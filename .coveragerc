@@ -1,0 +1,15 @@
+[run]
+branch = True
+include = */grand/*.py
+
+[report]
+exclude_lines =
+    if self.debug:
+    pragma: no cover
+    raise NotImplementedError
+    except ImportError:
+    if __name__ == .__main__.:
+ignore_errors = True
+omit =
+    tests/*
+    setup.py

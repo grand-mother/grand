@@ -1,0 +1,30 @@
+# Ignore the dist/version module
+version.py
+
+# Ignore Python bytecode
+__pycache__
+*.pyc
+*.pyo
+
+# Ignore build and dist temporaries
+dist
+build
+*.egg-info
+
+# Ignore temporary coverage reports
+.coverage
+
+# Ignore the Python engine
+python3-*.AppImage
+
+# Ignore PyCharm stuff
+.idea
+
+# Ignore local librairies and data
+grand/libs/lib
+grand/libs/data
+grand/tools/data/topography
+tests/topography
+
+# Ignore user data
+user/grand

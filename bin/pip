@@ -1,0 +1,22 @@
+#!/bin/bash
+
+main() {
+    local prefix="$(dirname $(dirname $(readlink -f $0)))"
+
+    contains "install" $@
+    if [ "$?" == "0" ]; then
+        python -m pip $@ "--user"
+        "${prefix}/setup.sh" "-q"
+    else
+        python -m pip $@
+    fi
+}
+
+contains () {
+    local e match="$1"
+    shift
+    for e; do [[ "$e" == "$match" ]] && return 0; done
+    return 1
+}
+
+main $@

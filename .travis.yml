@@ -1,0 +1,12 @@
+branches:
+  only:
+    - master
+
+install:
+  - source setup.sh && pip install codecov
+
+script:
+  - source setup.sh && ./.travis/script.sh
+
+after_success:
+  - source setup.sh && ./.travis/after-success.sh

@@ -1,0 +1,16 @@
+#! /bin/bash
+
+main() {
+    local prefix="$(dirname $(dirname $(readlink -f $0)))"
+    local user="grand"
+    local home=${prefix}/user/${user}
+
+    if [ ! -d "${home}" ]; then
+        mkdir -p "${home}"
+    fi
+
+    HOME="${prefix}/user/${user}" USER="${user}" "${prefix}/bin/python3-x86_64.AppImage" $@
+}
+
+
+main $@
