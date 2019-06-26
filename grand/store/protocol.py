@@ -18,7 +18,7 @@ import ssl
 import urllib.request
 import zlib
 
-def _disable_certs():
+def _disable_certs() -> None:
     """Disable certificates check"""
     try:
         _create_unverified_https_context = ssl._create_unverified_context

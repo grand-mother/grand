@@ -17,19 +17,22 @@
 """Manage shared libs for the GRAND package
 """
 
+from typing_extensions import Final
+
 import os
+from pathlib import Path
 
 __all__ = ["LIBDIR", "DATADIR"]
 
 
 # Initialise the package globals
-DATADIR = os.path.join(os.path.dirname(__file__), "data")
+DATADIR: Final = Path(__file__).parent / "data"
 """Path to the package data"""
 
 
-LIBDIR = os.path.join(os.path.dirname(__file__), "lib")
+LIBDIR: Final = Path(__file__).parent / "lib"
 """Path to the package shared libraries"""
 
 
-SRCDIR = os.path.join(os.path.dirname(__file__), "src")
+SRCDIR: Final = Path(__file__).parent / "src"
 """Path to the source for C-extensions"""

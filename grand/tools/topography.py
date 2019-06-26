@@ -17,7 +17,8 @@
 """Topography wrapper for GRAND packages.
 """
 
-from typing import Union
+from typing import Optional, Union
+from typing_extensions import Final
 
 from . import DATADIR
 from .coordinates import ECEF, GeodeticRepresentation, LTP
@@ -34,19 +35,19 @@ __all__ = ["elevation", "geoid_undulation", "update_data", "cachedir",
            "model", "Topography"]
 
 
-_CACHEDIR = Path(__file__).parent / "data" / "topography"
+_CACHEDIR: Final = Path(__file__).parent / "data" / "topography"
 """Location of cached topography data"""
 
 
-_DEFAULT_MODEL = "SRTMGL1"
+_DEFAULT_MODEL: Final = "SRTMGL1"
 """The default topographic model"""
 
 
-_default_topography = None
+_default_topography: Optional["Topography"] = None
 """Stack for the topographic data"""
 
 
-_geoid = None
+_geoid: Optional[_Map] = None
 """Map with geoid undulations"""
 
 
@@ -88,18 +89,18 @@ def update_data(coordinates: Union[ECEF, LTP]=None, clear: bool=False,
         for p in _CACHEDIR.glob("**/*.*"):
             p.unlink()
 
-    if coordinates:
+    if coordinates is not None:
         _CACHEDIR.mkdir(exist_ok=True)
 
         # Compute the bounding box
         coordinates = coordinates.transform_to(ECEF)
-        coordinates = coordinates.represent_as(GeodeticRepresentation)
-        latitude = coordinates.latitude / u.deg
+        coordinates = coordinates.represent_as(GeodeticRepresentation) # type:ignore
+        latitude = coordinates.latitude / u.deg # type: ignore
         try:
             latitude = [min(latitude), max(latitude)]
         except TypeError:
             latitude = [latitude, latitude]
-        longitude = coordinates.longitude / u.deg
+        longitude = coordinates.longitude / u.deg # type: ignore
         try:
             longitude = [min(longitude), max(longitude)]
         except TypeError:
@@ -159,7 +160,7 @@ class Topography:
     """Proxy to topography data.
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: Union[Path, str]) -> None:
         self._stack = _Stack(str(path))
 
 

@@ -61,8 +61,8 @@ main () {
         done
     }
 
-    sanitize_shebangs "system::" "bin"
-    sanitize_shebangs "user::" "user/grand/.local/bin"
+    sanitize_shebangs "system" "bin"
+    sanitize_shebangs "user" "user/grand/.local/bin"
 
     logmsg "--Environment set"
 }

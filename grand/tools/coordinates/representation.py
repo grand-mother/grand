@@ -18,6 +18,7 @@
 """
 
 from typing import Union
+from typing_extensions import Final
 
 from collections import OrderedDict
 
@@ -31,27 +32,23 @@ from astropy.coordinates import BaseRepresentation, CartesianRepresentation,   \
 __all__ = ["GeodeticRepresentation", "HorizontalRepresentation"]
 
 
-class GeodeticRepresentation: # Forward declaration
-    pass
-
-
 class GeodeticRepresentation(BaseRepresentation):
     """Geodetic coordinates representation w.r.t. the WGS84 ellipsoid."""
 
-    attr_classes = OrderedDict([["latitude", Latitude],
-                                ["longitude", Longitude],
-                                ["height", u.Quantity]])
+    attr_classes: Final = OrderedDict([("latitude", Latitude),
+                                       ("longitude", Longitude),
+                                       ("height", u.Quantity)])
     """Attributes of a Geodetic representation."""
 
 
     def __init__(self, latitude: Latitude, longitude: Longitude,
-                 height: u.Quantity=0 * u.m, copy: bool=True):
+                 height: u.Quantity=0 * u.m, copy: bool=True) -> None:
         super().__init__(latitude, longitude, height, copy=copy)
 
 
     @classmethod
     def from_cartesian(cls, cart: CartesianRepresentation) ->                  \
-            GeodeticRepresentation:
+            "GeodeticRepresentation":
         """Generate a Geodetic representation from a Cartesian one.
         """
         m1 = 1 / u.m
@@ -80,21 +77,18 @@ class GeodeticRepresentation(BaseRepresentation):
                                            ecef[:,2] * u.m, copy=False)
 
 
-class HorizontalRepresentation: # Forward declaration
-    pass
-
-
 class HorizontalRepresentation(BaseRepresentation):
     """Horizontal angular representation, for unit vectors."""
 
 
-    attr_classes = OrderedDict([["azimuth", Longitude],
-                                ["elevation", Latitude]])
+    attr_classes: Final = OrderedDict([("azimuth", Longitude),
+                                       ("elevation", Latitude)])
     """Attributes of a Horizontal representation"""
 
 
     def __init__(self, azimuth: Union[Longitude, u.Quantity, str],
-                 elevation: Union[Latitude, u.Quantity, str], copy: bool=True):
+                 elevation: Union[Latitude, u.Quantity, str],
+                 copy: bool=True) -> None:
         azimuth = Longitude(azimuth)
         azimuth.wrap_angle = 180 * u.deg
 
@@ -103,7 +97,7 @@ class HorizontalRepresentation(BaseRepresentation):
 
     @classmethod
     def from_cartesian(cls, cart: CartesianRepresentation) ->                  \
-            HorizontalRepresentation:
+            "HorizontalRepresentation":
         """Generate a Horizontal angular representation from a Cartesian unit
         vector.
         """

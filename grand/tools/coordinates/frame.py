@@ -18,6 +18,8 @@
 """
 
 from typing import Sequence, Union
+from typing_extensions import Final
+
 from datetime import datetime
 
 from .representation import GeodeticRepresentation, HorizontalRepresentation
@@ -39,7 +41,7 @@ from astropy.time import Time
 __all__ = ["ECEF", "LTP"]
 
 
-_HAS_GEOMAGNET = False
+_HAS_GEOMAGNET: Final = False
 """The geomagnet module needs a deferred import due to circular references."""
 
 
@@ -47,15 +49,15 @@ class ECEF(BaseCoordinateFrame):
     """Earth-Centered Earth-Fixed frame, co-moving with the Earth.
     """
 
-    default_representation = CartesianRepresentation
+    default_representation: Final = CartesianRepresentation
     """Default representation of local frames."""
 
     obstime = TimeAttribute(default=None)
     """The observation time. Defaults to `None`."""
 
 
-    def __init__(self, *args, obstime: Union[datetime, Time, str]=None,
-                 **kwargs):
+    def __init__(self, *args, obstime: Union["datetime", "Time", str]=None,
+                 **kwargs) -> None:
         super().__init__(*args, obstime=obstime, **kwargs)
 
 
@@ -105,16 +107,12 @@ def ecef_to_ecef(ecef0: ECEF, ecef1: ECEF) -> ECEF:
     return ecef1.realize_frame(ecef0.cartesian)
 
 
-class LTP(BaseCoordinateFrame): # Forward declaration
-    pass
-
-
 class LTP(BaseCoordinateFrame):
     """Local frame tangent to the WGS84 ellipsoid and oriented along cardinal
        directions.
     """
 
-    default_representation = CartesianRepresentation
+    default_representation: Final = CartesianRepresentation
     """Default representation of local frames."""
 
     location = Attribute(default=None)
@@ -130,9 +128,11 @@ class LTP(BaseCoordinateFrame):
     """The observation time."""
 
 
-    def __init__(self, *args, location: Union[EarthLocation, ECEF, LTP]=None,
+    def __init__(self, *args,
+                 location: Union["EarthLocation", "ECEF", "LTP"]=None,
                  orientation: Sequence[str]=None, magnetic: bool=False,
-                 obstime: Union[datetime, Time, str]=None, **kwargs):
+                 obstime: Union["datetime", "Time", str]=None,
+                 **kwargs) -> None:
 
         # Do the base initialisation
         location = self.location if location is None else location
@@ -206,7 +206,7 @@ class LTP(BaseCoordinateFrame):
 
 
 @frame_transform_graph.transform(FunctionTransform, ECEF, LTP)
-def ltp_to_ltp(ecef: ECEF, ltp: LTP) -> LTP:
+def ecef_to_ltp(ecef: ECEF, ltp: LTP) -> LTP:
     """Compute the transformation from ECEF to LTP coordinates.
     """
     c = ecef.cartesian

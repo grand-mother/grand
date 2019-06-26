@@ -17,7 +17,8 @@
 """Geomagnetic field wrapper for GRAND packages
 """
 
-from typing import Union
+from typing import Optional, Union
+from typing_extensions import Final
 
 from .coordinates import ECEF, GeodeticRepresentation, LTP
 from ..libs.gull import Snapshot as _Snapshot
@@ -28,11 +29,11 @@ import numpy
 from astropy.coordinates import EarthLocation
 
 
-_DEFAULT_MODEL = "IGRF12" # type: str
+_DEFAULT_MODEL: Final = "IGRF12"
 """The default geo-magnetic model"""
 
 
-_default_magnet = None # type: Geomagnet
+_default_magnet: Optional["Geomagnet"] = None
 """An instance of Geomagnet with the default geo-magnetic model"""
 
 
@@ -57,12 +58,12 @@ class Geomagnet:
     """Proxy to a geomagnetic model
     """
 
-    def __init__(self, model: str=None):
+    def __init__(self, model: str=None) -> None:
         if model is None:
             model = _DEFAULT_MODEL
-        self._model = model
-        self._snapshot = None
-        self._date = None
+        self._model = model   # type: str
+        self._snapshot = None # type: Optional[_Snapshot]
+        self._date = None     # type: Optional[str]
 
 
     def field(self, coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
@@ -84,7 +85,7 @@ class Geomagnet:
         geodetic = cart.represent_as(GeodeticRepresentation)
 
         # Fetch the magnetic field components in local LTP
-        field = self._snapshot(geodetic.latitude / u.deg,
+        field = self._snapshot(geodetic.latitude / u.deg,        # type: ignore
                                geodetic.longitude / u.deg,
                                geodetic.height / u.m)
 

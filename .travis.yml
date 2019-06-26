@@ -3,7 +3,7 @@ branches:
     - master
 
 install:
-  - source setup.sh && pip install codecov
+  - source setup.sh && ./.travis/install.sh
 
 script:
   - source setup.sh && ./.travis/script.sh

@@ -17,6 +17,9 @@
 """Utilities for encapsulating shared libraries
 """
 
+from typing import Generator, Optional, Union
+from typing_extensions import Final
+
 import contextlib
 import json
 import os
@@ -24,29 +27,32 @@ import subprocess
 import sys
 import tempfile
 from distutils.command.install import install
+from pathlib import Path
 from . import LIBDIR
 
 __all__ = ["Meta", "Temporary", "define"]
 
 
-def git(*args):
-    """System git call"""
+def git(*args) -> str:
+    """System git call
+    """
     command = "git " + " ".join(args)
     return subprocess.getoutput(command)
 
 
 @contextlib.contextmanager
-def Temporary(url, tag=None):
-    """Temporary context for building a shared library"""
-    path = os.getcwd()
+def Temporary(url: str, tag: Optional[str]=None) -> Generator[str, None, None]:
+    """Temporary context for building a shared library
+    """
+    path: Final = os.getcwd()
     with tempfile.TemporaryDirectory(prefix="grand-") as tmpdir:
         try:
             # Clone the repo
             os.chdir(tmpdir)
             git(f"clone {url}")
+            os.chdir(Path(url).name)
             if tag is not None:
                 git(f"checkout {tag}")
-            os.chdir(os.path.basename(url))
 
             # Get the hash
             githash = git("rev-parse", "HEAD")
@@ -59,37 +65,39 @@ def Temporary(url, tag=None):
 
 
 class Meta:
-    """Encapsulation of library meta data"""
+    """Encapsulation of library meta data
+    """
 
-    def __init__(self, name):
-        path = os.path.join(LIBDIR, f".{name}.json")
-        self._path = path
+    def __init__(self, name: str) -> None:
+        path = LIBDIR / f".{name}.json"
+        self._path: Final = path
 
-        if os.path.exists(path):
-            with open(path) as f:
-                self._meta = json.load(f)
+        if path.exists():
+            with path.open() as f:
+                self._meta: dict = json.load(f)
         else:
             self._meta = {}
 
-    def __getitem__(self, k):
+    def __getitem__(self, k: str) -> Optional[str]:
         try:
             return self._meta[k]
         except KeyError:
             return None
 
-    def __setitem__(self, k, v):
+    def __setitem__(self, k:str, v: Optional[str]):
         self._meta[k] = v
 
-    def update(self):
-        if not os.path.exists(LIBDIR):
-            os.makedirs(LIBDIR)
+    def update(self) -> None:
+        if not LIBDIR.exists():
+            LIBDIR.mkdir()
 
-        with open(self._path, "w") as f:
+        with self._path.open("w") as f:
             json.dump(self._meta, f)
 
 
 def define(source, arguments=None, result=None, exception=None):
-    """Decorator for defining wrapped library functions"""
+    """Decorator for defining wrapped library functions
+    """
 
     # Set the C prototype
     if arguments:

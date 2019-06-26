@@ -91,7 +91,7 @@ Alternative topography models
 
 .. warning::
    In order to get the topography elevation from the default GRAND model
-   (`STRMGL1`_), one should not directly instantiate a
+   (`SRTMGL1`_), one should not directly instantiate a
    :class:`~grand.topography.Topography` object.  Instead one should use the
    :func:`~grand.topography.elevation` function of the :mod:`~grand.topography`
    module.  This class is only meant to be used for studies of the impact of

@@ -17,12 +17,6 @@
 """GRAND software package
 """
 
-try:
-    from .version import __version__, __git__
-except ImportError:
-    __version__ = None
-    __git__ = {}
-
 from .tools import geomagnet, topography
 from .tools.coordinates import ECEF, GeodeticRepresentation,                   \
                                HorizontalRepresentation, LTP
