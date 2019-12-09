@@ -248,6 +248,14 @@ class CoordinatesTest(unittest.TestCase):
         self.assertCartesian(ltp0, ltp1, u.m, 8)
         self.assertEqual(ltp0.obstime, ltp1.obstime)
 
+        # Test an LTP permutation
+        ltp0 = LTP(x=1 * u.m, y=2 * u.m, z=3 * u.m, location=self.location)
+        frame1 = LTP(location=self.location, orientation=("N", "E", "D"))
+        ltp1 = ltp0.transform_to(frame1)
+        self.assertQuantity(ltp0.x, ltp1.y, u.m, 6)
+        self.assertQuantity(ltp0.y, ltp1.x, u.m, 6)
+        self.assertQuantity(ltp0.z, -ltp1.z, u.m, 6)
+
 
 if __name__ == "__main__":
     unittest.main()

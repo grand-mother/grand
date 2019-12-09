@@ -256,14 +256,14 @@ def ltp_to_ltp(ltp0: LTP, ltp1: LTP) -> LTP:
             return ltp1.realize_frame(c)
 
     # Transform to ECEF
+    c = c.transform(ltp0._basis)
     if translate:
-        c = c.copy()
-        c -= ltp0._origin
-    c = c.transform(ltp0._basis.T)
+        c += ltp0._origin
 
     # Transform back from ECEF
-    c = c.transform(ltp1._basis)
     if translate:
-        c += ltp1._origin
+        c = c.copy()
+        c -= ltp1._origin
+    c = c.transform(ltp1._basis.T)
 
     return ltp1.realize_frame(c)
