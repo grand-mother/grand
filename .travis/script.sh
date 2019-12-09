@@ -4,7 +4,7 @@ set -ex
 
 
 test_package() {
-    MYPYPATH=$PWD/user/grand/stubs mypy -m grand
+    MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy -m grand
     coverage run tests --unit
     python -m tests --doc
 }

@@ -19,17 +19,18 @@ main () {
 
     logmsg "--Cleaning the environment"
 
-    remove "bin"
-    remove "user/grand/.local/bin"
+    remove_path "bin"
+    remove_path "user/grand/.local/bin"
+    remove_pythonpath "lib/python"
 
     logmsg "--Environment cleaned"
 }
 
 
-remove () {
+remove_path () {
     local path="${prefix}/${1}"
     if [[ "$PATH" =~ "${path}" ]]; then
-        logmsg "  Removing ${1} from PATH"
+        logmsg "  Removing \$PREFIX/${1} from PATH"
         local work=":${PATH}:"
         local remove="${path}"
         work="${work/:$remove:/:}"
@@ -40,5 +41,19 @@ remove () {
 }
 
 
+remove_pythonpath () {
+    local path="${prefix}/${1}"
+    if [[ "$PYTHONPATH" =~ "${path}" ]]; then
+        logmsg "  Removing \$PREFIX/${1} from PYTHONPATH"
+        local work=":${PYTHONPATH}:"
+        local remove="${path}"
+        work="${work/:$remove:/:}"
+        work="${work%:}"
+        work="${work#:}"
+        export PYTHONPATH="${work}"
+    fi
+}
+
+
 main "$@"
-unset -f logmsg main remove
+unset -f logmsg main remove_path remove_pythonpath

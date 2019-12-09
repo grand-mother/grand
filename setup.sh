@@ -39,13 +39,23 @@ main () {
     expand_path () {
         local path="${prefix}/${1}"
         if [[ ! "$PATH" =~ "${path}" ]]; then
-            logmsg "  Adding ${1} to PATH"
+            logmsg "  Adding \$PREFIX/${1} to PATH"
             export PATH="${path}:${PATH}"
         fi
     }
 
     expand_path "bin"
     expand_path "user/grand/.local/bin"
+
+    expand_pythonpath () {
+        local path="${prefix}/${1}"
+        if [[ ! "$PYTHONPATH" =~ "${path}" ]]; then
+            logmsg "  Adding \$PREFIX/${1} to PYTHONPATH"
+            export PYTHONPATH="${path}:${PYTHONPATH}"
+        fi
+    }
+
+    expand_pythonpath "lib/python"
 
     # Rebase the shebangs of Python scripts
     sanitize_shebangs () {
@@ -63,6 +73,25 @@ main () {
 
     sanitize_shebangs "system" "bin"
     sanitize_shebangs "user" "user/grand/.local/bin"
+
+    # Build the C extensions
+    build_c () {
+        logmsg "--Installing C modules & libraries"
+        local tmpfile=$(mktemp /tmp/grand-setup-build.XXXXXX)
+        $(make install >& "${tmpfile}")
+        if [ "$?" != "0" ]; then
+            logmsg "Failed ..."
+            cat "${tmpfile}"
+            rm -f -- "${tmpfile}"
+            exit 1
+        else
+            rm -f -- "${tmpfile}"
+        fi
+    }
+
+    if [ ! -f "${prefix}/lib/python/grand/_core.so" ]; then
+        build_c
+    fi
 
     logmsg "--Environment set"
 }

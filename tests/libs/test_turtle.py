@@ -15,17 +15,6 @@ from grand.libs import turtle
 class TurtleTest(unittest.TestCase):
     """Unit tests for the turtle module"""
 
-    def test_init(self):
-        self.assertEqual(turtle.LIBNAME, "libturtle.so")
-        self.assertNotEqual(turtle.LIBHASH, None)
-
-    def test_install(self):
-        self.assertTrue(os.path.exists(turtle.LIBPATH))
-
-
-    def test_load(self):
-        self.assertNotEqual(turtle._lib, None)
-
     def test_ecef(self):
         # Reference values
         ref = {

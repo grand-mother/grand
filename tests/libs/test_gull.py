@@ -12,19 +12,6 @@ from grand.libs import gull
 class GullTest(unittest.TestCase):
     """Unit tests for the gull sub-package"""
 
-    def test_init(self):
-        self.assertEqual(gull.LIBNAME, "libgull.so")
-        self.assertNotEqual(gull.LIBHASH, None)
-
-
-    def test_install(self):
-        self.assertTrue(os.path.exists(gull.LIBPATH))
-
-
-    def test_load(self):
-        self.assertNotEqual(gull._lib, None)
-
-
     def test_snapshot(self):
         snapshot = gull.Snapshot()
         self.assertNotEqual(snapshot._snapshot, None)

@@ -14,91 +14,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-"""Encapsulation of the TURTLE C library
+"""Wrapper for the TURTLE C library
 """
 
-import ctypes
-import glob
-import os
-import shutil
-import subprocess
-
+from .._core import ffi, lib
 import numpy
 
-from . import LIBDIR, SRCDIR
-from .tools import Meta, Temporary, define
 
-
-__all__ = ["LIBNAME", "LIBPATH", "LIBHASH", "LibraryError", "Map", "Stack",
-           "ecef_from_geodetic", "ecef_from_horizontal", "ecef_to_geodetic",
-           "ecef_to_horizontal"]
-
-
-LIBNAME = "libturtle.so"
-"""The OS specific name of the TURTLE library object"""
-
-
-LIBPATH = os.path.join(LIBDIR, LIBNAME)
-"""The full path to the TURTLE library object"""
-
-
-LIBHASH = "7436e40aaa97fe719f6a0b6d823690986cedd3dc"
-"""The git hash of the library"""
-
-
-def _install():
-    """Install the TURTLE library to the top package location"""
-
-    # Check for an existing install
-    meta = Meta("turtle")
-    if meta["LIBHASH"] == LIBHASH:
-        return
-
-    def system(command):
-        subprocess.run(command, check=True, shell=True)
-
-    # Install the library with its vectorization binding
-    with Temporary("https://github.com/niess/turtle", LIBHASH) as _:
-        # Extend the source with vectorization
-        for path in glob.glob(f"{SRCDIR}/turtle/*.c"):
-            target = f"src/turtle/{os.path.basename(path)}"
-            system(f"cat {target} {path} > tmp.c")
-            system(f"mv tmp.c {target}")
-
-        # Build the library
-        system("make")
-
-        # Copy back the library
-        if not os.path.exists(LIBDIR):
-            os.makedirs(LIBDIR)
-        src = os.path.join("lib", "libturtle.so")
-        shutil.copy(src, LIBPATH)
-
-    # Dump the meta data
-    meta["LIBHASH"] = LIBHASH
-    meta.update()
-
-
-# Install the library on import, if needed
-_install()
-
-
-_lib = ctypes.cdll.LoadLibrary(LIBPATH)
-"""Proxy for the TURTLE library"""
-
-
-# Set the trap for TURTLE errors
-@define (_lib.turtle_error_set_trap)
-def _error_set_trap():
-    """Capture TURTLE errors"""
-    pass
-
-@define (_lib.turtle_error_get_last, result=ctypes.c_char_p)
-def _error_get_last():
-    """Get the last TURTLE error"""
-    pass
-
-_error_set_trap()
+__all__ = ["LibraryError", "Map", "Stack", "ecef_from_geodetic",
+           "ecef_from_horizontal", "ecef_to_geodetic", "ecef_to_horizontal"]
 
 
 class LibraryError(RuntimeError):
@@ -113,93 +37,15 @@ class LibraryError(RuntimeError):
             The function return code
         """
         self.code = code
-        message = _error_get_last()
+        message = ffi.string(lib.grand_error_get())
 
         header = "A TURTLE library error occurred"
         if message is not None:
-            message = f"{header}: {message.decode()}"
+            message = f"{header}: {message}"
         else:
             message = header
 
         super().__init__(message)
-
-
-_CST_DBL_P = numpy.ctypeslib.ndpointer(float, flags="aligned, contiguous")
-_DBL_P = numpy.ctypeslib.ndpointer(float,
-    flags="aligned, contiguous, writeable")
-
-@define (_lib.turtle_ecef_from_geodetic_v,
-         arguments = (_CST_DBL_P, _CST_DBL_P, _CST_DBL_P, _DBL_P,
-                      numpy.ctypeslib.c_intp))
-def _ecef_from_geodetic(latitude, longitude, altitude, ecef, size):
-    """Convert geodetic coordinates to ECEF ones"""
-    pass
-
-@define (_lib.turtle_ecef_from_horizontal_v,
-         arguments = (_CST_DBL_P, _CST_DBL_P, _CST_DBL_P, _CST_DBL_P, _DBL_P,
-                      numpy.ctypeslib.c_intp))
-def _ecef_from_horizontal(
-    latitude, longitude, azimuth, elevation, direction, size):
-    """Convert horizontal coordinates to an ECEF direction"""
-    pass
-
-@define (_lib.turtle_ecef_to_geodetic_v,
-         arguments = (_CST_DBL_P, _DBL_P, _DBL_P, _DBL_P,
-                      numpy.ctypeslib.c_intp))
-def _ecef_to_geodetic(ecef, latitude, longitude, altitude, size):
-    """Convert ECEF coordinates to geodetic ones"""
-    pass
-
-@define (_lib.turtle_ecef_to_horizontal_v,
-         arguments = (_CST_DBL_P, _CST_DBL_P, _CST_DBL_P, _DBL_P, _DBL_P,
-                      numpy.ctypeslib.c_intp))
-def _ecef_to_horizontal(
-    latitude, longitude, direction, azimuth, elevation, size):
-    """Convert an ECEF direction to horizontal coordinates"""
-    pass
-
-@define (_lib.turtle_stack_create,
-         arguments = (ctypes.POINTER(ctypes.c_void_p), ctypes.c_char_p,
-                      ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p),
-         result = ctypes.c_int,
-         exception = LibraryError)
-def _stack_create(stack, path, stack_size, lock, unlock):
-    """Create a new stack object"""
-    pass
-
-@define (_lib.turtle_stack_destroy,
-         arguments=(ctypes.POINTER(ctypes.c_void_p),))
-def _stack_destroy(stack):
-    """Destroy a stack object"""
-    pass
-
-@define (_lib.turtle_stack_elevation_v,
-         arguments = (ctypes.c_void_p, _CST_DBL_P, _CST_DBL_P, _DBL_P,
-                      numpy.ctypeslib.c_intp))
-def _stack_elevation(latitude, longitude, elevation, size):
-    """Get the topography elevation from a stack of maps"""
-    pass
-
-@define (_lib.turtle_map_load,
-         arguments = (ctypes.POINTER(ctypes.c_void_p), ctypes.c_char_p),
-         result = ctypes.c_int,
-         exception = LibraryError)
-def _map_load(map, path):
-    """Create a new map object from a data file"""
-    pass
-
-@define (_lib.turtle_map_destroy,
-         arguments=(ctypes.POINTER(ctypes.c_void_p),))
-def _map_destroy(map):
-    """Destroy a map object"""
-    pass
-
-@define (_lib.turtle_map_elevation_v,
-         arguments = (ctypes.c_void_p, _CST_DBL_P, _CST_DBL_P, _DBL_P,
-                      numpy.ctypeslib.c_intp))
-def _map_elevation(latitude, x, y, size):
-    """Get the topography elevation from a map"""
-    pass
 
 
 def _regularize(a):
@@ -223,7 +69,13 @@ def ecef_from_geodetic(latitude, longitude, altitude):
     else:
         ecef = numpy.zeros((latitude.size, 3))
 
-    _ecef_from_geodetic(latitude, longitude, altitude, ecef, latitude.size)
+    lib.turtle_ecef_from_geodetic_v(
+        ffi.cast("double *", latitude.ctypes.data),
+        ffi.cast("double *", longitude.ctypes.data),
+        ffi.cast("double *", altitude.ctypes.data),
+        ffi.cast("double *", ecef.ctypes.data),
+        latitude.size
+    )
     return ecef
 
 
@@ -244,8 +96,14 @@ def ecef_from_horizontal(latitude, longitude, azimuth, elevation):
     else:
         direction = numpy.zeros((latitude.size, 3))
 
-    _ecef_from_horizontal(
-        latitude, longitude, azimuth, elevation, direction, latitude.size)
+    lib.turtle_ecef_from_horizontal_v(
+        ffi.cast("double *", latitude.ctypes.data),
+        ffi.cast("double *", longitude.ctypes.data),
+        ffi.cast("double *", azimuth.ctypes.data),
+        ffi.cast("double *", elevation.ctypes.data),
+        ffi.cast("double *", direction.ctypes.data),
+        latitude.size
+    )
     return direction
 
 
@@ -264,7 +122,12 @@ def ecef_to_geodetic(ecef):
         set0 = lambda x: numpy.zeros(n)
         latitude, longitude, altitude = map(set0, range(3))
 
-    _ecef_to_geodetic(ecef, latitude, longitude, altitude, latitude.size)
+    lib.turtle_ecef_to_geodetic_v(
+        ffi.cast("double *", ecef.ctypes.data),
+        ffi.cast("double *", latitude.ctypes.data),
+        ffi.cast("double *", longitude.ctypes.data),
+        ffi.cast("double *", altitude.ctypes.data),
+        latitude.size)
 
     if n == 1:
         return latitude[0], longitude[0], altitude[0]
@@ -292,8 +155,13 @@ def ecef_to_horizontal(latitude, longitude, direction):
         set0 = lambda x: numpy.zeros(n)
         azimuth, elevation = map(set0, range(2))
 
-    _ecef_to_horizontal(
-        latitude, longitude, direction, azimuth, elevation, latitude.size)
+    lib.turtle_ecef_to_horizontal_v(
+        ffi.cast("double *", latitude.ctypes.data),
+        ffi.cast("double *", longitude.ctypes.data),
+        ffi.cast("double *", direction.ctypes.data),
+        ffi.cast("double *", azimuth.ctypes.data),
+        ffi.cast("double *", elevation.ctypes.data),
+        latitude.size)
 
     if n == 1:
         return azimuth[0], elevation[0] if n == 1 else azimuth, elevation
@@ -320,11 +188,11 @@ class Map:
         self._map, self._path = None, None
 
         # Create the map object
-        map_ = ctypes.c_void_p(None)
-        path_ = ctypes.c_char_p(path.encode())
+        map_ = ffi.new("struct turtle_map **")
+        path_ = ffi.new("char []", path.encode())
 
-        if (_map_load(ctypes.byref(map_), path_) != 0):
-            return
+        r = lib.turtle_map_load(map_, path_)
+        if r != 0: raise LibraryError(r)
         self._map = map_
         self._path = path
 
@@ -336,7 +204,7 @@ class Map:
         except AttributeError:
             return
 
-        _map_destroy(ctypes.byref(self._map))
+        lib.turtle_map_destroy(self._map)
         self._map = None
 
 
@@ -354,7 +222,10 @@ class Map:
             elevation = numpy.nan
             return elevation
         else:
-            _map_elevation(self._map, x, y, elevation, n)
+            lib.turtle_map_elevation_v(self._map[0],
+                ffi.cast("double *", x.ctypes.data),
+                ffi.cast("double *", y.ctypes.data),
+                ffi.cast("double *", elevation.ctypes.data), n)
             return elevation[0] if n == 1 else elevation
 
 
@@ -385,13 +256,12 @@ class Stack:
         self._stack, self._path, self._stack_size = None, None, None
 
         # Create the stack object
-        stack_ = ctypes.c_void_p(None)
-        path_ = ctypes.c_char_p(path.encode())
-        stack_size_ = ctypes.c_int(stack_size)
+        stack_ = ffi.new("struct turtle_stack **")
+        path_ = ffi.new("char []", path.encode())
 
-        if (_stack_create(ctypes.byref(stack_), path_, stack_size_, None, None)
-            != 0):
-            return
+        r = lib.turtle_stack_create(stack_, path_, stack_size,
+                                    ffi.NULL, ffi.NULL)
+        if r != 0: raise LibraryError(r)
         self._stack = stack_
         self._path = path
         self._stack_size = stack_size
@@ -404,7 +274,7 @@ class Stack:
         except AttributeError:
             return
 
-        _stack_destroy(ctypes.byref(self._stack))
+        lib.turtle_stack_destroy(self._stack)
         self._stack = None
 
 
@@ -418,7 +288,10 @@ class Stack:
         n = latitude.size
         elevation = numpy.zeros(n)
 
-        _stack_elevation(self._stack, latitude, longitude, elevation, n)
+        lib.turtle_stack_elevation_v(self._stack[0],
+            ffi.cast("double *", latitude.ctypes.data),
+            ffi.cast("double *", longitude.ctypes.data),
+            ffi.cast("double *", elevation.ctypes.data), n)
         return elevation[0] if n == 1 else elevation
 
 

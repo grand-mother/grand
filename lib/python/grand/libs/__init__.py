@@ -22,17 +22,9 @@ from typing_extensions import Final
 import os
 from pathlib import Path
 
-__all__ = ["LIBDIR", "DATADIR"]
+__all__ = ["DATADIR"]
 
 
 # Initialise the package globals
 DATADIR: Final = Path(__file__).parent / "data"
 """Path to the package data"""
-
-
-LIBDIR: Final = Path(__file__).parent / "lib"
-"""Path to the package shared libraries"""
-
-
-SRCDIR: Final = Path(__file__).parent / "src"
-"""Path to the source for C-extensions"""
