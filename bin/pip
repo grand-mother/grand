@@ -6,7 +6,7 @@ main() {
     contains "install" $@
     if [ "$?" == "0" ]; then
         python -m pip $@ "--user"
-        "${prefix}/setup.sh" "-q"
+        "${prefix}/env/setup.sh" "-q"
     else
         python -m pip $@
     fi

@@ -14,7 +14,8 @@ Clone the present repository and source the `setup.sh`_ file:
 .. code:: bash
 
    git clone https://github.com/grand-mother/grand
-   source grand/setup.sh
+   cd grand
+   source env/setup.sh
 
 Check the `online documentation`_ for further details.
 
@@ -32,7 +33,7 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 
 .. _LICENSE: LICENSE
 
-.. _setup.sh: setup.sh
+.. _setup.sh: env/setup.sh
 
 
 .. Externals links

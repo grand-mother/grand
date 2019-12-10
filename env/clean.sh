@@ -10,7 +10,7 @@ main () {
     esac
     done
 
-    local prefix="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    local prefix="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
     local tag="$(basename ${prefix})"
     logmsg () {

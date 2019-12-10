@@ -7,31 +7,34 @@ Installation
    Windows we recommend using a virtual machine, E.g.  VirtualBox_ with
    Debian_. Note that on Windows 10, WSL does not currently support AppImages.
 
-The :mod:`grand` package sources are available from GitHub_. Installation is
-as simple as cloning the repository:
+The :mod:`grand` package sources are available from GitHub_. Installing a
+devlopment version first requires to clone the repository:
 
 .. code-block:: bash
 
    git clone https://github.com/grand-mother/grand
 
 
-Setting up the environment
---------------------------
+Building and setting up the environment
+---------------------------------------
 
 Before using the package you must source the provided `setup.sh` file, as:
 
 .. code-block:: bash
 
-   source grand/setup.sh
+   cd grand
+   source env/setup.sh
 
-This will configure your environment for using GRAND's `python` and its related
-executables -located under grand/bin-, E.g. `pip`, `sphinx-build`, etc.
+This will build C libraries and modules and configure your environment for
+using GRAND's `python` and its related executables -located under grand/bin-,
+E.g. `pip`, `sphinx-build`, etc.
 
 .. note::
    The GRAND `python` is isolated from your system and home space. User specific
    data can be found under `grand/user/grand`.
 
-You can restore your initial environment by sourcing the `clean.sh` file.
+You can restore your initial environment by sourcing the `clean.sh` file located
+under `env/` as well.
 
 
 Installing custom packages

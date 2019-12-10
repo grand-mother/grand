@@ -10,16 +10,17 @@ main () {
     esac
     done
 
-    local prefix="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    local prefix="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
     local tag="$(basename ${prefix})"
     logmsg () {
         [[ -z "${quiet}" ]] && echo "[${tag}] $@"
     }
 
-    if [ ! -e "${prefix}/bin/python3-$(arch).AppImage" ]; then
+    local ARCH="x86_64"
+    if [ ! -e "${prefix}/bin/python3-${ARCH}.AppImage" ]; then
         logmsg "--Fetching AppImage"
-        local url="https://github.com/grand-mother/python/releases/download/continuous/python3-$(arch).AppImage"
+        local url="https://github.com/grand-mother/python/releases/download/continuous/python3-${ARCH}.AppImage"
         (cd "${prefix}/bin" && wget -cq "${url}")
         if [ "$?" != "0" ]; then
             logmsg "  could not fetch ${url}"
@@ -27,7 +28,7 @@ main () {
         fi
         logmsg "  AppImage retrieved"
     fi
-    chmod u+x "${prefix}/bin/python3-$(arch).AppImage" 
+    chmod u+x "${prefix}/bin/python3-${ARCH}.AppImage"
 
     if [ ! -d "${prefix}/user/grand" ]; then
         mkdir -p "${prefix}/user/grand"

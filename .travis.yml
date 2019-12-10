@@ -3,10 +3,10 @@ branches:
     - master
 
 install:
-  - source setup.sh && ./.travis/install.sh
+  - source env/setup.sh && ./.travis/install.sh
 
 script:
-  - source setup.sh && ./.travis/script.sh
+  - source env/setup.sh && ./.travis/script.sh
 
 after_success:
-  - source setup.sh && ./.travis/after-success.sh
+  - source env/setup.sh && ./.travis/after-success.sh
