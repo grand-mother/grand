@@ -1,41 +1,39 @@
-import astropy.units as u
+import logging
+logger = logging.getLogger(__name__)
 from typing import Optional, List, Union
 
+import astropy.units as u
 import numpy as np
 
-import logging
-logger = logging.getLogger("Shower")
 
 gcm2= u.gram /(u.cm**2)
 
-''' NOTE:
+""" NOTE:
 * from typing_extension import Final, mypy would would raise bad usage
 * numpy arrays: myarra.flags.writeable = False
 
 
-* Usage of @property decorator: in case an attribute is derived from other attributes in the class -> the derived attribute will update whenever the source attributes is changed, 
+* Usage of @property decorator: in case an attribute is derived from other attributes in the class -> the derived attribute will update whenever the source attributes is changed,
 attribute becomes a property by defining it as a function and add the @property decorator before the definition.
 * Usage of setter method for the property: to update the source attributes whenever the property is set
 
-'''
+"""
 
 class AlreadySet(Exception):
     """Raised when attempting to re-set an already set attribute"""
-    logger.debug('Already set')
     pass
 
-
 class Shower():
-    ''' info on shower 
-    
+    """ info on shower
+
         Immutable container with both static and runtime checks, The fields can be accessed as attributes/
-        
+
         1. A static analyses can be done with mypy. It will ensure that the proper types are used as arguments when setting the shower attributes. Special unit  can not be checked (eg energy given in meters...)
         2. In addition using the @property class decorator we can perform runtime checks when an instance attribute is modified. (not yet done, do we need that...)
-        
+
         NOTE: In principle all kind of information can be added, e.g. shower core info, injectionheight etc if available
               Do we want to have a calculated Xmax position, or shall we load it from a calculation or simulation if available...
-        
+
         showerID: str
         primary: str
         energy: float in eV
@@ -44,26 +42,26 @@ class Shower():
         direction: numpy vector
         injectionheight: float in m
         trigger:  list, int
-        
+
         simulations: str
         Xmax: float in g/cm2
         # Xmax_position: possible further attribute in class, to be defined
-                
+
         recoXmax: float in g/cm2
         recoenergy: float in eV
         recozenith: float in deg, GRAND
         recoazimuth: float in deg, GRAND
-        
-        
-        TODO: 
+
+
+        TODO:
         * How do I prevent that attributes can overwritten
         * missing impulse function: vector type, calculate impulse vector
-               
-    '''
-    
+
+    """
+
     _attributes = ("showerID", "primary", "energy", "zenith",
                             "azimuth", "injectionheight", "trigger")
-    
+
     def __init__(self, **kwargs):
         # list of instance attributes
         self.__showerID: Optional[str] = None
@@ -72,9 +70,9 @@ class Shower():
         self.__zenith: Optional[u.Quantity] = None
         self.__azimuth: Optional[u.Quantity] = None
         self.__injectionheight: Optional[u.Quantity] = None
-        
+
         self.__trigger: List[Union[int, str]] = None
-        
+
 
         for attr, value in kwargs.items():
             if attr not in self._attributes:
@@ -104,7 +102,7 @@ class Shower():
     def showerID(self, value: str):
         self._assert_not_set(self.__showerID)
         self.__showerID = value
-        
+
     @showerID.deleter
     def showerID(self):
         self.__showerID = None
@@ -119,7 +117,7 @@ class Shower():
     def primary(self, value: str):
         self._assert_not_set(self.__primary)
         self.__primary = value
-        
+
     @primary.deleter
     def primary(self):
         self.primary = None
@@ -134,7 +132,7 @@ class Shower():
     def energy(self, value: u.Quantity):
         self._assert_not_set(self.__energy)
         self.__energy = value.to(u.eV)
-        
+
     @energy.deleter
     def energy(self):
         self.__energy = None
@@ -149,7 +147,7 @@ class Shower():
     def zenith(self, value: u.Quantity):
         self._assert_not_set(self.__zenith)
         self.__zenith = value.to(u.deg)
-        
+
     @zenith.deleter
     def zenith(self):
         self.__zenith = None
@@ -164,7 +162,7 @@ class Shower():
     def azimuth(self, value: u.Quantity):
         self._assert_not_set(self.__azimuth)
         self.__azimuth = value.to(u.deg)
-        
+
     @azimuth.deleter
     def azimuth(self):
         self.__azimuth = None
@@ -179,7 +177,7 @@ class Shower():
     def injectionheight(self, value: u.Quantity):
         self._assert_not_set(self.__injectionheight)
         self.__injectionheight = value.to(u.m)
-        
+
     @injectionheight.deleter
     def injectionheight(self):
         self.__injectionheight = None
@@ -195,13 +193,13 @@ class Shower():
     def trigger(self, value: List[Union[str,int]] ):
         self._assert_not_set(self.__trigger)
         self.__trigger = value
-        
+
     @trigger.deleter
     def trigger(self):
         self.__trigger = None
-        
-    
-    def direction(self): 
+
+
+    def direction(self):
         """The shower direction (numpy array) -- cross-check definition: np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)]) """
         try:
             return np.array([np.cos(self.azimuth.to(u.rad))*np.sin(self.zenith.to(u.rad)),
@@ -210,22 +208,22 @@ class Shower():
         except:
             logger.error("Direction cannot be calculated")
 
-    
-    
-#=============================================  
 
-### simulated shower 
-class SimulatedShower(Shower):  
-    ''' info on simulations; Additional attributes: simulation, Xmax'''
-        
+
+#=============================================
+
+### simulated shower
+class SimulatedShower(Shower):
+    """ info on simulations; Additional attributes: simulation, Xmax"""
+
     _attributes = Shower._attributes + ("simulation", "Xmax")
-    
+
     def __init__(self, **kwargs):
         self.__simulation: Optional[str] = None
         self.__Xmax: Optional[u.Quantity] = None
-        
+
         super().__init__(**kwargs)
-    
+
     @property
     def simulation(self) -> u.Quantity:
         """name of simulation program"""
@@ -235,12 +233,12 @@ class SimulatedShower(Shower):
     def simulation(self, value: u.Quantity):
         self._assert_not_set(self.__simulation)
         self.__simulation = value
-        
-        
+
+
     @simulation.deleter
     def simulation(self):
         self.__simulation = None
-    
+
     @property
     def Xmax(self) -> u.Quantity:
         """The simulated/ calculated Xmax value"""
@@ -255,30 +253,30 @@ class SimulatedShower(Shower):
     def Xmax(self):
         self.__Xmax = None
 
-    #def Xmax_position(self): 
+    #def Xmax_position(self):
         #""" calculated/simulated Xmax_position"""
-        
-#=================================================        
+
+#=================================================
 
 ### reconstructed event
 class ReconstructedShower(Shower):
-    ''' info on reconstructed values; 
+    """ info on reconstructed values;
     Additional attributes: recoenergy, recoXmax, recozenith, recoazimuth
-    
+
     TODO:
-        *missing reco injectionheight       
-    '''
-    
+        *missing reco injectionheight
+    """
+
     _attributes = Shower._attributes + ("recoenergy", "recoXmax", "recozenith", "recoazimuth",)
-    
+
     def __init__(self, **kwargs):
         self.__recoenergy: Optional[u.Quantity] = None
         self.__recozenith: Optional[u.Quantity] = None
         self.__recoazimuth: Optional[u.Quantity] = None
         self.__recoXmax: Optional[u.Quantity] = None
-        
+
         super().__init__(**kwargs)
-    
+
     @property
     def recoenergy(self) -> u.Quantity:
         """value of reconstructed energy"""
@@ -307,8 +305,8 @@ class ReconstructedShower(Shower):
     @recozenith.deleter
     def recozenith(self):
         self.__recozenith = None
-    
-    
+
+
     @property
     def recoazimuth(self) -> u.Quantity:
         """value of reconstructed azimuth"""
@@ -322,8 +320,8 @@ class ReconstructedShower(Shower):
     @recoazimuth.deleter
     def recoazimuth(self):
         self.__recoazimuth = None
-        
-        
+
+
     @property
     def recoXmax(self) -> u.Quantity:
         """value of reconstructed Xmax"""
@@ -332,14 +330,14 @@ class ReconstructedShower(Shower):
     @recoXmax.setter
     def recoXmax(self, value: u.Quantity):
         self._assert_not_set(self.__recoXmax)
-        self.__recoXmax = value.to(gcm2) 
-    
+        self.__recoXmax = value.to(gcm2)
+
     @recoXmax.deleter
     def recoXmax(self):
         self.__recoXmax = None
-    
 
-    def recodirection(self): 
+
+    def recodirection(self):
         """The reconstructed shower direction (numpy array) -- cross-check definition: np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)]) """
         try:
             return np.array([np.cos(self.recoazimuth.to(u.rad))*np.sin(self.recozenith.to(u.rad)),
@@ -347,32 +345,32 @@ class ReconstructedShower(Shower):
                              np.cos(self.recozenith.to(u.rad))])
         except:
             logger.error("Direction cannot be reconstructed")
-    
-    
-#=================================================        
+
+
+#=================================================
 
 
 def loadInfo_toShower(name, info=None):
-    '''load meta info from hdf5 file to object attributes, object initiated beforehand
-    
+    """load meta info from hdf5 file to object attributes, object initiated beforehand
+
     example:        testshower = SimulatedShower()
                     loadInfo_toShower(testshower, f.meta)
-    
-    TODO: 
-        *add missing attributes if desired 
-    '''
+
+    TODO:
+        *add missing attributes if desired
+    """
     try:
         showerID = info["ID"]
         name.showerID = str(showerID)
     except IOError:
         showerID = None
-    
+
     try:
         primary = info["primary"]
         name.primary = str(primary)
     except IOError:
         primary = None
-        
+
     try:
         energy = info["energy"]
         if hasattr(energy, 'unit'):
@@ -381,7 +379,7 @@ def loadInfo_toShower(name, info=None):
             name.energy = float(energy)* u.eV
     except IOError:
         energy = None
-    
+
     try:
         zenith = info["zenith"]
         if hasattr(zenith, 'unit'):
@@ -390,7 +388,7 @@ def loadInfo_toShower(name, info=None):
             name.zenith = float(zenith)* u.deg
     except IOError:
         zenith = None
-    
+
     try:
         azimuth = info["azimuth"]
         if hasattr(azimuth, 'unit'):
@@ -399,7 +397,7 @@ def loadInfo_toShower(name, info=None):
             name.azimuth = float(azimuth)* u.deg
     except IOError:
         azimuth = None
-    
+
     try:
         injectionheight = info["injection_height"]
         if hasattr(injectionheight, 'unit'):
@@ -421,7 +419,7 @@ def loadInfo_toShower(name, info=None):
     except (IOError, KeyError):
         logger.error("No simulation info provided")
         simulation = None
-        
+
     try:
         Xmax = info["Xmax"]
         if hasattr(Xmax, 'unit'):
@@ -432,6 +430,6 @@ def loadInfo_toShower(name, info=None):
     except (IOError, KeyError):
         logger.error("No XMax value provided")
         Xmax = None
-    
 
-        
+
+

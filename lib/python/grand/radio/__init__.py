@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
 import logging
-logger = logging.getLogger("radio_simus")
+logger = logging.getLogger(__name__)
 
 import astropy.units as u
 import numpy as np
@@ -46,13 +46,12 @@ class Config:
 config = Config()
 
 
-#IMPORTANT: extend it with pa relative path
 def load_config(path):
     global config
 
     path = str(path)
     configfile = open(path, 'r')
-    print("..... Loading CONFIG FILE .....: "+path) # XXX use logger?
+    logging.info("Loading CONFIG FILE: " + path)
     for line in configfile:
         line = line.rstrip()
         if 'SITE' in line:
