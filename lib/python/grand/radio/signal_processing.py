@@ -13,9 +13,9 @@ logger = logging.getLogger("Signal_Processing")
 import astropy.units as u
 from . import config
 #assuming units: muV , ns
-Vrms=config.Vrms.value
-Vrms2=config.Vrms2.value
-tsampling=config.tsampling.value
+Vrms=(config.processing.vrms1 / u.uV).value
+Vrms2=(config.processing.vrms2 / u.uV).value
+tsampling=(config.processing.tsampling / u.ns).value
 
 
 __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]

@@ -4,7 +4,7 @@ Unit tests for the radio_simus package
 """
 
 from pathlib import Path
-from grand.radio import load_config
+from grand.config import load
 
-path = Path(__file__).parent / "test.config"
-load_config(path)
+path = Path(__file__).parent / "config.py"
+load(path)

@@ -1,12 +1,11 @@
 """ONGOING WORK
 
-Start to rewrite detectro class with containers, still ongoing
-At the bottom you find some line giving examples how to use the function of the class
+Start to rewrite detector class with containers, still ongoing
 
 Use: python3.7 detectors.py
 
 #see SLACK with Valentin 26Sept
-#* Internal conversion from any coordinate szstem to ECEF, see example in grand/tools/geomagnet.py
+#* Internal conversion from any coordinate system to ECEF, see example in grand/tools/geomagnet.py
 #* input type of antenna coordinates could be a Union[grand.ECEF, grand.LTP], ie. local or global coordinates (--> grand pacakage)
 #* use Final decorator (typing_extension)
 
@@ -28,13 +27,13 @@ import astropy.units as u
 import numpy as np
 
 from . import config
-site, origin = config.site, config.origin #, latitude, longitude # not yet needed
+site, origin = config.site.name, config.site.origin
 
 try:
     logger.info("Detector origin = ", str(origin))
     origin_default = origin
 except:
-    origin_default = np.array([ 0 * u.m, 0 * u.m, 0 * u.m])
+    origin_default = np.array([0, 0, 0]) * u.m
 
 
 class AlreadySet(Exception):

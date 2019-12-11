@@ -21,75 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 import logging
 logger = logging.getLogger(__name__)
 
-import astropy.units as u
-import numpy as np
+from .. import config as _config
 
 __all__ = ["config"]
 
 
-### Get and set config parameters
-class Config:
-    _config = {}
-
-    def __getattr__(self, key):
-        try:
-            return self._config[key]
-        except KeyError:
-            return None
-
-    def __setattr__(self, key, value):
-        if key in self._config:
-            raise KeyError(f"{key} already defined")
-        else:
-            self._config[key] = value
-
-config = Config()
-
-
-def load_config(path):
-    global config
-
-    path = str(path)
-    configfile = open(path, 'r')
-    logging.info("Loading CONFIG FILE: " + path)
-    for line in configfile:
-        line = line.rstrip()
-        if 'SITE' in line:
-            config.site=str(line.split('  ',-1)[1])
-        if 'LONG' in line:
-            config.longitude=float(line.split('  ',-1)[1])*u.deg # deg ->astropy.units
-        if 'LAT' in line:
-            config.latitude=float(line.split('  ',-1)[1])*u.deg # deg ->astropy.units
-        if 'OBSHEIGHT' in line:
-            config.obs_height=float(line.split('  ',-1)[1])*u.m # m ->astropy.units
-        if 'ORIGIN' in line:
-            tmp = list(line.split('  ',-1))
-            config.origin=np.array([float(tmp[1]),float(tmp[2]), float(tmp[3])])* u.m  # m ->astropy.units
-
-        if 'ARRAY' in line:
-            config.arrayfile=str(line.split('  ',-1)[1])
-
-        if 'THETAGEO' in line:
-            config.thetageo=float(line.split('  ',-1)[1])*u.deg # deg, GRAND ->astropy.units
-        if 'PHIGEO' in line:
-            config.phigeo=float(line.split('  ',-1)[1])*u.deg  # deg, GRAND ->astropy.units
-        if 'B_COREAS' in line: # B_COREAS  19.71  -14.18
-            tmp=list(line.split('  ',-1)) #  Bx  Bz  uT ->astropy.units
-            config.Bcoreas=np.array([tmp[0], tmp[1]*u.u*u.T, tmp[2]*u.u*u.T])
-        if 'B_ZHAIRES' in line: # B_COREAS  19.71  -14.18
-            tmp=list(line.split('  ',-1)) # F in muT, I in deg, D in deg  ->astropy.units
-            config.Bzhaires=np.array([tmp[0], tmp[1]*u.u*u.T, tmp[2]*u.deg, tmp[3]*u.deg])
-
-        if 'VRMS1' in line:
-            config.Vrms=float(line.split('  ',-1)[1])*u.u*u.V # muV  ->astropy.units
-        if 'VRMS2' in line:
-            config.Vrms2=float(line.split('  ',-1)[1])*u.u*u.V # muV  ->astropy.units
-        if 'TSAMPLING' in line:
-            config.tsampling=float(line.split('  ',-1)[1])*u.ns # ns  ->astropy.units
-
-        if 'ANTX' in line:
-            config.antx=str(line.split('  ',-1)[1])
-        if 'ANTY' in line:
-            config.anty=str(line.split('  ',-1)[1])
-        if 'ANTZ' in line:
-            config.antz=str(line.split('  ',-1)[1])
+config = _config.Config(__name__)
+config.Config("site", "name", "latitude", "longitude", "obsheight", "origin")
+config.array = None
+config.Config("magnet", "magnitude", "inclination", "declination")
+config.Config("processing", "vrms1", "vrms2", "tsampling")
+config.Config("antenna", "x", "y", "z")
