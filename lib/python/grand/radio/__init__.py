@@ -18,9 +18,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
-import logging
-logger = logging.getLogger(__name__)
-
 from .. import config as _config
 
 __all__ = ["config"]

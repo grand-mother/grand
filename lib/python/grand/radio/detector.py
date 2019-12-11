@@ -20,7 +20,7 @@ Use: python3.7 detectors.py
 
 import collections
 import logging
-logger = logging.getLogger(__name__) # Change to astropy
+logger = logging.getLogger(__name__)
 from typing import Optional, List, Union
 
 import astropy.units as u
@@ -29,10 +29,10 @@ import numpy as np
 from . import config
 site, origin = config.site.name, config.site.origin
 
-try:
-    logger.info("Detector origin = ", str(origin))
+if origin is not None:
+    logger.info(f"Detector origin: {str(origin)}")
     origin_default = origin
-except:
+else:
     origin_default = np.array([0, 0, 0]) * u.m
 
 

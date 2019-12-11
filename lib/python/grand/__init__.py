@@ -20,7 +20,11 @@
 from .tools import geomagnet, topography
 from .tools.coordinates import ECEF, GeodeticRepresentation,                   \
                                HorizontalRepresentation, LTP
+from .logging import getLogger
 from . import store
 
-__all__ = ["geomagnet", "store", "topography", "ECEF", "GeodeticRepresentation",
-           "HorizontalRepresentation", "LTP"]
+__all__ = ["geomagnet", "store", "logger", "topography", "ECEF",
+           "GeodeticRepresentation", "HorizontalRepresentation", "LTP"]
+
+
+logger:logging.Logger = getLogger(__name__)
