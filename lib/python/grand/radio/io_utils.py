@@ -110,7 +110,6 @@ def table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
     c = Column(data=voltage.T[2],unit=u.u*u.V,name='Vy')
     d = Column(data=voltage.T[3],unit=u.u*u.V,name='Vz')
     voltage_ant = Table(data=(a,b,c,d,), meta=info)
-    #print(voltage_ant)
 
     processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
     if save is not None:
@@ -523,7 +522,7 @@ def _load_positions_fromhdf(path_hdf5, path1 = "/event"):
         positions: numpy array
             list of antenna positions (x,y,z) contained in event
 
-    NOTE: The hdf5 file 
+    NOTE: The hdf5 file
     """
 
     from astropy.table import Table
@@ -632,13 +631,13 @@ def _load_path(path_hdf5, path="/analysis"):
         try:
             info=f.info
         except:
-            print("Info on", path," not availble")
+            logger.info("Info on", path," is not availble")
         try:
             meta=f.meta
         except:
-            print("Meta on ", path," not availble")
+            logger.info("Meta on ", path," is not available")
     except:
-        logger.warning(path_hdf5, " could not be loaded in _load_path")
+        logger.warning(path, "could not be loaded from", path_hdf5)
 
     return f, info, meta
 
@@ -771,9 +770,9 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
 
    Parameters
    ---------
-        path: str 
+        path: str
             path simulated event set
-        showerID: str 
+        showerID: str
             identifaction string for single event/shower
         simus: str
             coreas/zhaires
@@ -798,13 +797,13 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
     if simus == 'zhaires':
 
         ### taken from Matias scripts -- slighty modified functions,  to be tested
-        import radio_simus.AiresInfoFunctions as AiresInfo
+        from . import AiresInfoFunctions as AiresInfo
         sryfile=glob.glob(path+"/*.sry")
         zen,azim,energy,primary,xmax,distance,taskname=AiresInfo.ReadAiresSry(str(sryfile[0]),"GRAND")
         posfile = path +'/antpos.dat'
         positions, ID_ant, slopes = AiresInfo._get_positions_zhaires(posfile)
 
-        from radio_simus.AiresInfoFunctions import GetSlantXmaxFromSry
+        from .AiresInfoFunctions import GetSlantXmaxFromSry
         try:
             Xmax=GetSlantXmaxFromSry(sryfile,outmode="GRAND")
             core = np.array([0,0,0]) # infomation not yet accessible
@@ -814,14 +813,13 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         try:
             positions = positions + np.array([core[0], core[1], 0.*u.m])
         except:
-            logger.debug("No core position information availble")       
+            logger.debug("No core position information availble")
 
     if  simus == 'coreas':
-        import radio_simus.CoreasInfoFunctions as CoreasInfo
+        from . import CoreasInfoFunctions as CoreasInfo
         #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
         posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
         positions, ID_ant, slopes = CoreasInfo._get_positions_coreas(posfile)
-        #print(positions, ID_ant, slopes)
 
         inputfile = path+'/inp/SIM'+showerID+'.inp'
         zen,azim,energy,injh,primarytype,core,task = CoreasInfo.inputfromtxt_coreas(inputfile)
@@ -836,8 +834,7 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
             positions = positions + np.array([core[0], core[1], 0.*u.m])
         except:
             logger.debug("No core position information availble")
-            
-        #----------------------------------------------------------------------   
+        #---------------------------------------------------------------------
 
 
     # load shower info from inp file via dictionary
@@ -854,7 +851,6 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
             "simulation" : simus # coreas or zhaires
             }
         ####################################
-    #print("shower", shower)
     logger.info("Shower summary: " + str(shower))
 
 
@@ -866,10 +862,10 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
         d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
         e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
-        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta') 
-        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
+        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta')
+        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower)
         event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
-        print("Event info saved in: ", name_all)
+        logger.info("Event info has been saved to ", name_all)
 
     return shower, ID_ant, positions, slopes
 
