@@ -32,6 +32,7 @@ import os
 
 import glob
 import logging
+logger = logging.getLogger(__name__)
 
 #this function reads he Aires .sry file and tries to extract information from the simulation parameters
 #using the .sry file is preferred to using the .inp files because:
@@ -54,11 +55,11 @@ def inputfromtxt(input_file_path):
 #===========================================================================================================
     '''
     Get shower parameter from inp file for zhaires simulations
-    
+
     Parameters:
         input_file_path: str
             path of inp file
-        
+
     Returns:
         zen: float
             zenith, deg in GRAND conv.
@@ -75,7 +76,7 @@ def inputfromtxt(input_file_path):
         task: str
             ID of shower
     '''
-    
+
     particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
@@ -83,7 +84,7 @@ def inputfromtxt(input_file_path):
     if os.path.isfile(input_file_path) ==  False:  # File does not exist 
         print('--- ATTENTION: inp-file does not exist')
         #exit()
-        
+
     #datafile = file(input_file_path) # why it is not working...
     datafile = open(input_file_path, 'r') 
 
@@ -162,9 +163,8 @@ def inputfromtxt(input_file_path):
         primarytype='electron'
     elif primarytype=='pi0' or primarytype=='pi-' or primarytype=='pi+':
         primarytype='pion'
-    
+
     # TODO: add observer level -- antenna height to be corrected
-    
 
     #if task:
         #if core.all:
@@ -173,25 +173,25 @@ def inputfromtxt(input_file_path):
         #return zen,azim,energy,injh,primarytype,task
     #else:
         #return zen,azim,energy,injh,primarytype
-        
+
     return zen,azim,energy,injh,primarytype,core,task
 
 #===========================================================================================================
 def _get_positions_zhaires(path):
     '''
     read in antenna positions from Coreas simulations, wrt to sealevel
-    
+
     Parameters:
     datafile: str
         path to folder of run
-    
+
     Returns:
     positions: numpy array
         x,y,z component of antenna positions in meters
     ID_ant: list
         corresponding antenna ID for identification !- [0,1,2,....]
-        
-        
+
+
     NOTE: units assign to positions and slope assuming meters and degree 
     TODO: Test this function. Anne rewote Matias workaround
     '''
@@ -205,7 +205,7 @@ def _get_positions_zhaires(path):
     #for x in linestoken:
         #ID_ant.append(x.split()[tokens_column_number])
     #token.close()
-    
+
     ### TODO external input needed -- Tutrle
     slopes = np.zeros((len(positions),2)) #(thisis external to ZHAireS)
 
@@ -213,11 +213,12 @@ def _get_positions_zhaires(path):
     #y_pos1=np.asarray(y_pos1)
     #z_pos1=np.asarray(z_pos1)
     positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )*u.m
-    
+
     return positions, ID_ant, slopes
 
 
-#############
+##############################################################################
+##############################################################################
 
 def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
   try:

@@ -1,5 +1,5 @@
 '''Script to perform an interpolation between to electric field traces at a desired position
-TODO: use magnetic field values and shower core from config-file
+XXX / TODO: use shower core from config-file
 '''
 
 
@@ -11,13 +11,23 @@ import operator
 from os.path import split
 import sys
 
-from frame import get_rotation, UVWGetter
-from io_utils import load_trace
-
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 
-from __init__ import phigeo, thetageo
+
+import logging
+logger = logging.getLogger(__name__)
+
+from . import config
+phigeo=(config.processing.phigeo / u.deg).value
+thetageo=(config.processing.thetageo / u.deg).value
+
+from frame import get_rotation, UVWGetter
+from io_utils import load_trace
+
+
+
+
 
 #################################################################
 # Not needed at the moment, removed later
@@ -75,14 +85,15 @@ def unwrap(phi, ontrue=None):
         phi_unwrapped[i] = p1 - l * pi2
         p0 = p1
         if ontrue is not None:
-            print(i, phi[i], phi[i-1], l, phi_unwrapped[i], abs(phi[i] - phi[i-1]),
+            logger.info(i, phi[i], phi[i-1], l, phi_unwrapped[i], abs(phi[i] - phi[i-1]),
                   abs(phi[i] - phi[i-1] + np.pi), abs(phi[i] - phi[i-1] - np.pi), l)
     return phi_unwrapped
 
 
-def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  zeroadding=None, ontrue=None, flow=60.e6, fhigh=200.e6):
+def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  zeroadding=None, 
+                      ontrue=None, flow=60.e6, fhigh=200.e6, DISPLAY = False):
     """Interpolation of signal traces at the specific position in the frequency domain
-    
+
     The interpolation of traces needs as input antenna position 1 and 2, their traces (filtered or not) 
     in one component, their time, and the desired antenna position and returns the trace ( in x,y,z coordinate system) and the time from the desired antenna position.
     Zeroadding and upsampling of the signal are optional functions.
@@ -95,7 +106,6 @@ def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  ze
     This script bases on the diploma thesis of Ewa Holt (KIT, 2013) in the context of AERA/AUGER. It is based on the interpolation of the amplitude and the pahse in the frequency domain. 
     This can lead to misidentifiying of the correct phase. We are working on the interplementaion on a more robust interpolation of the signal time.
     Feel free to include it if you have some time to work on it. The script is completely modular so that single parts can be substitute easily.
-        
 
     Parameters:
     ----------
@@ -123,6 +133,8 @@ def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  ze
                 lower frequency - optional, define the frequency range for plotting, if desired (DISPLAY=True/False)
             fhigh: float
                 higher frequency - optional, define the frequency range for plotting, if desired (DISPLAY=True/False)
+            DISPLAY: True/False
+                Displaying debugging plots, default = False
 
     Returns:
     ----------
@@ -131,7 +143,6 @@ def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  ze
         tracedes: numpy array, float
             interpolated electric field component at desired antenna position
     """
-    DISPLAY = False
 
     # hand over time traces of one efield component -t1=time, trace1=efield- and the position 
     # x1 of the first antenna, the same for the second antenna t2,trace2, x2.
@@ -143,7 +154,7 @@ def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  ze
     factor_upsampling = 1
     if upsampling is not None:
         factor_upsampling = 8
-    c = 299792458.e-9  # m/ns
+    #c = 299792458.e-9  # m/ns
 
     # calculating weights: should be done with the xyz coordinates
     # since in star shape pattern it is mor a radial function connection the poistion of 
@@ -348,14 +359,21 @@ def interpolate_trace(t1, trace1, x1, t2, trace2, x2, xdes, upsampling=None,  ze
             #plt.legend(loc='best')
 
             #plt.show()
-            
-            
+
 #################################     
 
 
 def _ProjectPointOnLine(a, b, p):
     ''' Helper function
     line defined by vector a and b, project othogonally vector p to it
+
+    Parameters:
+    ----------
+    a,b: numpy array
+        points on line
+    p: numpy array
+        point interested in
+
     '''
     ap = p-a
     ab = b-a
@@ -366,13 +384,13 @@ def _ProjectPointOnLine(a, b, p):
     return point
 
 
-#################################     
+#################################
 
-        
+
 def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=thetageo, shower_core=np.array([0,0,0]), DISPLAY=False):
     '''
     Reads in arrays, looks for neigbours, calls the interpolation and saves the traces
-    
+
     Parameters:
     ----------
     desired: str
@@ -390,16 +408,14 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         position of shower core for correction
     DISPLAY: True/False
         enables printouts and plots
-    
-    
+
     Returns:
     ----------
         --
     Saves traces via index infomation in same folder as desired antenna positions
 
-    
     NOTE: The selection of the neigbours is sufficiently stable, but does not always pick the "best" neigbour, still looking for an idea
-    TODO: Read-in and save only hdf5 files
+    XXX / TODO: Read-in and save only hdf5 files
     '''
     print(shower_core)
 
@@ -422,8 +438,8 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         print(positions_sims, len(positions_sims))
     if len(positions_sims) <=1:
         print("Files of simulated positions has to consist of at least two positions, Bug to be fixed")
-    
-    
+
+
     # SELECTION: For interpolation only select the desired position which are "in" the plane of simulated antenna positions
     a = positions_sims[0]-positions_sims[10]
     a = a/np.linalg.norm(a)
@@ -456,14 +472,14 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         ax.scatter(positions_sims[:,0], positions_sims[:,1], label = "simulated")
         ax.scatter(positions[ind,0], positions[ind,1], label = "desired")
         ax.scatter(shower_core[0], shower_core[1],  label = "shower core")
-        
+
         plt.title("XYZ coordinates")
         plt.legend(loc=2)
         plt.show()
     #------------------------
 
-        
-    ##--##--##--##--##--##--##--##--##-##--##--##-##--##--## START: WRAP UP AS FUNCTION (PROJECTION AND ROTATION)
+
+    # XXX / TODO: ##--##--##--##--##--##--##--##--##-##--##--##-##--##--## START: WRAP UP AS FUNCTION (PROJECTION AND ROTATION)
     #### START: UNDO projection
     #define shower vector
     az_rad=np.deg2rad(180.+azimuth)#Note ZHAIRES units used
@@ -472,19 +488,19 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
     # shower vector  = direction of line for backprojection, TODO should be substituded bey line of sight Xmax - positions
     v = np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)])
     v = v/np.linalg.norm(v)
-    
+
     # for back projection position vector line is projected position
     # for back projection normal vector of plane to intercsect == v
     n = v
-        
+
     for i in np.arange(0,len(positions[:,1])):
         b=-np.dot(n,positions[i,:])/ np.dot(n, v)
         positions[i,:] = positions[i,:] + b*v - shower_core # correct by shower core position
     for i in np.arange(0,len(positions_sims[:,1])):
         b=-np.dot(n,positions_sims[i,:])/ np.dot(n, v)
         positions_sims[i,:] = positions_sims[i,:] + b*v - shower_core # correct by shower core position
-    
-    
+
+
 
     ### START: ROTATE INTO SHOWER COORDINATES, and core for offset by core position, alreadz corrected in projection
     #GetUVW = UVWGetter(shower_core[0], shower_core[1], shower_core[2], zenith, azimuth, phigeo, thetageo)
@@ -498,19 +514,19 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         if i in ind:
             pos.append(GetUVW(positions[i,:], ))    
     pos=np.asarray(pos)
-    
+
     # Rotate simulated positions
     pos_sims= np.zeros([len(positions_sims[:,1]),3])
     for i in np.arange(0,len(positions_sims[:,1])):
         pos_sims[i,:] = GetUVW(positions_sims[i,:], )
     ##--##--##--##--##--##--##--##--##-##--##--##-##--##--## END: WRAP UP AS FUNCTION (PROJECTION AND ROTATION)
-    
+
     # ------------------
     if DISPLAY:
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(1,1,1)
         #ax2 = fig2.gca(projection='3d')
-        
+
         #ax2.scatter(pos_sims[:,0], pos_sims[:,1], pos_sims[:,2], label = "simulated")
         #ax2.scatter(pos[:,0], pos[:,1], pos[:,2], label = "desired")
         for j in range(0,len(pos[:,1])):
@@ -519,13 +535,12 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         ax2.scatter(pos_sims[:,1], pos_sims[:,2], label = "simulated")
         ax2.scatter(pos[:,1], pos[:,2], label = "desired")
         ax2.scatter(0, 0, marker ="x",  label = "core")
-        
+
         plt.title("shower coordinates")
         plt.legend(loc=2)
         plt.show()
     # ------------------
 
-      
 
     # calculate radius and angle for simulated positions and store some in list
     points=[]
@@ -536,7 +551,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         if round(theta2,4) == -3.1416:
             theta2*=-1
         points.append([i, theta2, radius2])
-        
+
 
     #loop only over desired in-plane positions, acting as new reference 
     for i in np.arange(0,len(pos[:,1])):  # position should be within one plane yz plane, remove x=v component for simplicity
@@ -544,24 +559,24 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         theta = np.arctan2(pos[i,2], pos[i,1])
         radius = np.sqrt( pos[i,1]**2 + pos[i,2]**2 )
         #print("index of desired antenna ", ind[i], theta, radius, )
-        
-        
+
+
         # The 4 quadrants -- in allen 4 Ecken soll Liebe drin stecken
         points_I=[]
         points_II=[]
         points_III=[]
         points_IV=[]
-        
+
         for m in np.arange(0,len(points)): # desired points as reference
             delta_phi = points[m][1]-theta
             if delta_phi > np.pi:
                 delta_phi = delta_phi -2.*np.pi
             delta_r = points[m][2]-radius
-            
+
             #distance = np.sqrt(delta_r**2 + (delta_r *delta_phi)**2 ) # weighting approach1
             #distance= np.sqrt((pos_sims[m,1]-pos[i,1])**2. +(pos_sims[m,2]-pos[i,2])**2.) # euclidean distance
             distance= np.sqrt(points[m][2]**2. +radius**2. -2.*points[m][2]*radius* np.cos(points[m][1]-theta) ) #polar coordinates
-            
+
             if delta_phi >= 0. and  delta_r >= 0:
                 points_I.append((m,abs(round(delta_phi,2)),abs(round(delta_r,2)), distance))
             if delta_phi > 0. and  delta_r < 0:
@@ -570,19 +585,19 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
                 points_III.append((m,abs(round(delta_phi,2)),abs(round(delta_r,2)), distance))
             if delta_phi < 0. and  delta_r > 0:
                 points_IV.append((m,abs(round(delta_phi,2)),abs(round(delta_r,2)), distance))
-        
-    
+
+
         if not points_I:
-            print("list - Quadrant 1 - empty --> no interpolation for ant", str(ind[i]))
+            logger.error("list - Quadrant 1 - empty --> no interpolation for ant", str(ind[i]))
             continue
         if not points_II:
-            print("list - Quadrant 2 - empty --> no interpolation for desired ant", str(ind[i]))  
+            logger.error("list - Quadrant 2 - empty --> no interpolation for desired ant", str(ind[i]))  
             continue
         if not points_III:
-            print("list - Quadrant 3 - empty --> no interpolation for ant", str(ind[i]))   
+            logger.error("list - Quadrant 3 - empty --> no interpolation for ant", str(ind[i]))   
             continue
         if not points_IV:
-            print("list - Quadrant 4 - empty --> no interpolation for ant", str(ind[i]))
+            logger.error("list - Quadrant 4 - empty --> no interpolation for ant", str(ind[i]))
             continue
 
         points_I=np.array(points_I, dtype = [('index', 'i4'), ('delta_phi', 'f4'), ('delta_r', 'f4'), ('distance', 'f4')])
@@ -596,7 +611,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
         points_III = np.sort(points_III, order=[ 'distance','delta_phi', 'delta_r']) 
         points_IV = np.sort(points_IV, order=['distance', 'delta_phi', 'delta_r']) 
         #indizes of 4 closest neigbours: points_I[0][0], points_II[0][0], points_III[0][0], points_IV[0][0]
-        
+
         # try to combine the one with roughly the same radius first and then the ones in phi
         point_online1=_ProjectPointOnLine(pos_sims[points_I[0][0]], pos_sims[points_IV[0][0]], pos[i])# Project Point on line 1 - I-IV
         point_online2=_ProjectPointOnLine(pos_sims[points_II[0][0]], pos_sims[points_III[0][0]], pos[i])# Project Point on line 2 - II-III
@@ -608,7 +623,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
 
             for j in range(0,len(pos_sims[:,1])):
                 ax3.annotate(str(j), ((pos_sims[j,1], pos_sims[j,2])))
-            
+
             ## x component should be 0
             ax3.scatter(pos_sims[:,1], pos_sims[:,2], label = "simulated")
             ax3.scatter(pos[i,1], pos[i,2], label = "desired")
@@ -616,7 +631,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
             ax3.scatter(pos_sims[points_II[0][0],1], pos_sims[points_II[0][0],2], label = "2")
             ax3.scatter(pos_sims[points_III[0][0],1], pos_sims[points_III[0][0],2], label = "3")
             ax3.scatter(pos_sims[points_IV[0][0],1], pos_sims[points_IV[0][0],2], label = "4")
-            
+
             ax3.scatter(point_online1[1], point_online1[2], marker ="x")
             ax3.scatter(point_online2[1], point_online2[2], marker ="x")            
             ax3.scatter(0, 0, marker ="x",  label = "core")
@@ -626,27 +641,27 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
             plt.show()
         # ------------------
 
-   
-        
-        
-        
+
+
+
+
         ## the interpolation of the pulse shape is performed, in x, y and z component
         # TODO: read-in table instead textfile
         directory=split(array)[0]+"/"
-        print("Read traces from ", directory)
-        
+        logger.info("Read traces from ", directory)
+
         txt0 = load_trace(directory, points_I[0][0], suffix=".trace")
         txt1 = load_trace(directory, points_IV[0][0], suffix=".trace")
         xnew1, tracedes1x = interpolate_trace(txt0.T[0], txt0.T[1], positions_sims[points_I[0][0]] , txt1.T[0], txt1.T[1], positions_sims[points_IV[0][0]], point_online1 ,upsampling=None, zeroadding=None) 
         xnew1, tracedes1y = interpolate_trace(txt0.T[0], txt0.T[2], positions_sims[points_I[0][0]] , txt1.T[0], txt1.T[2], positions_sims[points_IV[0][0]], point_online1 ,upsampling=None, zeroadding=None) 
         xnew1, tracedes1z = interpolate_trace(txt0.T[0], txt0.T[3], positions_sims[points_I[0][0]] , txt1.T[0], txt1.T[3], positions_sims[points_IV[0][0]], point_online1 ,upsampling=None, zeroadding=None) 
-        
+
         txt2 = load_trace(directory, points_II[0][0], suffix=".trace")
         txt3 = load_trace(directory, points_III[0][0], suffix=".trace")
         xnew2, tracedes2x = interpolate_trace(txt2.T[0], txt2.T[1], positions_sims[points_II[0][0]] , txt3.T[0], txt3.T[1], positions_sims[points_III[0][0]], point_online2 ,upsampling=None, zeroadding=None) 
         xnew2, tracedes2y = interpolate_trace(txt2.T[0], txt2.T[2], positions_sims[points_II[0][0]] , txt3.T[0], txt3.T[2], positions_sims[points_III[0][0]], point_online2 ,upsampling=None, zeroadding=None) 
         xnew2, tracedes2z = interpolate_trace(txt2.T[0], txt2.T[3], positions_sims[points_II[0][0]] , txt3.T[0], txt3.T[3], positions_sims[points_III[0][0]], point_online2 ,upsampling=None, zeroadding=None)         
-        
+
         ###### Get the pulse shape of the desired position from projection on line1 and 2
         xnew_desiredx, tracedes_desiredx =interpolate_trace(xnew1, tracedes1x, point_online1, xnew2, tracedes2x, point_online2, positions[ind[i]], zeroadding=None)      
         xnew_desiredy, tracedes_desiredy =interpolate_trace(xnew1, tracedes1y, point_online1, xnew2, tracedes2y, point_online2, positions[ind[i]], zeroadding=None) 
@@ -657,13 +672,13 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=th
 
 
         # TODO Save as hdf5 file instead of textfile
-        print("Interpolated trace stord as ",split(desired)[0]+ '/a'+str(ind[i])+'.trace')
+        logger.info("Interpolated trace stord as ",split(desired)[0]+ '/a'+str(ind[i])+'.trace')
         FILE = open(split(desired)[0]+ '/a'+str(ind[i])+'.trace', "w+" )
         for i in range( 0, len(xnew_desiredx) ):
                 print("%3.2f %1.5e %1.5e %1.5e" % (
                     xnew_desiredx[i], tracedes_desiredx[i], tracedes_desiredy[i], tracedes_desiredz[i]), end='\n', file=FILE)
         FILE.close()
-        
+
         #delete after iterate
         del points_I, points_II, points_III, points_IV
 #-------------------------------------------------------------------
@@ -678,15 +693,15 @@ def main():
                 -- read in already simulated arrazs
                 -- find neigbours and perform interpolation
                 -- save interpolated trace
-            
+
             Usage: python3 interpolate.py 
             Example: python3 interpolate.py 
-            
+
             NOTE: Still hadrcoded pathes in file since it is only a library file
         """)
         sys.exit(0)
-        
-        
+
+
     path="/mnt/c/Users/Anne/work/CoREAS/"
     # path to list of desied antenna positions, traces will be stored in that corresponding folder
     #desired  = sys.argv[1]
@@ -696,8 +711,8 @@ def main():
     # Shower directions in deg and GRAND convention    
     zenith = (180-70.5) # GRAND deg
     azimuth = 180+0 # GRAND deg
-    
-    
+
+
     # call the interpolation: Angles of magnetic field and shower core information needed, but set to default values
     do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=thetageo, shower_core=np.array([0,0,2900]), DISPLAY=False)
 

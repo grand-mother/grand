@@ -32,26 +32,50 @@ __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_creat
 
 
 
-##########################################################################
+#===========================================================================================================
 
 
 def add_noise(voltages, vrms=Vrms2):
     """Add normal random noise on voltages
-    inputs : (voltage noise rms, voltages)
-    outputs : noisy voltages (time in ns)
+
+    Parameters: 
+    -----------
+        voltages: numpy array
+            voltage trace
+        vrms: float
+            noise rms, default loaded from config file
+
+    Returns: 
+    ----------    
+        numpy array
+        noisy voltages (time in ns)
     """
+
     noisy_voltages = np.copy(voltages)
     noisy_voltages[:,1:] = voltages[:,1:] + \
         np.random.normal(0, vrms, size=np.shape(voltages[:,1:]))
+
     return noisy_voltages
 
 #===========================================================================================================
 
 def digitization(voltages, tsampling=tsampling):
     """Digitize the voltages at an specific sampling
-    inputs : (voltages, sampling rate)
-    outputs : digitized voltages
+    
+    Parameters: 
+    -----------
+        voltages: numpy array
+            voltage trace
+        samplingrate: float
+            sampling rate in ns, default loaded from config file
+
+    Returns: 
+    ----------    
+        numpy array:
+        newly sampled trace
+
     """
+
     dt = round(np.mean(np.diff(voltages.T[0]))) #voltages.T[0, 1] - voltages.T[0, 0]
     num = len(voltages.T[0, :]) * int(tsampling / dt)
     if tsampling % dt != 0:
@@ -60,14 +84,26 @@ def digitization(voltages, tsampling=tsampling):
     Vx_sampled = resample(voltages.T[1, :], num)
     Vy_sampled = resample(voltages.T[2, :], num)
     Vz_sampled = resample(voltages.T[3, :], num)
+
     return np.array([t_sampled, Vx_sampled, Vy_sampled, Vz_sampled]).T
 
 #===========================================================================================================
 
 def Digitization_2(v,TSAMPLING=tsampling):
     """Digitize the voltages at an specific sampling -- v2
-    inputs : (voltages, sampling rate)
-    outputs : digitized voltages (time in ns)
+
+    Parameters: 
+    -----------
+        voltages: numpy array
+            voltage trace
+        samplingrate: float
+            sampling rate in ns, default loaded from config file
+
+    Returns: 
+    ----------    
+        numpy array:
+        newly sampled trace
+
     """
     v=v.T
     tstep = np.mean(np.diff(v[0])) # tweak the sh**
@@ -76,7 +112,7 @@ def Digitization_2(v,TSAMPLING=tsampling):
     vx=np.zeros(SAMPLESIZE)
     vy=np.zeros(SAMPLESIZE)
     vz=np.zeros(SAMPLESIZE)
-    tf=np.zeros(SAMPLESIZE)
+    tf=np.zeros(SAMPLESIZE)  
     ind=np.arange(0,SAMPLESIZE)*ratio
 
     if len(ind)>SAMPLESIZE:
@@ -87,67 +123,72 @@ def Digitization_2(v,TSAMPLING=tsampling):
     tf[0:len(ind)]=v[0,ind]
     for k in range(len(ind),SAMPLESIZE):
         tf[k]=tf[k-1]+TSAMPLING
+
     return np.array([tf, vx, vy, vz]).T
 
 #===========================================================================================================
 
 def _butter_bandpass_filter(data, lowcut, highcut, fs):
-    """subfunction of filt
+    """subfunction of filters
     """
+
     b, a = butter(5, [lowcut / (0.5 * fs), highcut / (0.5 * fs)],
                   btype='band')  # (order, [low, high], btype)
+
     return lfilter(b, a, data)
 
 #===========================================================================================================
 
 def filters(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
-  """ Filter signal v(t) in given bandwidth
-  Parameters
-  ----------
-   : voltages
-      The array of time (s) + voltage (muV) vectors to be filtered
-   : FREQMIN
-      The minimal frequency of the bandpass filter (Hz)
-   : FREQMAX:
-      The maximal frequency of the bandpass filter (Hz)
+    """ Filter signal v(t) in given bandwidth 
+    Parameters
+    ----------
+    voltages: numpy array
+        The array of time (s) + voltage (muV) vectors to be filtered
+    FREQMIN: float 
+        The minimal frequency of the bandpass filter (Hz)
+    FREQMAX: float 
+        The maximal frequency of the bandpass filter (Hz)
 
-  Returns
-  -------
-    numpy array
-        time in ns, Voltages (x,y,z)
-  Raises
-  ------
-  Notes
-  -----
-  At present Butterworth filter only is implemented
-  Examples
-  ATTENTION: output traces inversed now
-  --------
-  ```
-  >>> from signal_treatment import _butter_bandpass_filter
-  ```
-  """
+    Returns
+    -------
+        numpy array
+            time in ns, Voltages (x,y,z)
+    Raises
+    ------
+    Notes
+    -----
+    At present Butterworth filter only is implemented
 
-  t = voltages.T[0]
-  # check whether time in s or ns and correct for it
-  if t[1]-t[0] > 0.1:
-      t*=1e-9 # ns to s
-  v = np.array(voltages.T[1:, :])  # Raw signal
+    Examples
+    ATTENTION: output traces inversed now
+    --------
+    ```
+    >>> from signal_treatment import _butter_bandpass_filter
+    ```
+    """
 
-  #fs = 1 / np.mean(np.diff(t))  # Compute frequency step
-  fs = round(1 / np.mean(np.diff(t)))  # Compute frequency step
-  #print("Trace sampling frequency: ",fs/1e6,"MHz")
-  nCh = np.shape(v.T)[1]
-  vout = np.zeros(shape=(len(t), nCh))
-  res = t
-  for i in range(nCh):
-        vi = v[i,:]
-        #vout[:, i] = _butter_bandpass_filter(vi, FREQMIN, FREQMAX, fs)
-        res = np.append(res,_butter_bandpass_filter(vi, FREQMIN, FREQMAX, fs))
+    t = voltages.T[0]
+    # check whether time in s or ns and correct for it
+    if t[1]-t[0] > 0.1:
+        t*=1e-9 # ns to s
+    v = np.array(voltages.T[1:, :])  # Raw signal
 
-  res = np.reshape(res,(nCh+1,len(t)))  # Put it back inright format
-  res[0]*=1e9 # s to ns
-  return res.T
+    #fs = 1 / np.mean(np.diff(t))  # Compute frequency step
+    fs = round(1 / np.mean(np.diff(t)))  # Compute frequency step
+    #print("Trace sampling frequency: ",fs/1e6,"MHz")
+    nCh = np.shape(v.T)[1]
+    vout = np.zeros(shape=(len(t), nCh))
+    res = t
+    for i in range(nCh):
+            vi = v[i,:]
+            #vout[:, i] = _butter_bandpass_filter(vi, FREQMIN, FREQMAX, fs)
+            res = np.append(res,_butter_bandpass_filter(vi, FREQMIN, FREQMAX, fs))
+
+    res = np.reshape(res,(nCh+1,len(t)))  # Put it back inright format
+    res[0]*=1e9 # s to ns
+
+    return res.T
 
 #===========================================================================================================
 
@@ -170,7 +211,7 @@ def _create_emptytrace(nbins=599, tstep=1):
     vx=np.zeros(nbins)
     vy=np.zeros(nbins)
     vz=np.zeros(nbins)
-    t=np.fromfunction(lambda i: i*tstep, (nbins,), dtype=float)
+    t=np.fromfunction(lambda i: i*tstep, (nbins,), dtype=float) 
     trace=np.vstack((t,vx,vy,vz))
 
     return trace
@@ -186,25 +227,27 @@ def _create_emptytrace(nbins=599, tstep=1):
 ##########################################################################
 
 #===========================================================================================================
-def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0.,
+def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., 
                         processing={'antennaresponse', 'noise', 'filter', 'digitise'},
                         DISPLAY=1):
-        '''
+        ''' 
         Do the full chain once:
         1. READ IN THE SIMULATED ELECTRIC FIELD TRACE (at higher level) at hand over as parameter
         2. APPLY ANTENNA RESPONSE
         3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
         4. FILTER THE TRACE TO THE 50-200MHz WINDOW
-        5. DIGITIZATION -- 2ns
+        5. DIGITIZATION -- 2ns 
 
         -- To produce noise traces:
         -- 1. _create_emptytrace
         -- 3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
         -- 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
-        -- 5. DIGITIZATION -- 2ns
+        -- 5. DIGITIZATION -- 2ns 
 
-        NOTE: can be used modular so that people can pick the steps they need
+        NOTE: can be used modular so that people can pick the steps they need 
                 --> via "processing" parameter
+
+        XXX / TODO: load info about the requested steps in the chain from config file
 
 
         Arguments:
@@ -235,8 +278,8 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
         ### 2. APPLY ANTENNA RESPONSE
         if 'antennaresponse' in processing:
 
-            from .computevoltage import  compute_antennaresponse
-            trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
+            from . import computevoltage
+            trace = computevoltage.compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
 
             #### 2b. deconvolve antenna response - still ongoing work
             #from invert_computevoltage import compute_electicfield
@@ -302,7 +345,7 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
                 plt.ylabel('Voltage + Noise (muV) - filtered')
                 plt.legend(loc='best')
 
-                plt.subplot(212) # frequency domain
+                plt.subplot(212) # frequency domain            
                 freqs  = np.fft.rfftfreq(len(trace.T[1]),trace.T[0,1]-trace.T[0,0])
                 plt.plot(freqs,np.abs(np.fft.rfft(trace.T[1])), label="EW")
                 plt.plot(freqs,np.abs(np.fft.rfft(trace.T[2])), label="NS")
@@ -315,7 +358,7 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
                 #plt.savefig('voltage_filters.png', bbox_inches='tight')
 
 
-        ### 5. DIGITIZATION -- 2ns
+        ### 5. DIGITIZATION -- 2ns 
         if 'digitise' in processing:
 
             #trace = digitization(trace,tsampling)
@@ -336,7 +379,6 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
 
 
         return trace
-
 
 #===========================================================================================================
 #===========================================================================================================

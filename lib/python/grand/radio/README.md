@@ -10,7 +10,7 @@
     theta_zhaires= 180deg - theta_grand
     phi_zhaires= phi_grand + 180 deg
     - fix by Matias: thanks to Matias, the big output file is now directly split-up into separate electric-field files for each antenna 'a<i>.dat' (ns, muV/m) and a separate file listing the antenna positions 'antpos.dat'
-    
+
 * CoREAS:
     - output file: the traces for the individual antenna positions are saved in individual textfiles (<name><i>.txt, **units: cgs!** ) with names defined in the antenna-list file beforehand. Multiply the electric field by 2.99792458e4 to transfer the electric field from cgs to SI units (V/m).  The antenna positions in centimeters are handed over as input as a separated file (*.list). 
     - angle convention: the angle are defined by the direction the shower travels to. 
@@ -18,7 +18,7 @@
     Zenith = between particle momentum and **negative** z-axis!
     theta_coreas= 180deg -theta_grand
     phi_coreas= phi_grand
-    
+
     theta_coreas= theta_zhaires
     phi_coreas= phi_zhaires - 180deg
 
@@ -32,7 +32,7 @@
     * module reading in CoREAS antenna list (using astropy.unit to be implemented)  - meta info of hdf5 file
     * module reading in ZHAireS shower parameters (using astropy.unit to be implemented)  - meta info of hdf5 file
     * module reading in ZHAireS antenna list (using astropy.unit to be implemented)  - meta info of hdf5 file
-    
+
 * **hardcoded values now stored in config file** (eg. test.config read-in by __init__)
     see examples
 

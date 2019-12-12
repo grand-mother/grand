@@ -1,17 +1,15 @@
-"""
-Astropy units missing
-"""
+# XXX / TODO Handling of astropy units missing
 
 
 import numpy as np
 
 import logging
-logger = logging.getLogger("Signal_Treatment")
+logger = logging.getLogger(__name__)
 
 #===========================================================================================================
 def p2p(trace):
     ''' Calculates peak to peak values
-    
+
     Arguments:
     ----------
     trace: np.array with 1 or 4 columns
@@ -20,8 +18,8 @@ def p2p(trace):
     --------
     list: floats
         peak-to-peak values
-    '''        
-    
+    '''
+
     if trace.ndim==2: # simply assume np.array([t, x, y, z])
         xy = np.sqrt(trace.T[1]**2 + trace.T[2]**2)
         combined = np.sqrt(trace.T[1]**2 + trace.T[2]**2 + trace.T[3]**2) 
@@ -29,7 +27,7 @@ def p2p(trace):
     elif trace.ndim==1:
         return max(trace)-min(trace)
     else:
-        print("in p2p(): dimensions not correct")
+        logger.info("in p2p(): dimensions not correct")
 
 #===========================================================================================================
 def hilbert_env(signal):
@@ -43,24 +41,26 @@ def hilbert_env(signal):
     --------
     amplitude_envelope: np.array
         Hilbert envelope
-        
+
     '''
     from scipy.signal import hilbert
+
     analytic_signal = hilbert(signal)
     amplitude_envelope = np.abs(analytic_signal)
+
     return amplitude_envelope
 
 #===========================================================================================================
 def hilbert_peak(time, signal):
     ''' Calculates time and amplitude of peak
-    
+
     Arguments:
     ----------
     time: numpy array
         time in ns
     signal: numpy array
         signal trace in muV or muV/m
-        
+
     Returns:
     --------
     time of maximum in ns : float
@@ -68,9 +68,9 @@ def hilbert_peak(time, signal):
 
     '''
     envelope=hilbert_env(signal)
+
     #Get time and amp
-    
-    return time[np.where(signal == signal.max())][0],max(envelope)
+    return time[np.where(signal == signal.max())][0], max(envelope)
 
 
 #===========================================================================================================
@@ -79,7 +79,7 @@ def _trigger(p2p, mode, thrs):
     '''
     There are three modes: any, xy and all.
     According to each mode, returns 1 if the antenna is triggered or not.
-    
+
     Arguments:
     ----------
     p2p: numpy array
@@ -88,13 +88,13 @@ def _trigger(p2p, mode, thrs):
         any, xy or all
     thrs: float
         threshold value to exceed in muV/m or muV
-        
+
     Returns:
     ----------
     trig: int
         0 or 1
     '''
-    
+
     if type(p2p) is list:
         p2p = np.array(p2p)
 
@@ -129,7 +129,7 @@ def _trigger(p2p, mode, thrs):
         else:
            return 0
     else:
-       print("this mode doesn't exist")
+       logger.error("requested mode doesn't exist")
     #return trig
 
 #===========================================================================================================
