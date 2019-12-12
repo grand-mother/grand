@@ -91,7 +91,7 @@ class Detector:
     def origin(self) -> Union[list, str]:
         """origin of array, in m """
         if hasattr(self.__origin, 'unit'):
-            print("Unit of origin: ",self.__origin.unit)
+            logger.info("Unit of origin: ",self.__origin.unit)
             return self.__origin
         else:
             return self.__origin*u.m
@@ -136,7 +136,7 @@ class Detector:
         """position of antennas array, in m, accepts only lists"""
         #return np.asarray(self.__position)[0]*u.m
         if hasattr(self.__position, 'unit'):
-            print("Unit of antenna positions: ",self.__position.unit)
+            logger.info("Unit of antenna positions: ",self.__position.unit)
             return np.asarray(self.__position)[0]
         else:
             return np.asarray(self.__position)[0]*u.m

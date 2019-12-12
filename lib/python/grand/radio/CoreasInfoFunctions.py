@@ -26,10 +26,12 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     Get shower parameter from inp and reas file for coreas simulations
 
     Parameters:
+    ----------
         input_file_path: str
             path of inp file
 
     Returns:
+    ----------
         zen: float
             zenith, deg in GRAND conv.
         azim: float
@@ -48,6 +50,7 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
 
 
     if os.path.isfile(input_file_path) ==  False:  # File does not exist
+
         print('--- ATTENTION: inp-file does not exist')
         exit()
 
@@ -130,6 +133,7 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
             return zen,azim,energy,injh,primarytype,task
     else:
         return zen,azim,energy,injh,primarytype
+
 #===========================================================================================================
 
 def _get_positions_coreas(path):
@@ -137,10 +141,12 @@ def _get_positions_coreas(path):
     read in antenna positions from Coreas simulations, wrt to sealevel
 
     Parameters:
+    ----------
     datafile: str
         path to folder of run
 
     Returns:
+    ----------
     positions: numpy array
         x,y,z component of antenna positions in meters
     ID_ant: list
@@ -148,6 +154,7 @@ def _get_positions_coreas(path):
 
 
     NOTE: units assign to positions and slope assuming meters and degree
+
     '''
     datafile = open(path, 'r')
     x_pos1=[]
@@ -193,11 +200,12 @@ def get_Xmax_coreas(path):
         --- work in progress
 
     Parameters:
+    ----------
         path: str
             path to folder of run
 
     Returns:
-        Xmax: float
+        Xmax: float 
             slant depth in g/cm^2
     """
 
