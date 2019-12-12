@@ -23,6 +23,14 @@ import importlib
 __all__ = ["Config", "load"]
 
 
+def load(path):
+    spec = importlib.util.spec_from_file_location("config.load", path)
+    if spec is None:
+        raise FileNotFoundError(path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+
 class Config(dict):
     def __init__(self, name, *args, **kwargs):
         self._name = name
@@ -43,8 +51,5 @@ class Config(dict):
     def Config(self, name, *args, **kwargs):
         self[name] = Config(f"{self._name}.{name}", *args, **kwargs)
 
-
-def load(path):
-    spec = importlib.util.spec_from_file_location("config.load", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    @classmethod
+    def load(cls, path): load(path)

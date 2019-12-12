@@ -83,7 +83,7 @@ class Logger(logging.getLoggerClass()): # type: ignore
             self.logger.addHandler(self.file)
 
 
-def getLogger(name: str) -> Logger:
+def getLogger(name: str) -> Logger: # XXX make this patchable for external users
     """
     Get a specialised logger for the given namespace
     """
