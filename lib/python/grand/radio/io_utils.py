@@ -11,7 +11,7 @@ import sys
 import glob
 
 import logging
-logger = logging.getLogger("IO_utils")
+logger = logging.getLogger(__name__)
 
 from astropy import units as u
 
@@ -36,7 +36,7 @@ def load_trace(directory, index, suffix=".trace"):
    ---------
         numpy array
 
-    TODO: read-in hdf5 files and return numpy array
+    XXX / TODO: read-in hdf5 files and return numpy array
     """
 
     path = "{:}/a{:}{:}".format(directory, index, suffix)
@@ -46,7 +46,6 @@ def load_trace(directory, index, suffix=".trace"):
 
 #===========================================================================================================
 
-#===========================================================================================================
 
 def _table_efield(efield, pos=None, slopes=None, info={}, save=None, ant="/"):
     '''
@@ -78,7 +77,8 @@ def _table_efield(efield, pos=None, slopes=None, info={}, save=None, ant="/"):
 
     if save:
         efield_ant.write(save, path=ant+'efield', format="hdf5", append=True,  compression=True,serialize_meta=True) #
-    #if save is None:
+
+
     return efield_ant
 
 #===========================================================================================================
@@ -170,11 +170,7 @@ def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, content="e", 
         voltage = np.loadtxt(path_raw)
         efield_ant = table_voltage(voltage, pos, slopes=slopes, info=info, save=save, ant=ant)
 
-
-
     return efield_ant
-
-
 
 
 #===========================================================================================================
@@ -364,7 +360,7 @@ def _load_injectionheight_fromhdf(path_hdf5):
     except:
         injection_height=None
 
-    return injectionheight[0]
+    return injection_height[0]
 
 #===========================================================================================================
 
@@ -526,6 +522,8 @@ def _load_positions_fromhdf(path_hdf5, path1 = "/event"):
    ---------
         positions: numpy array
             list of antenna positions (x,y,z) contained in event
+
+    NOTE: The hdf5 file 
     """
 
     from astropy.table import Table
@@ -773,9 +771,9 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
 
    Parameters
    ---------
-        path: str
+        path: str 
             path simulated event set
-        showerID: str
+        showerID: str 
             identifaction string for single event/shower
         simus: str
             coreas/zhaires
@@ -798,59 +796,28 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
    """
 
     if simus == 'zhaires':
-        ####################################### NOTE zhaires --- THOSE HAS TO BE UPDATED
-        # Get the antenna positions from file
-        positions = np.loadtxt(path+"antpos.dat")
-        ID_ant = []
-        slopes = []
-        # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info
-        #posfile = path +'SIM'+str(showerID)+'.info'
-        #positions, ID_ant, slopes = _get_positions_coreas(posfile)
-        ##print(positions, ID_ant, slopes)
 
-        # Get shower info
-        inputfile = path+showerID+'.inp'
-        #inputfile = path+"/inp/"+showerID+'.inp'
-        #print("Check inputfile path: ", inputfile)
-        try:
-            zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
-        except:
-            print("no TASK, no CORE")
-            inputfile = path+showerID+'.inp'
-            zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
-            task=None
-            core=None
-
-        # correction of shower core
-        try:
-            positions = positions + np.array([core[0], core[1], 0.])
-        except:
-            print("positions not corrected for core")
-
-        ending_e = "a*.trace"
-
-
-
-        ### taken from Matias scripts -- to be tested
-        from . import AiresInfoFunctions as AiresInfo
+        ### taken from Matias scripts -- slighty modified functions,  to be tested
+        import radio_simus.AiresInfoFunctions as AiresInfo
         sryfile=glob.glob(path+"/*.sry")
         zen,azim,energy,primary,xmax,distance,taskname=AiresInfo.ReadAiresSry(str(sryfile[0]),"GRAND")
         posfile = path +'/antpos.dat'
         positions, ID_ant, slopes = AiresInfo._get_positions_zhaires(posfile)
 
-        from .AiresInfoFunctions import GetSlantXmaxFromSry
+        from radio_simus.AiresInfoFunctions import GetSlantXmaxFromSry
         try:
             Xmax=GetSlantXmaxFromSry(sryfile,outmode="GRAND")
+            core = np.array([0,0,0]) # infomation not yet accessible
         except:
             Xmax = None
         # correction of shower core
         try:
             positions = positions + np.array([core[0], core[1], 0.*u.m])
         except:
-            logger.debug("No core position information availble")
+            logger.debug("No core position information availble")       
 
     if  simus == 'coreas':
-        from . import CoreasInfoFunctions as CoreasInfo
+        import radio_simus.CoreasInfoFunctions as CoreasInfo
         #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
         posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
         positions, ID_ant, slopes = CoreasInfo._get_positions_coreas(posfile)
@@ -859,16 +826,18 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         inputfile = path+'/inp/SIM'+showerID+'.inp'
         zen,azim,energy,injh,primarytype,core,task = CoreasInfo.inputfromtxt_coreas(inputfile)
 
-        from .CoreasInfoFunctions import get_Xmax_coreas
-        Xmax = get_Xmax_coreas(path)
+        try:
+            Xmax = CoreasInfo._get_Xmax_coreas(path)
+        except:
+            Xmax = None
 
         # correction of shower core
         try:
             positions = positions + np.array([core[0], core[1], 0.*u.m])
         except:
             logger.debug("No core position information availble")
-
-        #----------------------------------------------------------------------
+            
+        #----------------------------------------------------------------------   
 
 
     # load shower info from inp file via dictionary
@@ -881,6 +850,7 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
             "injection_height" : injh,    # m (injection height in the local coordinate system)
             "task" : task,    # Identification
             "core" : core,    # m, numpy array, core position
+            "Xmax" : Xmax,    # depth of shower maximum in g/cm2
             "simulation" : simus # coreas or zhaires
             }
         ####################################
@@ -896,11 +866,12 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
         d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
         e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
-        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta')
-        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower)
+        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta') 
+        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
         event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
-        logger.info("Event info saved in: ", name_all)
+        print("Event info saved in: ", name_all)
 
     return shower, ID_ant, positions, slopes
+
 
 
