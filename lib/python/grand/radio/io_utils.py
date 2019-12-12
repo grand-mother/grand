@@ -865,7 +865,7 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         f1 = Column(data=slopes.T[1], unit=u.deg, name='beta')
         event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower)
         event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
-        logger.info("Event info has been saved to ", name_all)
+        logger.info("Event info has been saved to " + name_all)
 
     return shower, ID_ant, positions, slopes
 
