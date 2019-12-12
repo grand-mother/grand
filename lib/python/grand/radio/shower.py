@@ -353,45 +353,45 @@ class ReconstructedShower(Shower):
 
 def loadInfo_toShower(name, info=None):
     '''load meta info from dictionary to object attributes, object initiated beforehand
-    
+
     Arguments:
     name: (object)
         Identifier for initiated shower object
     info: str/dict
         if str: path to hdf5 event file
         if dict: dictionary with event information
-    
-    example:        
+
+    example:
                     testshower = SimulatedShower()
                     loadInfo_toShower(testshower, f.meta)
-    
+
     TODO: 
         *add missing attributes if desired 
     '''
-    
+
     from astropy.table import Table
-    
+
     if type(info) is not dict:
         logger.info('load information from event file')
         g=Table.read(info, path="/event")
         info=g.meta
     if type(info) is dict:
         logger.info('load information from dictionary')
-        
-    
-    
+
+
+
     try:
         showerID = info["ID"]
         name.showerID = str(showerID)
     except IOError:
         showerID = None
-    
+
     try:
         primary = info["primary"]
         name.primary = str(primary)
     except IOError:
         primary = None
-        
+
     try:
         energy = info["energy"]
         if hasattr(energy, 'unit'):
@@ -400,7 +400,7 @@ def loadInfo_toShower(name, info=None):
             name.energy = float(energy)* u.eV
     except IOError:
         energy = None
-    
+
     try:
         zenith = info["zenith"]
         if hasattr(zenith, 'unit'):
@@ -409,7 +409,7 @@ def loadInfo_toShower(name, info=None):
             name.zenith = float(zenith)* u.deg
     except IOError:
         zenith = None
-    
+
     try:
         azimuth = info["azimuth"]
         if hasattr(azimuth, 'unit'):
@@ -418,7 +418,7 @@ def loadInfo_toShower(name, info=None):
             name.azimuth = float(azimuth)* u.deg
     except IOError:
         azimuth = None
-    
+
     try:
         injectionheight = info["injection_height"]
         if hasattr(injectionheight, 'unit'):
@@ -440,7 +440,7 @@ def loadInfo_toShower(name, info=None):
     except (IOError, KeyError):
         logger.error("No simulation info provided")
         simulation = None
-        
+
     try:
         Xmax = info["Xmax"]
         if hasattr(Xmax, 'unit'):
@@ -451,7 +451,7 @@ def loadInfo_toShower(name, info=None):
     except (IOError, KeyError):
         logger.error("No XMax value provided")
         Xmax = None
-    
+
 
 
 
