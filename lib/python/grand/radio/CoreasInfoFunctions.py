@@ -11,7 +11,9 @@ import sys
 import glob
 
 import logging
-logger = logging.getLogger("CoreasInfo")
+logger = logging.getLogger(__name__)
+
+__all__ = ["inputfromtxt_coreas", "get_Xmax_coreas"] # XXX remove the _coreas
 
 from astropy import units as u
 
@@ -186,7 +188,7 @@ def _get_positions_coreas(path):
 
 #===========================================================================================================
 
-def _get_Xmax_coreas(path):
+def get_Xmax_coreas(path):
     """ read Xmax value from simulations, inspred by Rio group
         --- work in progress
         

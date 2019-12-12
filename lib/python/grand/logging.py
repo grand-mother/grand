@@ -1,4 +1,5 @@
 import logging
+from logging import DEBUG, INFO, WARNING, ERROR
 from typing import cast, Optional
 import sys
 
@@ -40,10 +41,11 @@ class Logger(logging.getLoggerClass()): # type: ignore
     give access to the corresponding handlers. The path attributes allows to set
     the optional output file.
     """
-    _default_level = logging.WARNING
+    _initial_level = logging.WARNING
 
     def reset(self) -> None:
-        self.setLevel(self._default_level)
+        self._default_level = self._initial_level
+        super().setLevel(self._initial_level)
 
         # Print formatter
         self._formatter = logging.Formatter(
@@ -56,7 +58,7 @@ class Logger(logging.getLoggerClass()): # type: ignore
             pass
 
         self.stream = StreamHandler()
-        self.stream.setLevel(self._default_level)
+        self.stream.setLevel(self._initial_level)
         self.stream.setFormatter(self._formatter)
         self.addHandler(self.stream)
 
@@ -68,6 +70,13 @@ class Logger(logging.getLoggerClass()): # type: ignore
 
         self._path: Optional[str] = None
         self.file: Optional[logging.FileHandler] = None
+
+    def setLevel(self, level):
+        self._default_level = level
+        super().setLevel(level)
+        self.stream.setLevel(level)
+        if self.file is not None:
+            self.file.setLevel(level)
 
     @property
     def path(self) -> Optional[str]:

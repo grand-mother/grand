@@ -22,13 +22,13 @@ import math
 import numpy as np
 
 import logging
-logger = logging.getLogger("ComuteVoltage")
+logger = logging.getLogger(__name__)
 
 import pylab as plt
 import glob
 
-from radio_simus.signal_processing import filters
-from .__init__ import antx, anty, antz
+from .signal_processing import filters
+from . import config
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
@@ -99,7 +99,7 @@ def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6):
 fr=np.arange(20,301,5)
 RLp, XLp = compute_ZL(fr*1e6)
 
-print('--- ATTENTION: current version of computevoltage only valid for Cosmic Rays') 
+logger.warning("Current version of computevoltage only valid for Cosmic Rays")
 
 #wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
 # Load antenna response files
@@ -113,9 +113,9 @@ freespace = 0
   #fileleff_y=wkdir+'HorizonAntenna_EWarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
   #fileleff_z=wkdir+'HorizonAntenna_Zarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, Vert component
   
-fileleff_x = antx
-fileleff_y = anty
-fileleff_z = antz
+fileleff_x = str(config.antenna.x)
+fileleff_y = str(config.antenna.y)
+fileleff_z = str(config.antenna.z)
 
 if PRINT_ON:
     print('Loading',fileleff_x,'...')  
