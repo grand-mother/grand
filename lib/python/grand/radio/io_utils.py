@@ -825,8 +825,8 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         zen,azim,energy,injh,primarytype,core,task = CoreasInfo.inputfromtxt_coreas(inputfile)
 
         try:
-            Xmax = CoreasInfo._get_Xmax_coreas(path)
-        except:
+            Xmax = CoreasInfo.get_Xmax_coreas(path)
+        except ValueError:
             Xmax = None
 
         # correction of shower core
