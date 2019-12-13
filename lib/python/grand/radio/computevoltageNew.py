@@ -1,17 +1,16 @@
 '''
-    original from HandsOn session 19/04/2019
-    --- several times modified
+    Translation of initial computeVoltage version (https://github.com/grand-mother/simulations/blob/master/computeVoltage_massProd.py)
+    being adapted to GRAND software
 
     TODO:
         - problem with shape of A and B in computevoltage for time traces with odd number of lines
-        - handle neutrinos and in general upward going showers
+        - handle upward going showers
+        - referential change (TopoToAntenna)
         - IMPORTANT: how to handle astropy units for electric field and voltage numpy arrays...
 
     ATTENTION:
     ----- computevoltage : stacking changed,  voltage time now in ns
 '''
-
-
 
 
 #!/usr/bin/env python
@@ -20,15 +19,23 @@ from os.path import  join
 import sys
 import math
 import numpy as np
+import astropy.units as u
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ComputeVoltage")
 
 import pylab as plt
 import glob
+from astropy import constants as const
 
-from .signal_processing import filters
+#from . import signal_processing
 from . import config
+from . import io_utils
+from . import shower
+from . import detector
+from . import modules
+
+#import _table_voltage,_load_to_array, _load_eventinfo_fromhdf, _load_path
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
@@ -40,11 +47,14 @@ PRINT_ON=False
 DISPLAY = 0
 
 ## Earth radius in m
-EARTH_RADIUS=6370949. #m
+from astropy import constants as const
+#EARTH_RADIUS=6370949. #m
+
 ## step in azimuth in npy file in deg
 azstep=5
 ## Multiplication factor: freq*2 if h/2 and sizeant/2
 freqscale=1
+
 ##if antenna is loaded or not in npy file --- NOTE: Not needed
 #loaded=1
 
@@ -93,49 +103,43 @@ def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6):
 #============================================================================
 
 
+def load_leff(**kwargs):
+  ''' Function to load antenna response model (npy file)
 
-# Compute load impendance
-#impRLC R = 300;C = 6.5e-12;L = 1e-6; 20 300 MHz
-fr=np.arange(20,301,5)
-RLp, XLp = compute_ZL(fr*1e6)
+  Arguments:
+  ----------
+  Path to files
 
-logger.warning("Current version of computevoltage only valid for Cosmic Rays")
+  Returns:
+  ----------
+  TO DO
+  '''
 
-#wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
-# Load antenna response files
-freespace = 0
-#if freespace==1:
-  #fileleff_x=wkdir+'butthalftripleX4p5mfreespace_leff.npy' #
-  #fileleff_y=wkdir+'butthalftripleY4p5mfreespace_leff.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
-  #fileleff_z=wkdir+'butthalftripleZ4p5mfreespace_leff.npy'
-#else:
-  #fileleff_x=wkdir+'HorizonAntenna_SNarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, NS component
-  #fileleff_y=wkdir+'HorizonAntenna_EWarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
-  #fileleff_z=wkdir+'HorizonAntenna_Zarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, Vert component
+  # Compute load impendance
+  fr=np.arange(20,301,5)
+  RLp, XLp = compute_ZL(fr*1e6)
 
-# fileleff_x = str(config.antenna.x)
-# fileleff_y = str(config.antenna.y)
-# fileleff_z = str(config.antenna.z)
-fileleff_x = "/home/martineau/GRAND/GRANDproto300/data/HorizonAntenna_SNarm_leff_loaded.npy"
-fileleff_y = "/home/martineau/GRAND/GRANDproto300/data/HorizonAntenna_EWarm_leff_loaded.npy"
-fileleff_z = "/home/martineau/GRAND/GRANDproto300/data/HorizonAntenna_Zarm_leff_loaded.npy"
+  try:
+      leff = kwargs["leff"]
+  except KeyError:
+      leff = config.leff
 
-if PRINT_ON:
-    print('Loading',fileleff_x,'...')
-logger.debug("Loading antenna files " + fileleff_x +"....")
-freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(fileleff_x) ### this line cost 6-7s
-RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
-XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
-freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2=np.load(fileleff_y) ### this line cost 6-7s
-RL2=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
-XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
-freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(fileleff_z) ### this line cost 6-7s
-RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-if PRINT_ON:
-    print('Done.')
+      if PRINT_ON:
+          print('Loading',leff,'...')
 
+          logger.debug("Loading antenna effective length files " + leff +"...")
+          freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(leff.x) ### this line cost 6-7s
+          RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
+          XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
+          freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2=np.load(leff.y) ### this line cost 6-7s
+          RL2=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
+          XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
+          freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(leff.z) ### this line cost 6-7s
+          RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
+          XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
 
+          if PRINT_ON:
+              print('Done.')
 
 
 #============================================================================
@@ -445,53 +449,6 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
 
 
-##===========================================================================================================
-#def inputfromtxt(input_file_path):
-##===========================================================================================================
-    #''' ATTENTION Should be deleted and substituted in modules
-    #'''
-
-    #particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
-    #,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
-
-
-    #showerID=str(input_file_path).split("/")[-2] # should be equivalent to folder name
-    #datafile = input_file_path+'/inp/'+showerID+'.inp'
-    ##datafile = glob.glob(input_file_path+'/inp/*.inp')[0]
-    #if os.path.isfile(datafile) ==  False:  # File does not exist
-        #try:
-            #datafile = input_file_path+'/'+showerID+'.inp'
-            #if os.path.isfile(datafile) ==  True:  # File does not exist
-                #print('\n Get shower parameters from ', datafile )
-        #except IOError:
-            #print('--- ATTENTION: Could not find ZHaireS input file in folder',datafile,'! Aborting.')
-            #exit()
-    #else: # File exists
-      #print('\n Get shower parameters from ', datafile )
-    ## ToDo: implement line-by-line reading
-    #data = open(datafile, 'r')
-    #for line in data:
-        #if 'PrimaryZenAngle' in line:
-            #zen=float(line.split(' ',-1)[1])
-            #zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-        #if 'PrimaryAzimAngle' in line:
-            #azim = float(line.split(' ',-1)[1])+180 #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-            #if azim>=360:
-                #azim= azim-360
-    #try:
-        #zen
-    #except NameError:
-        #print('--- ATTENTION: zenith could not be read-in')
-        #zen = 100. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
-    #try:
-        #azim
-    #except NameError:
-        #print('--- ATTENTION: azimuth could not be read-in')
-        #azim = 0
-
-    #print('Shower direction from input file -- azmimuth/deg ='+str(azim)+' , zenith/deg = '+str(zen))
-
-    #return zen,azim
 
 #===========================================================================================================
 def compute(opt_input,path, zenith_sim, azimuth_sim):
@@ -593,45 +550,49 @@ def compute(opt_input,path, zenith_sim, azimuth_sim):
 # Compute the time dependent voltage
 #===========================================================================================================
 if __name__ == '__main__':
+    print("computeVoltageNew()")
 
-    #print('Nb of paras=',len(sys.argv))
-    if ((str(sys.argv[2])=="manual") & (len(sys.argv)<5)) or ((str(sys.argv[2])=="txt") & (len(sys.argv)<3)):
-        print("""
-	Wrong minimum number of arguments. All angles are to be expressed in degrees and in GRAND convention.
-        Usage:
-        if ZHAireS inp file input (Several antennas):
-            python computevoltage.py [path to traces]  [input_option]
-            example: python computevoltage.py ./ txt
-        if manual input (Single antenna):
-            python computevoltage.py [path to traces] [input_option] [zenith] [azimuth] [opt: alpha,beta] [opt: antenna ID]]
-            example: python computeVoltage.py ./  manual 85 205 10 5
+    # Load simulated event HDF5 file
+    exfile = "/home/martineau/GRAND/GRANDproto300/data/test/event_000001.hdf5"
 
-        """)
+    from ..config import load
+    load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
 
-        ## -> computes voltage traces for EW, NS and Vertical antenna component and saves the voltage traces in out_'.txt (same folder as a'.trace)
-        ## -> produces a new json file with copying the original one, but saves as well additional informations as p2p-voltages, and peak times and values in *.voltage.json in the same folder as the original json file
-        sys.exit(0)
+    # First retrieve shower infos
+    #1st method: using dicts
+    sh, ant_ID, positions, slopes = io_utils._load_eventinfo_fromhdf(exfile)
+    print(sh.keys())
+    print("Zenith=",sh["zenith"])
+    print("Azimuth=",sh["azimuth"])
+    print("Core=",sh["core"])
+    print("Energy=",sh["energy"])
+    print("Xmax=",sh["xmax"])
+    print("Injection height=",sh["injection_height"])
+    try:
+         xmax = sh["xmax"]
+    except KeyError:
+         # No Xmax value available, compute it from (average) model.
+         xmax = modules._calculateXmax(sh["primary"],sh["energy"].value)
 
+    if sh["primary"] == "proton" or sh["primary"] == "iron":
+        xmaxpos = modules._get_CRXmaxPosition( sh["zenith"], sh["azimuth"],sh["xmax"], sh["injection_height"],sh["core"])
+    else:
+        print("No computation yet!")  # TODO
+    print("Xmax position in GRAND ref=",xmaxpos)
+    print("Distance to ground=",np.linalg.norm(xmaxpos),"m")
 
-    #folder containing the traces and where the output should go to
-    path=sys.argv[1]
-    print("path to traces=",path)
+    # #2nd method: using class
+    # sh = shower.SimulatedShower()
+    # from astropy.table import Table
+    # g = Table.read(exfile, path="/event")
+    # shower.loadInfo_toShower(sh, g.meta)
+    # print(sh.energy)
 
-    # Decide where to retrieve the shower parameters : txt for ZHAireS input file or manual to hand them over by hand
-    opt_input = str(sys.argv[2])
-    print("opt_input = ",opt_input)
-
-    if opt_input=='txt':
-        import in_out
-        # Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
-        inp_file = str(sys.argv[1])
-        zenith_sim,azimuth_sim ,energy,injh,primarytype,core,task= in_out.inputfromtxt(inp_file)
-
-    elif opt_input=='manual':
-        zenith_sim = float(sys.argv[3]) #deg
-        azimuth_sim = float(sys.argv[4]) #deg
-
-    print("VOLTAGE COMPUTATION STARTED")
-    compute(opt_input,path, zenith_sim, azimuth_sim)
-
-    print("VOLTAGE COMPUTED")
+    # Now get antenna positions from hdf5 file, using dicts
+    arrayfile = "/home/martineau/GRAND/soft/grand/lib/python/grand/example/det.txt"
+    det = detector.Detector()
+    #create detector=antenna array from file defined in config file
+    det.create_from_file(arrayfile)
+    ## get all antennas positions
+    array = det.position
+    #print(array)

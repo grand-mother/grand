@@ -6,7 +6,7 @@ from pathlib import Path
 
 radio.site.name      = "Lenghu"
 radio.site.longitude = 92.334037             * u.deg
-radio.site.latitude  = 38.870398             * u.deg 
+radio.site.latitude  = 38.870398             * u.deg
 radio.site.obsheight = 2734.0                * u.m
 radio.site.origin    = Array([0, 0, 0]) * u.m
 
@@ -25,6 +25,6 @@ radio.processing.tsampling = 2  * u.ns # For digitisation
 
 # Antenna responses
 prefix = Path("../lib/python/radio_simus/GRAND_antenna")
-radio.antenna.x = prefix / "HorizonAntenna_SNarm_leff_loaded.npy"
-radio.antenna.y = prefix / "HorizonAntenna_EWarm_leff_loaded.npy"
-radio.antenna.z = prefix / "HorizonAntenna_Zarm_leff_loaded.npy"
+radio.antenna.leff.x = prefix / "HorizonAntenna_SNarm_leff_loaded.npy"
+radio.antenna.leff.y = prefix / "HorizonAntenna_EWarm_leff_loaded.npy"
+radio.antenna.leff.z = prefix / "HorizonAntenna_Zarm_leff_loaded.npy"

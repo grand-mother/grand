@@ -46,7 +46,7 @@ def load_trace(directory, index, suffix=".trace"):
 
 def _table_efield(efield, pos=None, slopes=None, info={}, save=None, ant="/"):
     '''
-    Load electric field trace in table with header info 
+    Load electric field trace in table with header info
     (numpy array to astropy table)
 
     Parameters
@@ -84,7 +84,7 @@ def _table_efield(efield, pos=None, slopes=None, info={}, save=None, ant="/"):
 
 def table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
     '''
-    Load voltage trace in table with header info  
+    Load voltage trace in table with header info
     (numpy array to astropy table)
 
     Parameters
@@ -132,7 +132,7 @@ def table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
 
 
 
-def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, 
+def load_trace_to_table(path_raw,  pos=None, slopes=None, info={},
                         content="e", simus="zhaires", save=None, ant="/"):
     """Load data from an electric field trace file to astropy table
 
@@ -236,6 +236,35 @@ def _load_primary_fromhdf(path_hdf5):
     return primary[0]
 
 # ============================================================================
+
+
+def _load_xmax_fromhdf(path_hdf5):
+    """ Load Xmax from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str
+            path to hdf5 file
+
+   Returns
+   ---------
+        xmax: str, float
+            grammage in g/cm2
+    """
+
+    from astropy.table import Table
+
+    g = Table.read(path_hdf5, path="/event")
+
+    # Get shower infomation
+    try:
+        xmax = g.meta['Xmax'],        # primary (electron, pion)
+    except:
+        xmax = None
+
+    return xmax[0]
+
+    # ============================================================================
 
 
 def _load_energy_fromhdf(path_hdf5):
@@ -473,10 +502,11 @@ def _load_showerinfo_fromhdf(path_hdf5):
 
     ID = _load_ID_fromhdf(path_hdf5)
     primary = _load_primary_fromhdf(path_hdf5)
+    xmax = _load_xmax_fromhdf(path_hdf5)
     energy = _load_energy_fromhdf(path_hdf5)
     zenith = _load_zenith_fromhdf(path_hdf5)
     azimuth = _load_azimuth_fromhdf(path_hdf5)
-    injection_height = _load_injectionheight_fromhdf(path_hdf5)
+    injection_height = _load_injectionheight_fromhdf(path_hdf5).value/100 * u.m # Was initialy in cm?  # TODO: check
     task = _load_task_fromhdf(path_hdf5)
     core = _load_core_fromhdf(path_hdf5)
     simulation = _load_simulation_fromhdf(path_hdf5)
@@ -484,6 +514,7 @@ def _load_showerinfo_fromhdf(path_hdf5):
     shower = {
         "ID": ID,               # shower ID, number of simulation
         "primary": primary,        # primary (electron, pion)
+        "xmax": xmax,               # g/cm2
         "energy": energy,               # EeV
         "zenith": zenith,               # deg (GRAND frame)
         "azimuth": azimuth,                # deg (GRAND frame)
@@ -683,9 +714,9 @@ def _load_efield_fromhdf(path_hdf5, ant="/"):
 
     try:
         efield = Table.read(path_hdf5, path=ant+"/efield")
-        return np.array([efield['Time'], 
-                         efield['Ex'], 
-                         efield['Ey'], 
+        return np.array([efield['Time'],
+                         efield['Ex'],
+                         efield['Ey'],
                          efield['Ez']]).T
     except:
         return None
@@ -715,9 +746,9 @@ def _load_voltage_fromhdf(path_hdf5, ant="/"):
 
     try:
         voltage = Table.read(path_hdf5, path=ant+"/voltages")
-        return np.array([voltage['Time'], 
-                         voltage['Vx'], 
-                         voltage['Vy'], 
+        return np.array([voltage['Time'],
+                         voltage['Vx'],
+                         voltage['Vy'],
                          voltage['Vz']]).T
     except:
         return None
@@ -726,7 +757,7 @@ def _load_voltage_fromhdf(path_hdf5, ant="/"):
 
 
 def _load_to_array(path_hdf5, content="efield", ant="/"):
-    """Load trace data from hdf5 file for a single antenna 
+    """Load trace data from hdf5 file for a single antenna
     as numpy array and restore infomation on antenna
 
    Parameters
@@ -739,7 +770,7 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
    Returns
    ---------
         efield1 or voltage1: numpy array
-            containing the electric field or voltage trace trace: 
+            containing the electric field or voltage trace trace:
             time, Ex, Ey, Ez or time, Vx, Vy, Vz
         efield['Time'] or voltage['Time'].unit: str
             unit of time column
@@ -784,15 +815,14 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
             slopes = None
 
         # TODO do we one to return atsropy units...
-        return voltage1, voltage['Time'].unit, voltage['Vx'].unit, 
-               position, slopes
+        return voltage1, voltage['Time'].unit, voltage['Vx'].unit,position, slopes
 
 
 # ============================================================================
 
 
 def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
-    """Load data from simulation to hdf5 file, 
+    """Load data from simulation to hdf5 file,
        directly savin as hdf5 file option
 
    Parameters
@@ -846,8 +876,8 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
     if simus == 'coreas':
         from . import CoreasInfoFunctions as CoreasInfo
         # *list contains not alpha and beta
-        # posfile = path +'SIM'+str(showerID)+'.list' 
-        # produced file *info contains 
+        # posfile = path +'SIM'+str(showerID)+'.list'
+        # produced file *info contains
         # original ant ID , positions , alpha and beta
         posfile = path + 'SIM'+str(showerID)+'.info'
         positions, ID_ant, slopes = CoreasInfo._get_positions_coreas(posfile)

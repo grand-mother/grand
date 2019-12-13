@@ -25,11 +25,7 @@ def p2p(trace):
     if trace.ndim == 2:  # simply assume np.array([t, x, y, z])
         xy = np.sqrt(trace.T[1]**2 + trace.T[2]**2)
         combined = np.sqrt(trace.T[1]**2 + trace.T[2]**2 + trace.T[3]**2)
-        return  max(trace.T[1])-min(trace.T[1]), 
-                max(trace.T[2])-min(trace.T[2]), 
-                max(trace.T[3])-min(trace.T[3]), 
-                max(xy)-min(xy), 
-                max(combined)-min(combined)
+        return  max(trace.T[1])-min(trace.T[1]), max(trace.T[2])-min(trace.T[2]), max(trace.T[3])-min(trace.T[3]), max(xy)-min(xy),max(combined)-min(combined)
     elif trace.ndim == 1:
         return max(trace)-min(trace)
     else:
@@ -39,7 +35,7 @@ def p2p(trace):
 
 
 def hilbert_env(signal):
-    ''' 
+    '''
     Hilbert envelope - abs(analytical signal)
     Arguments:
     ----------

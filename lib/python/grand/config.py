@@ -50,6 +50,7 @@ class Config(dict):
 
     def Config(self, name, *args, **kwargs):
         self[name] = Config(f"{self._name}.{name}", *args, **kwargs)
+        return self[name]
 
     @classmethod
     def load(cls, path): load(path)

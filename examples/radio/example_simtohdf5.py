@@ -26,9 +26,10 @@ logger.setLevel(logging.INFO)
 
 
 # Load the config
-config.load(Path(__file__).parent / "config.py")
+#config.load(Path(__file__).parent / "config.py")
+config.load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
 Vrms = config.processing.vrms1
-
+#Vrms = 15
 
 # XXX use argparse
 voltage_compute = True

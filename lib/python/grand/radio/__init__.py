@@ -28,4 +28,4 @@ config.Config("site", "name", "latitude", "longitude", "obsheight", "origin")
 config.array = None
 config.Config("magnet", "magnitude", "inclination", "declination")
 config.Config("processing", "vrms1", "vrms2", "tsampling")
-config.Config("antenna", "x", "y", "z")
+config.Config("antenna").Config("leff", "x", "y", "z")

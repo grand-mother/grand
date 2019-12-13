@@ -12,11 +12,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 from . import config
+config.load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
 # assuming units: muV , ns
 Vrms = (config.processing.vrms1 / u.uV).value
 Vrms2 = (config.processing.vrms2 / u.uV).value
 tsampling = (config.processing.tsampling / u.ns).value
-
+# Vrms = 15
+# Vrms2 = 28
+# tsampling = 2
 
 __all__ = ["include_shadowing", "add_noise",
            "Digitization_2", "filter", "_create_emptytrace", "run"]
@@ -38,15 +41,15 @@ __all__ = ["include_shadowing", "add_noise",
 def add_noise(voltages, vrms=Vrms2):
     """Add normal random noise on voltages
 
-    Parameters: 
+    Parameters:
     -----------
         voltages: numpy array
             voltage trace
         vrms: float
             noise rms, default loaded from config file
 
-    Returns: 
-    ----------    
+    Returns:
+    ----------
         numpy array
         noisy voltages (time in ns)
     """
@@ -63,15 +66,15 @@ def add_noise(voltages, vrms=Vrms2):
 def digitization(voltages, tsampling=tsampling):
     """Digitize the voltages at an specific sampling
 
-    Parameters: 
+    Parameters:
     -----------
         voltages: numpy array
             voltage trace
         samplingrate: float
             sampling rate in ns, default loaded from config file
 
-    Returns: 
-    ----------    
+    Returns:
+    ----------
         numpy array:
         newly sampled trace
 
@@ -95,15 +98,15 @@ def digitization(voltages, tsampling=tsampling):
 def Digitization_2(v, TSAMPLING=tsampling):
     """Digitize the voltages at an specific sampling -- v2
 
-    Parameters: 
+    Parameters:
     -----------
         voltages: numpy array
             voltage trace
         samplingrate: float
             sampling rate in ns, default loaded from config file
 
-    Returns: 
-    ----------    
+    Returns:
+    ----------
         numpy array:
         newly sampled trace
 
@@ -145,14 +148,14 @@ def _butter_bandpass_filter(data, lowcut, highcut, fs):
 
 
 def filters(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
-    """ Filter signal v(t) in given bandwidth 
+    """ Filter signal v(t) in given bandwidth
     Parameters
     ----------
     voltages: numpy array
         The array of time (s) + voltage (muV) vectors to be filtered
-    FREQMIN: float 
+    FREQMIN: float
         The minimal frequency of the bandpass filter (Hz)
-    FREQMAX: float 
+    FREQMAX: float
         The maximal frequency of the bandpass filter (Hz)
 
     Returns
@@ -232,26 +235,26 @@ def _create_emptytrace(nbins=599, tstep=1):
 # ===========================================================================================================
 def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0.,
                         processing={'antennaresponse',
-                                    'noise', 
-                                    'filter', 
+                                    'noise',
+                                    'filter',
                                     'digitise'},
                         DISPLAY=1):
-    ''' 
+    '''
     Do the full chain once:
-    1. READ IN THE SIMULATED ELECTRIC FIELD TRACE (at higher level) 
+    1. READ IN THE SIMULATED ELECTRIC FIELD TRACE (at higher level)
         at hand over as parameter
     2. APPLY ANTENNA RESPONSE
     3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
     4. FILTER THE TRACE TO THE 50-200MHz WINDOW
-    5. DIGITIZATION -- 2ns 
+    5. DIGITIZATION -- 2ns
 
     -- To produce noise traces:
     -- 1. _create_emptytrace
     -- 3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
     -- 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
-    -- 5. DIGITIZATION -- 2ns 
+    -- 5. DIGITIZATION -- 2ns
 
-    NOTE: can be used modular so that people can pick the steps they need 
+    NOTE: can be used modular so that people can pick the steps they need
             --> via "processing" parameter
 
     XXX / TODO: load info about the requested steps in the chain from config file
@@ -286,8 +289,8 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
     if 'antennaresponse' in processing:
 
         from . import computevoltage
-        trace = computevoltage.compute_antennaresponse(efield, 
-                                                       zenith_sim, azimuth_sim, 
+        trace = computevoltage.compute_antennaresponse(efield,
+                                                       zenith_sim, azimuth_sim,
                                                        alpha=alpha_sim, beta=beta_sim)
 
         # 2b. deconvolve antenna response - still ongoing work
