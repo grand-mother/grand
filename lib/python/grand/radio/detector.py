@@ -2,31 +2,37 @@
 
 Start to rewrite detector class with containers, still ongoing
 
-Use: python3.7 detectors.py
+see SLACK with Valentin 26Sept
+* Internal conversion from any coordinate system to ECEF,
+    see example in grand/tools/geomagnet.py
+* input type of antenna coordinates could be a Union[grand.ECEF, grand.LTP], 
+    ie. local or global coordinates (--> grand pacakage)
+* use Final decorator (typing_extension)
 
-#see SLACK with Valentin 26Sept
-#* Internal conversion from any coordinate system to ECEF, see example in grand/tools/geomagnet.py
-#* input type of antenna coordinates could be a Union[grand.ECEF, grand.LTP], ie. local or global coordinates (--> grand pacakage)
-#* use Final decorator (typing_extension)
-
-#ToDo after adding grand
-#* add positions of a whole array, in ECEF and m
-#* ...
-#* antennas positions are stored in a single numpy.array, idealy a grand.coordinates.ECEF object.
-## * numpy arrays: myarra.flags.writeable = False
-##* implement an AntennaArray object with attributes: type:str, position:grand.coordinates.ECEF, orientation:grand.coordinates.Horizontal, etc.
-# * add function if slope not given, calculate it
+XXX / TODO after adding grand
+* add positions of a whole array, in ECEF and m
+* ...
+* antennas positions are stored in a single numpy.array, 
+    idealy a grand.coordinates.ECEF object.
+* numpy arrays: myarra.flags.writeable = False
+* implement an AntennaArray object with attributes: 
+    type:str, position:grand.coordinates.ECEF,
+    orientation:grand.coordinates.Horizontal, etc.
+* add function if slope not given, calculate it
 """
 
-import collections
-import logging
-logger = logging.getLogger(__name__)
-from typing import Optional, List, Union
 
-import astropy.units as u
 import numpy as np
+import astropy.units as u
+from typing import Optional, List, Union
+import collections
 
 from . import config
+
+import logging
+logger = logging.getLogger(__name__)
+
+
 site, origin = config.site.name, config.site.origin
 
 if origin is not None:
@@ -45,20 +51,24 @@ class Detector:
     """ info on detector
 
 
-        Immutable container with both static and runtime checks, The fields can be accessed as attributes/
+        Immutable container with both static and runtime checks,   
+        The fields can be accessed as attributes.
 
-        1. A static analyses can be done with mypy. It will ensure that the proper types are used as arguments when setting the shower attributes. Special unit  can not be checked (eg energy given in meters...)
-        2. In addition using the @property class decorator we can perform runtime checks when an instance attribute is modified.
+        1. A static analyses can be done with mypy. It will ensure that 
+        the proper types are used as arguments when setting the shower 
+        attributes. Special unit  can not be checked (eg energy given in
+        meters...)
+        2. In addition using the @property class decorator we can perform 
+        runtime checks when an instance attribute is modified.
 
-        ToDo:
+        XXX / TODO:
             a long list -- see the comments above
             unit test missing
 
     """
 
     _attributes = ("origin", "location",
-                   "position", "slope", "type")#, "antenna")
-
+                   "position", "slope", "type")
 
     def __init__(self, **kwargs):
         # list of instance attributes
@@ -74,8 +84,6 @@ class Detector:
                 raise ValueError(f"Invalid attribute {attr}")
             setattr(self, attr, value)
 
-
-    # Do I need that
     def __str__(self) -> str:
         attributes = ", ".join([attr + "=" + repr(getattr(self, attr))
                                 for attr in self._attributes])
@@ -86,12 +94,11 @@ class Detector:
         if attr not in (None, site, origin_default):
             raise AlreadySet()
 
-
     @property
     def origin(self) -> Union[list, str]:
         """origin of array, in m """
         if hasattr(self.__origin, 'unit'):
-            logger.info("Unit of origin: ",self.__origin.unit)
+            logger.info("Unit of origin: ", self.__origin.unit)
             return self.__origin
         else:
             return self.__origin*u.m
@@ -104,7 +111,6 @@ class Detector:
     @origin.deleter
     def origin(self):
         self.__origin = None
-
 
     @property
     def location(self) -> Union[list, str]:
@@ -120,7 +126,6 @@ class Detector:
     def location(self):
         self.__location = None
 
-
     @property
     def ID(self) -> Union[list, str, int]:
         """IDs of antennas in array, accepts only lists"""
@@ -130,13 +135,12 @@ class Detector:
     def ID(self, value: Union[int, str]):
         self.__ID.append(value)
 
-
     @property
     def position(self) -> Union[list, str]:
         """position of antennas array, in m, accepts only lists"""
-        #return np.asarray(self.__position)[0]*u.m
+        # return np.asarray(self.__position)[0]*u.m
         if hasattr(self.__position, 'unit'):
-            logger.info("Unit of antenna positions: ",self.__position.unit)
+            logger.info("Unit of antenna positions: ", self.__position.unit)
             return np.asarray(self.__position)[0]
         else:
             return np.asarray(self.__position)[0]*u.m
@@ -145,16 +149,16 @@ class Detector:
     def position(self, value: Union[list, str]):
         self.__position.append(value)
 
-
     @property
     def slope(self) -> Union[list, str]:
-        """local slopes (alpha,beta) of antennas in array, in deg, accepts only lists"""
+        """local slopes (alpha,beta) of antennas in array, in deg, 
+        accepts only lists
+        """
         return np.asarray(self.__slope)*u.deg
 
     @slope.setter
     def slope(self, value: Union[list, str]):
         self.__slope.append(value)
-
 
     @property
     def type(self) -> Union[list, str, int]:
@@ -164,7 +168,6 @@ class Detector:
     @type.setter
     def type(self, value: Union[int, str]):
         self.__type.append(value)
-
 
     def find_position(self, antID):
         """ find antenna position per ID in detector array
@@ -183,7 +186,6 @@ class Detector:
         index = np.where(self.ID == int(antID))[0][0]
         return self.position[index]
 
-
     def find_slope(self, antID):
         """ find antenna slope per ID in detector array
         Arguments:
@@ -199,7 +201,6 @@ class Detector:
         """
         index = np.where(self.ID == int(antID))[0][0]
         return self.slope[index]
-
 
     def find_antenna(self, antID):
         """ return antenna with ID as namedtuple
@@ -219,10 +220,10 @@ class Detector:
                        slope=self.slope[index],
                        type=self.type[index])
 
-
     def create_from_file(self, array_file):
         """ reading in whole antenna array as file: antID, positions in m
-            and slope wrt horizontal in deg(sets default values or to be caluclated), antenna type (or default)
+            and slope wrt horizontal in deg(sets default values or to be
+            caluclated), antenna type (or default)
 
         Arguments:
         ----------
@@ -241,14 +242,14 @@ class Detector:
         ant_array = np.loadtxt(array_file,  comments="#")
         self.ID = ant_array[:, 0].tolist()
         self.position = ant_array[:, 1:4].tolist()
-        for i in range(0,len(ant_array.T[0])):
+        for i in range(0, len(ant_array.T[0])):
             try:
                 self.slope = ant_array[i, 4:6].tolist()
-            except: #add exception
+            except:  # add exception
                 logger.debug("slope needs to be caluclated")
-                self.slope = (0,0)
+                self.slope = (0, 0)
             try:
-                self.type = str(ant_array[i,6])
-            except: #add exception
+                self.type = str(ant_array[i, 6])
+            except:  # add exception
                 logger.debug("Type needs to be defined")
-                self.type = "HorizonAntenna" # default type
+                self.type = "HorizonAntenna"  # default type
