@@ -694,7 +694,7 @@ def _load_path(path_hdf5, path="/analysis"):
 
 # ============================================================================
 
-def _load_efield_fromhdf(path_hdf5, ant="/"):
+def _load_efield_fromhdf(path_hdf5, ant):
     """Load electric field data from hdf5 file for a single antenna as numpy array
 
    Parameters

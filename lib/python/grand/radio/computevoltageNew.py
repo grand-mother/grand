@@ -42,9 +42,11 @@ from scipy.fftpack import rfft, irfft, rfftfreq
 from scipy.interpolate import interp1d
 #import astropy.units as u
 
+from ..config import load
+load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
 
-PRINT_ON=False
-DISPLAY = 0
+PRINT_ON=True
+DISPLAY = 2
 
 ## Earth radius in m
 from astropy import constants as const
@@ -57,7 +59,6 @@ freqscale=1
 
 ##if antenna is loaded or not in npy file --- NOTE: Not needed
 #loaded=1
-
 
 #============================================================================
 def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6):
@@ -108,11 +109,9 @@ def load_leff(**kwargs):
 
   Arguments:
   ----------
-  Path to files
+  Path to antenna model files
 
-  Returns:
-  ----------
-  TO DO
+
   '''
 
   # Compute load impendance
@@ -120,26 +119,35 @@ def load_leff(**kwargs):
   RLp, XLp = compute_ZL(fr*1e6)
 
   try:
-      leff = kwargs["leff"]
+      leffx, leffy,leffz = kwargs["leff"]  #TODO fix :)
   except KeyError:
-      leff = config.leff
+      leff_x = config.antenna.leff.x
+      leff_y = config.antenna.leff.y
+      leff_z = config.antenna.leff.z
 
-      if PRINT_ON:
-          print('Loading',leff,'...')
 
-          logger.debug("Loading antenna effective length files " + leff +"...")
-          freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(leff.x) ### this line cost 6-7s
-          RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
-          XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
-          freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2=np.load(leff.y) ### this line cost 6-7s
-          RL2=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
-          XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
-          freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(leff.z) ### this line cost 6-7s
-          RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-          XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
+  logger.debug("Loading antenna effective length file",leff_x)
+  print('Loading',leff_x)
+  global freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1,RL1,XL1
+  freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(leff_x) ### this line cost 6-7s
+  print('Done.')
+  RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
+  XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
 
-          if PRINT_ON:
-              print('Done.')
+  print('Loading',leff_y)
+  global freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2,RL2,XL2
+  freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2=np.load(leff_y) ### this line cost 6-7s
+  print('Done')
+  RL2=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
+  XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
+
+  print('Loading',leff_z)
+  global freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3,RL3,XL3
+  freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(leff_z) ### this line cost 6-7s
+  print('Done')
+  RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
+  XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
+
 
 
 #============================================================================
@@ -163,7 +171,7 @@ def TopoToAntenna(u,alpha,beta):
         shower vector in coordinates of antenna
 
     '''
-
+    # TODO: update using GRAND referential classes. Move to modules.
     alpha=alpha*np.pi/180 #around y
     beta=beta*np.pi/180 #around z
     cb = np.cos(beta)
@@ -190,13 +198,10 @@ def TopoToAntenna(u,alpha,beta):
     [xp,yp,zp] = rottot.dot(u)
     return np.array([xp,yp,zp])
 
-
-
-
 #===========================================================================================================
-def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ="X"):
+def get_voltage(t, Ex, Ey, Ez, zen, az,alpha=0, beta=0, typ="X"):
 #===========================================================================================================
-    ''' Applies the antenna response
+    ''' Applies the antenna response to the Efield
 
     Arguments:
     ----------
@@ -208,10 +213,10 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
         y component in muV/m
     Ez: numpy array
         z component in muV/m
-    zenith_sim: float
-        GRAND zenith in deg
-    azimuth_sim: float
-        GRAND azimuth in deg
+    zen: float
+        Effective zenith (ie source as seen at antenna position) in GRAND ref in deg
+    azim: float
+        Effective azimuth (ie source as seen at antenna position) in GRAND ref in deg
     alpha: float
         surface angle alpha in deg
     beta: float
@@ -229,7 +234,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
 
     # Load proper antenna response matrix
     if typ=="X":
-       fileleff = fileleff_x
+       fileleff = config.antenna.leff.x
        freq=freq1
        realimp=realimp1
        reactance=reactance1
@@ -242,7 +247,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
        RL=RL1
        XL=XL1
     if typ=="Y":
-       fileleff = fileleff_y
+       fileleff = config.antenna.leff.y
        freq=freq2
        realimp=realimp2
        reactance=reactance2
@@ -255,7 +260,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
        RL=RL2
        XL=XL2
     if typ=="Z":
-       fileleff = fileleff_z
+       fileleff = config.antenna.leff.z
        freq=freq3
        realimp=realimp3
        reactance=reactance3
@@ -268,50 +273,68 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
        RL=RL3
        XL=XL3
 
-    # Compute effective theta, phi in antenna tilted frame (taking slope into account, with x=SN)
-    caz = np.cos(np.deg2rad(azimuth_sim))
-    saz = np.sin(np.deg2rad(azimuth_sim))
-    czen = np.cos(np.deg2rad(zenith_sim))
-    szen = np.sin(np.deg2rad(zenith_sim))
-    ush = -np.array([caz*szen, saz*szen,czen])  # Vector pointing towards source
-    ushp = TopoToAntenna(ush,alpha,beta)  # Xmax vector in antenna frame
-    zen=np.arccos(ushp[2])*180/np.pi  # Zenith in antenna frame
-    azim=math.atan2(ushp[1],ushp[0])*180/np.pi
-    if azim>360:
-        azim = azim-360
-    elif azim<0:
-        azim = azim+360
+    # Compute effective theta, phi in antenna tilted frame (taking slope into account, with x=SN)  # TODO: cleaner way with GRAND frame classes?
+    ush = -modules._get_shower_vector(zen,az)  # Vector pointing towards Xmax
+    ushp = TopoToAntenna(ush,alpha,beta)  # Now  in antenna frame
+    zenp, azp = modules._get_shower_angles(ushp)
+    if azp>360 * u.deg:
+        azp = azp-360 * u.deg
+    elif azp<0 * u.deg:
+        azp = azp+360 * u.deg
+
     if typ=='X':
         if PRINT_ON:
             print('Alpha and beta of surface slope:',alpha, beta)
-            print('Zenith & azimuth in GRAND framework:',zenith_sim, azimuth_sim)
-            print('Zenith & azimuth in antenna framework:',zen, azim)
+            print('Zenith & azimuth in GRAND framework:',modules._get_shower_angles(ush))
+            print('Zenith & azimuth in antenna framework:',zenp, azp)
 
-    if (freespace==0) and (zen>90):
+    if zenp>90 * u.deg:
         print('Signal originates below antenna horizon! No antenna response computed. Abort.')
         logger.info('Signal originates below antenna horizon! No antenna response computed. Abort.')
         return([],[])
 
     # Now take care of Efield signals
-    delt = np.mean(np.diff(time1));
+    delt = np.mean(np.diff(t));
     Fs = round(1/delt)
-    timeoff=time1[0] # time offset, to get absolute time
-    time1 = (time1-time1[0]) #reset to zero
+    timeoff=t[0] # time offset, to get absolute time
+    t = t-timeoff #reset to zero
+
     # Rotate Efield to antenna frame (x along actual arm)
     Etot=np.array([Ex,Ey,Ez])
-    [Exp,Eyp,Ezp] = TopoToAntenna(Etot,alpha,beta)
-    szen = np.sin(zen*np.pi/180);
-    czen = np.cos(zen*np.pi/180);
-    saz = np.sin(azim*np.pi/180);
-    caz = np.cos(azim*np.pi/180);
-    #amplituder = szen*(caz*Exp+saz*Eyp)+czen*Ezp
+    [Exp,Eyp,Ezp] = TopoToAntenna(Etot,alpha,beta)  #TODO: cleaner way?
+    szen = np.sin(zenp*np.pi/180);
+    czen = np.cos(zenp*np.pi/180);
+    saz = np.sin(azp*np.pi/180);
+    caz = np.cos(azp*np.pi/180);
+    amplituder = szen*(caz*Exp+saz*Eyp)+czen*Ezp
     amplitudet = czen*(caz*Exp+saz*Eyp)-szen*Ezp
     amplitudep = -saz*Exp+caz*Eyp
-    # if typ == "Z":
-    #     plt.figure(12)
-    #     plt.plot(Exp)
-    #     plt.plot(Eyp)
-    #     plt.plot(Ezp)
+
+    ###plots
+    if DISPLAY==2:
+        import pylab as pl
+        import matplotlib.pyplot as plt
+
+        plt.figure(1,  facecolor='w', edgecolor='k')
+        plt.title(typ)
+        plt.subplot(211)
+        plt.plot(t*1e9,Ey, label="Ey = EW")
+        plt.plot(t*1e9,Ex, label="Ex = NS")
+        plt.plot(t*1e9,Ez, label="Ez = UP")
+        plt.plot(t*1e9,Exp, label="Exp = NS")
+
+        plt.xlabel('Time (nsec)')
+        plt.ylabel('Electric field (muV/m)')
+        plt.legend(loc='best')
+        plt.subplot(212)
+        plt.plot(t*1e9,amplituder, label="E$_{ r}$")
+        plt.plot(t*1e9,amplitudet, label="E$_{ \Theta}$")
+        plt.plot(t*1e9,amplitudep, label="E$_{ \Phi}$")
+        plt.xlabel('Time (nsec)')
+        plt.ylabel('Electric field (muV/m)')
+        plt.legend(loc='best')
+        plt.show()
+
 
     ##################################
     ### all the settings for the 3 different antenna arms:
@@ -330,9 +353,9 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     lpa2=np.zeros(nfreq)
 
     if azstep==5:
-        roundazimuth=round(azim/10)*10+round((azim-10*round(azim/10))/5)*5
+        roundazimuth=round(azp.value/10)*10+round((azp.value-10*round(azp.value/10))/5)*5
     elif azstep==1:
-        roundazimuth=round(azim)
+        roundazimuth=round(azp.value)
     else:
         print('Error on azimuth step!')
         logger.error('Error on azimuth step!')
@@ -346,14 +369,14 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
 
     for i in range(nfreq):   # Using interpolation for every angle
         f[i]=freq[i,0]*freqscale
-        indtheta=np.nonzero(theta[i,:]==int(zen))[0]
+        indtheta=np.nonzero(theta[i,:]==int(zenp.value))[0]
         indphi=np.nonzero(phi[i,:]==roundazimuth)[0]
         indcom=np.intersect1d(indtheta,indphi)
         ltr1[i]=lefftheta[i,indcom]
         lta1[i]=np.deg2rad(phasetheta[i,indcom]) #*np.pi/180
         lpr1[i]=leffphi[i,indcom]
         lpa1[i]=np.deg2rad(phasephi[i,indcom]) #*np.pi/180
-        indtheta=np.nonzero(theta[i,:]==int(zen)+1)[0]
+        indtheta=np.nonzero(theta[i,:]==int(zenp.value)+1)[0]
         indphi=np.nonzero(phi[i,:]==roundazimuth)[0]
         indcom=np.intersect1d(indtheta,indphi)
         ltr2[i]=lefftheta[i,indcom]
@@ -361,10 +384,10 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
         lpr2[i]=leffphi[i,indcom]
         lpa2[i]=np.deg2rad(phasephi[i,indcom]) #*np.pi/180
 
-        ltr=interp1d([int(zen),int(zen)+1],np.transpose([ltr1,ltr2]))(zen)
-        lta=interp1d([int(zen),int(zen)+1],np.transpose([lta1,lta2]))(zen)
-        lpr=interp1d([int(zen),int(zen)+1],np.transpose([lpr1,lpr2]))(zen)
-        lpa=interp1d([int(zen),int(zen)+1],np.transpose([lpa1,lpa2]))(zen)
+        ltr=interp1d([int(zenp.value),int(zenp.value)+1],np.transpose([ltr1,ltr2]))(zenp.value)
+        lta=interp1d([int(zenp.value),int(zenp.value)+1],np.transpose([lta1,lta2]))(zenp.value)
+        lpr=interp1d([int(zenp.value),int(zenp.value)+1],np.transpose([lpr1,lpr2]))(zenp.value)
+        lpa=interp1d([int(zenp.value),int(zenp.value)+1],np.transpose([lpa1,lpa2]))(zenp.value)
 
     ###############################
     # Now go for the real thing
@@ -373,7 +396,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     fmax=f[-1]
     f=f*1e6
     #nf  = int(2**np.floor(np.log(len(amplitudet))/np.log(2))) # changed in July2019 - shortens the trace
-    nf = len(amplitudet)
+    nf = len(amplitudet) # TODO: check that this is still OK?
     while Fs/nf > fmin*1e6:   # <== Make sure that the DFT resolution is at least fmin.
         nf *= 2
     F = rfftfreq(nf)*Fs
@@ -397,7 +420,6 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     B[0]  = A[0]*modulust[0]
     B[-1] = A[-1]*modulust[-1]
 
-
     C = rfft(amplitudep, nf)
     cp = np.cos(phasep)
     sp = np.sin(phasep)
@@ -415,137 +437,6 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
 
     return(voltage, timet+timeoff)
 
-
-#===========================================================================================================
-def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
-#===========================================================================================================
-    '''
-    calls compute voltage for each component and stacks the results
-
-    Parameters
-    -----------
-    signal: numpy array
-        electric field trace time/ns, Ex, Ey,Ez in muV/m
-    zenith_sim: float
-        zenith of shower in deg (GRAND)
-    azimuth_sim: float
-        azimuth of shower in deg (GRAND)
-    alpha, beta: float
-        antenna angles, optional, in deg
-
-    Returns
-    ---------
-    numpy array
-        voltage traces, Time in ns, Vx,Vy,Vz in muV
-    '''
-
-    voltage_NS, timeNS = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
-    voltage_EW, timeEW = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
-    voltage_vert, timevert = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
-
-    # ATTENTION EW AND NS WERE SWITCHED
-    # ATTENTION voltage time now in ns
-    #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
-    return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
-
-
-
-#===========================================================================================================
-def compute(opt_input,path, zenith_sim, azimuth_sim):
-#===========================================================================================================
-    ''' Reads in efield in ascii format (zhaires) and applies the antenna reponse t one antenna or whole array
-        By default grep all antennas from the antenna file
-
-        Arguments:
-        ----------
-        opt_input: str
-            hand over mode txt or manual
-        path: str
-            path to event
-        zenith_sim: float
-            GRAND zenith in deg
-        zenith_sim: float
-            GRAND zenith in deg
-
-        Returns:
-        --------
-            --
-        Note: Possible plot of traces if desired
-    '''
-
-
-    posfile = path + '/antpos.dat'
-    positions=np.genfromtxt(posfile)
-    start=0
-    end=len(positions)
-
-    alpha_sim=0
-    beta_sim=0
-    if opt_input=='txt' and len(sys.argv)==4: # just one specific antenna handed over
-            start=int(sys.argv[-1]) # antenna ID
-            end=start+1
-    elif opt_input=='manual':
-        if len(sys.argv)>=7: # Slope paras
-            alpha_sim = float(sys.argv[5]) # antenna slope
-            beta_sim = float(sys.argv[6]) # antenna slope
-            print('Antenna slope: (',alpha_sim,',',beta_sim,')')
-        if len(sys.argv)==8: # just one specif antenna handed over
-            start=int(sys.argv[-1]) # antenna ID
-            end=start+1
-
-
-
-    print('Now looping over',end-start,'antenna(s) in folder',path)
-    for l in range(start,end):
-
-        efieldtxt=path+'/a'+str(l)+'.trace'
-        print('\n** Antenna',l,', Efield file:',efieldtxt)
-
-        try:
-	    # Loading traces
-            efield = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
-
-        except IOError:
-            print('IOError: file not found')
-
-
-
-        ### APPLY ANTENNA RESPONSE
-        trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
-
-        ### TODO: add here peak-to-peak computation, but how do we wann store it...
-
-
-        ###plots
-        if DISPLAY==1:
-            import pylab as pl
-            import matplotlib.pyplot as plt
-
-            plt.figure(1,  facecolor='w', edgecolor='k')
-            plt.subplot(211)
-            plt.plot(efield[0],efield[2], label="Ey = EW")
-            plt.plot(efield[0],efield[1], label="Ex = NS")
-            plt.plot(efield[0],efield[3], label="Ez = UP")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Electric field (muV/m)')
-            plt.legend(loc='best')
-            plt.subplot(212)
-            plt.plot(trace[0]*1e9,trace[1], label="EW")
-            plt.plot(trace[0]*1e9,trace[2], label="NS")
-            plt.plot(trace[0]*1e9,trace[3], label="Vertical")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Voltage (muV)')
-            plt.legend(loc='best')
-
-            plt.show()
-
-############### end of loop over antennas
-
-
-####################################################################################################################################
-####################################################################################################################################
-####################################################################################################################################
-
 #===========================================================================================================
 # Compute the time dependent voltage
 #===========================================================================================================
@@ -555,8 +446,9 @@ if __name__ == '__main__':
     # Load simulated event HDF5 file
     exfile = "/home/martineau/GRAND/GRANDproto300/data/test/event_000001.hdf5"
 
-    from ..config import load
-    load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
+    #from ..config import load
+    #load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
+    load_leff()
 
     # First retrieve shower infos
     #1st method: using dicts
@@ -591,8 +483,61 @@ if __name__ == '__main__':
     # Now get antenna positions from hdf5 file, using dicts
     arrayfile = "/home/martineau/GRAND/soft/grand/lib/python/grand/example/det.txt"
     det = detector.Detector()
-    #create detector=antenna array from file defined in config file
-    det.create_from_file(arrayfile)
-    ## get all antennas positions
-    array = det.position
-    #print(array)
+    det.create_from_file(arrayfile)      #create detector=antenna array from file defined in config file
+    array = det.position  # get all antennas positions
+    IDs = det.ID  # get all antennas IDs
+
+    # loop over existing single antenna files as raw output from simulations
+    logger.info("Looping over antennas ...")
+    # Coordinates in a local frame (ENU by default)
+    from grand import ECEF, LTP
+    obstime = "2019-12-25"
+    origin = ECEF(latitude=38.85 * u.deg, longitude=92.5 * u.deg, height=0 * u.m,representation_type="geodetic")  # TODO: include this in the config file
+    #print("Center of GRAND array:",origin)
+    for i in range(np.size(IDs)):  # Would be more logical to loop on all existing traces rather than units in the detector
+        # First  build effective angles to Xmax (source)
+        ant = array[i]
+        ush = (ant-xmaxpos)/np.linalg.norm(xmaxpos-ant)
+        ush = ush / u.m
+        #ush = LTP(ush,location=origin, magnetic=True, orientation=("N", "W", "U"), obstime=obstime) # How can we get coordinates values???
+        print("Source radiating in direction:", ush)
+        print("towards antenna",ant)
+        zen_eff,az_eff = modules._get_shower_angles(ush)  # Effective zenith & az angles (ie Xmax pos seen from the antenna)
+        print("Corresponding angles:", zen_eff, az_eff)
+        alpha = 0 # TODO: fetch antenna slope
+        beta = 0
+        # Now fetch traces
+        efield = io_utils._load_efield_fromhdf(exfile,ant = "/"+str(int(IDs[i])))
+        if np.size(efield) == 1:  # No trace for that antenna
+            continue
+        # Now go to work
+        voltage_NS, timeNS = get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], zen_eff, az_eff, alpha, beta, typ="X")
+        voltage_EW, timeEW = get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], zen_eff, az_eff, alpha, beta, typ="Y")
+        voltage_vert, timevert = get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], zen_eff, az_eff, alpha, beta, typ="Z")
+
+        ###plots
+        if DISPLAY==1:
+            import pylab as pl
+            import matplotlib.pyplot as plt
+
+            plt.figure(1,  facecolor='w', edgecolor='k')
+            plt.subplot(211)
+            plt.plot(efield.T[0],efield.T[2], label="Ey = EW")
+            plt.plot(efield.T[0],efield.T[1], label="Ex = NS")
+            plt.plot(efield.T[0],efield.T[3], label="Ez = UP")
+            plt.xlabel('Time (nsec)')
+            plt.ylabel('Electric field (muV/m)')
+            plt.legend(loc='best')
+            plt.subplot(212)
+            plt.plot(timeEW*1e9,voltage_EW, label="EW")
+            plt.plot(timeNS*1e9,voltage_NS, label="NS")
+            plt.plot(timevert*1e9,voltage_vert, label="Vertical")
+            plt.xlabel('Time (nsec)')
+            plt.ylabel('Voltage (muV)')
+            plt.legend(loc='best')
+
+            plt.show()
+        # ATTENTION EW AND NS WERE SWITCHED
+        # ATTENTION voltage time now in ns
+        #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
+        #return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)

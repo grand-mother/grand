@@ -24,7 +24,7 @@ radio.processing.vrms2     = 28 * u.uV # Before filtering
 radio.processing.tsampling = 2  * u.ns # For digitisation
 
 # Antenna responses
-prefix = Path("../lib/python/radio_simus/GRAND_antenna")
+prefix = Path("lib/python/grand/tools/data/GRAND_antenna")
 radio.antenna.leff.x = prefix / "HorizonAntenna_SNarm_leff_loaded.npy"
 radio.antenna.leff.y = prefix / "HorizonAntenna_EWarm_leff_loaded.npy"
 radio.antenna.leff.z = prefix / "HorizonAntenna_Zarm_leff_loaded.npy"

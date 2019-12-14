@@ -18,7 +18,49 @@ thetageo = 90+(config.magnet.inclination / u.deg).value
 
 
 # ============================================================================
+def _get_shower_angles(ush):
+    '''
+    Parameters
+    ----------
+    ush : propagation vector of the shower in the GRAND referential
 
+    Returns
+    -------
+    zen :   float
+        zenith of the shower in GRAND, in deg
+    az : float
+        azimuth of the shower in GRAND, in deg
+    '''
+
+    zen=np.rad2deg(math.acos(ush[2])) * u.deg # Zenith in antenna frame
+    if zen<0 * u.deg:
+        zen = zen +360*u.deg
+    az=np.rad2deg(math.atan2(ush[1],ush[0])) * u.deg
+    if az<0 * u.deg:
+        az = az + 360*u.deg
+    return zen, az
+
+def _get_shower_vector(zen,az):
+    '''
+    Parameters
+    ----------
+    zen :   float
+        zenith of the shower in GRAND, in deg
+    az : float
+        azimuth of the shower in GRAND, in deg
+
+    Returns
+    -------
+    ush : propagation vector of the shower in the GRAND referential
+
+    '''
+    caz = np.cos(np.deg2rad(az))
+    saz = np.sin(np.deg2rad(az))
+    czen = np.cos(np.deg2rad(zen))
+    szen = np.sin(np.deg2rad(zen))
+    ush = np.array([caz*szen, saz*szen,czen])  # Using GRAND conventions here
+
+    return ush
 
 def _geomagnetic_angle(zen, az):
     '''
