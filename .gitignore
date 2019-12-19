@@ -30,6 +30,7 @@ python3-*.AppImage
 lib/python/grand/libs/data
 lib/python/grand/tools/data/topography
 tests/topography
+tests/montecarlo/data
 
 # Ignore user data
 user/grand

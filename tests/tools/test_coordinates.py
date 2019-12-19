@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the grand_tools.coordinates module
 """
@@ -13,7 +12,8 @@ import astropy.units as u
 from astropy.coordinates import CartesianRepresentation, EarthLocation, ITRS,  \
                                 SkyCoord
 from astropy.utils import iers
-iers.conf.auto_download = False # Disable downloads for tests, due to latency failures
+iers.conf.auto_download = False # Disable downloads for tests,
+                                # due to latency failures
 
 
 class CoordinatesTest(unittest.TestCase):
@@ -28,7 +28,7 @@ class CoordinatesTest(unittest.TestCase):
 
     def assertQuantity(self, x, y, unit, tol):
         """Check that two astropy.Quantities are consistent"""
-        self.assertAlmostEqual((x / unit).value, (y / unit).value, tol)
+        self.assertAlmostEqual(x.to_value(unit), y.to_value(unit), tol)
 
 
     def assertCartesian(self, x, y, unit, tol):
@@ -92,9 +92,9 @@ class CoordinatesTest(unittest.TestCase):
                                          elevation=angle[1] * u.deg)
             cart = h.represent_as(CartesianRepresentation)
 
-            self.assertQuantity(cart.x, point[0], u.one, 9)
-            self.assertQuantity(cart.y, point[1], u.one, 9)
-            self.assertQuantity(cart.z, point[2], u.one, 9)
+            self.assertQuantity(cart.x, point[0] * u.one, u.one, 9)
+            self.assertQuantity(cart.y, point[1] * u.one, u.one, 9)
+            self.assertQuantity(cart.z, point[2] * u.one, u.one, 9)
 
             cart = CartesianRepresentation(*point)
             h = cart.represent_as(HorizontalRepresentation)
@@ -144,9 +144,9 @@ class CoordinatesTest(unittest.TestCase):
         ltp = ecef.transform_to(LTP(location=self.location))
 
         self.assertEqual(ltp.obstime, self.obstime)
-        self.assertQuantity(ltp.x, 0, u.m, 6)
-        self.assertQuantity(ltp.y, 0, u.m, 6)
-        self.assertQuantity(ltp.z, 0, u.m, 6)
+        self.assertQuantity(ltp.x, 0 * u.m, u.m, 6)
+        self.assertQuantity(ltp.y, 0 * u.m, u.m, 6)
+        self.assertQuantity(ltp.z, 0 * u.m, u.m, 6)
 
         # Check the Earth location conversion
         location = ltp.earth_location.itrs.cartesian
@@ -199,20 +199,20 @@ class CoordinatesTest(unittest.TestCase):
                                       elevation = 0 * u.deg)
         ltp = LTP(uy, location=self.location, obstime=self.obstime)
 
-        self.assertQuantity(ltp.x, 0, u.one, 9)
-        self.assertQuantity(ltp.y, 1, u.one, 9)
-        self.assertQuantity(ltp.z, 0, u.one, 9)
+        self.assertQuantity(ltp.x, 0 * u.one, u.one, 9)
+        self.assertQuantity(ltp.y, 1 * u.one, u.one, 9)
+        self.assertQuantity(ltp.z, 0 * u.one, u.one, 9)
 
         r = ltp.transform_to(ECEF)
 
         self.assertEqual(r.obstime, ltp.obstime)
-        self.assertQuantity(r.cartesian.norm(), 1, u.one, 6)
+        self.assertQuantity(r.cartesian.norm(), 1 * u.one, u.one, 6)
 
         ecef = ECEF(uy, obstime=self.obstime)
         ltp = ecef.transform_to(LTP(location=self.location))
 
         self.assertEqual(ltp.obstime, ecef.obstime)
-        self.assertQuantity(ltp.cartesian.norm(), 1, u.one, 6)
+        self.assertQuantity(ltp.cartesian.norm(), 1 * u.one, u.one, 6)
 
         # Check the magnetic north case
         ltp0 = LTP(uy, location=self.location, obstime=self.obstime)
