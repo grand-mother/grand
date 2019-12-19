@@ -3,7 +3,7 @@ import numpy as np
 import logging
 logger = logging.getLogger(__name__)
 
-#===========================================================================================================
+# ===========================================================================================================
 #def load_trace(directory, index, suffix=".trace"):
     #"""Load data from a trace file (ascii file)
 
@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
         #with open(path, "r") as f:
             #return np.array([map(float, line.split()) for line in f])
 
-#===========================================================================================================
+# ===========================================================================================================
+
 
 def getn(h):
     """Get the refractive index
@@ -61,25 +62,28 @@ def getn(h):
 
     return 1. + 325E-06 * np.exp(-0.1218E-03 * h)
 
-#===========================================================================================================
+# ===========================================================================================================
+
 
 def getCerenkovAngle(h):
-   """Get the Cerenkov angle
+    """Get the Cerenkov angle
 
-    Arguments:
-    ----------
-    h: float
-        height in m wrt to sealevel
+     Arguments:
+     ----------
+     h: float
+         height in m wrt to sealevel
 
-    Returns:
-    --------
-    float
-        Cherenkov angle at height h in deg
-   """
+     Returns:
+     --------
+     float
+         Cherenkov angle at height h in deg
+    """
 
-   return np.rad2deg(np.arccos(1. / getn(h)))
+    return np.rad2deg(np.arccos(1. / getn(h)))
 
-#===========================================================================================================
+# ===========================================================================================================
+
+
 def get_integratedn(injh2, position):
     '''Calculates the integrated n from a specific height (0,0,height) to the observer position
         --- works currently only for neutrinos
@@ -100,63 +104,67 @@ def get_integratedn(injh2, position):
     NOTE: calculation of integrated n implemented similar as in Zhaires
     '''
 
-    Re= 6370949 # m, Earth radius
+    Re = 6370949  # m, Earth radius
     ########
     # line of sight
-    ux= position[0] -0.
-    uy= position[1] -0.
-    uz= position[2] -injh2
+    ux = position[0] - 0.
+    uy = position[1] - 0.
+    uz = position[2] - injh2
 
-    nint= 10000 # so many sub tracks alng line of sight
+    nint = 10000  # so many sub tracks alng line of sight
     # vector k along the line of sight
-    kx=ux/nint
-    ky=uy/nint
-    kz=uz/nint
+    kx = ux/nint
+    ky = uy/nint
+    kz = uz/nint
 
-    #current positions, start with injh as first point of emission
-    currpx=0.
-    currpy=0.
-    currpz=injh2
-    currh=currpz # just in that case here, since particle injected directly induce a shower
+    # current positions, start with injh as first point of emission
+    currpx = 0.
+    currpy = 0.
+    currpz = injh2
+    currh = currpz  # just in that case here, since particle injected directly induce a shower
 
-    ns=325E-06
-    kr=-0.1218E-03
+    ns = 325E-06
+    kr = -0.1218E-03
 
-    summe=0.
-    for i in range(0,nint):
-        nextpx=currpx+kx
-        nextpy=currpy+ky
-        nextpz=currpz+kz
+    summe = 0.
+    for i in range(0, nint):
+        nextpx = currpx+kx
+        nextpy = currpy+ky
+        nextpz = currpz+kz
 
-        nextR=np.sqrt( nextpx*nextpx +nextpy*nextpy )
-        nexth= ( np.sqrt((( injh2 - nextpz  ) + Re) * (( injh2  - nextpz  ) + Re) + nextR*nextR) - Re) /1e3
+        nextR = np.sqrt(nextpx*nextpx + nextpy*nextpy)
+        nexth = (np.sqrt(((injh2 - nextpz) + Re) *
+                         ((injh2 - nextpz) + Re) + nextR*nextR) - Re) / 1e3
 
-        if (abs(currh-nexth)>1e-10 ):
-            summe=summe+ (  np.exp(kr*nexth) -   np.exp(kr*currh)  )/ (kr*( nexth - currh) )
+        if (abs(currh-nexth) > 1e-10):
+            summe = summe + (np.exp(kr*nexth) - np.exp(kr*currh)
+                             ) / (kr*(nexth - currh))
         else:
-            summe=summe+ np.exp(kr*currh)
+            summe = summe + np.exp(kr*currh)
 
-        currpx=nextpx
-        currpy=nextpy
-        currpz=nextpy
-        currR=nextR
-        currh=nexth
- 
+        currpx = nextpx
+        currpy = nextpy
+        currpz = nextpy
+        currR = nextR
+        currh = nexth
 
-    avn= ns*summe/nint
-    n= 1.+ avn
+    avn = ns*summe/nint
+    n = 1. + avn
 
-    return  n # integrated n
+    return n  # integrated n
 
-#===========================================================================================================
+# ===========================================================================================================
+
+
 def mag(x):
     ''' Calculates the length of a vector or the absolute value
     '''
     return np.sqrt(x.dot(x))
 
 
-#=========================================================================================================== 
-def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.,0.]): # theta and azim in Grand convention
+# ===========================================================================================================
+# theta and azim in Grand convention
+def _getAngle(refpos=[0., 0., 1e6], theta=None, azim=None, ANTENNAS=None, core=[0., 0., 0.]):
     """ Get angle between antenna and shower axis (injection point or Xmax)
         Arguments:
         ----------
@@ -170,7 +178,7 @@ def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.
             observer position in m
         core: numpy array
             optional, core position in m, not yet used
- 
+
         Returns:
         --------
         float
@@ -181,19 +189,20 @@ def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.
     """
 
     zenr = np.radians(theta)
-    azimr= np.radians(azim)
+    azimr = np.radians(azim)
     ANTENNAS1 = np.copy(ANTENNAS)-core
 
     # Compute angle between shower and decay-point-to-antenna axes
     u_ant = ANTENNAS1-refpos
     u_ant = (u_ant/np.linalg.norm(u_ant))
 
-    u_sh = [np.cos(azimr)*np.sin(zenr), np.sin(azimr)*np.sin(zenr), np.cos(zenr)]
+    u_sh = [np.cos(azimr)*np.sin(zenr), np.sin(azimr)
+            * np.sin(zenr), np.cos(zenr)]
     ant_angle = np.arccos(np.matmul(u_ant, u_sh))
 
     return np.rad2deg(ant_angle)
 
-#===========================================================================================================
+# ===========================================================================================================
 
 #def rfftfreq(n, d=1.0, nyquist_domain=1):
 	#'''calcs frequencies for rfft, exactly as numpy.fft.rfftfreq, lacking that function in my old numpy version.
@@ -222,7 +231,8 @@ def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.
 		#f += (nyquist_domain-1)*fmax
 	#return f
 
-#===========================================================================================================
+# ===========================================================================================================
+
 
 def time2freq(trace):
     '''
@@ -245,9 +255,10 @@ def time2freq(trace):
 
     '''
 
-    return np.fft.rfft(trace, axis=-1) * 2 ** 0.5 
+    return np.fft.rfft(trace, axis=-1) * 2 ** 0.5
 
-#===========================================================================================================
+# ===========================================================================================================
+
 
 def freq2time(spectrum, n=None):
     """
@@ -267,4 +278,3 @@ def freq2time(spectrum, n=None):
 
     """
     return np.fft.irfft(spectrum, axis=-1, n=n) / 2 ** 0.5
-

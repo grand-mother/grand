@@ -13,15 +13,16 @@ import glob
 import logging
 logger = logging.getLogger(__name__)
 
-__all__ = ["inputfromtxt_coreas", "get_Xmax_coreas"] # XXX remove the _coreas
+# XXX / TODO remove the _coreas
+__all__ = ["inputfromtxt_coreas", "get_Xmax_coreas"] 
 
 from astropy import units as u
 
 
 
-#===========================================================================================================
+#===============================================================
 def inputfromtxt_coreas(input_file_path): # still ongoing work
-#===========================================================================================================
+#===============================================================
     '''
     Get shower parameter from inp and reas file for coreas simulations
 
@@ -58,12 +59,13 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     datafile = open(input_file_path, 'r')
 
     for line in datafile:
-        # NOTE: CORSIKA/CoREAS angle = direction of propgation == GRAND conventions
+        # NOTE: CORSIKA/CoREAS angle = direction of propgation 
+        #                            == GRAND conventions
         if 'THETAP' in line:
-            zen=float(line.split('    ',-1)[1]) *u.deg# propagation direction
+            zen=float(line.split('    ',-1)[1]) *u.deg
             zen=180*u.deg-zen # to GRAND
         if 'PHIP' in line:
-            azim = float(line.split('    ',-1)[1])*u.deg # propagation direction, already in GRAND
+            azim = float(line.split('    ',-1)[1])*u.deg # already in GRAND
         #if 'RASPASSHeight' in line:
             #injh = float(line.split(' ',-1)[2])*u.m
         if 'ERANGE' in line:
@@ -93,9 +95,12 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     try:
         injh
     except NameError:
-        injh = 100000.e2*u.m #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km in cm
+        #Case of a cosmic for which no injection height is defined 
+        #in the input file and is then set to 100 km in cm
+        injh = 100000.e2*u.m 
 
-    # Get reas file
+
+    # Get reas file , here get the produced info-file
     path, reas = os.path.split(input_file_path)
     base = os.path.basename(reas)
     base1 = os.path.splitext(base)
@@ -134,7 +139,7 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     else:
         return zen,azim,energy,injh,primarytype
 
-#===========================================================================================================
+#==================================================================
 
 def _get_positions_coreas(path):
     '''
@@ -161,7 +166,6 @@ def _get_positions_coreas(path):
     y_pos1=[]
     z_pos1=[]
     ID_ant=[]
-    #positions=[]
 
     alpha=[]
     beta=[]
@@ -169,9 +173,9 @@ def _get_positions_coreas(path):
     # Coreas
         if 'AntennaPosition =' in line: #list file
             #print(line,line.split('    ',-1) )
-            x_pos1.append(float(line.split('  ',-1)[1])/100.) #*u.cm) # cm to m
-            y_pos1.append(float(line.split('  ',-1)[2])/100.) #*u.cm) # cm to m
-            z_pos1.append(float(line.split('  ',-1)[3])/100.) #*u.cm) # cm to m
+            x_pos1.append(float(line.split('  ',-1)[1])/100.)  # cm to m
+            y_pos1.append(float(line.split('  ',-1)[2])/100.)  # cm to m
+            z_pos1.append(float(line.split('  ',-1)[3])/100.)  # cm to m
             ID_ant.append(str(line.split('  ',-1)[4]))
             alpha.append(0)
             beta.append(0)
@@ -189,11 +193,10 @@ def _get_positions_coreas(path):
     z_pos1=np.asarray(z_pos1)
     positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )*u.m
     slopes=np.stack((alpha, beta), axis=-1 )*u.deg
-    #print(ID_ant)
 
     return positions, ID_ant, slopes
 
-#===========================================================================================================
+#=====================================================================
 
 def get_Xmax_coreas(path):
     """ read Xmax value from simulations, inspred by Rio group
@@ -222,8 +225,7 @@ def get_Xmax_coreas(path):
 
     return Xmax
 
-#===========================================================================================================
-
+#=====================================================================
 def _get_distanceXmax_coreas(path):
     '''
     Reads the distance to Xmax from reas file , function from Rio group
@@ -250,8 +252,7 @@ def _get_distanceXmax_coreas(path):
 
     return d_Xmax
 
-#===========================================================================================================
-
+#=======================================================================
 def _get_showercore_coreas(path):
     '''
     Reads the distance to Xmax from reas file, inspired by Rio group
