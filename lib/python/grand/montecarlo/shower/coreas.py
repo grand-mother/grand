@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from logging import getLogger
 import os
+from pathlib import Path
 
 import astropy.constants
 from astropy.coordinates import CartesianRepresentation
@@ -24,7 +25,7 @@ _id_to_name = {
 
 class CoreasShower(Shower):
     @classmethod
-    def _from_dir(cls, path, version):
+    def _from_dir(cls, path: Path, version: int) -> Shower:
         if not path.exists():
             raise FileNotFoundError(path)
 

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from contextlib import contextmanager
 import os
+from typing import Optional, Tuple
 
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation
@@ -18,17 +21,17 @@ class ElementsIterator:
     """
     Iterator over the data elements of a node
     """
-    def __init__(self, node):
+    def __init__(self, node: DataNode) -> None:
         self.node = node
 
-    def __iter__(self):
+    def __iter__(self) -> ElementsIterator:
         self._data = self.node._group.__iter__()
         return self
 
-    def __next__(self):
+    def __next__(self) -> Tuple[str, DataNode]:
         while True:
-            k = self._data.__next__()
-            v = self.node._group[k]
+            k: str = self._data.__next__()
+            v: DataNode = self.node._group[k]
             if type(v) == _Dataset:
                 return k, self.node._unpack(v)
 
@@ -40,39 +43,39 @@ class DataNode:
 
     _compression = {"compression": "gzip", "compression_opts": 9}
 
-    def __init__(self, group):
+    def __init__(self, group: _Group) -> None:
         self._group = group
-        self._name = None
+        self._name: Optional[str] = None
 
-    def __getitem__(self, k):
+    def __getitem__(self, k: str) -> DataNode:
         v = self._group[k]
         if type(v) == _Group:
             return DataNode(v)
         else:
             raise KeyError(k)
 
-    def __iter__(self):
+    def __iter__(self) -> DataNode:
         self._group_iter = self._group.__iter__()
         return self
 
-    def __next__(self):
+    def __next__(self) -> DataNode:
         while True:
             k = self._group_iter.__next__()
             v = self._group[k]
             if type(v) == _Group:
                 return DataNode(v)
 
-    def __enter__(self):
+    def __enter__(self) -> DataNode:
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args) -> None:
         pass
 
-    def branch(self, k):
-        v = self._group.require_group(k)
+    def branch(self, k: str) -> DataNode:
+        v:_Group = self._group.require_group(k)
         return DataNode(v)
 
-    def read(self, k):
+    def read(self, k: str):
         v = self._group[k]
         if type(v) == _Dataset:
             return self._unpack(v)
@@ -97,7 +100,7 @@ class DataNode:
         else:
             dset = self._write_number(k, v, dtype, unit)
 
-    def _unpack(self, dset):
+    def _unpack(self, dset: _Dataset):
         if dset.shape:
             v = dset[:]
         else:

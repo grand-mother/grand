@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from logging import getLogger
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Union
 
 from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
@@ -22,12 +24,13 @@ class Field(NamedTuple):
 
 
 class Shower:
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
+        self.fields:Optional[OrderedDict] = None
         for k, v in kwargs.items():
             setattr(self, k, v)
 
     @classmethod
-    def load(cls, path, version=0):
+    def load(cls, path:Union[Path, str], version: int=0) -> Shower:
         _logger.info(f"Loading shower data from {path}")
 
         path = Path(path)
@@ -43,13 +46,13 @@ class Shower:
         else:
             self = load(path, version)
 
-        if hasattr(self, "fields"):
+        if self.fields is not None:
             _logger.info(f"Loaded {len(self.fields)} field(s) from {path}")
 
         return self
 
     @classmethod
-    def _from_hdf5(cls, path, version):
+    def _from_hdf5(cls, path: Path, version: int) -> Shower:
         kwargs = {}
 
         with io.open(path) as root:
@@ -62,7 +65,7 @@ class Shower:
             except KeyError:
                 pass
             else:
-                fields = OrderedDict()
+                fields: OrderedDict = OrderedDict()
                 kwargs["fields"] = fields
 
                 for antenna_node in fields_node:
@@ -75,7 +78,7 @@ class Shower:
 
         return cls(**kwargs)
 
-    def dump(self, path, version=0):
+    def dump(self, path: Union[Path, str], version: int=0) -> None:
         path = Path(path)
         if path.suffix != ".hdf5":
             raise ValueError("Invalid data format {path.suffix}")
@@ -88,16 +91,14 @@ class Shower:
                 if k != "fields" and (k[0] != "_"):
                     shower_node.write(k, v)
 
-            if hasattr(self, "fields"):
+            if self.fields is not None:
                 for antenna, field in self.fields.items():
                     _logger.debug(f"Dumping field for antenna {antenna}")
                     with shower_node.branch(f"fields/{antenna}") as n:
                         n.write("r", field.r, unit="m")
                         n.write("t", field.t, unit="ns")
                         n.write("E", field.E, unit="uV/m")
-        try:
+
+        if self.fields is not None:
             n = len(self.fields)
-        except AttributeError:
-            pass
-        else:
             _logger.info(f"Dumped {n} field(s) to {path}")
