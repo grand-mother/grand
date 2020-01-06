@@ -10,16 +10,18 @@ API documentation
 >>> import astropy.units as u
 
 
-Wrappers
---------
+Interfaces
+----------
 
-The :mod:`grand` package exposes the following interface modules. Those are
-wrappers, E.g. for core `C` libraries used in the simulation.
+The :mod:`grand` package exposes the following interface modules. Most of those
+are wrappers, E.g. for core `C` libraries used in the simulation.
 
 .. toctree::
    :maxdepth: 1
 
    grand.geomagnet
+   grand.io
+   grand.montecarlo
    grand.store
    grand.topography
 
@@ -27,7 +29,8 @@ wrappers, E.g. for core `C` libraries used in the simulation.
 Extensions
 ----------
 
-In addition, the :mod:`grand` package extends the following :mod:`astropy` functionalities.
+In addition, the :mod:`grand` package extends the :mod:`astropy` package with
+the following functionalities.
 
 .. toctree::
    :maxdepth: 1

@@ -30,75 +30,82 @@ class Shower:
             setattr(self, k, v)
 
     @classmethod
-    def load(cls, path:Union[Path, str], version: int=0) -> Shower:
-        _logger.info(f"Loading shower data from {path}")
-
-        path = Path(path)
-        if path.is_dir():
-            loadder = "_from_dir"
+    def load(cls, source: Union[Path, str, io.DataNode]) -> Shower:
+        if type(source) == io.DataNode:
+            filename = f"{source.filename}:{source.path}"
+            loader = "_from_datanode"
         else:
-            loadder = f"_from_{path.suffix[1:]}"
+            filename = f"{source}:/"
+            source = Path(source)
+            if source.is_dir():
+                loader = "_from_dir"
+            else:
+                loader = f"_from_datafile"
+
+        _logger.info(f"Loading shower data from {filename}")
 
         try:
-            load = getattr(cls, loadder)
+            load = getattr(cls, loader)
         except AttributeError:
-            raise ValueError(f"Invalid data format {path.suffix}")
+            raise ValueError(f"Invalid data format")
         else:
-            self = load(path, version)
+            self = load(source)
 
         if self.fields is not None:
-            _logger.info(f"Loaded {len(self.fields)} field(s) from {path}")
+            _logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
 
         return self
 
     @classmethod
-    def _from_hdf5(cls, path: Path, version: int) -> Shower:
-        kwargs = {}
-
+    def _from_datafile(cls, path: Path) -> Shower:
         with io.open(path) as root:
-            shower_node = root[f"montecarlo/shower/{version}"]
-            for name, data in shower_node.elements:
-                kwargs[name] = data
+            return cls._from_datanode(root)
 
-            try:
-                fields_node = shower_node["fields"]
-            except KeyError:
-                pass
-            else:
-                fields: OrderedDict = OrderedDict()
-                kwargs["fields"] = fields
+    @classmethod
+    def _from_datanode(cls, node: io.DataNode) -> Shower:
+        kwargs = {}
+        for name, data in node.elements:
+            kwargs[name] = data
 
-                for antenna_node in fields_node:
-                    antenna = int(antenna_node.name)
-                    _logger.debug(f"Loading field for antenna {antenna}")
-                    r = antenna_node.read("r")
-                    t = antenna_node.read("t")
-                    E = antenna_node.read("E")
-                    fields[antenna] = Field(r, t, E)
+        try:
+            fields_node = node["fields"]
+        except KeyError:
+            pass
+        else:
+            fields: OrderedDict = OrderedDict()
+            kwargs["fields"] = fields
+
+            for antenna_node in fields_node:
+                antenna = int(antenna_node.name)
+                _logger.debug(f"Loading field for antenna {antenna}")
+                r = antenna_node.read("r")
+                t = antenna_node.read("t")
+                E = antenna_node.read("E")
+                fields[antenna] = Field(r, t, E)
 
         return cls(**kwargs)
 
-    def dump(self, path: Union[Path, str], version: int=0) -> None:
-        path = Path(path)
-        if path.suffix != ".hdf5":
-            raise ValueError("Invalid data format {path.suffix}")
+    def dump(self, source: Union[Path, str, io.DataNode]) -> None:
+        if type(source) == io.DataNode:
+            self._to_datanode(source)
+        else:
+            with io.open(source, "w") as root:
+                self._to_datanode(root)
 
-        _logger.info(f"Dumping shower data to {path}")
+    def _to_datanode(self, node: io.DataNode):
+        _logger.info(f"Dumping shower data to {node.filename}:{node.path}")
 
-        with io.open(path, "w") as root:
-            shower_node = root.branch(f"montecarlo/shower/{version}")
-            for k, v in self.__dict__.items():
-                if k != "fields" and (k[0] != "_"):
-                    shower_node.write(k, v)
-
-            if self.fields is not None:
-                for antenna, field in self.fields.items():
-                    _logger.debug(f"Dumping field for antenna {antenna}")
-                    with shower_node.branch(f"fields/{antenna}") as n:
-                        n.write("r", field.r, unit="m")
-                        n.write("t", field.t, unit="ns")
-                        n.write("E", field.E, unit="uV/m")
+        for k, v in self.__dict__.items():
+            if k != "fields" and (k[0] != "_"):
+                node.write(k, v)
 
         if self.fields is not None:
+            for antenna, field in self.fields.items():
+                _logger.debug(f"Dumping field for antenna {antenna}")
+                with node.branch(f"fields/{antenna}") as n:
+                    n.write("r", field.r, unit="m")
+                    n.write("t", field.t, unit="ns")
+                    n.write("E", field.E, unit="uV/m")
+
             n = len(self.fields)
-            _logger.info(f"Dumped {n} field(s) to {path}")
+            _logger.info(f"Dumped {n} field(s) to {node.filename}:{node.path}")

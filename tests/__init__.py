@@ -49,11 +49,15 @@ def main():
 
     if not options.unit:
         # Look for doc tests
+        from astropy.coordinates import CartesianRepresentation
+        import astropy.units as u
         from grand import geomagnet, store, topography, ECEF,                  \
                           GeodeticRepresentation, HorizontalRepresentation, LTP
-        import astropy.units as u
-        globs = { "geomagnet": geomagnet, "store": store,
-                  "topography": topography, "ECEF": ECEF, "LTP": LTP,
+        import grand.io as io
+        globs = { "geomagnet": geomagnet, "io": io, "store": store,
+                  "topography": topography,
+                  "CartesianRepresentation": CartesianRepresentation,
+                  "ECEF": ECEF, "LTP": LTP,
                   "GeodeticRepresentation": GeodeticRepresentation,
                   "HorizontalRepresentation": HorizontalRepresentation, "u": u}
 
@@ -77,5 +81,9 @@ def main():
 
             runner = unittest.TextTestRunner(verbosity=options.verbosity)
             exit_status = not runner.run(test_suite).wasSuccessful()
+            try:
+                os.remove("data.hdf5")
+            except FileNotFoundError:
+                pass
 
     sys.exit(exit_status)

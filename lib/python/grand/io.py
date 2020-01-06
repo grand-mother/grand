@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from contextlib import contextmanager
 import os
 from typing import Optional, Tuple
 
@@ -12,9 +11,6 @@ from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
 
 __all__ = ["ElementsIterator", "DataNode"]
-
-
-h5py.get_config().default_file_mode = "r"
 
 
 class ElementsIterator:
@@ -75,12 +71,21 @@ class DataNode:
         v:_Group = self._group.require_group(k)
         return DataNode(v)
 
-    def read(self, k: str):
-        v = self._group[k]
-        if type(v) == _Dataset:
-            return self._unpack(v)
+    def close(self) -> None:
+        self._group.file.close()
+
+    def read(self, *args: str):
+        res = len(args) * [None]
+        for i, k in enumerate(args):
+            v = self._group[k]
+            if type(v) == _Dataset:
+                res[i] = self._unpack(v)
+            else:
+                raise KeyError(k)
+        if len(res) == 1:
+            return res[0]
         else:
-            raise KeyError(k)
+            return res
 
     def write(self, k, v, dtype=None, unit=None, columns=None, units=None):
         if isinstance(v, (str, bytes, numpy.string_, numpy.bytes_)):
@@ -316,11 +321,23 @@ class DataNode:
             self._name = os.path.basename(self._group.name)
         return self._name
 
+    @property
+    def path(self):
+        return self._group.name
 
-@contextmanager
-def open(*args, **kwargs):
-    f = _File(*args, **kwargs)
-    try:
-        yield DataNode(f["/"])
-    finally:
-        f.close()
+    @property
+    def filename(self):
+        return self._group.file.filename
+
+
+class ClosingDataNode(DataNode):
+    def __enter__(self) -> ClosingDataNode:
+        return self
+
+    def __exit__(self, *args) -> None:
+        self.close()
+
+
+def open(file, mode="r"):
+    f = _File(file, mode)
+    return ClosingDataNode(f["/"])

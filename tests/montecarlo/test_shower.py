@@ -11,7 +11,7 @@ from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
 
-from grand import store
+from grand import store, io
 from grand.montecarlo.shower import CoreasShower, Field, Shower
 
 
@@ -67,12 +67,26 @@ class ShowerTest(unittest.TestCase):
         )
         shower = Shower(fields=fields, **settings)
         shower.dump(self.path)
-        tmp = shower.load(self.path)
+        tmp = Shower.load(self.path)
 
-        a, b = shower.fields[1], tmp.fields[1]
-        self.assertCartesian(a.r, b.r)
-        self.assertQuantity(a.t, b.t)
-        self.assertCartesian(a.E, b.E)
+        def compare_showers():
+            a, b = shower.fields[1], tmp.fields[1]
+            self.assertCartesian(a.r, b.r)
+            self.assertQuantity(a.t, b.t)
+            self.assertCartesian(a.E, b.E)
+
+        compare_showers()
+
+        nodepath = "montecarlo/shower"
+        with io.open(self.path, "w") as root:
+            node = root.branch(nodepath)
+            shower.dump(node)
+
+        with io.open(self.path) as root:
+            node = root[nodepath]
+            tmp = Shower.load(node)
+
+        compare_showers()
 
 
     def test_coreas(self):
