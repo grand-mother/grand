@@ -10,7 +10,7 @@ import h5py
 from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
 
-__all__ = ["ElementsIterator", "DataNode"]
+__all__ = ["DataNode", "ElementsIterator"]
 
 
 class ElementsIterator:

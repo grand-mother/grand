@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
-from typing import NamedTuple, Optional, Union
+from typing import cast, MutableMapping, Optional, Union
 
 from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
@@ -11,30 +12,54 @@ import numpy
 
 from ...import io
 
-__all__ = ["Shower", "Field"]
+__all__ = ["Field", "FieldsCollection", "ShowerEvent"]
 
 
 _logger = getLogger(__name__)
 
 
-class Field(NamedTuple):
+@dataclass
+class Field:
     r: CartesianRepresentation
     t: u.Quantity
     E: CartesianRepresentation
 
+    @classmethod
+    def load(cls, node):
+        _logger.debug(f"Loading field from {node.filename}:{node.path}")
+        r = node.read("r")
+        t = node.read("t")
+        E = node.read("E")
+        return cls(r, t, E)
 
-class Shower:
-    def __init__(self, **kwargs) -> None:
-        self.fields:Optional[OrderedDict] = None
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def dump(self, node):
+        _logger.debug(f"Dumping field to {node.filename}:{node.path}")
+        node.write("r", self.r, unit="m")
+        node.write("t", self.t, unit="ns")
+        node.write("E", self.E, unit="uV/m")
+
+
+class FieldsCollection(OrderedDict, MutableMapping[int, Field]):
+    pass
+
+
+@dataclass
+class ShowerEvent:
+    energy: Optional[u.Quantity] = None
+    zenith: Optional[u.Quantity] = None
+    azimuth: Optional[u.Quantity] = None
+    primary: Optional[str] = None
+
+    fields: Optional[FieldsCollection] = None
 
     @classmethod
-    def load(cls, source: Union[Path, str, io.DataNode]) -> Shower:
+    def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         if type(source) == io.DataNode:
+            source = cast(io.DataNode, source)
             filename = f"{source.filename}:{source.path}"
             loader = "_from_datanode"
         else:
+            source = cast(Union[Path, str], source)
             filename = f"{source}:/"
             source = Path(source)
             if source.is_dir():
@@ -57,12 +82,12 @@ class Shower:
         return self
 
     @classmethod
-    def _from_datafile(cls, path: Path) -> Shower:
+    def _from_datafile(cls, path: Path) -> ShowerEvent:
         with io.open(path) as root:
             return cls._from_datanode(root)
 
     @classmethod
-    def _from_datanode(cls, node: io.DataNode) -> Shower:
+    def _from_datanode(cls, node: io.DataNode) -> ShowerEvent:
         kwargs = {}
         for name, data in node.elements:
             kwargs[name] = data
@@ -72,40 +97,38 @@ class Shower:
         except KeyError:
             pass
         else:
-            fields: OrderedDict = OrderedDict()
+            fields:OrderedDict = OrderedDict()
             kwargs["fields"] = fields
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
-                _logger.debug(f"Loading field for antenna {antenna}")
-                r = antenna_node.read("r")
-                t = antenna_node.read("t")
-                E = antenna_node.read("E")
-                fields[antenna] = Field(r, t, E)
+                fields[antenna] = Field.load(antenna_node)
 
         return cls(**kwargs)
 
     def dump(self, source: Union[Path, str, io.DataNode]) -> None:
         if type(source) == io.DataNode:
+            source = cast(io.DataNode, source)
             self._to_datanode(source)
         else:
+            source = cast(Union[Path, str], source)
             with io.open(source, "w") as root:
                 self._to_datanode(root)
 
     def _to_datanode(self, node: io.DataNode):
         _logger.info(f"Dumping shower data to {node.filename}:{node.path}")
 
-        for k, v in self.__dict__.items():
+        for f in fields(self):
+            k = f.name
             if k != "fields" and (k[0] != "_"):
-                node.write(k, v)
+                v = getattr(self, k)
+                if v is not None:
+                    node.write(k, v)
 
         if self.fields is not None:
             for antenna, field in self.fields.items():
-                _logger.debug(f"Dumping field for antenna {antenna}")
                 with node.branch(f"fields/{antenna}") as n:
-                    n.write("r", field.r, unit="m")
-                    n.write("t", field.t, unit="ns")
-                    n.write("E", field.E, unit="uV/m")
+                    field.dump(n)
 
-            n = len(self.fields)
-            _logger.info(f"Dumped {n} field(s) to {node.filename}:{node.path}")
+            m = len(self.fields)
+            _logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")

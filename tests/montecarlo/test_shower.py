@@ -12,11 +12,11 @@ import astropy.units as u
 import numpy
 
 from grand import store, io
-from grand.montecarlo.shower import CoreasShower, Field, Shower
+from grand.montecarlo.shower import CoreasShower, Field, ShowerEvent
 
 
 class ShowerTest(unittest.TestCase):
-    """Unit tests for the Shower class"""
+    """Unit tests for the ShowerEvent class"""
 
     path = Path("shower.hdf5")
 
@@ -48,9 +48,9 @@ class ShowerTest(unittest.TestCase):
             "zenith"  : 85 * u.deg,
             "azimuth" : 0 * u.deg
         }
-        shower = Shower(**settings)
+        shower = ShowerEvent(**settings)
         shower.dump(self.path)
-        tmp = shower.load(self.path)
+        tmp = ShowerEvent.load(self.path)
         for k in settings.keys():
             self.assertEquals(getattr(shower, k), getattr(tmp, k))
         self.tearDown()
@@ -65,9 +65,9 @@ class ShowerTest(unittest.TestCase):
                 numpy.array((0, 0, 1)) * u.uV / u.m
             )
         )
-        shower = Shower(fields=fields, **settings)
+        shower = ShowerEvent(fields=fields, **settings)
         shower.dump(self.path)
-        tmp = Shower.load(self.path)
+        tmp = ShowerEvent.load(self.path)
 
         def compare_showers():
             a, b = shower.fields[1], tmp.fields[1]
@@ -84,7 +84,7 @@ class ShowerTest(unittest.TestCase):
 
         with io.open(self.path) as root:
             node = root[nodepath]
-            tmp = Shower.load(node)
+            tmp = ShowerEvent.load(node)
 
         compare_showers()
 

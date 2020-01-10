@@ -1,3 +1,3 @@
-from .shower import CoreasShower, Shower
+from .shower import CoreasShower, ShowerEvent
 
-__all__ = ["CoreasShower", "Shower"]
+__all__ = ["CoreasShower", "ShowerEvent"]

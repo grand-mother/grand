@@ -2,13 +2,14 @@ from collections import OrderedDict
 from logging import getLogger
 import os
 from pathlib import Path
+from typing import Optional
 
 import astropy.constants
 from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
 
-from .generic import Field, Shower
+from .generic import Field, FieldsCollection, ShowerEvent
 
 __all__ = ["CoreasShower"]
 
@@ -23,9 +24,9 @@ _id_to_name = {
 }
 
 
-class CoreasShower(Shower):
+class CoreasShower(ShowerEvent):
     @classmethod
-    def _from_dir(cls, path: Path) -> Shower:
+    def _from_dir(cls, path: Path) -> ShowerEvent:
         if not path.exists():
             raise FileNotFoundError(path)
 
@@ -48,7 +49,8 @@ class CoreasShower(Shower):
                         z = float(words[4]) * u.m
                     )
 
-        fields = {}
+        fields: Optional[FieldsCollection] = None
+        raw_fields = {}
         try:
             fields_path = path.glob("*_coreas").__next__()
         except StopIteration:
@@ -64,16 +66,15 @@ class CoreasShower(Shower):
                 Ex = data[:,1] * cgs2si
                 Ey = data[:,2] * cgs2si
                 Ez = data[:,3] * cgs2si
-                fields[antenna] = Field(
+                raw_fields[antenna] = Field(
                     positions[antenna],
                     t,
                     CartesianRepresentation(Ex, Ey, Ez)
                 )
 
-            ordered = OrderedDict()
-            for key in sorted(fields.keys()):
-                ordered[key] = fields[key]
-            fields = ordered
+            fields = FieldsCollection()
+            for key in sorted(raw_fields.keys()):
+                fields[key] = raw_fields[key]
 
         inp = {}
         try:

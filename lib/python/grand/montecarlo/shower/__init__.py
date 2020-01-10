@@ -1,4 +1,4 @@
 from .coreas import CoreasShower
-from .generic import Field, Shower
+from .generic import Field, ShowerEvent
 
-__all__ = ["Field", "Shower", "CoreasShower"]
+__all__ = ["Field", "ShowerEvent", "CoreasShower"]
