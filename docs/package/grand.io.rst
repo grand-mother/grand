@@ -5,7 +5,7 @@
 ----
 
 Overview
-^^^^^^^^
+--------
 
 The :mod:`grand.io` module provides utilities for easy reading (writing) Python
 objects from (to) data files. The following types are supported: numpy
@@ -38,7 +38,7 @@ system while the data would be files inside the folder.
    same features.
 
 Accessing data files
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 Data files are accessed using the :func:`~grand.io.open` function. The semantic
 is the same than the Python :func:`~open` or C `fopen` functions.
@@ -58,7 +58,7 @@ is the same than the Python :func:`~open` or C `fopen` functions.
 
 
 Managing data nodes
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 .. autoclass:: grand.io.DataNode
 
@@ -169,6 +169,9 @@ Managing data nodes
 
       Read data from this node.
 
+      The optional argument *dtype* allows to specify the data type to use
+      for the read values. By default the native data type in the file is used.
+
       Multiple data can be read at once by providing multiple arguments. For
       example the following reads out two data elements from the root node.
 
@@ -211,10 +214,10 @@ Managing data nodes
 
 
 Examples
-^^^^^^^^
+--------
 
 Serialising Python data
-"""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example shows how to write basic Python objects to a data file.
 
@@ -240,7 +243,7 @@ Conversely, reading the data back can be done as following.
 >>> python_string = cstring.decode()
 
 Working with physical data
-""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example illustrates how to create a new data file and populate it
 with some physical data organised under various branches.

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 import os
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation
@@ -74,12 +74,12 @@ class DataNode:
     def close(self) -> None:
         self._group.file.close()
 
-    def read(self, *args: str):
+    def read(self, *args: str, dtype: Union[numpy.DataType, str, None]=None):
         res = len(args) * [None]
         for i, k in enumerate(args):
             v = self._group[k]
             if type(v) == _Dataset:
-                res[i] = self._unpack(v)
+                res[i] = self._unpack(v, dtype)
             else:
                 raise KeyError(k)
         if len(res) == 1:
@@ -105,11 +105,16 @@ class DataNode:
         else:
             dset = self._write_number(k, v, dtype, unit)
 
-    def _unpack(self, dset: _Dataset):
+    def _unpack(self, dset: _Dataset,
+                      dtype: Union[numpy.DataType, str, None]=None):
         if dset.shape:
             v = dset[:]
+            if dtype is not None:
+                v = v.astype(dtype)
         else:
             v = dset[()]
+            if dtype is not None:
+                v = numpy.dtype(dtype).type(v)
 
         if type(v) == numpy.bytes_:
             return self._unpack_string(dset, v)

@@ -27,16 +27,16 @@ class Field:
     @classmethod
     def load(cls, node):
         _logger.debug(f"Loading field from {node.filename}:{node.path}")
-        r = node.read("r")
-        t = node.read("t")
-        E = node.read("E")
+        r = node.read("r", dtype="f8")
+        t = node.read("t", dtype="f8")
+        E = node.read("E", dtype="f8")
         return cls(r, t, E)
 
     def dump(self, node):
         _logger.debug(f"Dumping field to {node.filename}:{node.path}")
-        node.write("r", self.r, unit="m")
-        node.write("t", self.t, unit="ns")
-        node.write("E", self.E, unit="uV/m")
+        node.write("r", self.r, unit="m", dtype="f4")
+        node.write("t", self.t, unit="ns", dtype="f4")
+        node.write("E", self.E, unit="uV/m", dtype="f4")
 
 
 class FieldsCollection(OrderedDict, MutableMapping[int, Field]):
