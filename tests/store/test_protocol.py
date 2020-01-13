@@ -5,9 +5,10 @@ Unit tests for the grand.store.protocol module
 import unittest
 
 from grand.store.protocol import InvalidBLOB, get
+from tests import TestCase
 
 
-class ProtocolTest(unittest.TestCase):
+class ProtocolTest(TestCase):
     """Unit tests for the protocol module"""
 
     def test_get(self):

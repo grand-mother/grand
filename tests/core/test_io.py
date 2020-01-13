@@ -10,9 +10,10 @@ import astropy.units as u
 import numpy
 
 import grand.io as io
+from tests import TestCase
 
 
-class IoTest(unittest.TestCase):
+class IoTest(TestCase):
     """Unit tests for grand.io class"""
 
     path = Path("io.hdf5")

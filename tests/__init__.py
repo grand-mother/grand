@@ -13,6 +13,32 @@ from pathlib import Path
 __all__ = ["main"]
 
 
+class TestCase(unittest.TestCase):
+    def assertArray(self, a, b, tol=9):
+        """Check that two numpy.ndarray are consistent"""
+        if len(a.shape) > 1:
+            a, b = a.flatten(), b.flatten()
+        for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
+
+    def assertQuantity(self, a, b, tol=9):
+        """Check that two astropy.Quantities are consistent"""
+        n = a.size
+        b = b.to_value(a.unit)
+        a = a.value
+        if n > 1:
+            if len(a.shape) > 1:
+                a, b = a.flatten(), b.flatten()
+            for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
+        else:
+            self.assertAlmostEquals(a, b, tol)
+
+    def assertCartesian(self, a, b, tol=9):
+        """Check that two CartesianRepresentations are consistent"""
+        self.assertQuantity(a.x, b.x, tol)
+        self.assertQuantity(a.y, b.y, tol)
+        self.assertQuantity(a.z, b.z, tol)
+
+
 def main():
     """Run a local test suite
     """

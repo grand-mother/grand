@@ -13,33 +13,16 @@ import numpy
 
 from grand import store, io
 from grand.montecarlo.shower import CoreasShower, Field, ShowerEvent
+from tests import TestCase
 
 
-class ShowerTest(unittest.TestCase):
-    """Unit tests for the ShowerEvent class"""
+class ShowerTest(TestCase):
+    """Unit tests for the shower module"""
 
     path = Path("shower.hdf5")
 
     def tearDown(self):
         self.path.unlink()
-
-    def assertQuantity(self, a, b, tol=9):
-        """Check that two astropy.Quantities are consistent"""
-        n = a.size
-        b = b.to_value(a.unit)
-        a = a.value
-        if n > 1:
-            for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
-        else:
-            self.assertAlmostEquals(a, b, tol)
-
-
-    def assertCartesian(self, a, b, tol=9):
-        """Check that two CartesianRepresentations are consistent"""
-        self.assertQuantity(a.x, b.x, tol)
-        self.assertQuantity(a.y, b.y, tol)
-        self.assertQuantity(a.z, b.z, tol)
-
 
     def test_generic(self):
         settings = {

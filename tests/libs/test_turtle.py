@@ -9,9 +9,10 @@ import numpy
 
 import grand.store as store
 from grand.libs import turtle
+from tests import TestCase
 
 
-class TurtleTest(unittest.TestCase):
+class TurtleTest(TestCase):
     """Unit tests for the turtle module"""
 
     def test_ecef(self):

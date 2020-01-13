@@ -4,16 +4,17 @@ Unit tests for the grand.tools.geomagnet module
 
 import unittest
 
-import grand.tools as tools
-from grand.tools.coordinates import GeodeticRepresentation, LTP
-from grand.tools.geomagnet import Geomagnet
-
 import numpy
 import astropy.units as u
 from astropy.coordinates import EarthLocation, ITRS
 
+import grand.tools as tools
+from grand.tools.coordinates import GeodeticRepresentation, LTP
+from grand.tools.geomagnet import Geomagnet
+from tests import TestCase
 
-class GeomagnetTest(unittest.TestCase):
+
+class GeomagnetTest(TestCase):
     """Unit tests for the geomagnet module"""
 
 
@@ -32,9 +33,9 @@ class GeomagnetTest(unittest.TestCase):
 
     def assertField(self, field, tol=6):
         """Check that the magnetic field is consistent"""
-        self.assertAlmostEqual((field.x / u.T).value, self.ref[0], tol)
-        self.assertAlmostEqual((field.y / u.T).value, self.ref[1], tol)
-        self.assertAlmostEqual((field.z / u.T).value, self.ref[2], tol)
+        self.assertQuantity(field.x, self.ref[0] * u.T, tol)
+        self.assertQuantity(field.y, self.ref[1] * u.T, tol)
+        self.assertQuantity(field.z, self.ref[2] * u.T, tol)
 
     def get_coordinates(self, n=1, obstime=True):
         obstime = self.date if obstime else None
