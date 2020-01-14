@@ -5,17 +5,17 @@ Start to rewrite detector class with containers, still ongoing
 see SLACK with Valentin 26Sept
 * Internal conversion from any coordinate system to ECEF,
     see example in grand/tools/geomagnet.py
-* input type of antenna coordinates could be a Union[grand.ECEF, grand.LTP], 
+* input type of antenna coordinates could be a Union[grand.ECEF, grand.LTP],
     ie. local or global coordinates (--> grand pacakage)
 * use Final decorator (typing_extension)
 
 XXX / TODO after adding grand
 * add positions of a whole array, in ECEF and m
 * ...
-* antennas positions are stored in a single numpy.array, 
+* antennas positions are stored in a single numpy.array,
     idealy a grand.coordinates.ECEF object.
 * numpy arrays: myarra.flags.writeable = False
-* implement an AntennaArray object with attributes: 
+* implement an AntennaArray object with attributes:
     type:str, position:grand.coordinates.ECEF,
     orientation:grand.coordinates.Horizontal, etc.
 * add function if slope not given, calculate it
@@ -51,14 +51,14 @@ class Detector:
     """ info on detector
 
 
-        Immutable container with both static and runtime checks,   
+        Immutable container with both static and runtime checks,
         The fields can be accessed as attributes.
 
-        1. A static analyses can be done with mypy. It will ensure that 
-        the proper types are used as arguments when setting the shower 
+        1. A static analyses can be done with mypy. It will ensure that
+        the proper types are used as arguments when setting the shower
         attributes. Special unit  can not be checked (eg energy given in
         meters...)
-        2. In addition using the @property class decorator we can perform 
+        2. In addition using the @property class decorator we can perform
         runtime checks when an instance attribute is modified.
 
         XXX / TODO:
@@ -151,7 +151,7 @@ class Detector:
 
     @property
     def slope(self) -> Union[list, str]:
-        """local slopes (alpha,beta) of antennas in array, in deg, 
+        """local slopes (alpha,beta) of antennas in array, in deg,
         accepts only lists
         """
         return np.asarray(self.__slope)*u.deg

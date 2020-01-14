@@ -35,6 +35,8 @@ from . import shower
 from . import detector
 from . import modules
 
+from . import computevoltage_orig
+
 #import _table_voltage,_load_to_array, _load_eventinfo_fromhdf, _load_path
 
 import linecache
@@ -46,7 +48,7 @@ from ..config import load
 load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
 
 PRINT_ON=True
-DISPLAY = 2
+DISPLAY = 1
 
 ## Earth radius in m
 from astropy import constants as const
@@ -302,10 +304,13 @@ def get_voltage(t, Ex, Ey, Ez, zen, az,alpha=0, beta=0, typ="X"):
     # Rotate Efield to antenna frame (x along actual arm)
     Etot=np.array([Ex,Ey,Ez])
     [Exp,Eyp,Ezp] = TopoToAntenna(Etot,alpha,beta)  #TODO: cleaner way?
-    szen = np.sin(zenp*np.pi/180);
-    czen = np.cos(zenp*np.pi/180);
-    saz = np.sin(azp*np.pi/180);
-    caz = np.cos(azp*np.pi/180);
+    szen = np.sin(zenp);  # numpy takes care about angle units (deg), must not apply pi/180 factor here
+    czen = np.cos(zenp);
+    saz = np.sin(azp);
+    caz = np.cos(azp);
+    print("Zen & Az = ",zenp,azp)
+    print(czen,szen,caz,saz)
+
     amplituder = szen*(caz*Exp+saz*Eyp)+czen*Ezp
     amplitudet = czen*(caz*Exp+saz*Eyp)-szen*Ezp
     amplitudep = -saz*Exp+caz*Eyp
@@ -318,10 +323,9 @@ def get_voltage(t, Ex, Ey, Ez, zen, az,alpha=0, beta=0, typ="X"):
         plt.figure(1,  facecolor='w', edgecolor='k')
         plt.title(typ)
         plt.subplot(211)
-        plt.plot(t*1e9,Ey, label="Ey = EW")
-        plt.plot(t*1e9,Ex, label="Ex = NS")
-        plt.plot(t*1e9,Ez, label="Ez = UP")
-        plt.plot(t*1e9,Exp, label="Exp = NS")
+        plt.plot(t*1e9,Eyp, label="Ey = EW")
+        plt.plot(t*1e9,Exp, label="Ex = NS")
+        plt.plot(t*1e9,Ezp, label="Ez = UP")
 
         plt.xlabel('Time (nsec)')
         plt.ylabel('Electric field (muV/m)')
@@ -485,7 +489,7 @@ if __name__ == '__main__':
     det = detector.Detector()
     det.create_from_file(arrayfile)      #create detector=antenna array from file defined in config file
     array = det.position  # get all antennas positions
-    IDs = det.ID  # get all antennas IDs
+    IDs = det.ID  # get all antennas IDs  #TODO: change IDs to int instead of float
 
     # loop over existing single antenna files as raw output from simulations
     logger.info("Looping over antennas ...")
@@ -495,40 +499,56 @@ if __name__ == '__main__':
     origin = ECEF(latitude=38.85 * u.deg, longitude=92.5 * u.deg, height=0 * u.m,representation_type="geodetic")  # TODO: include this in the config file
     #print("Center of GRAND array:",origin)
     for i in range(np.size(IDs)):  # Would be more logical to loop on all existing traces rather than units in the detector
-        # First  build effective angles to Xmax (source)
+        # First fetch traces
+        efield = io_utils._load_efield_fromhdf(exfile,ant = "/"+str(int(IDs[i])))
+        if np.size(efield) == 1:  # No trace for that antenna
+            print("No signal on antenna",int(IDs[i]),", skipping it.")
+            continue
+
+        # Now  build effective angles to Xmax (source)
+        print("Now working on antenna",int(IDs[i]),".")
         ant = array[i]
         ush = (ant-xmaxpos)/np.linalg.norm(xmaxpos-ant)
         ush = ush / u.m
         #ush = LTP(ush,location=origin, magnetic=True, orientation=("N", "W", "U"), obstime=obstime) # How can we get coordinates values???
         print("Source radiating in direction:", ush)
-        print("towards antenna",ant)
+        print("towards position",ant)
         zen_eff,az_eff = modules._get_shower_angles(ush)  # Effective zenith & az angles (ie Xmax pos seen from the antenna)
-        print("Corresponding angles:", zen_eff, az_eff)
+        print("Corresponding effective angles:", zen_eff, az_eff)
+
         alpha = 0 # TODO: fetch antenna slope
         beta = 0
-        # Now fetch traces
-        efield = io_utils._load_efield_fromhdf(exfile,ant = "/"+str(int(IDs[i])))
-        if np.size(efield) == 1:  # No trace for that antenna
-            continue
         # Now go to work
         voltage_NS, timeNS = get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], zen_eff, az_eff, alpha, beta, typ="X")
         voltage_EW, timeEW = get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], zen_eff, az_eff, alpha, beta, typ="Y")
         voltage_vert, timevert = get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], zen_eff, az_eff, alpha, beta, typ="Z")
 
         ###plots
-        if DISPLAY==1:
+        if DISPLAY>0:
             import pylab as pl
             import matplotlib.pyplot as plt
 
-            plt.figure(1,  facecolor='w', edgecolor='k')
-            plt.subplot(211)
+            plt.figure(17,  facecolor='w', edgecolor='k')
+            plt.subplot(311)
             plt.plot(efield.T[0],efield.T[2], label="Ey = EW")
             plt.plot(efield.T[0],efield.T[1], label="Ex = NS")
             plt.plot(efield.T[0],efield.T[3], label="Ez = UP")
             plt.xlabel('Time (nsec)')
             plt.ylabel('Electric field (muV/m)')
             plt.legend(loc='best')
-            plt.subplot(212)
+            plt.subplot(312)
+            plt.plot(timeEW*1e9,voltage_EW, label="EW")
+            plt.plot(timeNS*1e9,voltage_NS, label="NS")
+            plt.plot(timevert*1e9,voltage_vert, label="Vertical")
+            plt.xlabel('Time (nsec)')
+            plt.ylabel('Voltage (muV)')
+            plt.legend(loc='best')
+
+            # Now compare to old computationss
+            voltage_NS, timeNS  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="X")
+            voltage_EW, timeEW  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="Y")
+            voltage_vert, timevert  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="Z")
+            plt.subplot(313)
             plt.plot(timeEW*1e9,voltage_EW, label="EW")
             plt.plot(timeNS*1e9,voltage_NS, label="NS")
             plt.plot(timevert*1e9,voltage_vert, label="Vertical")
@@ -537,6 +557,8 @@ if __name__ == '__main__':
             plt.legend(loc='best')
 
             plt.show()
+
+
         # ATTENTION EW AND NS WERE SWITCHED
         # ATTENTION voltage time now in ns
         #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
