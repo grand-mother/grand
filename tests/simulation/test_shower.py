@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.montecarlo.shower module
+Unit tests for the grand.simulation.shower module
 """
 
 from collections import OrderedDict
@@ -12,7 +12,7 @@ import astropy.units as u
 import numpy
 
 from grand import store, io
-from grand.montecarlo.shower import CoreasShower, Field, ShowerEvent
+from grand.simulation.shower import CoreasShower, Field, ShowerEvent
 from tests import TestCase
 
 

@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.montecarlo.antenna module
+Unit tests for the grand.simulation.antenna module
 """
 
 from pathlib import Path
@@ -9,8 +9,7 @@ import astropy.units as u
 import numpy
 
 from grand import ECEF
-from grand.montecarlo.antenna import Antenna, ElectricField,                   \
-                                     TabulatedAntennaModel
+from grand.simulation import Antenna, ElectricField, TabulatedAntennaModel
 from tests import TestCase
 
 
