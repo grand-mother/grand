@@ -10,7 +10,7 @@ Overview
 The :mod:`grand.io` module provides utilities for easy reading (writing) Python
 objects from (to) data files. The following types are supported: numpy
 :class:`~numpy.array`, :class:`~bytes`,
-:class:`~astropy.coordinates.CartesianRepresentation`, :class:`~float`,
+:class:`~astropy.coordinates.BaseRepresentation`, :class:`~float`,
 :class:`~int`, astropy :class:`~astropy.units.Quantity`, :class:`~str`. In
 addition any :class:`~list` or :class:`~tuple` of numpy :class:`~numpy.array` or
 astropy :class:`~astropy.units.Quantity` are stored as a numeric table with

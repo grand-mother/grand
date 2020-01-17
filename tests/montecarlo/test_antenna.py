@@ -5,10 +5,10 @@ Unit tests for the grand.montecarlo.antenna module
 from pathlib import Path
 import unittest
 
-from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
 
+from grand import ECEF
 from grand.montecarlo.antenna import Antenna, ElectricField,                   \
                                      TabulatedAntennaModel
 from tests import TestCase
@@ -69,14 +69,17 @@ class AntennaTest(TestCase):
     def test_antenna(self):
         ts, delta, Es = 502.5, 5, 100
         t = numpy.linspace(0, 2000, 20001)
-        E0 = numpy.zeros(t.shape)
         E1 = numpy.zeros(t.shape)
         E1[(t >= ts - 0.5 * delta) & (t <= ts + 0.5 * delta)] = Es
-        field = ElectricField(t * u.ns,
-                              CartesianRepresentation(E1, E0, E0, unit="uV/m"))
+
+        t *= u.ns
+        E0 = numpy.zeros(t.shape) * u.uV / u.m
+        E1 *= u.uV / u.m
+        E = ECEF(E1, E0, E0, representation_type="cartesian")
+        field = ElectricField(t, E)
 
         antenna = Antenna(model=self.model)
-        direction = CartesianRepresentation(1, 0, 1)
+        direction = ECEF(1, 0, 1, representation_type="cartesian")
         voltage = antenna.compute_voltage(direction, field)
 
         imin, imax = numpy.argmin(voltage.V), numpy.argmax(voltage.V)

@@ -134,7 +134,7 @@ class TabulatedAntennaModel(AntennaModel):
         it0 = int(numpy.floor(rt1) % t.theta.size)
         it1 = it0 + 1
         if it1 == t.theta.size: # Prevent overflow
-            it1, rt1 = it, 0
+            it1, rt1 = it0, 0
         else:
             rt1 -= numpy.floor(rt1)
         rt0 = 1 - rt1

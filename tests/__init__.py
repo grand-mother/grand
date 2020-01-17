@@ -38,6 +38,11 @@ class TestCase(unittest.TestCase):
         self.assertQuantity(a.y, b.y, tol)
         self.assertQuantity(a.z, b.z, tol)
 
+    def assertUnitSpherical(self, a, b, tol=9):
+        """Check that two UnitSphericalRepresentations are consistent"""
+        self.assertQuantity(a.lon, b.lon, tol)
+        self.assertQuantity(a.lat, b.lat, tol)
+
 
 def main():
     """Run a local test suite

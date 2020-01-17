@@ -125,3 +125,35 @@ enum gull_return gull_snapshot_field_v(struct gull_snapshot * snapshot,
 
         return GULL_RETURN_SUCCESS;
 }
+
+
+/* Inplace linear transform of Cartesian coordinates */
+void grand_cartesian_transform_forward(double m[3][3], double t[3],
+    double * x, double * y, double * z, long n)
+{
+        for (; n > 0; n--, x++, y++, z++) {
+                double r0[3] = {*x, *y, *z}, r[3] = {t[0], t[1], t[2]};
+                int i;
+                for (i = 0; i < 3; i++) {
+                        int j;
+                        for (j = 0; j < 3; j++) r[i] += m[i][j] * r0[j];
+                }
+                *x = r[0], *y = r[1], *z = r[2];
+        }
+}
+
+/* Inplace reverse linear transform of Cartesian coordinates */
+void grand_cartesian_transform_backward(double m[3][3], double t[3],
+    double * x, double * y, double * z, long n)
+{
+        for (; n > 0; n--, x++, y++, z++) {
+                double r0[3] = {*x - t[0], *y - t[1], *z - t[2]},
+                       r[3] = {0, 0, 0};
+                int i;
+                for (i = 0; i < 3; i++) {
+                        int j;
+                        for (j = 0; j < 3; j++) r[i] += m[j][i] * r0[j];
+                }
+                *x = r[0], *y = r[1], *z = r[2];
+        }
+}

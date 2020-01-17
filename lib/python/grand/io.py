@@ -5,10 +5,13 @@ import os
 from typing import Optional, Tuple, Union
 
 import astropy.units as u
-from astropy.coordinates import CartesianRepresentation
+from astropy.coordinates import BaseRepresentation
+from astropy.coordinates.representation import REPRESENTATION_CLASSES
 import h5py
 from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
+
+from . import ECEF, LTP
 
 __all__ = ["DataNode", "ElementsIterator"]
 
@@ -92,8 +95,6 @@ class DataNode:
             dset = self._write_string(k, v)
         elif isinstance(v, u.Quantity):
             dset = self._write_quantity(k, v, dtype, unit)
-        elif isinstance(v, CartesianRepresentation):
-            dset = self._write_cartesian(k, v, dtype, columns, unit)
         elif isinstance(v, (list, tuple)):
             dset = self._write_table(k, v, dtype, columns, units)
         elif isinstance(v, numpy.ndarray):
@@ -102,6 +103,8 @@ class DataNode:
             if units:
                 self._check_units(v, units)
             dset = self._write_array(k, v, dtype, columns, units)
+        elif isinstance(v, BaseRepresentation):
+            dset = self._write_representation(k, v, dtype, unit, columns, units)
         else:
             dset = self._write_number(k, v, dtype, unit)
 
@@ -128,10 +131,10 @@ class DataNode:
             return v
         elif metatype == "quantity":
             return self._unpack_quantity(dset, v)
-        elif metatype == "cartesian":
-            return self._unpack_cartesian(dset, v)
         elif metatype == "table":
             return self._unpack_table(dset, v)
+        elif metatype.startswith("representation"):
+            return self._unpack_representation(dset, v)
         else:
             raise ValueError(f"Invalid metatype {metatype}")
 
@@ -189,28 +192,30 @@ class DataNode:
         unit = dset.attrs["unit"]
         return v * u.Unit(unit)
 
-    def _write_cartesian(self, k, v, dtype=None, columns=None, unit=None):
-        v = v.xyz
+    def _write_representation(self, k, v, dtype=None, unit=None,
+        columns=None, units=None):
+
+        components = v.components
+        values = [getattr(v, f"_{name}") for name in components]
 
         if columns is None:
-            columns = ("x", "y", "z")
-        else:
-            self._check_columns(v, columns)
+            columns = components
 
-        if unit is None:
-            unit = str(v.unit)
-        units = (unit, unit, unit)
+        if unit is not None:
+            units = (unit, unit, unit)
 
-        dset = self._write_array(k, v.value, dtype, columns, units)
-        dset.attrs["metatype"] = "cartesian"
+        dset = self._write_table(k, values, dtype, columns, units)
+        dset.attrs["metatype"] = f"representation/{v.get_name()}"
 
         return dset
 
     @staticmethod
-    def _unpack_cartesian(dset, v):
-        unit = dset.attrs["units"][0]
-        v *= u.Unit(unit)
-        return CartesianRepresentation(v)
+    def _unpack_representation(dset, v):
+        name = os.path.basename(dset.attrs["metatype"])
+        cls = REPRESENTATION_CLASSES[name]
+        units = dset.attrs["units"]
+        v = [v[i] * u.Unit(ui) for i, ui in enumerate(units)]
+        return cls(*v)
 
     def _write_table(self, k, v, dtype=None, columns=None, units=None):
         if columns:
