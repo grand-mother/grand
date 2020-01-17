@@ -16,15 +16,12 @@
 
 """Extra frames for astropy.coordinates.
 """
+from __future__ import annotations
 
-from typing import Sequence, Union
-from typing_extensions import Final
-
+from collections import defaultdict
 from datetime import datetime
-
-from .representation import GeodeticRepresentation, HorizontalRepresentation
-
-from ...libs import turtle
+from typing import Optional, Sequence, Union
+from typing_extensions import Final
 
 import numpy
 import astropy.units as u
@@ -36,16 +33,95 @@ from astropy.coordinates import Attribute, BaseCoordinateFrame,                \
                                 RepresentationMapping, TimeAttribute,          \
                                 frame_transform_graph
 from astropy.time import Time
+from astropy.utils.decorators import lazyproperty
+
+from ...libs import turtle
+from .representation import GeodeticRepresentation, HorizontalRepresentation
+from .transform import Rotation
 
 
-__all__ = ["ECEF", "LTP"]
+__all__ = ["ECEF", "LTP", "ExtendedCoordinateFrame"]
 
 
 _HAS_GEOMAGNET: Final = False
 """The geomagnet module needs a deferred import due to circular references."""
 
 
-class ECEF(BaseCoordinateFrame):
+class ExtendedCoordinateFrame(BaseCoordinateFrame):
+    """A coordinates frame with unmutable data supporting extra arithmetic
+       operators.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self._data is not None:
+            self._protect(self._data)
+
+
+    def __add__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])   \
+        -> ExtendedCoordinateFrame:
+        """Left hand side coordinates translation.
+        """
+        if isinstance(other, BaseCoordinateFrame):
+            other = other.transform_to(self)._data
+        return self.realize_frame(self._data + other)
+
+
+    def __radd__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])  \
+        -> ExtendedCoordinateFrame:
+        """Right hand side coordinates translation.
+        """
+        if isinstance(other, BaseCoordinateFrame):
+            other = other.transform_to(self)._data
+        return self.realize_frame(other + self._data)
+
+
+    def __sub__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])   \
+        -> ExtendedCoordinateFrame:
+        """Left hand side coordinates subtraction.
+        """
+        if isinstance(other, BaseCoordinateFrame):
+            other = other.transform_to(self)._data
+        return self.realize_frame(self._data - other)
+
+
+    def __rsub__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])  \
+        -> ExtendedCoordinateFrame:
+        """Right hand side coordinates subtraction.
+        """
+        if isinstance(other, BaseCoordinateFrame):
+            other = other.transform_to(self)._data
+        return self.realize_frame(other - self._data)
+
+
+    def __mul__(self, other: Any) -> ExtendedCoordinateFrame:
+        """Left hand side coordinates multiplication.
+        """
+        return self.realize_frame(self._data * other)
+
+
+    def __rmul__(self, other: Any) -> ExtendedCoordinateFrame:
+        """Right hand side coordinates multiplication.
+        """
+        return self.realize_frame(other * self._data)
+
+
+    def represent_as(self, base: BaseRepresentation, s: str="base",
+        in_frame_units: bool=False) -> BaseRepresentation:
+
+        r = super().represent_as(base, s, in_frame_units)
+        self._protect(r)
+
+        return r
+
+
+    def _protect(self, representation: BaseRepresentation) -> None:
+        for component in representation.components:
+            getattr(representation, component).flags.writeable = False
+
+
+class ECEF(ExtendedCoordinateFrame):
     """Earth-Centered Earth-Fixed frame, co-moving with the Earth.
     """
 
@@ -107,7 +183,7 @@ def ecef_to_ecef(ecef0: ECEF, ecef1: ECEF) -> ECEF:
     return ecef1.realize_frame(ecef0.cartesian)
 
 
-class LTP(BaseCoordinateFrame):
+class LTP(ExtendedCoordinateFrame):
     """Local frame tangent to the WGS84 ellipsoid and oriented along cardinal
        directions.
     """
@@ -118,11 +194,14 @@ class LTP(BaseCoordinateFrame):
     location = Attribute(default=None)
     """The origin on Earth of the local frame."""
 
-    orientation = Attribute(default=("E", "N", "U"))
-    """The cardinal directions of the x, y, and z axis (default: E, N, U)."""
+    orientation = Attribute(default="ENU")
+    """The cardinal directions of the x, y, and z axis (default: ENU)."""
 
     magnetic = Attribute(default=False)
     """Use the magnetic north instead of the geographic one (default: false)."""
+
+    rotation = Attribute(default=None)
+    """An optional rotation w.r.t. the cardinal directions."""
 
     obstime = TimeAttribute(default=None)
     """The observation time."""
@@ -131,6 +210,7 @@ class LTP(BaseCoordinateFrame):
     def __init__(self, *args,
                  location: Union["EarthLocation", "ECEF", "LTP"]=None,
                  orientation: Sequence[str]=None, magnetic: bool=False,
+                 rotation: Optional[Rotation]=None,
                  obstime: Union["datetime", "Time", str]=None,
                  **kwargs) -> None:
 
@@ -141,7 +221,8 @@ class LTP(BaseCoordinateFrame):
         orientation = self.orientation if orientation is None else orientation
 
         super().__init__(*args, location=location, orientation=orientation,
-                         magnetic=magnetic, obstime=obstime, **kwargs)
+                         magnetic=magnetic, rotation=rotation,
+                         obstime=obstime, **kwargs)
 
         # Set the transform parameters
         itrs = self._location.itrs
@@ -193,6 +274,19 @@ class LTP(BaseCoordinateFrame):
 
         self._basis = numpy.column_stack((ux, uy, uz))
         self._origin = itrs.cartesian
+
+        if rotation is not None:
+            self._basis = rotation.apply(self._basis, inverse=True)
+
+
+    def rotated(self, rotation: Rotation, copy: bool=True) -> LTP:
+        """Get a rotated version of this frame
+        """
+        if self.rotation is not None:
+            rotation = rotation * self.rotation
+        replicate = self.replicate if self.has_data                            \
+                                   else self.replicate_without_data
+        return replicate(copy=copy, rotation=rotation)
 
 
     @property

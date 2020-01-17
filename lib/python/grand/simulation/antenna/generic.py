@@ -87,7 +87,7 @@ class Antenna:
             direction = direction.transform_to(self.frame)
 
         Leff:CartesianRepresentation
-        Leff = self.model.effective_length(direction.spherical, f)
+        Leff = self.model.effective_length(direction.cartesian, f)
 
         if self.frame:
             tmp = self.frame(Leff, copy=False)

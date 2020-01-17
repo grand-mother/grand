@@ -18,14 +18,15 @@
 """
 
 from .tools import geomagnet, topography
-from .tools.coordinates import ECEF, GeodeticRepresentation,                   \
+from .tools.coordinates import ECEF, ExtendedCoordinateFrame,                  \
+                               GeodeticRepresentation,                         \
                                HorizontalRepresentation, LTP
 from .logging import getLogger, Logger
 from . import logging, store
 
 __all__ = ["geomagnet", "getLogger", "store", "topography", "ECEF",
-           "GeodeticRepresentation", "HorizontalRepresentation", "Logger",
-           "LTP"]
+           "ExtendedCoordinateFrame", "GeodeticRepresentation",
+           "HorizontalRepresentation", "Logger", "LTP"]
 
 
 logger:Logger = getLogger(__name__)

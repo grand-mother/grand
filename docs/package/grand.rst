@@ -21,7 +21,7 @@ are wrappers, E.g. for core `C` libraries used in the simulation.
 
    grand.geomagnet
    grand.io
-   grand.montecarlo
+   grand.simulation
    grand.store
    grand.topography
 
@@ -29,8 +29,8 @@ are wrappers, E.g. for core `C` libraries used in the simulation.
 Extensions
 ----------
 
-In addition, the :mod:`grand` package extends the :mod:`astropy` package with
-the following functionalities.
+In addition, the :mod:`grand` package extends the :mod:`astropy` package as
+described below.
 
 .. toctree::
    :maxdepth: 1
