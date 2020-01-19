@@ -22,44 +22,53 @@ def _get_shower_angles(ush):
     '''
     Parameters
     ----------
-    ush : propagation vector of the shower in the GRAND referential
+    ush : propagation vector(s) of the shower in the GRAND referential. Dimension = nb of vectors x [u_x,u_y,u_z]
 
     Returns
     -------
-    zen :   float
-        zenith of the shower in GRAND, in deg
-    az : float
-        azimuth of the shower in GRAND, in deg
+    zen :   array
+        zenith of the showers in GRAND, in deg
+    az : array
+        azimuth of the showers in GRAND, in deg
     '''
 
-    zen=np.rad2deg(math.acos(ush[2])) * u.deg # Zenith in antenna frame
-    if zen<0 * u.deg:
-        zen = zen +360*u.deg
-    az=np.rad2deg(math.atan2(ush[1],ush[0])) * u.deg
-    if az<0 * u.deg:
-        az = az + 360*u.deg
+    if np.size(ush) == 3:
+        ush = np.array([ush])  # python is so amazingly shity with vector manipulation... This is needed to force definition of line vector
+    if np.shape(ush)[1] != 3:
+       print("Nb of columns of shower vectors must be 3: [u_x,u_y,u_z]")
+       return([0,0])
+    # First normalize shower vectors
+    n = np.linalg.norm(ush,axis=1)
+    ush = ush/n[:,None]
+    zen=np.rad2deg(np.arccos(ush[:,2])) * u.deg # Zenith in antenna frame
+    zen[zen<0] = zen[zen<0] +360*u.deg
+    az=np.rad2deg(np.arctan2(ush[:,1],ush[:,0])) * u.deg
+    az[az<0] = az[az<0] + 360*u.deg
+    if np.size(az) == 1:
+      az = az[0]
+      zen = zen[0]
     return zen, az
 
 def _get_shower_vector(zen,az):
     '''
     Parameters
     ----------
-    zen :   float
-        zenith of the shower in GRAND, in deg
-    az : float
+    zen :   array
+        zenith of the showers in GRAND, in deg
+    az : array
         azimuth of the shower in GRAND, in deg
 
     Returns
     -------
-    ush : propagation vector of the shower in the GRAND referential
+    ush : propagation vectors of the shower in the GRAND referential. Shape = (nshowers*[ush_x,ush_y,ush_z])
 
     '''
     caz = np.cos(np.deg2rad(az))
     saz = np.sin(np.deg2rad(az))
     czen = np.cos(np.deg2rad(zen))
     szen = np.sin(np.deg2rad(zen))
-    ush = np.array([caz*szen, saz*szen,czen])  # Using GRAND conventions here
-
+    ush = np.array([np.multiply(caz,szen),np.multiply(saz,szen),czen])  # Using GRAND conventions here
+    ush = ush.T
     return ush
 
 def _geomagnetic_angle(zen, az):

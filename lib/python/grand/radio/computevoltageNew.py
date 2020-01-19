@@ -35,7 +35,7 @@ from . import shower
 from . import detector
 from . import modules
 
-from . import computevoltage_orig
+#from . import computevoltage_orig
 
 #import _table_voltage,_load_to_array, _load_eventinfo_fromhdf, _load_path
 
@@ -128,7 +128,7 @@ def load_leff(**kwargs):
       leff_z = config.antenna.leff.z
 
 
-  logger.debug("Loading antenna effective length file",leff_x)
+  #logger.debug("Loading antenna effective length file",leff_x)
   print('Loading',leff_x)
   global freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1,RL1,XL1
   freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(leff_x) ### this line cost 6-7s
@@ -309,7 +309,7 @@ def get_voltage(t, Ex, Ey, Ez, zen, az,alpha=0, beta=0, typ="X"):
     saz = np.sin(azp);
     caz = np.cos(azp);
     print("Zen & Az = ",zenp,azp)
-    print(czen,szen,caz,saz)
+    #print(czen,szen,caz,saz)
 
     amplituder = szen*(caz*Exp+saz*Eyp)+czen*Ezp
     amplitudet = czen*(caz*Exp+saz*Eyp)-szen*Ezp
@@ -448,7 +448,7 @@ if __name__ == '__main__':
     print("computeVoltageNew()")
 
     # Load simulated event HDF5 file
-    exfile = "/home/martineau/GRAND/GRANDproto300/data/test/event_000001.hdf5"
+    exfile = "/home/martineau/GRAND/GRANDproto300/data/test/coreas/event_000001.hdf5"
 
     #from ..config import load
     #load("/home/martineau/GRAND/soft/grand/tests/radio/config.py")
@@ -545,16 +545,16 @@ if __name__ == '__main__':
             plt.legend(loc='best')
 
             # Now compare to old computationss
-            voltage_NS, timeNS  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="X")
-            voltage_EW, timeEW  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="Y")
-            voltage_vert, timevert  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="Z")
-            plt.subplot(313)
-            plt.plot(timeEW*1e9,voltage_EW, label="EW")
-            plt.plot(timeNS*1e9,voltage_NS, label="NS")
-            plt.plot(timevert*1e9,voltage_vert, label="Vertical")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Voltage (muV)')
-            plt.legend(loc='best')
+            # voltage_NS, timeNS  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="X")
+            # voltage_EW, timeEW  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="Y")
+            # voltage_vert, timevert  = computevoltage_orig.get_voltage(efield.T[0]*1e-9, efield.T[1], efield.T[2], efield.T[3], -ush, alpha, beta, typ="Z")
+            # plt.subplot(313)
+            # plt.plot(timeEW*1e9,voltage_EW, label="EW")
+            # plt.plot(timeNS*1e9,voltage_NS, label="NS")
+            # plt.plot(timevert*1e9,voltage_vert, label="Vertical")
+            # plt.xlabel('Time (nsec)')
+            # plt.ylabel('Voltage (muV)')
+            # plt.legend(loc='best')
 
             plt.show()
 
