@@ -20,13 +20,13 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 from typing_extensions import Final
 
 import numpy
 import astropy.units as u
 from astropy.coordinates import Attribute, BaseCoordinateFrame,                \
-                                CartesianRepresentation,                       \
+                                BaseRepresentation, CartesianRepresentation,   \
                                 CylindricalRepresentation, EarthLocation,      \
                                 FunctionTransform, ITRS,                       \
                                 PhysicsSphericalRepresentation,                \

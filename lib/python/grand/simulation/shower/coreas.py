@@ -26,7 +26,7 @@ _id_to_name = {
 
 class CoreasShower(ShowerEvent):
     @classmethod
-    def _from_dir(cls, path: Path) -> ShowerEvent:
+    def _from_dir(cls, path: Path) -> CoreasShower:
         if not path.exists():
             raise FileNotFoundError(path)
 

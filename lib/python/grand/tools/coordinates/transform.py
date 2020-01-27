@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Optional, Tuple, Union
 
 from astropy.coordinates import BaseRepresentation, CartesianRepresentation
 import astropy.units as u
@@ -50,7 +50,7 @@ class Rotation(_Rotation):
         if angles[0].shape:
             angles = angles[0].to_value(u.rad)
         else:
-            angles = [a.to_value(u.rad) for a in angles]
+            angles = tuple(a.to_value(u.rad) for a in angles)
         return super().from_euler(seq, angles)
 
     def euler_angles(self, seq: str, unit: Union[str, u.Unit]="rad")           \
