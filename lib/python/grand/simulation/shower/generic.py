@@ -10,6 +10,7 @@ from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
 
+from ..pdg import ParticleCode
 from ...import io
 
 __all__ = ["Field", "FieldsCollection", "ShowerEvent"]
@@ -48,7 +49,7 @@ class ShowerEvent:
     energy: Optional[u.Quantity] = None
     zenith: Optional[u.Quantity] = None
     azimuth: Optional[u.Quantity] = None
-    primary: Optional[str] = None
+    primary: Optional[ParticleCode] = None
 
     fields: Optional[FieldsCollection] = None
 

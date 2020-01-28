@@ -12,7 +12,9 @@ import astropy.units as u
 import numpy
 
 from grand import store, io
-from grand.simulation.shower import CoreasShower, Field, ShowerEvent
+from grand.simulation.pdg import ParticleCode
+from grand.simulation.shower import CoreasShower, Field, ShowerEvent,          \
+                                    ZhairesShower
 from tests import TestCase
 
 
@@ -24,9 +26,26 @@ class ShowerTest(TestCase):
     def tearDown(self):
         self.path.unlink()
 
+    @staticmethod
+    def get_data(tag):
+        """Get test data from the store
+        """
+        path = Path(__file__).parent / f"data/{tag}"
+
+        if not path.exists():
+            tgz_name = f"{tag}-test.tar"
+            tgz_path = path / (tgz_name + ".gz")
+            tgz = store.get(tgz_name)
+            path.mkdir(parents=True)
+            with tgz_path.open("wb") as f: f.write(tgz)
+            with tarfile.open(tgz_path, "r|*") as tar: tar.extractall(path)
+            tgz_path.unlink()
+
+        return path
+
     def test_generic(self):
         settings = {
-            "primary" : "p",
+            "primary" : ParticleCode.PROTON,
             "energy"  : 1E+18 * u.eV,
             "zenith"  : 85 * u.deg,
             "azimuth" : 0 * u.deg
@@ -73,24 +92,25 @@ class ShowerTest(TestCase):
 
 
     def test_coreas(self):
-        # Get the test data from the store
-        path = Path(__file__).parent / "data/coreas"
-        if not path.exists():
-            tgz_name = "coreas-test.tar"
-            tgz_path = path / (tgz_name + ".gz")
-            tgz = store.get(tgz_name)
-            path.mkdir(parents=True)
-            with tgz_path.open("wb") as f: f.write(tgz)
-            with tarfile.open(tgz_path, "r|*") as tar: tar.extractall(path)
-            tgz_path.unlink()
-
-        # Test the CoREAS loader
+        path = self.get_data("coreas")
         shower = CoreasShower.load(path)
         shower.dump(self.path)
         tmp = shower.load(self.path)
 
         a, b = shower.fields[9], tmp.fields[9]
-        self.assertCartesian(a.r, b.r, 8)
+        self.assertCartesian(a.r, b.r, 4)
+        self.assertQuantity(a.t, b.t, 7)
+        self.assertCartesian(a.E, b.E, 5)
+
+
+    def test_zhaires(self):
+        path = self.get_data("zhaires")
+        shower = ZhairesShower.load(path)
+        shower.dump(self.path)
+        tmp = shower.load(self.path)
+
+        a, b = shower.fields[9], tmp.fields[9]
+        self.assertCartesian(a.r, b.r, 4)
         self.assertQuantity(a.t, b.t, 7)
         self.assertCartesian(a.E, b.E, 5)
 

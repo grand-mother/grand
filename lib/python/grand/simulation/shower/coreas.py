@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from logging import getLogger
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import astropy.constants
 from astropy.coordinates import CartesianRepresentation
@@ -10,6 +12,7 @@ import astropy.units as u
 import numpy
 
 from .generic import Field, FieldsCollection, ShowerEvent
+from ..pdg import ParticleCode
 
 __all__ = ["CoreasShower"]
 
@@ -17,10 +20,10 @@ __all__ = ["CoreasShower"]
 logger = getLogger(__name__)
 
 
-"""CORSIKA particles ids"""
-_id_to_name = {
-    14:   "p",
-    5626: "Fe"
+"""CORSIKA particle Id to PDG code"""
+_id_to_code: Dict[int, ParticleCode] = {
+    14:   ParticleCode.PROTON,
+    5626: ParticleCode.IRON
 }
 
 
@@ -37,17 +40,16 @@ class CoreasShower(ShowerEvent):
             pass
         else:
             with info_file.open() as f:
-                lines = f.read().split(os.linesep)
-            for line in lines:
-                if not line: continue
-                words = line.split()
-                if words[0] == "ANTENNA":
-                    antenna = int(words[1])
-                    positions[antenna] = CartesianRepresentation(
-                        x = float(words[2]) * u.m,
-                        y = float(words[3]) * u.m,
-                        z = float(words[4]) * u.m
-                    )
+                for line in f:
+                    if not line: continue
+                    words = line.split()
+                    if words[0] == "ANTENNA":
+                        antenna = int(words[1])
+                        positions[antenna] = CartesianRepresentation(
+                            x = float(words[2]) * u.m,
+                            y = float(words[3]) * u.m,
+                            z = float(words[4]) * u.m
+                        )
 
         fields: Optional[FieldsCollection] = None
         raw_fields = {}
@@ -82,21 +84,22 @@ class CoreasShower(ShowerEvent):
         except StopIteration:
             raise FileNotFoundError(path / "inp/*.inp")
         else:
+            converters = {
+                "ERANGE": ("energy", lambda x: float(x) * u.GeV),
+                "THETAP": ("zenith", lambda x: float(x) * u.deg),
+                "PHIP":   ("azimuth", lambda x: float(x) * u.deg),
+                "PRMPAR": ("primary", lambda x: _id_to_code[int(x)])
+            }
+
             with inp_path.open() as f:
-                lines = f.read().split(os.linesep)
-            for line in lines:
-                if not line: continue
-                words = line.split()
-                try:
-                    tag, convert = {
-                        "ERANGE": ("energy", lambda x: float(x) * u.GeV),
-                        "THETAP": ("zenith", lambda x: float(x) * u.deg),
-                        "PHIP":   ("azimuth", lambda x: float(x) * u.deg),
-                        "PRMPAR": ("primary", lambda x: _id_to_name[int(x)])
-                    }[words[0]]
-                except KeyError:
-                    pass
-                else:
-                    inp[tag] = convert(words[1])
+                for line in f:
+                    if not line: continue
+                    words = line.split()
+                    try:
+                        tag, convert = converters[words[0]]
+                    except KeyError:
+                        pass
+                    else:
+                        inp[tag] = convert(words[1])
 
         return cls(fields=fields, **inp)

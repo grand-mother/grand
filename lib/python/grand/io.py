@@ -233,15 +233,17 @@ class DataNode:
         try:
             m = len(v[0])
         except TypeError:
-            m = 1
-
-        data = numpy.zeros((n, m), dtype=dtype)
+            m = 0
+            data = numpy.zeros(n, dtype=dtype)
+        else:
+            data = numpy.zeros((n, m), dtype=dtype)
 
         for i, ui in enumerate(units):
+            s = (i, slice(None)) if (m > 0) else i
             if ui:
-                data[i,:] = v[i].to_value(ui)
+                data[s] = v[i].to_value(ui)
             else:
-                data[i,:] = v[i]
+                data[s] = v[i]
 
         dset = self._write_array(k, data, dtype, columns, units)
         dset.attrs["metatype"] = "table"
@@ -251,11 +253,15 @@ class DataNode:
     @staticmethod
     def _unpack_table(dset, v):
         units = dset.attrs["units"]
+        try:
+            m = dset.shape[1]
+        except IndexError:
+            m = 0
+
         table = []
         for i, ui in enumerate(units):
-            vi = v[i,:]
-            if vi.size == 1:
-                vi = vi[0]
+            s = (i, slice(None)) if (m > 0) else i
+            vi = v[s]
             if ui:
                 vi *= u.Unit(ui)
             table.append(vi)
