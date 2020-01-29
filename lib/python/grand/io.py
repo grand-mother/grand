@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from collections import OrderedDict
 import os
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import astropy.units as u
-from astropy.coordinates import BaseRepresentation
+from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation,       \
+                                CartesianRepresentation
 from astropy.coordinates.representation import REPRESENTATION_CLASSES
+from astropy.time import Time
 import h5py
 from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
 
-from . import ECEF, LTP
+from . import ECEF, LTP, Rotation
 
 __all__ = ["DataNode", "ElementsIterator"]
 
@@ -92,24 +94,26 @@ class DataNode:
 
     def write(self, k, v, dtype=None, unit=None, columns=None, units=None):
         if isinstance(v, (str, bytes, numpy.string_, numpy.bytes_)):
-            dset = self._write_string(k, v)
+            self._write_string(k, v)
         elif isinstance(v, u.Quantity):
-            dset = self._write_quantity(k, v, dtype, unit)
+            self._write_quantity(k, v, dtype, unit)
         elif isinstance(v, (list, tuple)):
-            dset = self._write_table(k, v, dtype, columns, units)
+            self._write_table(k, v, dtype, columns, units)
         elif isinstance(v, numpy.ndarray):
             if columns:
                 self._check_columns(v, columns)
             if units:
                 self._check_units(v, units)
-            dset = self._write_array(k, v, dtype, columns, units)
+            self._write_array(k, v, dtype, columns, units)
         elif isinstance(v, BaseRepresentation):
-            dset = self._write_representation(k, v, dtype, unit, columns, units)
+            self._write_representation(k, v, dtype, unit, columns, units)
+        elif isinstance(v, BaseCoordinateFrame):
+            self._write_frame(k, v)
         else:
-            dset = self._write_number(k, v, dtype, unit)
+            self._write_number(k, v, dtype, unit)
 
     def _unpack(self, dset: _Dataset,
-                      dtype: Union[numpy.DataType, str, None]=None):
+                      dtype: Union[numpy.DataType, str, None]=None) -> Any:
         if dset.shape:
             v = dset[:]
             if dtype is not None:
@@ -135,12 +139,14 @@ class DataNode:
             return self._unpack_table(dset, v)
         elif metatype.startswith("representation"):
             return self._unpack_representation(dset, v)
+        elif metatype.startswith("frame"):
+            return self._unpack_frame(dset, v)
         else:
             raise ValueError(f"Invalid metatype {metatype}")
 
         return v
 
-    def _write_string(self, k, v, columns=None, units=None):
+    def _write_string(self, k, v, columns=None, units=None) -> _Dataset:
         if hasattr(v, "encode"):
             encoding = "UTF-8"
             v = v.encode()
@@ -167,7 +173,7 @@ class DataNode:
         else:
             return v.tobytes()
 
-    def _write_quantity(self, k, v, dtype=None, unit=None):
+    def _write_quantity(self, k, v, dtype=None, unit=None) -> _Dataset:
         if dtype is None:
             dtype = v.dtype
 
@@ -193,7 +199,7 @@ class DataNode:
         return v * u.Unit(unit)
 
     def _write_representation(self, k, v, dtype=None, unit=None,
-        columns=None, units=None):
+        columns=None, units=None) -> _Dataset:
 
         components = v.components
         values = [getattr(v, f"_{name}") for name in components]
@@ -217,7 +223,9 @@ class DataNode:
         v = [v[i] * u.Unit(ui) for i, ui in enumerate(units)]
         return cls(*v)
 
-    def _write_table(self, k, v, dtype=None, columns=None, units=None):
+    def _write_table(self, k, v, dtype=None, columns=None, units=None)         \
+        -> _Dataset:
+
         if columns:
             self._check_columns(v, columns)
 
@@ -267,7 +275,7 @@ class DataNode:
             table.append(vi)
         return table
 
-    def _write_number(self, k, v, dtype=None, unit=None):
+    def _write_number(self, k, v, dtype=None, unit=None) -> _Dataset:
         if dtype is None:
             if hasattr(v, "dtype"):
                 dtype = v.dtype
@@ -282,7 +290,9 @@ class DataNode:
         if unit:
             dset.attrs["unit"] = unit
 
-    def _write_array(self, k, v, dtype=None, columns=None, units=None):
+    def _write_array(self, k, v, dtype=None, columns=None, units=None)         \
+        -> _Dataset:
+
         if dtype is None:
             dtype = v.dtype
 
@@ -298,6 +308,60 @@ class DataNode:
             dset.attrs["units"] = units
 
         return dset
+
+    def _write_frame(self, k, v):
+        if isinstance(v, ECEF):
+            dset = self._group.require_dataset(k, data=None, shape=(),
+                                               dtype="f8")
+            dset.attrs["metatype"] = "frame/ecef"
+        elif isinstance(v, LTP):
+            data = numpy.empty((4, 3))
+            c = v._origin.represent_as(CartesianRepresentation)
+            data[0,0] = c.x.to_value("m")
+            data[0,1] = c.y.to_value("m")
+            data[0,2] = c.z.to_value("m")
+            data[1:,:] = v._basis
+
+            dset = self._group.require_dataset(k, data=data, shape=data.shape,
+                                               dtype=data.dtype)
+            dset.attrs["metatype"] = "frame/ltp"
+            dset.attrs["orientation"] = v.orientation
+            dset.attrs["magnetic"] = v.magnetic
+            if v.rotation is not None:
+                dset.attrs["rotation"] = v.rotation.matrix
+        else:
+            raise NotImplementedError(type(v))
+
+        if v.obstime is not None:
+            dset.attrs["obstime"] = v.obstime.jd
+
+    @staticmethod
+    def _unpack_frame(dset, v):
+        try:
+            obstime = dset.attrs["obstime"]
+        except KeyError:
+            obstime = None
+        else:
+            obstime = Time(obstime, format="jd")
+
+        name = os.path.basename(dset.attrs["metatype"])
+        if name == "ecef":
+            return ECEF(obstime=obstime)
+        elif name == "ltp":
+            location = ECEF(dset[0,:] * u.m)
+
+            try:
+                rotation = dset.attrs["rotation"]
+            except KeyError:
+                rotation = None
+            else:
+                rotation = Rotation.from_matrix(rotation)
+
+            return LTP(location=location, orientation=dset.attrs["orientation"],
+                       magnetic=dset.attrs["magnetic"], obstime=obstime,
+                       rotation=rotation)
+        else:
+            raise NotImplementedError(name)
 
     @staticmethod
     def _check_columns(v, columns):

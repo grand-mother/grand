@@ -91,6 +91,8 @@ Alternatively, magnetic coordinates can be used as well by setting *magnetic* to
       By default, a :class:`~astropy.coordinates.CartesianRepresentation` is
       expected for the coordinates data, i.e. *x*, *y* and *z*.
 
+   .. automethod:: grand.LTP.rotated
+
    .. autoproperty:: grand.LTP.earth_location
    .. autoproperty:: grand.LTP.magnetic
    .. autoproperty:: grand.LTP.orientation

@@ -11,6 +11,7 @@ import astropy.units as u
 import numpy
 
 import grand.io as io
+from grand import ECEF, LTP, Rotation
 from tests import TestCase
 
 
@@ -29,6 +30,8 @@ class IoTest(TestCase):
         r1 = CartesianRepresentation(c, c, c)
         c = numpy.array((90, -90)) * u.deg
         u1 = UnitSphericalRepresentation(c, c)
+        loc = ECEF(45 * u.deg, 6 * u.deg, 0 * u.m,
+                   representation_type="geodetic")
 
         elements = {
             "primary"    : "pà",
@@ -42,7 +45,11 @@ class IoTest(TestCase):
             "position2"  : r0,
             "position3"  : r1,
             "direction0" : u0,
-            "direction1" : u1
+            "direction1" : u1,
+            "frame0"     : ECEF(obstime="2010-01-01"),
+            "frame1"     : LTP(location=loc, obstime="2010-01-01",
+                               magnetic=True,
+                               rotation=Rotation.from_euler("z", 90 * u.deg))
         }
 
         with io.open(self.path, "w") as root:
@@ -65,6 +72,17 @@ class IoTest(TestCase):
                 elif isinstance(a, numpy.ndarray):
                     self.assertEquals(a.shape, element.shape)
                     self.assertArray(a, element)
+                elif isinstance(a, ECEF):
+                    self.assertEquals(a.obstime.jd, element.obstime.jd)
+                elif isinstance(a, LTP):
+                    self.assertEquals(a.obstime.jd, element.obstime.jd)
+                    self.assertCartesian(a.location.itrs.cartesian,
+                                         element.location.itrs.cartesian, 8)
+                    self.assertEquals(a.orientation, element.orientation)
+                    self.assertEquals(a.magnetic, element.magnetic)
+                    self.assertArray(a.rotation.matrix, element.rotation.matrix)
+                    self.assertArray(a._basis, element._basis)
+                    self.assertCartesian(a._origin, element._origin, 8)
                 else:
                     self.assertEquals(a, element)
 

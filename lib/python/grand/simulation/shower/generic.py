@@ -6,7 +6,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 
-from astropy.coordinates import CartesianRepresentation
+from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
 import astropy.units as u
 import numpy
 
@@ -51,6 +51,7 @@ class ShowerEvent:
     azimuth: Optional[u.Quantity] = None
     primary: Optional[ParticleCode] = None
 
+    frame: Optional[BaseCoordinateFrame] = None
     fields: Optional[FieldsCollection] = None
 
     @classmethod

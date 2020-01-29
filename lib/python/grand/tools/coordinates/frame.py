@@ -143,8 +143,8 @@ class ECEF(ExtendedCoordinateFrame):
         :py:class:`~astropy.coordinates.EarthLocation`.
         """
         geo = self.represent_as(GeodeticRepresentation)
-        return EarthLocation(lon=geo.longitude, lat=geo.latitude,
-                             height=geo.height)
+        return EarthLocation.from_geodetic(geo.longitude.copy(), geo.latitude,
+                                           geo.height, ellipsoid="WGS84")
 
 
 @frame_transform_graph.transform(FunctionTransform, ITRS, ECEF)

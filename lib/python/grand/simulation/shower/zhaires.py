@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from logging import getLogger
 from pathlib import Path
 import re
@@ -11,6 +12,7 @@ import numpy
 
 from .generic import Field, FieldsCollection, ShowerEvent
 from ..pdg import ParticleCode
+from ...tools.coordinates import ECEF, LTP
 
 __all__ = ["InvalidAntennaName", "ZhairesShower"]
 
@@ -86,11 +88,37 @@ class ZhairesShower(ShowerEvent):
                 words = string.split()
                 return float(words[0]) * u.Unit(words[1])
 
+            def parse_frame_location(string: str) -> BaseCoordinateFrame:
+                lat, lon = string.split("Long:")
+                lat = parse_quantity(lat[:-2])
+                lon = parse_quantity(lon[:-3])
+                return ECEF(lat, lon, 0 * u.m, representation_type="geodetic")
+
+            def parse_date(string: str) -> datetime:
+                return datetime.strptime(string.strip(), "%d/%b/%Y")
+
+            def parse_frame_direction(string: str) -> BaseCoordinateFrame:
+                origin = inp["frame"]
+                obstime = inp.pop("_obstime")
+
+                string = string.strip()
+                if string == "Local magnetic north":
+                    orientation, magnetic = "NWU", True
+                    # XXX is the orientation correct?
+                else:
+                    raise NotImplementedError(string)
+
+                return LTP(location=origin, orientation=orientation,
+                           magnetic=magnetic, obstime=obstime)
+
             converters = (
+                ("(Lat", "frame", parse_frame_location),
+                ("Date", "_obstime", parse_date),
                 ("Primary particle", "primary", parse_primary),
                 ("Primary energy", "energy", parse_quantity),
                 ("Primary zenith angle", "zenith", parse_quantity),
-                ("Primary azimuth angle", "azimuth", parse_quantity)
+                ("Primary azimuth angle", "azimuth", parse_quantity),
+                ("Zero azimuth direction", "frame", parse_frame_direction)
             )
 
             i = 0
