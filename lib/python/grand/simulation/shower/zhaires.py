@@ -4,13 +4,14 @@ from datetime import datetime
 from logging import getLogger
 from pathlib import Path
 import re
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from astropy.coordinates import CartesianRepresentation
+from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
 import astropy.units as u
 import numpy
 
-from .generic import Field, FieldsCollection, ShowerEvent
+from .generic import FieldsCollection, ShowerEvent
+from ..antenna import ElectricField
 from ..pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP
 
@@ -61,10 +62,10 @@ class ZhairesShower(ShowerEvent):
             Ex = data[:,1] * uVm
             Ey = data[:,2] * uVm
             Ez = data[:,3] * uVm
-            raw_fields[antenna] = Field(
-                positions[antenna],
+            raw_fields[antenna] = ElectricField(
                 t,
-                CartesianRepresentation(Ex, Ey, Ez)
+                CartesianRepresentation(Ex, Ey, Ez),
+                positions[antenna]
             )
 
         if raw_fields:
@@ -72,7 +73,7 @@ class ZhairesShower(ShowerEvent):
             for key in sorted(raw_fields.keys()):
                 fields[key] = raw_fields[key]
 
-        inp = {}
+        inp: Dict[str, Any] = {}
         try:
             sry_path = path.glob("*.sry").__next__()
         except StopIteration:

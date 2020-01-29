@@ -11,7 +11,8 @@ from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
 
-from .generic import Field, FieldsCollection, ShowerEvent
+from .generic import FieldsCollection, ShowerEvent
+from ..antenna import ElectricField
 from ..pdg import ParticleCode
 
 __all__ = ["CoreasShower"]
@@ -68,10 +69,10 @@ class CoreasShower(ShowerEvent):
                 Ex = data[:,1] * cgs2si
                 Ey = data[:,2] * cgs2si
                 Ez = data[:,3] * cgs2si
-                raw_fields[antenna] = Field(
-                    positions[antenna],
+                raw_fields[antenna] = ElectricField(
                     t,
-                    CartesianRepresentation(Ex, Ey, Ez)
+                    CartesianRepresentation(Ex, Ey, Ez),
+                    positions[antenna]
                 )
 
             fields = FieldsCollection()

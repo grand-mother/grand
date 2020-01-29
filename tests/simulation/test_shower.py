@@ -12,9 +12,9 @@ import astropy.units as u
 import numpy
 
 from grand import store, io
+from grand.simulation import CoreasShower, ElectricField, ShowerEvent,         \
+                             ZhairesShower
 from grand.simulation.pdg import ParticleCode
-from grand.simulation.shower import CoreasShower, Field, ShowerEvent,          \
-                                    ZhairesShower
 from tests import TestCase
 
 
@@ -58,14 +58,14 @@ class ShowerTest(TestCase):
         self.tearDown()
 
         fields = OrderedDict()
-        fields[1] = Field(
-            CartesianRepresentation(1 * u.m, 2 * u.m, 3 * u.m),
+        fields[1] = ElectricField(
             numpy.array((0, 1, 2)) * u.ns,
             CartesianRepresentation(
                 numpy.array((1, 0, 0)) * u.uV / u.m,
                 numpy.array((0, 1, 0)) * u.uV / u.m,
                 numpy.array((0, 0, 1)) * u.uV / u.m
-            )
+            ),
+            CartesianRepresentation(1 * u.m, 2 * u.m, 3 * u.m),
         )
         shower = ShowerEvent(fields=fields, **settings)
         shower.dump(self.path)

@@ -11,36 +11,16 @@ import astropy.units as u
 import numpy
 
 from ..pdg import ParticleCode
+from ..antenna import ElectricField
 from ...import io
 
-__all__ = ["Field", "FieldsCollection", "ShowerEvent"]
+__all__ = ["FieldsCollection", "ShowerEvent"]
 
 
 _logger = getLogger(__name__)
 
 
-@dataclass
-class Field:
-    r: CartesianRepresentation
-    t: u.Quantity
-    E: CartesianRepresentation
-
-    @classmethod
-    def load(cls, node):
-        _logger.debug(f"Loading field from {node.filename}:{node.path}")
-        r = node.read("r", dtype="f8")
-        t = node.read("t", dtype="f8")
-        E = node.read("E", dtype="f8")
-        return cls(r, t, E)
-
-    def dump(self, node):
-        _logger.debug(f"Dumping field to {node.filename}:{node.path}")
-        node.write("r", self.r, unit="m", dtype="f4")
-        node.write("t", self.t, unit="ns", dtype="f4")
-        node.write("E", self.E, unit="uV/m", dtype="f4")
-
-
-class FieldsCollection(OrderedDict, MutableMapping[int, Field]):
+class FieldsCollection(OrderedDict, MutableMapping[int, ElectricField]):
     pass
 
 
@@ -104,7 +84,7 @@ class ShowerEvent:
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
-                fields[antenna] = Field.load(antenna_node)
+                fields[antenna] = ElectricField.load(antenna_node)
 
         return cls(**kwargs)
 

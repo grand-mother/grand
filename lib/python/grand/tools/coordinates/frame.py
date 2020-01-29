@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import copy as _copy
 from datetime import datetime
 from typing import Any, Optional, Sequence, Union
 from typing_extensions import Final
@@ -121,6 +122,38 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
             getattr(representation, component).flags.writeable = False
 
 
+    def _replicate(self, data: Any, copy: bool=False, **kwargs: Any) -> ECEF:
+        if kwargs:
+            return super()._replicate(data, copy, **kwargs)
+
+        # Copy the object instead of calling the initialization again
+        tmp = self.data, self.cache # type: ignore
+        frame = _copy.copy(self) if copy is False else _copy.deepcopy(self)
+        frame.cache = defaultdict(dict) # type: ignore
+        if data is not None:
+            if copy:
+                data = data.copy()
+            self._protect(data)
+        frame._data = data
+        self.data, self.cache = tmp
+
+        return frame
+
+
+    @property
+    def data(self) -> BaseRepresentation:
+        """The coordinate data for this object.
+        """
+        return self._data
+
+    @data.setter
+    def data(self, value: Optional[BaseRepresentation]) -> None:
+        if value is not None:
+            self._protect(value)
+        self._data = value
+        self.cache.clear()
+
+
 class ECEF(ExtendedCoordinateFrame):
     """Earth-Centered Earth-Fixed frame, co-moving with the Earth.
     """
@@ -216,8 +249,10 @@ class LTP(ExtendedCoordinateFrame):
 
         # Do the base initialisation
         location = self.location if location is None else location
-        if hasattr(location, "earth_location"):
+        try:
             location = location.earth_location
+        except AttributeError:
+            pass
         orientation = self.orientation if orientation is None else orientation
 
         super().__init__(*args, location=location, orientation=orientation,
@@ -280,13 +315,13 @@ class LTP(ExtendedCoordinateFrame):
 
 
     def rotated(self, rotation: Rotation, copy: bool=True) -> LTP:
-        """Get a rotated version of this frame
+        """Get a rotated version of this frame.
         """
-        if self.rotation is not None:
-            rotation = rotation * self.rotation
-        replicate = self.replicate if self.has_data                            \
-                                   else self.replicate_without_data
-        return replicate(copy=copy, rotation=rotation)
+        r = rotation if self.rotation is None else rotation * self.rotation
+        frame = self._replicate(self.data, copy)
+        frame._rotation = r
+        frame._basis = rotation.apply(frame._basis, inverse=True)
+        return frame
 
 
     @property

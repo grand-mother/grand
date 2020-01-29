@@ -124,8 +124,19 @@ Those are forwarded to the frame coordinates.
 .. autoclass:: grand.ExtendedCoordinateFrame
 
    This class inherits from a :class:`~astropy.coordinates.BaseCoordinateFrame`.
-   Functionalities are identical and are not documented here. Note however
-   that the `data` and any of its representations are *read only*.
+   Most functionalities are identical and are not documented here.
+
+   .. warning::
+
+      The `data` managed by the frame and by any of its representations are
+      enforced to be *read only* in order to prevent in-place modifications.
+      However, contrary to a :class:`astropy.coordinates.BaseCoordinateFrame`
+      it is allowed to (re)set the data to another representation, e.g. as:
+
+      ..
+         >>> frame = ECEF(0, 0, 0)
+
+      >>> frame.data = CartesianRepresentation(0, 0, 0)
 
 
 Representations
