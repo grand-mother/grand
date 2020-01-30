@@ -36,6 +36,8 @@ class ShowerEvent:
 
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
+        baseclass = cls
+
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
             filename = f"{source.filename}:{source.path}"
@@ -46,15 +48,26 @@ class ShowerEvent:
             source = Path(source)
             if source.is_dir():
                 loader = "_from_dir"
+
+                if not hasattr(cls, loader):
+                    # Detection of the simulation engine. Lazy imports are used
+                    # in order to avoid circular references
+                    from .coreas import CoreasShower
+                    from .zhaires import ZhairesShower
+
+                    if CoreasShower._check_dir(source):
+                        baseclass = CoreasShower
+                    elif ZhairesShower._check_dir(source):
+                        baseclass = ZhairesShower
             else:
                 loader = f"_from_datafile"
 
         _logger.info(f"Loading shower data from {filename}")
 
         try:
-            load = getattr(cls, loader)
+            load = getattr(baseclass, loader)
         except AttributeError:
-            raise ValueError(f"Invalid data format")
+            raise NotImplementedError(f"Invalid data format")
         else:
             self = load(source)
 

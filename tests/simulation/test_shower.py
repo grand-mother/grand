@@ -11,7 +11,7 @@ from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
 
-from grand import store, io
+from grand import store, io, LTP
 from grand.simulation import CoreasShower, ElectricField, ShowerEvent,         \
                              ZhairesShower
 from grand.simulation.pdg import ParticleCode
@@ -93,6 +93,9 @@ class ShowerTest(TestCase):
 
     def test_coreas(self):
         path = self.get_data("coreas")
+        shower = ShowerEvent.load(path)
+        self.assertIs(shower.frame, None)
+
         shower = CoreasShower.load(path)
         shower.dump(self.path)
         tmp = shower.load(self.path)
@@ -105,6 +108,9 @@ class ShowerTest(TestCase):
 
     def test_zhaires(self):
         path = self.get_data("zhaires")
+        shower = ShowerEvent.load(path)
+        self.assertIsInstance(shower.frame, LTP)
+
         shower = ZhairesShower.load(path)
         shower.dump(self.path)
         tmp = shower.load(self.path)

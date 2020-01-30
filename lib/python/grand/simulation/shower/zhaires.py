@@ -27,6 +27,14 @@ class InvalidAntennaName(ValueError):
 
 class ZhairesShower(ShowerEvent):
     @classmethod
+    def _check_dir(cls, path: Path) -> bool:
+        try:
+            info_file = path.glob("*.sry").__next__()
+        except StopIteration:
+            return False
+        return True
+
+    @classmethod
     def _from_dir(cls, path: Path) -> ZhairesShower:
         if not path.exists():
             raise FileNotFoundError(path)

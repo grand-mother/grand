@@ -30,6 +30,14 @@ _id_to_code: Dict[int, ParticleCode] = {
 
 class CoreasShower(ShowerEvent):
     @classmethod
+    def _check_dir(cls, path: Path) -> bool:
+        try:
+            info_file = path.glob("*.reas").__next__()
+        except StopIteration:
+            return False
+        return True
+
+    @classmethod
     def _from_dir(cls, path: Path) -> CoreasShower:
         if not path.exists():
             raise FileNotFoundError(path)
