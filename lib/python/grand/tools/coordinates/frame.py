@@ -339,10 +339,14 @@ def ecef_to_ltp(ecef: ECEF, ltp: LTP) -> LTP:
     """Compute the transformation from ECEF to LTP coordinates.
     """
     c = ecef.cartesian
+    p = c.get_xyz()
     if c.x.unit.is_equivalent("m"):
-        c = c.copy()
-        c -= ltp._origin
-    c = c.transform(ltp._basis.T)
+        t = ltp._origin
+        p[0] -= t.x
+        p[1] -= t.y
+        p[2] -= t.z
+    p[:] = numpy.dot(ltp._basis.T, p)
+    c = CartesianRepresentation(p, copy=False)
 
     if ltp._obstime is None:
         ltp._obstime = ecef._obstime
@@ -354,9 +358,14 @@ def ecef_to_ltp(ecef: ECEF, ltp: LTP) -> LTP:
 def ltp_to_ecef(ltp: LTP, ecef: ECEF) -> ECEF:
     """Compute the transformation from LTP to ECEF coordinates.
     """
-    c = ltp.cartesian.transform(ltp._basis)
+    c = ltp.cartesian
+    p = numpy.dot(ltp._basis, c.get_xyz())
     if c.x.unit.is_equivalent("m"):
-        c += ltp._origin
+        t = ltp._origin
+        p[0] += t.x
+        p[1] += t.y
+        p[2] += t.z
+    c = CartesianRepresentation(p, copy=False)
 
     if ecef._obstime is None:
         ecef._obstime = ltp._obstime
@@ -384,15 +393,14 @@ def ltp_to_ltp(ltp0: LTP, ltp1: LTP) -> LTP:
             # coordinates are equal
             return ltp1.realize_frame(c)
 
-    # Transform to ECEF
-    c = c.transform(ltp0._basis)
+    # Transform to and back from ECEF
+    p = numpy.dot(ltp0._basis, c.get_xyz())
     if translate:
-        c += ltp0._origin
-
-    # Transform back from ECEF
-    if translate:
-        c = c.copy()
-        c -= ltp1._origin
-    c = c.transform(ltp1._basis.T)
+        t = ltp0._origin - ltp1._origin
+        p[0] += t.x
+        p[1] += t.y
+        p[2] += t.z
+    p[:] = numpy.dot(ltp1._basis.T, p)
+    c = CartesianRepresentation(p, copy=False)
 
     return ltp1.realize_frame(c)
