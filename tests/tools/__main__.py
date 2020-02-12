@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Run all unit tests for the grand.tools package
 """

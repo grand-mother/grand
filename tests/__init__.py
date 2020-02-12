@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the GRAND package
 """
@@ -12,6 +11,37 @@ import sys
 from pathlib import Path
 
 __all__ = ["main"]
+
+
+class TestCase(unittest.TestCase):
+    def assertArray(self, a, b, tol=9):
+        """Check that two numpy.ndarray are consistent"""
+        if len(a.shape) > 1:
+            a, b = a.flatten(), b.flatten()
+        for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
+
+    def assertQuantity(self, a, b, tol=9):
+        """Check that two astropy.Quantities are consistent"""
+        n = a.size
+        b = b.to_value(a.unit)
+        a = a.value
+        if n > 1:
+            if len(a.shape) > 1:
+                a, b = a.flatten(), b.flatten()
+            for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
+        else:
+            self.assertAlmostEquals(a, b, tol)
+
+    def assertCartesian(self, a, b, tol=9):
+        """Check that two CartesianRepresentations are consistent"""
+        self.assertQuantity(a.x, b.x, tol)
+        self.assertQuantity(a.y, b.y, tol)
+        self.assertQuantity(a.z, b.z, tol)
+
+    def assertUnitSpherical(self, a, b, tol=9):
+        """Check that two UnitSphericalRepresentations are consistent"""
+        self.assertQuantity(a.lon, b.lon, tol)
+        self.assertQuantity(a.lat, b.lat, tol)
 
 
 def main():
@@ -50,11 +80,15 @@ def main():
 
     if not options.unit:
         # Look for doc tests
+        from astropy.coordinates import CartesianRepresentation
+        import astropy.units as u
         from grand import geomagnet, store, topography, ECEF,                  \
                           GeodeticRepresentation, HorizontalRepresentation, LTP
-        import astropy.units as u
-        globs = { "geomagnet": geomagnet, "store": store,
-                  "topography": topography, "ECEF": ECEF, "LTP": LTP,
+        import grand.io as io
+        globs = { "geomagnet": geomagnet, "io": io, "store": store,
+                  "topography": topography,
+                  "CartesianRepresentation": CartesianRepresentation,
+                  "ECEF": ECEF, "LTP": LTP,
                   "GeodeticRepresentation": GeodeticRepresentation,
                   "HorizontalRepresentation": HorizontalRepresentation, "u": u}
 
@@ -78,5 +112,9 @@ def main():
 
             runner = unittest.TextTestRunner(verbosity=options.verbosity)
             exit_status = not runner.run(test_suite).wasSuccessful()
+            try:
+                os.remove("data.hdf5")
+            except FileNotFoundError:
+                pass
 
     sys.exit(exit_status)

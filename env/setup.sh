@@ -81,10 +81,15 @@ main () {
         local tmpfile=$(mktemp /tmp/grand-setup-build.XXXXXX)
         $(make install >& "${tmpfile}")
         if [ "$?" != "0" ]; then
-            logmsg "Failed ..."
             cat "${tmpfile}"
             rm -f -- "${tmpfile}"
-            exit 1
+            logmsg ""
+            logmsg "An unexpected error occured. See details above."
+            logmsg "The reason might be that your Python AppImage is out of date"
+            logmsg "  Try `rm bin/python3-*.` and re-source this script"
+            logmsg "  If this error persists please open an issue at:"
+            logmsg "    https://github.com/grand-mother/grand/issues"
+            return 1
         else
             rm -f -- "${tmpfile}"
         fi

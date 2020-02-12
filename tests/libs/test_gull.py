@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the grand.libs.gull module
 """
@@ -7,9 +6,10 @@ import os
 import unittest
 
 from grand.libs import gull
+from tests import TestCase
 
 
-class GullTest(unittest.TestCase):
+class GullTest(TestCase):
     """Unit tests for the gull sub-package"""
 
     def test_snapshot(self):

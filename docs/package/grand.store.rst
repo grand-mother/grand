@@ -1,5 +1,5 @@
-:mod:`~grand.store` --- Data storage
-====================================
+:mod:`~grand.store` --- Interface to remote data storage
+========================================================
 .. module:: grand.store
 
 .. warning::

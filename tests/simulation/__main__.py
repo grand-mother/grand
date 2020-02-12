@@ -1,5 +1,5 @@
 """
-Run all unit tests for the grand_store package
+Run all unit tests for the grand.simulation package
 """
 
 from .. import main

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the grand.tools.topography module
 """
@@ -7,17 +6,18 @@ import os
 import unittest
 from pathlib import Path
 
+import numpy
+import astropy.units as u
+
 import grand.store as store
 import grand.tools as tools
 from grand.tools.coordinates import ECEF, GeodeticRepresentation
 from grand.tools import topography
 from grand.tools.topography import Topography
-
-import numpy
-import astropy.units as u
+from tests import TestCase
 
 
-class TopographyTest(unittest.TestCase):
+class TopographyTest(TestCase):
     """Unit tests for the topography module"""
 
 

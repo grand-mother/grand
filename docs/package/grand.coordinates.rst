@@ -1,5 +1,11 @@
 Extension of :mod:`astropy.coordinates`
 =======================================
+.. module:: grand.tool.coordinates
+
+----
+
+Overview
+--------
 
 The :mod:`grand` package extends :mod:`astropy.coordinates` with geographic
 representations and local frames. It adds the :class:`~grand.ECEF` and
@@ -11,16 +17,22 @@ representations and local frames. It adds the :class:`~grand.ECEF` and
 Frames
 ------
 
-.. warning::
-   The :mod:`grand` frames are co-moving with the Earth. i.e. the *obstime* can
-   be omitted, in which case it is inherited from the source frame during
-   transforms. This differs from base :mod:`astropy.coordinates` frames where
-   the observation time must be stated explicitly during a transform (see E.g.
-   `#8390`_).
+The :mod:`grand` frames differ from base :mod:`astropy.coordinates` frames in
+several respects. First, they all inherit from a
+:class:`~grand.ExtendedCoordinateFrame` instead of a
+:mod:`~astropy.coordinates.BaseCoordinateFrame`. Their coordinates data are
+*read only*. This prevents some severe bugs (e.g. see issue `#9873`_). In
+addition, they support basic arithmetic operators (`+`, `-` and `*`).
+
+Secondly, the :mod:`grand` frames are co-moving with the Earth. i.e. the
+*obstime* can be omitted, in which case it is inherited from the source frame
+during transforms. This differs from base :mod:`astropy.coordinates` frames
+where the observation time must be stated explicitly during a transform (E.g.
+see issue `#8390`_).
 
 If specified, the observation time must be an instance of an `astropy`
 :class:`~astropy.time.Time` object or any of its initializers, E.g.
-:class:`~datetime.datetime`, or `str`. 
+:class:`~datetime.datetime`, or `str`.
 
 In addition, the frame classes defined in :mod:`astropy.coordinates` do not
 distinguish points from vectors when transforming between frames. The `grand`
@@ -64,7 +76,7 @@ as:
 
 >>> from astropy.coordinates import EarthLocation
 >>> ltp = LTP(location=EarthLocation.of_site("greenwich"),
-...           orientation=("N", "E", "D"))
+...           orientation="NED")
 
 Alternatively, magnetic coordinates can be used as well by setting *magnetic* to
 `True`. By default geographic East, North, Up (ENU) coordinates are used.
@@ -79,10 +91,52 @@ Alternatively, magnetic coordinates can be used as well by setting *magnetic* to
       By default, a :class:`~astropy.coordinates.CartesianRepresentation` is
       expected for the coordinates data, i.e. *x*, *y* and *z*.
 
+   .. automethod:: grand.LTP.rotated
+
    .. autoproperty:: grand.LTP.earth_location
    .. autoproperty:: grand.LTP.magnetic
    .. autoproperty:: grand.LTP.orientation
    .. autoproperty:: grand.LTP.obstime
+
+
+Extended frame
+^^^^^^^^^^^^^^
+
+The :class:`~grand.ExtendedCoordinateFrame` is an extension of the astropy
+:class:`~astropy.coordinates.BaseCoordinateFrame` but with *read only* data.
+This prevents some type of severe bugs that could occur with astropy frames
+when data are modified in-place (E.g. see issue `#9873`_).
+
+Furthermore the :class:`~grand.ExtendedCoordinateFrame` also implements the
+addition (`+`), subtraction (`-`) and multiplication (`*`) arithmetic operators.
+Those are forwarded to the frame coordinates.
+
+.. note::
+
+   When adding or subtracting two frames the resulting system is the one of the
+   left hand side.  If needed, the coordinates of the right hand side are
+   transformed to the system of the left hand side before being added or
+   subtracted.  Consequently, the addition of two frames is not strictly
+   commutative. Note that one can also add or subtract a frame with a
+   :class:`~astropy.coordinates.BaseRepresentation` in which case the
+   representation is assumed to be in the frame system.
+
+.. autoclass:: grand.ExtendedCoordinateFrame
+
+   This class inherits from a :class:`~astropy.coordinates.BaseCoordinateFrame`.
+   Most functionalities are identical and are not documented here.
+
+   .. warning::
+
+      The `data` managed by the frame and by any of its representations are
+      enforced to be *read only* in order to prevent in-place modifications.
+      However, contrary to a :class:`astropy.coordinates.BaseCoordinateFrame`
+      it is allowed to (re)set the data to another representation, e.g. as:
+
+      ..
+         >>> frame = ECEF(0, 0, 0)
+
+      >>> frame.data = CartesianRepresentation(0, 0, 0)
 
 
 Representations
@@ -145,6 +199,7 @@ upwards at Greenwich:
 
 
 .. _#8390: https://github.com/astropy/astropy/issues/8390
+.. _#9873: https://github.com/astropy/astropy/issues/9873
 .. _Earth-Centered Earth-Fixed: https://en.wikipedia.org/wiki/ECEF
 .. _Local Tangent Plane coordinates: https://en.wikipedia.org/wiki/Local_tangent_plane_coordinates
 .. _geodetic datum: https://en.wikipedia.org/wiki/Geodetic_datum
