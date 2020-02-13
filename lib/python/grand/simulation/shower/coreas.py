@@ -111,4 +111,41 @@ class CoreasShower(ShowerEvent):
                     else:
                         inp[tag] = convert(words[1])
 
+        try:
+            reas_path = path.glob("*.reas").__next__()
+        except StopIteration:
+            raise FileNotFoundError(path / "*.reas")
+        else:
+            tags = (
+                "CoreCoordinateNorth", "CoreCoordinateWest",
+                "CoreCoordinateVertical", "DistanceOfShowerMaximum"
+            )
+
+            index, values = 0, numpy.empty(len(tags))
+            target = tags[index]
+            with reas_path.open() as f:
+                for line in f:
+                    try:
+                        tag, value = line.split(" = ")
+                    except ValueError:
+                        continue
+                    if tag != target: continue
+
+                    values[index] = float(value.split(";", 1)[0])
+
+                    index += 1
+                    try:
+                        target = tags[index]
+                    except IndexError:
+                        break
+
+            core = CartesianRepresentation(values[0], values[1], values[2],
+                                           unit="cm")
+            distance = values[3] * u.cm
+            theta, phi = inp["zenith"], inp["azimuth"]
+            ct, st = numpy.cos(theta), numpy.sin(theta)
+            direction = CartesianRepresentation( # XXX is this correct?
+                st * numpy.cos(phi), st * numpy.sin(phi), ct)
+            inp["maximum"] = core + distance * direction
+
         return cls(fields=fields, **inp)

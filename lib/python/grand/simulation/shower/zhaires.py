@@ -120,6 +120,11 @@ class ZhairesShower(ShowerEvent):
                 return LTP(location=origin, orientation=orientation,
                            magnetic=magnetic, obstime=obstime)
 
+            def parse_maximum(string: str) -> CartesianRepresentation:
+                _, _, *xyz = string.split()
+                x, y, z = map(float, xyz)
+                return CartesianRepresentation(x * u.km, y * u.km, z * u.km)
+
             converters = (
                 ("(Lat", "frame", parse_frame_location),
                 ("Date", "_obstime", parse_date),
@@ -127,7 +132,8 @@ class ZhairesShower(ShowerEvent):
                 ("Primary energy", "energy", parse_quantity),
                 ("Primary zenith angle", "zenith", parse_quantity),
                 ("Primary azimuth angle", "azimuth", parse_quantity),
-                ("Zero azimuth direction", "frame", parse_frame_direction)
+                ("Zero azimuth direction", "frame", parse_frame_direction),
+                ("Location of max.(Km)", "maximum", parse_maximum)
             )
 
             i = 0
