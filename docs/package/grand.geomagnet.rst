@@ -11,7 +11,8 @@ models can also be instanciated as :class:`~grand.geomagnet.Geomagnet` object.
 .. warning::
    The input *coordinates* to the :func:`~grand.geomagnet.field` function or
    method must be a :mod:`grand` frame, i.e. :class:`~grand.ECEF` or
-   :class:`~grand.LTP`. In addition, an observation time must be specified.
+   :class:`~grand.LTP`. In addition, if no observation time is specified
+   a default value is used (31 December 2019).
 
 .. note::
     The :func:`~grand.geomagnet.field` function and method accept vectorized
@@ -33,7 +34,13 @@ Default interface
    ...                    longitude=3 * u.deg, obstime="2019-01-01")
    >>> field = geomagnet.field(coordinates)
 
-.. autofunction:: grand.geomagnet.model
+.. autoproperty:: grand.geomagnet.model
+
+   The default geomagnetic model, i.e. `IGRF12`_.
+
+.. autoproperty:: grand.geomagnet.obstime
+
+   The deault observation time, i.e. 31 December 2019.
 
 
 Alternative magnetic models

@@ -16,6 +16,7 @@
 
 """Geomagnetic field wrapper for GRAND packages
 """
+from __future__ import annotations
 
 from typing import Optional, Union
 from typing_extensions import Final
@@ -24,17 +25,31 @@ from .coordinates import ECEF, GeodeticRepresentation, LTP
 from ..libs.gull import Snapshot as _Snapshot
 
 import astropy.units as u
+from astropy.time import Time
 import numpy
 
 from astropy.coordinates import EarthLocation
 
 
-_DEFAULT_MODEL: Final = "IGRF12"
-"""The default geo-magnetic model"""
+_default_model: Final = "IGRF12"
+"""The default geo-magnetic model, i.e. IGRF12.
+   Reference: https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html
+"""
 
-
-_default_magnet: Optional["Geomagnet"] = None
+_default_magnet: Optional[Geomagnet] = None
 """An instance of Geomagnet with the default geo-magnetic model"""
+
+_default_obstime: Final[Time] = Time("2019-12-31")
+"""The default observation time if none is specified"""
+
+
+def __getattr__(name):
+    if name == "model":
+        return _default_model
+    elif name == "obstime":
+        return _default_obstime.datetime.date
+    else:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def field(coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
@@ -47,20 +62,13 @@ def field(coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
     return _default_magnet.field(coordinates)
 
 
-def model() -> str:
-    """Get the default model for the geo-magnetic field, I.e.
-    `IGRF12 <https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html>`_.
-    """
-    return _DEFAULT_MODEL
-
-
 class Geomagnet:
     """Proxy to a geomagnetic model
     """
 
     def __init__(self, model: str=None) -> None:
         if model is None:
-            model = _DEFAULT_MODEL
+            model = _default_model
         self._model = model   # type: str
         self._snapshot = None # type: Optional[_Snapshot]
         self._date = None     # type: Optional[str]
@@ -73,8 +81,7 @@ class Geomagnet:
         # Update the snapshot, if needed
         obstime = coordinates.obstime
         if obstime is None:
-            raise ValueError(
-                "No observation time was specified for the coordinates")
+            obstime = _default_obstime
         date = obstime.datetime.date()
         if date != self._date:
             self._snapshot = _Snapshot(self._model, date)

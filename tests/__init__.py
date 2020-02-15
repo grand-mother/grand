@@ -30,7 +30,7 @@ class TestCase(unittest.TestCase):
                 a, b = a.flatten(), b.flatten()
             for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
         else:
-            self.assertAlmostEquals(a, b, tol)
+            self.assertAlmostEqual(a, b, tol)
 
     def assertCartesian(self, a, b, tol=9):
         """Check that two CartesianRepresentations are consistent"""

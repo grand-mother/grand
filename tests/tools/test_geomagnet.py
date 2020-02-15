@@ -49,8 +49,10 @@ class GeomagnetTest(TestCase):
 
     def test_default(self):
         # Test the initialisation
-        model = "IGRF12"
-        self.assertEqual(tools.geomagnet.model(), model)
+        self.assertEqual(tools.geomagnet.model,
+                         tools.geomagnet._default_model)
+        self.assertEqual(tools.geomagnet.obstime,
+                         tools.geomagnet._default_obstime.datetime.date)
 
         # Test the default field getter
         c = self.get_coordinates()
@@ -93,11 +95,11 @@ class GeomagnetTest(TestCase):
         self.assertField(field)
 
 
-    def test_error(self):
+    def test_obstime(self):
         c = self.get_coordinates(obstime=False)
-        with self.assertRaises(ValueError) as context:
-            tools.geomagnet.field(c)
-        self.assertRegex(context.exception.args[0], "^No observation time")
+        field = tools.geomagnet.field(c)
+        self.assertEqual(field.obstime.datetime.date,
+                         tools.geomagnet._default_obstime.datetime.date)
 
 
 if __name__ == "__main__":

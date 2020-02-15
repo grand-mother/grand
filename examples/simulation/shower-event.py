@@ -1,12 +1,14 @@
 #! /usr/bin/env python
-from grand import LTP
+import astropy.units as u
+from grand import ECEF, LTP
 from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
 
 
 # Load the radio shower simulation data
-#
-# XXX Handle COREAS data / with the missing frame case
-shower = ShowerEvent.load("tests/simulation/data/zhaires")
+shower = ShowerEvent.load("tests/simulation/data/coreas")
+if shower.frame is None:
+    shower.localize(45 * u.deg, 3 * u.deg) # Coreas showers have no localization
+                                           # info. This must be set manually
 
 # Define an antenna model
 #

@@ -165,7 +165,7 @@ class ECEF(ExtendedCoordinateFrame):
     """The observation time. Defaults to `None`."""
 
 
-    def __init__(self, *args, obstime: Union["datetime", "Time", str]=None,
+    def __init__(self, *args, obstime: Union[datetime, Time, str, None]=None,
                  **kwargs) -> None:
         super().__init__(*args, obstime=obstime, **kwargs)
 
@@ -266,9 +266,6 @@ class LTP(ExtendedCoordinateFrame):
 
         if magnetic:
             # Compute the magnetic declination
-            if self._obstime is None:
-                raise ValueError("Magnetic coordinates require specifying "
-                                 "an observation time")
             ecef = ECEF(itrs.x, itrs.y, itrs.z, obstime=self._obstime)
 
             if not _HAS_GEOMAGNET:

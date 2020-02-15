@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from datetime import datetime
 from logging import getLogger
 import os
 from pathlib import Path
@@ -8,12 +9,14 @@ from typing import Dict, Optional
 
 import astropy.constants
 from astropy.coordinates import CartesianRepresentation
+from astropy.time import Time
 import astropy.units as u
 import numpy
 
 from .generic import FieldsCollection, ShowerEvent
 from ..antenna import ElectricField
 from ..pdg import ParticleCode
+from ...tools.coordinates import ECEF, LTP
 
 __all__ = ["CoreasShower"]
 
@@ -149,3 +152,17 @@ class CoreasShower(ShowerEvent):
             inp["maximum"] = core + distance * direction
 
         return cls(fields=fields, **inp)
+
+
+    def localize(self, latitude: u.Quantity, longitude: u.Quantity,
+                 height: Optional[u.Quantity]=None,
+                 obstime: Union[datetime, Time, str, None]=None) -> None:
+
+        if height is None:
+            height = 0 * u.m
+
+        location = ECEF(latitude, longitude, height,
+                        representation_type="geodetic")
+        self.frame = LTP(location=location, orientation="NWU", magnetic=True,
+                         obstime=obstime)
+        # XXX Is this the frame used by CoREAS?
