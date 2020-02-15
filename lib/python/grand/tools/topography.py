@@ -17,19 +17,21 @@
 """Topography wrapper for GRAND packages.
 """
 
-from typing import Optional, Union
-from typing_extensions import Final
-
-from . import DATADIR
-from .coordinates import ECEF, GeodeticRepresentation, LTP
-from ..libs.turtle import Stack as _Stack, Map as _Map
-from .. import store
+from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Optional, Union
+from typing_extensions import Final
 
 import astropy.units as u
 import numpy
+
+from . import DATADIR
+from .coordinates import ECEF, GeodeticRepresentation, LTP
+from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
+from .. import store
+from .._core import ffi, lib
 
 __all__ = ["elevation", "geoid_undulation", "update_data", "cachedir",
            "model", "Topography"]
@@ -51,6 +53,18 @@ _geoid: Optional[_Map] = None
 """Map with geoid undulations"""
 
 
+def distance(position: Union[ECEF, LTP], direction: Union[ECEF, LTP],
+    maximum_distance: Optional[u.Quantity]=None) -> u.Quantity:
+    """Get the signed intersection distance with the topography.
+    """
+    global _default_topography
+
+    if _default_topography is None:
+        _CACHEDIR.mkdir(exist_ok=True)
+        _default_topography = Topography(_CACHEDIR)
+    return _default_topography.distance(position, direction, maximum_distance)
+
+
 def elevation(coordinates: Union[ECEF, LTP]) -> u.Quantity:
     """Get the topography elevation, w.r.t. sea level.
     """
@@ -62,23 +76,27 @@ def elevation(coordinates: Union[ECEF, LTP]) -> u.Quantity:
     return _default_topography.elevation(coordinates)
 
 
-def geoid_undulation(coordinates: Union[ECEF, LTP]) -> u.Quantity:
-    """Get the geoid undulation.
-    """
-
+def _get_geoid():
     global _geoid
 
     if _geoid is None:
         path = os.path.join(DATADIR, "egm96.png")
         _geoid = _Map(path)
+    return _geoid
+
+
+def geoid_undulation(coordinates: Union[ECEF, LTP]) -> u.Quantity:
+    """Get the geoid undulation.
+    """
+    geoid = _get_geoid()
 
     # Compute the geodetic coordinates
     cart = coordinates.transform_to(ECEF).cartesian
     geodetic = cart.represent_as(GeodeticRepresentation)
 
-    z = _geoid.elevation(geodetic.longitude / u.deg,
+    z = geoid.elevation(geodetic.longitude / u.deg,
                          geodetic.latitude / u.deg)
-    return z * u.m
+    return z << u.m
 
 
 def update_data(coordinates: Union[ECEF, LTP]=None, clear: bool=False,
@@ -162,6 +180,7 @@ class Topography:
 
     def __init__(self, path: Union[Path, str]) -> None:
         self._stack = _Stack(str(path))
+        self._stepper:Optional[_Stepper] = None
 
 
     def elevation(self, coordinates: Union[ECEF, LTP]) -> u.Quantity:
@@ -174,4 +193,49 @@ class Topography:
         # Return the topography elevation
         z = self._stack.elevation(geodetic.latitude / u.deg,
                                   geodetic.longitude / u.deg)
-        return z * u.m
+        return z << u.m
+
+
+    def distance(self, position: Union[ECEF, LTP],
+                 direction: Union[ECEF, LTP],
+                 maximum_distance: Optional[u.Quantity]=None) -> u.Quantity:
+        """Get the signed intersection distance with the topography.
+        """
+
+        if self._stepper is None:
+            stepper = _Stepper()
+            stepper.add(self._stack)
+            stepper.geoid = _get_geoid()
+            self._stepper = stepper
+
+        position = position.transform_to(ECEF).cartesian
+        direction = direction.transform_to(ECEF).cartesian
+        dn = maximum_distance.size if maximum_distance is not None else 1
+        n = max(position.x.size, direction.x.size, dn)
+
+        if ((direction.size > 1) and (direction.size < n)) or                  \
+           ((position.size > 1) and (position.size < n)) or                    \
+           ((dn > 1) and (dn < n)):
+            raise ValueError("incompatible size")
+
+        r = numpy.empty(3 * n)
+        v = numpy.empty(3 * n)
+        d = numpy.empty(n)
+
+        r[::3] = position.x.to_value("m")
+        r[1::3] = position.y.to_value("m")
+        r[2::3] = position.z.to_value("m")
+        v[::3] = direction.x.value
+        v[1::3] = direction.y.value
+        v[2::3] = direction.z.value
+        d[:] = maximum_distance.to_value("m") if maximum_distance is not None  \
+                                              else 0
+
+        lib.grand_topography_distance(
+            self._stepper._stepper[0],
+            ffi.cast("double *", r.ctypes.data),
+            ffi.cast("double *", v.ctypes.data),
+            ffi.cast("double *", d.ctypes.data), n)
+
+        if d.size == 1: d = d[0]
+        return d << u.m

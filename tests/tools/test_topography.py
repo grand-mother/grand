@@ -11,7 +11,7 @@ import astropy.units as u
 
 import grand.store as store
 import grand.tools as tools
-from grand.tools.coordinates import ECEF, GeodeticRepresentation
+from grand.tools.coordinates import ECEF, GeodeticRepresentation, LTP
 from grand.tools import topography
 from grand.tools.topography import Topography
 from tests import TestCase
@@ -97,6 +97,40 @@ class TopographyTest(TestCase):
         self.assertEqual(z.size, 1)
         self.assertEqual(z.unit, u.m)
         self.assertFalse(numpy.isnan(z))
+
+
+    def test_topography_distance(self):
+        # Fetch a test tile
+        geo = GeodeticRepresentation(latitude=39.5 * u.deg,
+                                     longitude=90.5 * u.deg)
+        c = ECEF(geo)
+        topography.update_data(c)
+
+        # Test the distance getter
+        z = topography.elevation(c) + topography.geoid_undulation(c)
+        c = ECEF(GeodeticRepresentation(latitude=geo.latitude,
+                                        longitude=geo.longitude,
+                                        height=z - 1 * u.m))
+        v = LTP(0 * u.deg, 45 * u.deg, representation_type="horizontal",
+                location = c)
+        d = topography.distance(c, v, 10 * u.m)
+        self.assertEqual(d.size, 1)
+        self.assertEqual(d.unit, u.m)
+        self.assertFalse(numpy.isnan(d))
+        self.assertTrue(d < 0)
+
+        d = topography.distance(c, v, 50 * u.cm)
+        self.assertTrue(numpy.isnan(d))
+
+        o = numpy.ones(10)
+        c = ECEF(GeodeticRepresentation(latitude=geo.latitude * o,
+                                        longitude=geo.longitude * o,
+                                        height=(z - 1 * u.m) * o))
+        d = topography.distance(c, v, 10 * u.m)
+        self.assertEqual(d.size, o.size)
+        self.assertEqual(d.unit, u.m)
+        for i in range(o.size):
+            self.assertTrue(d[i] < 0)
 
 
 if __name__ == "__main__":

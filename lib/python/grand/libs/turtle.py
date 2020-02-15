@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import cast, Optional, Union
 import weakref
 
 from .._core import ffi, lib
@@ -191,16 +191,18 @@ class Map:
         LibraryError
             A TURTLE library error occured, e.g. if the data could not be loaded
         """
-        self._map, self._path = None, None
 
         # Create the map object
         map_ = ffi.new("struct turtle_map **")
         path_ = ffi.new("char []", str(path).encode())
 
         r = lib.turtle_map_load(map_, path_)
-        if r != 0: raise LibraryError(r)
-        self._map = map_
-        self._path = path
+        if r != 0:
+            self._map, self._path = None, None
+            raise LibraryError(r)
+        else:
+            self._map = map_
+            self._path = path
 
 
         def destroy():
@@ -311,12 +313,12 @@ class Stepper:
     def __init__(self):
         """Create a stepper for the ray tracing of topography data
         """
-        self._stepper = None
-
         stepper_ = ffi.new("struct turtle_stepper **")
 
         r = lib.turtle_stepper_create(stepper_)
-        if r != 0: raise LibraryError(r)
+        if r != 0:
+            self._stepper = None
+            raise LibraryError(r)
         self._stepper = stepper_
         self._geoid = None
         self._data = set([])
@@ -331,9 +333,13 @@ class Stepper:
     def add(self, data: Union[Map, Stack, None]=None, offset: float=0):
         if data is not None:
             if isinstance(data, Map):
+                if data._map is None:
+                    raise ValueError("no data")
                 lib.turtle_stepper_add_map(self._stepper[0], data._map[0],
                                            offset)
             else:
+                if data._stack is None:
+                    raise ValueError("no data")
                 lib.turtle_stepper_add_stack(self._stepper[0], data._stack[0],
                                              offset)
             self._data.add(data)
@@ -353,6 +359,8 @@ class Stepper:
         else:
             self._data.add(map_)
             self._geoid = map_
+            if map_._map is None:
+                raise ValueError("no data")
             map_ = map_._map[0]
         lib.turtle_stepper_geoid_set(self._stepper[0], map_)
 

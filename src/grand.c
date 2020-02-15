@@ -127,33 +127,35 @@ enum gull_return gull_snapshot_field_v(struct gull_snapshot * snapshot,
 }
 
 
-/* Inplace linear transform of Cartesian coordinates */
-void grand_cartesian_transform_forward(double m[3][3], double t[3],
-    double * x, double * y, double * z, long n)
+/* Intersection with the topography */
+void grand_topography_distance(struct turtle_stepper * stepper,
+    const double * r, const double * u, double * d, long n)
 {
-        for (; n > 0; n--, x++, y++, z++) {
-                double r0[3] = {*x, *y, *z}, r[3] = {t[0], t[1], t[2]};
-                int i;
-                for (i = 0; i < 3; i++) {
-                        int j;
-                        for (j = 0; j < 3; j++) r[i] += m[i][j] * r0[j];
-                }
-                *x = r[0], *y = r[1], *z = r[2];
-        }
-}
+        for (; n > 0; n--, r += 3, u += 3, d++) {
+                int index[2];
+                double altitude, elevation[2];
+                turtle_stepper_step(stepper, (double *)r, NULL, NULL, NULL,
+                    &altitude, elevation, NULL, index);
+                if (*index >= 0)
+                        *index = altitude > *elevation;
 
-/* Inplace reverse linear transform of Cartesian coordinates */
-void grand_cartesian_transform_backward(double m[3][3], double t[3],
-    double * x, double * y, double * z, long n)
-{
-        for (; n > 0; n--, x++, y++, z++) {
-                double r0[3] = {*x - t[0], *y - t[1], *z - t[2]},
-                       r[3] = {0, 0, 0};
-                int i;
-                for (i = 0; i < 3; i++) {
-                        int j;
-                        for (j = 0; j < 3; j++) r[i] += m[j][i] * r0[j];
+                int medium = *index;
+                double dd = 0.;
+                while ((*index == medium) && ((*d <= 0) || (dd < *d)) &&
+                    (altitude > -11000) && (altitude < 8000)) {
+                        double step;
+                        turtle_stepper_step(stepper, (double *)r, u, NULL, NULL,
+                        &altitude, elevation, &step, index);
+                        dd += step;
+                        if (*index >= 0)
+                                *index = altitude > *elevation;
                 }
-                *x = r[0], *y = r[1], *z = r[2];
+
+                if ((*index >= 0) && (*index != medium) &&
+                    ((*d <= 0) || (dd < *d))) {
+                        *d = (medium == 0) ? -dd : dd;
+                } else {
+                        *d = NAN;
+                }
         }
 }

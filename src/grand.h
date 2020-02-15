@@ -37,3 +37,8 @@ void turtle_stack_elevation_v(struct turtle_stack * stack,
 enum gull_return gull_snapshot_field_v(struct gull_snapshot * snapshot,
     double * latitude, double * longitude, double * altitude, double * magnet,
     long n, double ** workspace);
+
+
+/* Intersection with the topography */
+void grand_topography_distance(struct turtle_stepper * stepper,
+    const double * r, const double * u, double * d, long n);
