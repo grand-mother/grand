@@ -5,7 +5,7 @@ from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
 
 
 # Load the radio shower simulation data
-shower = ShowerEvent.load("tests/simulation/data/coreas")
+shower = ShowerEvent.load("tests/simulation/data/zhaires")
 if shower.frame is None:
     shower.localize(45 * u.deg, 3 * u.deg) # Coreas showers have no localization
                                            # info. This must be set manually
@@ -26,7 +26,7 @@ for antenna_index, field in shower.fields.items():
     # local magnetic North by using an ENU/LTP frame (x: East, y: North, z:
     # Upward)
 
-    antenna_location = shower.frame.realize_frame(field.r)
+    antenna_location = shower.frame.realize_frame(field.electric.r)
     antenna_frame = LTP(location=antenna_location, orientation="ENU",
                         magnetic=True, obstime=shower.frame.obstime)
     antenna = Antenna(model=antenna_model, frame=antenna_frame)
@@ -38,7 +38,6 @@ for antenna_index, field in shower.fields.items():
     # of observation and the electric field components are provided in the
     # shower frame. This is indicated by the `frame` named argument.
 
-    direction = shower.maximum - field.r
-    voltage = antenna.compute_voltage(direction, field, frame=shower.frame)
-
-    # XXX Add to a voltage collection
+    direction = shower.maximum - field.electric.r
+    field.voltage = antenna.compute_voltage(direction, field.electric,
+                                            frame=shower.frame)

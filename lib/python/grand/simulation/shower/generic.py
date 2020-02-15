@@ -11,16 +11,46 @@ import astropy.units as u
 import numpy
 
 from ..pdg import ParticleCode
-from ..antenna import ElectricField
+from ..antenna import ElectricField, Voltage
 from ...import io
 
-__all__ = ["FieldsCollection", "ShowerEvent"]
+__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
 
 
 _logger = getLogger(__name__)
 
 
-class FieldsCollection(OrderedDict, MutableMapping[int, ElectricField]):
+@dataclass
+class CollectionEntry:
+    electric: Optional[ElectricField] = None
+    voltage: Optional[Voltage] = None
+
+    @classmethod
+    def load(cls, node: DataNone) -> CollectionEntry:
+        try:
+            subnode = node["electric"]
+        except KeyError:
+            electric = None
+        else:
+            electric = ElectricField.load(subnode)
+
+        try:
+            subnode = node["voltage"]
+        except KeyError:
+            voltage = None
+        else:
+            voltage = Voltage.load()
+
+        return cls(electric, voltage)
+
+    def dump(self, node:DataNode) -> None:
+        if self.electric is not None:
+            self.electric.dump(node.branch("electric"))
+        if self.voltage is not None:
+            self.voltage.dump(node.branch("voltage"))
+
+
+class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
     pass
 
 
@@ -98,7 +128,7 @@ class ShowerEvent:
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
-                fields[antenna] = ElectricField.load(antenna_node)
+                fields[antenna] = CollectionEntry.load(antenna_node)
 
         return cls(**kwargs)
 

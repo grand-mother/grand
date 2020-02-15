@@ -15,6 +15,7 @@ from grand import store, io, LTP
 from grand.simulation import CoreasShower, ElectricField, ShowerEvent,         \
                              ZhairesShower
 from grand.simulation.pdg import ParticleCode
+from grand.simulation.shower.generic import CollectionEntry
 from tests import TestCase
 
 
@@ -43,6 +44,14 @@ class ShowerTest(TestCase):
 
         return path
 
+    def assertField(self, a, b):
+        self.assertEqual(a.voltage, None)
+        self.assertEqual(b.voltage, None)
+        a, b = a.electric, b.electric
+        self.assertCartesian(a.r, b.r, 4)
+        self.assertQuantity(a.t, b.t, 7)
+        self.assertCartesian(a.E, b.E, 5)
+
     def test_generic(self):
         settings = {
             "primary" : ParticleCode.PROTON,
@@ -54,11 +63,11 @@ class ShowerTest(TestCase):
         shower.dump(self.path)
         tmp = ShowerEvent.load(self.path)
         for k in settings.keys():
-            self.assertEquals(getattr(shower, k), getattr(tmp, k))
+            self.assertEqual(getattr(shower, k), getattr(tmp, k))
         self.tearDown()
 
         fields = OrderedDict()
-        fields[1] = ElectricField(
+        electric = ElectricField(
             numpy.array((0, 1, 2)) * u.ns,
             CartesianRepresentation(
                 numpy.array((1, 0, 0)) * u.uV / u.m,
@@ -67,15 +76,14 @@ class ShowerTest(TestCase):
             ),
             CartesianRepresentation(1 * u.m, 2 * u.m, 3 * u.m),
         )
+        fields[1] = CollectionEntry(electric)
         shower = ShowerEvent(fields=fields, **settings)
         shower.dump(self.path)
         tmp = ShowerEvent.load(self.path)
 
         def compare_showers():
             a, b = shower.fields[1], tmp.fields[1]
-            self.assertCartesian(a.r, b.r)
-            self.assertQuantity(a.t, b.t)
-            self.assertCartesian(a.E, b.E)
+            self.assertField(a, b)
 
         compare_showers()
 
@@ -90,7 +98,6 @@ class ShowerTest(TestCase):
 
         compare_showers()
 
-
     def test_coreas(self):
         path = self.get_data("coreas")
         shower = ShowerEvent.load(path)
@@ -101,10 +108,7 @@ class ShowerTest(TestCase):
         tmp = shower.load(self.path)
 
         a, b = shower.fields[9], tmp.fields[9]
-        self.assertCartesian(a.r, b.r, 4)
-        self.assertQuantity(a.t, b.t, 7)
-        self.assertCartesian(a.E, b.E, 5)
-
+        self.assertField(a, b)
 
     def test_zhaires(self):
         path = self.get_data("zhaires")
@@ -116,9 +120,7 @@ class ShowerTest(TestCase):
         tmp = shower.load(self.path)
 
         a, b = shower.fields[9], tmp.fields[9]
-        self.assertCartesian(a.r, b.r, 4)
-        self.assertQuantity(a.t, b.t, 7)
-        self.assertCartesian(a.E, b.E, 5)
+        self.assertField(a, b)
 
 
 if __name__ == "__main__":

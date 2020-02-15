@@ -13,7 +13,7 @@ from astropy.time import Time
 import astropy.units as u
 import numpy
 
-from .generic import FieldsCollection, ShowerEvent
+from .generic import CollectionEntry, FieldsCollection, ShowerEvent
 from ..antenna import ElectricField
 from ..pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP
@@ -80,11 +80,12 @@ class CoreasShower(ShowerEvent):
                 Ex = data[:,1] * cgs2si
                 Ey = data[:,2] * cgs2si
                 Ez = data[:,3] * cgs2si
-                raw_fields[antenna] = ElectricField(
+                electric = ElectricField(
                     t,
                     CartesianRepresentation(Ex, Ey, Ez),
                     positions[antenna]
                 )
+                raw_fields[antenna] = CollectionEntry(electric)
 
             fields = FieldsCollection()
             for key in sorted(raw_fields.keys()):

@@ -10,7 +10,7 @@ from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
 import astropy.units as u
 import numpy
 
-from .generic import FieldsCollection, ShowerEvent
+from .generic import CollectionEntry, FieldsCollection, ShowerEvent
 from ..antenna import ElectricField
 from ..pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP
@@ -70,11 +70,12 @@ class ZhairesShower(ShowerEvent):
             Ex = data[:,1] * uVm
             Ey = data[:,2] * uVm
             Ez = data[:,3] * uVm
-            raw_fields[antenna] = ElectricField(
+            electric = ElectricField(
                 t,
                 CartesianRepresentation(Ex, Ey, Ez),
                 positions[antenna]
             )
+            raw_fields[antenna] = CollectionEntry(electric)
 
         if raw_fields:
             fields = FieldsCollection()
