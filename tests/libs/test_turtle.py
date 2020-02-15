@@ -2,6 +2,7 @@
 Unit tests for the grand.libs.turtle module
 """
 
+from pathlib import Path
 import os
 import unittest
 
@@ -14,6 +15,26 @@ from tests import TestCase
 
 class TurtleTest(TestCase):
     """Unit tests for the turtle module"""
+
+    @staticmethod
+    def get_stack_data():
+        dirname = Path("tests/topography")
+        basename = Path("N38E083.SRTMGL1.hgt")
+        path = dirname / basename
+        if not path.exists():
+            try:
+                os.makedirs(dirname)
+            except OSError:
+                pass
+            with path.open("wb") as f:
+                f.write(store.get(basename))
+        return dirname
+
+
+    @staticmethod
+    def get_map_data():
+        return Path(__file__).parent / "data" / "map.png"
+
 
     def test_ecef(self):
         # Reference values
@@ -78,15 +99,7 @@ class TurtleTest(TestCase):
 
     def test_stack(self):
         # Fetch a test tile
-        dirname, basename = "tests/topography", "N38E083.SRTMGL1.hgt"
-        path = os.path.join(dirname, basename)
-        if not os.path.exists(path):
-            try:
-                os.makedirs(dirname)
-            except OSError:
-                pass
-            with open(path, "wb") as f:
-                f.write(store.get(basename))
+        dirname = self.get_stack_data()
 
         # Check the stack initalisation
         stack = turtle.Stack(dirname)
@@ -124,7 +137,7 @@ class TurtleTest(TestCase):
 
     def test_map(self):
         # Check the map loading
-        path = os.path.join(os.path.dirname(__file__), "data", "map.png")
+        path = self.get_map_data()
         map_ = turtle.Map(path)
         self.assertNotEqual(map_._map, None)
         self.assertEqual(map_.path, path)
@@ -146,6 +159,21 @@ class TurtleTest(TestCase):
         with self.assertRaises(RuntimeError) as context:
             map_ = turtle.Map("")
         self.assertRegex(context.exception.args[0], "^A TURTLE library error")
+
+
+    def test_stepper(self):
+        # Check the stepper wrapper
+        stepper = turtle.Stepper()
+        self.assertEqual(stepper.geoid, None)
+
+        stack_path = self.get_stack_data()
+        stepper.add(turtle.Stack(stack_path))
+        stepper.add(turtle.Stack(stack_path))
+
+        map_path = self.get_map_data()
+        map_ = turtle.Map(map_path)
+        stepper.geoid = map_
+        self.assertEqual(stepper.geoid, map_)
 
 
 if __name__ == "__main__":

@@ -17,18 +17,24 @@
 """Wrapper for the TURTLE C library
 """
 
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Optional, Union
+import weakref
+
 from .._core import ffi, lib
 import numpy
 
 
-__all__ = ["LibraryError", "Map", "Stack", "ecef_from_geodetic",
+__all__ = ["LibraryError", "Map", "Stack", "Stepper", "ecef_from_geodetic",
            "ecef_from_horizontal", "ecef_to_geodetic", "ecef_to_horizontal"]
 
 
 class LibraryError(RuntimeError):
     """A TURTLE library error"""
 
-    def __init__(self, code):
+    def __init__(self, code: int):
         """Set a TURTLE library error
 
         Parameters
@@ -172,12 +178,12 @@ def ecef_to_horizontal(latitude, longitude, direction):
 class Map:
     """Proxy for a TURTLE map object"""
 
-    def __init__(self, path):
+    def __init__(self, path: Union[Path, str]):
         """Initialise a map object from a data file
 
         Parameters
         ----------
-        path : str
+        path : Path or str
             The path where the data are located
 
         Raises
@@ -189,7 +195,7 @@ class Map:
 
         # Create the map object
         map_ = ffi.new("struct turtle_map **")
-        path_ = ffi.new("char []", path.encode())
+        path_ = ffi.new("char []", str(path).encode())
 
         r = lib.turtle_map_load(map_, path_)
         if r != 0: raise LibraryError(r)
@@ -197,15 +203,11 @@ class Map:
         self._path = path
 
 
-    def __del__(self):
-        try:
-            if self._map is None:
-                return
-        except AttributeError:
-            return
+        def destroy():
+            lib.turtle_map_destroy(self._map)
+            self._map = None
 
-        lib.turtle_map_destroy(self._map)
-        self._map = None
+        weakref.finalize(self, destroy)
 
 
     def elevation(self, x, y):
@@ -238,12 +240,12 @@ class Map:
 class Stack:
     """Proxy for a TURTLE stack object"""
 
-    def __init__(self, path, stack_size=0):
+    def __init__(self, path: Union[Path, str], stack_size: int=0):
         """Create a stack of maps for a world wide topography model
 
         Parameters
         ----------
-        path : str
+        path : Path or str
             The path where the data tiles are located
         stack_size : integer, optional
             The maximum number of data tiles kept in memory
@@ -257,7 +259,7 @@ class Stack:
 
         # Create the stack object
         stack_ = ffi.new("struct turtle_stack **")
-        path_ = ffi.new("char []", path.encode())
+        path_ = ffi.new("char []", str(path).encode())
 
         r = lib.turtle_stack_create(stack_, path_, stack_size,
                                     ffi.NULL, ffi.NULL)
@@ -267,15 +269,11 @@ class Stack:
         self._stack_size = stack_size
 
 
-    def __del__(self):
-        try:
-            if self._stack is None:
-                return
-        except AttributeError:
-            return
+        def destroy():
+            lib.turtle_stack_destroy(self._stack)
+            self._stack = None
 
-        lib.turtle_stack_destroy(self._stack)
-        self._stack = None
+        weakref.finalize(self, destroy)
 
 
     def elevation(self, latitude, longitude):
@@ -305,3 +303,56 @@ class Stack:
     def stack_size(self):
         """The maximum number of data tiles kept in memory"""
         return self._stack_size
+
+
+class Stepper:
+    """Proxy for a TURTLE stepper object"""
+
+    def __init__(self):
+        """Create a stepper for the ray tracing of topography data
+        """
+        self._stepper = None
+
+        stepper_ = ffi.new("struct turtle_stepper **")
+
+        r = lib.turtle_stepper_create(stepper_)
+        if r != 0: raise LibraryError(r)
+        self._stepper = stepper_
+        self._geoid = None
+        self._data = set([])
+
+        def destroy():
+            lib.turtle_stepper_destroy(self._stepper)
+            self._stepper = None
+
+        weakref.finalize(self, destroy)
+
+
+    def add(self, data: Union[Map, Stack, None]=None, offset: float=0):
+        if data is not None:
+            if isinstance(data, Map):
+                lib.turtle_stepper_add_map(self._stepper[0], data._map[0],
+                                           offset)
+            else:
+                lib.turtle_stepper_add_stack(self._stepper[0], data._stack[0],
+                                             offset)
+            self._data.add(data)
+        else:
+            lib.turtle_stepper_add_flat(self._stepper[0], offset)
+
+
+    @property
+    def geoid(self):
+        return self._geoid
+
+    @geoid.setter
+    def geoid(self, map_: Optional[Map]):
+        if map_ is None:
+            self._data.pop(self._geoid)
+            self._geoid = None
+        else:
+            self._data.add(map_)
+            self._geoid = map_
+            map_ = map_._map[0]
+        lib.turtle_stepper_geoid_set(self._stepper[0], map_)
+
