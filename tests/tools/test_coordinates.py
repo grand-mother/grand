@@ -264,9 +264,8 @@ class CoordinatesTest(TestCase):
         self.assertQuantity(declination.to(u.deg), 0.10 * u.deg, 2)
 
         # Test the magnetic case with no obstime
-        with self.assertRaises(ValueError) as context:
-            LTP(uy, location=self.location, magnetic=True)
-        self.assertRegex(context.exception.args[0], "^Magnetic")
+        ltp1 = LTP(uy, location=self.location, magnetic=True)
+        self.assertIsNone(ltp1.obstime)
 
         # Test the invalid frame case
         with self.assertRaises(ValueError) as context:

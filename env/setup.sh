@@ -24,9 +24,14 @@ main () {
         (cd "${prefix}/bin" && wget -cq "${url}")
         if [ "$?" != "0" ]; then
             logmsg "  could not fetch ${url}"
-            exit 1
+            return 1
         fi
         logmsg "  AppImage retrieved"
+
+        if [ -f "${prefix}/lib/python/grand/_core.so" ]; then
+            logmsg "--Cleaning existing install"
+            make clean
+        fi
     fi
     chmod u+x "${prefix}/bin/python3-${ARCH}.AppImage"
 
