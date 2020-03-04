@@ -127,6 +127,27 @@ enum gull_return gull_snapshot_field_v(struct gull_snapshot * snapshot,
 }
 
 
+/* Ground elevation w.r.t. sea level or w.r.t. the ellipsoid */
+void grand_topography_elevation(struct turtle_stack * stack,
+    struct turtle_map * geoid, const double * latitude,
+    const double * longitude, double * elevation, long n)
+{
+        for (; n > 0; n--, latitude++, longitude++, elevation++) {
+                int inside;
+                turtle_stack_elevation(
+                    stack, *latitude, *longitude, elevation, &inside);
+                if (!inside) {
+                        *elevation = NAN;
+                } else if (geoid != NULL) {
+                        double undulation = 0.;
+                        turtle_map_elevation(
+                            geoid, *longitude, *latitude, &undulation, &inside);
+                        *elevation += undulation;
+                }
+        }
+}
+
+
 /* Intersection with the topography */
 void grand_topography_distance(struct turtle_stepper * stepper,
     const double * r, const double * u, double * d, long n)

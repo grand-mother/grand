@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+from enum import IntEnum
 import os
 from pathlib import Path
 from typing import Optional, Union
@@ -53,6 +54,14 @@ _geoid: Optional[_Map] = None
 """Map with geoid undulations"""
 
 
+class Reference(IntEnum):
+    """Reference level for topography data
+    """
+
+    GEOID = 0
+    ELLIPSOID = 1
+
+
 def distance(position: Union[ECEF, LTP], direction: Union[ECEF, LTP],
     maximum_distance: Optional[u.Quantity]=None) -> u.Quantity:
     """Get the signed intersection distance with the topography.
@@ -65,15 +74,16 @@ def distance(position: Union[ECEF, LTP], direction: Union[ECEF, LTP],
     return _default_topography.distance(position, direction, maximum_distance)
 
 
-def elevation(coordinates: Union[ECEF, LTP]) -> u.Quantity:
-    """Get the topography elevation, w.r.t. sea level.
+def elevation(coordinates: Union[ECEF, LTP],
+    reference: Optional[Reference]=None) -> u.Quantity:
+    """Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid.
     """
     global _default_topography
 
     if _default_topography is None:
         _CACHEDIR.mkdir(exist_ok=True)
         _default_topography = Topography(_CACHEDIR)
-    return _default_topography.elevation(coordinates)
+    return _default_topography.elevation(coordinates, reference)
 
 
 def _get_geoid():
@@ -91,11 +101,11 @@ def geoid_undulation(coordinates: Union[ECEF, LTP]) -> u.Quantity:
     geoid = _get_geoid()
 
     # Compute the geodetic coordinates
-    cart = coordinates.transform_to(ECEF).cartesian
-    geodetic = cart.represent_as(GeodeticRepresentation)
+    geodetic = coordinates.transform_to(ECEF).represent_as(
+               GeodeticRepresentation)
 
-    z = geoid.elevation(geodetic.longitude / u.deg,
-                         geodetic.latitude / u.deg)
+    z = geoid.elevation(geodetic.longitude.to_value(u.deg),
+                         geodetic.latitude.to_value(u.deg))
     return z << u.m
 
 
@@ -183,17 +193,36 @@ class Topography:
         self._stepper:Optional[_Stepper] = None
 
 
-    def elevation(self, coordinates: Union[ECEF, LTP]) -> u.Quantity:
-        """Get the topography elevation, w.r.t. sea level.
+    def elevation(self, coordinates: Union[ECEF, LTP],
+        reference: Optional[Reference]=None) -> u.Quantity:
+        """Get the topography elevation, w.r.t. sea level or w.r.t the
+           ellipsoid.
         """
         # Compute the geodetic coordinates
-        cart = coordinates.transform_to(ECEF).cartesian
-        geodetic = cart.represent_as(GeodeticRepresentation)
+        geodetic = coordinates.transform_to(ECEF).represent_as(
+                   GeodeticRepresentation)
+        latitude = geodetic.latitude.to_value("deg")
+        longitude = geodetic.longitude.to_value("deg")
+        if not isinstance(latitude, numpy.ndarray):
+            latitude = numpy.array((latitude,))
+            longitude = numpy.array((longitude,))
 
         # Return the topography elevation
-        z = self._stack.elevation(geodetic.latitude / u.deg,
-                                  geodetic.longitude / u.deg)
-        return z << u.m
+        n = latitude.size
+        elevation = numpy.zeros(n)
+        if (reference is None) or (reference == Reference.ELLIPSOID):
+            geoid = _get_geoid()._map[0]
+        else:
+            geoid = ffi.NULL
+
+        lib.grand_topography_elevation(self._stack._stack[0], geoid,
+            ffi.cast("double *", latitude.ctypes.data),
+            ffi.cast("double *", longitude.ctypes.data),
+            ffi.cast("double *", elevation.ctypes.data), n)
+        if n == 1:
+            elevation = elevation[0]
+
+        return elevation << u.m
 
 
     def distance(self, position: Union[ECEF, LTP],

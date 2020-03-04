@@ -88,15 +88,33 @@ class TopographyTest(TestCase):
 
     def test_topography_elevation(self):
         # Fetch a test tile
-        c = ECEF(GeodeticRepresentation(latitude=39.5 * u.deg,
-                                        longitude=90.5 * u.deg))
+        geo = GeodeticRepresentation(latitude=39.5 * u.deg,
+                                     longitude=90.5 * u.deg)
+        c = ECEF(geo)
         topography.update_data(c)
 
         # Test the topography getter
-        z = topography.elevation(c)
-        self.assertEqual(z.size, 1)
-        self.assertEqual(z.unit, u.m)
-        self.assertFalse(numpy.isnan(z))
+        z0 = topography.elevation(c)
+        self.assertEqual(z0.size, 1)
+        self.assertEqual(z0.unit, u.m)
+        self.assertFalse(numpy.isnan(z0))
+
+        z1 = topography.elevation(c, reference=topography.Reference.GEOID)
+        z1 += topography.geoid_undulation(c)
+        self.assertEqual(z1.size, 1)
+        self.assertEqual(z1.unit, u.m)
+        self.assertFalse(numpy.isnan(z1))
+
+        self.assertQuantity(z0, z1)
+
+        o = numpy.ones(10)
+        c = ECEF(GeodeticRepresentation(latitude=geo.latitude * o,
+                                        longitude=geo.longitude * o))
+        z2 = topography.elevation(c)
+        self.assertEqual(z2.size, o.size)
+        self.assertEqual(z2.unit, u.m)
+        for i in range(o.size):
+            self.assertQuantity(z2[i], z0)
 
 
     def test_topography_distance(self):
