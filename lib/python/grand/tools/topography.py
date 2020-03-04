@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from enum import IntEnum
+import enum
 import os
 from pathlib import Path
 from typing import Optional, Union
@@ -34,8 +34,8 @@ from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
 from .. import store
 from .._core import ffi, lib
 
-__all__ = ["elevation", "geoid_undulation", "update_data", "cachedir",
-           "model", "Topography"]
+__all__ = ["elevation", "distance", "geoid_undulation", "update_data",
+           "cachedir", "model", "Reference", "Topography"]
 
 
 _CACHEDIR: Final = Path(__file__).parent / "data" / "topography"
@@ -54,12 +54,13 @@ _geoid: Optional[_Map] = None
 """Map with geoid undulations"""
 
 
-class Reference(IntEnum):
+class Reference(enum.IntEnum):
     """Reference level for topography data
     """
 
-    GEOID = 0
-    ELLIPSOID = 1
+    ELLIPSOID = enum.auto()
+    GEOID = enum.auto()
+    LOCAL = enum.auto()
 
 
 def distance(position: Union[ECEF, LTP], direction: Union[ECEF, LTP],
@@ -195,9 +196,73 @@ class Topography:
 
     def elevation(self, coordinates: Union[ECEF, LTP],
         reference: Optional[Reference]=None) -> u.Quantity:
-        """Get the topography elevation, w.r.t. sea level or w.r.t the
+        """Get the topography elevation, w.r.t. sea level, w.r.t the
+           ellipsoid or in local coordinates.
+        """
+
+        if reference is None:
+            if isinstance(coordinates, LTP):
+                elevation = self._local_elevation(coordinates)
+            else:
+                geoid = _get_geoid()._map[0]
+                elevation = self._global_elevation(coordinates,
+                                                   Reference.ELLIPSOID)
+        else:
+            if reference == Reference.LOCAL:
+                if not isinstance(coordinates, LTP):
+                    raise ValueError("not an LTP frame")
+                elevation = self._local_elevation(coordinates)
+            else:
+                elevation = self._global_elevation(coordinates, reference)
+
+        if elevation.size == 1:
+            elevation = elevation[0]
+
+        return elevation << u.m
+
+
+    @staticmethod
+    def _as_double_ptr(a):
+        a = numpy.require(a, float, ["CONTIGUOUS", "ALIGNED"])
+        return ffi.cast("double *", a.ctypes.data)
+
+
+    def _local_elevation(self, coordinates: LTP) -> u.Quantity:
+        """Get the topography elevation in local coordinates, i.e. along the
+           (Oz) axis.
+        """
+
+        # Compute the geodetic coordinates
+        cartesian = coordinates.cartesian
+        x = cartesian.x.to_value(u.m)
+        y = cartesian.y.to_value(u.m)
+        if not isinstance(x, numpy.ndarray):
+            x = numpy.array((x,))
+            y = numpy.array((y,))
+
+        # Return the topography elevation
+        n = x.size
+        elevation = numpy.zeros(n)
+        origin = coordinates._origin.xyz.to_value(u.m)
+        geoid = _get_geoid()._map[0]
+        stack = self._stack._stack[0] if self._stack._stack else ffi.NULL
+
+        lib.grand_topography_local_elevation(stack, geoid,
+            self._as_double_ptr(origin),
+            self._as_double_ptr(coordinates._basis),
+            self._as_double_ptr(x),
+            self._as_double_ptr(y),
+            self._as_double_ptr(elevation), n)
+
+        return elevation
+
+
+    def _global_elevation(self, coordinates: Union[ECEF, LTP],
+        reference: Reference) -> u.Quantity:
+        """Get the topography elevation w.r.t. sea level or w.r.t. the
            ellipsoid.
         """
+
         # Compute the geodetic coordinates
         geodetic = coordinates.transform_to(ECEF).represent_as(
                    GeodeticRepresentation)
@@ -210,19 +275,18 @@ class Topography:
         # Return the topography elevation
         n = latitude.size
         elevation = numpy.zeros(n)
-        if (reference is None) or (reference == Reference.ELLIPSOID):
+        if reference == Reference.ELLIPSOID:
             geoid = _get_geoid()._map[0]
         else:
             geoid = ffi.NULL
+        stack = self._stack._stack[0] if self._stack._stack else ffi.NULL
 
-        lib.grand_topography_elevation(self._stack._stack[0], geoid,
-            ffi.cast("double *", latitude.ctypes.data),
-            ffi.cast("double *", longitude.ctypes.data),
-            ffi.cast("double *", elevation.ctypes.data), n)
-        if n == 1:
-            elevation = elevation[0]
+        lib.grand_topography_global_elevation(stack, geoid,
+            self._as_double_ptr(latitude),
+            self._as_double_ptr(longitude),
+            self._as_double_ptr(elevation), n)
 
-        return elevation << u.m
+        return elevation
 
 
     def distance(self, position: Union[ECEF, LTP],
@@ -262,9 +326,9 @@ class Topography:
 
         lib.grand_topography_distance(
             self._stepper._stepper[0],
-            ffi.cast("double *", r.ctypes.data),
-            ffi.cast("double *", v.ctypes.data),
-            ffi.cast("double *", d.ctypes.data), n)
+            self._as_double_ptr(r),
+            self._as_double_ptr(v),
+            self._as_double_ptr(d), n)
 
         if d.size == 1: d = d[0]
         return d << u.m

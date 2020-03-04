@@ -49,7 +49,7 @@ _HAS_GEOMAGNET: Final = False
 
 
 class ExtendedCoordinateFrame(BaseCoordinateFrame):
-    """A coordinates frame with unmutable data supporting extra arithmetic
+    """A coordinates frame with immutable data supporting extra arithmetic
        operators.
     """
 

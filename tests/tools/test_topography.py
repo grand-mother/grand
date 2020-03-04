@@ -93,7 +93,7 @@ class TopographyTest(TestCase):
         c = ECEF(geo)
         topography.update_data(c)
 
-        # Test the topography getter
+        # Test the global topography getter
         z0 = topography.elevation(c)
         self.assertEqual(z0.size, 1)
         self.assertEqual(z0.unit, u.m)
@@ -108,13 +108,20 @@ class TopographyTest(TestCase):
         self.assertQuantity(z0, z1)
 
         o = numpy.ones(10)
-        c = ECEF(GeodeticRepresentation(latitude=geo.latitude * o,
-                                        longitude=geo.longitude * o))
-        z2 = topography.elevation(c)
+        cv = ECEF(GeodeticRepresentation(latitude=geo.latitude * o,
+                                         longitude=geo.longitude * o))
+        z2 = topography.elevation(cv)
         self.assertEqual(z2.size, o.size)
         self.assertEqual(z2.unit, u.m)
         for i in range(o.size):
             self.assertQuantity(z2[i], z0)
+
+        # Test the local topography getter
+        cl = LTP(0 << u.m, 0 << u.m, 0 << u.m, location=c)
+        z3 = topography.elevation(cl)
+        self.assertEqual(z3.size, 1)
+        self.assertEqual(z3.unit, u.m)
+        self.assertQuantity(z3, z1)
 
 
     def test_topography_distance(self):

@@ -33,6 +33,12 @@ Default interface
    :func:`~grand.topography.geoid_undulations` functions accept vectorized data.
    The returned value is a :py:class:`~astropy.units.Quantity` in meters.
 
+.. autofunction:: grand.topography.distance
+
+   .. note::
+      The returned distance is signed. A positive (negative) value indicates
+      that the initial position is above (below) the ground. The absolute value
+      gives the actual distance.
 
 .. autofunction:: grand.topography.elevation
 
@@ -42,11 +48,14 @@ Default interface
 
    >>> coordinates = ECEF(latitude=43.83 * u.deg, longitude=87.62 * u.deg,
    ...                    representation_type="geodetic")
-   >>> elevation = topography.elevation(coordinates)
+   >>> elevation = topography.elevation(coordinates,
+   ...                                  reference=topography.Reference.GEOID)
 
    .. note::
-      In order to get the GPS elevation, w.r.t. the WGS84 ellipsoid, you need to
-      add the :func:`~grand.topography.geoid_undulation`.
+      By default, if no explicit reference is specified, the elevation is given
+      w.r.t. the ellipsoid if geocentric coordinates are used (ECEF) or in local
+      coordinates if local coordinates (LTP) are provided. In the latter case,
+      the elevation data naturally include the Earth curvature.
 
 
 .. autofunction:: grand.topography.geoid_undulation

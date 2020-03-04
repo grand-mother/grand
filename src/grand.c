@@ -127,8 +127,39 @@ enum gull_return gull_snapshot_field_v(struct gull_snapshot * snapshot,
 }
 
 
+/* Transform a point from LTP coordinates to ECEF ones */
+static void ltp_point_to_ecef(const double * origin, const double * basis,
+    const double * local, double * ecef)
+{
+        int i;
+        for (i = 0; i < 3; i++) {
+                int j;
+                ecef[i] = origin[i];
+                for (j = 0; j < 3; j++)
+                        ecef[i] += basis[3 * i + j] * local[j];
+        }
+}
+
+
+/* Transform a point from ECEF coordinates to LTP ones */
+static void ltp_point_from_ecef(const double * origin, const double * basis,
+    const double * ecef, double * local)
+{
+        const double t[] = { ecef[0] - origin[0], ecef[1] - origin[1],
+                             ecef[2] - origin[2] };
+
+        int i;
+        for (i = 0; i < 3; i++) {
+                int j;
+                local[i] = 0.;
+                for (j = 0; j < 3; j++)
+                        local[i] += basis[3 * j + i] * t[j];
+        }
+}
+
+
 /* Ground elevation w.r.t. sea level or w.r.t. the ellipsoid */
-void grand_topography_elevation(struct turtle_stack * stack,
+void grand_topography_global_elevation(struct turtle_stack * stack,
     struct turtle_map * geoid, const double * latitude,
     const double * longitude, double * elevation, long n)
 {
@@ -144,6 +175,55 @@ void grand_topography_elevation(struct turtle_stack * stack,
                             geoid, *longitude, *latitude, &undulation, &inside);
                         *elevation += undulation;
                 }
+        }
+}
+
+
+/* Ground elevation in local coordinates */
+void grand_topography_local_elevation(struct turtle_stack * stack,
+    struct turtle_map * geoid, const double * origin, const double * basis,
+    const double * x, const double * y, double * elevation, long n)
+{
+        for (; n > 0; n--, x++, y++, elevation++) {
+                /* Let us compute the altitude in local coordinates using an
+                 * iterative method. We need to find the ground position that
+                 * projects at (x, y).  Let us Initialise the search on the
+                 * ellipsoid, i.e. at zero altitude
+                 */
+                double local[3] = { *x, *y, 0. };
+                double new[3] = { 0., 0., 0. };
+                int _;
+                for (_ = 0; _ < 5; _++) {
+                        /* Get the ground altitude for the current guess */
+                        double ecef[3], lla[3];
+                        ltp_point_to_ecef(origin, basis, local, ecef);
+                        turtle_ecef_to_geodetic(ecef, lla, lla + 1, lla + 2);
+
+                        int inside;
+                        turtle_stack_elevation(
+                            stack, lla[0], lla[1], lla + 2, &inside);
+                        if (!inside) {
+                                new[2] = NAN;
+                                break;
+                        }
+
+                        double undulation = 0.;
+                        turtle_map_elevation(
+                            geoid, lla[1], lla[0], &undulation, &inside);
+                        lla[2] += undulation;
+
+                        /* Compute the corresponding local coordinates */
+                        turtle_ecef_from_geodetic(lla[0], lla[1], lla[2], ecef);
+                        ltp_point_from_ecef(origin, basis, ecef, new);
+
+                        /* Check for convergence and update. */
+                        const double dx = *x - new[0];
+                        const double dy = *y - new[1];
+                        if ((fabs(dx) < 1E-03) && (fabs(dy) < 1E-03)) break;
+                        local[0] += dx;
+                        local[1] += dy;
+                }
+                *elevation = new[2];
         }
 }
 
