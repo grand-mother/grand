@@ -7,8 +7,9 @@ from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
 # Load the radio shower simulation data
 shower = ShowerEvent.load("tests/simulation/data/zhaires")
 if shower.frame is None:
-    shower.localize(45 * u.deg, 3 * u.deg) # Coreas showers have no localization
-                                           # info. This must be set manually
+    shower.localize(39.5 * u.deg, 90.5 * u.deg) # Coreas showers have no
+                                                # localization info. This must
+                                                # be set manually
 
 # Define an antenna model
 #
