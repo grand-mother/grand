@@ -5,6 +5,7 @@ from datetime import datetime
 from logging import getLogger
 import os
 from pathlib import Path
+import re
 from typing import Dict, Optional
 
 import astropy.constants
@@ -72,8 +73,9 @@ class CoreasShower(ShowerEvent):
         else:
             cgs2si = (
                 astropy.constants.c / (u.m / u.s)).value * 1E+02 * u.uV / u.m
+            pattern = re.compile("(\d+).dat$")
             for antenna_path in fields_path.glob("*.dat"):
-                antenna = int(antenna_path.name[5:].split(".", 1)[0])
+                antenna = int(pattern.search(str(antenna_path))[1])
                 logger.debug(f"Loading trace for antenna {antenna}")
                 data = numpy.loadtxt(antenna_path)
                 t  = data[:,0] * u.ns
@@ -93,7 +95,7 @@ class CoreasShower(ShowerEvent):
 
         inp = {}
         try:
-            inp_path = path.glob("inp/*.inp").__next__()
+            inp_path = path.rglob("*.inp").__next__()
         except StopIteration:
             raise FileNotFoundError(path / "inp/*.inp")
         else:
@@ -106,7 +108,7 @@ class CoreasShower(ShowerEvent):
 
             with inp_path.open() as f:
                 for line in f:
-                    if not line: continue
+                    if not line.strip(): continue
                     words = line.split()
                     try:
                         tag, convert = converters[words[0]]
