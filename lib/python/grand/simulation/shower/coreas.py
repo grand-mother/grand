@@ -46,23 +46,53 @@ class CoreasShower(ShowerEvent):
         if not path.exists():
             raise FileNotFoundError(path)
 
-        positions = {}
+        matches = path.glob("*.reas")
         try:
-            info_file = path.glob("*.info").__next__()
+            reas_path = matches.__next__()
         except StopIteration:
-            pass
+            raise FileNotFoundError(path / "*.reas")
         else:
-            with info_file.open() as f:
-                for line in f:
-                    if not line: continue
-                    words = line.split()
-                    if words[0] == "ANTENNA":
-                        antenna = int(words[1])
-                        positions[antenna] = CartesianRepresentation(
-                            x = float(words[2]) * u.m,
-                            y = float(words[3]) * u.m,
-                            z = float(words[4]) * u.m
-                        )
+            index = int(reas_path.name[3:9])
+            reas = cls._parse_reas(path, index)
+
+            try:
+                matches.__next__()
+            except StopIteration:
+                pass
+            else:
+                logger.warning(
+                    f"Multiple shower simulations in {path}. Loading only one.")
+
+        config = {
+            "energy": float(reas["PrimaryParticleEnergy"]) * 1E-09 << u.GeV,
+            "zenith": float(reas["ShowerZenithAngle"]) << u.deg,
+            "azimuth": float(reas["ShowerAzimuthAngle"]) << u.deg,
+            "primary": _id_to_code[int(reas["PrimaryParticleType"])]
+        }
+
+        core = CartesianRepresentation(
+            float(reas["CoreCoordinateNorth"]) * 1E-02,
+            float(reas["CoreCoordinateWest"]) * 1E-02,
+            float(reas["CoreCoordinateVertical"]) * 1E-02,
+            unit = u.m)
+        distance = float(reas["DistanceOfShowerMaximum"]) * 1E-02 << u.m
+        theta, phi = config["zenith"], config["azimuth"]
+        ct, st = numpy.cos(theta), numpy.sin(theta)
+        direction = CartesianRepresentation( # XXX is this correct?
+            st * numpy.cos(phi), st * numpy.sin(phi), ct)
+        config["maximum"] = core + distance * direction
+
+        antpos = cls._parse_coreas_bins(path, index)
+        if antpos is None:
+            antpos = cls._parse_list(path, index)
+            if antpos is None:
+                antpos = cls._parse_info(path, index)
+
+        positions = {}
+        if antpos is not None:
+            for (antenna, r) in antpos:
+                positions[antenna] = CartesianRepresentation(
+                    x = r[0], y = r[1], z = r[2])
 
         fields: Optional[FieldsCollection] = None
         raw_fields = {}
@@ -93,68 +123,7 @@ class CoreasShower(ShowerEvent):
             for key in sorted(raw_fields.keys()):
                 fields[key] = raw_fields[key]
 
-        inp = {}
-        try:
-            inp_path = path.rglob("*.inp").__next__()
-        except StopIteration:
-            raise FileNotFoundError(path / "inp/*.inp")
-        else:
-            converters = {
-                "ERANGE": ("energy", lambda x: float(x) * u.GeV),
-                "THETAP": ("zenith", lambda x: float(x) * u.deg),
-                "PHIP":   ("azimuth", lambda x: float(x) * u.deg),
-                "PRMPAR": ("primary", lambda x: _id_to_code[int(x)])
-            }
-
-            with inp_path.open() as f:
-                for line in f:
-                    if not line.strip(): continue
-                    words = line.split()
-                    try:
-                        tag, convert = converters[words[0]]
-                    except KeyError:
-                        pass
-                    else:
-                        inp[tag] = convert(words[1])
-
-        try:
-            reas_path = path.glob("*.reas").__next__()
-        except StopIteration:
-            raise FileNotFoundError(path / "*.reas")
-        else:
-            tags = (
-                "CoreCoordinateNorth", "CoreCoordinateWest",
-                "CoreCoordinateVertical", "DistanceOfShowerMaximum"
-            )
-
-            index, values = 0, numpy.empty(len(tags))
-            target = tags[index]
-            with reas_path.open() as f:
-                for line in f:
-                    try:
-                        tag, value = line.split(" = ")
-                    except ValueError:
-                        continue
-                    if tag != target: continue
-
-                    values[index] = float(value.split(";", 1)[0])
-
-                    index += 1
-                    try:
-                        target = tags[index]
-                    except IndexError:
-                        break
-
-            core = CartesianRepresentation(values[0], values[1], values[2],
-                                           unit="cm")
-            distance = values[3] * u.cm
-            theta, phi = inp["zenith"], inp["azimuth"]
-            ct, st = numpy.cos(theta), numpy.sin(theta)
-            direction = CartesianRepresentation( # XXX is this correct?
-                st * numpy.cos(phi), st * numpy.sin(phi), ct)
-            inp["maximum"] = core + distance * direction
-
-        return cls(fields=fields, **inp)
+        return cls(fields=fields, **config)
 
 
     def localize(self, latitude: u.Quantity, longitude: u.Quantity,
@@ -169,3 +138,101 @@ class CoreasShower(ShowerEvent):
         self.frame = LTP(location=location, orientation="NWU", magnetic=True,
                          obstime=obstime)
         # XXX Is this the frame used by CoREAS?
+
+
+    @classmethod
+    def _parse_reas(cls, path: Path, index: int) -> Optional[Dict]:
+        """Parse a SIMxxxxxx.reas file
+        """
+        reas_file = path / f"SIM{index:06d}.reas"
+        if not reas_file.exists():
+            return None
+
+        with reas_file.open() as f:
+            txt = f.read()
+
+        try:
+            pattern = cls._reas_pattern
+        except AttributeError:
+            pattern = re.compile(
+                "([^=# \n\t]+)[ \t]*=[ \t]*([^ ;\t]*)[ \t]*;")
+            setattr(cls, "_reas_pattern", pattern)
+
+        matches = pattern.findall(txt)
+
+        def tonum(s):
+            s2 = s[1:] if s.startswith("-") else s
+            return int(s) if s2.isdecimal() else float(s)
+
+        return {key: tonum(value) for (key, value) in matches}
+
+
+    @classmethod
+    def _parse_coreas_bins(cls, path: Path, index: int) -> Optional[Dict]:
+        """Parse a SIMxxxxxx_coreas.bins file
+        """
+        bins_file = path / f"SIM{index:06d}_coreas.bins"
+        if not bins_file.exists():
+            return None
+
+        data = []
+        pattern = re.compile("(\d+).dat$")
+        with bins_file.open() as f:
+            for line in f:
+                d = line.split()
+                if not d:
+                    continue
+                antenna = int(pattern.search(d[0])[1])
+                position = tuple(float(v) * 1E-02 for v in d[1:4]) << u.m
+                data.append((antenna, position))
+
+        return data
+
+
+    @classmethod
+    def _parse_list(cls, path:Path, index: int) -> Optional[Dict]:
+        """Parse a SIMxxxxxx.list file
+        """
+
+        list_file = path / f"SIM{index:06d}.list"
+        if not list_file.exists():
+            return None
+
+        data = []
+        pattern = re.compile("(\d+)$")
+        with list_file.open() as f:
+            for line in f:
+                d = line.split()
+                if not d:
+                    continue
+                antenna = int(pattern.search(d[5])[1])
+                position = tuple(float(v) * 1E-02 for v in d[2:5]) << u.m
+                data.append((antenna, position))
+
+        return data
+
+
+    @classmethod
+    def _parse_info(cls, path:Path, index: int) -> Optional[Dict]:
+        """Parse a SIMxxxxxx.info file
+        """
+
+        info_file = path / f"SIM{index:06d}.info"
+        if not info_file.exists():
+            return None
+
+        with info_file.open() as f:
+            txt = f.read()
+
+        try:
+            pattern = cls._info_pattern
+        except AttributeError:
+            pattern = re.compile(
+                "ANTENNA[ \t]+([^ \t]+)[ \t]+([^ \t]+)"
+                "[ \t]+([^ \t]+)[ \t]+([^ \t]+)")
+            setattr(cls, "_info_pattern", pattern)
+
+        matches = pattern.findall(txt)
+
+        return [(int(antenna), tuple(float(v) for v in values) << u.m)
+                for (antenna, *values) in matches]

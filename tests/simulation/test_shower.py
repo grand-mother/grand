@@ -110,6 +110,14 @@ class ShowerTest(TestCase):
         a, b = shower.fields[9], tmp.fields[9]
         self.assertField(a, b)
 
+        pos0 = CoreasShower._parse_coreas_bins(path, 9000)
+        pos1 = CoreasShower._parse_list(path, 9000)
+        self.assertIsNotNone(pos0)
+        for i, (antenna0, r0) in enumerate(pos0):
+            antenna1, r1 = pos1[i]
+            self.assertEqual(antenna0, antenna1)
+            self.assertQuantity(r0, r1)
+
     def test_zhaires(self):
         path = self.get_data("zhaires")
         shower = ShowerEvent.load(path)
