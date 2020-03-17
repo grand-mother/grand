@@ -1,7 +1,8 @@
-from .shower import CoreasShower, ShowerEvent, ZhairesShower
 from .antenna import Antenna, AntennaModel, ElectricField, MissingFrameError,  \
                      TabulatedAntennaModel, Voltage
+from .pdg import ParticleCode
+from .shower import CoreasShower, ShowerEvent, ZhairesShower
 
 __all__ = ["Antenna", "AntennaModel", "CoreasShower", "ElectricField",
-           "MissingFrameError", "ShowerEvent", "TabulatedAntennaModel",
-           "Voltage", "ZhairesShower"]
+           "MissingFrameError", "ParticleCode", "ShowerEvent",
+           "TabulatedAntennaModel", "Voltage", "ZhairesShower"]
