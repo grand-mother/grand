@@ -108,7 +108,7 @@ class CoreasShower(ShowerEvent):
                 antenna = int(pattern.search(str(antenna_path))[1])
                 logger.debug(f"Loading trace for antenna {antenna}")
                 data = numpy.loadtxt(antenna_path)
-                t  = data[:,0] * u.ns
+                t  = data[:,0] * 1E+09 * u.ns
                 Ex = data[:,1] * cgs2si
                 Ey = data[:,2] * cgs2si
                 Ez = data[:,3] * cgs2si
