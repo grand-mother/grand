@@ -9,7 +9,8 @@ import re
 from typing import Dict, Optional
 
 import astropy.constants
-from astropy.coordinates import CartesianRepresentation
+from astropy.coordinates import CartesianRepresentation,                       \
+                                PhysicsSphericalRepresentation
 from astropy.time import Time
 import astropy.units as u
 import numpy
@@ -67,7 +68,7 @@ class CoreasShower(ShowerEvent):
             "energy": float(reas["PrimaryParticleEnergy"]) * 1E-09 << u.GeV,
             "zenith": float(reas["ShowerZenithAngle"]) << u.deg,
             "azimuth": float(reas["ShowerAzimuthAngle"]) << u.deg,
-            "primary": _id_to_code[int(reas["PrimaryParticleType"])]
+            "primary": _id_to_code[int(reas["PrimaryParticleType"])],
         }
 
         core = CartesianRepresentation(
@@ -75,6 +76,15 @@ class CoreasShower(ShowerEvent):
             float(reas["CoreCoordinateWest"]) * 1E-02,
             float(reas["CoreCoordinateVertical"]) * 1E-02,
             unit = u.m)
+        config["core"] = core
+
+        geomagnet = PhysicsSphericalRepresentation(
+            theta = (90 + float(reas["MagneticFieldInclinationAngle"])) \
+                    << u.deg,
+            phi = 0 << u.deg,
+            r = float(reas["MagneticFieldStrength"]) * 1E-04 << u.T)
+        config["geomagnet"] = geomagnet.represent_as(CartesianRepresentation)
+
         distance = float(reas["DistanceOfShowerMaximum"]) * 1E-02 << u.m
         theta, phi = config["zenith"], config["azimuth"]
         ct, st = numpy.cos(theta), numpy.sin(theta)

@@ -60,9 +60,13 @@ class ShowerEvent:
     zenith: Optional[u.Quantity] = None
     azimuth: Optional[u.Quantity] = None
     primary: Optional[ParticleCode] = None
-    maximum: Optional[CartesianRepresentation] = None
 
     frame: Optional[BaseCoordinateFrame] = None
+
+    core: Optional[CartesianRepresentation] = None
+    geomagnet: Optional[CartesianRepresentation] = None
+    maximum: Optional[CartesianRepresentation] = None
+
     fields: Optional[FieldsCollection] = None
 
     @classmethod
