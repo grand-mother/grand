@@ -305,6 +305,13 @@ class CoordinatesTest(TestCase):
         frame2 = LTP(location=self.location, orientation="ENU")
         self.assertArray(frame1._basis, frame2._basis)
 
+        # Test declination
+        declination = 5 * u.deg
+        frame0 = LTP(location=self.location, declination=declination)
+        r = Rotation.from_euler("Z", -declination)
+        frame1 = LTP(location=self.location, rotation=r)
+        self.assertArray(frame0._basis, frame1._basis)
+
 
     def test_rotation(self):
         # Test initialisation

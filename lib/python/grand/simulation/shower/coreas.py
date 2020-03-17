@@ -137,8 +137,9 @@ class CoreasShower(ShowerEvent):
 
 
     def localize(self, latitude: u.Quantity, longitude: u.Quantity,
-                 height: Optional[u.Quantity]=None,
-                 obstime: Union[datetime, Time, str, None]=None) -> None:
+            height: Optional[u.Quantity]=None,
+            declination: Optional[u.Quantity]=None,
+            obstime: Union[datetime, Time, str, None]=None) -> None:
 
         if height is None:
             height = 0 * u.m
@@ -146,7 +147,7 @@ class CoreasShower(ShowerEvent):
         location = ECEF(latitude, longitude, height,
                         representation_type="geodetic")
         self.frame = LTP(location=location, orientation="NWU", magnetic=True,
-                         obstime=obstime)
+                         declination=declination, obstime=obstime)
         # XXX Is this the frame used by CoREAS?
 
 

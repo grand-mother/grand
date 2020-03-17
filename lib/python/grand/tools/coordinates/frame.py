@@ -233,6 +233,9 @@ class LTP(ExtendedCoordinateFrame):
     magnetic = Attribute(default=False)
     """Use the magnetic north instead of the geographic one (default: false)."""
 
+    declination = Attribute(default=None)
+    """Use the magnetic north with the given declination (default: None)."""
+
     rotation = Attribute(default=None)
     """An optional rotation w.r.t. the cardinal directions."""
 
@@ -243,6 +246,7 @@ class LTP(ExtendedCoordinateFrame):
     def __init__(self, *args,
                  location: Union["EarthLocation", "ECEF", "LTP"]=None,
                  orientation: Sequence[str]=None, magnetic: bool=False,
+                 declination: Optional[u.Quantity]=None,
                  rotation: Optional[Rotation]=None,
                  obstime: Union["datetime", "Time", str]=None,
                  **kwargs) -> None:
@@ -256,15 +260,15 @@ class LTP(ExtendedCoordinateFrame):
         orientation = self.orientation if orientation is None else orientation
 
         super().__init__(*args, location=location, orientation=orientation,
-                         magnetic=magnetic, rotation=rotation,
-                         obstime=obstime, **kwargs)
+                         magnetic=magnetic, declination=declination,
+                         rotation=rotation, obstime=obstime, **kwargs)
 
         # Set the transform parameters
         itrs = self._location.itrs
         geo = itrs.represent_as(GeodeticRepresentation)
         latitude, longitude = geo.latitude / u.deg, geo.longitude / u.deg
 
-        if magnetic:
+        if magnetic and declination is None:
             # Compute the magnetic declination
             ecef = ECEF(itrs.x, itrs.y, itrs.z, obstime=self._obstime)
 
@@ -275,9 +279,12 @@ class LTP(ExtendedCoordinateFrame):
             c = field.cartesian
             c /= c.norm()
             h = c.represent_as(HorizontalRepresentation)
-            azimuth0 = h.azimuth / u.deg
+            declination = h.azimuth
+
+        if declination is None:
+            azimuth0 = 0
         else:
-            azimuth0 = 0.
+            azimuth0 = declination.to_value(u.deg)
 
         def vector(name):
             tag = name[0].upper()
