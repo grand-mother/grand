@@ -16,17 +16,23 @@ else
 $(error invalid BUILD_TYPE $(BUILD_TYPE))
 endif
 
+SOEXT= so
+SYS  = $(shell uname -s)
+ifeq ($(SYS), Darwin)
+	SOEXT= dylib
+endif
+
 LIBS= turtle gull
 GULL_DATA= IGRF12.COF WMM2015.COF
 
-INSTALL_LIBS= $(addprefix $(PREFIX)/lib/lib,$(addsuffix .so,$(LIBS)))
-INSTALL_DATA= $(addprefix $(PREFIX)/lib/python/grand/libs/data/gull/,$(GULL_DATA))
+INSTALL_LIBS= $(addprefix $(PREFIX)/grand/libs/lib,$(addsuffix .$(SOEXT),$(LIBS)))
+INSTALL_DATA= $(addprefix $(PREFIX)/grand/libs/data/gull/,$(GULL_DATA))
 
-BUILD_LIBS=   $(BUILD_DIR)/lib/python/grand/_core.so
-BUILD_LIBS+=  $(addprefix $(BUILD_DIR)/lib/lib,$(addsuffix .so,$(LIBS)))
+BUILD_LIBS=   $(BUILD_DIR)/grand/_core.so
+BUILD_LIBS+=  $(addprefix $(BUILD_DIR)/grand/libs/lib,$(addsuffix .$(SOEXT),$(LIBS)))
 
-MODULES=  $(PREFIX)/lib/python/grand/_core.so
-MODULES+= $(addprefix $(PREFIX)/,$(shell find lib/python/grand -name *.py 2>/dev/null))
+MODULES=  $(PREFIX)/grand/_core.so
+MODULES+= $(addprefix $(PREFIX)/,$(shell find grand -name *.py 2>/dev/null))
 
 $(BUILD_LIBS) $(addprefix $(BUILD_DIR)/src/gull/share/data/,$(GULL_DATA)): FORCE
 	@echo "==== Building $$(basename $@) module ===="
@@ -40,18 +46,24 @@ install: $(INSTALL_LIBS) $(MODULES) $(INSTALL_DATA)
 
 $(PREFIX)/%.so: $(BUILD_DIR)/%.so
 	@echo "INSTALL  $$(basename $@)" && \
-	$(INSTALL_D) $(shell dirname $@)
+	$(INSTALL_D) $(shell dirname $@) && \
 	$(INSTALL_X) $^ $@
 
-$(PREFIX)/lib/python/%.py: lib/python/%.py
+$(PREFIX)/%.dylib: $(BUILD_DIR)/%.dylib
 	@echo "INSTALL  $$(basename $@)" && \
-	$(INSTALL_D) $(shell dirname $@)
+	$(INSTALL_D) $(shell dirname $@) && \
 	$(INSTALL_X) $^ $@
 
-$(PREFIX)/lib/python/grand/libs/data/gull/%: $(BUILD_DIR)/src/gull/share/data/%
+$(PREFIX)/%.py: %.py
 	@echo "INSTALL  $$(basename $@)" && \
-	$(INSTALL_D) $(shell dirname $@)
+	$(INSTALL_D) $(shell dirname $@) && \
+	$(INSTALL_X) $^ $@
+
+$(PREFIX)/grand/libs/data/gull/%: $(BUILD_DIR)/src/gull/share/data/%
+	@echo "INSTALL  $$(basename $@)" && \
+	$(INSTALL_D) $(shell dirname $@) && \
 	$(INSTALL_F) $^ $@
 
 clean:
-	@$(RM) -r lib/*.so lib/python/grand/*.so lib/python/grand/libs/data build-*
+	@$(RM) -r grand/*.so grand/libs/*.$(SOEXT) grand/libs/data build* dist* *.egg-info
+	@find . | grep -E "(__pycache__|\.pyc|\.pyo)" | xargs rm -rf

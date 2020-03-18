@@ -16,6 +16,7 @@ __pycache__
 dist
 build*
 *.egg-info
+*.whl
 
 # Ignore temporary coverage reports
 .coverage
@@ -27,8 +28,10 @@ python3-*.AppImage
 .idea
 
 # Ignore local librairies and data
-lib/python/grand/libs/data
-lib/python/grand/tools/data/topography
+lib/python*
+grand/libs/lib*.so
+grand/libs/data
+grand/tools/data/topography
 tests/topography
 tests/simulation/data
 

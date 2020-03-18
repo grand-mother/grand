@@ -35,6 +35,8 @@ main () {
     fi
     chmod u+x "${prefix}/bin/python3-${ARCH}.AppImage"
 
+    VERSION=$(${prefix}/bin/python3-${ARCH}.AppImage -c 'import sys; print(".".join([str(v) for v in sys.version_info[:2]]))')
+
     if [ ! -d "${prefix}/user/grand" ]; then
         mkdir -p "${prefix}/user/grand"
     fi
@@ -61,7 +63,16 @@ main () {
         fi
     }
 
-    expand_pythonpath "lib/python"
+    expand_pythonpath "lib/python${VERSION}"
+
+    local target="${prefix}/lib/python${VERSION}"
+    local link
+    for link in $(ls -d "${prefix}/lib/python"* 2>/dev/null)
+    do
+        [[ "${link}" != "${target}" ]] && rm -rf "${link}"
+    done
+    mkdir -p "${target}"
+    [ ! -L "${target}/grand" ] && ln -s "../../grand" "${target}/grand"
 
     # Rebase the shebangs of Python scripts
     sanitize_shebangs () {
