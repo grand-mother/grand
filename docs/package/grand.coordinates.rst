@@ -78,12 +78,14 @@ as:
 >>> ltp = LTP(location=EarthLocation.of_site("greenwich"),
 ...           orientation="NED")
 
-Alternatively, magnetic coordinates can be used as well by setting *magnetic* to
-`True`. By default geographic East, North, Up (ENU) coordinates are used.
+By default geographic East, North, Up (ENU) coordinates are used. Alternatively,
+magnetic coordinates can be used as well by setting *magnetic* to `True` or
+by explicitly providing the magnetic *declination*. If *magnetic* is `True` but
+no *declination* is provided then the magnetic declination is computed using
+the built-in :mod:`~grand.geomagnet`.
 
 .. note::
    One must always specify the local frame origin, as the *location* parameter.
-   If magnetic coordinates are used, the *obstime* must be specified as well.
 
 .. autoclass:: grand.LTP
 
