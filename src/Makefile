@@ -2,12 +2,13 @@ CC=        gcc
 CFLAGS=    -O3
 INSTALL_X= install -m 0755
 INSTALL_F= install -m 0644
+INSTALL_D= install -d
 PYTHON   = python3
 
 BUILD_DIR= build
 
 # Git tags of external dependencies
-TURTLE_TAG= v0.7
+TURTLE_TAG= v0.8
 GULL_TAG= 91ed20f
 
 define git_clone #([$1] = destination, [$2] = url, [$3] = tag)
@@ -20,12 +21,14 @@ endef
 define build_lib #([$1] = name, [$2] = source, [$3] = library)
 	echo "MAKE     $$(basename $(3))" && \
 	$(MAKE) --quiet -C $(2) CFLAGS="$(CFLAGS) -fPIC"
-	$(INSTALL_X) -D $(2)/lib/lib$(1).so $(3)
+	$(INSTALL_D) $(shell dirname $(3))
+	$(INSTALL_F) $(2)/lib/lib$(1).so $(3)
 endef
 
 define install_header #([$1] = name, [$2] = source, [$3] = header)
 	echo "INSTALL  $$(basename $(3))" && \
-	$(INSTALL_F) -D $(2)/include/$(1).h $(3)
+	$(INSTALL_D) $(shell dirname $(3))
+	$(INSTALL_F) $(2)/include/$(1).h $(3)
 endef
 
 LIBS= $(BUILD_DIR)/lib/libturtle.so \
@@ -41,7 +44,7 @@ all: $(LIBS) $(HEADERS) $(MODULES)
 .PHONY: clean
 
 clean:
-	@rm -rf $(BUILD_DIR) $(LIB_DIR) $(INCLUDE_DIR)
+	$(RM) -rf $(BUILD_DIR)
 
 $(BUILD_DIR)/src/turtle:
 	@$(call git_clone,$@,"https://github.com/niess/turtle.git",$(TURTLE_TAG))

@@ -106,4 +106,7 @@ class Rotation(_Rotation):
 
     @property
     def magnitude(self) -> u.Quantity:
-        return super().magnitude() * u.rad
+        mag = super().magnitude()
+        if isinstance(mag, numpy.ndarray) and mag.size == 1:
+            mag = mag[0]
+        return mag * u.rad

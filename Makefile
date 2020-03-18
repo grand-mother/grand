@@ -4,6 +4,7 @@ BUILD_TYPE= release
 PYTHON= $(PWD)/bin/python
 INSTALL_X= install -m 0755
 INSTALL_F= install -m 0644
+INSTALL_D= install -d
 
 BUILD_DIR= $(PWD)/build-$(BUILD_TYPE)
 
@@ -25,7 +26,7 @@ BUILD_LIBS=   $(BUILD_DIR)/lib/python/grand/_core.so
 BUILD_LIBS+=  $(addprefix $(BUILD_DIR)/lib/lib,$(addsuffix .so,$(LIBS)))
 
 MODULES=  $(PREFIX)/lib/python/grand/_core.so
-MODULES+= $(addprefix $(PREFIX)/,$(shell find lib/python/grand -name *.py))
+MODULES+= $(addprefix $(PREFIX)/,$(shell find lib/python/grand -name *.py 2>/dev/null))
 
 $(BUILD_LIBS) $(addprefix $(BUILD_DIR)/src/gull/share/data/,$(GULL_DATA)): FORCE
 	@echo "==== Building $$(basename $@) module ===="
@@ -39,15 +40,18 @@ install: $(INSTALL_LIBS) $(MODULES) $(INSTALL_DATA)
 
 $(PREFIX)/%.so: $(BUILD_DIR)/%.so
 	@echo "INSTALL  $$(basename $@)" && \
-	$(INSTALL_X) -D $^ $@
+	$(INSTALL_D) $(shell dirname $@)
+	$(INSTALL_X) $^ $@
 
 $(PREFIX)/lib/python/%.py: lib/python/%.py
 	@echo "INSTALL  $$(basename $@)" && \
-	$(INSTALL_X) -D $^ $@
+	$(INSTALL_D) $(shell dirname $@)
+	$(INSTALL_X) $^ $@
 
 $(PREFIX)/lib/python/grand/libs/data/gull/%: $(BUILD_DIR)/src/gull/share/data/%
 	@echo "INSTALL  $$(basename $@)" && \
-	$(INSTALL_F) -D $^ $@
+	$(INSTALL_D) $(shell dirname $@)
+	$(INSTALL_F) $^ $@
 
 clean:
-	@$(RM) -rf lib/*.so lib/python/grand/*.so lib/python/grand/libs/data build-*
+	@$(RM) -r lib/*.so lib/python/grand/*.so lib/python/grand/libs/data build-*

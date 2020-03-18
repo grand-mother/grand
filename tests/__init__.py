@@ -23,6 +23,7 @@ class TestCase(unittest.TestCase):
     def assertQuantity(self, a, b, tol=9):
         """Check that two astropy.Quantities are consistent"""
         n = a.size
+        self.assertEqual(n, b.size)
         b = b.to_value(a.unit)
         a = a.value
         if n > 1:

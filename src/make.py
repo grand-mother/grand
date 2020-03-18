@@ -43,7 +43,7 @@ def build():
             libraries = ["turtle", "gull"],
             include_dirs = [str(INC_DIR), str(SRC_DIR)],
             library_dirs = [str(LIB_DIR)],
-            extra_link_args = ["-Wl,-rpath=$ORIGIN/../.."]
+            extra_link_args = ["-Wl,-rpath,$ORIGIN/../.."]
         )
 
     TMP_DIR.mkdir(parents = True, exist_ok = True)

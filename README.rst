@@ -1,5 +1,5 @@
-grand package |travis| |codecov| |docs| |appimage|
-==================================================
+grand package |workflow| |codecov| |docs| |appimage|
+====================================================
 
 *This is the development environment for the `grand` package. It is powered
 by* `Python 3`_, `Scientific Python`_ and `Astropy`_. *You can download does
@@ -74,10 +74,10 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
    :target: `AppImage`_
 
 .. |codecov| image:: https://codecov.io/gh/grand-mother/grand/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/grand-mother/grand
+   :target: https://codecov.io/gh/grand-mother/grand
 
 .. |docs| image:: https://img.shields.io/badge/docs-ready-brightgreen.svg
    :target: `online documentation`_
 
-.. |travis| image:: https://travis-ci.com/grand-mother/grand.svg?branch=master
-  :target: https://travis-ci.com/grand-mother/grand
+.. |workflow| image:: https://github.com/grand-mother/grand/workflows/Tests/badge.svg
+   :target: https://github.com/grand-mother/grand/actions?query=workflow%3ATests

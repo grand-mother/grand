@@ -121,7 +121,7 @@ class TopographyTest(TestCase):
         z3 = topography.elevation(cl)
         self.assertEqual(z3.size, 1)
         self.assertEqual(z3.unit, u.m)
-        self.assertQuantity(z3, z1)
+        self.assertQuantity(z3, z1, 7)
 
 
     def test_topography_distance(self):

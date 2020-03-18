@@ -91,7 +91,7 @@ main () {
             logmsg ""
             logmsg "An unexpected error occured. See details above."
             logmsg "The reason might be that your Python AppImage is out of date"
-            logmsg "  Try `rm bin/python3-*.` and re-source this script"
+            logmsg "  Try \`rm bin/python3-*.\` and re-source this script"
             logmsg "  If this error persists please open an issue at:"
             logmsg "    https://github.com/grand-mother/grand/issues"
             return 1
