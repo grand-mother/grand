@@ -9,6 +9,12 @@ class ParticleCode(IntEnum):
        Ref: http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
     """
 
+    # Bosons
+    GAMMA = 22
+    Z_0 = 23
+    W_PLUS = 24
+    W_MINUS = -24
+
     # Leptons
     ELECTRON = 11
     ANTI_ELECTRON = -11

@@ -6,8 +6,10 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Optional
 
-from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
+from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation,  \
+                                PhysicsSphericalRepresentation
 import astropy.units as u
+import h5py
 import numpy
 
 from .generic import CollectionEntry, FieldsCollection, ShowerEvent
@@ -152,3 +154,62 @@ class ZhairesShower(ShowerEvent):
                         break
 
         return cls(fields=fields, **inp)
+
+
+    @classmethod
+    def _from_datafile(cls, path: Path) -> ZhairesShower:
+        with h5py.File(path, "r") as fd:
+            if not "RunInfo.__table_column_meta__" in fd["/"]:
+                return super()._from_datafile(path)
+
+            for name in fd["/"].keys():
+                if not name.startswith("RunInfo"):
+                    break
+
+            event = fd[f"{name}/EventInfo"]
+            antennas = fd[f"{name}/AntennaInfo"]
+            traces = fd[f"{name}/AntennaTraces"]
+
+            fields = FieldsCollection()
+
+            pattern = re.compile("([0-9]+)$")
+            for tag, x, y, z, *_ in antennas:
+                tag = tag.decode()
+                antenna = int(pattern.search(tag)[1])
+                r = CartesianRepresentation(
+                    float(x), float(y), float(z), unit=u.m)
+                tmp = traces[f"{tag}/efield"][:]
+                efield = tmp.view("f4").reshape(tmp.shape + (-1,))
+                t = numpy.asarray(efield[:,0], "f8") << u.ns
+                Ex = numpy.asarray(efield[:,1], "f8") << u.uV / u.m
+                Ey = numpy.asarray(efield[:,2], "f8") << u.uV / u.m
+                Ez = numpy.asarray(efield[:,3], "f8") << u.uV / u.m
+                E = CartesianRepresentation(Ex, Ey, Ez, copy=False),
+
+                fields[antenna] = CollectionEntry(
+                    electric=ElectricField(t = t, E = E, r = r))
+
+            primary = {
+                "Fe^56"  : ParticleCode.IRON,
+                "Gamma"  : ParticleCode.GAMMA,
+                "Proton" : ParticleCode.PROTON
+            }[event[0, "Primary"].decode()]
+
+            geomagnet = PhysicsSphericalRepresentation(
+                theta = float(90 + event[0, "BFieldIncl"]) << u.deg,
+                phi = 0 << u.deg,
+                r = float(event[0, "BField"]) << u.uT)
+
+            return cls(
+                energy = float(event[0, "Energy"]) << u.EeV,
+                zenith = float(event[0, "Zenith"]) << u.deg,
+                azimuth = float(event[0, "Azimuth"]) << u.deg,
+                primary = primary,
+
+                core = CartesianRepresentation(0, 0, 0, unit="m"),
+                geomagnet = geomagnet.represent_as(CartesianRepresentation),
+                maximum = CartesianRepresentation(*event[0, "XmaxPosition"],
+                                                  unit="m"),
+
+                fields = fields
+            )
