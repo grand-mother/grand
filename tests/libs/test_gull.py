@@ -15,9 +15,9 @@ class GullTest(TestCase):
     def test_snapshot(self):
         snapshot = gull.Snapshot()
         self.assertNotEqual(snapshot._snapshot, None)
-        self.assertEqual(snapshot.model, "IGRF12")
+        self.assertEqual(snapshot.model, "IGRF13")
         d = snapshot.date
-        self.assertEqual(d.year, 2019)
+        self.assertEqual(d.year, 2020)
         self.assertEqual(d.month, 1)
         self.assertEqual(d.day, 1)
         self.assertEqual(snapshot.order, 13)
@@ -25,17 +25,17 @@ class GullTest(TestCase):
         self.assertEqual(snapshot.altitude[1], 600E+03)
         del snapshot
 
-        snapshot = gull.Snapshot("WMM2015", "2018-06-04")
+        snapshot = gull.Snapshot("WMM2020", "2020-03-23")
         self.assertNotEqual(snapshot._snapshot, None)
-        self.assertEqual(snapshot.model, "WMM2015")
+        self.assertEqual(snapshot.model, "WMM2020")
         d = snapshot.date
-        self.assertEqual(d.year, 2018)
-        self.assertEqual(d.month, 6)
-        self.assertEqual(d.day, 4)
+        self.assertEqual(d.year, 2020)
+        self.assertEqual(d.month, 3)
+        self.assertEqual(d.day, 23)
 
         # Magnetic field according to
-        # http://geomag.nrcan.gc.ca/calc/mfcal-en.php
-        ref = (0, 2.2983E-05, -4.0852E-05)
+        # https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm
+        ref = (566E-09, 22999E-09, -41003E-09)
 
         m = snapshot(45., 3.)
         tol = 6

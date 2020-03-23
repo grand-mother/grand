@@ -18,7 +18,7 @@ BUILD_DIR= build
 
 # Git tags of external dependencies
 TURTLE_TAG= v0.8
-GULL_TAG  = 43f1598
+GULL_TAG  = 286ace5
 
 define git_clone #([$1] = destination, [$2] = url, [$3] = tag)
 	echo "CLONE    $$(basename $1)" && \

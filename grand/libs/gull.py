@@ -48,13 +48,13 @@ class LibraryError(RuntimeError):
 class Snapshot:
     """Proxy for a GULL snapshot object"""
 
-    def __init__(self, model="IGRF12", date="2019-01-01"):
+    def __init__(self, model="IGRF13", date="2020-01-01"):
         """Create a snapshot of the geo-magnetic field
 
         Parameters
         ----------
         model : str
-            The geo-magnetic model to use (IGRF12, or WMM2015)
+            The geo-magnetic model to use (IGRF13, or WMM2020)
         date : str or datetime.date
             The day at which the snapshot is taken
 

@@ -31,15 +31,15 @@ import numpy
 from astropy.coordinates import EarthLocation
 
 
-_default_model: Final = "IGRF12"
-"""The default geo-magnetic model, i.e. IGRF12.
+_default_model: Final = "IGRF13"
+"""The default geo-magnetic model, i.e. IGRF13.
    Reference: https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html
 """
 
 _default_magnet: Optional[Geomagnet] = None
 """An instance of Geomagnet with the default geo-magnetic model"""
 
-_default_obstime: Final[Time] = Time("2019-12-31")
+_default_obstime: Final[Time] = Time("2020-01-01")
 """The default observation time if none is specified"""
 
 

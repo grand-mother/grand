@@ -11,7 +11,7 @@ BUILD_DIR= $(PWD)/build-$(BUILD_TYPE)
 ifeq ($(BUILD_TYPE), release)
 CFLAGS+= -O3
 else ifeq ($(BUILD_TYPE), debug)
-CFLAGS+= -O0 -g3
+CFLAGS+= "-O0 -g3"
 else
 $(error invalid BUILD_TYPE $(BUILD_TYPE))
 endif
@@ -23,7 +23,7 @@ ifeq ($(SYS), Darwin)
 endif
 
 LIBS= turtle gull
-GULL_DATA= IGRF12.COF WMM2015.COF
+GULL_DATA= IGRF13.COF WMM2020.COF
 
 INSTALL_LIBS= $(addprefix $(PREFIX)/grand/libs/lib,$(addsuffix .$(SOEXT),$(LIBS)))
 INSTALL_DATA= $(addprefix $(PREFIX)/grand/libs/data/gull/,$(GULL_DATA))

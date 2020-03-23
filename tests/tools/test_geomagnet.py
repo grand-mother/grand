@@ -22,13 +22,13 @@ class GeomagnetTest(TestCase):
         super().__init__(*args)
 
         # The geo-magnetic field according to
-        # http://geomag.nrcan.gc.ca/calc/mfcal-en.php"""
-        self.ref = (0, 2.2983E-05, -4.0852E-05)
+        # https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm
+        self.ref = (566E-09, 22999E-09, -41003E-09)
 
         # The corresponding Earth location
         self.location = EarthLocation(lat=45.0 * u.deg, lon=3.0 * u.deg,
                                       height=1000. * u.m)
-        self.date = "2018-06-04"
+        self.date = "2020-03-23"
 
 
     def assertField(self, field, tol=6):
@@ -87,7 +87,7 @@ class GeomagnetTest(TestCase):
 
 
     def test_custom(self):
-        geomagnet = Geomagnet(model="WMM2015")
+        geomagnet = Geomagnet(model="WMM2020")
         c = self.get_coordinates()
         field = geomagnet.field(c)
         self.assertEqual(field.x.size, 1)
