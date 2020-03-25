@@ -66,7 +66,7 @@ class CoreasShower(ShowerEvent):
 
         config = {
             "energy": float(reas["PrimaryParticleEnergy"]) * 1E-09 << u.GeV,
-            "zenith": float(reas["ShowerZenithAngle"]) << u.deg,
+            "zenith": (180 - float(reas["ShowerZenithAngle"])) << u.deg,
             "azimuth": float(reas["ShowerAzimuthAngle"]) << u.deg,
             "primary": _id_to_code[int(reas["PrimaryParticleType"])],
         }
@@ -88,9 +88,9 @@ class CoreasShower(ShowerEvent):
         distance = float(reas["DistanceOfShowerMaximum"]) * 1E-02 << u.m
         theta, phi = config["zenith"], config["azimuth"]
         ct, st = numpy.cos(theta), numpy.sin(theta)
-        direction = CartesianRepresentation( # XXX is this correct?
+        direction = CartesianRepresentation(
             st * numpy.cos(phi), st * numpy.sin(phi), ct)
-        config["maximum"] = core + distance * direction
+        config["maximum"] = core - distance * direction
 
         antpos = cls._parse_coreas_bins(path, index)
         if antpos is None:

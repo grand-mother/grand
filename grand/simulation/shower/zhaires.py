@@ -202,8 +202,8 @@ class ZhairesShower(ShowerEvent):
 
             return cls(
                 energy = float(event[0, "Energy"]) << u.EeV,
-                zenith = float(event[0, "Zenith"]) << u.deg,
-                azimuth = float(event[0, "Azimuth"]) << u.deg,
+                zenith = (180 - float(event[0, "Zenith"])) << u.deg,
+                azimuth = -float(event[0, "Azimuth"]) << u.deg,
                 primary = primary,
 
                 core = CartesianRepresentation(0, 0, 0, unit="m"),
