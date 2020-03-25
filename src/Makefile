@@ -43,7 +43,7 @@ endef
 LIBS= $(BUILD_DIR)/grand/libs/libturtle.$(SOEXT) \
       $(BUILD_DIR)/grand/libs/libgull.$(SOEXT)
 
-MODULES= $(BUILD_DIR)/grand/_core.so
+MODULES= $(BUILD_DIR)/grand/_core.abi3.so
 
 HEADERS= $(BUILD_DIR)/include/turtle.h \
          $(BUILD_DIR)/include/gull.h
@@ -69,4 +69,4 @@ $(BUILD_DIR)/include/%.h: $(BUILD_DIR)/src/%
 
 $(MODULES): $(LIBS) $(HEADERS) grand.c grand.h
 	@echo "PYTHON   $$(basename $@)" && \
-	$(PYTHON) make.py $(BUILD_DIR)
+	$(PYTHON) build_core.py $(BUILD_DIR)

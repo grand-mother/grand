@@ -1,5 +1,5 @@
 # Ignore the dist/version module
-version.py
+grand/version.py
 
 # Ignore shared libraries
 *.so
