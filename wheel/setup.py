@@ -57,6 +57,19 @@ git_revision = '{git_revision:}'
     return version
 
 
+def get_requirements():
+    """Load the package requirements
+    """
+    with open("requirements.txt") as f:
+        requirements = []
+        for line in f.readlines():
+            req = line.strip().split("#", 1)[0]
+            if (not req) or req.startswith("#"):
+                continue
+            requirements.append(req)
+        return requirements
+
+
 setuptools.setup(
     name = "grand",
     version = get_version(),
@@ -72,14 +85,15 @@ setuptools.setup(
         "Documentation" : "https://https://grand-mother.github.io/grand-docs",
         "Source Code"   : "https://github.com/grand-mother/grand",
     },
-    packages=setuptools.find_packages(exclude=("tests*",)),
-    cffi_modules=('./src/build_core.py:ffi',),
-    classifiers=[s for s in CLASSIFIERS.split(os.linesep) if s.strip()],
+    packages = setuptools.find_packages(exclude=("tests*",)),
+    cffi_modules = ('./src/build_core.py:ffi',),
+    classifiers = [s for s in CLASSIFIERS.split(os.linesep) if s.strip()],
     license = "LGPLv3",
     platforms = ["Linux", "Mac OS-X"],
-    python_requires=">=3.8",
-    include_package_data=True,
-    package_data={"": ("libs/*.so", "libs/*.so.*",
+    python_requires = ">=3.8",
+    install_requires = get_requirements(),
+    include_package_data = True,
+    package_data = {"": ("libs/*.so", "libs/*.so.*",
         "libs/data/gull/*", "tools/data/egm96.png")},
     exclude_package_data = {"": ("tools/data/topography/*",)},
 )
