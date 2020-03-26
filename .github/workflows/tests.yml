@@ -1,9 +1,10 @@
 name: Tests
-on: [push, pull_request]
-  paths-ignore:
-  - docs/requirements.txt
-  - examples/requirements.txt
-  - .github/workflows/appimage.yml
+on:
+  push:
+    paths-ignore:
+    - docs/requirements.txt
+    - examples/requirements.txt
+    - .github/workflows/appimage.yml
 
 jobs:
   Linux:

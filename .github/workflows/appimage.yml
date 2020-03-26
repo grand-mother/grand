@@ -1,10 +1,13 @@
 name: AppImage
-on: [push, pull_request]
-  paths:
-  - requirements.txt
-  - docs/requirements.txt
-  - examples/requirements.txt
-  - .github/workflows/appimage.yml
+on:
+  push:
+    branches:
+    - master
+    paths:
+    - requirements.txt
+    - docs/requirements.txt
+    - examples/requirements.txt
+    - .github/workflows/appimage.yml
 
 jobs:
   Generate:

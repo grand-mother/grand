@@ -20,7 +20,7 @@ main () {
     local ARCH="x86_64"
     if [ ! -e "${prefix}/bin/python3-${ARCH}.AppDir" ]; then
         logmsg "--Fetching AppImage"
-        local url="https://github.com/grand-mother/python/releases/download/continuous/python3-${ARCH}.AppImage"
+        local url="https://github.com/grand-mother/grand/releases/download/appimage/python3-${ARCH}.AppImage"
         (cd "${prefix}/bin" && wget -cq "${url}")
         if [ "$?" != "0" ]; then
             logmsg "  could not fetch ${url}"

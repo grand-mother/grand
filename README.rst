@@ -1,21 +1,26 @@
 grand package |workflow| |codecov| |docs| |appimage|
 ====================================================
 
-*This is the development environment for the `grand` package. It is powered
-by* `Python 3`_, `Scientific Python`_ and `Astropy`_. *You can download does
-bundled in a single* `AppImage`_.
+*Core* `Python 3`_  *package for the offline software of the* `GRAND`_
+*Collaboration.*
 
 
 Quick start
 -----------
 
-Clone the present repository and source the `setup.sh`_ file:
+The grand package can be installed from `PyPI`_ using pip, e.g. as:
 
 .. code:: bash
 
-   git clone https://github.com/grand-mother/grand
-   cd grand
-   source env/setup.sh
+   python3.8 -m pip install -U --user grand
+
+Note that Python 3.8 or above is required. On Linux you can get it as an
+`AppImage`_ including grand dependencies as:
+
+.. code:: bash
+
+   wget https://github.com/grand-mother/grand/releases/download/appimage/python3-x86_64.AppImage
+   chmod u+x python3-x86_64.AppImage
 
 Check the `online documentation`_ for further details.
 
@@ -26,9 +31,11 @@ How to contribute
 Issues can be `reported on GitHub`_.
 
 You can also contribute back to the code with Pull Requests `PR`_. Note that you
-first need to fork this repository. Note also that in order to be accepted your
-changes are expected to successfully pass the integration tests. You can run
-does locally as:
+first need to fork and clone this repository. On Linux a development
+environment is provided. It can be enabled by sourcing the `setup.sh`_ script.
+
+In order to be accepted your changes are expected to successfully pass the
+integration tests. You can run does locally as:
 
 .. code:: bash
 
@@ -44,28 +51,28 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 
 .. Local links
 
-.. _COPYING.LESSER: COPYING.LESSER
+.. _COPYING.LESSER: https://github.com/grand-mother/grand/blob/master/COPYING.LESSER
 
-.. _LICENSE: LICENSE
+.. _LICENSE: https://github.com/grand-mother/grand/blob/master/LICENSE
 
-.. _setup.sh: env/setup.sh
+.. _setup.sh: https://github.com/grand-mother/grand/blob/master/env/setup.sh
 
 
 .. Externals links
 
 .. _AppImage: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
 
-.. _Astropy: https://www.astropy.org
+.. _GRAND: http://grand.cnrs.fr
 
 .. _online documentation: https://grand-mother.github.io/grand-docs
 
 .. _PR: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests
 
+.. _PyPI: https://pypi.org/project/grand
+
 .. _Python 3: https://www.python.org
 
 .. _reported on GitHub: https://github.com/grand-mother/grand/issues
-
-.. _Scientific Python: https://www.scipy.org
 
 
 .. Badges
