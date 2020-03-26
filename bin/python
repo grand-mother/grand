@@ -9,7 +9,7 @@ main() {
         mkdir -p "${home}"
     fi
 
-    HOME="${prefix}/user/${user}" USER="${user}" "${prefix}/bin/python3-x86_64.AppImage" $@
+    HOME="${prefix}/user/${user}" USER="${user}" "${prefix}/bin/python3-x86_64.AppDir/AppRun" $@
 }
 
 

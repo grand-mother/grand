@@ -18,7 +18,7 @@ main () {
     }
 
     local ARCH="x86_64"
-    if [ ! -e "${prefix}/bin/python3-${ARCH}.AppImage" ]; then
+    if [ ! -e "${prefix}/bin/python3-${ARCH}.AppDir" ]; then
         logmsg "--Fetching AppImage"
         local url="https://github.com/grand-mother/python/releases/download/continuous/python3-${ARCH}.AppImage"
         (cd "${prefix}/bin" && wget -cq "${url}")
@@ -26,16 +26,23 @@ main () {
             logmsg "  could not fetch ${url}"
             return 1
         fi
+        chmod u+x "${prefix}/bin/python3-${ARCH}.AppImage"
         logmsg "  AppImage retrieved"
+
+        logmsg "--Extracting AppImage"
+        (cd "${prefix}/bin" && \
+         ./python3-${ARCH}.AppImage --appimage-extract &> /dev/null && \
+         mv "squashfs-root" "python3-${ARCH}.AppDir" &&
+         rm -f "python3-${ARCH}.AppImage")
+        logmsg "  AppImage extracted"
 
         if [ -f "${prefix}/lib/python/grand/_core.so" ]; then
             logmsg "--Cleaning existing install"
             make clean
         fi
     fi
-    chmod u+x "${prefix}/bin/python3-${ARCH}.AppImage"
 
-    VERSION=$(${prefix}/bin/python3-${ARCH}.AppImage -c 'import sys; print(".".join([str(v) for v in sys.version_info[:2]]))')
+    VERSION=$(${prefix}/bin/python3-${ARCH}.AppDir/AppRun -c 'import sys; print(".".join([str(v) for v in sys.version_info[:2]]))')
 
     if [ ! -d "${prefix}/user/grand" ]; then
         mkdir -p "${prefix}/user/grand"

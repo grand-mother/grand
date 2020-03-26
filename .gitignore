@@ -23,6 +23,7 @@ build*
 
 # Ignore the Python engine
 python3-*.AppImage
+python3-*.AppDir
 
 # Ignore PyCharm stuff
 .idea
