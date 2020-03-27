@@ -13,6 +13,7 @@ import numpy
 from ..pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
 from ...import io
+from ...tools.coordinates import Rotation
 
 __all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
 
@@ -162,3 +163,21 @@ class ShowerEvent:
 
             m = len(self.fields)
             _logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
+
+    def shower_frame(self) -> BaseCoordinateFrame:
+        ev = self.core - self.maximum
+        ev /= ev.norm()
+        evB = ev.cross(self.geomagnet)
+        evB /= evB.norm()
+        evvB = ev.cross(evB)
+
+        r = Rotation.from_matrix(numpy.array((evB.xyz, evvB.xyz, ev.xyz)).T)
+        return self.frame.rotated(r)
+
+    def transform(self, representation: BaseRepresentation,
+                        frame: BaseCoordinateFrame) -> BaseCoordinateFrame:
+        if frame == self.frame:
+            return self.frame.realize_frame(representation)
+        else:
+            coordinates = self.frame._replicate(representation, copy=False)
+            return coordinates.transform_to(frame)

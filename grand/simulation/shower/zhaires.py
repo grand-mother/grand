@@ -85,6 +85,7 @@ class ZhairesShower(ShowerEvent):
                 fields[key] = raw_fields[key]
 
         inp: Dict[str, Any] = {}
+        inp["core"] = CartesianRepresentation(0, 0, 0, unit="m")
         try:
             sry_path = path.glob("*.sry").__next__()
         except StopIteration:
@@ -110,18 +111,25 @@ class ZhairesShower(ShowerEvent):
                 return datetime.strptime(string.strip(), "%d/%b/%Y")
 
             def parse_frame_direction(string: str) -> BaseCoordinateFrame:
-                origin = inp["frame"]
-                obstime = inp.pop("_obstime")
+                inp["_origin"] = inp["frame"]
 
                 string = string.strip()
                 if string == "Local magnetic north":
-                    orientation, magnetic = "NWU", True
-                    # XXX is the orientation correct?
+                    return "NWU"
                 else:
                     raise NotImplementedError(string)
 
-                return LTP(location=origin, orientation=orientation,
-                           magnetic=magnetic, obstime=obstime)
+            def parse_geomagnet_intensity(string: str) -> u.Quantity:
+                return float(string.split()[0]) << u.uT
+
+            def parse_geomagnet_angles(string: str) -> CartesianRepresentation:
+                intensity = inp["geomagnet"]
+                inclination, _, _, declination, _ = string.split()
+                theta = (90 + float(inclination)) << u.deg
+                inp["_declination"] = float(declination) << u.deg
+                spherical = PhysicsSphericalRepresentation(theta=theta,
+                    phi=0 << u.deg, r=intensity)
+                return spherical.represent_as(CartesianRepresentation)
 
             def parse_maximum(string: str) -> CartesianRepresentation:
                 _, _, *xyz = string.split()
@@ -136,6 +144,9 @@ class ZhairesShower(ShowerEvent):
                 ("Primary zenith angle", "zenith", parse_quantity),
                 ("Primary azimuth angle", "azimuth", parse_quantity),
                 ("Zero azimuth direction", "frame", parse_frame_direction),
+                ("Geomagnetic field: Intensity:", "geomagnet",
+                    parse_geomagnet_intensity),
+                ("I:", "geomagnet", parse_geomagnet_angles),
                 ("Location of max.(Km)", "maximum", parse_maximum)
             )
 
@@ -152,6 +163,13 @@ class ZhairesShower(ShowerEvent):
                         tag, k, convert = converters[i]
                     except IndexError:
                         break
+
+        origin = inp.pop("_origin")
+        declination = inp.pop("_declination")
+        obstime = inp.pop("_obstime")
+        orientation = inp["frame"]
+        inp["frame"] = LTP(location=origin, orientation=orientation,
+                           declination=declination, obstime=obstime)
 
         return cls(fields=fields, **inp)
 

@@ -7,7 +7,7 @@ from pathlib import Path
 import tarfile
 import unittest
 
-from astropy.coordinates import CartesianRepresentation
+from astropy.coordinates import CartesianRepresentation, SphericalRepresentation
 import astropy.units as u
 import numpy
 
@@ -122,6 +122,13 @@ class ShowerTest(TestCase):
         path = self.get_data("zhaires")
         shower = ShowerEvent.load(path)
         self.assertIsInstance(shower.frame, LTP)
+        self.assertIsNotNone(shower.geomagnet)
+        self.assertQuantity(shower.geomagnet.norm(), 54.021 << u.uT)
+        spherical = shower.geomagnet.represent_as(SphericalRepresentation)
+        self.assertQuantity(spherical.lat, -57.43 << u.deg)
+        self.assertIsNotNone(shower.core)
+        self.assertIsNotNone(shower.maximum)
+        self.assertQuantity(shower.frame.declination, 0.72 << u.deg)
 
         shower = ZhairesShower.load(path)
         shower.dump(self.path)
@@ -129,6 +136,16 @@ class ShowerTest(TestCase):
 
         a, b = shower.fields[9], tmp.fields[9]
         self.assertField(a, b)
+
+        frame = shower.shower_frame()
+        ev = shower.core - shower.maximum
+        ev /= ev.norm()
+        evB = ev.cross(shower.geomagnet)
+        evB /= evB.norm()
+        ev = shower.transform(ev, frame).cartesian.xyz.value
+        self.assertArray(ev, numpy.array((0, 0, 1)))
+        evB = shower.transform(evB, frame).cartesian.xyz.value
+        self.assertArray(evB, numpy.array((1, 0, 0)))
 
 
 if __name__ == "__main__":
