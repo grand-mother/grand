@@ -53,6 +53,12 @@ jobs:
         mkdir dist
         mv wheel/*.whl dist
 
+    - name: Test wheel
+      run: |
+        mv grand .grand
+        python -m tests --unit
+        mv .grand grand
+
     - name: Upload to PyPI
       if: github.ref == 'refs/heads/master'
       uses: pypa/gh-action-pypi-publish@master

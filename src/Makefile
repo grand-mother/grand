@@ -40,8 +40,8 @@ define install_header #([$1] = name, [$2] = source, [$3] = header)
 	$(INSTALL_F) $(2)/include/$(1).h $(3)
 endef
 
-LIBS= $(BUILD_DIR)/grand/libs/libturtle.$(SOEXT) \
-      $(BUILD_DIR)/grand/libs/libgull.$(SOEXT)
+LIBS= $(BUILD_DIR)/lib/libturtle.$(SOEXT) \
+      $(BUILD_DIR)/lib/libgull.$(SOEXT)
 
 MODULES= $(BUILD_DIR)/grand/_core.abi3.so
 
@@ -61,7 +61,7 @@ $(BUILD_DIR)/src/turtle:
 $(BUILD_DIR)/src/gull:
 	@$(call git_clone,$@,"https://github.com/niess/gull.git",$(GULL_TAG))
 
-$(BUILD_DIR)/grand/libs/lib%.$(SOEXT): $(BUILD_DIR)/src/%
+$(BUILD_DIR)/lib/lib%.$(SOEXT): $(BUILD_DIR)/src/%
 	@$(call build_lib,$*,$^,$@)
 
 $(BUILD_DIR)/include/%.h: $(BUILD_DIR)/src/%

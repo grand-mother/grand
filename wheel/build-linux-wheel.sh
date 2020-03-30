@@ -17,7 +17,7 @@ ${PRE_CMD}
 set -ex
 
 atexit() {
-    trap "chown -R ${uid}:${gid} /pwd/build-release /pwd/grand/version.py"
+    chown -R ${uid}:${gid} /pwd/*
 }
 trap atexit EXIT
 
@@ -36,8 +36,8 @@ cd /pwd
 make clean
 make install PYTHON=${PYTHON}
 GRAND_VERSION=${GRAND_VERSION} "${PYTHON}" wheel/setup.py bdist_wheel
-export LD_LIBRARY_PATH="\$(pwd)/grand/libs:\${LD_LIBRARY_PATH}"
-auditwheel repair -L libs --plat=manylinux1_${ARCH} -w wheel dist/grand*.whl
+export LD_LIBRARY_PATH="\$(pwd)/lib:\${LD_LIBRARY_PATH}"
+auditwheel repair --plat=manylinux1_${ARCH} -w wheel dist/grand*.whl
 
 echo "cleaning"
 make clean

@@ -16,7 +16,7 @@ else:
         BUILD_DIR = "build-release"
 BUILD_DIR = Path(BUILD_DIR).resolve()
 
-LIB_DIR = BUILD_DIR / "grand/libs"
+LIB_DIR = BUILD_DIR / "lib"
 INC_DIR = BUILD_DIR / "include"
 TMP_DIR = BUILD_DIR / "tmp"
 PACKAGE_PATH = BUILD_DIR / "grand"
@@ -42,9 +42,9 @@ include(SRC_DIR / "grand.h")
 
 def configure():
     if platform.system() == "Darwin":
-        rpath = rpath = ["-Wl,-rpath,@loader_path/libs"]
+        rpath = rpath = ["-Wl,-rpath,@loader_path/../lib"]
     else:
-        rpath = ["-Wl,-rpath,$ORIGIN/libs"]
+        rpath = ["-Wl,-rpath,$ORIGIN/../lib"]
 
     with open(SRC_DIR / "grand.c") as f:
         ffi.set_source("grand._core",

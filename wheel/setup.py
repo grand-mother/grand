@@ -93,7 +93,6 @@ setuptools.setup(
     python_requires = ">=3.8",
     install_requires = get_requirements(),
     include_package_data = True,
-    package_data = {"": ("libs/*.so", "libs/*.so.*",
-        "libs/data/gull/*", "tools/data/egm96.png")},
+    package_data = {"": ("libs/data/gull/*", "tools/data/egm96.png")},
     exclude_package_data = {"": ("tools/data/topography/*",)},
 )
