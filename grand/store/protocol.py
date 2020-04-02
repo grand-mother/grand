@@ -44,4 +44,4 @@ def get(name: str, tag: str="101") -> bytes:
         with urllib.request.urlopen(url) as f:
             return zlib.decompress(f.read(), wbits=31)
     except Exception as e:
-        raise InvalidBLOB(e)
+        raise InvalidBLOB(e) from None

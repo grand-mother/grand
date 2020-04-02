@@ -169,8 +169,14 @@ def update_data(coordinates: Union[ECEF, LTP]=None, clear: bool=False,
                 basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt"
                 path = _CACHEDIR / basename
                 if not path.exists():
-                    with path.open("wb") as f:
-                        f.write(store.get(basename))
+                    try:
+                        data = store.get(basename)
+                    except store.InvalidBLOB:
+                        raise ValueError(f"missing data for {basename}")   \
+                        from None
+                    else:
+                        with path.open("wb") as f:
+                            f.write(data)
 
 
 def cachedir() -> Path:
