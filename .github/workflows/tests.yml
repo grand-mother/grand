@@ -53,10 +53,15 @@ jobs:
         mkdir dist
         mv wheel/*.whl dist
 
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.8'
+
     - name: Test wheel
       run: |
         mv grand .grand
-        python -m tests --unit
+        pip3 install dist/grand-*_x86_64.whl
+        python3 -m tests --unit
         mv .grand grand
 
     - name: Upload to PyPI
