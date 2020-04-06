@@ -8,6 +8,8 @@ on:
     - docs/requirements.txt
     - examples/requirements.txt
     - .github/workflows/appimage.yml
+  schedule:
+    - cron: '0 3 * * *'
 
 jobs:
   Generate:
@@ -25,7 +27,7 @@ jobs:
       run: |
         # Get the base Python AppImage
         baseurl=https://github.com/niess/python-appimage/releases/download
-        gittag=python-${PYTHON_TAG}-manylinux${MANYLINUX_TAG}_x86_64
+        gittag=python${PYTHON_VERSION}
         python_appimage=python${PYTHON_FULLVERSION}-${PYTHON_TAG}-manylinux${MANYLINUX_TAG}_x86_64.AppImage
         wget -q "${baseurl}/${gittag}/${python_appimage}"
         chmod u+x "${python_appimage}"
