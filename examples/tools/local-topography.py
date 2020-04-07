@@ -2,7 +2,7 @@
 import astropy.units as u
 from grand import ECEF, LTP, topography
 import matplotlib.pyplot as pl
-import np
+import numpy as np
 
 
 # Set the local frame origin
