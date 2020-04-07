@@ -178,6 +178,10 @@ def update_data(coordinates: Union[ECEF, LTP]=None, clear: bool=False,
                         with path.open("wb") as f:
                             f.write(data)
 
+    # Reset the topography proxy
+    global _default_topography
+    _default_topography = None
+
 
 def cachedir() -> Path:
     """Get the location of the topography data cache.
