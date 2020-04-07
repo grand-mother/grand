@@ -83,7 +83,7 @@ jobs:
     - name: Install
       run: |
         pip3 install -U pip
-        pip3 install -U astropy cffi h5py numpy scipy typing_extensions
+        pip3 install -U -r requirements.txt
         make install PYTHON=$(which python3)
 
     - name: Check documentation examples
