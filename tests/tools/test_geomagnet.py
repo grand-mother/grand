@@ -41,11 +41,11 @@ class GeomagnetTest(TestCase):
         obstime = self.date if obstime else None
         if n == 1:
             return LTP(x=0 * u.m, y=0 * u.m, z=0 * u.m, location=self.location,
-                       obstime=obstime)
+                       orientation="ENU", magnetic=False, obstime=obstime)
         else:
             zero = n * (0 * u.m,)
             return LTP(x=zero, y=zero, z=zero, location=self.location,
-                       obstime=obstime)
+                       orientation="ENU", magnetic=False, obstime=obstime)
 
     def test_default(self):
         # Test the initialisation
@@ -74,7 +74,8 @@ class GeomagnetTest(TestCase):
             self.assertEqual(field.x.unit, u.T)
             self.assertEqual(field.y.unit, u.T)
             self.assertEqual(field.z.unit, u.T)
-            frame = LTP(location=self.location)
+            frame = LTP(location=self.location, orientation="ENU",
+                        magnetic=False)
             ltp = value.transform_to(frame)
             self.assertField(ltp)
 

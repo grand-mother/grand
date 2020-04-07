@@ -148,7 +148,6 @@ class CoreasShower(ShowerEvent):
                         representation_type="geodetic")
         self.frame = LTP(location=location, orientation="NWU", magnetic=True,
                          declination=declination, obstime=obstime)
-        # XXX Is this the frame used by CoREAS?
 
 
     @classmethod

@@ -70,19 +70,18 @@ LTP frame
 
 The :class:`~grand.LTP` class (`Local Tangent Plane coordinates`_) allows to
 define local frames tangent to the WGS84 ellipsoid. The *orientation* property
-can be used to define the frame axes, along cardinal directions. E.g. the
-following defines a local North, East, Down (NED) frame centered on Greenwich,
-as:
+can be used to define the frame axes, along the directions of the local magnetic
+field. E.g. the following defines a local magnetic North, East, Down (NED) frame
+centered on Greenwich, as:
 
 >>> from astropy.coordinates import EarthLocation
 >>> ltp = LTP(location=EarthLocation.of_site("greenwich"),
 ...           orientation="NED")
 
-By default geographic East, North, Up (ENU) coordinates are used. Alternatively,
-magnetic coordinates can be used as well by setting *magnetic* to `True` or
-by explicitly providing the magnetic *declination*. If *magnetic* is `True` but
-no *declination* is provided then the magnetic declination is computed using
-the built-in :mod:`~grand.geomagnet`.
+By default magnetic North, West, Up (NWU) coordinates are used. If not
+explicitly specified the magnetic *declination* is computed using the built-in
+:mod:`~grand.geomagnet` module. Alternatively, geographic coordinates can be
+used as well by setting *magnetic* to `False`.
 
 .. note::
    One must always specify the local frame origin, as the *location* parameter.

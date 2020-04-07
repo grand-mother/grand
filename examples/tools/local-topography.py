@@ -21,7 +21,7 @@ x = numpy.linspace(-radius, radius, 1001)
 y = numpy.linspace(-radius, radius, 1001)
 X, Y = numpy.meshgrid(x, y)
 coordinates = LTP(X.flatten(), Y.flatten(), numpy.zeros(X.size) << u.km,
-                  location=origin)
+                  location=origin, orientation="ENU", magnetic=False)
 
 # Get the local ground elevation. Note that local coordinates naturally account
 # for the Earth curvature.

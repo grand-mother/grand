@@ -103,14 +103,16 @@ class Geomagnet:
                                      lon=geodetic.longitude,
                                      height=geodetic.height)
             return LTP(x=field[0] * u.T, y=field[1] * u.T, z=field[2] * u.T,
-                       location=location, obstime=obstime)
+                       location=location, obstime=obstime, orientation="ENU",
+                       magnetic=False)
         else:
             ecef = numpy.zeros((n, 3))
             for i, value in enumerate(field):
                 location = EarthLocation(lat=geodetic.latitude[i],
                                          lon=geodetic.longitude[i],
                                          height=geodetic.height[i])
-                ltp = LTP(x=value[0], y=value[1], z=value[2], location=location)
+                ltp = LTP(x=value[0], y=value[1], z=value[2], location=location,
+                          orientation="ENU", magnetic=False)
                 c = ltp.transform_to(ECEF).cartesian
                 ecef[i,0] = c.x
                 ecef[i,1] = c.y

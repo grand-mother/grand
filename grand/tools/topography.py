@@ -142,7 +142,8 @@ def update_data(coordinates: Union[ECEF, LTP]=None, clear: bool=False,
                 c = LTP(x=delta, y=delta, z=0 * u.m,
                         location=ECEF(GeodeticRepresentation(
                                           latitude[i] * u.deg,
-                                          longitude[i] * u.deg)))
+                                          longitude[i] * u.deg)),
+                        orientation="ENU", magnetic=False)
                 c = c.transform_to(ECEF).represent_as(GeodeticRepresentation)
                 latitude[i] = c.latitude / u.deg
                 longitude[i] = c.longitude / u.deg

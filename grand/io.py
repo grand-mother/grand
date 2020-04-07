@@ -327,6 +327,8 @@ class DataNode:
             dset.attrs["metatype"] = "frame/ltp"
             dset.attrs["orientation"] = v.orientation
             dset.attrs["magnetic"] = v.magnetic
+            if v.declination is not None:
+                dset.attrs["declination"] = v.declination.to_value("deg")
             if v.rotation is not None:
                 dset.attrs["rotation"] = v.rotation.matrix
         else:
@@ -357,9 +359,16 @@ class DataNode:
             else:
                 rotation = Rotation.from_matrix(rotation)
 
-            return LTP(location=location, orientation=dset.attrs["orientation"],
-                       magnetic=dset.attrs["magnetic"], obstime=obstime,
-                       rotation=rotation)
+            try:
+                declination = dset.attrs["declination"] << u.deg
+            except KeyError:
+                declination = None
+
+            return LTP(location=location,
+                       orientation=dset.attrs["orientation"],
+                       magnetic=dset.attrs["magnetic"],
+                       declination=declination,
+                       obstime=obstime, rotation=rotation)
         else:
             raise NotImplementedError(name)
 

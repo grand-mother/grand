@@ -227,11 +227,11 @@ class LTP(ExtendedCoordinateFrame):
     location = Attribute(default=None)
     """The origin on Earth of the local frame."""
 
-    orientation = Attribute(default="ENU")
+    orientation = Attribute(default="NWU")
     """The cardinal directions of the x, y, and z axis (default: ENU)."""
 
-    magnetic = Attribute(default=False)
-    """Use the magnetic north instead of the geographic one (default: false)."""
+    magnetic = Attribute(default=True)
+    """Use the magnetic north instead of the geographic one (default: True)."""
 
     declination = Attribute(default=None)
     """Use the magnetic north with the given declination (default: None)."""
@@ -245,10 +245,11 @@ class LTP(ExtendedCoordinateFrame):
 
     def __init__(self, *args,
                  location: Union["EarthLocation", "ECEF", "LTP"]=None,
-                 orientation: Sequence[str]=None, magnetic: bool=False,
+                 orientation: Sequence[str]=None,
+                 magnetic: Optional[bool]=None,
                  declination: Optional[u.Quantity]=None,
                  rotation: Optional[Rotation]=None,
-                 obstime: Union["datetime", "Time", str]=None,
+                 obstime: Union["datetime", "Time", str, None]=None,
                  **kwargs) -> None:
 
         # Do the base initialisation
