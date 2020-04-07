@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 import astropy.units as u
 from grand import ECEF, LTP, topography
-import matplotlib.pyplot as plot
-import numpy
+import matplotlib.pyplot as pl
+import np
 
 
 # Set the local frame origin
@@ -17,10 +17,10 @@ topography.update_data(origin, radius=radius)
 
 
 # Generate a grid of local coordinates using numpy.meshgrid
-x = numpy.linspace(-radius, radius, 1001)
-y = numpy.linspace(-radius, radius, 1001)
-X, Y = numpy.meshgrid(x, y)
-coordinates = LTP(X.flatten(), Y.flatten(), numpy.zeros(X.size) << u.km,
+x = np.linspace(-radius, radius, 1001)
+y = np.linspace(-radius, radius, 1001)
+X, Y = np.meshgrid(x, y)
+coordinates = LTP(X.flatten(), Y.flatten(), np.zeros(X.size) << u.km,
                   location=origin, orientation="ENU", magnetic=False)
 
 # Get the local ground elevation. Note that local coordinates naturally account
@@ -30,10 +30,10 @@ zg = zg.reshape(X.shape)
 
 # Plot the result using contour levels. The Earth curvature is clearly visible
 # at large distances from the origin.
-plot.figure()
-plot.contourf(x.to_value("km"), y.to_value("km"), zg.to_value("km"), 40)
-plot.colorbar()
-plot.xlabel("easting (km)")
-plot.ylabel("northing (km)")
-plot.title("local altitude (km)")
-plot.show()
+pl.figure()
+pl.contourf(x.to_value("km"), y.to_value("km"), zg.to_value("km"), 40)
+pl.colorbar()
+pl.xlabel("easting (km)")
+pl.ylabel("northing (km)")
+pl.title("local altitude (km)")
+pl.show()
