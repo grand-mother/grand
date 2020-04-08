@@ -46,7 +46,7 @@ Then, you can export the AppImage_ python to you environment as:
 
 .. code-block:: bash
 
-   export PATH=$(path)/python3/usr/bin:$PATH
+   export PATH="$(path)/python3/usr/bin:$PATH"
 
 
 OSX
@@ -68,4 +68,5 @@ Once built, the :mod:`grand` package can be relocated to any desired location.
 
 .. _AppImage: https://appimage.org
 .. _GitHub: https://github.com/grand-mother/grand
+.. _PyPI: https://pypi.org/project/grand
 .. _Python AppImages: https://github.com/niess/python-appimage

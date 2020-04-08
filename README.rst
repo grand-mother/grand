@@ -12,7 +12,7 @@ The grand package can be installed from `PyPI`_ using pip, e.g. as:
 
 .. code:: bash
 
-   python3.8 -m pip install -U --user grand
+   pip install grand
 
 Note that Python 3.8 or above is required. On Linux you can get it as an
 `AppImage`_ including grand dependencies as:
