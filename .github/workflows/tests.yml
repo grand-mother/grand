@@ -3,7 +3,7 @@ on:
   push:
     paths-ignore:
     - docs/requirements.txt
-    - examples/requirements.txt
+    - examples/**
     - .github/workflows/appimage.yml
 
 jobs:
