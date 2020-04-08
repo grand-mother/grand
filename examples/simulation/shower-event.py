@@ -5,7 +5,7 @@ from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
 
 
 # Load the radio shower simulation data
-shower = ShowerEvent.load("tests/simulation/data/zhaires")
+shower = ShowerEvent.load('tests/simulation/data/zhaires')
 if shower.frame is None:
     shower.localize(39.5 * u.deg, 90.5 * u.deg) # Coreas showers have no
                                                 # localization info. This must
@@ -17,7 +17,7 @@ if shower.frame is None:
 # arm is assumed here for the sake of simplicity
 
 antenna_model = TabulatedAntennaModel.load(
-    "HorizonAntenna_EWarm_leff_loaded.npy")
+    'HorizonAntenna_EWarm_leff_loaded.npy')
 
 # Loop over electric fields and compute the corresponding voltages
 for antenna_index, field in shower.fields.items():
@@ -28,7 +28,7 @@ for antenna_index, field in shower.fields.items():
     # Upward)
 
     antenna_location = shower.frame.realize_frame(field.electric.r)
-    antenna_frame = LTP(location=antenna_location, orientation="ENU",
+    antenna_frame = LTP(location=antenna_location, orientation='ENU',
                         magnetic=True, obstime=shower.frame.obstime)
     antenna = Antenna(model=antenna_model, frame=antenna_frame)
 
