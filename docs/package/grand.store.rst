@@ -12,7 +12,7 @@
    For example, the following retrieves an `SRTMGL1`_ topography tile from the
    store, as a :class:`bytes` object.
 
-   >>> data = store.get("N39E090.SRTMGL1.hgt")
+   >>> data = store.get('N39E090.SRTMGL1.hgt')
 
 .. autoclass:: grand.store.InvalidBLOB
 

@@ -1,21 +1,5 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2019 The GRAND collaboration
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>
-
-"""Extra frames for astropy.coordinates.
-"""
+'''Extra frames for astropy.coordinates.
+'''
 from __future__ import annotations
 
 from collections import defaultdict
@@ -41,17 +25,17 @@ from .representation import GeodeticRepresentation, HorizontalRepresentation
 from .transform import Rotation
 
 
-__all__ = ["ECEF", "LTP", "ExtendedCoordinateFrame"]
+__all__ = ['ECEF', 'LTP', 'ExtendedCoordinateFrame']
 
 
 _HAS_GEOMAGNET: Final = False
-"""The geomagnet module needs a deferred import due to circular references."""
+'''The geomagnet module needs a deferred import due to circular references.'''
 
 
 class ExtendedCoordinateFrame(BaseCoordinateFrame):
-    """A coordinates frame with immutable data supporting extra arithmetic
+    '''A coordinates frame with immutable data supporting extra arithmetic
        operators.
-    """
+    '''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,8 +46,8 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
 
     def __add__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])   \
         -> ExtendedCoordinateFrame:
-        """Left hand side coordinates translation.
-        """
+        '''Left hand side coordinates translation.
+        '''
         if isinstance(other, BaseCoordinateFrame):
             other = other.transform_to(self)._data
         return self.realize_frame(self._data + other)
@@ -71,8 +55,8 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
 
     def __radd__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])  \
         -> ExtendedCoordinateFrame:
-        """Right hand side coordinates translation.
-        """
+        '''Right hand side coordinates translation.
+        '''
         if isinstance(other, BaseCoordinateFrame):
             other = other.transform_to(self)._data
         return self.realize_frame(other + self._data)
@@ -80,8 +64,8 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
 
     def __sub__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])   \
         -> ExtendedCoordinateFrame:
-        """Left hand side coordinates subtraction.
-        """
+        '''Left hand side coordinates subtraction.
+        '''
         if isinstance(other, BaseCoordinateFrame):
             other = other.transform_to(self)._data
         return self.realize_frame(self._data - other)
@@ -89,26 +73,26 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
 
     def __rsub__(self, other: Union[BaseRepresentation, BaseCoordinateFrame])  \
         -> ExtendedCoordinateFrame:
-        """Right hand side coordinates subtraction.
-        """
+        '''Right hand side coordinates subtraction.
+        '''
         if isinstance(other, BaseCoordinateFrame):
             other = other.transform_to(self)._data
         return self.realize_frame(other - self._data)
 
 
     def __mul__(self, other: Any) -> ExtendedCoordinateFrame:
-        """Left hand side coordinates multiplication.
-        """
+        '''Left hand side coordinates multiplication.
+        '''
         return self.realize_frame(self._data * other)
 
 
     def __rmul__(self, other: Any) -> ExtendedCoordinateFrame:
-        """Right hand side coordinates multiplication.
-        """
+        '''Right hand side coordinates multiplication.
+        '''
         return self.realize_frame(other * self._data)
 
 
-    def represent_as(self, base: BaseRepresentation, s: str="base",
+    def represent_as(self, base: BaseRepresentation, s: str='base',
         in_frame_units: bool=False) -> BaseRepresentation:
 
         r = super().represent_as(base, s, in_frame_units)
@@ -142,8 +126,8 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
 
     @property
     def data(self) -> BaseRepresentation:
-        """The coordinate data for this object.
-        """
+        '''The coordinate data for this object.
+        '''
         return self._data
 
     @data.setter
@@ -155,14 +139,14 @@ class ExtendedCoordinateFrame(BaseCoordinateFrame):
 
 
 class ECEF(ExtendedCoordinateFrame):
-    """Earth-Centered Earth-Fixed frame, co-moving with the Earth.
-    """
+    '''Earth-Centered Earth-Fixed frame, co-moving with the Earth.
+    '''
 
     default_representation: Final = CartesianRepresentation
-    """Default representation of local frames."""
+    '''Default representation of local frames.'''
 
     obstime = TimeAttribute(default=None)
-    """The observation time. Defaults to `None`."""
+    '''The observation time. Defaults to `None`.'''
 
 
     def __init__(self, *args, obstime: Union[datetime, Time, str, None]=None,
@@ -172,18 +156,18 @@ class ECEF(ExtendedCoordinateFrame):
 
     @property
     def earth_location(self) -> EarthLocation:
-        """The data in this frame as an
+        '''The data in this frame as an
         :py:class:`~astropy.coordinates.EarthLocation`.
-        """
+        '''
         geo = self.represent_as(GeodeticRepresentation)
         return EarthLocation.from_geodetic(geo.longitude.copy(), geo.latitude,
-                                           geo.height, ellipsoid="WGS84")
+                                           geo.height, ellipsoid='WGS84')
 
 
 @frame_transform_graph.transform(FunctionTransform, ITRS, ECEF)
 def itrs_to_ecef(itrs: ITRS, ecef: ECEF) -> ECEF:
-    """Compute the transformation from ITRS to ECEF coordinates.
-    """
+    '''Compute the transformation from ITRS to ECEF coordinates.
+    '''
     if ecef._obstime == None:
         # The conversion goes to a generic frame
         ecef._obstime = itrs._obstime
@@ -195,8 +179,8 @@ def itrs_to_ecef(itrs: ITRS, ecef: ECEF) -> ECEF:
 
 @frame_transform_graph.transform(FunctionTransform, ECEF, ITRS)
 def ecef_to_itrs(ecef: ECEF, itrs: ITRS) -> ITRS:
-    """Compute the transformation from ECEF to ITRS coordinates.
-    """
+    '''Compute the transformation from ECEF to ITRS coordinates.
+    '''
     if itrs._obstime == ecef._obstime:
         c = ecef.cartesian
     else:
@@ -208,8 +192,8 @@ def ecef_to_itrs(ecef: ECEF, itrs: ITRS) -> ITRS:
 
 @frame_transform_graph.transform(FunctionTransform, ECEF, ECEF)
 def ecef_to_ecef(ecef0: ECEF, ecef1: ECEF) -> ECEF:
-    """Compute the transformation from ECEF to ECEF coordinate.
-    """
+    '''Compute the transformation from ECEF to ECEF coordinate.
+    '''
     if ecef1._obstime is None:
         ecef1._obstime = ecef0._obstime
 
@@ -217,39 +201,39 @@ def ecef_to_ecef(ecef0: ECEF, ecef1: ECEF) -> ECEF:
 
 
 class LTP(ExtendedCoordinateFrame):
-    """Local frame tangent to the WGS84 ellipsoid and oriented along cardinal
+    '''Local frame tangent to the WGS84 ellipsoid and oriented along cardinal
        directions.
-    """
+    '''
 
     default_representation: Final = CartesianRepresentation
-    """Default representation of local frames."""
+    '''Default representation of local frames.'''
 
     location = Attribute(default=None)
-    """The origin on Earth of the local frame."""
+    '''The origin on Earth of the local frame.'''
 
-    orientation = Attribute(default="NWU")
-    """The cardinal directions of the x, y, and z axis (default: ENU)."""
+    orientation = Attribute(default='NWU')
+    '''The cardinal directions of the x, y, and z axis (default: ENU).'''
 
     magnetic = Attribute(default=True)
-    """Use the magnetic north instead of the geographic one (default: True)."""
+    '''Use the magnetic north instead of the geographic one (default: True).'''
 
     declination = Attribute(default=None)
-    """Use the magnetic north with the given declination (default: None)."""
+    '''Use the magnetic north with the given declination (default: None).'''
 
     rotation = Attribute(default=None)
-    """An optional rotation w.r.t. the cardinal directions."""
+    '''An optional rotation w.r.t. the cardinal directions.'''
 
     obstime = TimeAttribute(default=None)
-    """The observation time."""
+    '''The observation time.'''
 
 
     def __init__(self, *args,
-                 location: Union["EarthLocation", "ECEF", "LTP"]=None,
+                 location: Union['EarthLocation', 'ECEF', 'LTP']=None,
                  orientation: Sequence[str]=None,
                  magnetic: Optional[bool]=None,
                  declination: Optional[u.Quantity]=None,
                  rotation: Optional[Rotation]=None,
-                 obstime: Union["datetime", "Time", str, None]=None,
+                 obstime: Union['datetime', 'Time', str, None]=None,
                  **kwargs) -> None:
 
         # Do the base initialisation
@@ -289,24 +273,24 @@ class LTP(ExtendedCoordinateFrame):
 
         def vector(name):
             tag = name[0].upper()
-            if tag == "E":
+            if tag == 'E':
                 return turtle.ecef_from_horizontal(latitude, longitude,
                                                    90 + azimuth0, 0)
-            elif tag == "W":
+            elif tag == 'W':
                 return turtle.ecef_from_horizontal(latitude, longitude,
                                                    270 + azimuth0, 0)
-            elif tag == "N":
+            elif tag == 'N':
                 return turtle.ecef_from_horizontal(latitude, longitude,
                                                    azimuth0,  0)
-            elif tag == "S":
+            elif tag == 'S':
                 return turtle.ecef_from_horizontal(latitude, longitude,
                                                    180 + azimuth0,  0)
-            elif tag == "U":
+            elif tag == 'U':
                 return turtle.ecef_from_horizontal(latitude, longitude, 0, 90)
-            elif tag == "D":
+            elif tag == 'D':
                 return turtle.ecef_from_horizontal(latitude, longitude, 0, -90)
             else:
-                raise ValueError(f"Invalid frame orientation `{name}`")
+                raise ValueError(f'Invalid frame orientation `{name}`')
 
         ux = vector(self._orientation[0])
         uy = vector(self._orientation[1])
@@ -320,8 +304,8 @@ class LTP(ExtendedCoordinateFrame):
 
 
     def rotated(self, rotation: Rotation, copy: bool=True) -> LTP:
-        """Get a rotated version of this frame.
-        """
+        '''Get a rotated version of this frame.
+        '''
         r = rotation if self.rotation is None else rotation * self.rotation
         frame = self._replicate(self.data, copy)
         frame._rotation = r
@@ -331,9 +315,9 @@ class LTP(ExtendedCoordinateFrame):
 
     @property
     def earth_location(self) -> EarthLocation:
-        """The data in this frame as an
+        '''The data in this frame as an
         :class:`~astropy.coordinates.EarthLocation`.
-        """
+        '''
         geo = self.transform_to(ECEF).represent_as(GeodeticRepresentation)
         return EarthLocation(lon=geo.longitude, lat=geo.latitude,
                              height=geo.height)
@@ -341,11 +325,11 @@ class LTP(ExtendedCoordinateFrame):
 
 @frame_transform_graph.transform(FunctionTransform, ECEF, LTP)
 def ecef_to_ltp(ecef: ECEF, ltp: LTP) -> LTP:
-    """Compute the transformation from ECEF to LTP coordinates.
-    """
+    '''Compute the transformation from ECEF to LTP coordinates.
+    '''
     c = ecef.cartesian
     p = c.get_xyz()
-    if c.x.unit.is_equivalent("m"):
+    if c.x.unit.is_equivalent('m'):
         t = ltp._origin
         p[0] -= t.x
         p[1] -= t.y
@@ -361,11 +345,11 @@ def ecef_to_ltp(ecef: ECEF, ltp: LTP) -> LTP:
 
 @frame_transform_graph.transform(FunctionTransform, LTP, ECEF)
 def ltp_to_ecef(ltp: LTP, ecef: ECEF) -> ECEF:
-    """Compute the transformation from LTP to ECEF coordinates.
-    """
+    '''Compute the transformation from LTP to ECEF coordinates.
+    '''
     c = ltp.cartesian
     p = numpy.dot(ltp._basis, c.get_xyz())
-    if c.x.unit.is_equivalent("m"):
+    if c.x.unit.is_equivalent('m'):
         t = ltp._origin
         p[0] += t.x
         p[1] += t.y
@@ -380,10 +364,10 @@ def ltp_to_ecef(ltp: LTP, ecef: ECEF) -> ECEF:
 
 @frame_transform_graph.transform(FunctionTransform, LTP, LTP)
 def ltp_to_ltp(ltp0: LTP, ltp1: LTP) -> LTP:
-    """Compute the transformation from LTP to LTP coordinates.
-    """
+    '''Compute the transformation from LTP to LTP coordinates.
+    '''
     c = ltp0.cartesian
-    translate = c.x.unit.is_equivalent("m")
+    translate = c.x.unit.is_equivalent('m')
 
     # Forward the observation time
     if ltp1._obstime is None:

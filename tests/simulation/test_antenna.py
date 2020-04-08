@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.simulation.antenna module
-"""
+'''
 
 from pathlib import Path
 import unittest
@@ -16,9 +16,9 @@ from tests import TestCase
 
 
 class AntennaTest(TestCase):
-    """Unit tests for the antenna module"""
+    '''Unit tests for the antenna module'''
 
-    path = Path("antenna.hdf5")
+    path = Path('antenna.hdf5')
 
     def tearDown(self):
         try:
@@ -33,12 +33,12 @@ class AntennaTest(TestCase):
         except AttributeError:
             pass
 
-        path = Path("HorizonAntenna_EWarm_leff_loaded.npy")
+        path = Path('HorizonAntenna_EWarm_leff_loaded.npy')
         if path.exists():
             self._model = TabulatedAntennaModel.load(path)
             return self._model
         else:
-            self.skipTest(f"missing {path}")
+            self.skipTest(f'missing {path}')
 
     def test_tabulated(self):
         t = self.model.table
@@ -85,8 +85,8 @@ class AntennaTest(TestCase):
             t0 = 0.5 * (voltage.t[imax] + voltage.t[imin])
             Vpp = voltage.V[imax] - voltage.V[imin]
 
-            self.assertLess(t0.to_value("ns") - ts, delta)
-            self.assertGreater(Vpp.to_value("uV"), 6E-02 * Es)
+            self.assertLess(t0.to_value('ns') - ts, delta)
+            self.assertGreater(Vpp.to_value('uV'), 6E-02 * Es)
 
         antenna = Antenna(model=self.model, frame=ECEF())
         field = ElectricField(t, E, frame=ECEF())
@@ -106,5 +106,5 @@ class AntennaTest(TestCase):
             antenna.compute_voltage(direction, field)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

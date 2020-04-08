@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.tools.geomagnet module
-"""
+'''
 
 import unittest
 
@@ -15,7 +15,7 @@ from tests import TestCase
 
 
 class GeomagnetTest(TestCase):
-    """Unit tests for the geomagnet module"""
+    '''Unit tests for the geomagnet module'''
 
 
     def __init__(self, *args):
@@ -28,11 +28,11 @@ class GeomagnetTest(TestCase):
         # The corresponding Earth location
         self.location = EarthLocation(lat=45.0 * u.deg, lon=3.0 * u.deg,
                                       height=1000. * u.m)
-        self.date = "2020-03-23"
+        self.date = '2020-03-23'
 
 
     def assertField(self, field, tol=6):
-        """Check that the magnetic field is consistent"""
+        '''Check that the magnetic field is consistent'''
         self.assertQuantity(field.x, self.ref[0] * u.T, tol)
         self.assertQuantity(field.y, self.ref[1] * u.T, tol)
         self.assertQuantity(field.z, self.ref[2] * u.T, tol)
@@ -41,11 +41,11 @@ class GeomagnetTest(TestCase):
         obstime = self.date if obstime else None
         if n == 1:
             return LTP(x=0 * u.m, y=0 * u.m, z=0 * u.m, location=self.location,
-                       orientation="ENU", magnetic=False, obstime=obstime)
+                       orientation='ENU', magnetic=False, obstime=obstime)
         else:
             zero = n * (0 * u.m,)
             return LTP(x=zero, y=zero, z=zero, location=self.location,
-                       orientation="ENU", magnetic=False, obstime=obstime)
+                       orientation='ENU', magnetic=False, obstime=obstime)
 
     def test_default(self):
         # Test the initialisation
@@ -74,7 +74,7 @@ class GeomagnetTest(TestCase):
             self.assertEqual(field.x.unit, u.T)
             self.assertEqual(field.y.unit, u.T)
             self.assertEqual(field.z.unit, u.T)
-            frame = LTP(location=self.location, orientation="ENU",
+            frame = LTP(location=self.location, orientation='ENU',
                         magnetic=False)
             ltp = value.transform_to(frame)
             self.assertField(ltp)
@@ -88,7 +88,7 @@ class GeomagnetTest(TestCase):
 
 
     def test_custom(self):
-        geomagnet = Geomagnet(model="WMM2020")
+        geomagnet = Geomagnet(model='WMM2020')
         c = self.get_coordinates()
         field = geomagnet.field(c)
         self.assertEqual(field.x.size, 1)
@@ -103,5 +103,5 @@ class GeomagnetTest(TestCase):
                          tools.geomagnet._default_obstime.datetime.date)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

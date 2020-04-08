@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand_tools.coordinates module
-"""
+'''
 
 import unittest
 
@@ -19,12 +19,12 @@ from tests import TestCase
 
 
 class CoordinatesTest(TestCase):
-    """Unit tests for the coordinates module"""
+    '''Unit tests for the coordinates module'''
 
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.obstime = "2010-01-01"
+        self.obstime = '2010-01-01'
         self.location = EarthLocation(lat=45.0 * u.deg, lon=3.0 * u.deg,
                                       height=1000. * u.m)
 
@@ -128,7 +128,7 @@ class CoordinatesTest(TestCase):
             SphericalRepresentation(z4 * u.deg, z4 * u.deg, o4 * u.m))
         frame1 = ExtendedCoordinateFrame(
             CartesianRepresentation(z4 * u.m, o4 * u.m, z4 * u.m))
-        r = Rotation.from_euler("Z", 90 * u.deg)
+        r = Rotation.from_euler('Z', 90 * u.deg)
 
         frame2 = r * frame0
         self.assertTrue(isinstance(frame2.data, SphericalRepresentation))
@@ -178,14 +178,14 @@ class CoordinatesTest(TestCase):
 
         # Check the constructor & to ECEF transform
         ltp = LTP(x=0 * u.m, y=0 * u.m, z=0 * u.m, location=self.location,
-                  orientation="ENU", magnetic=False)
+                  orientation='ENU', magnetic=False)
         r = ltp.transform_to(ECEF)
 
         self.assertEqual(r.obstime, ltp.obstime)
         self.assertCartesian(r, ecef, 6)
 
         # Check the from ECEF transform
-        ltp = ecef.transform_to(LTP(location=self.location, orientation="ENU",
+        ltp = ecef.transform_to(LTP(location=self.location, orientation='ENU',
                                     magnetic=False))
 
         self.assertEqual(ltp.obstime, self.obstime)
@@ -203,14 +203,14 @@ class CoordinatesTest(TestCase):
         for point in (points):
             cart = CartesianRepresentation(x=point[1], y=point[0], z=point[2],
                                            unit=u.m)
-            altaz = SkyCoord(cart, frame="altaz", location=self.location,
+            altaz = SkyCoord(cart, frame='altaz', location=self.location,
                              obstime=self.obstime)
             ecef0 = altaz.transform_to(ECEF(obstime=self.obstime))
 
             cart = CartesianRepresentation(x=point[0], y=point[1], z=point[2],
                                            unit=u.m)
             ltp = LTP(cart, location=self.location, obstime=self.obstime,
-                      orientation="ENU", magnetic=False)
+                      orientation='ENU', magnetic=False)
             ecef1 = ltp.transform_to(ECEF)
 
             self.assertEqual(ecef0.obstime, ecef1.obstime)
@@ -220,14 +220,14 @@ class CoordinatesTest(TestCase):
         point = (1, -1, 2)
         cart = CartesianRepresentation(x=point[0], y=point[1], z=point[2],
                                        unit=u.m)
-        altaz = SkyCoord(cart, frame="altaz", location=self.location,
+        altaz = SkyCoord(cart, frame='altaz', location=self.location,
                          obstime=self.obstime)
         ecef0 = altaz.transform_to(ECEF(obstime=self.obstime))
 
-        for (orientation, sign) in (("NEU", (1, 1, 1)),
-                                    ("NED", (1, 1, -1)),
-                                    ("SEU", (-1, 1, 1)),
-                                    ("NWU", (1, -1, 1))):
+        for (orientation, sign) in (('NEU', (1, 1, 1)),
+                                    ('NED', (1, 1, -1)),
+                                    ('SEU', (-1, 1, 1)),
+                                    ('NWU', (1, -1, 1))):
             cart = CartesianRepresentation(x=sign[0] * point[0],
                 y=sign[1] * point[1], z=sign[2] * point[2], unit=u.m)
             ltp = LTP(cart, location=self.location, obstime=self.obstime,
@@ -251,7 +251,7 @@ class CoordinatesTest(TestCase):
         self.assertQuantity(r.cartesian.norm(), 1 * u.one, 6)
 
         ecef = ECEF(uy, obstime=self.obstime)
-        ltp = ecef.transform_to(LTP(location=self.location, orientation="ENU",
+        ltp = ecef.transform_to(LTP(location=self.location, orientation='ENU',
                                     magnetic=False))
 
         self.assertEqual(ltp.obstime, ecef.obstime)
@@ -259,9 +259,9 @@ class CoordinatesTest(TestCase):
 
         # Check the magnetic north case
         ltp0 = LTP(uy, location=self.location, obstime=self.obstime,
-                orientation="ENU", magnetic=False)
+                orientation='ENU', magnetic=False)
         frame1 = LTP(location=self.location, obstime=self.obstime,
-                     orientation="ENU", magnetic=True)
+                     orientation='ENU', magnetic=True)
         ltp1 = ltp0.transform_to(frame1)
         self.assertEqual(ltp0.obstime, ltp1.obstime)
 
@@ -269,21 +269,21 @@ class CoordinatesTest(TestCase):
         self.assertQuantity(declination.to(u.deg), 0.10 * u.deg, 2)
 
         # Test the magnetic case with no obstime
-        ltp1 = LTP(uy, location=self.location, orientation="ENU",
+        ltp1 = LTP(uy, location=self.location, orientation='ENU',
                    magnetic=True)
         self.assertIsNone(ltp1.obstime)
 
         # Test the invalid frame case
         with self.assertRaises(ValueError) as context:
-            LTP(uy, location=self.location, orientation=("T", "O", "T", "O"))
-        self.assertRegex(context.exception.args[0], "^Invalid frame")
+            LTP(uy, location=self.location, orientation=('T', 'O', 'T', 'O'))
+        self.assertRegex(context.exception.args[0], '^Invalid frame')
 
         # Test the ltp round trip with a position
-        frame0 = LTP(location=self.location, orientation="ENU", magnetic=False)
+        frame0 = LTP(location=self.location, orientation='ENU', magnetic=False)
         frame1 = LTP(location=self.location, obstime=self.obstime,
-                     orientation="ENU", magnetic=True)
+                     orientation='ENU', magnetic=True)
         ltp0 = LTP(x=1 * u.m, y=2 * u.m, z=3 * u.m, location=self.location,
-                   orientation="ENU", magnetic=False, obstime=self.obstime)
+                   orientation='ENU', magnetic=False, obstime=self.obstime)
         ltp1 = ltp0.transform_to(frame1).transform_to(frame0)
         self.assertCartesian(ltp0, ltp1, 8)
 
@@ -294,31 +294,31 @@ class CoordinatesTest(TestCase):
 
         # Test an LTP permutation
         ltp0 = LTP(x=1 * u.m, y=2 * u.m, z=3 * u.m, location=self.location,
-                   orientation="ENU", magnetic=False)
-        frame1 = LTP(location=self.location, orientation="NED", magnetic=False)
+                   orientation='ENU', magnetic=False)
+        frame1 = LTP(location=self.location, orientation='NED', magnetic=False)
         ltp1 = ltp0.transform_to(frame1)
         self.assertQuantity(ltp0.x, ltp1.y, 6)
         self.assertQuantity(ltp0.y, ltp1.x, 6)
         self.assertQuantity(ltp0.z, -ltp1.z, 6)
 
         # Test an explicit rotation
-        r = Rotation.from_euler("ZX", 90 * u.deg, 90 * u.deg)
-        frame0 = LTP(location=self.location, orientation="ENU", magnetic=False,
+        r = Rotation.from_euler('ZX', 90 * u.deg, 90 * u.deg)
+        frame0 = LTP(location=self.location, orientation='ENU', magnetic=False,
                      rotation=r)
-        frame1 = LTP(location=self.location, orientation="NUE", magnetic=False)
+        frame1 = LTP(location=self.location, orientation='NUE', magnetic=False)
         self.assertArray(frame0._basis, frame1._basis)
 
         # Test replication with a rotation
         frame1 = frame0.rotated(r.inverse, copy=False)
-        frame2 = LTP(location=self.location, orientation="ENU", magnetic=False)
+        frame2 = LTP(location=self.location, orientation='ENU', magnetic=False)
         self.assertArray(frame1._basis, frame2._basis)
 
         # Test declination
         declination = 5 * u.deg
         frame0 = LTP(location=self.location, declination=declination,
-                     orientation="ENU")
-        r = Rotation.from_euler("Z", -declination)
-        frame1 = LTP(location=self.location, orientation="ENU", magnetic=False,
+                     orientation='ENU')
+        r = Rotation.from_euler('Z', -declination)
+        frame1 = LTP(location=self.location, orientation='ENU', magnetic=False,
                      rotation=r)
         self.assertArray(frame0._basis, frame1._basis)
 
@@ -326,8 +326,8 @@ class CoordinatesTest(TestCase):
     def test_rotation(self):
         # Test initialisation
         a0 = numpy.array((45, 30, 15)) * u.deg
-        r0 = Rotation.from_euler("ZYZ", a0)
-        r1 = Rotation.from_euler("ZYZ", *a0)
+        r0 = Rotation.from_euler('ZYZ', a0)
+        r1 = Rotation.from_euler('ZYZ', *a0)
         self.assertArray(r0.matrix, r1.matrix)
 
         # Test rotation vector
@@ -338,14 +338,14 @@ class CoordinatesTest(TestCase):
 
         # Test euler angles
         a0 = numpy.array((45, 30, 15)) * u.deg
-        r0 = Rotation.from_euler("ZYZ", a0)
-        a1 = r0.euler_angles("ZYZ")
-        a2 = r0.euler_angles("ZYZ", unit="deg")
+        r0 = Rotation.from_euler('ZYZ', a0)
+        a1 = r0.euler_angles('ZYZ')
+        a2 = r0.euler_angles('ZYZ', unit='deg')
         self.assertQuantity(a0, a1)
         self.assertQuantity(a0, a2)
 
         # Test the application of a rotation
-        r0 = Rotation.from_euler("Z", 90 * u.deg)
+        r0 = Rotation.from_euler('Z', 90 * u.deg)
         r1 = r0.inverse
 
         v0 = numpy.array((0, 1, 0))
@@ -364,18 +364,18 @@ class CoordinatesTest(TestCase):
         v1 = r1.apply(v1, inverse=True)
         self.assertQuantity(v0, v1)
 
-        v0 = CartesianRepresentation(0, 1, 0, unit="m")
-        v1 = CartesianRepresentation(1, 0, 0, unit="m")
+        v0 = CartesianRepresentation(0, 1, 0, unit='m')
+        v1 = CartesianRepresentation(1, 0, 0, unit='m')
         v1 = r0 * v1
         self.assertCartesian(v0, v1)
-        v1 = CartesianRepresentation(1, 0, 0, unit="m")
+        v1 = CartesianRepresentation(1, 0, 0, unit='m')
         v1 = r1.apply(v1, inverse=True)
         self.assertCartesian(v0, v1)
 
         # Test composition of rotations
-        r0 = Rotation.from_euler("z", 90 * u.deg)
-        r1 = Rotation.from_euler("x", 90 * u.deg)
-        r2 = Rotation.from_euler("zx", 90 * u.deg, 90 * u.deg)
+        r0 = Rotation.from_euler('z', 90 * u.deg)
+        r1 = Rotation.from_euler('x', 90 * u.deg)
+        r2 = Rotation.from_euler('zx', 90 * u.deg, 90 * u.deg)
         r3 = r1 * r0
         self.assertTrue(isinstance(r3, Rotation))
         self.assertArray(r3.matrix, r2.matrix)
@@ -385,11 +385,11 @@ class CoordinatesTest(TestCase):
         self.assertArray(r3.matrix, r0.matrix)
 
         # Test the magnitude property
-        r0 = Rotation.from_euler("z", 90 * u.deg)
+        r0 = Rotation.from_euler('z', 90 * u.deg)
         self.assertQuantity(r0.magnitude, 90 * u.deg)
 
         # Test vectors alignment
-        r0 = Rotation.from_euler("Z", 90 * u.deg)
+        r0 = Rotation.from_euler('Z', 90 * u.deg)
 
         def check_align(v0):
             v1 = r0.apply(v0)
@@ -404,7 +404,7 @@ class CoordinatesTest(TestCase):
         check_align(v0)
 
         v0 = CartesianRepresentation((1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 0),
-                                     unit="m")
+                                     unit='m')
         check_align(v0)
 
         # Test the identity generator
@@ -433,5 +433,5 @@ class CoordinatesTest(TestCase):
             check_random(r0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

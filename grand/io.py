@@ -15,13 +15,13 @@ import numpy
 
 from . import ECEF, LTP, Rotation
 
-__all__ = ["DataNode", "ElementsIterator"]
+__all__ = ['DataNode', 'ElementsIterator']
 
 
 class ElementsIterator:
-    """
+    '''
     Iterator over the data elements of a node
-    """
+    '''
     def __init__(self, node: DataNode) -> None:
         self.node = node
 
@@ -38,11 +38,11 @@ class ElementsIterator:
 
 
 class DataNode:
-    """
+    '''
     A node containing data elements and branches to sub-nodes
-    """
+    '''
 
-    _compression = {"compression": "gzip", "compression_opts": 9}
+    _compression = {'compression': 'gzip', 'compression_opts': 9}
 
     def __init__(self, group: _Group) -> None:
         self._group = group
@@ -127,31 +127,31 @@ class DataNode:
             return self._unpack_string(dset, v)
 
         try:
-            metatype = dset.attrs["metatype"]
+            metatype = dset.attrs['metatype']
         except KeyError:
             metatype = None
 
         if metatype is None:
             return v
-        elif metatype == "quantity":
+        elif metatype == 'quantity':
             return self._unpack_quantity(dset, v)
-        elif metatype == "table":
+        elif metatype == 'table':
             return self._unpack_table(dset, v)
-        elif metatype.startswith("representation"):
+        elif metatype.startswith('representation'):
             return self._unpack_representation(dset, v)
-        elif metatype.startswith("frame"):
+        elif metatype.startswith('frame'):
             return self._unpack_frame(dset, v)
         else:
-            raise ValueError(f"Invalid metatype {metatype}")
+            raise ValueError(f'Invalid metatype {metatype}')
 
         return v
 
     def _write_string(self, k, v, columns=None, units=None) -> _Dataset:
-        if hasattr(v, "encode"):
-            encoding = "UTF-8"
+        if hasattr(v, 'encode'):
+            encoding = 'UTF-8'
             v = v.encode()
         else:
-            encoding = "ASCII"
+            encoding = 'ASCII'
 
         v = numpy.bytes_(v)
 
@@ -161,14 +161,14 @@ class DataNode:
             opts = {}
         dset = self._group.require_dataset(k, data=v, shape=v.shape,
                                            dtype=v.dtype, **opts)
-        dset.attrs["encoding"] = encoding
+        dset.attrs['encoding'] = encoding
 
         return dset
 
     @staticmethod
     def _unpack_string(dset, v):
-        encoding = dset.attrs["encoding"]
-        if encoding != "ASCII":
+        encoding = dset.attrs['encoding']
+        if encoding != 'ASCII':
             return v.decode(encoding)
         else:
             return v.tobytes()
@@ -188,21 +188,21 @@ class DataNode:
 
         dset = self._group.require_dataset(k, data=v, dtype=dtype,
                                            shape=shape)
-        dset.attrs["unit"] = unit
-        dset.attrs["metatype"] = "quantity"
+        dset.attrs['unit'] = unit
+        dset.attrs['metatype'] = 'quantity'
 
         return dset
 
     @staticmethod
     def _unpack_quantity(dset, v):
-        unit = dset.attrs["unit"]
+        unit = dset.attrs['unit']
         return v * u.Unit(unit)
 
     def _write_representation(self, k, v, dtype=None, unit=None,
         columns=None, units=None) -> _Dataset:
 
         components = v.components
-        values = [getattr(v, f"_{name}") for name in components]
+        values = [getattr(v, f'_{name}') for name in components]
 
         if columns is None:
             columns = components
@@ -211,15 +211,15 @@ class DataNode:
             units = (unit, unit, unit)
 
         dset = self._write_table(k, values, dtype, columns, units)
-        dset.attrs["metatype"] = f"representation/{v.get_name()}"
+        dset.attrs['metatype'] = f'representation/{v.get_name()}'
 
         return dset
 
     @staticmethod
     def _unpack_representation(dset, v):
-        name = os.path.basename(dset.attrs["metatype"])
+        name = os.path.basename(dset.attrs['metatype'])
         cls = REPRESENTATION_CLASSES[name]
-        units = dset.attrs["units"]
+        units = dset.attrs['units']
         v = [v[i] * u.Unit(ui) for i, ui in enumerate(units)]
         return cls(*v)
 
@@ -254,13 +254,13 @@ class DataNode:
                 data[s] = v[i]
 
         dset = self._write_array(k, data, dtype, columns, units)
-        dset.attrs["metatype"] = "table"
+        dset.attrs['metatype'] = 'table'
 
         return dset
 
     @staticmethod
     def _unpack_table(dset, v):
-        units = dset.attrs["units"]
+        units = dset.attrs['units']
         try:
             m = dset.shape[1]
         except IndexError:
@@ -277,18 +277,18 @@ class DataNode:
 
     def _write_number(self, k, v, dtype=None, unit=None) -> _Dataset:
         if dtype is None:
-            if hasattr(v, "dtype"):
+            if hasattr(v, 'dtype'):
                 dtype = v.dtype
             elif isinstance(v, float):
-                dtype = "f8"
+                dtype = 'f8'
             elif isinstance(v, int):
-                dtype = "i8"
+                dtype = 'i8'
             else:
-                raise ValueError(f"Could not infer dtype for {type(v)}")
+                raise ValueError(f'Could not infer dtype for {type(v)}')
 
         dset = self._group.require_dataset(k, data=v, dtype=dtype, shape=())
         if unit:
-            dset.attrs["unit"] = unit
+            dset.attrs['unit'] = unit
 
     def _write_array(self, k, v, dtype=None, columns=None, units=None)         \
         -> _Dataset:
@@ -303,70 +303,70 @@ class DataNode:
         dset = self._group.require_dataset(k, data=v, dtype=dtype,
                                            shape=v.shape, **opts)
         if columns:
-            dset.attrs["columns"] = columns
+            dset.attrs['columns'] = columns
         if units:
-            dset.attrs["units"] = units
+            dset.attrs['units'] = units
 
         return dset
 
     def _write_frame(self, k, v):
         if isinstance(v, ECEF):
             dset = self._group.require_dataset(k, data=None, shape=(),
-                                               dtype="f8")
-            dset.attrs["metatype"] = "frame/ecef"
+                                               dtype='f8')
+            dset.attrs['metatype'] = 'frame/ecef'
         elif isinstance(v, LTP):
             data = numpy.empty((4, 3))
             c = v._origin.represent_as(CartesianRepresentation)
-            data[0,0] = c.x.to_value("m")
-            data[0,1] = c.y.to_value("m")
-            data[0,2] = c.z.to_value("m")
+            data[0,0] = c.x.to_value('m')
+            data[0,1] = c.y.to_value('m')
+            data[0,2] = c.z.to_value('m')
             data[1:,:] = v._basis
 
             dset = self._group.require_dataset(k, data=data, shape=data.shape,
                                                dtype=data.dtype)
-            dset.attrs["metatype"] = "frame/ltp"
-            dset.attrs["orientation"] = v.orientation
-            dset.attrs["magnetic"] = v.magnetic
+            dset.attrs['metatype'] = 'frame/ltp'
+            dset.attrs['orientation'] = v.orientation
+            dset.attrs['magnetic'] = v.magnetic
             if v.declination is not None:
-                dset.attrs["declination"] = v.declination.to_value("deg")
+                dset.attrs['declination'] = v.declination.to_value('deg')
             if v.rotation is not None:
-                dset.attrs["rotation"] = v.rotation.matrix
+                dset.attrs['rotation'] = v.rotation.matrix
         else:
             raise NotImplementedError(type(v))
 
         if v.obstime is not None:
-            dset.attrs["obstime"] = v.obstime.jd
+            dset.attrs['obstime'] = v.obstime.jd
 
     @staticmethod
     def _unpack_frame(dset, v):
         try:
-            obstime = dset.attrs["obstime"]
+            obstime = dset.attrs['obstime']
         except KeyError:
             obstime = None
         else:
-            obstime = Time(obstime, format="jd")
+            obstime = Time(obstime, format='jd')
 
-        name = os.path.basename(dset.attrs["metatype"])
-        if name == "ecef":
+        name = os.path.basename(dset.attrs['metatype'])
+        if name == 'ecef':
             return ECEF(obstime=obstime)
-        elif name == "ltp":
+        elif name == 'ltp':
             location = ECEF(dset[0,:] * u.m)
 
             try:
-                rotation = dset.attrs["rotation"]
+                rotation = dset.attrs['rotation']
             except KeyError:
                 rotation = None
             else:
                 rotation = Rotation.from_matrix(rotation)
 
             try:
-                declination = dset.attrs["declination"] << u.deg
+                declination = dset.attrs['declination'] << u.deg
             except KeyError:
                 declination = None
 
             return LTP(location=location,
-                       orientation=dset.attrs["orientation"],
-                       magnetic=dset.attrs["magnetic"],
+                       orientation=dset.attrs['orientation'],
+                       magnetic=dset.attrs['magnetic'],
                        declination=declination,
                        obstime=obstime, rotation=rotation)
         else:
@@ -376,21 +376,21 @@ class DataNode:
     def _check_columns(v, columns):
         n = len(v)
         if columns and (len(columns) != n):
-            raise ValueError(f"Invalid number of columns (expected {n} got "
-                             f"{len(columns)})")
+            raise ValueError(f'Invalid number of columns (expected {n} got '
+                             f'{len(columns)})')
 
     @staticmethod
     def _check_units(v, units):
         n = len(v)
         if units and (len(units) != n):
-            raise ValueError(f"Invalid number of units (expected {n} got "
-                             f"{len(units)})")
+            raise ValueError(f'Invalid number of units (expected {n} got '
+                             f'{len(units)})')
     @staticmethod
     def _get_unit(v):
         try:
             return v.unit.name
         except AttributeError:
-            return ""
+            return ''
 
     @property
     def elements(self):
@@ -427,6 +427,6 @@ class ClosingDataNode(DataNode):
         self.close()
 
 
-def open(file, mode="r"):
+def open(file, mode='r'):
     f = _File(file, mode)
-    return ClosingDataNode(f["/"])
+    return ClosingDataNode(f['/'])

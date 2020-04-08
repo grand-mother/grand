@@ -75,8 +75,8 @@ field. E.g. the following defines a local magnetic North, East, Down (NED) frame
 centered on Greenwich, as:
 
 >>> from astropy.coordinates import EarthLocation
->>> ltp = LTP(location=EarthLocation.of_site("greenwich"),
-...           orientation="NED")
+>>> ltp = LTP(location=EarthLocation.of_site('greenwich'),
+...           orientation='NED')
 
 By default magnetic North, West, Up (NWU) coordinates are used. If not
 explicitly specified the magnetic *declination* is computed using the built-in
@@ -157,7 +157,7 @@ coordinates using a `geodetic datum`_ instead of the default
 :mod:`astropy.coordinates.Cartesian`, E.g. as:
 
 >>> point = ECEF(latitude=45 * u.deg, longitude=3 * u.deg, height=0.5 * u.m,
-...              representation_type="geodetic")
+...              representation_type='geodetic')
 
 .. autoclass:: grand.GeodeticRepresentation
 
@@ -180,8 +180,8 @@ coordinates system`_. For example, the following defines a unit vector pointing
 upwards at Greenwich:
 
 >>> from astropy.coordinates import EarthLocation
->>> up = LTP(location=EarthLocation.of_site("greenwich"),
-...          representation_type="horizontal",
+>>> up = LTP(location=EarthLocation.of_site('greenwich'),
+...          representation_type='horizontal',
 ...          azimuth = 0 * u.deg, elevation = 90 * u.deg)
 
 .. autoclass:: grand.HorizontalRepresentation

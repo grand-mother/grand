@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.tools.topography module
-"""
+'''
 
 import os
 import unittest
@@ -18,7 +18,7 @@ from tests import TestCase
 
 
 class TopographyTest(TestCase):
-    """Unit tests for the topography module"""
+    '''Unit tests for the topography module'''
 
 
     def test_geoid(self):
@@ -32,11 +32,11 @@ class TopographyTest(TestCase):
 
     def test_custom_topography(self):
         # Fetch a test tile
-        dirname, basename = Path("tests/topography"), "N39E090.SRTMGL1.hgt"
+        dirname, basename = Path('tests/topography'), 'N39E090.SRTMGL1.hgt'
         path = dirname / basename
         if not path.exists():
             dirname.mkdir(exist_ok=True)
-            with path.open("wb") as f:
+            with path.open('wb') as f:
                 f.write(store.get(basename))
 
         # Test the topography getter
@@ -51,39 +51,39 @@ class TopographyTest(TestCase):
 
     def test_topography_cache(self):
         # Check the cache config
-        self.assertEqual(topography.model(), "SRTMGL1")
+        self.assertEqual(topography.model(), 'SRTMGL1')
         self.assertRegex(str(topography.cachedir()),
-                "^.*/grand/tools/data/topography")
+                '^.*/grand/tools/data/topography')
 
         # Clear the cache
         topography.update_data(clear=True)
-        self.assertFalse([p for p in topography.cachedir().glob("**/*")])
+        self.assertFalse([p for p in topography.cachedir().glob('**/*')])
 
         # Fetch data
         c = ECEF(GeodeticRepresentation(latitude=39.5 * u.deg,
                                         longitude=90.5 * u.deg))
         topography.update_data(c)
         self.assertTrue(
-            (topography.cachedir() / "N39E090.SRTMGL1.hgt").exists())
+            (topography.cachedir() / 'N39E090.SRTMGL1.hgt').exists())
 
         c = ECEF(GeodeticRepresentation(
             latitude=u.Quantity((39.5, 40.5)) * u.deg,
             longitude=u.Quantity((90.5, 90.5)) * u.deg))
         topography.update_data(c)
         self.assertTrue(
-            (topography.cachedir() / "N40E090.SRTMGL1.hgt").exists())
+            (topography.cachedir() / 'N40E090.SRTMGL1.hgt').exists())
 
         c = ECEF(GeodeticRepresentation(latitude=40 * u.deg,
                                         longitude=90.5 * u.deg))
         topography.update_data(c, radius=100 * u.km)
         self.assertTrue(
-            (topography.cachedir() / "N39E089.SRTMGL1.hgt").exists())
+            (topography.cachedir() / 'N39E089.SRTMGL1.hgt').exists())
         self.assertTrue(
-            (topography.cachedir() / "N39E091.SRTMGL1.hgt").exists())
+            (topography.cachedir() / 'N39E091.SRTMGL1.hgt').exists())
         self.assertTrue(
-            (topography.cachedir() / "N40E089.SRTMGL1.hgt").exists())
+            (topography.cachedir() / 'N40E089.SRTMGL1.hgt').exists())
         self.assertTrue(
-            (topography.cachedir() / "N40E091.SRTMGL1.hgt").exists())
+            (topography.cachedir() / 'N40E091.SRTMGL1.hgt').exists())
 
 
     def test_topography_elevation(self):
@@ -136,7 +136,7 @@ class TopographyTest(TestCase):
         c = ECEF(GeodeticRepresentation(latitude=geo.latitude,
                                         longitude=geo.longitude,
                                         height=z - 1 * u.m))
-        v = LTP(0 * u.deg, 45 * u.deg, representation_type="horizontal",
+        v = LTP(0 * u.deg, 45 * u.deg, representation_type='horizontal',
                 location = c)
         d = topography.distance(c, v, 10 * u.m)
         self.assertEqual(d.size, 1)
@@ -158,5 +158,5 @@ class TopographyTest(TestCase):
             self.assertTrue(d[i] < 0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

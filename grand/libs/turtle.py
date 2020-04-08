@@ -1,21 +1,5 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2018 The GRAND collaboration
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>
-
-"""Wrapper for the TURTLE C library
-"""
+'''Wrapper for the TURTLE C library
+'''
 
 from __future__ import annotations
 
@@ -27,27 +11,27 @@ from .._core import ffi, lib
 import numpy
 
 
-__all__ = ["LibraryError", "Map", "Stack", "Stepper", "ecef_from_geodetic",
-           "ecef_from_horizontal", "ecef_to_geodetic", "ecef_to_horizontal"]
+__all__ = ['LibraryError', 'Map', 'Stack', 'Stepper', 'ecef_from_geodetic',
+           'ecef_from_horizontal', 'ecef_to_geodetic', 'ecef_to_horizontal']
 
 
 class LibraryError(RuntimeError):
-    """A TURTLE library error"""
+    '''A TURTLE library error'''
 
     def __init__(self, code: int):
-        """Set a TURTLE library error
+        '''Set a TURTLE library error
 
         Parameters
         ----------
         code : int
             The function return code
-        """
+        '''
         self.code = code
         message = ffi.string(lib.grand_error_get())
 
-        header = "A TURTLE library error occurred"
+        header = 'A TURTLE library error occurred'
         if message is not None:
-            message = f"{header}: {message}"
+            message = f'{header}: {message}'
         else:
             message = header
 
@@ -55,20 +39,20 @@ class LibraryError(RuntimeError):
 
 
 def _regularize(a):
-    """Regularize an array (or float) input"""
+    '''Regularize an array (or float) input'''
     a = numpy.asanyarray(a)
-    return numpy.require(a, float, ["CONTIGUOUS", "ALIGNED"])
+    return numpy.require(a, float, ['CONTIGUOUS', 'ALIGNED'])
 
 
 def ecef_from_geodetic(latitude, longitude, altitude):
-    """Convert geodetic coordinates to ECEF ones"""
+    '''Convert geodetic coordinates to ECEF ones'''
 
     latitude, longitude, altitude = map(_regularize, (latitude, longitude,
                                                       altitude))
     if latitude.size != longitude.size:
-        raise ValueError("latitude and longitude must have the same size")
+        raise ValueError('latitude and longitude must have the same size')
     if latitude.size != altitude.size:
-        raise ValueError("latitude and altitude must have the same size")
+        raise ValueError('latitude and altitude must have the same size')
 
     if latitude.size == 1:
         ecef = numpy.zeros(3)
@@ -76,26 +60,26 @@ def ecef_from_geodetic(latitude, longitude, altitude):
         ecef = numpy.zeros((latitude.size, 3))
 
     lib.turtle_ecef_from_geodetic_v(
-        ffi.cast("double *", latitude.ctypes.data),
-        ffi.cast("double *", longitude.ctypes.data),
-        ffi.cast("double *", altitude.ctypes.data),
-        ffi.cast("double *", ecef.ctypes.data),
+        ffi.cast('double *', latitude.ctypes.data),
+        ffi.cast('double *', longitude.ctypes.data),
+        ffi.cast('double *', altitude.ctypes.data),
+        ffi.cast('double *', ecef.ctypes.data),
         latitude.size
     )
     return ecef
 
 
 def ecef_from_horizontal(latitude, longitude, azimuth, elevation):
-    """Convert horizontal coordinates to an ECEF direction"""
+    '''Convert horizontal coordinates to an ECEF direction'''
 
     latitude, longitude, azimuth, elevation = map(_regularize,
         (latitude, longitude, azimuth, elevation))
     if latitude.size != longitude.size:
-        raise ValueError("latitude and longitude must have the same size")
+        raise ValueError('latitude and longitude must have the same size')
     if latitude.size != azimuth.size:
-        raise ValueError("latitude and azimuth must have the same size")
+        raise ValueError('latitude and azimuth must have the same size')
     if latitude.size != elevation.size:
-        raise ValueError("latitude and elevation must have the same size")
+        raise ValueError('latitude and elevation must have the same size')
 
     if latitude.size == 1:
         direction = numpy.zeros(3)
@@ -103,22 +87,22 @@ def ecef_from_horizontal(latitude, longitude, azimuth, elevation):
         direction = numpy.zeros((latitude.size, 3))
 
     lib.turtle_ecef_from_horizontal_v(
-        ffi.cast("double *", latitude.ctypes.data),
-        ffi.cast("double *", longitude.ctypes.data),
-        ffi.cast("double *", azimuth.ctypes.data),
-        ffi.cast("double *", elevation.ctypes.data),
-        ffi.cast("double *", direction.ctypes.data),
+        ffi.cast('double *', latitude.ctypes.data),
+        ffi.cast('double *', longitude.ctypes.data),
+        ffi.cast('double *', azimuth.ctypes.data),
+        ffi.cast('double *', elevation.ctypes.data),
+        ffi.cast('double *', direction.ctypes.data),
         latitude.size
     )
     return direction
 
 
 def ecef_to_geodetic(ecef):
-    """Convert ECEF coordinates to geodetic ones"""
+    '''Convert ECEF coordinates to geodetic ones'''
 
     ecef = _regularize(ecef)
     if (ecef.size < 3) or ((ecef.size % 3) != 0):
-        raise ValueError("ecef coordinates must be n x 3")
+        raise ValueError('ecef coordinates must be n x 3')
 
     n = int(ecef.size / 3)
     if n == 1:
@@ -129,10 +113,10 @@ def ecef_to_geodetic(ecef):
         latitude, longitude, altitude = map(set0, range(3))
 
     lib.turtle_ecef_to_geodetic_v(
-        ffi.cast("double *", ecef.ctypes.data),
-        ffi.cast("double *", latitude.ctypes.data),
-        ffi.cast("double *", longitude.ctypes.data),
-        ffi.cast("double *", altitude.ctypes.data),
+        ffi.cast('double *', ecef.ctypes.data),
+        ffi.cast('double *', latitude.ctypes.data),
+        ffi.cast('double *', longitude.ctypes.data),
+        ffi.cast('double *', altitude.ctypes.data),
         latitude.size)
 
     if n == 1:
@@ -142,17 +126,17 @@ def ecef_to_geodetic(ecef):
 
 
 def ecef_to_horizontal(latitude, longitude, direction):
-    """Convert an ECEF direction to horizontal coordinates"""
+    '''Convert an ECEF direction to horizontal coordinates'''
 
     latitude, longitude, direction = map(_regularize, (latitude, longitude,
                                                        direction))
     if latitude.size != longitude.size:
-        raise ValueError("latitude and longitude must have the same size")
+        raise ValueError('latitude and longitude must have the same size')
     if (direction.size < 3) or ((direction.size % 3) != 0):
-        raise ValueError("direction must be n x 3")
+        raise ValueError('direction must be n x 3')
     n = int(direction.size / 3)
     if latitude.size != n:
-        raise ValueError("latitude and direction must have consistent shapes")
+        raise ValueError('latitude and direction must have consistent shapes')
 
     if n == 1:
         set0 = lambda x:numpy.zeros(1)
@@ -162,11 +146,11 @@ def ecef_to_horizontal(latitude, longitude, direction):
         azimuth, elevation = map(set0, range(2))
 
     lib.turtle_ecef_to_horizontal_v(
-        ffi.cast("double *", latitude.ctypes.data),
-        ffi.cast("double *", longitude.ctypes.data),
-        ffi.cast("double *", direction.ctypes.data),
-        ffi.cast("double *", azimuth.ctypes.data),
-        ffi.cast("double *", elevation.ctypes.data),
+        ffi.cast('double *', latitude.ctypes.data),
+        ffi.cast('double *', longitude.ctypes.data),
+        ffi.cast('double *', direction.ctypes.data),
+        ffi.cast('double *', azimuth.ctypes.data),
+        ffi.cast('double *', elevation.ctypes.data),
         latitude.size)
 
     if n == 1:
@@ -176,10 +160,10 @@ def ecef_to_horizontal(latitude, longitude, direction):
 
 
 class Map:
-    """Proxy for a TURTLE map object"""
+    '''Proxy for a TURTLE map object'''
 
     def __init__(self, path: Union[Path, str]):
-        """Initialise a map object from a data file
+        '''Initialise a map object from a data file
 
         Parameters
         ----------
@@ -190,11 +174,11 @@ class Map:
         ------
         LibraryError
             A TURTLE library error occured, e.g. if the data could not be loaded
-        """
+        '''
 
         # Create the map object
-        map_ = ffi.new("struct turtle_map **")
-        path_ = ffi.new("char []", str(path).encode())
+        map_ = ffi.new('struct turtle_map **')
+        path_ = ffi.new('char []', str(path).encode())
 
         r = lib.turtle_map_load(map_, path_)
         if r != 0:
@@ -213,11 +197,11 @@ class Map:
 
 
     def elevation(self, x, y):
-        """Get the elevation at the given map coordinates"""
+        '''Get the elevation at the given map coordinates'''
 
         x, y = map(_regularize, (x, y))
         if x.size != y.size:
-            raise ValueError("x and y must have the same size")
+            raise ValueError('x and y must have the same size')
 
         n = x.size
         elevation = numpy.zeros(n)
@@ -227,23 +211,23 @@ class Map:
             return elevation
         else:
             lib.turtle_map_elevation_v(self._map[0],
-                ffi.cast("double *", x.ctypes.data),
-                ffi.cast("double *", y.ctypes.data),
-                ffi.cast("double *", elevation.ctypes.data), n)
+                ffi.cast('double *', x.ctypes.data),
+                ffi.cast('double *', y.ctypes.data),
+                ffi.cast('double *', elevation.ctypes.data), n)
             return elevation[0] if n == 1 else elevation
 
 
     @property
     def path(self):
-        """The path where the data tiles are located"""
+        '''The path where the data tiles are located'''
         return self._path
 
 
 class Stack:
-    """Proxy for a TURTLE stack object"""
+    '''Proxy for a TURTLE stack object'''
 
     def __init__(self, path: Union[Path, str], stack_size: int=0):
-        """Create a stack of maps for a world wide topography model
+        '''Create a stack of maps for a world wide topography model
 
         Parameters
         ----------
@@ -256,12 +240,12 @@ class Stack:
         ------
         LibraryError
             A TURTLE library error occured, e.g. if the data format is not valid
-        """
+        '''
         self._stack, self._path, self._stack_size = None, None, None
 
         # Create the stack object
-        stack_ = ffi.new("struct turtle_stack **")
-        path_ = ffi.new("char []", str(path).encode())
+        stack_ = ffi.new('struct turtle_stack **')
+        path_ = ffi.new('char []', str(path).encode())
 
         r = lib.turtle_stack_create(stack_, path_, stack_size,
                                     ffi.NULL, ffi.NULL)
@@ -279,41 +263,41 @@ class Stack:
 
 
     def elevation(self, latitude, longitude):
-        """Get the elevation at the given geodetic coordinates"""
+        '''Get the elevation at the given geodetic coordinates'''
 
         latitude, longitude = map(_regularize, (latitude, longitude))
         if latitude.size != longitude.size:
-            raise ValueError("latitude and longitude must have the same size")
+            raise ValueError('latitude and longitude must have the same size')
 
         n = latitude.size
         elevation = numpy.zeros(n)
 
         lib.turtle_stack_elevation_v(self._stack[0],
-            ffi.cast("double *", latitude.ctypes.data),
-            ffi.cast("double *", longitude.ctypes.data),
-            ffi.cast("double *", elevation.ctypes.data), n)
+            ffi.cast('double *', latitude.ctypes.data),
+            ffi.cast('double *', longitude.ctypes.data),
+            ffi.cast('double *', elevation.ctypes.data), n)
         return elevation[0] if n == 1 else elevation
 
 
     @property
     def path(self):
-        """The path where the data tiles are located"""
+        '''The path where the data tiles are located'''
         return self._path
 
 
     @property
     def stack_size(self):
-        """The maximum number of data tiles kept in memory"""
+        '''The maximum number of data tiles kept in memory'''
         return self._stack_size
 
 
 class Stepper:
-    """Proxy for a TURTLE stepper object"""
+    '''Proxy for a TURTLE stepper object'''
 
     def __init__(self):
-        """Create a stepper for the ray tracing of topography data
-        """
-        stepper_ = ffi.new("struct turtle_stepper **")
+        '''Create a stepper for the ray tracing of topography data
+        '''
+        stepper_ = ffi.new('struct turtle_stepper **')
 
         r = lib.turtle_stepper_create(stepper_)
         if r != 0:
@@ -334,12 +318,12 @@ class Stepper:
         if data is not None:
             if isinstance(data, Map):
                 if data._map is None:
-                    raise ValueError("no data")
+                    raise ValueError('no data')
                 lib.turtle_stepper_add_map(self._stepper[0], data._map[0],
                                            offset)
             else:
                 if data._stack is None:
-                    raise ValueError("no data")
+                    raise ValueError('no data')
                 lib.turtle_stepper_add_stack(self._stepper[0], data._stack[0],
                                              offset)
             self._data.add(data)
@@ -360,7 +344,7 @@ class Stepper:
             self._data.add(map_)
             self._geoid = map_
             if map_._map is None:
-                raise ValueError("no data")
+                raise ValueError('no data')
             map_ = map_._map[0]
         lib.turtle_stepper_geoid_set(self._stepper[0], map_)
 

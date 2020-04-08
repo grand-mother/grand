@@ -56,10 +56,10 @@ is the same than the Python :func:`~open` or C `fopen` functions.
    For example, the following creates a new data file using the root
    :class:`~grand.io.DataNode` as a closing context manager.
 
-   >>> with io.open("data.hdf5", "w") as root:
+   >>> with io.open('data.hdf5', 'w') as root:
    ...     pass
 
-   In order to read from (append to) a file use the `"r"` (`"a"`) mode.
+   In order to read from (append to) a file use the `'r'` (`'a'`) mode.
 
 
 Managing data nodes
@@ -72,10 +72,10 @@ Managing data nodes
    *apples*.
 
    ..
-      >>> root = io.open("data.hdf5", "w")
-      >>> node = root.branch("apples")
+      >>> root = io.open('data.hdf5', 'w')
+      >>> node = root.branch('apples')
 
-   >>> node = root["apples"]
+   >>> node = root['apples']
 
    ..
       >>> root.close()
@@ -95,7 +95,7 @@ Managing data nodes
       one.
 
       ..
-         >>> root = io.open("data.hdf5")
+         >>> root = io.open('data.hdf5')
 
       >>> for node in root.children:
       ...     pass
@@ -111,7 +111,7 @@ Managing data nodes
       node.
 
       ..
-         >>> root = io.open("data.hdf5")
+         >>> root = io.open('data.hdf5')
 
       >>> for name, data in root.elements:
       ...     pass
@@ -162,7 +162,7 @@ Managing data nodes
          `with` statement as shown below) instead of explictly calling the
          :func:`~grand.io.DataNode.close` method.
 
-         >>> with open("data.hdf5") as root:
+         >>> with open('data.hdf5') as root:
          ...     # Do all I/Os within this context
          ...     pass
 
@@ -181,11 +181,11 @@ Managing data nodes
       example the following reads out two data elements from the root node.
 
       ..
-         >>> root = io.open("data.hdf5", "w")
-         >>> root.write("frequency", 1 * u.Hz)
-         >>> root.write("position", CartesianRepresentation(1, 2, 3, unit="m"))
+         >>> root = io.open('data.hdf5', 'w')
+         >>> root.write('frequency', 1 * u.Hz)
+         >>> root.write('position', CartesianRepresentation(1, 2, 3, unit='m'))
 
-      >>> frequency, position = root.read("frequency", "position")
+      >>> frequency, position = root.read('frequency', 'position')
 
       ..
          >>> root.close()
@@ -199,9 +199,9 @@ Managing data nodes
       :class:`~astropy.units.Quantity` as a 32 bits floating point.
 
       ..
-         >>> root = io.open("data.hdf5", "w")
+         >>> root = io.open('data.hdf5', 'w')
 
-      >>> root.write("frequency", 1 * u.Hz, dtype="f")
+      >>> root.write('frequency', 1 * u.Hz, dtype='f')
 
       ..
          >>> root.close()
@@ -229,11 +229,11 @@ The following example shows how to write basic Python objects to a data file.
 ..
    >>> import numpy as np
 
->>> with io.open("data.hdf5", "w") as root:
-...     root.write("example_of_cstring", b"This is a C like string\x00")
-...     root.write("example_of_str", "This is a Python string")
-...     root.write("example_of_number", 1)
-...     root.write("example_of_array", np.array((1, 2, 3)))
+>>> with io.open('data.hdf5', 'w') as root:
+...     root.write('example_of_cstring', b'This is a C like string\x00')
+...     root.write('example_of_str', 'This is a Python string')
+...     root.write('example_of_number', 1)
+...     root.write('example_of_array', np.array((1, 2, 3)))
 
 .. note::
 
@@ -243,8 +243,8 @@ The following example shows how to write basic Python objects to a data file.
 
 Conversely, reading the data back can be done as following.
 
->>> with io.open("data.hdf5") as root:
-...     cstring = root.read("example_of_cstring")
+>>> with io.open('data.hdf5') as root:
+...     cstring = root.read('example_of_cstring')
 >>> python_string = cstring.decode()
 
 Working with physical data
@@ -253,20 +253,20 @@ Working with physical data
 The following example illustrates how to create a new data file and populate it
 with some physical data organised under various branches.
 
->>> with io.open("data.hdf5", "w") as root:
-...     root.write("energy", 1E+18 * u.eV)
+>>> with io.open('data.hdf5', 'w') as root:
+...     root.write('energy', 1E+18 * u.eV)
 ...
-...     with root.branch("fields/a0") as a0:
-...         r = CartesianRepresentation(0, 0, 0, unit="m")
-...         a0.write("r", r, dtype="f") # Store the data with a specific format
+...     with root.branch('fields/a0') as a0:
+...         r = CartesianRepresentation(0, 0, 0, unit='m')
+...         a0.write('r', r, dtype='f') # Store the data with a specific format
 ...
 ...         E = CartesianRepresentation(
 ...             np.array((0, 0, 0)),
 ...             np.array((0, 1, 0)),
 ...             np.array((0, 0, 0)),
-...             unit="uV/m"
+...             unit='uV/m'
 ...         )
-...         a0.write("E", E, unit="V/m") # Store the data with a specific unit
+...         a0.write('E', E, unit='V/m') # Store the data with a specific unit
 
 
 

@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.simulation.shower module
-"""
+'''
 
 from collections import OrderedDict
 from pathlib import Path
@@ -20,26 +20,26 @@ from tests import TestCase
 
 
 class ShowerTest(TestCase):
-    """Unit tests for the shower module"""
+    '''Unit tests for the shower module'''
 
-    path = Path("shower.hdf5")
+    path = Path('shower.hdf5')
 
     def tearDown(self):
         self.path.unlink()
 
     @staticmethod
     def get_data(tag):
-        """Get test data from the store
-        """
-        path = Path(__file__).parent / f"data/{tag}"
+        '''Get test data from the store
+        '''
+        path = Path(__file__).parent / f'data/{tag}'
 
         if not path.exists():
-            tgz_name = f"{tag}-test.tar"
-            tgz_path = path / (tgz_name + ".gz")
+            tgz_name = f'{tag}-test.tar'
+            tgz_path = path / (tgz_name + '.gz')
             tgz = store.get(tgz_name)
             path.mkdir(parents=True)
-            with tgz_path.open("wb") as f: f.write(tgz)
-            with tarfile.open(tgz_path, "r|*") as tar: tar.extractall(path)
+            with tgz_path.open('wb') as f: f.write(tgz)
+            with tarfile.open(tgz_path, 'r|*') as tar: tar.extractall(path)
             tgz_path.unlink()
 
         return path
@@ -54,10 +54,10 @@ class ShowerTest(TestCase):
 
     def test_generic(self):
         settings = {
-            "primary" : ParticleCode.PROTON,
-            "energy"  : 1E+18 * u.eV,
-            "zenith"  : 85 * u.deg,
-            "azimuth" : 0 * u.deg
+            'primary' : ParticleCode.PROTON,
+            'energy'  : 1E+18 * u.eV,
+            'zenith'  : 85 * u.deg,
+            'azimuth' : 0 * u.deg
         }
         shower = ShowerEvent(**settings)
         shower.dump(self.path)
@@ -87,8 +87,8 @@ class ShowerTest(TestCase):
 
         compare_showers()
 
-        nodepath = "montecarlo/shower"
-        with io.open(self.path, "w") as root:
+        nodepath = 'montecarlo/shower'
+        with io.open(self.path, 'w') as root:
             node = root.branch(nodepath)
             shower.dump(node)
 
@@ -99,7 +99,7 @@ class ShowerTest(TestCase):
         compare_showers()
 
     def test_coreas(self):
-        path = self.get_data("coreas")
+        path = self.get_data('coreas')
         shower = ShowerEvent.load(path)
         self.assertIs(shower.frame, None)
 
@@ -119,7 +119,7 @@ class ShowerTest(TestCase):
             self.assertQuantity(r0, r1)
 
     def test_zhaires(self):
-        path = self.get_data("zhaires")
+        path = self.get_data('zhaires')
         shower = ShowerEvent.load(path)
         self.assertIsInstance(shower.frame, LTP)
         self.assertIsNotNone(shower.geomagnet)
@@ -148,5 +148,5 @@ class ShowerTest(TestCase):
         self.assertArray(evB, numpy.array((1, 0, 0)))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

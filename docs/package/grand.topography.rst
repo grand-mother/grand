@@ -47,7 +47,7 @@ Default interface
    data have been cached.
 
    >>> coordinates = ECEF(latitude=43.83 * u.deg, longitude=87.62 * u.deg,
-   ...                    representation_type="geodetic")
+   ...                    representation_type='geodetic')
    >>> elevation = topography.elevation(coordinates,
    ...                                  reference=topography.Reference.GEOID)
 
@@ -115,7 +115,7 @@ Alternative topography models
    For example, assuming that you have the topography tiles corresponding to
    `ASTER GDEM2`_ in your cache, the following allows to access those.
 
-   >>> topo = topography.Topography("ASTER-GDEM2")
+   >>> topo = topography.Topography('ASTER-GDEM2')
 
 
 .. _SRTMGL1: https://www.arcgis.com/home/item.html?id=cadb028a356046479fcda5207a235560

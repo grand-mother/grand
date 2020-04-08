@@ -15,7 +15,7 @@ from ..antenna import ElectricField, Voltage
 from ...import io
 from ...tools.coordinates import Rotation
 
-__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
+__all__ = ['CollectionEntry', 'FieldsCollection', 'ShowerEvent']
 
 
 _logger = getLogger(__name__)
@@ -29,14 +29,14 @@ class CollectionEntry:
     @classmethod
     def load(cls, node: DataNone) -> CollectionEntry:
         try:
-            subnode = node["electric"]
+            subnode = node['electric']
         except KeyError:
             electric = None
         else:
             electric = ElectricField.load(subnode)
 
         try:
-            subnode = node["voltage"]
+            subnode = node['voltage']
         except KeyError:
             voltage = None
         else:
@@ -46,9 +46,9 @@ class CollectionEntry:
 
     def dump(self, node:DataNode) -> None:
         if self.electric is not None:
-            self.electric.dump(node.branch("electric"))
+            self.electric.dump(node.branch('electric'))
         if self.voltage is not None:
-            self.voltage.dump(node.branch("voltage"))
+            self.voltage.dump(node.branch('voltage'))
 
 
 class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
@@ -76,14 +76,14 @@ class ShowerEvent:
 
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
-            filename = f"{source.filename}:{source.path}"
-            loader = "_from_datanode"
+            filename = f'{source.filename}:{source.path}'
+            loader = '_from_datanode'
         else:
             source = cast(Union[Path, str], source)
-            filename = f"{source}:/"
+            filename = f'{source}:/'
             source = Path(source)
             if source.is_dir():
-                loader = "_from_dir"
+                loader = '_from_dir'
 
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
@@ -96,19 +96,19 @@ class ShowerEvent:
                     elif ZhairesShower._check_dir(source):
                         baseclass = ZhairesShower
             else:
-                loader = f"_from_datafile"
+                loader = f'_from_datafile'
 
-        _logger.info(f"Loading shower data from {filename}")
+        _logger.info(f'Loading shower data from {filename}')
 
         try:
             load = getattr(baseclass, loader)
         except AttributeError:
-            raise NotImplementedError(f"Invalid data format")
+            raise NotImplementedError(f'Invalid data format')
         else:
             self = load(source)
 
         if self.fields is not None:
-            _logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
+            _logger.info(f'Loaded {len(self.fields)} field(s) from {filename}')
 
         return self
 
@@ -124,12 +124,12 @@ class ShowerEvent:
             kwargs[name] = data
 
         try:
-            fields_node = node["fields"]
+            fields_node = node['fields']
         except KeyError:
             pass
         else:
             fields:OrderedDict = OrderedDict()
-            kwargs["fields"] = fields
+            kwargs['fields'] = fields
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
@@ -143,26 +143,26 @@ class ShowerEvent:
             self._to_datanode(source)
         else:
             source = cast(Union[Path, str], source)
-            with io.open(source, "w") as root:
+            with io.open(source, 'w') as root:
                 self._to_datanode(root)
 
     def _to_datanode(self, node: io.DataNode):
-        _logger.info(f"Dumping shower data to {node.filename}:{node.path}")
+        _logger.info(f'Dumping shower data to {node.filename}:{node.path}')
 
         for f in fields(self):
             k = f.name
-            if k != "fields" and (k[0] != "_"):
+            if k != 'fields' and (k[0] != '_'):
                 v = getattr(self, k)
                 if v is not None:
                     node.write(k, v)
 
         if self.fields is not None:
             for antenna, field in self.fields.items():
-                with node.branch(f"fields/{antenna}") as n:
+                with node.branch(f'fields/{antenna}') as n:
                     field.dump(n)
 
             m = len(self.fields)
-            _logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
+            _logger.info(f'Dumped {m} field(s) to {node.filename}:{node.path}')
 
     def localize(self, latitude: u.Quantity, longitude: u.Quantity,
             height: Optional[u.Quantity]=None,
@@ -173,8 +173,8 @@ class ShowerEvent:
             height = 0 * u.m
 
         location = ECEF(latitude, longitude, height,
-                        representation_type="geodetic")
-        self.frame = LTP(location=location, orientation="NWU", magnetic=True,
+                        representation_type='geodetic')
+        self.frame = LTP(location=location, orientation='NWU', magnetic=True,
                          declination=declination, obstime=obstime)
 
     def shower_frame(self) -> BaseCoordinateFrame:

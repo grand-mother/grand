@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.io module
-"""
+'''
 
 from pathlib import Path
 import unittest
@@ -16,9 +16,9 @@ from tests import TestCase
 
 
 class IoTest(TestCase):
-    """Unit tests for grand.io class"""
+    '''Unit tests for grand.io class'''
 
-    path = Path("io.hdf5")
+    path = Path('io.hdf5')
 
     def tearDown(self):
         self.path.unlink()
@@ -31,28 +31,28 @@ class IoTest(TestCase):
         c = numpy.array((90, -90)) * u.deg
         u1 = UnitSphericalRepresentation(c, c)
         loc = ECEF(45 * u.deg, 6 * u.deg, 0 * u.m,
-                   representation_type="geodetic")
+                   representation_type='geodetic')
 
         elements = {
-            "primary"    : "pà",
-            "bytes"      : b"0100011",
-            "id"         : 1,
-            "energy0"    : 1.0,
-            "energy1"    : 1 * u.eV,
-            "data"       : numpy.array(((1, 2, 3), (4, 5, 6))),
-            "position0"  : r0.xyz,
-            "position1"  : [r0.x, r0.y, r0.z],
-            "position2"  : r0,
-            "position3"  : r1,
-            "direction0" : u0,
-            "direction1" : u1,
-            "frame0"     : ECEF(obstime="2010-01-01"),
-            "frame1"     : LTP(location=loc, obstime="2010-01-01",
+            'primary'    : 'pà',
+            'bytes'      : b'0100011',
+            'id'         : 1,
+            'energy0'    : 1.0,
+            'energy1'    : 1 * u.eV,
+            'data'       : numpy.array(((1, 2, 3), (4, 5, 6))),
+            'position0'  : r0.xyz,
+            'position1'  : [r0.x, r0.y, r0.z],
+            'position2'  : r0,
+            'position3'  : r1,
+            'direction0' : u0,
+            'direction1' : u1,
+            'frame0'     : ECEF(obstime='2010-01-01'),
+            'frame1'     : LTP(location=loc, obstime='2010-01-01',
                                magnetic=True,
-                               rotation=Rotation.from_euler("z", 90 * u.deg))
+                               rotation=Rotation.from_euler('z', 90 * u.deg))
         }
 
-        with io.open(self.path, "w") as root:
+        with io.open(self.path, 'w') as root:
             for k, v in elements.items():
                 root.write(k, v)
 
@@ -60,7 +60,7 @@ class IoTest(TestCase):
             for name, element in root.elements:
                 a = elements[name]
 
-                if hasattr(a, "shape"):
+                if hasattr(a, 'shape'):
                     self.assertEquals(a.shape, element.shape)
 
                 if isinstance(a, u.Quantity):
@@ -86,5 +86,5 @@ class IoTest(TestCase):
                 else:
                     self.assertEquals(a, element)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

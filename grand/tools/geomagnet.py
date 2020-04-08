@@ -1,21 +1,5 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2019 The GRAND collaboration
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>
-
-"""Geomagnetic field wrapper for GRAND packages
-"""
+'''Geomagnetic field wrapper for GRAND packages
+'''
 from __future__ import annotations
 
 from typing import Optional, Union
@@ -31,30 +15,30 @@ import numpy
 from astropy.coordinates import EarthLocation
 
 
-_default_model: Final = "IGRF13"
-"""The default geo-magnetic model, i.e. IGRF13.
+_default_model: Final = 'IGRF13'
+'''The default geo-magnetic model, i.e. IGRF13.
    Reference: https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html
-"""
+'''
 
 _default_magnet: Optional[Geomagnet] = None
-"""An instance of Geomagnet with the default geo-magnetic model"""
+'''An instance of Geomagnet with the default geo-magnetic model'''
 
-_default_obstime: Final[Time] = Time("2020-01-01")
-"""The default observation time if none is specified"""
+_default_obstime: Final[Time] = Time('2020-01-01')
+'''The default observation time if none is specified'''
 
 
 def __getattr__(name):
-    if name == "model":
+    if name == 'model':
         return _default_model
-    elif name == "obstime":
+    elif name == 'obstime':
         return _default_obstime.datetime.date
     else:
-        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+        raise AttributeError(f'module {__name__} has no attribute {name}')
 
 
 def field(coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
-    """Get the default geo-magnetic field at the given *coordinates*.
-    """
+    '''Get the default geo-magnetic field at the given *coordinates*.
+    '''
     global _default_magnet
 
     if _default_magnet is None:
@@ -63,8 +47,8 @@ def field(coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
 
 
 class Geomagnet:
-    """Proxy to a geomagnetic model
-    """
+    '''Proxy to a geomagnetic model
+    '''
 
     def __init__(self, model: str=None) -> None:
         if model is None:
@@ -75,8 +59,8 @@ class Geomagnet:
 
 
     def field(self, coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
-        """Get the geo-magnetic field components
-        """
+        '''Get the geo-magnetic field components
+        '''
 
         # Update the snapshot, if needed
         obstime = coordinates.obstime
@@ -103,7 +87,7 @@ class Geomagnet:
                                      lon=geodetic.longitude,
                                      height=geodetic.height)
             return LTP(x=field[0] * u.T, y=field[1] * u.T, z=field[2] * u.T,
-                       location=location, obstime=obstime, orientation="ENU",
+                       location=location, obstime=obstime, orientation='ENU',
                        magnetic=False)
         else:
             ecef = numpy.zeros((n, 3))
@@ -112,7 +96,7 @@ class Geomagnet:
                                          lon=geodetic.longitude[i],
                                          height=geodetic.height[i])
                 ltp = LTP(x=value[0], y=value[1], z=value[2], location=location,
-                          orientation="ENU", magnetic=False)
+                          orientation='ENU', magnetic=False)
                 c = ltp.transform_to(ECEF).cartesian
                 ecef[i,0] = c.x
                 ecef[i,1] = c.y

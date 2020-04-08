@@ -53,7 +53,7 @@ class Rotation(_Rotation):
             angles = tuple(a.to_value(u.rad) for a in angles)
         return super().from_euler(seq, angles)
 
-    def euler_angles(self, seq: str, unit: Union[str, u.Unit]="rad")           \
+    def euler_angles(self, seq: str, unit: Union[str, u.Unit]=u.rad)           \
         -> u.Quantity:
 
         unit = u.Unit(unit)

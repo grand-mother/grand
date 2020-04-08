@@ -13,7 +13,7 @@ import numpy
 from .generic import AntennaModel
 from ... import io
 
-__all__ = ["DataTable", "TabulatedAntennaModel"]
+__all__ = ['DataTable', 'TabulatedAntennaModel']
 
 
 _logger = getLogger(__name__)
@@ -33,7 +33,7 @@ class DataTable:
 
     def dump(self, node: io.DataNode) -> None:
         for field in fields(self):
-            node.write(field.name, getattr(self, field.name), dtype="f4")
+            node.write(field.name, getattr(self, field.name), dtype='f4')
 
     @classmethod
     def load(cls, node: io.DataNode) -> DataTable:
@@ -53,7 +53,7 @@ class TabulatedAntennaModel(AntennaModel):
             self.table.dump(node)
         else:
             path = cast(Union[Path, str], destination)
-            with io.open(path, "w") as node:
+            with io.open(path, 'w') as node:
                 self.table.dump(node)
 
     @classmethod
@@ -62,25 +62,25 @@ class TabulatedAntennaModel(AntennaModel):
 
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
-            filename = f"{source.filename}:{source.path}"
-            loader = "_load_from_datanode"
+            filename = f'{source.filename}:{source.path}'
+            loader = '_load_from_datanode'
         else:
             source = cast(Union[Path, str], source)
-            filename = f"{source}:/"
+            filename = f'{source}:/'
             source = Path(source)
-            if source.suffix == ".npy":
-                loader = "_load_from_numpy"
+            if source.suffix == '.npy':
+                loader = '_load_from_numpy'
             else:
-                loader = "_load_from_datafile"
+                loader = '_load_from_datafile'
 
-        _logger.info(f"Loading tabulated antenna model from {filename}")
+        _logger.info(f'Loading tabulated antenna model from {filename}')
 
         load = getattr(cls, loader)
         self = load(source)
 
         t = self.table
         n = t.frequency.size * t.theta.size * t.phi.size
-        _logger.info(f"Loaded {n} entries from {filename}")
+        _logger.info(f'Loaded {n} entries from {filename}')
 
         return self
 
@@ -104,7 +104,7 @@ class TabulatedAntennaModel(AntennaModel):
         n_phi = int(R.shape[1] / n_theta)
         shape = (n_f, n_phi, n_theta)
 
-        dtype = "f4"
+        dtype = 'f4'
         f = f[:,0].astype(dtype) * u.MHz
         theta = theta[0, :n_theta].astype(dtype) * u.deg
         phi = phi[0, ::n_theta].astype(dtype) * u.deg
@@ -148,28 +148,28 @@ class TabulatedAntennaModel(AntennaModel):
         rp1 -= numpy.floor(rp1)
         rp0 = 1 - rp1
 
-        x = frequency.to_value("Hz")
-        xp = t.frequency.to_value("Hz")
+        x = frequency.to_value('Hz')
+        xp = t.frequency.to_value('Hz')
 
         def interp(v):
             fp = rp0 * rt0 * v[:, ip0, it0] + rp1 * rt0 * v[:, ip1, it0] +     \
                  rp0 * rt1 * v[:, ip0, it1] + rp1 * rt1 * v[:, ip1, it1]
             return numpy.interp(x, xp, fp, left=0, right=0)
 
-        ltr = interp(t.leff_theta.to_value("m"))
-        lta = interp(t.phase_theta.to_value("rad"))
-        lpr = interp(t.leff_phi.to_value("m"))
-        lpa = interp(t.phase_phi.to_value("rad"))
+        ltr = interp(t.leff_theta.to_value('m'))
+        lta = interp(t.phase_theta.to_value('rad'))
+        lpr = interp(t.leff_phi.to_value('m'))
+        lpa = interp(t.phase_phi.to_value('rad'))
 
         # Pack the result as a Cartesian vector with complex values
         lt = ltr * numpy.exp(1j * lta)
         lp = lpr * numpy.exp(1j * lpa)
 
-        t, p = theta.to_value("rad"), phi.to_value("rad")
+        t, p = theta.to_value('rad'), phi.to_value('rad')
         ct, st = numpy.cos(t), numpy.sin(t)
         cp, sp = numpy.cos(p), numpy.sin(p)
         lx = lt * ct * cp - sp * lp
         ly = lt * ct * sp + cp * lp
         lz = -st * lt
 
-        return CartesianRepresentation(lx, ly, lz, unit="m")
+        return CartesianRepresentation(lx, ly, lz, unit='m')

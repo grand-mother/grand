@@ -30,8 +30,8 @@ Default interface
    For example, the following returns the Earth magnetic field at sea level,
    close to Clermont-Ferrand, France, for new year 2019.
 
-   >>> coordinates = ECEF(representation_type="geodetic", latitude=45 * u.deg,
-   ...                    longitude=3 * u.deg, obstime="2019-01-01")
+   >>> coordinates = ECEF(representation_type='geodetic', latitude=45 * u.deg,
+   ...                    longitude=3 * u.deg, obstime='2019-01-01')
    >>> field = geomagnet.field(coordinates)
 
 .. autoproperty:: grand.geomagnet.model
@@ -60,7 +60,7 @@ Supported models for the Earth magnetic field are: `IGRF12`_ and `WMM2015`_.
    The default model is `IGRF12`_. You can instanciate an alternative model by
    specifying its name, E.g.  as follow:
 
-   >>> magnet = geomagnet.Geomagnet("WWM2015")
+   >>> magnet = geomagnet.Geomagnet('WWM2015')
 
    .. automethod:: grand.geomagnet.Geomagnet.field
 

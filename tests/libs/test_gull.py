@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.libs.gull module
-"""
+'''
 
 import os
 import unittest
@@ -10,12 +10,12 @@ from tests import TestCase
 
 
 class GullTest(TestCase):
-    """Unit tests for the gull sub-package"""
+    '''Unit tests for the gull sub-package'''
 
     def test_snapshot(self):
         snapshot = gull.Snapshot()
         self.assertNotEqual(snapshot._snapshot, None)
-        self.assertEqual(snapshot.model, "IGRF13")
+        self.assertEqual(snapshot.model, 'IGRF13')
         d = snapshot.date
         self.assertEqual(d.year, 2020)
         self.assertEqual(d.month, 1)
@@ -25,9 +25,9 @@ class GullTest(TestCase):
         self.assertEqual(snapshot.altitude[1], 600E+03)
         del snapshot
 
-        snapshot = gull.Snapshot("WMM2020", "2020-03-23")
+        snapshot = gull.Snapshot('WMM2020', '2020-03-23')
         self.assertNotEqual(snapshot._snapshot, None)
-        self.assertEqual(snapshot.model, "WMM2020")
+        self.assertEqual(snapshot.model, 'WMM2020')
         d = snapshot.date
         self.assertEqual(d.year, 2020)
         self.assertEqual(d.month, 3)
@@ -55,7 +55,7 @@ class GullTest(TestCase):
 
     def test_snapshot_error(self):
         with self.assertRaises(gull.LibraryError) as context:
-            snapshot = gull.Snapshot("Unknown")
+            snapshot = gull.Snapshot('Unknown')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

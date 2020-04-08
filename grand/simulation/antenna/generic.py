@@ -10,8 +10,8 @@ import numpy
 
 from ... import io, ECEF, LTP
 
-__all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError",
-           "Voltage"]
+__all__ = ['Antenna', 'AntennaModel', 'ElectricField', 'MissingFrameError',
+           'Voltage']
 
 
 _logger = getLogger(__name__)
@@ -26,34 +26,34 @@ class ElectricField:
 
     @classmethod
     def load(cls, node: io.DataNode):
-        _logger.debug(f"Loading E-field from {node.filename}:{node.path}")
+        _logger.debug(f'Loading E-field from {node.filename}:{node.path}')
 
-        t = node.read("t", dtype="f8")
-        E = node.read("E", dtype="f8")
+        t = node.read('t', dtype='f8')
+        E = node.read('E', dtype='f8')
 
         try:
-            r = node.read("r", dtype="f8")
+            r = node.read('r', dtype='f8')
         except KeyError:
             r = None
 
         try:
-            frame = node.read("frame")
+            frame = node.read('frame')
         except KeyError:
             frame = None
 
         return cls(t, E, r, frame)
 
     def dump(self, node: io.DataNode):
-        _logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
+        _logger.debug(f'Dumping E-field to {node.filename}:{node.path}')
 
-        node.write("t", self.t, unit="ns", dtype="f4")
-        node.write("E", self.E, unit="uV/m", dtype="f4")
+        node.write('t', self.t, unit='ns', dtype='f4')
+        node.write('E', self.E, unit='uV/m', dtype='f4')
 
         if self.r is not None:
-            node.write("r", self.r, unit="m", dtype="f4")
+            node.write('r', self.r, unit='m', dtype='f4')
 
         if self.frame is not None:
-            node.write("frame", self.frame)
+            node.write('frame', self.frame)
 
 
 @dataclass
@@ -63,15 +63,15 @@ class Voltage:
 
     @classmethod
     def load(cls, node: io.DataNode):
-        _logger.debug(f"Loading voltage from {node.filename}:{node.path}")
-        t = node.read("t", dtype="f8")
-        V = node.read("V", dtype="f8")
+        _logger.debug(f'Loading voltage from {node.filename}:{node.path}')
+        t = node.read('t', dtype='f8')
+        V = node.read('V', dtype='f8')
         return cls(t, V)
 
     def dump(self, node: io.DataNode):
-        _logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
-        node.write("t", self.t, unit="ns", dtype="f4")
-        node.write("V", self.V, unit="uV", dtype="f4")
+        _logger.debug(f'Dumping E-field to {node.filename}:{node.path}')
+        node.write('t', self.t, unit='ns', dtype='f4')
+        node.write('V', self.V, unit='uV', dtype='f4')
 
 
 class AntennaModel:
@@ -99,7 +99,7 @@ class Antenna:
             if (frame is not None) or                                          \
                (not isinstance(field.E, BaseRepresentation)) or                \
                (not isinstance(direction, BaseRepresentation)):
-                raise MissingFrameError("missing antenna frame")
+                raise MissingFrameError('missing antenna frame')
             else:
                 E_frame, dir_frame = None, None
                 E = field.E
@@ -117,7 +117,7 @@ class Antenna:
                 dir_frame = direction
 
             if frame_required and (frame is None):
-                raise MissingFrameError("missing frame")
+                raise MissingFrameError('missing frame')
 
         # Compute the voltage
         def rfft(q):
@@ -127,7 +127,7 @@ class Antenna:
             return numpy.fft.irfft(q.value) * q.unit
 
         def fftfreq(n, t):
-            dt = (t[1] - t[0]).to_value("s")
+            dt = (t[1] - t[0]).to_value('s')
             return numpy.fft.fftfreq(n, dt) * u.Hz
 
         E = field.E.represent_as(CartesianRepresentation)

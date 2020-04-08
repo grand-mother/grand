@@ -1,6 +1,6 @@
-"""
+'''
 Unit tests for the grand.libs.turtle module
-"""
+'''
 
 from pathlib import Path
 import os
@@ -14,87 +14,87 @@ from tests import TestCase
 
 
 class TurtleTest(TestCase):
-    """Unit tests for the turtle module"""
+    '''Unit tests for the turtle module'''
 
     @staticmethod
     def get_stack_data():
-        dirname = Path("tests/topography")
-        basename = Path("N38E083.SRTMGL1.hgt")
+        dirname = Path('tests/topography')
+        basename = Path('N38E083.SRTMGL1.hgt')
         path = dirname / basename
         if not path.exists():
             try:
                 os.makedirs(dirname)
             except OSError:
                 pass
-            with path.open("wb") as f:
+            with path.open('wb') as f:
                 f.write(store.get(basename))
         return dirname
 
 
     @staticmethod
     def get_map_data():
-        return Path(__file__).parent / "data" / "map.png"
+        return Path(__file__).parent / 'data' / 'map.png'
 
 
     def test_ecef(self):
         # Reference values
         ref = {
-            "geodetic" : (45, 3, 1E+03),
-            "ecef" : (4512105.81527233, 236469.44566852, 4488055.51564711),
-            "horizontal" : (0, 90)}
-        u = numpy.array(ref["ecef"])
-        ref["direction"] = u / numpy.linalg.norm(u) # Assuming a spherical Earth
+            'geodetic' : (45, 3, 1E+03),
+            'ecef' : (4512105.81527233, 236469.44566852, 4488055.51564711),
+            'horizontal' : (0, 90)}
+        u = numpy.array(ref['ecef'])
+        ref['direction'] = u / numpy.linalg.norm(u) # Assuming a spherical Earth
 
         # Check the ECEF to geodetic conversion
-        ecef = turtle.ecef_from_geodetic(*ref["geodetic"])
+        ecef = turtle.ecef_from_geodetic(*ref['geodetic'])
         for i in range(3):
-            self.assertAlmostEqual(ecef[i], ref["ecef"][i], 4)
+            self.assertAlmostEqual(ecef[i], ref['ecef'][i], 4)
 
         n = 10
-        ecef = turtle.ecef_from_geodetic(n * (ref["geodetic"][0],),
-            n * (ref["geodetic"][1],), n * (ref["geodetic"][2],))
+        ecef = turtle.ecef_from_geodetic(n * (ref['geodetic'][0],),
+            n * (ref['geodetic'][1],), n * (ref['geodetic'][2],))
         self.assertEqual(ecef.shape[0], n)
         self.assertEqual(ecef.shape[1], 3)
         for i in range(n):
             for j in range(3):
-                self.assertAlmostEqual(ecef[i,j], ref["ecef"][j], 4)
+                self.assertAlmostEqual(ecef[i,j], ref['ecef'][j], 4)
 
         # Check the geodetic to ECEF conversion
-        geodetic = turtle.ecef_to_geodetic(ref["ecef"])
+        geodetic = turtle.ecef_to_geodetic(ref['ecef'])
         for i in range(3):
-            self.assertAlmostEqual(geodetic[i], ref["geodetic"][i], 4)
+            self.assertAlmostEqual(geodetic[i], ref['geodetic'][i], 4)
 
-        geodetic = turtle.ecef_to_geodetic(n * (ref["ecef"],))
+        geodetic = turtle.ecef_to_geodetic(n * (ref['ecef'],))
         for i in range(3):
             self.assertEqual(geodetic[i].size, n) 
         for i in range(3):
             for j in range(10):
-                self.assertAlmostEqual(geodetic[i][j], ref["geodetic"][i], 4)
+                self.assertAlmostEqual(geodetic[i][j], ref['geodetic'][i], 4)
 
         # Check the horizontal to ECEF conversion
-        direction = turtle.ecef_from_horizontal(ref["geodetic"][0],
-            ref["geodetic"][1], ref["horizontal"][0], ref["horizontal"][1])
+        direction = turtle.ecef_from_horizontal(ref['geodetic'][0],
+            ref['geodetic'][1], ref['horizontal'][0], ref['horizontal'][1])
         for i in range(3):
-            self.assertAlmostEqual(direction[i], ref["direction"][i], 2)
+            self.assertAlmostEqual(direction[i], ref['direction'][i], 2)
 
-        direction = turtle.ecef_from_horizontal(n * (ref["geodetic"][0],),
-            n * (ref["geodetic"][1],), n * (ref["horizontal"][0],),
-            n * (ref["horizontal"][1],))
+        direction = turtle.ecef_from_horizontal(n * (ref['geodetic'][0],),
+            n * (ref['geodetic'][1],), n * (ref['horizontal'][0],),
+            n * (ref['horizontal'][1],))
         self.assertEqual(direction.shape[0], n)
         self.assertEqual(direction.shape[1], 3)
         for i in range(n):
             for j in range(3):
-                self.assertAlmostEqual(direction[i,j], ref["direction"][j], 2)
+                self.assertAlmostEqual(direction[i,j], ref['direction'][j], 2)
 
         # Check the ECEF direction to horizontal conversion
-        horizontal = turtle.ecef_to_horizontal(ref["geodetic"][0],
-            ref["geodetic"][1], ref["direction"])
-        self.assertAlmostEqual(horizontal[1], ref["horizontal"][1], 0)
+        horizontal = turtle.ecef_to_horizontal(ref['geodetic'][0],
+            ref['geodetic'][1], ref['direction'])
+        self.assertAlmostEqual(horizontal[1], ref['horizontal'][1], 0)
 
-        horizontal = turtle.ecef_to_horizontal(n * (ref["geodetic"][0],),
-            n * (ref["geodetic"][1],), n * (ref["direction"],))
+        horizontal = turtle.ecef_to_horizontal(n * (ref['geodetic'][0],),
+            n * (ref['geodetic'][1],), n * (ref['direction'],))
         for i in range(n):
-            self.assertAlmostEqual(horizontal[1][i], ref["horizontal"][1], 0)
+            self.assertAlmostEqual(horizontal[1][i], ref['horizontal'][1], 0)
 
 
     def test_stack(self):
@@ -125,9 +125,9 @@ class TurtleTest(TestCase):
         del stack
 
         # Check the empty stack initalisation
-        stack = turtle.Stack("")
+        stack = turtle.Stack('')
         self.assertNotEqual(stack._stack, None)
-        self.assertEqual(stack.path, "")
+        self.assertEqual(stack.path, '')
         self.assertEqual(stack.stack_size, 0)
 
         # Check the elevation getter for empty entries
@@ -157,8 +157,8 @@ class TurtleTest(TestCase):
 
         # Check for invalid path case
         with self.assertRaises(RuntimeError) as context:
-            map_ = turtle.Map("")
-        self.assertRegex(context.exception.args[0], "^A TURTLE library error")
+            map_ = turtle.Map('')
+        self.assertRegex(context.exception.args[0], '^A TURTLE library error')
 
 
     def test_stepper(self):
@@ -176,5 +176,5 @@ class TurtleTest(TestCase):
         self.assertEqual(stepper.geoid, map_)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
