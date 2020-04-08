@@ -218,12 +218,27 @@ class ZhairesShower(ShowerEvent):
                 phi = 0 << u.deg,
                 r = float(event[0, "BField"]) << u.uT)
 
+            try:
+                latitude = event[0, "Latitude"] << u.deg
+                longitude = event[0, "Longitude"] << u.deg
+                declination = event[0, "BFieldDecl"] << u.deg
+                obstime = datetime.strptime(event[0, "Date"].strip(),
+                                            "%d/%b/%Y")
+            except KeyError:
+                frame = None
+            else:
+                origin = ECEF(latitude, longitude, 0 * u.m,
+                              representation_type="geodetic")
+                frame = LTP(location=origin, orientation="NWU",
+                            declination=declination, obstime=obstime)
+
             return cls(
                 energy = float(event[0, "Energy"]) << u.EeV,
                 zenith = (180 - float(event[0, "Zenith"])) << u.deg,
                 azimuth = -float(event[0, "Azimuth"]) << u.deg,
                 primary = primary,
 
+                frame = frame,
                 core = CartesianRepresentation(0, 0, 0, unit="m"),
                 geomagnet = geomagnet.represent_as(CartesianRepresentation),
                 maximum = CartesianRepresentation(*event[0, "XmaxPosition"],

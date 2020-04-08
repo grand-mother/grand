@@ -136,20 +136,6 @@ class CoreasShower(ShowerEvent):
         return cls(fields=fields, **config)
 
 
-    def localize(self, latitude: u.Quantity, longitude: u.Quantity,
-            height: Optional[u.Quantity]=None,
-            declination: Optional[u.Quantity]=None,
-            obstime: Union[datetime, Time, str, None]=None) -> None:
-
-        if height is None:
-            height = 0 * u.m
-
-        location = ECEF(latitude, longitude, height,
-                        representation_type="geodetic")
-        self.frame = LTP(location=location, orientation="NWU", magnetic=True,
-                         declination=declination, obstime=obstime)
-
-
     @classmethod
     def _parse_reas(cls, path: Path, index: int) -> Optional[Dict]:
         """Parse a SIMxxxxxx.reas file
