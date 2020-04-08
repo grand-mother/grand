@@ -9,7 +9,7 @@ on:
     - examples/requirements.txt
     - .github/workflows/appimage.yml
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 4 * * *'
 
 jobs:
   Generate:

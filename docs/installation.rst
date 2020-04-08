@@ -2,69 +2,66 @@ Installation
 ============
 
 .. warning::
-   The :mod:`grand` package is meant to be used on a Linux system. All its
-   dependencies are bundled within an AppImage_. For developping on OSX or
-   Windows we recommend using a virtual machine, E.g.  VirtualBox_ with
-   Debian_. Note that on Windows 10, WSL does not currently support AppImages.
+   The :mod:`grand` package is meant to be used on Unix systems. For Windows
+   users we recommend using WSL or a virtual machine.
 
-The :mod:`grand` package sources are available from GitHub_. Installing a
-devlopment version first requires to clone the repository:
-
-.. code-block:: bash
-
-   git clone https://github.com/grand-mother/grand
+Python 3.8 or later is required for installing and running the :mod:`grand`
+package. OS specific instructions are found below.
 
 
-Building and setting up the environment
----------------------------------------
+Linux
+-----
 
-Before using the package you must source the provided `setup.sh` file, as:
+Once you have Python 3.8 installed your can get the :mod:`grand` package from
+PyPI_, e.g. using pip as:
 
 .. code-block:: bash
 
+   pip install grand
+
+If you don't already have Python3.8, on Linux we provide a ready to use
+AppImage_. It contains Python3.8 and extra Python packages needed by
+:mod:`grand`.  Note that you need not use this AppImage_. The :mod:`grand`
+package is compatible with any distribution of CPython 3.8, e.g. installing from
+source or using conda if you prefer.
+
+If you like to go for the AppImage_ you can download it from GitHub_ as:
+
+.. code-block:: bash
+   wget https://github.com/grand-mother/grand/releases/download/appimage/python3-x86_64.AppImage
+   chmod +x python3-x86_64.AppImage
+
+Further instructions on `Python AppImages`_ can be found on GitHub. In
+particular we recommend extracting the AppImage in order to get a contained and
+expendable Python runtime. This can be done as:
+
+.. code-block:: bash
+   ./python3-x86_64.AppImage --appimage-extract
+   mv squashfs-root python3
+   rm -f python3-x86_64.AppImage
+
+Then, you can export the AppImage_ python to you environment as:
+
+.. code-block:: bash
+   export PATH=$(path)/python3/usr/bin:$PATH
+
+
+OSX
+---
+
+On OSX you will need to build the :mod:`grand` package from the source. This
+can be done as:
+
+.. code-block:: bash
+   git clone https://github.com/grand-mother/grand.git
    cd grand
-   source env/setup.sh
+   pip3.8 install --user -U pip
+   pip3.8 install --user -U -r requirements.txt
+   make install PYTHON=$(which python3.8)
 
-This will build C libraries and modules and configure your environment for
-using GRAND's `python` and its related executables -located under grand/bin-,
-E.g. `pip`, `sphinx-build`, etc.
-
-.. note::
-   The GRAND `python` is isolated from your system and home space. User specific
-   data can be found under `grand/user/grand`.
-
-You can restore your initial environment by sourcing the `clean.sh` file located
-under `env/` as well.
-
-
-Installing custom packages
---------------------------
-
-Extra Python packages can be (un)installed within the GRAND environment with
-`pip`, E.g. as:
-
-.. code-block:: bash
-
-   pip install test-pip-install
-
-.. note::
-   The packages are installed to the GRAND user space, i.e. in
-   grand/user/grand/.local. You can get rid of them by simply deleting the
-   grand/user folder.
-
-
-Relocating
-----------
-
-The installation can be relocated, E.g. with `cp` or `mv`. Only, one needs to
-source the `setup.sh` file again, once relocated.
-
-.. warning::
-   Custom packages, installed with `pip`, might not support relocation, E.g. to
-   another Linux system. You can re-install them in this case.
+Once built, the :mod:`grand` package can be relocated to any desired location.
 
 
 .. _AppImage: https://appimage.org
-.. _Debian: https://www.debian.org
 .. _GitHub: https://github.com/grand-mother/grand
-.. _VirtualBox: https://www.virtualbox.org
+.. _Python AppImages: https://github.com/niess/python-appimage
