@@ -28,6 +28,7 @@ source or using conda if you prefer.
 If you like to go for the AppImage_ you can download it from GitHub_ as:
 
 .. code-block:: bash
+
    wget https://github.com/grand-mother/grand/releases/download/appimage/python3-x86_64.AppImage
    chmod +x python3-x86_64.AppImage
 
@@ -36,6 +37,7 @@ particular we recommend extracting the AppImage in order to get a contained and
 expendable Python runtime. This can be done as:
 
 .. code-block:: bash
+
    ./python3-x86_64.AppImage --appimage-extract
    mv squashfs-root python3
    rm -f python3-x86_64.AppImage
@@ -43,6 +45,7 @@ expendable Python runtime. This can be done as:
 Then, you can export the AppImage_ python to you environment as:
 
 .. code-block:: bash
+
    export PATH=$(path)/python3/usr/bin:$PATH
 
 
@@ -53,6 +56,7 @@ On OSX you will need to build the :mod:`grand` package from the source. This
 can be done as:
 
 .. code-block:: bash
+
    git clone https://github.com/grand-mother/grand.git
    cd grand
    pip3.8 install --user -U pip
