@@ -15,6 +15,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         repository: numpy/numpy-stubs
+        ref: 2c8d8f26adb1eef54571ccc85ef8ad4f2fb90c4c
         path: tmp/numpy-stubs
 
     - name: Initialise the environment
