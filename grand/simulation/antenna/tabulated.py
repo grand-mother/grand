@@ -63,7 +63,7 @@ class TabulatedAntennaModel(AntennaModel):
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
             filename = f'{source.filename}:{source.path}'
-            loader = '_load_from_datanode'
+            loader = '_load_from_node'
         else:
             source = cast(Union[Path, str], source)
             filename = f'{source}:/'
