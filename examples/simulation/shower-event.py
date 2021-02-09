@@ -4,6 +4,18 @@ from grand import ECEF, LTP
 from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
 
 
+# Note: This examples requires some test data to be downloaded localy. You can
+# get these data from the grand store as:
+#
+# wget https://github.com/grand-mother/store/releases/download/101/HorizonAntenna_EWarm_leff_loaded.npy
+#
+# mkdir -p tests/simulation/data/zhaires
+# cd tests/simulation/data/zhaires
+# wget https://github.com/grand-mother/store/releases/download/101/zhaires-test.tar.gz
+# tar -xzf zhaires-test.tar.gz
+# cd -
+
+
 # Load the radio shower simulation data
 shower = ShowerEvent.load('tests/simulation/data/zhaires')
 if shower.frame is None:
