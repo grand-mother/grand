@@ -5,7 +5,7 @@ Unit tests for the grand.io module
 from pathlib import Path
 import unittest
 
-from astropy.coordinates import CartesianRepresentation,                       \
+from astropy.coordinates import Angle, CartesianRepresentation,                \
                                 UnitSphericalRepresentation
 import astropy.units as u
 import numpy
@@ -28,7 +28,7 @@ class IoTest(TestCase):
         u0 = UnitSphericalRepresentation(90 * u.deg, -90 * u.deg)
         c = numpy.array((1, 2)) * u.m
         r1 = CartesianRepresentation(c, c, c)
-        c = numpy.array((90, -90)) * u.deg
+        c = Angle(90, unit=u.deg)
         u1 = UnitSphericalRepresentation(c, c)
         loc = ECEF(45 * u.deg, 6 * u.deg, 0 * u.m,
                    representation_type='geodetic')
