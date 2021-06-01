@@ -58,8 +58,10 @@ class ZhairesShower(ShowerEvent):
                     positions[antenna] = CartesianRepresentation(
                         x = float(words[2]) * u.m,
                         y = float(words[3]) * u.m,
-                        z = float(words[4]) * u.m
+                        z = 0 * u.m
+                        #z = float(words[4]) * u.m
                     )
+                    #print("### Warning: Forcing antenna height = 0m")
 
         fields: Optional[FieldsCollection] = None
         raw_fields = {}
@@ -134,7 +136,19 @@ class ZhairesShower(ShowerEvent):
             def parse_maximum(string: str) -> CartesianRepresentation:
                 _, _, *xyz = string.split()
                 x, y, z = map(float, xyz)
-                return CartesianRepresentation(x * u.km, y * u.km, z * u.km)
+                ## Here we have to express the Xmax height in the correct LTP defined at ground level (eg z(antenna) = 0)
+                ## Hence we have to correct z_Xmax by "GroundAltitude" read from ZHaires input file
+                ## Dirty hack by OMH for now
+                try:
+                    inp_file = path.glob('*.inp').__next__()
+                    print("### zhaires.py: reading groundaltitude from. inp file.")
+                    with open(inp_file) as f:
+                      for line in f:
+                        if 'GroundAltitude' in line:
+                            ground_alt = float(line.split()[1])
+                except StopIteration:
+                    raise FileNotFoundError(path / '*.inp')
+                return CartesianRepresentation(x * u.km, y * u.km, (z-ground_alt/1000) * u.km)
 
             converters = (
                 ('(Lat', 'frame', parse_frame_location),

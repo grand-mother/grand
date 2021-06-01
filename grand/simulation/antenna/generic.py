@@ -92,7 +92,6 @@ class Antenna:
     def compute_voltage(self, direction: Union[ECEF, LTP, BaseRepresentation],
             field: ElectricField, frame: Union[ECEF, LTP, None]=None)          \
             -> Voltage:
-
         # Uniformise the inputs
         if self.frame is None:
             antenna_frame = None
@@ -106,6 +105,7 @@ class Antenna:
         else:
             antenna_frame = cast(Union[ECEF, LTP], self.frame)
             frame_required = False
+
             if field.frame is None:
                 E_frame, frame_required = frame, True
             else:
@@ -140,18 +140,21 @@ class Antenna:
             # Change the direction to the antenna frame
             if isinstance(direction, BaseRepresentation):
                 direction = dir_frame.realize_frame(direction)
-            direction = direction.transform_to(antenna_frame).data
+            direction = direction.transform_to(antenna_frame) # Now compute direction vector data in antenna frame
+            direction = direction.data
 
         Leff:CartesianRepresentation
         Leff = self.model.effective_length(direction, f)
-
         if antenna_frame is not None:
             # Change the effective length to the E-field frame
             tmp = antenna_frame.realize_frame(Leff)
             tmp = tmp.transform_to(E_frame)
+            # Transorm from antenna_frame to E_frame is a translation.
+            # The Leff vector norm should therefeore not be modified, but it is because it is defined as a point in astropy coordinates
             Leff = tmp.cartesian
 
-        V = irfft(Ex * Leff.x + Ey * Leff.y + Ez * Leff.z)
+        # Here we have to do an ugly patch for Leff values to be correct
+        V = irfft(Ex * (Leff.x  - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
         t = field.t
         t = t[:V.size]
 

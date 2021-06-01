@@ -156,6 +156,8 @@ class TabulatedAntennaModel(AntennaModel):
                  rp0 * rt1 * v[:, ip0, it1] + rp1 * rt1 * v[:, ip1, it1]
             return numpy.interp(x, xp, fp, left=0, right=0)
 
+
+
         ltr = interp(t.leff_theta.to_value('m'))
         lta = interp(t.phase_theta.to_value('rad'))
         lpr = interp(t.leff_phi.to_value('m'))
@@ -166,6 +168,7 @@ class TabulatedAntennaModel(AntennaModel):
         lp = lpr * numpy.exp(1j * lpa)
 
         t, p = theta.to_value('rad'), phi.to_value('rad')
+
         ct, st = numpy.cos(t), numpy.sin(t)
         cp, sp = numpy.cos(p), numpy.sin(p)
         lx = lt * ct * cp - sp * lp
