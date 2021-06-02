@@ -1,7 +1,7 @@
 PREFIX=     $(PWD)
 BUILD_TYPE= release
 
-PYTHON= /usr/bin/python3
+PYTHON= $(PWD)/bin/python
 INSTALL_X= install -m 0755
 INSTALL_F= install -m 0644
 INSTALL_D= install -d
