@@ -10,6 +10,15 @@ import numpy
 
 from ... import io, ECEF, LTP
 
+import os
+grand_astropy = True
+try:
+    if os.environ['GRAND_ASTROPY']=="0":
+        grand_astropy=False
+except:
+    pass
+
+
 __all__ = ['Antenna', 'AntennaModel', 'ElectricField', 'MissingFrameError',
            'Voltage']
 
@@ -92,6 +101,7 @@ class Antenna:
     def compute_voltage(self, direction: Union[ECEF, LTP, BaseRepresentation],
             field: ElectricField, frame: Union[ECEF, LTP, None]=None)          \
             -> Voltage:
+
         # Uniformise the inputs
         if self.frame is None:
             antenna_frame = None
@@ -105,7 +115,6 @@ class Antenna:
         else:
             antenna_frame = cast(Union[ECEF, LTP], self.frame)
             frame_required = False
-
             if field.frame is None:
                 E_frame, frame_required = frame, True
             else:
@@ -129,8 +138,15 @@ class Antenna:
         def fftfreq(n, t):
             dt = (t[1] - t[0]).to_value('s')
             return numpy.fft.fftfreq(n, dt) * u.Hz
-
-        E = field.E.represent_as(CartesianRepresentation)
+	
+#        print("E not repr", field.E)
+        # LWP: Seems unnecessary at least in the tested case - field.E already in cartesian
+        if grand_astropy:
+            E = field.E.represent_as(CartesianRepresentation)
+        else:
+            E = field.E
+#        print("E cart", E)
+#        exit()
         Ex = rfft(E.x)
         Ey = rfft(E.y)
         Ez = rfft(E.z)
@@ -139,22 +155,41 @@ class Antenna:
         if dir_frame is not None:
             # Change the direction to the antenna frame
             if isinstance(direction, BaseRepresentation):
-                direction = dir_frame.realize_frame(direction)
-            direction = direction.transform_to(antenna_frame) # Now compute direction vector data in antenna frame
-            direction = direction.data
+                print("dir pre", direction, dir_frame, antenna_frame)
+                # LWP: this joins direction and dir_frame - not needed if we get rid of astropy
+                if grand_astropy:
+                    direction = dir_frame.realize_frame(direction)
+                else:
+                    E = field.E
+                
+                print("dir post", direction)
+                #exit()
+            
+            # LWP: This adds the difference of the bases (shower_frame-antenna_frame) to the direction, which can be done manually
+            if grand_astropy:
+                direction = direction.transform_to(antenna_frame).data
+                print("dire postpost", direction)
+            else:
+                # Bases are in meters
+                base_diff = numpy.array([dir_frame.location.x.value-antenna_frame.location.x.value, dir_frame.location.y.value-antenna_frame.location.y.value, dir_frame.location.z.value-antenna_frame.location.z.value])/1000
+                # LWP: The frames are NWU and ENU orientation, yet their values are as similar as they had the same orientation...
+                print(antenna_frame, dir_frame)
+                print(base_diff)
+                # LWP: ToDo: Need to check the orientations of frames and perhaps reposition the x,y,z
+                direction = numpy.array([direction.x.value,direction.y.value,direction.z.value])+base_diff
+                print(direction)
+                #exit()
 
         Leff:CartesianRepresentation
         Leff = self.model.effective_length(direction, f)
+
         if antenna_frame is not None:
             # Change the effective length to the E-field frame
             tmp = antenna_frame.realize_frame(Leff)
             tmp = tmp.transform_to(E_frame)
-            # Transorm from antenna_frame to E_frame is a translation.
-            # The Leff vector norm should therefeore not be modified, but it is because it is defined as a point in astropy coordinates
             Leff = tmp.cartesian
 
-        # Here we have to do an ugly patch for Leff values to be correct
-        V = irfft(Ex * (Leff.x  - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
+        V = irfft(Ex * Leff.x + Ey * Leff.y + Ez * Leff.z)
         t = field.t
         t = t[:V.size]
 
