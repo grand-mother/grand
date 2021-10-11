@@ -1,28 +1,27 @@
-#! /usr/bin/env python
-import astropy.units as u
-from grand import ECEF, LTP
-from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
-#from grand.simulation import ShowerEvent, TabulatedAntennaModel
-#from grand.simulation.antenna .generic import compute_voltage
+#! /usr/bin/env python3
+
 import numpy as np
 from matplotlib import pyplot as plt
-from astropy.coordinates import BaseRepresentation, CartesianRepresentation
+from grand import ECEF, Geodetic, LTP, GRANDCS, SphericalRepresentation, CartesianRepresentation
+from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
+
 
 # Load the radio shower simulation data
 showerdir = '../../tests/simulation/data/zhaires'
 shower = ShowerEvent.load(showerdir)
-if shower.frame is None:
-    shower.localize(39.5 * u.deg, 90.5 * u.deg) # Coreas showers have no
-                                                # localization info. This must
-                                                # be set manually
 
-print("Shower frame=",shower.frame)
+if shower.frame is None:
+    shower.localize(39.5, 90.5) # Coreas showers have no
+                                # localization info. This must
+                                # be set manually
+print('---------------------------------')
 print("Zenith (Zhaires?!) =",shower.zenith)
 print("Azimuth (Zhaires?!) =",shower.azimuth)
-print("Xmax=",shower.maximum)
-#shower.core=CartesianRepresentation(0, 0, 2900, unit='m')
-print("Core=",shower.core)
-
+print("Xmax=",shower.maximum.flatten())
+print("Core=",shower.core.flatten())
+print("obstime=", shower.frame.obstime, '\n')
+print(vars(shower.frame), "Shower frame")
+print('---------------------------------', '\n')
 
 # Define an antenna model
 #
@@ -31,43 +30,55 @@ print("Core=",shower.core)
 
 antenna_model = TabulatedAntennaModel.load('./HorizonAntenna_EWarm_leff_loaded.npy')
 
+counter = 0
 # Loop over electric fields and compute the corresponding voltages
 for antenna_index, field in shower.fields.items():
+    counter += 1
+    if counter==2:
+        break
+
     # Compute the antenna local frame
     #
     # The antenna is placed within the shower frame. It is oriented along the
     # local magnetic North by using an ENU/LTP frame (x: East, y: North, z: Upward)
-    antenna_location = shower.frame.realize_frame(field.electric.r)
-    print(antenna_index,"Antenna pos=",antenna_location)
-
-    antenna_frame = LTP(location=antenna_location, orientation='NWU',magnetic=True, obstime=shower.frame.obstime)
+    antpos_wrt_shower= field.electric.r # RK: if antenna location was saved in LTP frame in zhaires.py, next step would not required.
+    antenna_location = LTP(x=antpos_wrt_shower.x, y=antpos_wrt_shower.y, 
+                           z=antpos_wrt_shower.z, frame=shower.frame)
+    antenna_frame = LTP(location=antenna_location, orientation='NWU',
+                        magnetic=True, obstime=shower.frame.obstime)
     antenna = Antenna(model=antenna_model, frame=antenna_frame)
 
-
+    print(antenna_index,"Antenna pos in shower frame", antpos_wrt_shower.flatten())
+    print(vars(antenna_location), antenna_location.flatten(), "antenna pos LTP in shower frame")
+    print('---------------------------------', '\n')
+    print(vars(antenna_frame), 'antenna frame')
+    print('---------------------------------', '\n')
+    
     # Compute the voltage on the antenna
     #
     # The electric field is assumed to be a plane-wave originating from the
     # shower axis at the depth of maximum development. Note that the direction
     # of observation and the electric field components are provided in the
     # shower frame. This is indicated by the `frame` named argument.
-    direction = shower.maximum - field.electric.r
-    print("Direction to Xmax = ",direction)
-    #print(antenna_frame.realize_frame(direction))
-    Exyz = field.electric.E.represent_as(CartesianRepresentation)
+    Exyz = field.electric.E
+    
+    # Xmax, Efield, and input frame are all in shower frame.
+    field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
 
-    field.voltage = antenna.compute_voltage(direction, field.electric,frame=shower.frame)
+    print("\nVpp=",max(field.voltage.V)-min(field.voltage.V), '\n')
 
     plt.figure()
     plt.subplot(211)
     plt.plot(field.electric.t,Exyz.x,label='Ex')
     plt.plot(field.electric.t,Exyz.y,label='Ey')
     plt.plot(field.electric.t,Exyz.z,label='Ez')
-    plt.xlabel('Time ('+str(field.electric.t.unit)+')')
-    plt.ylabel('Efield ('+str(Exyz.x.unit)+')')
+    plt.xlabel('Time (ns)')
+    plt.ylabel(r'Efield ($\mu$V/m)')
     plt.legend(loc='best')
     plt.subplot(212)
     plt.plot(field.voltage.t,field.voltage.V,label='V$_{EW}$')
-    plt.xlabel('Time ('+str(field.voltage.t.unit)+')')
-    plt.ylabel('Voltage ('+str(field.voltage.V.unit)+')')
+    plt.xlabel('Time (ns)')
+    plt.ylabel(r'Voltage ($\mu$V)')
     plt.legend(loc='best')
     plt.show()
+    input("Type return for next antenna")

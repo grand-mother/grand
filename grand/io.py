@@ -4,16 +4,16 @@ from collections import OrderedDict
 import os
 from typing import Any, Optional, Tuple, Union
 
-import astropy.units as u
-from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation,       \
-                                CartesianRepresentation
-from astropy.coordinates.representation import REPRESENTATION_CLASSES
-from astropy.time import Time
+#import astropy.units as u
+#from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, CartesianRepresentation
+#from astropy.coordinates.representation import REPRESENTATION_CLASSES
+#from astropy.time import Time
+
 import h5py
 from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
 
-from . import ECEF, LTP, Rotation
+from . import ECEF, LTP, Rotation, CartesianRepresentation
 
 __all__ = ['DataNode', 'ElementsIterator']
 
@@ -41,7 +41,6 @@ class DataNode:
     '''
     A node containing data elements and branches to sub-nodes
     '''
-
     _compression = {'compression': 'gzip', 'compression_opts': 9}
 
     def __init__(self, group: _Group) -> None:
@@ -73,7 +72,7 @@ class DataNode:
         pass
 
     def branch(self, k: str) -> DataNode:
-        v:_Group = self._group.require_group(k)
+        v:_Group = self._group.require_group(k) #Create a group only if it doesn’t exist else TypeError.
         return DataNode(v)
 
     def close(self) -> None:
@@ -92,25 +91,32 @@ class DataNode:
         else:
             return res
 
-    def write(self, k, v, dtype=None, unit=None, columns=None, units=None):
+    #def write(self, k, v, dtype=None, unit=None, columns=None, units=None):
+    def write(self, k, v, dtype=None, columns=None): #RK
         if isinstance(v, (str, bytes, numpy.string_, numpy.bytes_)):
             self._write_string(k, v)
-        elif isinstance(v, u.Quantity):
-            self._write_quantity(k, v, dtype, unit)
+        #elif isinstance(v, u.Quantity):
+        #    self._write_quantity(k, v, dtype, unit)
         elif isinstance(v, (list, tuple)):
-            self._write_table(k, v, dtype, columns, units)
+            #self._write_table(k, v, dtype, columns, units)
+            self._write_table(k, v, dtype, columns)
         elif isinstance(v, numpy.ndarray):
             if columns:
                 self._check_columns(v, columns)
-            if units:
-                self._check_units(v, units)
-            self._write_array(k, v, dtype, columns, units)
-        elif isinstance(v, BaseRepresentation):
-            self._write_representation(k, v, dtype, unit, columns, units)
-        elif isinstance(v, BaseCoordinateFrame):
-            self._write_frame(k, v)
+            #if units:
+            #    self._check_units(v, units)
+            #self._write_array(k, v, dtype, columns, units)
+            self._write_array(k, v, dtype, columns)  #RK
+        #elif isinstance(v, BaseRepresentation):    
+        elif isinstance(v, CartesianRepresentation): # RK. TODO: Recheck this method.
+            #self._write_representation(k, v, dtype, unit, columns, units)
+            self._write_representation(k, v, dtype, columns) #RK
+        #elif isinstance(v, BaseCoordinateFrame):
+        elif isinstance(v, (ECEF, LTP)): #RK
+            self._write_frame(k, v)      # RK. TODO: Recheck this method.
         else:
-            self._write_number(k, v, dtype, unit)
+            #self._write_number(k, v, dtype, unit)
+            self._write_number(k, v, dtype) #RK
 
     def _unpack(self, dset: _Dataset,
                       dtype: Union[numpy.DataType, str, None]=None) -> Any:
@@ -146,7 +152,8 @@ class DataNode:
 
         return v
 
-    def _write_string(self, k, v, columns=None, units=None) -> _Dataset:
+    #def _write_string(self, k, v, columns=None, units=None) -> _Dataset:
+    def _write_string(self, k, v, columns=None) -> _Dataset: #RK
         if hasattr(v, 'encode'):
             encoding = 'UTF-8'
             v = v.encode()
@@ -173,13 +180,14 @@ class DataNode:
         else:
             return v.tobytes()
 
-    def _write_quantity(self, k, v, dtype=None, unit=None) -> _Dataset:
+    #def _write_quantity(self, k, v, dtype=None, unit=None) -> _Dataset:
+    def _write_quantity(self, k, v, dtype=None) -> _Dataset: #RK
         if dtype is None:
             dtype = v.dtype
 
-        if unit is None:
-            unit = str(v.unit)
-        v = v.to_value(unit)
+        #if unit is None:
+        #    unit = str(v.unit)
+        #v = v.to_value(unit)
 
         try:
             shape = v.shape
@@ -188,51 +196,54 @@ class DataNode:
 
         dset = self._group.require_dataset(k, data=v, dtype=dtype,
                                            shape=shape)
-        dset.attrs['unit'] = unit
+        #dset.attrs['unit'] = unit
         dset.attrs['metatype'] = 'quantity'
 
         return dset
 
+    #RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
     @staticmethod
     def _unpack_quantity(dset, v):
-        unit = dset.attrs['unit']
-        return v * u.Unit(unit)
+        #unit = dset.attrs['unit']
+        return v #* u.Unit(unit)
 
-    def _write_representation(self, k, v, dtype=None, unit=None,
-        columns=None, units=None) -> _Dataset:
-
+    # TODO: Recheck this method. Find out where it is used.
+    #def _write_representation(self, k, v, dtype=None, unit=None,
+    #    columns=None, units=None) -> _Dataset:
+    def _write_representation(self, k, v, dtype=None, columns=None) -> _Dataset:
         components = v.components
         values = [getattr(v, f'_{name}') for name in components]
 
         if columns is None:
             columns = components
 
-        if unit is not None:
-            units = (unit, unit, unit)
+        #if unit is not None:
+        #    units = (unit, unit, unit)
 
-        dset = self._write_table(k, values, dtype, columns, units)
+        #dset = self._write_table(k, values, dtype, columns, units)
+        dset = self._write_table(k, values, dtype, columns) #RK
         dset.attrs['metatype'] = f'representation/{v.get_name()}'
 
         return dset
 
-    @staticmethod
-    def _unpack_representation(dset, v):
-        name = os.path.basename(dset.attrs['metatype'])
-        cls = REPRESENTATION_CLASSES[name]
-        units = dset.attrs['units']
-        v = [v[i] * u.Unit(ui) for i, ui in enumerate(units)]
-        return cls(*v)
+    #RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
+    #@staticmethod
+    #def _unpack_representation(dset, v):
+    #    name = os.path.basename(dset.attrs['metatype'])
+    #    cls = REPRESENTATION_CLASSES[name]
+    #    #units = dset.attrs['units']
+    #    #v = [v[i] * u.Unit(ui) for i, ui in enumerate(units)]
+    #    return cls(*v)
 
-    def _write_table(self, k, v, dtype=None, columns=None, units=None)         \
-        -> _Dataset:
-
+    #def _write_table(self, k, v, dtype=None, columns=None, units=None) -> _Dataset:
+    def _write_table(self, k, v, dtype=None, columns=None) -> _Dataset:
         if columns:
             self._check_columns(v, columns)
 
-        if units:
-            self._check_units(v, units)
-        else:
-            units = [self._get_unit(vi) for vi in v]
+        #if units:
+        #    self._check_units(v, units)
+        #else:
+        #    units = [self._get_unit(vi) for vi in v]
 
         if dtype is None:
             dtype = v[0].dtype
@@ -246,36 +257,48 @@ class DataNode:
         else:
             data = numpy.zeros((n, m), dtype=dtype)
 
-        for i, ui in enumerate(units):
+        #for i, ui in enumerate(units):
+        #    s = (i, slice(None)) if (m > 0) else i
+        #    if ui:
+        #        data[s] = v[i].to_value(ui)
+        #    else:
+        #        data[s] = v[i]
+        # RK
+        for i in range(len(v)):
             s = (i, slice(None)) if (m > 0) else i
-            if ui:
-                data[s] = v[i].to_value(ui)
-            else:
-                data[s] = v[i]
+            data[s] = v[i]
 
-        dset = self._write_array(k, data, dtype, columns, units)
+        #dset = self._write_array(k, data, dtype, columns, units)
+        dset = self._write_array(k, data, dtype, columns) #RK
         dset.attrs['metatype'] = 'table'
 
         return dset
 
+    #RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
     @staticmethod
     def _unpack_table(dset, v):
-        units = dset.attrs['units']
+        #units = dset.attrs['units']
         try:
             m = dset.shape[1]
         except IndexError:
             m = 0
 
         table = []
-        for i, ui in enumerate(units):
+        #for i, ui in enumerate(units):
+        #    s = (i, slice(None)) if (m > 0) else i
+        #    vi = v[s]
+        #    if ui:
+        #        vi *= u.Unit(ui)
+        #    table.append(vi)
+        for i in range(len(v)):
             s = (i, slice(None)) if (m > 0) else i
             vi = v[s]
-            if ui:
-                vi *= u.Unit(ui)
             table.append(vi)
+
         return table
 
-    def _write_number(self, k, v, dtype=None, unit=None) -> _Dataset:
+    #def _write_number(self, k, v, dtype=None, unit=None) -> _Dataset:
+    def _write_number(self, k, v, dtype=None) -> _Dataset: #RK
         if dtype is None:
             if hasattr(v, 'dtype'):
                 dtype = v.dtype
@@ -287,11 +310,11 @@ class DataNode:
                 raise ValueError(f'Could not infer dtype for {type(v)}')
 
         dset = self._group.require_dataset(k, data=v, dtype=dtype, shape=())
-        if unit:
-            dset.attrs['unit'] = unit
+        #if unit:
+        #    dset.attrs['unit'] = unit
 
-    def _write_array(self, k, v, dtype=None, columns=None, units=None)         \
-        -> _Dataset:
+    #def _write_array(self, k, v, dtype=None, columns=None, units=None) -> _Dataset:
+    def _write_array(self, k, v, dtype=None, columns=None) -> _Dataset:
 
         if dtype is None:
             dtype = v.dtype
@@ -304,47 +327,67 @@ class DataNode:
                                            shape=v.shape, **opts)
         if columns:
             dset.attrs['columns'] = columns
-        if units:
-            dset.attrs['units'] = units
+        #if units:
+        #    dset.attrs['units'] = units
 
         return dset
 
     def _write_frame(self, k, v):
         if isinstance(v, ECEF):
-            dset = self._group.require_dataset(k, data=None, shape=(),
-                                               dtype='f8')
+            # require_dataset(name, shape=None, dtype=None, exact=None, **kwds)
+            #require_dataset is from h5py. Creates a dataset if it doesn’t exist.
+            # RK TODO: why is ECEF data not saved, i.e data=None? Save other
+            #          frames too, like GRANDCS, Geodetic.
+            dset = self._group.require_dataset(k, data=None, shape=(), dtype='f8') 
             dset.attrs['metatype'] = 'frame/ecef'
         elif isinstance(v, LTP):
+            #RK. I do not like saving orgin and basis in a single array.
             data = numpy.empty((4, 3))
-            c = v._origin.represent_as(CartesianRepresentation)
-            data[0,0] = c.x.to_value('m')
-            data[0,1] = c.y.to_value('m')
-            data[0,2] = c.z.to_value('m')
-            data[1:,:] = v._basis
+            #c = v._origin.represent_as(CartesianRepresentation)
+            #data[0,0] = c.x.to_value('m')
+            #data[0,1] = c.y.to_value('m')
+            #data[0,2] = c.z.to_value('m')
+            #data[1:,:] = v._basis
+            c = v.location  #RK. location is in ECEF frame.
+            data[0,0] = c.x #RK
+            data[0,1] = c.y #RK
+            data[0,2] = c.z #RK
+            data[1:,:] = v._basis #RK. basis is wrt ECEF frame.
 
             dset = self._group.require_dataset(k, data=data, shape=data.shape,
                                                dtype=data.dtype)
             dset.attrs['metatype'] = 'frame/ltp'
-            dset.attrs['orientation'] = v.orientation
             dset.attrs['magnetic'] = v.magnetic
+            dset.attrs['orientation'] = v.orientation
+
+            if v.magnetic:
+                dset.attrs['magmodel'] = v.magmodel #RK
+                dset.attrs['obstime']  = v.obstime  #R
             if v.declination is not None:
-                dset.attrs['declination'] = v.declination.to_value('deg')
+                dset.attrs['declination'] = v.declination#.to_value('deg')
             if v.rotation is not None:
                 dset.attrs['rotation'] = v.rotation.matrix
         else:
             raise NotImplementedError(type(v))
 
         if v.obstime is not None:
-            dset.attrs['obstime'] = v.obstime.jd
+            dset.attrs['obstime'] = v.obstime#.jd
 
+        '''
+    #RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
     @staticmethod
     def _unpack_frame(dset, v):
         try:
             obstime = dset.attrs['obstime']
         except KeyError:
             obstime = None
-        else:
-            obstime = Time(obstime, format='jd')
+        #else:
+        #    obstime = Time(obstime, format='jd')
+        #RK
+        if isinstance(obstime, str):
+            obstime = datetime.date.fromisoformat(obstime)
+        elif isinstance(obstime, datet.date):
+            pass
 
         name = os.path.basename(dset.attrs['metatype'])
         if name == 'ecef':
@@ -370,7 +413,7 @@ class DataNode:
                        declination=declination,
                        obstime=obstime, rotation=rotation)
         else:
-            raise NotImplementedError(name)
+            raise NotImplementedError(name)'''
 
     @staticmethod
     def _check_columns(v, columns):
@@ -379,18 +422,20 @@ class DataNode:
             raise ValueError(f'Invalid number of columns (expected {n} got '
                              f'{len(columns)})')
 
-    @staticmethod
-    def _check_units(v, units):
-        n = len(v)
-        if units and (len(units) != n):
-            raise ValueError(f'Invalid number of units (expected {n} got '
-                             f'{len(units)})')
-    @staticmethod
-    def _get_unit(v):
-        try:
-            return v.unit.name
-        except AttributeError:
-            return ''
+    #RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
+    #@staticmethod
+    #def _check_units(v, units):
+    #    n = len(v)
+    #    if units and (len(units) != n):
+    #        raise ValueError(f'Invalid number of units (expected {n} got '
+    #                         f'{len(units)})')
+    #RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
+    #@staticmethod
+    #def _get_unit(v):
+    #    try:
+    #        return v.unit.name
+    #    except AttributeError:
+    #        return ''
 
     @property
     def elements(self):

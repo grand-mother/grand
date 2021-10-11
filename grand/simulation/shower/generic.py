@@ -5,15 +5,14 @@ from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
+from numbers import Number
 
-from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
-import astropy.units as u
 import numpy
 
 from ..pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
 from ...import io
-from ...tools.coordinates import ECEF, LTP, Rotation
+from ...tools.coordinates import ECEF, LTP, Rotation, GRANDCS, CartesianRepresentation #RK
 
 __all__ = ['CollectionEntry', 'FieldsCollection', 'ShowerEvent']
 
@@ -57,23 +56,20 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
 
 @dataclass
 class ShowerEvent:
-    energy: Optional[u.Quantity] = None
-    zenith: Optional[u.Quantity] = None
-    azimuth: Optional[u.Quantity] = None
-    primary: Optional[ParticleCode] = None
-
-    frame: Optional[BaseCoordinateFrame] = None
-
-    core: Optional[CartesianRepresentation] = None
+    energy   : Optional[Number] = None
+    zenith   : Optional[Number] = None
+    azimuth  : Optional[Number] = None
+    primary  : Optional[ParticleCode] = None
+    frame    : Optional[GRANDCS, LTP] = None
+    core     : Optional[CartesianRepresentation] = None
     geomagnet: Optional[CartesianRepresentation] = None
-    maximum: Optional[CartesianRepresentation] = None
-
-    fields: Optional[FieldsCollection] = None
+    maximum  : Optional[CartesianRepresentation] = None
+    ground_alt: 'altitude asl in meter'          = None #RK
+    fields   : Optional[FieldsCollection]        = None
 
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         baseclass = cls
-
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
             filename = f'{source.filename}:{source.path}'
@@ -99,6 +95,8 @@ class ShowerEvent:
                 loader = f'_from_datafile'
 
         _logger.info(f'Loading shower data from {filename}')
+        #print(f'Loading shower data from {filename}')
+        #print('loader', loader)
 
         try:
             load = getattr(baseclass, loader)
@@ -164,33 +162,39 @@ class ShowerEvent:
             m = len(self.fields)
             _logger.info(f'Dumped {m} field(s) to {node.filename}:{node.path}')
 
-    def localize(self, latitude: u.Quantity, longitude: u.Quantity,
-            height: Optional[u.Quantity]=None,
-            declination: Optional[u.Quantity]=None,
-            obstime: Union[datetime, Time, str, None]=None) -> None:
 
-        if height is None:
-            height = 0 * u.m
-
-        location = ECEF(latitude, longitude, height,
-                        representation_type='geodetic')
+    #def localize(self, latitude: u.Quantity, longitude: u.Quantity, height: Optional[u.Quantity]=None,
+    #        declination: Optional[u.Quantity]=None,
+    #        obstime: Union[datetime, Time, str, None]=None) -> None:
+    # RK
+    def localize(self, latitude, longitude, height=0,
+            declination: Optional[Number]         =None,
+            obstime    : Union[datetime, Time, str, None] =None) -> None:
+        #if height is None:
+        #    height = 0 #* u.m
+        #location = ECEF(latitude, longitude, height,
+        #                representation_type='geodetic')
+        location   = Geodetic(latitude=latitude, longitude=longitude, height=height) #RK
         self.frame = LTP(location=location, orientation='NWU', magnetic=True,
                          declination=declination, obstime=obstime)
 
-    def shower_frame(self) -> BaseCoordinateFrame:
+    # RK TODO: Understand what is done here and below and modify based on new coordinates.
+    def shower_frame(self):# -> BaseCoordinateFrame:
         ev = self.core - self.maximum
         ev /= ev.norm()
         evB = ev.cross(self.geomagnet)
         evB /= evB.norm()
         evvB = ev.cross(evB)
-
-        r = Rotation.from_matrix(numpy.array((evB.xyz, evvB.xyz, ev.xyz)).T)
+        # from_matrix is from scipy.transform.Rotation.
+        r = Rotation.from_matrix(numpy.array((evB.xyz, evvB.xyz, ev.xyz)).T) 
         return self.frame.rotated(r)
 
-    def transform(self, representation: BaseRepresentation,
-                        frame: BaseCoordinateFrame) -> BaseCoordinateFrame:
+    #def transform(self, representation: BaseRepresentation,
+    #                    frame: BaseCoordinateFrame) -> BaseCoordinateFrame:
+    #RK: This function seems unnecessary. Delete this after figuring out where it has been used.
+    '''def transform(self, representation, frame): # RK
         if frame == self.frame:
             return self.frame.realize_frame(representation)
         else:
             coordinates = self.frame._replicate(representation, copy=False)
-            return coordinates.transform_to(frame)
+            return coordinates.transform_to(frame)'''

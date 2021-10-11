@@ -7,11 +7,9 @@ from pathlib import Path
 import tarfile
 import unittest
 
-from astropy.coordinates import CartesianRepresentation, SphericalRepresentation
-import astropy.units as u
 import numpy
 
-from grand import store, io, LTP
+from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
 from grand.simulation import CoreasShower, ElectricField, ShowerEvent,         \
                              ZhairesShower
 from grand.simulation.pdg import ParticleCode
@@ -48,6 +46,7 @@ class ShowerTest(TestCase):
         self.assertEqual(a.voltage, None)
         self.assertEqual(b.voltage, None)
         a, b = a.electric, b.electric
+        print(type(a.r), type(b.r))
         self.assertCartesian(a.r, b.r, 4)
         self.assertQuantity(a.t, b.t, 7)
         self.assertCartesian(a.E, b.E, 5)
@@ -55,9 +54,9 @@ class ShowerTest(TestCase):
     def test_generic(self):
         settings = {
             'primary' : ParticleCode.PROTON,
-            'energy'  : 1E+18 * u.eV,
-            'zenith'  : 85 * u.deg,
-            'azimuth' : 0 * u.deg
+            'energy'  : 1E+9,# * u.GV,
+            'zenith'  : 85,# * u.deg,
+            'azimuth' : 0 #* u.deg
         }
         shower = ShowerEvent(**settings)
         shower.dump(self.path)
@@ -68,13 +67,13 @@ class ShowerTest(TestCase):
 
         fields = OrderedDict()
         electric = ElectricField(
-            numpy.array((0, 1, 2)) * u.ns,
+            numpy.array((0, 1, 2)),# * u.ns,
             CartesianRepresentation(
-                numpy.array((1, 0, 0)) * u.uV / u.m,
-                numpy.array((0, 1, 0)) * u.uV / u.m,
-                numpy.array((0, 0, 1)) * u.uV / u.m
+                x=numpy.array((1, 0, 0)),# * u.uV / u.m,
+                y=numpy.array((0, 1, 0)),# * u.uV / u.m,
+                z=numpy.array((0, 0, 1))# * u.uV / u.m
             ),
-            CartesianRepresentation(1 * u.m, 2 * u.m, 3 * u.m),
+            CartesianRepresentation(x=1, y=2, z=3),
         )
         fields[1] = CollectionEntry(electric)
         shower = ShowerEvent(fields=fields, **settings)
@@ -104,6 +103,7 @@ class ShowerTest(TestCase):
         self.assertIs(shower.frame, None)
 
         shower = CoreasShower.load(path)
+        print('path: ', self.path)
         shower.dump(self.path)
         tmp = shower.load(self.path)
 
@@ -123,12 +123,12 @@ class ShowerTest(TestCase):
         shower = ShowerEvent.load(path)
         self.assertIsInstance(shower.frame, LTP)
         self.assertIsNotNone(shower.geomagnet)
-        self.assertQuantity(shower.geomagnet.norm(), 54.021 << u.uT)
-        spherical = shower.geomagnet.represent_as(SphericalRepresentation)
-        self.assertQuantity(spherical.lat, -57.43 << u.deg)
+        self.assertAlmostEqual(numpy.linalg.norm(shower.geomagnet), 0.054021)
+        spherical = SphericalRepresentation(shower.geomagnet)
+        self.assertQuantity(spherical.theta, numpy.array([147.43]))
         self.assertIsNotNone(shower.core)
         self.assertIsNotNone(shower.maximum)
-        self.assertQuantity(shower.frame.declination, 0.72 << u.deg)
+        self.assertEqual(shower.frame.declination, 0.72)
 
         shower = ZhairesShower.load(path)
         shower.dump(self.path)

@@ -231,7 +231,7 @@ void grand_topography_local_elevation(struct turtle_stack * stack,
 /* Intersection with the topography */
 void grand_topography_distance(struct turtle_stepper * stepper,
     const double * r, const double * u, double * d, long n)
-{
+{   
         for (; n > 0; n--, r += 3, u += 3, d++) {
                 int index[2];
                 double altitude, elevation[2];
