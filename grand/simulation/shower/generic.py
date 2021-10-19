@@ -163,38 +163,29 @@ class ShowerEvent:
             _logger.info(f'Dumped {m} field(s) to {node.filename}:{node.path}')
 
 
-    #def localize(self, latitude: u.Quantity, longitude: u.Quantity, height: Optional[u.Quantity]=None,
-    #        declination: Optional[u.Quantity]=None,
-    #        obstime: Union[datetime, Time, str, None]=None) -> None:
-    # RK
     def localize(self, latitude, longitude, height=0,
             declination: Optional[Number]         =None,
             obstime    : Union[datetime, Time, str, None] =None) -> None:
-        #if height is None:
-        #    height = 0 #* u.m
-        #location = ECEF(latitude, longitude, height,
-        #                representation_type='geodetic')
         location   = Geodetic(latitude=latitude, longitude=longitude, height=height) #RK
         self.frame = LTP(location=location, orientation='NWU', magnetic=True,
                          declination=declination, obstime=obstime)
 
-    # RK TODO: Understand what is done here and below and modify based on new coordinates.
-    def shower_frame(self):# -> BaseCoordinateFrame:
-        ev = self.core - self.maximum
-        ev /= ev.norm()
-        evB = ev.cross(self.geomagnet)
-        evB /= evB.norm()
-        evvB = ev.cross(evB)
-        # from_matrix is from scipy.transform.Rotation.
-        r = Rotation.from_matrix(numpy.array((evB.xyz, evvB.xyz, ev.xyz)).T) 
-        return self.frame.rotated(r)
+    
+    def shower_frame(self):
+        # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
+        ev   = self.core - self.maximum
+        ev  /= numpy.linalg.norm(ev)
+        ev   = ev.T[0]              # [[x], [y], [z]] --> [x, y, z]
+        evB  = numpy.cross(ev, self.geomagnet.T[0])
+        evB /= numpy.linalg.norm(evB)
+        evvB = numpy.cross(ev, evB) 
 
-    #def transform(self, representation: BaseRepresentation,
-    #                    frame: BaseCoordinateFrame) -> BaseCoordinateFrame:
-    #RK: This function seems unnecessary. Delete this after figuring out where it has been used.
-    '''def transform(self, representation, frame): # RK
-        if frame == self.frame:
-            return self.frame.realize_frame(representation)
-        else:
-            coordinates = self.frame._replicate(representation, copy=False)
-            return coordinates.transform_to(frame)'''
+        # change these unit vector from 'NWU' LTP frame to ECEF frame.
+        # RK TODO: Going back to ECEF frame is a common process for vectors. 
+        #          Develop a function to do this.
+        ev   = numpy.matmul(self.frame.basis.T, ev)
+        evB  = numpy.matmul(self.frame.basis.T, evB)
+        evvB = numpy.matmul(self.frame.basis.T, evvB)
+        self.frame.basis = numpy.vstack((evB, evvB, ev))
+
+        return self.frame
