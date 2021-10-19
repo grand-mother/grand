@@ -46,7 +46,6 @@ class ShowerTest(TestCase):
         self.assertEqual(a.voltage, None)
         self.assertEqual(b.voltage, None)
         a, b = a.electric, b.electric
-        print(type(a.r), type(b.r))
         self.assertCartesian(a.r, b.r, 4)
         self.assertQuantity(a.t, b.t, 7)
         self.assertCartesian(a.E, b.E, 5)
@@ -103,7 +102,6 @@ class ShowerTest(TestCase):
         self.assertIs(shower.frame, None)
 
         shower = CoreasShower.load(path)
-        print('path: ', self.path)
         shower.dump(self.path)
         tmp = shower.load(self.path)
 
@@ -139,13 +137,23 @@ class ShowerTest(TestCase):
 
         frame = shower.shower_frame()
         ev = shower.core - shower.maximum
-        ev /= ev.norm()
-        evB = ev.cross(shower.geomagnet)
-        evB /= evB.norm()
-        ev = shower.transform(ev, frame).cartesian.xyz.value
-        self.assertArray(ev, numpy.array((0, 0, 1)))
-        evB = shower.transform(evB, frame).cartesian.xyz.value
-        self.assertArray(evB, numpy.array((1, 0, 0)))
+        ev  /= numpy.linalg.norm(ev)
+        ev   = ev.T[0]
+        evB  = numpy.cross(ev, shower.geomagnet.T[0])
+        evB /= numpy.linalg.norm(evB)
+        evvB = numpy.cross(ev, evB) # evB is already transposed.
+
+        #evB = shower.transform(evB, frame).cartesian.xyz.value
+        evB = LTP(x=evB[0], y=evB[1], z=evB[2], frame=shower.frame) 
+        evB = evB.ltp_to_ltp(frame)
+        self.assertArray(evB, numpy.array((1, 0, 0)), 7)
+        evvB = LTP(x=evvB[0], y=evvB[1], z=evvB[2], frame=shower.core) 
+        evvB = evvB.ltp_to_ltp(frame)
+        self.assertArray(evvB, numpy.array((0, 1, 0)), 7)
+        #ev = shower.transform(ev, frame).cartesian.xyz.value
+        ev = LTP(x=ev[0], y=ev[1], z=ev[2], frame=shower.core) # TODO: this step is redundant as ev is already in LTP. Fix this.
+        ev = ev.ltp_to_ltp(frame)
+        self.assertArray(ev, numpy.array((0, 0, 1)), 7)
 
 
 if __name__ == '__main__':
