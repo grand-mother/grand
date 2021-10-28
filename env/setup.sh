@@ -61,6 +61,8 @@ main () {
 
     expand_path "bin"
     expand_path "user/grand/.local/bin"
+    # add in PATH executable install by pip (like pylint)
+    expand_path "bin/python3-x86_64.AppDir/opt/python3.8/bin"
 
     expand_pythonpath () {
         local path="${prefix}/${1}"
