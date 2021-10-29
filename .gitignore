@@ -38,3 +38,9 @@ tests/simulation/data
 
 # Ignore user data
 user/grand
+
+# quality
+.scannerwork/*
+quality/report*
+quality/html_coverage
+
