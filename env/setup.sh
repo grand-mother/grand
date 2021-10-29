@@ -11,7 +11,8 @@ main () {
     done
 
     local prefix="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
-
+    # add to env variable define root pf package
+    export GRAND_ROOT=$prefix
     local tag="$(basename ${prefix})"
     logmsg () {
         [[ -z "${quiet}" ]] && echo "[${tag}] $@"
@@ -63,6 +64,8 @@ main () {
     expand_path "user/grand/.local/bin"
     # add in PATH executable install by pip (like pylint)
     expand_path "bin/python3-x86_64.AppDir/opt/python3.8/bin"
+    # add in PATH quality for script
+    expand_path "quality"
 
     expand_pythonpath () {
         local path="${prefix}/${1}"
