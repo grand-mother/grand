@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 
 from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
+from astropy.coordinates.representation import BaseRepresentation
 import astropy.units as u
 import numpy
 
