@@ -39,8 +39,12 @@ tests/simulation/data
 # Ignore user data
 user/grand
 
-# quality
+# Ignore quality report 
 .scannerwork/*
-quality/report*
-quality/html_coverage
+quality/report_*
+quality/html_*
+
+# Ignore eclipse config files
+.project
+.pydevproject
 
