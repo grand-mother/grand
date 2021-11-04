@@ -9,8 +9,6 @@ __pycache__
 *.pyc
 *.pyo
 
-# Ignore mypy cache
-.mypy_cache
 
 # Ignore build and dist temporaries
 dist
@@ -18,8 +16,6 @@ build*
 *.egg-info
 *.whl
 
-# Ignore temporary coverage reports
-.coverage
 
 # Ignore the Python engine
 python3-*.AppImage
@@ -39,8 +35,11 @@ tests/simulation/data
 # Ignore user data
 user/grand
 
-# Ignore quality report 
-.scannerwork/*
+# Ignore quality report
+.mypy_cache
+.pytest_cache
+.coverage
+.scannerwork
 quality/report_*
 quality/html_*
 
