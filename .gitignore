@@ -46,4 +46,5 @@ quality/html_*
 # Ignore eclipse config files
 .project
 .pydevproject
+.settings
 
