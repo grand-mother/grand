@@ -5,11 +5,11 @@ Unit tests for the grand.simulation.antenna module
 from pathlib import Path
 import unittest
 
-import astropy.units as u
-from astropy.coordinates import CartesianRepresentation
+#import astropy.units as u
+#from astropy.coordinates import CartesianRepresentation
 import numpy
 
-from grand import ECEF
+from grand import ECEF, CartesianRepresentation, LTP
 from grand.simulation import Antenna, ElectricField, MissingFrameError,        \
                              TabulatedAntennaModel
 from tests import TestCase
@@ -69,41 +69,41 @@ class AntennaTest(TestCase):
 
     def test_antenna(self):
         ts, delta, Es = 502.5, 5, 100
-        t = numpy.linspace(0, 2000, 20001)
+        t = numpy.linspace(0, 2000, 20001)*1.e-9
         E1 = numpy.zeros(t.shape)
         E1[(t >= ts - 0.5 * delta) & (t <= ts + 0.5 * delta)] = Es
 
-        t *= u.ns
-        E0 = numpy.zeros(t.shape) * u.uV / u.m
-        E1 *= u.uV / u.m
-        E = CartesianRepresentation(E1, E0, E0)
+        #t *= u.ns
+        E0 = numpy.zeros(t.shape) #* u.uV / u.m
+        #E1 *= u.uV / u.m
+        E = CartesianRepresentation(x=E1, y=E0, z=E0)
 
-        direction = CartesianRepresentation(1, 0, 1)
-
+        #direction = CartesianRepresentation(x=1, y=0, z=1)
+        xmax    =  LTP(x=1, y=0, z=1, location=ECEF(x=0,y=0,z=0), declination=0, orientation='NWU')
         def check(voltage):
             imin, imax = numpy.argmin(voltage.V), numpy.argmax(voltage.V)
             t0 = 0.5 * (voltage.t[imax] + voltage.t[imin])
             Vpp = voltage.V[imax] - voltage.V[imin]
 
-            self.assertLess(t0.to_value('ns') - ts, delta)
-            self.assertGreater(Vpp.to_value('uV'), 6E-02 * Es)
+            self.assertLess(t0 - ts, delta)
+            self.assertGreater(Vpp, 6E-02 * Es)
 
-        antenna = Antenna(model=self.model, frame=ECEF())
-        field = ElectricField(t, E, frame=ECEF())
-        check(antenna.compute_voltage(ECEF(direction), field))
+        antenna = Antenna(model=self.model, frame=ECEF(x=0,y=0,z=0))
+        field = ElectricField(t, E, frame=ECEF(x=0,y=0,z=0))
+        check(antenna.compute_voltage(xmax, field))
         with self.assertRaises(MissingFrameError) as context:
-            antenna.compute_voltage(direction, field)
+            antenna.compute_voltage(xmax, field, frame=frame)
 
         antenna = Antenna(model=self.model)
         field = ElectricField(t, E)
-        check(antenna.compute_voltage(direction, field))
+        check(antenna.compute_voltage(xmax, field))
         with self.assertRaises(MissingFrameError) as context:
-            antenna.compute_voltage(ECEF(direction), field)
+            antenna.compute_voltage(xmax, field, frame=frame)
 
-        antenna = Antenna(model=self.model, frame=ECEF())
-        check(antenna.compute_voltage(direction, field, frame=ECEF()))
+        antenna = Antenna(model=self.model, frame=ECEF(x=0,y=0,z=0))
+        check(antenna.compute_voltage(xmax, field, frame=ECEF(x=0,y=0,z=0)))
         with self.assertRaises(MissingFrameError) as context:
-            antenna.compute_voltage(direction, field)
+            antenna.compute_voltage(xmax, field)
 
 
 if __name__ == '__main__':

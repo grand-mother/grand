@@ -20,11 +20,12 @@ class TestCase(unittest.TestCase):
             a, b = a.flatten(), b.flatten()
         for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
 
-    #RK
     def assertQuantity(self, a, b, tol=9):
         '''Check that two astropy.Quantities are consistent'''
         n = a.size
         self.assertEqual(n, b.size)
+        b = b.to_value(a.unit)
+        a = a.value
         if n > 1:
             if len(a.shape) > 1:
                 a, b = a.flatten(), b.flatten()
@@ -34,15 +35,15 @@ class TestCase(unittest.TestCase):
 
     def assertCartesian(self, a, b, tol=9):
         '''Check that two CartesianRepresentations are consistent'''
-        self.assertQuantity(a[0], b[0], tol)
-        self.assertQuantity(a[1], b[1], tol)
-        self.assertQuantity(a[2], b[2], tol)
+        self.assertQuantity(a.x, b.x, tol)
+        self.assertQuantity(a.y, b.y, tol)
+        self.assertQuantity(a.z, b.z, tol)
 
-    def assertSpherical(self, a, b, tol=9):
-        '''Check that two SphericalRepresentations are consistent'''
-        self.assertQuantity(a[0], b[0], tol)
-        self.assertQuantity(a[1], b[1], tol)
-        self.assertQuantity(a[2], b[2], tol)
+    def assertUnitSpherical(self, a, b, tol=9):
+        '''Check that two UnitSphericalRepresentations are consistent'''
+        self.assertQuantity(a.lon, b.lon, tol)
+        self.assertQuantity(a.lat, b.lat, tol)
+
 
 def main():
     '''Run a local test suite
