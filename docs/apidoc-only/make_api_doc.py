@@ -40,7 +40,7 @@ def main(args):
     #                        
     logging.info(f"============> [2/4] Copy conf file for API doc and source")
     # Note : get_root_eclairs() has changed
-    os.system('cp -r ' + get_root_pkg() + '/docs/api/sphinx ' + doc_dir)
+    os.system('cp -r ' + get_root_pkg() + '/docs/apidoc-only/sphinx ' + doc_dir)
     cp_src = 'cp -r ' + get_root_pkg() + '/grand'
     if args.only is None:
         cp_src += ' ' + doc_dir + '/src'            
