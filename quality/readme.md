@@ -10,7 +10,7 @@ After
 do 
 
 ```console
-python -m pip install -r quality/requirement.txt
+python -m pip install -r quality/requirements.txt
 ```
 
 ## Check code, static analysis
