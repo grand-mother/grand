@@ -9,10 +9,10 @@ import numpy
 #from astropy.coordinates import CartesianRepresentation, EarthLocation, ITRS,  \
 #                                SkyCoord, SphericalRepresentation
 #from astropy.utils import iers
-iers.conf.auto_download = False # Disable downloads for tests,
+#iers.conf.auto_download = False # Disable downloads for tests,
                                 # due to latency failures
 
-from grand import ECEF, LTP, Geodetic, GeodeticRepresentation, CartesianRepresentation, \
+from grand.tools.coordinates import ECEF, LTP, Geodetic, GeodeticRepresentation, CartesianRepresentation, \
                     HorizontalRepresentation, SphericalRepresentation, Rotation, Reference 
             #ExtendedCoordinateFrame, Rotation
 from tests import TestCase
