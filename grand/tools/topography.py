@@ -122,7 +122,7 @@ def update_data(coordinates: Union[ECEF, LTP]=None, clear: bool=False,
         # Extend by the radius, if any
         if radius is not None:
             for i in range (2):
-                delta = -radius if not i else radius
+                delta = -1*radius if not i else radius
                 c = LTP(x=delta, y=delta, z=0 * u.m,
                         location=ECEF(GeodeticRepresentation(
                                           latitude[i] * u.deg,
