@@ -1,2 +1,7 @@
 python_docs_theme
-sphinx
+sphinx==3.0.3
+sphinx-automodapi==0.13
+sphinx-pyreverse==0.0.17
+sphinx-rtd-theme==1.0.0
+better-apidoc==0.3.2
+
