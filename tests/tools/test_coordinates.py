@@ -26,7 +26,7 @@ class CoordinatesTest(TestCase):
 
         self.obstime = '2010-01-01'
         self.location = Geodetic(latitude=0., longitude=0., 
-                                height=0., referece=Reference.ELLIPSOID)
+                                height=0., reference=Reference.ELLIPSOID)
 
     def test_geodetic(self):
         ecef = ECEF(x=6378137, y=0, z=0)
