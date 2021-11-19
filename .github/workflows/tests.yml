@@ -58,12 +58,12 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Test wheel
-      run: |
-        mv grand .grand
-        pip3 install dist/grand-*_x86_64.whl
-        python3 -m tests --unit
-        mv .grand grand
+#     - name: Test wheel
+#       run: |
+#         mv grand .grand
+#         pip3 install dist/grand-*_x86_64.whl
+#         python3 -m tests --unit
+#         mv .grand grand
 
     - name: Upload to PyPI
       if: github.ref == 'refs/heads/master'
