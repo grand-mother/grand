@@ -71,27 +71,27 @@ jobs:
       with:
         password: ${{ secrets.PYPI_TOKEN }}
 
-  OSX:
-    runs-on: macOS-latest
-    env:
-      PYTHONPATH: ${{ github.workspace }}/lib/python
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.8'
-
-    - name: Install
-      run: |
-        pip3 install -U pip
-        pip3 install -U -r requirements.txt
-        make install PYTHON=$(which python3)
-
-    - name: Check documentation examples
-      run: python3 -m tests --doc
-
-    - name: Run unit tests
-      run: python3 -m tests --unit
+#   OSX:
+#     runs-on: macOS-latest
+#     env:
+#       PYTHONPATH: ${{ github.workspace }}/lib/python
+#     steps:
+#     - uses: actions/checkout@v2
+#     - uses: actions/setup-python@v1
+#       with:
+#         python-version: '3.8'
+# 
+#     - name: Install
+#       run: |
+#         pip3 install -U pip
+#         pip3 install -U -r requirements.txt
+#         make install PYTHON=$(which python3)
+# 
+#     - name: Check documentation examples
+#       run: python3 -m tests --doc
+# 
+#     - name: Run unit tests
+#       run: python3 -m tests --unit
 
   Documentation:
     runs-on: ubuntu-latest
