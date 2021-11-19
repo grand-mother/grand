@@ -24,8 +24,7 @@ jobs:
     - name: Static analysis with pylint
       run: |
         . env/setup.sh
-        ls -l
-        pip install -r quality/requirement.txt
+        python -m pip install -r quality/requirements.txt
         pylint --rcfile quality/pylint.conf --fail-under=9.5  grand
         
     - name: Static type check
