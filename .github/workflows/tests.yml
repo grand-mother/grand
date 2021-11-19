@@ -19,31 +19,37 @@ jobs:
         path: tmp/numpy-stubs
 
     - name: Initialise the environment
-      run: . env/setup.sh
-
+      run: |
+        . env/setup.sh
+        python -m pip install -r quality/requirements.txt
+      
+    - name: Static analysis with pylint
+      run: |
+        . env/setup.sh                
+        pylint --rcfile quality/pylint.conf --fail-under=9.5  grand
+        
     - name: Static type check
       run: |
         . env/setup.sh
-        pip install mypy
         mkdir -p user/grand/stubs
         mv tmp/numpy-stubs/numpy-stubs user/grand/stubs/numpy
         MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy                    \
             --config-file=$PWD/tests/mypy.ini -m grand
+
+    - name: Dynamics analysis and coverage
+      run: |
+        . env/setup.sh
+        coverage run --source=grand -m pytest tests
 
     - name: Check documentation examples
       run: |
         . env/setup.sh
         python -m tests --doc
 
-    - name: Run unit tests
-      run: |
-        . env/setup.sh
-        pip install codecov
-        coverage run tests --unit
 
-    - name: Upload the coverage
-      if: github.ref == 'refs/heads/master'
-      uses: codecov/codecov-action@v1
+#     - name: Upload the coverage
+#       if: github.ref == 'refs/heads/master'
+#       uses: codecov/codecov-action@v1
 
 #     - name: Build wheels
 #       if: github.ref == 'refs/heads/master'
