@@ -31,7 +31,6 @@ jobs:
     - name: Static type check
       run: |
         . env/setup.sh
-#       pip install mypy
         mkdir -p user/grand/stubs
         mv tmp/numpy-stubs/numpy-stubs user/grand/stubs/numpy
         MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy                    \
