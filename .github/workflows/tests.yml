@@ -20,7 +20,13 @@ jobs:
 
     - name: Initialise the environment
       run: . env/setup.sh
-
+      
+    - name: Static analysis with pylint
+      run: |
+        . env/setup.sh
+        python -m pip install -r quality/requirement.txt
+        pylint --rcfile quality/pylint.conf --fail-under=9.5  grand
+        
     - name: Static type check
       run: |
         . env/setup.sh
@@ -41,9 +47,9 @@ jobs:
         pip install codecov
         coverage run tests --unit
 
-    - name: Upload the coverage
-      if: github.ref == 'refs/heads/master'
-      uses: codecov/codecov-action@v1
+#     - name: Upload the coverage
+#       if: github.ref == 'refs/heads/master'
+#       uses: codecov/codecov-action@v1
 
 #     - name: Build wheels
 #       if: github.ref == 'refs/heads/master'
