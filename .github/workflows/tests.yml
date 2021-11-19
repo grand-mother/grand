@@ -25,7 +25,7 @@ jobs:
       run: |
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
-        pylint --rcfile quality/pylint.conf --fail-under=9.5  grand
+        pylint --rcfile quality/pylint.conf --fail-under=9.9  grand
         
     - name: Static type check
       run: |
