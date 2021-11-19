@@ -65,11 +65,11 @@ jobs:
 #         python3 -m tests --unit
 #         mv .grand grand
 
-    - name: Upload to PyPI
-      if: github.ref == 'refs/heads/master'
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_TOKEN }}
+#     - name: Upload to PyPI
+#       if: github.ref == 'refs/heads/master'
+#       uses: pypa/gh-action-pypi-publish@master
+#       with:
+#         password: ${{ secrets.PYPI_TOKEN }}
 
 #   OSX:
 #     runs-on: macOS-latest
