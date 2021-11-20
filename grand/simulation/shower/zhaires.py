@@ -7,7 +7,7 @@ import re
 from typing import Any, Dict, Optional
 
 from ...tools.coordinates import ECEF, LTP, Geodetic
-from ...tools.coordinates import CartesianRepresentation, SphericalRepresentation, Reference
+from ...tools.coordinates import CartesianRepresentation, SphericalRepresentation#, Reference
 
 import h5py
 import numpy
@@ -40,7 +40,7 @@ class ZhairesShower(ShowerEvent):
         if not path.exists():
             raise FileNotFoundError(path)
 
-        # Note: Zhaires has a fixed coordinate frame at a location with 'NWU' orientation at sea level.
+        # Note: Zhaires has a fixed coordinate frame at a location with 'NWU' orientation at the sea level.
         # 'N' is the magnetic north, 'W' is 90 deg west from 'N', and 'U' is upward towards zenith.
         inp: Dict[str, Any] = {}
         try:
@@ -63,7 +63,7 @@ class ZhairesShower(ShowerEvent):
                 lat = parse_quantity(lat[:-2])
                 lon = parse_quantity(lon[:-3])
                 # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
-                geodetic = Geodetic(latitude=lat, longitude=lon, height=0, reference=Reference.ELLIPSOID)
+                geodetic = Geodetic(latitude=lat, longitude=lon, height=0, reference='ELLIPSOID')
                 return ECEF(geodetic)
 
             def parse_date(string: str) -> datetime:
@@ -146,6 +146,7 @@ class ZhairesShower(ShowerEvent):
                            declination=declination, obstime=obstime)  
         inp['core'] = LTP(x=0, y=0, z=ground_alt, frame=inp['frame'])
         #RK. Save Xmax in LTP frame. It will be easier to convert to antenna frame.
+        #    But it takes more space (about 8 times/antenna).
         Xmax           = inp['maximum'] 
         inp['maximum'] = LTP(x=Xmax.x, y=Xmax.y, z=Xmax.z, frame=inp['frame']) #RK
 
