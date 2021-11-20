@@ -143,14 +143,12 @@ class ShowerTest(TestCase):
         evB /= numpy.linalg.norm(evB)
         evvB = numpy.cross(ev, evB) # evB is already transposed.
 
-        #evB = shower.transform(evB, frame).cartesian.xyz.value
         evB = LTP(x=evB[0], y=evB[1], z=evB[2], frame=shower.frame) 
         evB = evB.ltp_to_ltp(frame)
         self.assertArray(evB, numpy.array((1, 0, 0)), 7)
         evvB = LTP(x=evvB[0], y=evvB[1], z=evvB[2], frame=shower.core) 
         evvB = evvB.ltp_to_ltp(frame)
         self.assertArray(evvB, numpy.array((0, 1, 0)), 7)
-        #ev = shower.transform(ev, frame).cartesian.xyz.value
         ev = LTP(x=ev[0], y=ev[1], z=ev[2], frame=shower.core) # TODO: this step is redundant as ev is already in LTP. Fix this.
         ev = ev.ltp_to_ltp(frame)
         self.assertArray(ev, numpy.array((0, 0, 1)), 7)
