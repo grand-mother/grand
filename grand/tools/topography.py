@@ -24,7 +24,6 @@ __all__ = ['elevation', 'distance', 'geoid_undulation', 'update_data',
 class Reference(enum.IntEnum):
     '''Reference level for topography data
     '''
-
     ELLIPSOID = enum.auto()
     GEOID = enum.auto()
     LOCAL = enum.auto()
@@ -40,7 +39,7 @@ _DEFAULT_MODEL: Final = 'SRTMGL1'
 _default_topography: Optional['Topography'] = None
 '''Stack for the topographic data'''
 
-_default_reference: Optional[Reference] = Reference.GEOID
+_default_reference: Optional[str] = 'GEOID' #options: 'GEOID', LOCAL', 'ELLIPSOID'
 '''Stack for the topographic data'''
 
 _geoid: Optional[_Map] = None
@@ -59,8 +58,8 @@ def distance(position: 'Coordinates Instance', direction: CartesianRepresentatio
     return _default_topography.distance(position, direction, maximum_distance)
 
 
-def elevation(coordinates: 'Coordinates Instance',
-    reference: Optional[Reference]=_default_reference):
+def elevation(coordinates: 'Coordinates Instance', 
+    reference: Optional[str]=_default_reference):
     '''Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid.
     '''
     global _default_topography
@@ -101,9 +100,11 @@ def geoid_undulation(coordinates: 'Coordinates Instance'=None,
     geoid = _get_geoid()
 
     # Compute the geodetic coordinates
-    if (not isinstance(latitude, type(None))) and (not isinstance(longitude, type(None))):
+    #if (not isinstance(latitude, type(None))) and (not isinstance(longitude, type(None))):
+    if (latitude is not None) and (longitude is not None):
         pass
-    elif not isinstance(coordinates, type(None)):
+        #elif not isinstance(coordinates, type(None)):
+    elif coordinates is not None:
         geodetic = Geodetic(coordinates)
         latitude = geodetic.latitude
         longitude= geodetic.longitude
@@ -195,7 +196,6 @@ def update_data(coordinates: 'Coordinate Instance' = None,
 
                 # ToDo: Add error message if failing to load topography data.
 
-
     # Reset the topography proxy
     global _default_topography
     _default_topography = None
@@ -223,19 +223,14 @@ class Topography:
 
 
     def elevation(self, coordinates: 'Coordinates Instance',
-        reference: Optional[Reference]=_default_reference):
+        reference: Optional[str]=_default_reference):
         '''Get the topography elevation, w.r.t. sea level, w.r.t the
            ellipsoid or in local coordinates. The default reference is
            w.r.t sea level (GEOID).
         '''
-        #if reference is None:
-        #    if isinstance(coordinates, (LTP, GRANDCS)):
-        #        elevation = self._local_elevation(coordinates)
-        #    else:
-        #        elevation = self._global_elevation(coordinates,
-        #                                           Reference.ELLIPSOID)
-        #else:
-        if reference == Reference.LOCAL:
+        reference = reference.upper()
+
+        if reference == 'LOCAL':
             if not isinstance(coordinates, (LTP, GRANDCS)):
                 raise ValueError('not an LTP or GRANDCS frame')
             elevation = self._local_elevation(coordinates)
@@ -282,7 +277,7 @@ class Topography:
         return elevation
 
 
-    def _global_elevation(self, coordinates: 'Coordinate Instance', reference: Reference):
+    def _global_elevation(self, coordinates: 'Coordinate Instance', reference: str):
         '''Get the topography elevation w.r.t. sea level or w.r.t. the
            ellipsoid.
         '''
@@ -298,7 +293,7 @@ class Topography:
         # Return the topography elevation
         n = latitude.size
         elevation = np.zeros(n)
-        if reference == Reference.ELLIPSOID:
+        if reference == 'ELLIPSOID':
             geoid = _get_geoid()._map[0]
         else:
             geoid = ffi.NULL
@@ -335,7 +330,7 @@ class Topography:
         norm      = np.linalg.norm(direction)
         direction = direction/norm
 
-        dn = maximum_distance.size if maximum_distance is not None else 1
+        dn = np.float64(maximum_distance).size if maximum_distance is not None else 1
         n  = max(position.x.size, direction.x.size, dn)
 
         if ((direction.size > 1) and (direction.size < n)) or                  \
