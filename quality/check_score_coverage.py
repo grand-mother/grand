@@ -10,7 +10,7 @@ import sys
 
 import coverage
 
-COV_THRESHOLD = 90
+COV_THRESHOLD = 80
 
 GRAND_ROOT = os.environ["GRAND_ROOT"]
 os.chdir(GRAND_ROOT)
