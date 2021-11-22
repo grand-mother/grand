@@ -26,7 +26,7 @@ jobs:
     - name: Static analysis with pylint
       run: |
         . env/setup.sh                
-        pylint --rcfile quality/pylint.conf --fail-under=9.5  grand
+        grand_quality_analysis.bash
         
     - name: Static type check
       run: |
