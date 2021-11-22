@@ -40,7 +40,8 @@ jobs:
       run: |
         . env/setup.sh
         coverage run --source=grand -m pytest tests
-
+        check_score_coverage.py
+        
     - name: Check documentation examples
       run: |
         . env/setup.sh
