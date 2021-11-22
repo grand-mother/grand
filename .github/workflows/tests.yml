@@ -19,119 +19,126 @@ jobs:
         path: tmp/numpy-stubs
 
     - name: Initialise the environment
-      run: . env/setup.sh
-
+      run: |
+        . env/setup.sh
+        python -m pip install -r quality/requirements.txt
+      
+    - name: Static analysis with pylint
+      run: |
+        . env/setup.sh                
+        grand_quality_analysis.bash
+        
     - name: Static type check
       run: |
         . env/setup.sh
-        pip install mypy
         mkdir -p user/grand/stubs
         mv tmp/numpy-stubs/numpy-stubs user/grand/stubs/numpy
         MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy                    \
             --config-file=$PWD/tests/mypy.ini -m grand
 
+    - name: Dynamics analysis and coverage
+      run: |
+        . env/setup.sh
+        coverage run --source=grand -m pytest tests
+        check_score_coverage.py
+        
     - name: Check documentation examples
       run: |
         . env/setup.sh
         python -m tests --doc
 
-    - name: Run unit tests
-      run: |
-        . env/setup.sh
-        pip install codecov
-        coverage run tests --unit
 
-    - name: Upload the coverage
-      if: github.ref == 'refs/heads/master'
-      uses: codecov/codecov-action@v1
+#     - name: Upload the coverage
+#       if: github.ref == 'refs/heads/master'
+#       uses: codecov/codecov-action@v1
 
-    - name: Build wheels
-      if: github.ref == 'refs/heads/master'
-      run: |
-        ./wheel/build-linux-wheel.sh cp38-cp38 x86_64
-        ./wheel/build-linux-wheel.sh cp38-cp38 i686
-        rm -rf dist
-        mkdir dist
-        mv wheel/*.whl dist
+#     - name: Build wheels
+#       if: github.ref == 'refs/heads/master'
+#       run: |
+#         ./wheel/build-linux-wheel.sh cp38-cp38 x86_64
+#         ./wheel/build-linux-wheel.sh cp38-cp38 i686
+#         rm -rf dist
+#         mkdir dist
+#         mv wheel/*.whl dist
 
     - uses: actions/setup-python@v1
       with:
         python-version: '3.8'
 
-    - name: Test wheel
-      run: |
-        mv grand .grand
-        pip3 install dist/grand-*_x86_64.whl
-        python3 -m tests --unit
-        mv .grand grand
+#     - name: Test wheel
+#       run: |
+#         mv grand .grand
+#         pip3 install dist/grand-*_x86_64.whl
+#         python3 -m tests --unit
+#         mv .grand grand
 
-    - name: Upload to PyPI
-      if: github.ref == 'refs/heads/master'
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_TOKEN }}
+#     - name: Upload to PyPI
+#       if: github.ref == 'refs/heads/master'
+#       uses: pypa/gh-action-pypi-publish@master
+#       with:
+#         password: ${{ secrets.PYPI_TOKEN }}
 
-  OSX:
-    runs-on: macOS-latest
-    env:
-      PYTHONPATH: ${{ github.workspace }}/lib/python
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.8'
+#   OSX:
+#     runs-on: macOS-latest
+#     env:
+#       PYTHONPATH: ${{ github.workspace }}/lib/python
+#     steps:
+#     - uses: actions/checkout@v2
+#     - uses: actions/setup-python@v1
+#       with:
+#         python-version: '3.8'
+# 
+#     - name: Install
+#       run: |
+#         pip3 install -U pip
+#         pip3 install -U -r requirements.txt
+#         make install PYTHON=$(which python3)
+# 
+#     - name: Check documentation examples
+#       run: python3 -m tests --doc
+# 
+#     - name: Run unit tests
+#       run: python3 -m tests --unit
 
-    - name: Install
-      run: |
-        pip3 install -U pip
-        pip3 install -U -r requirements.txt
-        make install PYTHON=$(which python3)
-
-    - name: Check documentation examples
-      run: python3 -m tests --doc
-
-    - name: Run unit tests
-      run: python3 -m tests --unit
-
-  Documentation:
-    runs-on: ubuntu-latest
-    needs: Linux
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
-        with:
-          repository: grand-mother/grand-docs
-          path: docs/build/html
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Build
-        run: |
-          . env/setup.sh
-
-          cd docs/build/html
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-
-          cd ../..
-          make html
-
-          if [[ ! -f "build/html/.nojekyll" ]]; then
-            touch "build/html/.nojekyll"
-          fi
-
-          cd build/html
-          if [[ ! -z "$(git status --porcelain)" ]]; then
-            git add "."
-            git commit -a --amend --message "Update the docs"
-          fi
-          cd ../../..
-
-      - name: Push
-        uses: ad-m/github-push-action@master
-        with:
-          directory: docs/build/html
-          repository: grand-mother/grand-docs
-          github_token: ${{ secrets.PERSONAL_TOKEN }}
-          force: true
+#   Documentation:
+#     runs-on: ubuntu-latest
+#     needs: Linux
+#     if: github.ref == 'refs/heads/master'
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/checkout@v2
+#         with:
+#           repository: grand-mother/grand-docs
+#           path: docs/build/html
+#           persist-credentials: false
+#           fetch-depth: 0
+# 
+#       - name: Build
+#         run: |
+#           . env/setup.sh
+# 
+#           cd docs/build/html
+#           git config user.email "action@github.com"
+#           git config user.name "GitHub Action"
+# 
+#           cd ../..
+#           make html
+# 
+#           if [[ ! -f "build/html/.nojekyll" ]]; then
+#             touch "build/html/.nojekyll"
+#           fi
+# 
+#           cd build/html
+#           if [[ ! -z "$(git status --porcelain)" ]]; then
+#             git add "."
+#             git commit -a --amend --message "Update the docs"
+#           fi
+#           cd ../../..
+# 
+#       - name: Push
+#         uses: ad-m/github-push-action@master
+#         with:
+#           directory: docs/build/html
+#           repository: grand-mother/grand-docs
+#           github_token: ${{ secrets.PERSONAL_TOKEN }}
+#           force: true
