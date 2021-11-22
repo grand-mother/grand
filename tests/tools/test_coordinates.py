@@ -35,7 +35,7 @@ class CoordinatesTest(TestCase):
 
     def __init__(self, *args):
         super().__init__(*args)
-
+        
         self.obstime = '2020-01-01'
         self.location = Geodetic(latitude=0., longitude=0., height=0., 
                         reference='ELLIPSOID')
