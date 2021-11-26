@@ -8,11 +8,13 @@ from pathlib import Path
 import re
 from typing import Dict, Optional
 
-import astropy.constants
-from astropy.coordinates import CartesianRepresentation,                       \
-                                PhysicsSphericalRepresentation
-from astropy.time import Time
-import astropy.units as u
+#import astropy.constants
+#from astropy.coordinates import CartesianRepresentation,                       \
+#                                PhysicsSphericalRepresentation
+#from astropy.time import Time
+#import astropy.units as u
+
+from grand import CartesianRepresentation, SphericalRepresentation
 import numpy
 
 from .generic import CollectionEntry, FieldsCollection, ShowerEvent
@@ -32,7 +34,7 @@ _id_to_code: Dict[int, ParticleCode] = {
     5626: ParticleCode.IRON
 }
 
-
+# RK. TODO: This class has not been checked properly. Rework on this.
 class CoreasShower(ShowerEvent):
     @classmethod
     def _check_dir(cls, path: Path) -> bool:
@@ -65,31 +67,34 @@ class CoreasShower(ShowerEvent):
                     f'Multiple shower simulations in {path}. Loading only one.')
 
         config = {
-            'energy': float(reas['PrimaryParticleEnergy']) * 1E-09 << u.GeV,
-            'zenith': (180 - float(reas['ShowerZenithAngle'])) << u.deg,
-            'azimuth': float(reas['ShowerAzimuthAngle']) << u.deg,
+            'energy': float(reas['PrimaryParticleEnergy']) * 1E-09, # << u.GeV,
+            'zenith': (180 - float(reas['ShowerZenithAngle'])),     # << u.deg,
+            'azimuth': float(reas['ShowerAzimuthAngle']),           # << u.deg,
             'primary': _id_to_code[int(reas['PrimaryParticleType'])],
         }
 
         core = CartesianRepresentation(
-            float(reas['CoreCoordinateNorth']) * 1E-02,
-            float(reas['CoreCoordinateWest']) * 1E-02,
-            float(reas['CoreCoordinateVertical']) * 1E-02,
-            unit = u.m)
+            x=float(reas['CoreCoordinateNorth']) * 1E-02,
+            y=float(reas['CoreCoordinateWest'])  * 1E-02,
+            z=float(reas['CoreCoordinateVertical']) * 1E-02)#,
+            #unit = u.m)
         config['core'] = core
 
-        geomagnet = PhysicsSphericalRepresentation(
-            theta = (90 + float(reas['MagneticFieldInclinationAngle'])) \
-                    << u.deg,
-            phi = 0 << u.deg,
-            r = float(reas['MagneticFieldStrength']) * 1E-04 << u.T)
-        config['geomagnet'] = geomagnet.represent_as(CartesianRepresentation)
+        #geomagnet = PhysicsSphericalRepresentation(
+        geomagnet = SphericalRepresentation(
+            theta = (90 + float(reas['MagneticFieldInclinationAngle'])), #<< u.deg,
+            phi = 0, #<< u.deg,
+            #r = float(reas['MagneticFieldStrength']) * 1E-04 << u.T)
+            r = float(reas['MagneticFieldStrength']) * 1E05) #nT
+        #config['geomagnet'] = geomagnet.represent_as(CartesianRepresentation)
+        config['geomagnet'] = CartesianRepresentation(geomagnet)
 
-        distance = float(reas['DistanceOfShowerMaximum']) * 1E-02 << u.m
+        distance = float(reas['DistanceOfShowerMaximum']) * 1E-02 #<< u.m
         theta, phi = config['zenith'], config['azimuth']
-        ct, st = numpy.cos(theta), numpy.sin(theta)
+        #ct, st = numpy.cos(theta), numpy.sin(theta) #RK, was this wrong? theta is in deg.
+        ct, st = numpy.cos(numpy.deg2rad(theta)), numpy.sin(numpy.deg2rad(theta))
         direction = CartesianRepresentation(
-            st * numpy.cos(phi), st * numpy.sin(phi), ct)
+            x=st * numpy.cos(phi), y=st * numpy.sin(phi), z=ct)
         config['maximum'] = core - distance * direction
 
         antpos = cls._parse_coreas_bins(path, index)
@@ -111,20 +116,20 @@ class CoreasShower(ShowerEvent):
         except StopIteration:
             pass
         else:
-            cgs2si = (
-                astropy.constants.c / (u.m / u.s)).value * 1E+02 * u.uV / u.m
+            #cgs2si = (astropy.constants.c / (u.m / u.s)).value * 1E+02 * u.uV / u.m
+            cgs2si = 29979245800.0
             pattern = re.compile('(\d+).dat$')
             for antenna_path in fields_path.glob('*.dat'):
                 antenna = int(pattern.search(str(antenna_path))[1])
                 logger.debug(f'Loading trace for antenna {antenna}')
                 data = numpy.loadtxt(antenna_path)
-                t  = data[:,0] * 1E+09 * u.ns
+                t  = data[:,0] * 1E+09 #* u.ns
                 Ex = data[:,1] * cgs2si
                 Ey = data[:,2] * cgs2si
                 Ez = data[:,3] * cgs2si
                 electric = ElectricField(
                     t,
-                    CartesianRepresentation(Ex, Ey, Ez),
+                    CartesianRepresentation(x=Ex, y=Ey, z=Ez),
                     positions[antenna]
                 )
                 raw_fields[antenna] = CollectionEntry(electric)
@@ -179,7 +184,7 @@ class CoreasShower(ShowerEvent):
                 if not d:
                     continue
                 antenna = int(pattern.search(d[0])[1])
-                position = tuple(float(v) * 1E-02 for v in d[1:4]) << u.m
+                position = tuple(float(v) * 1E-02 for v in d[1:4]) #<< u.m
                 data.append((antenna, position))
 
         return data
@@ -202,7 +207,7 @@ class CoreasShower(ShowerEvent):
                 if not d:
                     continue
                 antenna = int(pattern.search(d[5])[1])
-                position = tuple(float(v) * 1E-02 for v in d[2:5]) << u.m
+                position = tuple(float(v) * 1E-02 for v in d[2:5]) #<< u.m
                 data.append((antenna, position))
 
         return data
@@ -230,5 +235,6 @@ class CoreasShower(ShowerEvent):
 
         matches = pattern.findall(txt)
 
-        return [(int(antenna), tuple(float(v) for v in values) << u.m)
+        #return [(int(antenna), tuple(float(v) for v in values) << u.m)
+        return [(int(antenna), tuple(float(v) for v in values))
                 for (antenna, *values) in matches]

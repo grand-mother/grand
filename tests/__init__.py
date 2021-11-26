@@ -7,6 +7,7 @@ import doctest
 import os
 import unittest
 import sys
+from numbers import Number
 
 from pathlib import Path
 
@@ -22,15 +23,15 @@ class TestCase(unittest.TestCase):
 
     #RK
     def assertQuantity(self, a, b, tol=9):
-        '''Check that two astropy.Quantities are consistent'''
-        n = a.size
-        self.assertEqual(n, b.size)
-        if n > 1:
-            if len(a.shape) > 1:
-                a, b = a.flatten(), b.flatten()
-            for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
-        else:
+        '''Check that two quantities are consistent'''
+        if isinstance(a, Number):
             self.assertAlmostEqual(a, b, tol)
+        elif isinstance(a, (list, numpy.ndarray)):
+            if isinstance(a, numpy.ndarray):
+                n = a.size
+                self.assertEqual(n, b.size)
+            a, b = a.flatten(), b.flatten()
+            for i, ai in enumerate(a): self.assertAlmostEqual(ai, b[i], tol)
 
     def assertCartesian(self, a, b, tol=9):
         '''Check that two CartesianRepresentations are consistent'''
