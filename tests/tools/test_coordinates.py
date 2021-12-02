@@ -1,7 +1,7 @@
 '''
 Unit tests for the grand_tools.coordinates module
 
-RK Todo: Fully develop Horizontal coordinate system and 
+RK Todo: Complete Horizontal coordinate system and 
          implement Rotation of LTP frame.
 '''
 import unittest

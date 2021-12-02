@@ -8,7 +8,7 @@ from .tools.geomagnet import Geomagnet
 from .tools import coordinates
 from .tools.coordinates import Coordinates, CartesianRepresentation, SphericalRepresentation, \
 							   GeodeticRepresentation, Geodetic, \
-							   GRANDCS, LTP, ECEF, \
+							   GRANDCS, LTP, ECEF, HorizontalVector, Horizontal,\
 							   Rotation
 
 from .logging import getLogger, Logger

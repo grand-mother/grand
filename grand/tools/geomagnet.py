@@ -31,7 +31,8 @@ def __getattr__(name):
     if name == 'model':
         return _default_model
     elif name == 'obstime':
-        return _default_obstime.datetime.date
+        #return _default_obstime.datetime.date
+        return _default_obstime
     else:
         raise AttributeError(f'module {__name__} has no attribute {name}')
 
@@ -40,11 +41,12 @@ def __getattr__(name):
 def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresentation:
     '''Get the default geo-magnetic field at the given *coordinates*.
     '''
-    global _default_magnet
-
-    if _default_magnet is None:
-        _default_magnet = Geomagnet()
-    return _default_magnet.field(coordinates)
+    #global _default_magnet
+    #if _default_magnet is None:
+    #    #_default_magnet = Geomagnet()
+    #return _default_magnet.field(coordinates)
+    geomagnet = Geomagnet(location=coordinates)
+    return geomagnet.field
 
 
 class Geomagnet:
@@ -61,9 +63,10 @@ class Geomagnet:
                   latitude : Union[Number, np.ndarray] = None,
                   longitude: Union[Number, np.ndarray] = None,
                   height   : Union[Number, np.ndarray] = None,
-                  location : Union[ECEF, Geodetic, GRANDCS]=None,
+                  location : Union[ECEF, Geodetic, LTP, GRANDCS]=None,
                   obstime  : Union[str, datetime.date]   = None) -> CartesianRepresentation:
 
+        #print('location:', location, type(location))
         if model is None:
             model = _default_model
 
@@ -80,7 +83,7 @@ class Geomagnet:
         # or GRAND cs. OR latitude=deg, longitude=deg, height=meter.
         if latitude!=None and longitude!=None and height!=None:
             geodetic_loc = Geodetic(latitude=latitude, longitude=longitude, height=height)
-        elif isinstance(location, (ECEF, Geodetic, GeodeticRepresentation, GRANDCS)):
+        elif isinstance(location, (ECEF, Geodetic, GeodeticRepresentation, LTP, GRANDCS)):
             geodetic_loc = Geodetic(location)
         else:
             raise TypeError('Provide location in ECEF, Geodetic, or GRAND coordinate system instead of type %s.\n \

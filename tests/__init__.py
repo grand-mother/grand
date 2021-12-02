@@ -8,6 +8,7 @@ import os
 import unittest
 import sys
 from numbers import Number
+import numpy
 
 from pathlib import Path
 
