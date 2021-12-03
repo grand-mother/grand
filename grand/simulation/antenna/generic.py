@@ -5,7 +5,8 @@ from logging import getLogger
 from typing import cast, Optional, Union
 from numbers import Number
 
-from ...tools.coordinates import ECEF, LTP, GRANDCS, CartesianRepresentation, SphericalRepresentation #RK
+from ...tools.coordinates import ECEF, LTP, GRANDCS, CartesianRepresentation, \
+                                SphericalRepresentation #RK
 import numpy
 
 from ... import io #, ECEF, LTP
@@ -83,6 +84,7 @@ class AntennaModel:
 class MissingFrameError(ValueError):
     pass
 
+
 @dataclass
 class Antenna:
     model: AntennaModel
@@ -90,8 +92,8 @@ class Antenna:
 
     def effective_length(self, xmax: LTP,
         Efield: ElectricField,
-        frame: Union[ECEF, LTP, GRANDCS, None]=None) -> CartesianRepresentation:
-        # frame is shower frame. self.frame is antenna frame.
+        frame: Union[LTP, GRANDCS, None]=None) -> CartesianRepresentation:
+        # 'frame' is shower frame. 'self.frame' is antenna frame.
 
         if isinstance(xmax, LTP):
             direction  = xmax.ltp_to_ltp(self.frame) # shower frame --> antenna frame
@@ -165,7 +167,11 @@ class Antenna:
 
     def compute_voltage(self, xmax: LTP, 
         Efield: ElectricField,
-        frame: Union[ECEF, LTP, GRANDCS, None]=None)-> Voltage:
+        frame: Union[LTP, GRANDCS, None]=None)-> Voltage:
+
+        # frame is shower frame. self.frame is antenna frame.
+        if (self.frame is None) or (frame is None):
+            raise MissingFrameError('missing antenna or shower frame')
 
         # Compute the voltage. input Leff and field are in shower frame. 
         def rfft(q):
@@ -179,7 +185,7 @@ class Antenna:
         Ex = rfft(E.x)
         Ey = rfft(E.y)
         Ez = rfft(E.z)
-        
+
         # Here we have to do an ugly patch for Leff values to be correct
         V  = irfft(Ex * (Leff.x  - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
 
