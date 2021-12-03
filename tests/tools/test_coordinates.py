@@ -10,7 +10,8 @@ from tests import TestCase
 import numpy
 import datetime
 from grand import ECEF, LTP, Geodetic, GeodeticRepresentation, CartesianRepresentation, \
-                    SphericalRepresentation, Rotation, HorizontalVector, Horizontal , Reference
+    SphericalRepresentation, HorizontalRepresentation, HorizontalVector, Horizontal,\
+    Reference, Coordinates, Rotation, GRANDCS
 import copy as _copy
 
 def copy(obj, deep=False):
@@ -40,21 +41,133 @@ class CoordinatesTest(TestCase):
         self.location = Geodetic(latitude=0., longitude=0., height=0., 
                         reference='ELLIPSOID')
 
+    # RK
+    def test_coordinates(self):
+        ar1 = Coordinates(1)
+        ar2 = Coordinates(5)
+        self.assertEqual(ar1.shape[0], 3)
+        self.assertEqual(ar1.shape[1], 1)
+        self.assertEqual(ar2.shape[0], 3)
+        self.assertEqual(ar2.shape[1], 5)
+        # make sure raise TypeError if input is not integer.
+        with self.assertRaises(TypeError) as context:
+            Coordinates(5.)
+
+    # RK
+    def test_cartesianrepresentation(self):
+        cart1 = CartesianRepresentation(x=1, y=1, z=0)
+        norm1 = cart1.norm()
+        sphr1 = SphericalRepresentation(cart1)
+        sphr2 = cart1.cartesian_to_spherical()
+        horz2 = cart1.cartesian_to_horizontal()
+        self.assertEqual(norm1, numpy.sqrt(cart1.x**2 + cart1.y**2 + cart1.z**2))
+        self.assertEqual(sphr1.theta, 90)
+        self.assertEqual(sphr1.phi, 45)
+        self.assertEqual(sphr1.r, numpy.sqrt(2))
+        self.assertEqual(sphr2.theta, 90)
+        self.assertEqual(sphr2.phi, 45)
+        self.assertEqual(sphr2.r, numpy.sqrt(2))
+        self.assertEqual(horz2.azimuth, 45)
+        self.assertEqual(horz2.elevation, 0)
+        # check getter. Use assertQuantity or assertEqual
+        self.assertQuantity(cart1.x, cart1[0], 6)
+        self.assertQuantity(cart1.y, cart1[1], 6)
+        self.assertQuantity(cart1.z, cart1[2], 6)
+        with self.assertRaises(TypeError) as context:
+            CartesianRepresentation(x='one', y=1, z=0)
+
+    # RK
+    def test_sphericalrepresentation(self):
+        sphr1 = SphericalRepresentation(theta=90, phi=45, r=numpy.sqrt(2))
+        cart1 = CartesianRepresentation(sphr1)
+        cart2 = sphr1.spherical_to_cartesian()
+        horz2 = sphr1.spherical_to_horizontal()
+        self.assertEqual(sphr1.theta[0], 90)
+        self.assertEqual(sphr1.phi[0], 45)
+        self.assertEqual(sphr1.r[0], numpy.sqrt(2))
+        self.assertQuantity(cart1.x[0], 1, 6)
+        self.assertQuantity(cart1.y[0], 1, 6)
+        self.assertQuantity(cart1.z[0], 0, 6)
+        self.assertQuantity(cart2.x[0], 1, 6)
+        self.assertQuantity(cart2.y[0], 1, 6)
+        self.assertQuantity(cart2.z[0], 0, 6)
+        self.assertQuantity(horz2.azimuth[0], 45)
+        self.assertQuantity(horz2.elevation[0], 0)
+        self.assertQuantity(horz2.norm[0], numpy.sqrt(2))
+        with self.assertRaises(TypeError) as context:
+            SphericalRepresentation(theta='one', phi=45, r=1.41)
+
+    # RK
+    def test_geodeticrepresentation(self):
+        geod = GeodeticRepresentation(latitude=0, longitude=0, height=0)
+        # test getter
+        self.assertQuantity(geod.latitude[0], 0, 6)
+        self.assertQuantity(geod.longitude[0], 0, 6)
+        self.assertQuantity(geod.height[0], 0, 6)
+        # test setter
+        geod.latitude += 1
+        geod.longitude+= 1
+        geod.height   += 1
+        self.assertQuantity(geod.latitude[0], 1, 6)
+        self.assertQuantity(geod.longitude[0], 1, 6)
+        self.assertQuantity(geod.height[0], 1, 6)
+        # test TypeError
+        with self.assertRaises(TypeError) as context:
+            GeodeticRepresentation(latitude='zero', longitude=0, height=0)
+
+    # RK. Horizontal CS is not complete. Rework on this.
+    def test_horizontalrepresentation(self):
+        horz = HorizontalRepresentation(azimuth=45, elevation=0, norm=numpy.sqrt(2))
+        cart = horz.horizontal_to_cartesian()
+        sphr = horz.horizontal_to_spherical()
+        # test getter
+        self.assertQuantity(horz.azimuth[0], 45, 6)
+        self.assertQuantity(horz.elevation[0], 0, 6)
+        self.assertQuantity(horz.norm[0], numpy.sqrt(2), 6)
+        # test setter
+        horz.azimuth  += 1
+        horz.elevation+= 1
+        horz.norm     += 1
+        self.assertQuantity(horz.azimuth[0], 46, 6)
+        self.assertQuantity(horz.elevation[0], 1, 6)
+        self.assertQuantity(horz.norm[0], numpy.sqrt(2)+1, 6)
+        # test TypeError
+        with self.assertRaises(TypeError) as context:
+            GeodeticRepresentation(azimuth='zero', elevation=0, norm=0)
+
+        # test transformation
+        self.assertAlmostEqual(cart.x[0], 1, 6)
+        self.assertQuantity(cart.y[0], 1, 6)
+        self.assertQuantity(cart.z[0], 0, 6)
+        self.assertQuantity(sphr.theta[0], 90)
+        self.assertQuantity(sphr.phi[0], 45)
+        self.assertQuantity(sphr.r[0], numpy.sqrt(2))
+
     def test_geodetic(self):
         ecef = ECEF(x=6378137, y=0, z=0)
         geod = Geodetic(ecef, reference='ELLIPSOID')
-        self.assertQuantity(geod.latitude , self.location.latitude , 6)
-        self.assertQuantity(geod.longitude, self.location.longitude, 6)
-        self.assertQuantity(geod.height   , self.location.height   , 6)
+        ecef1= geod.geodetic_to_ecef()
+        geod1 = ecef.ecef_to_geodetic(reference='ELLIPSOID')
+        horz = geod.geodetic_to_horizontal()
+        grnd = geod.geodetic_to_grandcs()
+        ltpf = LTP(location=self.location, orientation='NWU')
+        ltp  = geod.geodetic_to_ltp(ltpf)
 
         # Check the method transformation
-        geod1 = ecef.ecef_to_geodetic(reference='ELLIPSOID')
-        self.assertQuantity(geod1.latitude , self.location.latitude , 6)
-        self.assertQuantity(geod1.longitude, self.location.longitude, 6)
-        self.assertQuantity(geod1.height   , self.location.height   , 6)
+        self.assertQuantity(geod, self.location , 6)
+        self.assertQuantity(geod1, self.location , 6)
+        self.assertQuantity(ecef, ecef1, 6)
+        self.assertCartesian(ecef, ecef1, 6)
 
         # RK TODO: Add more test.
-
+        self.assertEqual(geod.reference, 'ELLIPSOID')
+        self.assertQuantity(ltp.location, ecef)
+        # check input value is either number or array of numbers.
+        with self.assertRaises(TypeError) as context:
+            Geodetic(azimuth='zero', elevation=0, norm=0)
+        # check input argument is of knonw coordinate system.
+        with self.assertRaises(TypeError) as context:
+            Geodetic(numpy.ones(10))
 
     def test_horizontal(self):
         '''for (angle, point) in (((90, 0), (1, 0, 0)),
@@ -82,11 +195,22 @@ class CoordinatesTest(TestCase):
         # Check the forward transform
         ecef0 = ECEF(x=6378137, y=0, z=0)
         ecef1 = ECEF(self.location)
+        ecef2 = self.location.geodetic_to_ecef()
+        geod  = ecef0.ecef_to_geodetic(reference='ELLIPSOID')
         self.assertCartesian(ecef0, ecef1, 8)
+        self.assertCartesian(ecef1, ecef2, 8)
+        self.assertQuantity(geod, self.location)
+        self.assertQuantity(geod.latitude[0], 0)
+        self.assertEqual(ecef0.obstime, '2020-01-01')
+        # check input value is either number or array of numbers.
+        with self.assertRaises(TypeError) as context:
+            ECEF(x='zero', y=0, z=0)
+        # check input argument is of knonw coordinate system.
+        with self.assertRaises(TypeError) as context:
+            ECEF(numpy.ones(10))
+
 
         # Check the backward transform
-        ecef2 = self.location.geodetic_to_ecef()
-        self.assertCartesian(ecef1, ecef2, 8)
 
         #RK- obstime is not yet properly used in ECEF.
         # Check the obstime handling
@@ -253,6 +377,13 @@ class CoordinatesTest(TestCase):
 
         self.assertEqual(r.obstime, ltp.obstime)
         self.assertQuantity(r.norm(), 6378137., 6) #RK
+
+        # check input argument is of knonw coordinate system.
+        with self.assertRaises(TypeError) as context:
+            LTP(numpy.ones(10), frame=ltp)
+        # check input argument is of knonw coordinate system.
+        with self.assertRaises(TypeError) as context:
+            LTP(location=numpy.ones(10), orientation='NWU')
 
 
         # RK: Horizontal coordinate system is incomplete and need more work.
@@ -450,6 +581,21 @@ class CoordinatesTest(TestCase):
         for r0 in rs:
             check_random(r0)
         '''
+    def test_grandcs(self):
+        # RK. Add more tests.
+        grnd = GRANDCS(x=0, y=0, z=0, location=self.location)
+        ecef = grnd.grandcs_to_ecef()
+        geod = grnd.grandcs_to_geodetic(reference='ELLIPSOID')
+
+        self.assertQuantity(grnd.location, ECEF(self.location))
+        # check input argument is of knonw coordinate system.
+        with self.assertRaises(TypeError) as context:
+            GRANDCS(numpy.ones(10))
+        # check input argument is of knonw coordinate system.
+        with self.assertRaises(TypeError) as context:
+            GRANDCS(x='one', y=0, z=0)
+
+
 
 if __name__ == '__main__':
     unittest.main()

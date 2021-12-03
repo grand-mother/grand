@@ -244,8 +244,9 @@ class CartesianRepresentation(Coordinates):
 		theta, phi, r = _cartesian_to_spherical(self[0], self[1], self[2])
 		return SphericalRepresentation(theta=theta, phi=phi, r=r)
 
-	def _cartesian_to_horizontal(self):
-		return _cartesian_to_horizontal(self[0], self[1], self[2])
+	def cartesian_to_horizontal(self):
+		azi, ele, norm = _cartesian_to_horizontal(self[0], self[1], self[2])
+		return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
 
 	def norm(self):
 		return np.linalg.norm(self)
@@ -288,7 +289,7 @@ class SphericalRepresentation(Coordinates):
 			assert n==len(r), 'Length of theta and r array must be the same. \
 							   theta: %i, r: %i'%(n,len(r))
 		else:
-			raise TypeError(type(x))
+			raise TypeError(type(theta))
 
 		obj = super().__new__(cls, n) # create 3xn ndarray coordinates instance with random entries.
 		obj[0] = theta                # replace 0-coordinates with input theta. theta can be int, float, or ndarray.
@@ -324,8 +325,79 @@ class SphericalRepresentation(Coordinates):
 		x, y, z = _spherical_to_cartesian(self[0], self[1], self[2])
 		return CartesianRepresentation(x=x, y=y, z=z)
 
-	def _spherical_to_horizontal(self):
-		return _spherical_to_horizontal(self[0], self[1], self[2])
+	def spherical_to_horizontal(self):
+		azi, ele, norm = _spherical_to_horizontal(self[0], self[1], self[2])
+		return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
+
+class HorizontalRepresentation(Coordinates):
+	'''
+	Generic container for horizontal coordinates.
+	'''
+	def __new__(cls, 
+				azimuth  : Union[Number, np.ndarray] = None, 
+				elevation: Union[Number, np.ndarray] = None, 
+				norm     : Union[Number, np.ndarray] = 1.):
+		'''
+		Create a horizontal coordinates instance.
+		Object with (3,n) ndarray is created which will later be filled with input 
+		azimuth, elevation, and norm, where n is equal to len(azimuth). If predefined 
+		object (like CartesianCoordinates,..) is given as an argument, it will be 
+		first converted to horizontal coordinates. Then (3,n) ndarray will be filled
+		with converted azimuth, elevation, and norm.
+		n        : number of coordinate points. 3xn np.ndarray object will be instantiated
+				   which will then be replaced by input azimuth, elevation, and norm. 
+				   'n' has to be predefined.
+		azimuth  : angle from true North towards East.
+		elevation: angle from horizontal plane (NE plane) towards zenith.
+		norm     : distance from the origin to the point.
+		'''
+		if isinstance(azimuth, Number):
+			n = 1
+		elif isinstance(azimuth, np.ndarray):
+			n = len(azimuth)
+			assert n==len(elevation), 'Length of azimuth and elevation array must be the same. \
+									   azimuth: %i, elevation: %i'%(n,len(elevation))
+		else:
+			raise TypeError(type(azimuth))
+
+		obj = super().__new__(cls, n) # create 3xn ndarray coordinates instance with random entries.
+		obj[0] = azimuth              # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
+		obj[1] = elevation            # replace 1-coordinates with input elevation. elevation can be int, float, or ndarray.
+		obj[2] = norm                 # replace 2-coordinates with input norm. norm can be int, float, or ndarray.
+		
+		return obj
+
+	@property
+	def azimuth(self):
+		return self[0]
+
+	@azimuth.setter
+	def azimuth(self, v):
+		self[0] = v
+
+	@property
+	def elevation(self):
+		return self[1]
+
+	@elevation.setter
+	def elevation(self, v):
+		self[1] = v
+
+	@property
+	def norm(self):
+		return self[2]
+
+	@norm.setter
+	def norm(self, v):
+		self[2] = v
+
+	def horizontal_to_cartesian(self):
+		x,y,z = _horizontal_to_cartesian(self[0], self[1], self[2])
+		return CartesianRepresentation(x=x, y=y, z=z)
+
+	def horizontal_to_spherical(self):
+		th, phi, r = _horizontal_to_spherical(self[0], self[1], self[2])
+		return SphericalRepresentation(theta=th, phi=phi, r=r)
 
 
 class GeodeticRepresentation(Coordinates):
@@ -366,7 +438,7 @@ class GeodeticRepresentation(Coordinates):
 			assert n==len(height)
 
 		else:
-			raise TypeError(type(x))
+			raise TypeError(type(latitude))
 
 		obj = super().__new__(cls, n) # create 3xn ndarray coordinates instance with random entries.		
 		obj[0] = latitude    # replace 0-position with input latitude. latitude can be int, float, or ndarray.
@@ -463,10 +535,12 @@ class HorizontalRepresentation(Coordinates):
 		self[2] = v
 
 	def horizontal_to_cartesian(self):
-		return _horizontal_to_cartesian(self[0], self[1], self[2])
+		x,y,z = _horizontal_to_cartesian(self[0], self[1], self[2])
+		return CartesianRepresentation(x=x, y=y, z=z)
 
 	def horizontal_to_spherical(self):
-		return _horizontal_to_spherical(self[0], self[1], self[2])
+		th, phi, r = _horizontal_to_spherical(self[0], self[1], self[2])
+		return SphericalRepresentation(theta=th, phi=phi, r=r)
 
 
 # ------------------Frame---------------------
@@ -516,6 +590,10 @@ class Geodetic(GeodeticRepresentation):
 				return super().__new__(cls, latitude =placeholder, 
 											longitude=placeholder, 
 											height   =placeholder)
+			else:
+				raise TypeError(type(arg), 
+						   'Argument type must be either \
+						   ECEF, Geodetic, LTP, GRANDCS or Horizontal.')
 		else:
 			# TODO: This part maynot be required.
 			# return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -644,6 +722,10 @@ class ECEF(CartesianRepresentation):
 				return super().__new__(cls, x=placeholder, 
 											y=placeholder, 
 											z=placeholder)
+			else:
+				raise TypeError(type(arg), 
+						   'Argument type must be either \
+						   ECEF, Geodetic, LTP, GRANDCS or Horizontal.')
 		else:
 			# TODO: This part maynot be required.
 			# return a placeholder with 1 entry. This is used if we just want to define LTP frame
@@ -945,6 +1027,10 @@ class LTP(CartesianRepresentation):
 					ecef = ECEF(arg)             # Convert from Geodetic input to ECEF.
 				placeholder = np.nan*np.ones(len(ecef.x))
 				return super().__new__(cls, x=placeholder, y=placeholder, z=placeholder)
+			else:
+				raise TypeError(type(arg), 
+						   'Argument type must be either \
+						   ECEF, Geodetic, LTP, GRANDCS or Horizontal.')
 		else:
 			# return a placeholder with 1 entry. This is used if we just want to define LTP frame
 			# without giving any coordinates. Can also use np.empty((1,1)) instead of np.array([nan]).
@@ -1134,6 +1220,20 @@ class GRANDCS(LTP):
 				obstime  : Union[str, datetime.date] = '2020-01-01',
 				rotation = None):
 
+		# Added for tests.
+		if arg is not None:
+			if isinstance(arg, (ECEF, HorizontalVector, Geodetic, LTP, GRANDCS)):
+				pass
+			else:
+				raise TypeError(type(arg), 
+						   'Argument type must be \
+							ECEF, Geodetic, LTP, GRANDCS or HorizontalVector.')
+		if x is not None:
+			if isinstance(x, (Number, np.ndarray)):
+				pass
+			else:
+				raise TypeError(type(x), 'x type must be int, float or np.ndarray.')
+
 		super().__init__(arg = arg,          # input coordinate instance to convert to LTP
 						x    = x,  # x-coordinate at LTP.
 						y    = y,  # y-coordinate at LTP
@@ -1166,122 +1266,4 @@ class GRANDCS(LTP):
 
 # RK TODO: Rework on this class.
 class Rotation(_Rotation):
-	def __mul__(self, other: Any):
-		try:
-			return self.apply(other)
-		except NotImplementedError:
-			return NotImplemented
-
-	def apply(self, other, 
-		inverse: bool=False):                                                   \
-
-		def apply(v):
-			return super(self.__class__, self)                                 \
-				.apply(v, inverse)                                             \
-				.reshape(other.shape)
-
-		if isinstance(other, _Rotation):
-			if inverse:
-				return super(self.__class__, self.inverse).__mul__(other)
-			else:
-				return super().__mul__(other)
-
-		elif isinstance(other, CartesianRepresentation):
-			r = other # RK TODO: get rid of situations like this. Propagated from before.
-			matrix = self.matrix if not inverse else self.inverse.matrix
-			r = r.transform(matrix)
-			return CartesianRepresentation(x=r[:,0], y=r[:,1], z=r[:,2]) # RK. TO DO: Check if x=r[:,0] is correct or not.
-
-		elif isinstance(other, np.ndarray):
-			return apply(other)
-
-		else:
-			raise NotImplementedError
-
-	
-	#def from_euler(cls, seq: str, *angles: u.Quantity) -> Rotation:
-	@classmethod
-	def from_euler(cls,
-		seq: str, 
-		*angles) -> Rotation: #RK angles: float or array_like, shape (N,) or (N, [1 or 2 or 3])
-		# https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.from_euler.html
-		#if angles[0].shape:
-		#    angles = angles[0].to_value(u.rad)
-		#else:
-		#    angles = tuple(a.to_value(u.rad) for a in angles)
-		#return super().from_euler(seq, angles)
-		return super().from_euler(seq, angles, degrees=True) # RK
-
-	def euler_angles(self, seq: str):
-		#unit = u.Unit(unit)
-		#if unit is u.deg:
-		#    return super().as_euler(seq, degrees=True) * unit
-		#else:
-		#    return super().as_euler(seq) * u.rad
-		return super().as_euler(seq, degrees=True) # RK
-
-	@classmethod
-	def from_rotvec(cls, rotvec) -> Rotation: # Rk
-		# https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.from_rotvec.html
-		#return super().from_rotvec(rotvec.to_value(u.rad))
-		return super().from_rotvec(rotvec, degrees=True) # RK. Initialize a rotation in degrees, and view it in degrees:
-
-	@classmethod
-	def align_vectors(cls,
-		a: Union[CartesianRepresentation, np.ndarray],
-		b: Union[CartesianRepresentation, np.ndarray],
-		weights: Optional[np.ndarray]=None) -> Tuple[Rotation, float]: # RK
-		#https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.align_vectors.html
-		#def harmonize(x):
-		#    if isinstance(x, BaseRepresentation):
-		#        xyz = x.represent_as(CartesianRepresentation).xyz
-		#        ux = xyz.unit
-		#        x = xyz.value.T
-		#    elif isinstance(x, u.Quantity):
-		#        ux = x.unit
-		#    else:
-		#        ux = u.dimensionless_unscaled
-		#    return x, ux
-
-		#a, ua = harmonize(a)
-		#b, ub = harmonize(b)
-		#b = b * (1 * ub).to_value(ua)
-
-		# RK
-		# Inputs for scipy.spatial.transform.Rotation.align_vectors:
-		# a: array_like, shape (N, 3)
-		# b: array_like, shape (N, 3)
-		# weights: array_like shape (N,)
-		# returns Rotation instance, best estimate of the rotation that transforms b to a.
-		if isinstance(a, (CartesianRepresentation, np.ndarray)) and isinstance(b, (CartesianRepresentation, np.ndarray)):
-			pass
-		else:
-			raise TypeError('Provide a and b as CartesianRepresentation instead of %s'%type(a))
-
-		# requied shape (N,3), given shape of CartesianRepresentation is (3,N).
-		# tanspose the input a, b, and weights. 
-		# To Do: double check about transposing weights.
-		return super().align_vectors(a.T, b.T, weights.T)
-
-	@property
-	def inverse(self) -> Rotation:
-		return super().inv()
-
-	@property
-	def matrix(self) -> np.ndarray:
-		m = super().as_matrix()
-		if m.shape[0] == 1:
-			m = m.reshape(3, 3)
-		return m
-
-	@property
-	def rotvec(self):
-		return super().as_rotvec() # rad
-
-	@property
-	def magnitude(self):
-		mag = super().magnitude()
-		if isinstance(mag, np.ndarray) and mag.size == 1:
-			mag = mag[0]
-		return mag # rad
-
+	pass

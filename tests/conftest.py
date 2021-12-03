@@ -11,7 +11,8 @@ from grand.simulation import TabulatedAntennaModel
 
 GRAND_ROOT = os.getenv("GRAND_ROOT")
 # TODO: create a clear function to locate data in grand
-GRAND_DATA = osp.join(GRAND_ROOT)
+#GRAND_DATA = osp.join(GRAND_ROOT)
+GRAND_DATA = osp.join(GRAND_ROOT, 'examples/simulation/')
 
 def pytest_configure(config):
     """Run master_data_test main function prior to run pytests.
