@@ -5,11 +5,12 @@ Unit tests for the grand.simulation.antenna module
 from pathlib import Path
 import unittest
 
+import os.path as osp
 import astropy.units as u
 from astropy.coordinates import CartesianRepresentation
 import numpy
 
-from grand import ECEF
+from grand import ECEF, GRAND_DATA
 from grand.simulation import Antenna, ElectricField, MissingFrameError,        \
                              TabulatedAntennaModel
 from tests import TestCase
@@ -33,12 +34,12 @@ class AntennaTest(TestCase):
         except AttributeError:
             pass
 
-        path = Path('HorizonAntenna_EWarm_leff_loaded.npy')
-        if path.exists():
-            self._model = TabulatedAntennaModel.load(path)
+        path_ant = osp.join(GRAND_DATA,'HorizonAntenna_EWarm_leff_loaded.npy')
+        if osp.exists(path_ant):
+            self._model = TabulatedAntennaModel.load(path_ant)
             return self._model
         else:
-            self.skipTest(f'missing {path}')
+            self.skipTest(f'missing {path_ant}')
 
     def test_tabulated(self):
         t = self.model.table
