@@ -29,7 +29,6 @@ class GeodeticRepresentation(BaseRepresentation):
                  height: u.Quantity=0 * u.m, copy: bool=True) -> None:
         super().__init__(latitude, longitude, height, copy=copy)
 
-
     @classmethod
     def from_cartesian(cls, cart: CartesianRepresentation) ->                  \
             'GeodeticRepresentation':
@@ -50,6 +49,8 @@ class GeodeticRepresentation(BaseRepresentation):
     def to_cartesian(self) -> CartesianRepresentation:
         '''Generate a Cartesian representation from a Geodetic one.
         '''
+        # pylint: disable=no-member
+        # height define with *args out of possibility of pylint
         d1, m1 = 1 / u.deg, 1 / u.m
         ecef = turtle.ecef_from_geodetic(self.latitude * d1,
                                          self.longitude * d1, self.height * m1)
@@ -106,6 +107,8 @@ class HorizontalRepresentation(BaseRepresentation):
         '''Generate a Cartesian unit vector from this Horizontal angular
         representation.
         '''
+        # pylint: disable=no-member
+        # elevation define with *args out of possibility of pylint
         theta = 90 * u.deg - self.elevation
         phi = 90 * u.deg - self.azimuth
         ct, st = numpy.cos(theta), numpy.sin(theta)

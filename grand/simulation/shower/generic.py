@@ -5,6 +5,8 @@ from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
+from datetime import datetime
+from time import time 
 
 from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
 from astropy.coordinates.representation import BaseRepresentation
@@ -28,7 +30,7 @@ class CollectionEntry:
     voltage: Optional[Voltage] = None
 
     @classmethod
-    def load(cls, node: DataNone) -> CollectionEntry:
+    def load(cls, node: io.DataNode) -> CollectionEntry:
         try:
             subnode = node['electric']
         except KeyError:
@@ -41,11 +43,11 @@ class CollectionEntry:
         except KeyError:
             voltage = None
         else:
-            voltage = Voltage.load()
+            voltage = Voltage.load(node)
 
         return cls(electric, voltage)
 
-    def dump(self, node:DataNode) -> None:
+    def dump(self, node: io.DataNode) -> None:
         if self.electric is not None:
             self.electric.dump(node.branch('electric'))
         if self.voltage is not None:
@@ -168,7 +170,7 @@ class ShowerEvent:
     def localize(self, latitude: u.Quantity, longitude: u.Quantity,
             height: Optional[u.Quantity]=None,
             declination: Optional[u.Quantity]=None,
-            obstime: Union[datetime, Time, str, None]=None) -> None:
+            obstime: Union[datetime, time, str, None]=None) -> None:
 
         if height is None:
             height = 0 * u.m

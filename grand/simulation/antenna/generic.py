@@ -77,7 +77,7 @@ class Voltage:
 class AntennaModel:
     def effective_length(self, direction: BaseRepresentation,
         frequency: u.Quantity) -> CartesianRepresentation:
-        pass
+        return CartesianRepresentation(0)
 
 
 class MissingFrameError(ValueError):

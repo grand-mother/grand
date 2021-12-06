@@ -24,9 +24,10 @@ class Rotation(_Rotation):
         -> Union[Rotation, BaseRepresentation, u.Quantity, numpy.ndarray]:
 
         def apply(v):
-            return super(self.__class__, self)                                 \
-                .apply(v, inverse)                                             \
-                .reshape(other.shape)
+            # pylint: disable=bad-super-call
+            # disable test seems ok ...
+            ret = super(self.__class__, self).apply(v, inverse).reshape(other.shape)
+            return ret
 
         if isinstance(other, _Rotation):
             if inverse:
