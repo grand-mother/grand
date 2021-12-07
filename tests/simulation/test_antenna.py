@@ -4,10 +4,13 @@ Unit tests for the grand.simulation.antenna module
 
 from pathlib import Path
 import unittest
+import os.path as osp
+
 
 import numpy
 
-from grand import ECEF, CartesianRepresentation, LTP, Geodetic
+from grand import ECEF, CartesianRepresentation, LTP, Geodetic, GRAND_DATA
+
 from grand.simulation import Antenna, ElectricField, MissingFrameError,        \
                              TabulatedAntennaModel, Voltage
 from tests import TestCase
@@ -30,13 +33,12 @@ class AntennaTest(TestCase):
         except AttributeError:
             pass
 
-        antfiledir = '/Users/rameshkoirala/Documents/GRAND/grand/examples/simulation/'
-        path = Path(antfiledir+'HorizonAntenna_EWarm_leff_loaded.npy')
-        if path.exists():
-            self._model = TabulatedAntennaModel.load(path)
+        path_ant = osp.join(GRAND_DATA,'HorizonAntenna_EWarm_leff_loaded.npy')
+        if osp.exists(path_ant):
+            self._model = TabulatedAntennaModel.load(path_ant)
             return self._model
         else:
-            self.skipTest(f'missing {path}')
+            self.skipTest(f'missing {path_ant}')
 
     def test_tabulated(self):
         t = self.model.table

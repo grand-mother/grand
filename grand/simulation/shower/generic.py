@@ -5,7 +5,12 @@ from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
+
 from numbers import Number
+
+from datetime import datetime
+from time import time 
+
 
 import numpy
 
@@ -26,7 +31,7 @@ class CollectionEntry:
     voltage: Optional[Voltage] = None
 
     @classmethod
-    def load(cls, node: DataNone) -> CollectionEntry:
+    def load(cls, node: io.DataNode) -> CollectionEntry:
         try:
             subnode = node['electric']
         except KeyError:
@@ -39,11 +44,11 @@ class CollectionEntry:
         except KeyError:
             voltage = None
         else:
-            voltage = Voltage.load()
+            voltage = Voltage.load(node)
 
         return cls(electric, voltage)
 
-    def dump(self, node:DataNode) -> None:
+    def dump(self, node: io.DataNode) -> None:
         if self.electric is not None:
             self.electric.dump(node.branch('electric'))
         if self.voltage is not None:

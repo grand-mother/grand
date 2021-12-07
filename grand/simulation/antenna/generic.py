@@ -75,10 +75,10 @@ class Voltage:
 
 
 class AntennaModel:
-    def effective_length(self, xmax: LTP,
-        Efield: ElectricField,
-        frame: Union[ECEF, LTP, GRANDCS, None]=None) -> CartesianRepresentation:
-        pass
+    def effective_length(self, direction: BaseRepresentation,
+        frequency: u.Quantity) -> CartesianRepresentation:
+        return CartesianRepresentation(0)
+
 
 
 class MissingFrameError(ValueError):
