@@ -44,9 +44,9 @@ class AntennaTest(TestCase):
         t = self.model.table
         shape = (281, 72, 91)
 
-        self.assertEquals(t.frequency.size, shape[0])
-        self.assertEquals(t.phi.size, shape[1])
-        self.assertEquals(t.theta.size, shape[2])
+        self.assertEqual(t.frequency.size, shape[0])
+        self.assertEqual(t.phi.size, shape[1])
+        self.assertEqual(t.theta.size, shape[2])
         self.assertEqual(t.resistance.shape, shape)
         self.assertEqual(t.reactance.shape, shape)
         self.assertEqual(t.leff_theta.shape, shape)
