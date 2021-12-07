@@ -1,6 +1,6 @@
-'''
+"""
 Unit tests for the grand.simulation.shower module
-'''
+"""
 
 from collections import OrderedDict
 from pathlib import Path
@@ -10,34 +10,34 @@ import unittest
 import numpy
 
 from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
-from grand.simulation import CoreasShower, ElectricField, ShowerEvent,         \
-                             ZhairesShower
+from grand.simulation import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
 from grand.simulation.pdg import ParticleCode
 from grand.simulation.shower.generic import CollectionEntry
 from tests import TestCase
 
 
 class ShowerTest(TestCase):
-    '''Unit tests for the shower module'''
+    """Unit tests for the shower module"""
 
-    path = Path('shower.hdf5')
+    path = Path("shower.hdf5")
 
     def tearDown(self):
         self.path.unlink()
 
     @staticmethod
     def get_data(tag):
-        '''Get test data from the store
-        '''
-        path = Path(__file__).parent / f'data/{tag}'
+        """Get test data from the store"""
+        path = Path(__file__).parent / f"data/{tag}"
 
         if not path.exists():
-            tgz_name = f'{tag}-test.tar'
-            tgz_path = path / (tgz_name + '.gz')
+            tgz_name = f"{tag}-test.tar"
+            tgz_path = path / (tgz_name + ".gz")
             tgz = store.get(tgz_name)
             path.mkdir(parents=True)
-            with tgz_path.open('wb') as f: f.write(tgz)
-            with tarfile.open(tgz_path, 'r|*') as tar: tar.extractall(path)
+            with tgz_path.open("wb") as f:
+                f.write(tgz)
+            with tarfile.open(tgz_path, "r|*") as tar:
+                tar.extractall(path)
             tgz_path.unlink()
 
         return path
@@ -52,10 +52,10 @@ class ShowerTest(TestCase):
 
     def test_generic(self):
         settings = {
-            'primary' : ParticleCode.PROTON,
-            'energy'  : 1E+9,# * u.GV,
-            'zenith'  : 85,# * u.deg,
-            'azimuth' : 0 #* u.deg
+            "primary": ParticleCode.PROTON,
+            "energy": 1e9,  # * u.GV,
+            "zenith": 85,  # * u.deg,
+            "azimuth": 0,  # * u.deg
         }
         shower = ShowerEvent(**settings)
         shower.dump(self.path)
@@ -66,11 +66,11 @@ class ShowerTest(TestCase):
 
         fields = OrderedDict()
         electric = ElectricField(
-            numpy.array((0, 1, 2)),# * u.ns,
+            numpy.array((0, 1, 2)),  # * u.ns,
             CartesianRepresentation(
-                x=numpy.array((1, 0, 0)),# * u.uV / u.m,
-                y=numpy.array((0, 1, 0)),# * u.uV / u.m,
-                z=numpy.array((0, 0, 1))# * u.uV / u.m
+                x=numpy.array((1, 0, 0)),  # * u.uV / u.m,
+                y=numpy.array((0, 1, 0)),  # * u.uV / u.m,
+                z=numpy.array((0, 0, 1)),  # * u.uV / u.m
             ),
             CartesianRepresentation(x=1, y=2, z=3),
         )
@@ -85,8 +85,8 @@ class ShowerTest(TestCase):
 
         compare_showers()
 
-        nodepath = 'montecarlo/shower'
-        with io.open(self.path, 'w') as root:
+        nodepath = "montecarlo/shower"
+        with io.open(self.path, "w") as root:
             node = root.branch(nodepath)
             shower.dump(node)
 
@@ -97,7 +97,7 @@ class ShowerTest(TestCase):
         compare_showers()
 
     def test_coreas(self):
-        path = self.get_data('coreas')
+        path = self.get_data("coreas")
         shower = ShowerEvent.load(path)
         self.assertIs(shower.frame, None)
 
@@ -117,7 +117,7 @@ class ShowerTest(TestCase):
             self.assertQuantity(r0, r1)
 
     def test_zhaires(self):
-        path = self.get_data('zhaires')
+        path = self.get_data("zhaires")
         shower = ShowerEvent.load(path)
         self.assertIsInstance(shower.frame, LTP)
         self.assertIsNotNone(shower.geomagnet)
@@ -137,22 +137,24 @@ class ShowerTest(TestCase):
 
         frame = shower.shower_frame()
         ev = shower.core - shower.maximum
-        ev  /= numpy.linalg.norm(ev)
-        ev   = ev.T[0]
-        evB  = numpy.cross(ev, shower.geomagnet.T[0])
+        ev /= numpy.linalg.norm(ev)
+        ev = ev.T[0]
+        evB = numpy.cross(ev, shower.geomagnet.T[0])
         evB /= numpy.linalg.norm(evB)
-        evvB = numpy.cross(ev, evB) # evB is already transposed.
+        evvB = numpy.cross(ev, evB)  # evB is already transposed.
 
-        evB = LTP(x=evB[0], y=evB[1], z=evB[2], frame=shower.frame) 
+        evB = LTP(x=evB[0], y=evB[1], z=evB[2], frame=shower.frame)
         evB = evB.ltp_to_ltp(frame)
         self.assertArray(evB, numpy.array((1, 0, 0)), 7)
-        evvB = LTP(x=evvB[0], y=evvB[1], z=evvB[2], frame=shower.core) 
+        evvB = LTP(x=evvB[0], y=evvB[1], z=evvB[2], frame=shower.core)
         evvB = evvB.ltp_to_ltp(frame)
         self.assertArray(evvB, numpy.array((0, 1, 0)), 7)
-        ev = LTP(x=ev[0], y=ev[1], z=ev[2], frame=shower.core) # TODO: this step is redundant as ev is already in LTP. Fix this.
+        ev = LTP(
+            x=ev[0], y=ev[1], z=ev[2], frame=shower.core
+        )  # TODO: this step is redundant as ev is already in LTP. Fix this.
         ev = ev.ltp_to_ltp(frame)
         self.assertArray(ev, numpy.array((0, 0, 1)), 7)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

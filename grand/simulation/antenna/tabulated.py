@@ -11,9 +11,9 @@ import numpy
 from .generic import AntennaModel
 from ... import io
 
-from ...tools.coordinates import CartesianRepresentation, SphericalRepresentation 
+from ...tools.coordinates import CartesianRepresentation, SphericalRepresentation
 
-__all__ = ['DataTable', 'TabulatedAntennaModel']
+__all__ = ["DataTable", "TabulatedAntennaModel"]
 
 
 _logger = getLogger(__name__)
@@ -21,19 +21,19 @@ _logger = getLogger(__name__)
 
 @dataclass
 class DataTable:
-    frequency   : Union[Number, numpy.ndarray]
-    theta       : Union[Number, numpy.ndarray]
-    phi         : Union[Number, numpy.ndarray]
-    resistance  : Union[Number, numpy.ndarray]
-    reactance   : Union[Number, numpy.ndarray]
-    leff_theta  : Union[Number, numpy.ndarray]
-    phase_theta : Union[Number, numpy.ndarray]
-    leff_phi    : Union[Number, numpy.ndarray]
-    phase_phi   : Union[Number, numpy.ndarray]
+    frequency: Union[Number, numpy.ndarray]
+    theta: Union[Number, numpy.ndarray]
+    phi: Union[Number, numpy.ndarray]
+    resistance: Union[Number, numpy.ndarray]
+    reactance: Union[Number, numpy.ndarray]
+    leff_theta: Union[Number, numpy.ndarray]
+    phase_theta: Union[Number, numpy.ndarray]
+    leff_phi: Union[Number, numpy.ndarray]
+    phase_phi: Union[Number, numpy.ndarray]
 
     def dump(self, node: io.DataNode) -> None:
         for field in fields(self):
-            node.write(field.name, getattr(self, field.name), dtype='f4')
+            node.write(field.name, getattr(self, field.name), dtype="f4")
 
     @classmethod
     def load(cls, node: io.DataNode) -> DataTable:
@@ -53,71 +53,77 @@ class TabulatedAntennaModel(AntennaModel):
             self.table.dump(node)
         else:
             path = cast(Union[Path, str], destination)
-            with io.open(path, 'w') as node:
+            with io.open(path, "w") as node:
                 self.table.dump(node)
 
     @classmethod
-    def load(cls, source: Union[str, Path, io.DataNode])                       \
-        -> TabulatedAntennaModel:
+    def load(cls, source: Union[str, Path, io.DataNode]) -> TabulatedAntennaModel:
 
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
-            filename = f'{source.filename}:{source.path}'
-            loader = '_load_from_node'
+            filename = f"{source.filename}:{source.path}"
+            loader = "_load_from_node"
         else:
             source = cast(Union[Path, str], source)
-            filename = f'{source}:/'
+            filename = f"{source}:/"
             source = Path(source)
-            if source.suffix == '.npy':
-                loader = '_load_from_numpy'
+            if source.suffix == ".npy":
+                loader = "_load_from_numpy"
             else:
-                loader = '_load_from_datafile'
+                loader = "_load_from_datafile"
 
-        _logger.info(f'Loading tabulated antenna model from {filename}')
+        _logger.info(f"Loading tabulated antenna model from {filename}")
 
         load = getattr(cls, loader)
         self = load(source)
 
         t = self.table
         n = t.frequency.size * t.theta.size * t.phi.size
-        _logger.info(f'Loaded {n} entries from {filename}')
+        _logger.info(f"Loaded {n} entries from {filename}")
 
         return self
 
     @classmethod
-    def _load_from_datafile(cls, path: Union[Path, str])                       \
-        -> TabulatedAntennaModel:
+    def _load_from_datafile(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
 
         with io.open(path) as root:
             return cls._load_from_node(root)
 
     @classmethod
     def _load_from_node(cls, node: io.DataNode) -> TabulatedAntennaModel:
-        return cls(table = DataTable.load(node))
+        return cls(table=DataTable.load(node))
 
     @classmethod
     def _load_from_numpy(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
         f, R, X, theta, phi, lefft, leffp, phaset, phasep = numpy.load(path)
 
-        n_f     = f.shape[0]
-        n_theta = len(numpy.unique(theta[0,:]))
-        n_phi   = int(R.shape[1] / n_theta)
-        shape   = (n_f, n_phi, n_theta)
+        n_f = f.shape[0]
+        n_theta = len(numpy.unique(theta[0, :]))
+        n_phi = int(R.shape[1] / n_theta)
+        shape = (n_f, n_phi, n_theta)
 
-        dtype   = 'f4'
-        f       = f[:,0].astype(dtype)*1.e6          # MHz --> Hz
-        theta   = theta[0, :n_theta].astype(dtype)   # deg
-        phi     = phi[0, ::n_theta].astype(dtype)    # deg
-        R       = R.reshape(shape).astype(dtype)     # Ohm
-        X       = X.reshape(shape).astype(dtype)     # Ohm
-        lefft   = lefft.reshape(shape).astype(dtype) # m
-        leffp   = leffp.reshape(shape).astype(dtype) # m
+        dtype = "f4"
+        f = f[:, 0].astype(dtype) * 1.0e6  # MHz --> Hz
+        theta = theta[0, :n_theta].astype(dtype)  # deg
+        phi = phi[0, ::n_theta].astype(dtype)  # deg
+        R = R.reshape(shape).astype(dtype)  # Ohm
+        X = X.reshape(shape).astype(dtype)  # Ohm
+        lefft = lefft.reshape(shape).astype(dtype)  # m
+        leffp = leffp.reshape(shape).astype(dtype)  # m
 
         # RK TODO: Make sure going from rad to deg does not affect calculations somewhere else.
-        phaset  = phaset.reshape(shape).astype(dtype) # deg 
-        phasep  = phasep.reshape(shape).astype(dtype) # deg
+        phaset = phaset.reshape(shape).astype(dtype)  # deg
+        phasep = phasep.reshape(shape).astype(dtype)  # deg
 
-        t = DataTable(frequency = f, theta = theta, phi = phi, resistance = R,
-                      reactance = X, leff_theta = lefft, phase_theta = phaset,
-                      leff_phi = leffp, phase_phi = phasep)
+        t = DataTable(
+            frequency=f,
+            theta=theta,
+            phi=phi,
+            resistance=R,
+            reactance=X,
+            leff_theta=lefft,
+            phase_theta=phaset,
+            leff_phi=leffp,
+            phase_phi=phasep,
+        )
         return cls(table=t)

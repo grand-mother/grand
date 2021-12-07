@@ -1,30 +1,36 @@
-'''
+"""
 Unit tests for the grand.io module
-'''
+"""
 
 from pathlib import Path
 import unittest
 
-#from astropy.coordinates import Angle, CartesianRepresentation,                \
+# from astropy.coordinates import Angle, CartesianRepresentation,                \
 #                                UnitSphericalRepresentation
-#import astropy.units as u
+# import astropy.units as u
 import numpy
 
 import grand.io as io
-from grand import Geodetic, ECEF, LTP, Rotation, CartesianRepresentation,\
-                  SphericalRepresentation
+from grand import (
+    Geodetic,
+    ECEF,
+    LTP,
+    Rotation,
+    CartesianRepresentation,
+    SphericalRepresentation,
+)
 from tests import TestCase
 
 
 class IoTest(TestCase):
-    '''Unit tests for grand.io class'''
+    """Unit tests for grand.io class"""
 
-    path = Path('io.hdf5')
+    path = Path("io.hdf5")
 
     def tearDown(self):
         self.path.unlink()
 
-    '''def test_readwrite(self):
+    """def test_readwrite(self):
         r0 = CartesianRepresentation(1 * u.m, 2 * u.m, 3 * u.m)
         u0 = UnitSphericalRepresentation(90 * u.deg, -90 * u.deg)
         c = numpy.array((1, 2)) * u.m
@@ -86,10 +92,10 @@ class IoTest(TestCase):
                     self.assertCartesian(a._origin, element._origin, 8)
                 else:
                     self.assertEquals(a, element)
-    '''
-    #RK
+    """
+    # RK
     def test_readwrite(self):
-        r0 = CartesianRepresentation(x=1, y=2 , z=3)
+        r0 = CartesianRepresentation(x=1, y=2, z=3)
         u0 = SphericalRepresentation(theta=90, phi=-90, r=1)
         c = numpy.array((1, 2))
         r1 = CartesianRepresentation(x=c, y=c, z=c)
@@ -98,25 +104,32 @@ class IoTest(TestCase):
         loc = Geodetic(latitude=45, longitude=6, height=0)
 
         elements = {
-            'primary'    : 'pà',
-            'bytes'      : b'0100011',
-            'id'         : 1,
-            'energy0'    : 1.0,
-            'energy1'    : 1,
-            'data'       : numpy.array(((1, 2, 3), (4, 5, 6))),
-            'position0'  : r0,
-            'position1'  : [r0.x, r0.y, r0.z],
-            'position2'  : r0,
-            'position3'  : r1,
-            'direction0' : u0,
-            'direction1' : u1,
-            'frame0'     : ECEF(x=0,y=0,z=0,obstime='2010-01-01'),
-            'frame1'     : LTP(x=0,y=0,z=0,location=loc, obstime='2010-01-01',
-                               magnetic=True, orientation='NWU')
-                               #rotation=Rotation.from_euler('z', 90 * u.deg)) #RK. TODO.
+            "primary": "pà",
+            "bytes": b"0100011",
+            "id": 1,
+            "energy0": 1.0,
+            "energy1": 1,
+            "data": numpy.array(((1, 2, 3), (4, 5, 6))),
+            "position0": r0,
+            "position1": [r0.x, r0.y, r0.z],
+            "position2": r0,
+            "position3": r1,
+            "direction0": u0,
+            "direction1": u1,
+            "frame0": ECEF(x=0, y=0, z=0, obstime="2010-01-01"),
+            "frame1": LTP(
+                x=0,
+                y=0,
+                z=0,
+                location=loc,
+                obstime="2010-01-01",
+                magnetic=True,
+                orientation="NWU",
+            )
+            # rotation=Rotation.from_euler('z', 90 * u.deg)) #RK. TODO.
         }
 
-        with io.open(self.path, 'w') as root:
+        with io.open(self.path, "w") as root:
             for k, v in elements.items():
                 root.write(k, v)
 
@@ -124,10 +137,10 @@ class IoTest(TestCase):
             for name, element in root.elements:
                 a = elements[name]
                 print(a, type(a))
-                if hasattr(a, 'shape'):
+                if hasattr(a, "shape"):
                     self.assertEqual(a.shape, element.shape)
 
-                # RK: TODO: ECEF, LTP is not detected by isinstance, instead 
+                # RK: TODO: ECEF, LTP is not detected by isinstance, instead
                 #           they are seen as CartesianRepresentation objects.
                 if isinstance(a, CartesianRepresentation):
                     self.assertCartesian(a, element)
@@ -143,11 +156,11 @@ class IoTest(TestCase):
                     self.assertCartesian(a.location, element.location, 8)
                     self.assertEqual(a.orientation, element.orientation)
                     self.assertEqual(a.magnetic, element.magnetic)
-                    #self.assertArray(a.rotation.matrix, element.rotation.matrix)
+                    # self.assertArray(a.rotation.matrix, element.rotation.matrix)
                     self.assertArray(a.basis, element.basis)
                 else:
                     self.assertEqual(a, element)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
