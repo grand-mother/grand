@@ -75,8 +75,9 @@ class Voltage:
 
 
 class AntennaModel:
-    def effective_length(self, direction: BaseRepresentation,
-        frequency: u.Quantity) -> CartesianRepresentation:
+    # TODO: suspicious code no constructor , no test, dead code ?
+    def effective_length(self, direction,
+        frequency) -> CartesianRepresentation:
         return CartesianRepresentation(0)
 
 
