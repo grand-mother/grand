@@ -1,7 +1,11 @@
 '''GRAND software package
 '''
-from .tools import geomagnet, topography
 
+import os.path as osp
+from pathlib import Path
+
+
+from .tools import geomagnet, topography
 from .tools.topography import geoid_undulation, Reference, Topography
 
 # RK
@@ -15,8 +19,6 @@ from .tools.coordinates import Coordinates, CartesianRepresentation, SphericalRe
 
 from .logging import getLogger, Logger
 from . import logging, store
-import os.path as osp
-from pathlib import Path
 
 GRAND_DATA = osp.join(Path.home(), ".grand")
 

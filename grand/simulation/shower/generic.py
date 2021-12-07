@@ -5,7 +5,6 @@ from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
-
 from numbers import Number
 
 from datetime import datetime
