@@ -243,18 +243,14 @@ class CartesianRepresentation(Coordinates):
         else:
             raise TypeError(type(x))
 
-        obj = super().__new__(
-            cls, n
-        )  # create 3xn ndarray coordinates instance with random entries.
-        obj[
-            0
-        ] = x  # replace x-coordinates with input x. x can be int, float, or ndarray.
-        obj[
-            1
-        ] = y  # replace y-coordinates with input y. y can be int, float, or ndarray.
-        obj[
-            2
-        ] = z  # replace z-coordinates with input z. z can be int, float, or ndarray.
+        # create 3xn ndarray coordinates instance with random entries.
+        obj = super().__new__(cls, n)
+        # replace x-coordinates with input x. x can be int, float, or ndarray.
+        obj[0] = x
+        # replace y-coordinates with input y. y can be int, float, or ndarray.
+        obj[1] = y
+        # replace z-coordinates with input z. z can be int, float, or ndarray.
+        obj[2] = z
         return obj
 
     @property
@@ -340,18 +336,14 @@ class SphericalRepresentation(Coordinates):
         else:
             raise TypeError(type(theta))
 
-        obj = super().__new__(
-            cls, n
-        )  # create 3xn ndarray coordinates instance with random entries.
-        obj[
-            0
-        ] = theta  # replace 0-coordinates with input theta. theta can be int, float, or ndarray.
-        obj[
-            1
-        ] = phi  # replace 1-coordinates with input phi. phi can be int, float, or ndarray.
-        obj[
-            2
-        ] = r  # replace 2-coordinates with input r. r can be int, float, or ndarray.
+        # create 3xn ndarray coordinates instance with random entries.
+        obj = super().__new__(cls, n)
+        # replace 0-coordinates with input theta. theta can be int, float, or ndarray.
+        obj[0] = theta
+        # replace 1-coordinates with input phi. phi can be int, float, or ndarray.
+        obj[1] = phi
+        # replace 2-coordinates with input r. r can be int, float, or ndarray.
+        obj[2] = r
         return obj
 
     @property
@@ -423,19 +415,14 @@ class HorizontalRepresentation(Coordinates):
             )
         else:
             raise TypeError(type(azimuth))
-
-        obj = super().__new__(
-            cls, n
-        )  # create 3xn ndarray coordinates instance with random entries.
-        obj[
-            0
-        ] = azimuth  # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
-        obj[
-            1
-        ] = elevation  # replace 1-coordinates with input elevation. elevation can be int, float, or ndarray.
-        obj[
-            2
-        ] = norm  # replace 2-coordinates with input norm. norm can be int, float, or ndarray.
+        # create 3xn ndarray coordinates instance with random entries.
+        obj = super().__new__(cls, n)
+        # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
+        obj[0] = azimuth
+        # replace 1-coordinates with input elevation. elevation can be int, float, or ndarray.
+        obj[1] = elevation
+        # replace 2-coordinates with input norm. norm can be int, float, or ndarray.
+        obj[2] = norm
 
         return obj
 
@@ -515,18 +502,14 @@ class GeodeticRepresentation(Coordinates):
         else:
             raise TypeError(type(latitude))
 
-        obj = super().__new__(
-            cls, n
-        )  # create 3xn ndarray coordinates instance with random entries.
-        obj[
-            0
-        ] = latitude  # replace 0-position with input latitude. latitude can be int, float, or ndarray.
-        obj[
-            1
-        ] = longitude  # replace 1-position with input longitude. longitude can be int, float, or ndarray.
-        obj[
-            2
-        ] = height  # replace 2-position with input height. height can be int, float, or ndarray.
+        # create 3xn ndarray coordinates instance with random entries.
+        obj = super().__new__(cls, n)
+        # replace 0-position with input latitude. latitude can be int, float, or ndarray.
+        obj[0] = latitude
+        # replace 1-position with input longitude. longitude can be int, float, or ndarray.
+        obj[1] = longitude
+        # replace 2-position with input height. height can be int, float, or ndarray.
+        obj[2] = height
 
         return obj
 
