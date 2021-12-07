@@ -5,18 +5,15 @@ from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
-from numbers import Number
-
 from datetime import datetime
-from time import time 
-
-
+from time import time
+from numbers import Number
 import numpy
 
 from ..pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
 from ...import io
-from ...tools.coordinates import ECEF, LTP, Rotation, GRANDCS, CartesianRepresentation #RK
+from ...tools.coordinates import ECEF, Geodetic, LTP, Rotation, GRANDCS, CartesianRepresentation #RK
 
 __all__ = ['CollectionEntry', 'FieldsCollection', 'ShowerEvent']
 
@@ -169,7 +166,7 @@ class ShowerEvent:
 
     def localize(self, latitude, longitude, height=0,
             declination: Optional[Number]         =None,
-            obstime    : Union[datetime, Time, str, None] =None) -> None:
+            obstime    : Union[datetime, time, str, None] =None) -> None:
         location   = Geodetic(latitude=latitude, longitude=longitude, height=height) #RK
         self.frame = LTP(location=location, orientation='NWU', magnetic=True,
                          declination=declination, obstime=obstime)

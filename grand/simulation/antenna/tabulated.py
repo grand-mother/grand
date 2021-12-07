@@ -21,15 +21,15 @@ _logger = getLogger(__name__)
 
 @dataclass
 class DataTable:
-    frequency   : Number
-    theta       : Number
-    phi         : Number
-    resistance  : Number
-    reactance   : Number
-    leff_theta  : Number
-    phase_theta : numpy.ndarray
-    leff_phi    : Number
-    phase_phi   : numpy.ndarray
+    frequency   : Union[Number, numpy.ndarray]
+    theta       : Union[Number, numpy.ndarray]
+    phi         : Union[Number, numpy.ndarray]
+    resistance  : Union[Number, numpy.ndarray]
+    reactance   : Union[Number, numpy.ndarray]
+    leff_theta  : Union[Number, numpy.ndarray]
+    phase_theta : Union[Number, numpy.ndarray]
+    leff_phi    : Union[Number, numpy.ndarray]
+    phase_phi   : Union[Number, numpy.ndarray]
 
     def dump(self, node: io.DataNode) -> None:
         for field in fields(self):

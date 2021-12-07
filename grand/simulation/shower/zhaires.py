@@ -78,7 +78,7 @@ class ZhairesShower(ShowerEvent):
                 else:
                     raise NotImplementedError(string)
 
-            def parse_geomagnet_intensity(string: str) -> u.Quantity:
+            def parse_geomagnet_intensity(string: str):# -> u.Quantity:
                 return float(string.split()[0]) * 1e-3 # uT --> nT
 
             def parse_geomagnet_angles(string: str) -> CartesianRepresentation:

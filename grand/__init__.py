@@ -25,6 +25,7 @@ GRAND_DATA = osp.join(Path.home(), ".grand")
 
 __all__ = ['geomagnet', 'getLogger', 'store', 'topography', 'ECEF',
 		   'Geodetic', 'GeodeticRepresentation', 'GRANDCS', 'coordinates',
-		   'Logger', 'LTP', 'SphericalRepresentation', 'CartesianRepresentation', 'Rotation', 'GRAND_DATA']
+		   'Logger', 'LTP', 'SphericalRepresentation', 'CartesianRepresentation', 
+		   'Rotation', 'GRAND_DATA']
 
 logger:Logger = getLogger(__name__)

@@ -11,7 +11,7 @@ from ..libs.gull import Snapshot as _Snapshot
 
 import numpy
 import datetime
-
+from numbers import Number
 
 
 _default_model: Final = 'IGRF13'
@@ -23,7 +23,7 @@ _default_magnet: Optional[Geomagnet] = None
 '''An instance of Geomagnet with the default geo-magnetic model'''
 
 #_default_obstime: Final[Time] = Time('2020-01-01')
-_default_obstime: Final[date] = datetime.date(2020, 1, 1)
+_default_obstime: Final[datetime.date] = datetime.date(2020, 1, 1)
 '''The default observation time if none is specified'''
 
 
@@ -60,9 +60,9 @@ class Geomagnet:
     '''
 
     def __init__(self,model: str=None,
-                  latitude : Union[Number, np.ndarray] = None,
-                  longitude: Union[Number, np.ndarray] = None,
-                  height   : Union[Number, np.ndarray] = None,
+                  latitude : Union[Number, numpy.ndarray] = None,
+                  longitude: Union[Number, numpy.ndarray] = None,
+                  height   : Union[Number, numpy.ndarray] = None,
                   location : Union[ECEF, Geodetic, LTP, GRANDCS]=None,
                   obstime  : Union[str, datetime.date]   = None) -> CartesianRepresentation:
 

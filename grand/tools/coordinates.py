@@ -42,8 +42,9 @@ grd_origin_lon    = 92.28605 # degree
 grd_origin_height = 2920.522 # meter
 
 __all__ =  ('Coordinates', 
-			'CartesianRepresentation' , 'HorizontalRepresentation' , 'SphericalRepresentation',
-			'ECEF', 'Geodetic', 'LTP' , 'GRANDCS', 'HorizontalVector',
+			'CartesianRepresentation' , 'SphericalRepresentation',
+			'HorizontalRepresentation', 'Horizontal', 'HorizontalVector',
+			'ECEF', 'Geodetic', 'LTP' , 'GRANDCS', 
 			'_cartesian_to_spherical' ,
 			'_cartesian_to_horizontal',
 			'_spherical_to_cartesian' ,
@@ -329,6 +330,7 @@ class SphericalRepresentation(Coordinates):
 		azi, ele, norm = _spherical_to_horizontal(self[0], self[1], self[2])
 		return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
 
+
 class HorizontalRepresentation(Coordinates):
 	'''
 	Generic container for horizontal coordinates.
@@ -472,77 +474,6 @@ class GeodeticRepresentation(Coordinates):
 		self[2] = v
 
 
-class HorizontalRepresentation(Coordinates):
-	'''
-	Generic container for horizontal coordinates.
-	'''
-	def __new__(cls, 
-				azimuth  : Union[Number, np.ndarray] = None, 
-				elevation: Union[Number, np.ndarray] = None, 
-				norm     : Union[Number, np.ndarray] = 1.):
-		'''
-		Create a horizontal coordinates instance.
-		Object with (3,n) ndarray is created which will later be filled with input 
-		azimuth, elevation, and norm, where n is equal to len(azimuth). If predefined 
-		object (like CartesianCoordinates,..) is given as an argument, it will be 
-		first converted to horizontal coordinates. Then (3,n) ndarray will be filled
-		with converted azimuth, elevation, and norm.
-		n        : number of coordinate points. 3xn np.ndarray object will be instantiated
-				   which will then be replaced by input azimuth, elevation, and norm. 
-				   'n' has to be predefined.
-		azimuth  : angle from true North towards East.
-		elevation: angle from horizontal plane (NE plane) towards zenith.
-		norm     : distance from the origin to the point.
-		'''
-		if isinstance(azimuth, Number):
-			n = 1
-		elif isinstance(azimuth, np.ndarray):
-			n = len(azimuth)
-			assert n==len(elevation), 'Length of azimuth and elevation array must be the same. \
-									   azimuth: %i, elevation: %i'%(n,len(elevation))
-		else:
-			raise TypeError(type(x))
-
-		obj = super().__new__(cls, n) # create 3xn ndarray coordinates instance with random entries.
-		obj[0] = azimuth              # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
-		obj[1] = elevation            # replace 1-coordinates with input elevation. elevation can be int, float, or ndarray.
-		obj[2] = norm                 # replace 2-coordinates with input norm. norm can be int, float, or ndarray.
-		
-		return obj
-
-	@property
-	def azimuth(self):
-		return self[0]
-
-	@azimuth.setter
-	def azimuth(self, v):
-		self[0] = v
-
-	@property
-	def elevation(self):
-		return self[1]
-
-	@elevation.setter
-	def elevation(self, v):
-		self[1] = v
-
-	@property
-	def norm(self):
-		return self[2]
-
-	@norm.setter
-	def norm(self, v):
-		self[2] = v
-
-	def horizontal_to_cartesian(self):
-		x,y,z = _horizontal_to_cartesian(self[0], self[1], self[2])
-		return CartesianRepresentation(x=x, y=y, z=z)
-
-	def horizontal_to_spherical(self):
-		th, phi, r = _horizontal_to_spherical(self[0], self[1], self[2])
-		return SphericalRepresentation(theta=th, phi=phi, r=r)
-
-
 # ------------------Frame---------------------
 class Geodetic(GeodeticRepresentation):
 	'''
@@ -635,7 +566,7 @@ class Geodetic(GeodeticRepresentation):
 				else:
 					raise TypeError('Provide reference as GEOID or ELLIPSOID istead of %s'%str(reference))
 
-			elif isinstance(arg, HorizontalVector):
+			elif isinstance(arg, Horizontal):
 				#TO DO: write proper transformation.
 				pass
 			elif isinstance(arg, ECEF):
@@ -654,7 +585,7 @@ class Geodetic(GeodeticRepresentation):
 			else:
 				raise TypeError(type(arg), type(latitude), 
 						   'Argument type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or HorizontalVector.')
+							ECEF, Geodetic, GRANDCS or Horizontal.')
 
 		if isinstance(latitude, (Number, np.ndarray)):
 			# use setter to replace placeholder coordinates values with the real values.
@@ -662,9 +593,9 @@ class Geodetic(GeodeticRepresentation):
 			self.longitude= longitude
 			self.height   = height
 		else:
-			raise TypeError(type(arg), type(latitude), 
-					   'Argument type must be either int, float, np.ndarray, \
-						ECEF, Geodetic, GRANDCS or HorizontalVector.')
+			raise TypeError(type(latitude), 
+					   'latitude, longitude, and height type must be either \
+					   int, float, np.ndarray.')
 
 	def geodetic_to_horizontal(self):
 		pass
@@ -731,9 +662,9 @@ class ECEF(CartesianRepresentation):
 			# return a placeholder with 1 entry. This is used if we just want to define LTP frame
 			# without giving any coordinates. Can also use np.empty((1,1)) instead of np.array([nan]).
 			# Do not use array with no entry because n>=1 is needed to instantiate 'Coordinates'.
-			return super().__new__(cls, latitude =np.array([np.nan]), 
-										longitude=np.array([np.nan]), 
-										height   =np.array([np.nan])) 
+			return super().__new__(cls, x=np.array([np.nan]), 
+										y=np.array([np.nan]), 
+										z=np.array([np.nan])) 
 
 	def __init__(self, 
 				arg : 'Coordinates Instance'    = None, 
@@ -746,11 +677,11 @@ class ECEF(CartesianRepresentation):
 
 		if not isinstance(arg, type(None)):
 			arg = copy(arg)
-			if isinstance(arg, HorizontalVector):
+			if isinstance(arg, Horizontal):
 				#TO DO: write a proper transformation from Horizontal to ECEF.
 				pass
 			elif isinstance(arg, ECEF):
-				x, y, z = ecef.x, ecef.y, ecef.z
+				x, y, z = arg.x, arg.y, arg.z
 			elif isinstance(arg, Geodetic):
 				# allows Geodtic instances as input. Convert from Geodetic to ECEF.
 				# change height wrt geoid to wrt ellipsoid.
@@ -772,7 +703,7 @@ class ECEF(CartesianRepresentation):
 			else:
 				raise TypeError(type(arg), type(x), 
 						   'Type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or HorizontalVector.')
+							ECEF, Geodetic, GRANDCS or Horizontal.')
 
 		if isinstance(x, (Number, np.ndarray)):
 			# use setter to replace placeholder coordinates values with the real values.
@@ -780,9 +711,8 @@ class ECEF(CartesianRepresentation):
 			self.y = y
 			self.z = z
 		else:
-			raise TypeError(type(arg), type(x), 
-					   'Argument type must be either int, float, np.ndarray, \
-						ECEF, Geodetic, GRANDCS or HorizontalVector.')
+			raise TypeError(type(x), 
+					   'x, y, and z type must be either int, float, np.ndarray.')
 
 	def ecef_to_geodetic(self, reference='GEOID'):
 		return Geodetic(self, reference=reference)
@@ -806,111 +736,18 @@ grandcs_origin = Geodetic(latitude = grd_origin_lat,
 						  height   = grd_origin_height,
 						  reference= 'GEOID')
 
-# RK: Rework on this class
+# RK: Merged into Horizontal. Delete this class.
 class HorizontalVector(HorizontalRepresentation):
 	'''
-	Generic container for horizontal coordinates. Location of this
-	coordinate system must be provided in longitude and latitude.
-
-	Note: Starting direction is fixed towards the True North from the given lat and lon.
-
-	azimuth  : angle (deg) starting from true North towards East.
-	elevation: angle (deg) from horizontal plane towards zenith.
+	This class has been merged into Horizontal class
+	by adding 'vector' attribute to reduce code duplication.
 	'''
-
-	def __new__(cls, 
-				arg      : 'Coordinates Instance'    = None, 
-				azimuth  : Union[Number, np.ndarray] = None, 
-				elevation: Union[Number, np.ndarray] = None, 
-				norm     : Union[Number, np.ndarray] = 1.,
-				location : 'Coordinates Instance'    = grandcs_origin): # Location of horizontal CS.
-		'''
-		Create a horizontal coordinates instance.
-		Object with (3,n) ndarray is created which will later be filled with input 
-		azimuth, elevation, and norm, where n is equal to len(azimuth). If predefined 
-		object (like CartesianCoordinates,..) is given as an argument, it will be 
-		first converted to horizontal coordinates. Then (3,n) ndarray will be filled
-		with converted azimuth, elevation, and norm.
-		n: number of coordinate points. 3xn np.ndarray object will be instantiated
-		   which will then be replaced by input azimuth, elevation, and norm. 
-		   'n' has to be predefined.
-		location: location of Horizontal coordinate system. Can be given in any known
-				coordinate system. It will be converted to Geodetic coordinate system.
-		'''		
-		obj         = LTP(location=location, orientation='ENU', magnetic=False)
-		ecef_loc    = obj.location  # location is already in ECEF cs.
-		ecef_basis  = obj.basis     # basis is already in ECEF cs.
-		cls.location= ecef_loc      # used to convert back to ECEF, Geodetic etc.
-		cls.basis   = ecef_basis    # used to convert back to ECEF, Geodetic etc.
-
-		if isinstance(arg, (HorizontalVector, HorizontalRepresentation)):
-			return HorizontalVector(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm)
-
-		if isinstance(azimuth, (Number, np.ndarray)):
-			# check if input coordinates are of the right kind.
-			# Additional check will be performed inside HorizontalRepresentation.
-			pass
-		elif not isinstance(arg, type(None)):
-			if isinstance(arg, (ECEF, Geodetic, GRANDCS)):
-				if isinstance(arg, ECEF):
-					ecef = arg                   # No need to convert. ECEF is required.
-				elif isinstance(arg, (Geodetic, GRANDCS)):
-					ecef = ECEF(arg)             # Convert from Geodetic input to ECEF.
-
-				# Positional vector from the new location is not used like for GRANDCS cs.
-				# see: turtle.ecef_to_horizontal()
-				pos_v      = np.vstack((ecef.x, ecef.y, ecef.z))
-				# Projecting positional vectors to GRANDCS's cs basis.
-				# Converts completely from ECEF cs to the GRANDCS's cs.
-				# Below matrix multiplication is performed in turtle.ecef_to_horizontal()
-				enu_cord = np.matmul(ecef_basis, pos_v) 
-				x, y, z  = enu_cord[0], enu_cord[1], enu_cord[2] # x,y,z w.r.t to ENU basis. 
-				r        = np.sqrt(x*x + y*y + z*z)
-				azimuth  = np.rad2deg(np.arctan2(x,y))
-				elevation= np.rad2deg(np.arcsin(z/r))
-				norm     = r
-			else:
-				raise TypeError(type(arg), type(azimuth), 
-						   'Type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or HorizontalVector.')			
-		else:
-			raise TypeError(type(arg), type(azimuth), 
-					   'Type must be either int, float, np.ndarray, \
-						ECEF, Geodetic, GRANDCS or HorizontalVector.')
-
-		return super().__new__(cls, azimuth, elevation, norm)
-
-	def horizontal_to_ecef(self):
-		rel   = np.deg2rad(self.elevation)
-		raz   = np.deg2rad(self.azimuth)
-		ce    = np.cos(rel)
-
-		pos_v = np.vstack((self.norm*ce*np.sin(raz), 
-						   self.norm*ce*np.cos(raz), 
-						   self.norm*np.sin(rel)))
-		# Projecting horizontal direction vectors to ECEF's cs basis.
-		# Converts completely from Horizontal to ECEF cs.
-		# Below matrix multiplication is performed in turtle.ecef_to_horizontal()
-		ecef_cord = np.matmul(self.basis.T, pos_v) # basis is in ECEF frame.
-		x, y, z   = ecef_cord[0], ecef_cord[1], ecef_cord[2] # x,y,z w.r.t to ECEF basis.
-
-		return ECEF(x=x, y=y, z=z)
-
-	def horizontal_to_geodetic(self):
-		ecef = self.horizontal_to_ecef()
-		return Geodetic(ecef)
-
-	def horizontal_to_grandcs(self):
-		ecef = self.horizontal_to_ecef()
-		return GRANDCS(arg=ecef, origin=self.origin)
+	pass
 
 # RK: Rework on this class
 class Horizontal(HorizontalRepresentation):
 	'''
-	Generic container for horizontal coordinates. Location of this
-	coordinate system must be provided in longitude and latitude.
-
-	Note: Starting direction is fixed towards the True North from the given lat and lon.
+	Generic container for horizontal coordinates. 
 
 	azimuth  : angle (deg) starting from true North towards East.
 	elevation: angle (deg) from horizontal plane towards zenith.
@@ -921,42 +758,41 @@ class Horizontal(HorizontalRepresentation):
 				azimuth  : Union[Number, np.ndarray] = None, 
 				elevation: Union[Number, np.ndarray] = None, 
 				norm     : Union[Number, np.ndarray] = 1.,
-				location : 'Coordinates Instance'    = grandcs_origin): # Location of horizontal CS.
+				location : 'Coordinates Instance'    = grandcs_origin,
+				vector   : 'Boolean'                 = False): 
 		'''
-		Create a horizontal coordinates instance.
-		Object with (3,n) ndarray is created which will later be filled with input 
-		azimuth, elevation, and norm, where n is equal to len(azimuth). If predefined 
-		object (like CartesianCoordinates,..) is given as an argument, it will be 
-		first converted to horizontal coordinates. Then (3,n) ndarray will be filled
-		with converted azimuth, elevation, and norm.
 		n: number of coordinate points. 3xn np.ndarray object will be instantiated
 		   which will then be replaced by input azimuth, elevation, and norm. 
 		   'n' has to be predefined.
-		location: location of Horizontal coordinate system. Can be given in any known
-				coordinate system. It will be converted to Geodetic coordinate system.
+		location: origin of Horizontal coordinate system. Can be given in any known
+				coordinate system. 
 		'''		
 		obj         = LTP(location=location, orientation='ENU', magnetic=False)
 		ecef_loc    = obj.location  # location is already in ECEF cs.
 		ecef_basis  = obj.basis     # basis is already in ECEF cs.
 		cls.location= ecef_loc      # used to convert back to ECEF, Geodetic etc.
 		cls.basis   = ecef_basis    # used to convert back to ECEF, Geodetic etc.
+		cls.vector  = vector
 
-		if isinstance(arg, (HorizontalVector, HorizontalRepresentation)):
-			return HorizontalVector(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm)
+		if isinstance(arg, (Horizontal, HorizontalRepresentation)):
+			return Horizontal(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm)
 
 		if isinstance(azimuth, (Number, np.ndarray)):
 			# check if input coordinates are of the right kind.
 			# Additional check will be performed inside HorizontalRepresentation.
 			pass
 		elif not isinstance(arg, type(None)):
-			if isinstance(arg, (ECEF, Geodetic, GRANDCS)):
+			if isinstance(arg, (ECEF, Geodetic, LTP, GRANDCS)):
 				if isinstance(arg, ECEF):
 					ecef = arg                   # No need to convert. ECEF is required.
-				elif isinstance(arg, (Geodetic, GRANDCS)):
+				elif isinstance(arg, (Geodetic, LTP, GRANDCS)):
 					ecef = ECEF(arg)             # Convert from Geodetic input to ECEF.
 
 				# Positional vector from the new location is used like for GRANDCS cs.
-				pos_v      = np.vstack((ecef.x - cls.location.x, 
+				if vector:
+					pos_v  = np.vstack((ecef.x, ecef.y, ecef.z))
+				else:
+					pos_v  = np.vstack((ecef.x - cls.location.x, 
 										ecef.y - cls.location.y, 
 										ecef.z - cls.location.z))
 				# Projecting positional vectors to 'ENU' LTP's cs basis.
@@ -970,11 +806,11 @@ class Horizontal(HorizontalRepresentation):
 			else:
 				raise TypeError(type(arg), type(azimuth), 
 						   'Type must be either int, float, np.ndarray, \
-							ECEF, Geodetic, GRANDCS or HorizontalVector.')			
+							ECEF, Geodetic, GRANDCS or Horizontal.')			
 		else:
 			raise TypeError(type(arg), type(azimuth), 
 					   'Type must be either int, float, np.ndarray, \
-						ECEF, Geodetic, GRANDCS or HorizontalVector.')
+						ECEF, Geodetic, GRANDCS or Horizontal.')
 
 		return super().__new__(cls, azimuth, elevation, norm)
 
@@ -989,8 +825,10 @@ class Horizontal(HorizontalRepresentation):
 		# Projecting horizontal direction vectors to ECEF's cs basis.
 		# Converts completely from Horizontal to ECEF cs.
 		# Below matrix multiplication is performed in turtle.ecef_to_horizontal()
-		#ecef_cord = np.matmul(self.basis.T, pos_v) # basis is in ECEF frame.
-		ecef_cord = np.matmul(self.basis.T, pos_v) + self.location # basis is in ECEF frame.
+		if self.vector:
+			ecef_cord = np.matmul(self.basis.T, pos_v) # basis is in ECEF frame.
+		else:
+			ecef_cord = np.matmul(self.basis.T, pos_v) + self.location # basis is in ECEF frame.
 		x, y, z   = ecef_cord[0], ecef_cord[1], ecef_cord[2] # x,y,z w.r.t to ECEF basis.
 
 		return ECEF(x=x, y=y, z=z)
@@ -1001,7 +839,7 @@ class Horizontal(HorizontalRepresentation):
 
 	def horizontal_to_grandcs(self):
 		ecef = self.horizontal_to_ecef()
-		return GRANDCS(arg=ecef, origin=self.origin)
+		return GRANDCS(ecef)
 
 
 class LTP(CartesianRepresentation):
@@ -1222,12 +1060,12 @@ class GRANDCS(LTP):
 
 		# Added for tests.
 		if arg is not None:
-			if isinstance(arg, (ECEF, HorizontalVector, Geodetic, LTP, GRANDCS)):
+			if isinstance(arg, (ECEF, Horizontal, Geodetic, LTP, GRANDCS)):
 				pass
 			else:
 				raise TypeError(type(arg), 
 						   'Argument type must be \
-							ECEF, Geodetic, LTP, GRANDCS or HorizontalVector.')
+							ECEF, Geodetic, LTP, GRANDCS or Horizontal.')
 		if x is not None:
 			if isinstance(x, (Number, np.ndarray)):
 				pass

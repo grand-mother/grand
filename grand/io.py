@@ -143,10 +143,10 @@ class DataNode:
             return self._unpack_quantity(dset, v)
         elif metatype == 'table':
             return self._unpack_table(dset, v)
-        elif metatype.startswith('representation'):
-            return self._unpack_representation(dset, v)
-        elif metatype.startswith('frame'):
-            return self._unpack_frame(dset, v)
+        #elif metatype.startswith('representation'):
+        #    return self._unpack_representation(dset, v)
+        #elif metatype.startswith('frame'):
+        #    return self._unpack_frame(dset, v)
         else:
             raise ValueError(f'Invalid metatype {metatype}')
 

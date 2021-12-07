@@ -14,11 +14,11 @@ from pathlib import Path
 #from .geomagnet import *
 #from .topography import geoid_undulation, Reference, Topography
 
-#__all__ = ['DATADIR']
+__all__ = ['DATADIR']
 # RK
-__all__ = ['DATADIR', 'CartesianRepresentation', 'ECEF', 
-		   'Geodetic', 'GeodeticRepresentation', 'GRANDCS',
-		   'LTP']
+#__all__ = ['DATADIR', 'CartesianRepresentation', 'ECEF', 
+#		   'Geodetic', 'GeodeticRepresentation', 'GRANDCS',
+#		   'LTP']
 
 # Initialise the package globals
 DATADIR: Final = Path(__file__).parent / 'data'

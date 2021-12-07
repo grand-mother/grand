@@ -158,7 +158,7 @@ def update_data(coordinates: 'Coordinate Instance' = None,
                 # 3 points defined at radius distance from the origin, one point on each axis.
                 # Max latitude = origin+radius towards N. Min latitude = origin-radius towards N.
                 # Max longitude = origin+radius towards E. Min longitude = origin-radius towards E.
-                delta = -radius if not i else radius
+                delta = -1*radius if not i else radius
                 ltp_E = np.array([delta, 0, 0]) # delta distance [m] towards E from origin.
                 ltp_N = np.array([0, delta, 0]) # delta distance [m] towards N from origin.
                 ltp_U = np.array([0, 0, delta]) # delta distance [m] towards U from origin.

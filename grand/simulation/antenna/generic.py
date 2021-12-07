@@ -58,8 +58,8 @@ class ElectricField:
 
 @dataclass
 class Voltage:
-    t: u.Quantity
-    V: u.Quantity
+    t: 's'
+    V: 'uV'
 
     @classmethod
     def load(cls, node: io.DataNode):
@@ -87,7 +87,7 @@ class MissingFrameError(ValueError):
 
 @dataclass
 class Antenna:
-    model: AntennaModel
+    model: 'TabulatedAntennaModel'  # if class is used, circular import error occurs.
     frame: Union[ECEF, LTP, GRANDCS, None] = None
 
     def effective_length(self, xmax: LTP,
