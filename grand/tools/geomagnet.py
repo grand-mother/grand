@@ -11,8 +11,7 @@ from ..libs.gull import Snapshot as _Snapshot
 
 import numpy
 import datetime
-from numbers import Number
-
+from datetime import date
 
 _default_model: Final = "IGRF13"
 """The default geo-magnetic model, i.e. IGRF13.
@@ -61,12 +60,12 @@ class Geomagnet:
     def __init__(
         self,
         model: str = None,
-        latitude: Union[Number, numpy.ndarray] = None,
-        longitude: Union[Number, numpy.ndarray] = None,
-        height: Union[Number, numpy.ndarray] = None,
+        latitude: Union[float, numpy.ndarray] = None,
+        longitude: Union[float, numpy.ndarray] = None,
+        height: Union[float, numpy.ndarray] = None,
         location: Union[ECEF, Geodetic, LTP, GRANDCS] = None,
-        obstime: Union[str, datetime.date] = None,
-    ) -> CartesianRepresentation:
+        obstime: Union[str, date] = None,
+    ) -> None:
 
         # print('location:', location, type(location))
         if model is None:
@@ -87,12 +86,8 @@ class Geomagnet:
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRAND cs. OR latitude=deg, longitude=deg, height=meter.
         if latitude != None and longitude != None and height != None:
-            geodetic_loc = Geodetic(
-                latitude=latitude, longitude=longitude, height=height
-            )
-        elif isinstance(
-            location, (ECEF, Geodetic, GeodeticRepresentation, LTP, GRANDCS)
-        ):
+            geodetic_loc = Geodetic(latitude=latitude, longitude=longitude, height=height)
+        elif isinstance(location, (ECEF, Geodetic, GeodeticRepresentation, LTP, GRANDCS)):
             geodetic_loc = Geodetic(location)
         else:
             raise TypeError(
@@ -107,9 +102,7 @@ class Geomagnet:
 
         # Calculate magnetic field
         self.snapshot = _Snapshot(self.model, self.obstime)
-        Bfield = self.snapshot(
-            geodetic_loc.latitude, geodetic_loc.longitude, geodetic_loc.height
-        )
+        Bfield = self.snapshot(geodetic_loc.latitude, geodetic_loc.longitude, geodetic_loc.height)
 
         # Output magnetic field is either in [Bx, By, Bz] or [[Bx1, By1, Bz1], [Bx2, By2, Bz2], ....]
         if Bfield.size == 3:
