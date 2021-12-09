@@ -63,9 +63,7 @@ class CoreasShower(ShowerEvent):
             except StopIteration:
                 pass
             else:
-                logger.warning(
-                    f"Multiple shower simulations in {path}. Loading only one."
-                )
+                logger.warning(f"Multiple shower simulations in {path}. Loading only one.")
 
         config = {
             "energy": float(reas["PrimaryParticleEnergy"]) * 1e-09,  # << u.GeV,
@@ -96,9 +94,7 @@ class CoreasShower(ShowerEvent):
         theta, phi = config["zenith"], config["azimuth"]
         # ct, st = numpy.cos(theta), numpy.sin(theta) #RK, was this wrong? theta is in deg.
         ct, st = numpy.cos(numpy.deg2rad(theta)), numpy.sin(numpy.deg2rad(theta))
-        direction = CartesianRepresentation(
-            x=st * numpy.cos(phi), y=st * numpy.sin(phi), z=ct
-        )
+        direction = CartesianRepresentation(x=st * numpy.cos(phi), y=st * numpy.sin(phi), z=ct)
         config["maximum"] = core - distance * direction
 
         antpos = cls._parse_coreas_bins(path, index)
@@ -228,7 +224,4 @@ class CoreasShower(ShowerEvent):
         matches = pattern.findall(txt)
 
         # return [(int(antenna), tuple(float(v) for v in values) << u.m)
-        return [
-            (int(antenna), tuple(float(v) for v in values))
-            for (antenna, *values) in matches
-        ]
+        return [(int(antenna), tuple(float(v) for v in values)) for (antenna, *values) in matches]
