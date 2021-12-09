@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from logging import getLogger
-from typing import cast, Optional, Union
-from numbers import Number
-
+from typing import cast, Optional, Union, Any
+import numpy as np
 from ...tools.coordinates import (
     ECEF,
     LTP,
@@ -12,7 +11,7 @@ from ...tools.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
 )  # RK
-import numpy
+
 
 from ... import io  # , ECEF, LTP
 
@@ -24,7 +23,7 @@ _logger = getLogger(__name__)
 
 @dataclass
 class ElectricField:
-    t: Number
+    t: np.ndarray
     E: CartesianRepresentation  # RK
     r: Union[CartesianRepresentation, None] = None
     frame: Union[ECEF, LTP, GRANDCS, None] = None
@@ -63,8 +62,8 @@ class ElectricField:
 
 @dataclass
 class Voltage:
-    t: "s"
-    V: "uV"
+    t: np.ndarray  # [s]
+    V: np.ndarray  # [?]
 
     @classmethod
     def load(cls, node: io.DataNode):
@@ -91,11 +90,11 @@ class MissingFrameError(ValueError):
 
 @dataclass
 class Antenna:
-    model: "TabulatedAntennaModel"  # if class is used, circular import error occurs.
-    frame: Union[ECEF, LTP, GRANDCS, None] = None
+    model: Any  # if class is used, circular import error occurs.
+    frame: Union[ECEF, LTP, GRANDCS]
 
     def effective_length(
-        self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS, None] = None
+        self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS]
     ) -> CartesianRepresentation:
         # 'frame' is shower frame. 'self.frame' is antenna frame.
 
@@ -113,26 +112,26 @@ class Antenna:
 
         dtheta = table.theta[1] - table.theta[0]  # deg
         rt1 = (theta - table.theta[0]) / dtheta
-        it0 = int(numpy.floor(rt1) % table.theta.size)
+        it0 = int(np.floor(rt1) % table.theta.size)
         it1 = it0 + 1
         if it1 == table.theta.size:  # Prevent overflow
             it1, rt1 = it0, 0
         else:
-            rt1 -= numpy.floor(rt1)
+            rt1 -= np.floor(rt1)
         rt0 = 1 - rt1
 
         dphi = table.phi[1] - table.phi[0]  # deg
         rp1 = (phi - table.phi[0]) / dphi
-        ip0 = int(numpy.floor(rp1) % table.phi.size)
+        ip0 = int(np.floor(rp1) % table.phi.size)
         ip1 = ip0 + 1
         if ip1 == table.phi.size:  # Results are periodic along phi
             ip1 = 0
-        rp1 -= numpy.floor(rp1)
+        rp1 -= np.floor(rp1)
         rp0 = 1 - rp1
 
         def fftfreq(n, t):
             dt = t[1] - t[0]
-            return numpy.fft.fftfreq(n, dt)
+            return np.fft.fftfreq(n, dt)
 
         def interp(v):
             fp = (
@@ -141,41 +140,38 @@ class Antenna:
                 + rp0 * rt1 * v[:, ip0, it1]
                 + rp1 * rt1 * v[:, ip1, it1]
             )
-            return numpy.interp(x, xp, fp, left=0, right=0)
+            return np.interp(x, xp, fp, left=0, right=0)
 
         E = Efield.E
-        Ex = numpy.fft.rfft(E.x)
+        Ex = np.fft.rfft(E.x)
         x = fftfreq(Ex.size, Efield.t)  # frequency [Hz]
         xp = table.frequency  # frequency [Hz]
 
         ltr = interp(table.leff_theta)  # LWP. m
-        lta = interp(numpy.deg2rad(table.phase_theta))  # LWP. rad
+        lta = interp(np.deg2rad(table.phase_theta))  # LWP. rad
         lpr = interp(table.leff_phi)  # LWP. m
-        lpa = interp(numpy.deg2rad(table.phase_phi))  # LWP. rad
+        lpa = interp(np.deg2rad(table.phase_phi))  # LWP. rad
 
         # Pack the result as a Cartesian vector with complex values
-        lt = ltr * numpy.exp(1j * lta)
-        lp = lpr * numpy.exp(1j * lpa)
+        lt = ltr * np.exp(1j * lta)
+        lp = lpr * np.exp(1j * lpa)
 
-        t, p = numpy.deg2rad(theta), numpy.deg2rad(phi)
-        ct, st = numpy.cos(t), numpy.sin(t)
-        cp, sp = numpy.cos(p), numpy.sin(p)
+        t, p = np.deg2rad(theta), np.deg2rad(phi)
+        ct, st = np.cos(t), np.sin(t)
+        cp, sp = np.cos(p), np.sin(p)
         lx = lt * ct * cp - sp * lp
         ly = lt * ct * sp + cp * lp
         lz = -st * lt
 
         # Treating Leff as a vector (no change in magnitude) and transforming it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame  (ToDo: there might be an easier way to do this.)
-        Leff = CartesianRepresentation(x=lx, y=ly, z=lz)
-        Leff = numpy.matmul(
-            self.frame.basis.T, Leff
-        )  # vector wrt ECEF frame. Antenna --> ECEF
-        Leff = numpy.matmul(
-            frame.basis, Leff
-        )  # vector wrt shower frame. ECEF --> Shower
+        Leff = CartesianRepresentation(x=lx, y=ly, z=lz)       
+        Leff = np.matmul(self.frame.basis.T, Leff)  # vector wrt ECEF frame. Antenna --> ECEF
+        Leff = np.matmul(frame.basis, Leff)  # vector wrt shower frame. ECEF --> Shower
 
         return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
-
+    
+        
     def compute_voltage(
         self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS, None] = None
     ) -> Voltage:
@@ -186,10 +182,10 @@ class Antenna:
 
         # Compute the voltage. input Leff and field are in shower frame.
         def rfft(q):
-            return numpy.fft.rfft(q)
+            return np.fft.rfft(q)
 
         def irfft(q):
-            return numpy.fft.irfft(q)
+            return np.fft.irfft(q)
 
         Leff = self.effective_length(xmax, Efield, frame)
         E = Efield.E  # E is CartesianRepresentation
@@ -198,11 +194,7 @@ class Antenna:
         Ez = rfft(E.z)
 
         # Here we have to do an ugly patch for Leff values to be correct
-        V = irfft(
-            Ex * (Leff.x - Leff.x[0])
-            + Ey * (Leff.y - Leff.y[0])
-            + Ez * (Leff.z - Leff.z[0])
-        )
+        V = irfft(Ex * (Leff.x - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
 
         t = Efield.t
         t = t[: V.size]
