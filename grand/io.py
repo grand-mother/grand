@@ -122,9 +122,7 @@ class DataNode:
             # self._write_number(k, v, dtype, unit)
             self._write_number(k, v, dtype)  # RK
 
-    def _unpack(
-        self, dset: _Dataset, dtype: Union[numpy.DataType, str, None] = None
-    ) -> Any:
+    def _unpack(self, dset: _Dataset, dtype: Union[numpy.DataType, str, None] = None) -> Any:
         if dset.shape:
             v = dset[:]
             if dtype is not None:
@@ -171,9 +169,7 @@ class DataNode:
             opts = self._compression
         else:
             opts = {}
-        dset = self._group.require_dataset(
-            k, data=v, shape=v.shape, dtype=v.dtype, **opts
-        )
+        dset = self._group.require_dataset(k, data=v, shape=v.shape, dtype=v.dtype, **opts)
         dset.attrs["encoding"] = encoding
 
         return dset
@@ -328,9 +324,7 @@ class DataNode:
             opts = self._compression
         else:
             opts = {}
-        dset = self._group.require_dataset(
-            k, data=v, dtype=dtype, shape=v.shape, **opts
-        )
+        dset = self._group.require_dataset(k, data=v, dtype=dtype, shape=v.shape, **opts)
         if columns:
             dset.attrs["columns"] = columns
         # if units:
@@ -360,9 +354,7 @@ class DataNode:
             data[0, 2] = c.z  # RK
             data[1:, :] = v._basis  # RK. basis is wrt ECEF frame.
 
-            dset = self._group.require_dataset(
-                k, data=data, shape=data.shape, dtype=data.dtype
-            )
+            dset = self._group.require_dataset(k, data=data, shape=data.shape, dtype=data.dtype)
             dset.attrs["metatype"] = "frame/ltp"
             dset.attrs["magnetic"] = v.magnetic
             dset.attrs["orientation"] = v.orientation
@@ -426,9 +418,7 @@ class DataNode:
     def _check_columns(v, columns):
         n = len(v)
         if columns and (len(columns) != n):
-            raise ValueError(
-                f"Invalid number of columns (expected {n} got " f"{len(columns)})"
-            )
+            raise ValueError(f"Invalid number of columns (expected {n} got " f"{len(columns)})")
 
     # RK: This function is now unnecessary without units. Delete this after figuring out where it has been used.
     # @staticmethod
