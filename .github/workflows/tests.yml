@@ -31,7 +31,8 @@ jobs:
         manage_sonar_update.py
 
     - name: Yes update   
-        if: ${{ always() }}        
+      if: ${{ always() }}
+      run: |      
         ls
 
 #     - name: Dynamics analysis and coverage
