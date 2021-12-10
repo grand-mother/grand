@@ -39,10 +39,10 @@ jobs:
         . env/setup.sh
         grand_quality_type.bash 
 
-    - name: Check documentation examples
-      run: |
-        . env/setup.sh
-        python -m tests --doc
+#     - name: Check documentation examples
+#       run: |
+#         . env/setup.sh
+#         python -m tests --doc
 
 
 #     - name: Upload the coverage
