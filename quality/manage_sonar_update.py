@@ -12,7 +12,7 @@ USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 
 #==================== ENV
 SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
-BRANCH = os.environ["BRANCH"]
+BRANCH = os.environ["GITHUB_REF_NAME"]
 USER_GIT = os.environ["USER_GIT"]
 LOGIN = "0c9f679e12df438a312b424ae52f5959cd0b5e4a"
 
