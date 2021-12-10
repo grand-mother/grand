@@ -72,13 +72,13 @@ class CoreasShower(ShowerEvent):
             "azimuth": float(reas["ShowerAzimuthAngle"]),  # << u.deg,
             "primary": _id_to_code[int(reas["PrimaryParticleType"])],
         }
-    
+
         core = CartesianRepresentation(
             x=float(reas["CoreCoordinateNorth"]) * 1e-02,
             y=float(reas["CoreCoordinateWest"]) * 1e-02,
             z=float(reas["CoreCoordinateVertical"]) * 1e-02,
         )
-            
+
         # unit = u.m)
         config["core"] = core
 
@@ -121,7 +121,7 @@ class CoreasShower(ShowerEvent):
             cgs2si = 29979245800.0
             pattern = re.compile("(\d+).dat$")
             for antenna_path in fields_path.glob("*.dat"):
-                antenna = int(pattern.search(str(antenna_path))[1]) # type: ignore[index]
+                antenna = int(pattern.search(str(antenna_path))[1])  # type: ignore[index]
                 logger.debug(f"Loading trace for antenna {antenna}")
                 data = numpy.loadtxt(antenna_path)
                 t = data[:, 0] * 1e09  # * u.ns
@@ -137,7 +137,7 @@ class CoreasShower(ShowerEvent):
             for key in sorted(raw_fields.keys()):
                 fields[key] = raw_fields[key]
 
-        ret = cls(fields=fields, **config)# type: ignore[arg-type]
+        ret = cls(fields=fields, **config)  # type: ignore[arg-type]
         return ret
 
     @classmethod
@@ -149,7 +149,7 @@ class CoreasShower(ShowerEvent):
 
         with reas_file.open() as f:
             txt = f.read()
-    
+
         pattern = re.compile("([^=# \n\t]+)[ \t]*=[ \t]*([^ ;\t]*)[ \t]*;")
         setattr(cls, "_reas_pattern", pattern)
 
@@ -175,7 +175,7 @@ class CoreasShower(ShowerEvent):
                 d = line.split()
                 if not d:
                     continue
-                antenna = int(pattern.search(d[0])[1])# type: ignore[index]
+                antenna = int(pattern.search(d[0])[1])  # type: ignore[index]
                 position = tuple(float(v) * 1e-02 for v in d[1:4])  # << u.m
                 data.append((antenna, position))
 
@@ -196,7 +196,7 @@ class CoreasShower(ShowerEvent):
                 d = line.split()
                 if not d:
                     continue
-                antenna = int(pattern.search(d[5])[1])# type: ignore[index]
+                antenna = int(pattern.search(d[5])[1])  # type: ignore[index]
                 position = tuple(float(v) * 1e-02 for v in d[2:5])  # << u.m
                 data.append((antenna, position))
 

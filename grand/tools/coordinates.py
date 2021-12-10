@@ -32,11 +32,12 @@ import os
 from numbers import Number
 
 import numpy as np
+
 try:
     from scipy.spatial.transform import Rotation as _Rotation
 except ImportError:
     _Rotation = None
-    
+
 from ..libs import turtle
 from . import DATADIR
 
@@ -1044,7 +1045,7 @@ class LTP(CartesianRepresentation):
         magnetic: bool = False,  # shift orientation by magnetic declination?
         magmodel: str = "IGRF13",  # if shift, which magnetic model to use?
         declination: Optional[float] = None,  # or simply provide the magnetic declination
-        obstime: Union[str, datetime ] = "2020-01-01",  # calculate declination of what date?
+        obstime: Union[str, datetime] = "2020-01-01",  # calculate declination of what date?
         frame: Any = None,
         rotation=None,
     ):
