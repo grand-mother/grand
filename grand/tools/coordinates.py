@@ -43,7 +43,7 @@ from . import DATADIR
 
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
-grd_origin_lat = 38.888491  # degree
+grd_origin_lat = 38.88849  # degree
 grd_origin_lon = 92.28605  # degree
 grd_origin_height = 2920.522  # meter
 
