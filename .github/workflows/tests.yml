@@ -23,14 +23,14 @@ jobs:
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
 
-    - name: SonarQube update ?
+    - name: Check SonarQube update
       env:
         USER_GIT: ${{github.actor}}
       run: |
         . env/setup.sh
         manage_sonar_update.py
 
-    - name: Yes update   
+    - name: SonarQube update   
       if: ${{ success() }}
       run: |      
         ls
