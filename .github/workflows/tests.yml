@@ -31,7 +31,7 @@ jobs:
         manage_sonar_update.py
 
     - name: Yes update   
-        if: ${{ success() }}        
+        if: ${{ always() }}        
         echo "update SonarQube"
 
 #     - name: Dynamics analysis and coverage
