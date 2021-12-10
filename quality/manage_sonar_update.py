@@ -8,7 +8,9 @@ Created on 22 nov. 2021
 import os
 import sys
 
-USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
+#USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
+USER_SONAR = [ 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
+
 
 #==================== ENV
 SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
