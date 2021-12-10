@@ -8,7 +8,7 @@ Created on 22 nov. 2021
 import os
 import sys
 
-USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
+USER_SONAR = ['luckyji', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 #USER_SONAR = [ 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 
 
