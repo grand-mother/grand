@@ -21,7 +21,7 @@ jobs:
     - name: Initialise the environment
       run: |
         echo $GITHUB_REF_NAME
-        echo $github.actor
+        echo ${{github.actor}}
 #         . env/setup.sh
 #         python -m pip install -r quality/requirements.txt
 
