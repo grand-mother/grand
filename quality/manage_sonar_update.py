@@ -8,11 +8,43 @@ Created on 22 nov. 2021
 import os
 import sys
 
-print(os.environ["GITHUB_REF_NAME"])
-print(os.environ["USER_GIT"])
+USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 
-SHA = os.environ["GITHUB_SHA"][:8]
-GITHUB_REF_NAME = os.environ["GITHUB_REF_NAME"]
+#==================== ENV
+SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
+BRANCH = os.environ["BRANCH"]
 USER_GIT = os.environ["USER_GIT"]
+LOGIN = "0c9f679e12df438a312b424ae52f5959cd0b5e4a"
 
-print(SHA)
+
+#==================== FUNCTION
+def create_sonar_properties(name="", key="", descr="", login="", n_file='sonar.properties'):
+    properties = f'sonar.projectName={name}'
+    properties += f'\nsonar.projectKey={key}'
+    properties += f'\nsonar.projectDescription={descr}'
+    properties += f'\nsonar.login={login}'
+    properties += '''
+sonar.host.url=https://sonarqube.grand.in2p3.fr
+
+sonar.sources=grand
+sonar.sourceEncoding=UTF-8
+sonar.python.coverage.reportPaths=quality/report_coverage.xml
+sonar.python.pylint.reportPaths=quality/report_pylint.txt
+'''
+    with open(n_file, 'w') as f_job:
+        f_job.write(properties)
+    print(properties)
+    
+    
+#==================== MAIN
+if BRANCH in ['master', 'dev', 'dev_update_sonar_ci']:
+    # name=BRANCH
+    name = 'grand'   
+    create_sonar_properties(BRANCH, BRANCH, LOGIN)
+    exit(0)
+elif USER_GIT in USER_SONAR:
+    name = f'user_{USER_GIT}'
+    create_sonar_properties(name, name, BRANCH, LOGIN)
+    exit(0)
+exit(1)
+    
