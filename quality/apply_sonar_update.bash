@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $1 eq 0 ]; then
+if [ $1 -eq 0 ]; then
 	mkdir sonar
 	cd sonar         
 	curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
