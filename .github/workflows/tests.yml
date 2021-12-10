@@ -20,15 +20,17 @@ jobs:
 
     - name: Initialise the environment
       run: |
-        . env/setup.sh
-        python -m pip install -r quality/requirements.txt
-
-    - name: SonarQube update 
-      run: |
-        . env/setup.sh
-        mkdir sonar
-        cd sonar
         echo $GITHUB_REF_NAME
+        echo $github.actor
+#         . env/setup.sh
+#         python -m pip install -r quality/requirements.txt
+
+#     - name: SonarQube update 
+#       run: |
+#         . env/setup.sh
+#         mkdir sonar
+#         cd sonar
+#         
 #         curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
 #         unzip  sonar-scanner-cli-4.6.2.2472-linux.zip
 #         PATH=$PATH:$GRAND_ROOT/sonar/sonar-scanner-4.6.2.2472-linux/bin
