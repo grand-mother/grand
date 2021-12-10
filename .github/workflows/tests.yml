@@ -22,22 +22,39 @@ jobs:
       run: |
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
-      
-    - name: Dynamics analysis and coverage
+     
+    - name: SonarQube update 
       run: |
         . env/setup.sh
-        coverage run --source=grand -m pytest tests
-        check_score_coverage.py
-        
-    - name: Static analysis with pylint
-      run: |
-        . env/setup.sh                
+        apt-get install -y openjdk-11-jdk-headless
+        apt-get install -y unzip
+        apt-get install -y curl
+        mkdir sonar
+        cd sonar
+        curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102-linux.zip
+        unzip  sonar-scanner-cli-4.3.0.2102-linux.zip
+        cd /usr/bin && ln -s $GRAND_ROOT/sonar/sonar-scanner-4.3.0.2102-linux/bin/sonar-scanner sonar-scanner
+        cd $GRAND_ROOT
+        grand_quality_test_cov.bash
         grand_quality_analysis.bash
+        sonar-scanner -Dproject.settings=quality/sonar_grand_in2p3.properties
         
-    - name: Static type check
-      run: |
-        . env/setup.sh
-        grand_quality_type.bash 
+
+#     - name: Dynamics analysis and coverage
+#       run: |
+#         . env/setup.sh
+#         coverage run --source=grand -m pytest tests
+#         check_score_coverage.py
+#         
+#     - name: Static analysis with pylint
+#       run: |
+#         . env/setup.sh                
+#         grand_quality_analysis.bash
+#         
+#     - name: Static type check
+#       run: |
+#         . env/setup.sh
+#         grand_quality_type.bash 
 
 #     - name: Check documentation examples
 #       run: |
