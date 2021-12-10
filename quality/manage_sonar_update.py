@@ -43,11 +43,9 @@ sonar.python.pylint.reportPaths=quality/report_pylint.txt
 if BRANCH in ['master', 'dev']:
     name=BRANCH
     #name = 'grand'   
-    create_sonar_properties(name, name, SHA, LOGIN)
-    sys.exit(0)
+    create_sonar_properties(name, name, SHA, LOGIN)    
 elif USER_GIT in USER_SONAR:
     name = f'user_{USER_GIT}'
-    create_sonar_properties(name, name, BRANCH, LOGIN)
-    sys.exit(0)
-sys.exit(1)
+    create_sonar_properties(name, name, BRANCH, LOGIN)   
+sys.exit(0)
     
