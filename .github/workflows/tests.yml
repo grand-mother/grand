@@ -32,9 +32,9 @@ jobs:
         unzip  sonar-scanner-cli-4.3.0.2102-linux.zip
         PATH=$PATH:$GRAND_ROOT/sonar/sonar-scanner-4.3.0.2102-linux/bin
         cd $GRAND_ROOT
-        sonar-scanner -Dproject.settings=quality/sonar_grand_in2p3.properties
         grand_quality_test_cov.bash
         grand_quality_analysis.bash
+        sonar-scanner -Dproject.settings=quality/sonar_grand_in2p3.properties
         
         
 #         apt-get install -y openjdk-11-jdk-headless
