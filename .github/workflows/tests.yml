@@ -30,7 +30,7 @@ jobs:
         cd sonar
         curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102-linux.zip
         unzip  sonar-scanner-cli-4.3.0.2102-linux.zip
-        cd /usr/bin && ln -s $GRAND_ROOT/sonar/sonar-scanner-4.3.0.2102-linux/bin/sonar-scanner sonar-scanner
+        PATH=$PATH:$GRAND_ROOT/sonar/sonar-scanner-4.3.0.2102-linux/bin
         cd $GRAND_ROOT
         sonar-scanner -Dproject.settings=quality/sonar_grand_in2p3.properties
         grand_quality_test_cov.bash
