@@ -29,7 +29,10 @@ jobs:
       run: |
         . env/setup.sh
         manage_sonar_update.py
-
+        if [ $? -eq 1]
+        then
+           echo "update SonarQube"
+        fi
 
 #     - name: Dynamics analysis and coverage
 #       run: |
