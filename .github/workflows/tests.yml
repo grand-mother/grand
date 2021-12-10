@@ -23,13 +23,15 @@ jobs:
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
 
-    - name: SonarQube update
+    - name: SonarQube update ?
       env:
         USER_GIT: ${{github.actor}}
       run: |
         . env/setup.sh
-        manage_sonar_update.py        
-        if: ${{success}}        
+        manage_sonar_update.py
+
+    - name: Yes update   
+        if: ${{ success() }}        
         echo "update SonarQube"
 
 #     - name: Dynamics analysis and coverage
