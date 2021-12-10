@@ -11,3 +11,4 @@ if [ $1 -eq 0 ]; then
 	grand_quality_analysis.bash
 	sonar-scanner -Dproject.settings=sonar.properties
 fi 
+exit 0
