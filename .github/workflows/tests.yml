@@ -31,7 +31,7 @@ jobs:
         manage_sonar_update.py
 
     - name: SonarQube update   
-      if: ${{ success() }}
+      if: ${{ failure() }}
       run: |      
         ls
 
