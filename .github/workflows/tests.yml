@@ -31,7 +31,7 @@ jobs:
         manage_sonar_update.py
 
     - name: Yes update   
-      if: ${{ succes() }}
+      if: ${{ success() }}
       run: |      
         ls
 
