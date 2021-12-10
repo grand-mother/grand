@@ -8,8 +8,8 @@ Created on 22 nov. 2021
 import os
 import sys
 
-#USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
-USER_SONAR = [ 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
+USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
+#USER_SONAR = [ 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 
 
 #==================== ENV
@@ -39,7 +39,7 @@ sonar.python.pylint.reportPaths=quality/report_pylint.txt
     
     
 #==================== MAIN
-if BRANCH in ['master', 'dev', 'dev_update_sonar_ci1']:
+if BRANCH in ['master', 'dev', 'dev_update_sonar_ci']:
     # name=BRANCH
     name = 'grand'   
     create_sonar_properties(name, name, SHA, LOGIN)
