@@ -33,8 +33,8 @@ jobs:
 
     - name: Dynamics analysis and coverage
       run: |
-        . env/setup.sh
-        grand_quality_test_cov.bash
+        . env/setup.sh        
+        coverage run --source=grand -m pytest tests -v
         check_score_coverage.py
         
     - name: Static analysis with pylint
