@@ -6,18 +6,19 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Optional
 
+
+import h5py
+import numpy
+
+
+from .generic import CollectionEntry, FieldsCollection, ShowerEvent
+from ..antenna import ElectricField
+from ..pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP, Geodetic
 from ...tools.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
 )  # , Reference
-
-import h5py
-import numpy
-
-from .generic import CollectionEntry, FieldsCollection, ShowerEvent
-from ..antenna import ElectricField
-from ..pdg import ParticleCode
 
 __all__ = ["InvalidAntennaName", "ZhairesShower"]
 
@@ -53,9 +54,7 @@ class ZhairesShower(ShowerEvent):
         else:
 
             def parse_primary(string: str) -> ParticleCode:
-                return {"Proton": ParticleCode.PROTON, "Iron": ParticleCode.IRON}[
-                    string.strip()
-                ]
+                return {"Proton": ParticleCode.PROTON, "Iron": ParticleCode.IRON}[string.strip()]
 
             def parse_quantity(string: str):
                 words = string.split()
@@ -66,9 +65,7 @@ class ZhairesShower(ShowerEvent):
                 lat = parse_quantity(lat[:-2])
                 lon = parse_quantity(lon[:-3])
                 # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
-                geodetic = Geodetic(
-                    latitude=lat, longitude=lon, height=0, reference="ELLIPSOID"
-                )
+                geodetic = Geodetic(latitude=lat, longitude=lon, height=0, reference="ELLIPSOID")
                 return ECEF(geodetic)
 
             def parse_date(string: str) -> datetime:
@@ -112,9 +109,7 @@ class ZhairesShower(ShowerEvent):
                                 inp["ground_alt"] = ground_alt
                 except StopIteration:
                     raise FileNotFoundError(path / "*.inp")
-                return CartesianRepresentation(
-                    x=1000 * x, y=1000 * y, z=1000 * z
-                )  # RK. km --> m
+                return CartesianRepresentation(x=1000 * x, y=1000 * y, z=1000 * z)  # RK. km --> m
 
             converters = (
                 ("(Lat", "frame", parse_frame_location),
@@ -171,9 +166,7 @@ class ZhairesShower(ShowerEvent):
         # Positions are in LTP frame with origin at shower core. Usually shower frame has 'NWU' orientation,
         # where N=magnetic north. Defined in ..../grand/tests/simulation/data/zhaires/*.sry file.
         positions = {}
-        ant_file = (
-            path / "antpos.dat"
-        )  # Ex: 1 A0  0.00000E+00  2.70450E+02  2.90000E+03
+        ant_file = path / "antpos.dat"  # Ex: 1 A0  0.00000E+00  2.70450E+02  2.90000E+03
         if ant_file.exists():
             pattern = re.compile("A([0-9]+)$")
             with ant_file.open() as f:
@@ -227,7 +220,7 @@ class ZhairesShower(ShowerEvent):
         return cls(fields=fields, **inp)
 
     @classmethod
-    def _from_datafile(cls, path: Path) -> ZhairesShower:
+    def _from_datafile(cls, path: Path):
         with h5py.File(path, "r") as fd:
             if not "RunInfo.__table_column_meta__" in fd["/"]:
                 return super()._from_datafile(path)
@@ -245,7 +238,8 @@ class ZhairesShower(ShowerEvent):
             pattern = re.compile("([0-9]+)$")
             for tag, x, y, z, *_ in antennas:
                 tag = tag.decode()
-                antenna = int(pattern.search(tag)[1])
+                # TODO: mypy indicate type error ... disable
+                antenna = int(pattern.search(tag)[1])  # type: ignore[index]
                 r = CartesianRepresentation(x=float(x), y=float(y), z=float(z))  # RK
                 tmp = traces[f"{tag}/efield"][:]
                 efield = tmp.view("f4").reshape(tmp.shape + (-1,))
@@ -253,7 +247,7 @@ class ZhairesShower(ShowerEvent):
                 Ex = numpy.asarray(efield[:, 1], "f8")  # uV/m
                 Ey = numpy.asarray(efield[:, 2], "f8")  # uV/m
                 Ez = numpy.asarray(efield[:, 3], "f8")  # uV/m
-                E = (CartesianRepresentation(x=Ex, y=Ey, z=Ez),)
+                E = CartesianRepresentation(x=Ex, y=Ey, z=Ez)
                 fields[antenna] = CollectionEntry(electric=ElectricField(t=t, E=E, r=r))
 
             primary = {

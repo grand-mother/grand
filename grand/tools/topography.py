@@ -6,7 +6,7 @@ from __future__ import annotations
 import enum
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Any
 from typing_extensions import Final
 
 import numpy as np
@@ -63,9 +63,9 @@ _geoid: Optional[_Map] = None
 
 
 def distance(
-    position: "Coordinates Instance",
+    position: Any,
     direction: CartesianRepresentation,
-    maximum_distance: "m" = None,
+    maximum_distance: float = None,
 ):
     """Get the signed intersection distance with the topography."""
     global _default_topography
@@ -76,9 +76,7 @@ def distance(
     return _default_topography.distance(position, direction, maximum_distance)
 
 
-def elevation(
-    coordinates: "Coordinates Instance", reference: Optional[str] = _default_reference
-):
+def elevation(coordinates, reference: Optional[str] = _default_reference):
     """Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid."""
     global _default_topography
 
@@ -97,7 +95,7 @@ def _get_geoid():
     return _geoid
 
 
-def geoid_undulationX(coordinates: "Coordinates Instance"):
+def geoid_undulationX(coordinates):
     """Get the geoid undulation. This function calculates the height of
     the geoid w.r.t the ellipsoid at a given latitude and longitude.
     """
@@ -110,9 +108,7 @@ def geoid_undulationX(coordinates: "Coordinates Instance"):
     return z
 
 
-def geoid_undulation(
-    coordinates: "Coordinates Instance" = None, latitude=None, longitude=None
-):
+def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     """Get the geoid undulation. This function calculates the height of
     the geoid w.r.t the ellipsoid at a given latitude and longitude.
     """
@@ -135,9 +131,7 @@ def geoid_undulation(
     return geoid.elevation(longitude, latitude)
 
 
-def update_data(
-    coordinates: "Coordinate Instance" = None, clear: bool = False, radius: "m" = None
-):
+def update_data(coordinates=None, clear: bool = False, radius: float = None):
 
     """Update the cache of topography data.
     Data are stored in https://github.com/grand-mother/store/releases.
@@ -151,9 +145,7 @@ def update_data(
         _CACHEDIR.mkdir(exist_ok=True)
 
         # Compute the bounding box
-        if isinstance(
-            coordinates, (ECEF, Geodetic, GeodeticRepresentation, GRANDCS, LTP)
-        ):
+        if isinstance(coordinates, (ECEF, Geodetic, GeodeticRepresentation, GRANDCS, LTP)):
             pass
         else:
             raise TypeError(
@@ -174,9 +166,7 @@ def update_data(
         if radius is not None:
             for i in range(2):
                 # define a local LTP frame at a given latitude and longitude.
-                location = Geodetic(
-                    latitude=latitude[i], longitude=longitude[i], height=height[i]
-                )
+                location = Geodetic(latitude=latitude[i], longitude=longitude[i], height=height[i])
                 c = LTP(location=location, orientation="ENU", magnetic=False)
                 basis = c.basis  # in ECEF frame
                 origin = c.location  # in ECEF frame
@@ -186,15 +176,9 @@ def update_data(
                 # Max latitude = origin+radius towards N. Min latitude = origin-radius towards N.
                 # Max longitude = origin+radius towards E. Min longitude = origin-radius towards E.
                 delta = -1 * radius if not i else radius
-                ltp_E = np.array(
-                    [delta, 0, 0]
-                )  # delta distance [m] towards E from origin.
-                ltp_N = np.array(
-                    [0, delta, 0]
-                )  # delta distance [m] towards N from origin.
-                ltp_U = np.array(
-                    [0, 0, delta]
-                )  # delta distance [m] towards U from origin.
+                ltp_E = np.array([delta, 0, 0])  # delta distance [m] towards E from origin.
+                ltp_N = np.array([0, delta, 0])  # delta distance [m] towards N from origin.
+                ltp_U = np.array([0, 0, delta])  # delta distance [m] towards U from origin.
                 arg = np.column_stack(
                     (ltp_E, ltp_N, ltp_U)
                 )  # [[x1, x2, x3], [y1, y2, y3], [z1, z2, z3]]
@@ -258,33 +242,37 @@ class Topography:
 
     def elevation(
         self,
-        coordinates: "Coordinates Instance",
+        coordinates,
         reference: Optional[str] = _default_reference,
     ):
         """Get the topography elevation, w.r.t. sea level, w.r.t the
         ellipsoid or in local coordinates. The default reference is
         w.r.t sea level (GEOID).
         """
-        reference = reference.upper()
+        if isinstance(reference, str):
+            reference = reference.upper()
 
-        if reference == "LOCAL":
-            if not isinstance(coordinates, (LTP, GRANDCS)):
-                raise ValueError("not an LTP or GRANDCS frame")
-            elevation = self._local_elevation(coordinates)
+            if reference == "LOCAL":
+                if not isinstance(coordinates, (LTP, GRANDCS)):
+                    raise ValueError("not an LTP or GRANDCS frame")
+                elevation = self._local_elevation(coordinates)
+            else:
+                elevation = self._global_elevation(coordinates, reference)
+
+            if elevation.size == 1:
+                elevation = elevation[0]
+
+            return elevation
         else:
-            elevation = self._global_elevation(coordinates, reference)
-
-        if elevation.size == 1:
-            elevation = elevation[0]
-
-        return elevation
+            # TODO: what doing if reference is None ?
+            raise ValueError
 
     @staticmethod
     def _as_double_ptr(a):
         a = np.require(a, float, ["CONTIGUOUS", "ALIGNED"])
         return ffi.cast("double *", a.ctypes.data)
 
-    def _local_elevation(self, coordinates: "Coordinates Instance"):
+    def _local_elevation(self, coordinates):
         """Get the topography elevation in local coordinates, i.e. along the (Oz) axis."""
         # Compute the x and y coordinate in local frame.
         x = coordinates.x
@@ -316,7 +304,7 @@ class Topography:
 
         return elevation
 
-    def _global_elevation(self, coordinates: "Coordinate Instance", reference: str):
+    def _global_elevation(self, coordinates, reference: str):
         """Get the topography elevation w.r.t. sea level or w.r.t. the
         ellipsoid.
         """
@@ -351,9 +339,9 @@ class Topography:
 
     def distance(
         self,
-        position: "Coordinates Instance",
+        position: Any,
         direction: CartesianRepresentation,
-        maximum_distance: "m" = None,
+        maximum_distance: float = None,
     ):
         """Get the signed intersection distance with the topography."""
         if self._stepper is None:
@@ -368,9 +356,7 @@ class Topography:
             #       direction must be in ECEF frame for lib.grand_topography_distance()
             pass
         else:
-            raise TypeError(
-                "Direction must be in CartesianRepresentation in ECEF frame."
-            )
+            raise TypeError("Direction must be in CartesianRepresentation in ECEF frame.")
 
         # Normalize the direction vector. Unit vector is required.
         norm = np.linalg.norm(direction)

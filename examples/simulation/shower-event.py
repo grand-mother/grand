@@ -84,9 +84,7 @@ for antenna_index, field in shower.fields.items():
     Exyz = field.electric.E
 
     # Xmax, Efield, and input frame are all in shower frame.
-    field.voltage = antenna.compute_voltage(
-        shower.maximum, field.electric, frame=shower.frame
-    )
+    field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
 
     print("\nVpp=", max(field.voltage.V) - min(field.voltage.V), "\n")
 
