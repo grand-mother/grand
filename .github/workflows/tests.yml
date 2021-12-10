@@ -26,9 +26,6 @@ jobs:
     - name: SonarQube update 
       run: |
         . env/setup.sh
-#         apt-get install -y openjdk-11-jdk-headless
-#         apt-get install -y unzip
-#         apt-get install -y curl
         mkdir sonar
         cd sonar
         curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102-linux.zip
@@ -40,7 +37,9 @@ jobs:
         grand_quality_analysis.bash
         
         
-
+#         apt-get install -y openjdk-11-jdk-headless
+#         apt-get install -y unzip
+#         apt-get install -y curl
 #     - name: Dynamics analysis and coverage
 #       run: |
 #         . env/setup.sh
