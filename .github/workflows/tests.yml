@@ -29,7 +29,7 @@ jobs:
       run: |
         . env/setup.sh
         manage_sonar_update.py
-        . apply_sonar_update.bash
+        . apply_sonar_update.bash $?
 
  
 
