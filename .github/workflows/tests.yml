@@ -24,7 +24,7 @@ jobs:
       run: |        
         echo $GITHUB_REF_NAME
         echo $USER_GIT
-        manage_sonar_update.py
+        quality/manage_sonar_update.py
 #         . env/setup.sh
 #         python -m pip install -r quality/requirements.txt
 
