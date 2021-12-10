@@ -19,13 +19,13 @@ jobs:
         path: tmp/numpy-stubs
 
     - name: Initialise the environment
-      env:
-        USER_GIT: ${{github.actor}}    
       run: |
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
 
-    - name: SonarQube update    
+    - name: SonarQube update
+      env:
+        USER_GIT: ${{github.actor}}
       run: |
         . env/setup.sh
         manage_sonar_update.py
