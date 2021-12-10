@@ -37,10 +37,7 @@ jobs:
     - name: Static type check
       run: |
         . env/setup.sh
-        mkdir -p user/grand/stubs
-        mv tmp/numpy-stubs/numpy-stubs user/grand/stubs/numpy
-        MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy                    \
-            --config-file=$PWD/tests/mypy.ini -m grand
+        grand_quality_type.bash 
 
     - name: Check documentation examples
       run: |
