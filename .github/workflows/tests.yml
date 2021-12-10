@@ -28,9 +28,8 @@ jobs:
         USER_GIT: ${{github.actor}}
       run: |
         . env/setup.sh
-        manage_sonar_update.py
-        if [ $? -eq 1]
-        then
+        manage_sonar_update.py        
+        if ${{success}} ; then
            echo "update SonarQube"
         fi
 
