@@ -9,8 +9,6 @@ on:
 jobs:
   Linux:
     runs-on: ubuntu-latest
-  env:
-    USER_GIT: ${{github.actor}}
 
     steps:
     - uses: actions/checkout@v2
@@ -21,8 +19,9 @@ jobs:
         path: tmp/numpy-stubs
 
     - name: Initialise the environment
-      run: |
-        
+      env:
+        USER_GIT: ${{github.actor}}
+      run: |        
         echo $GITHUB_REF_NAME
         echo $USER_GIT
 #         . env/setup.sh
