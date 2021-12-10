@@ -35,6 +35,7 @@ sonar.python.pylint.reportPaths=quality/report_pylint.txt
 '''
     with open(n_file, 'w') as f_job:
         f_job.write(properties)
+        print(n_file)
     print(properties)
     
     

@@ -9,5 +9,5 @@ if [ $1 -eq 0 ]; then
 	cd $GRAND_ROOT
 	grand_quality_test_cov.bash
 	grand_quality_analysis.bash
-	sonar-scanner -Dproject.settings=quality/sonar.properties
+	sonar-scanner -Dproject.settings=sonar.properties
 fi 
