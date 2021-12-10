@@ -6,19 +6,23 @@ from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
-from time import time 
-
-from astropy.coordinates import BaseCoordinateFrame, CartesianRepresentation
-from astropy.coordinates.representation import BaseRepresentation
-import astropy.units as u
+from time import time
+from numbers import Number
 import numpy
 
 from ..pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
-from ...import io
-from ...tools.coordinates import ECEF, LTP, Rotation
+from ... import io
+from ...tools.coordinates import (
+    ECEF,
+    Geodetic,
+    LTP,
+    Rotation,
+    GRANDCS,
+    CartesianRepresentation,
+)  # RK
 
-__all__ = ['CollectionEntry', 'FieldsCollection', 'ShowerEvent']
+__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
 
 
 _logger = getLogger(__name__)
@@ -32,14 +36,14 @@ class CollectionEntry:
     @classmethod
     def load(cls, node: io.DataNode) -> CollectionEntry:
         try:
-            subnode = node['electric']
+            subnode = node["electric"]
         except KeyError:
             electric = None
         else:
             electric = ElectricField.load(subnode)
 
         try:
-            subnode = node['voltage']
+            subnode = node["voltage"]
         except KeyError:
             voltage = None
         else:
@@ -49,9 +53,9 @@ class CollectionEntry:
 
     def dump(self, node: io.DataNode) -> None:
         if self.electric is not None:
-            self.electric.dump(node.branch('electric'))
+            self.electric.dump(node.branch("electric"))
         if self.voltage is not None:
-            self.voltage.dump(node.branch('voltage'))
+            self.voltage.dump(node.branch("voltage"))
 
 
 class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
@@ -60,33 +64,30 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
 
 @dataclass
 class ShowerEvent:
-    energy: Optional[u.Quantity] = None
-    zenith: Optional[u.Quantity] = None
-    azimuth: Optional[u.Quantity] = None
+    energy: Optional[float] = None
+    zenith: Optional[float] = None
+    azimuth: Optional[float] = None
     primary: Optional[ParticleCode] = None
-
-    frame: Optional[BaseCoordinateFrame] = None
-
+    frame: Optional[Union[GRANDCS, LTP]] = None
     core: Optional[CartesianRepresentation] = None
     geomagnet: Optional[CartesianRepresentation] = None
     maximum: Optional[CartesianRepresentation] = None
-
+    ground_alt: float = 0.0
     fields: Optional[FieldsCollection] = None
 
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         baseclass = cls
-
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
-            filename = f'{source.filename}:{source.path}'
-            loader = '_from_datanode'
+            filename = f"{source.filename}:{source.path}"
+            loader = "_from_datanode"
         else:
             source = cast(Union[Path, str], source)
-            filename = f'{source}:/'
+            filename = f"{source}:/"
             source = Path(source)
             if source.is_dir():
-                loader = '_from_dir'
+                loader = "_from_dir"
 
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
@@ -99,19 +100,21 @@ class ShowerEvent:
                     elif ZhairesShower._check_dir(source):
                         baseclass = ZhairesShower
             else:
-                loader = f'_from_datafile'
+                loader = f"_from_datafile"
 
-        _logger.info(f'Loading shower data from {filename}')
+        _logger.info(f"Loading shower data from {filename}")
+        # print(f'Loading shower data from {filename}')
+        # print('loader', loader)
 
         try:
             load = getattr(baseclass, loader)
         except AttributeError:
-            raise NotImplementedError(f'Invalid data format')
+            raise NotImplementedError(f"Invalid data format")
         else:
             self = load(source)
 
         if self.fields is not None:
-            _logger.info(f'Loaded {len(self.fields)} field(s) from {filename}')
+            _logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
 
         return self
 
@@ -127,12 +130,12 @@ class ShowerEvent:
             kwargs[name] = data
 
         try:
-            fields_node = node['fields']
+            fields_node = node["fields"]
         except KeyError:
             pass
         else:
-            fields:OrderedDict = OrderedDict()
-            kwargs['fields'] = fields
+            fields: OrderedDict = OrderedDict()
+            kwargs["fields"] = fields
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
@@ -146,54 +149,59 @@ class ShowerEvent:
             self._to_datanode(source)
         else:
             source = cast(Union[Path, str], source)
-            with io.open(source, 'w') as root:
+            with io.open(source, "w") as root:
                 self._to_datanode(root)
 
     def _to_datanode(self, node: io.DataNode):
-        _logger.info(f'Dumping shower data to {node.filename}:{node.path}')
+        _logger.info(f"Dumping shower data to {node.filename}:{node.path}")
 
         for f in fields(self):
             k = f.name
-            if k != 'fields' and (k[0] != '_'):
+            if k != "fields" and (k[0] != "_"):
                 v = getattr(self, k)
                 if v is not None:
                     node.write(k, v)
 
         if self.fields is not None:
             for antenna, field in self.fields.items():
-                with node.branch(f'fields/{antenna}') as n:
+                with node.branch(f"fields/{antenna}") as n:
                     field.dump(n)
 
             m = len(self.fields)
-            _logger.info(f'Dumped {m} field(s) to {node.filename}:{node.path}')
+            _logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
 
-    def localize(self, latitude: u.Quantity, longitude: u.Quantity,
-            height: Optional[u.Quantity]=None,
-            declination: Optional[u.Quantity]=None,
-            obstime: Union[datetime, time, str, None]=None) -> None:
+    def localize(
+        self,
+        latitude,
+        longitude,
+        height=0,
+        declination: Optional[float] = None,
+        obstime: Union[str, datetime] = "2020-01-01",
+    ) -> None:
+        location = Geodetic(latitude=latitude, longitude=longitude, height=height)  # RK
+        self.frame = LTP(
+            location=location,
+            orientation="NWU",
+            magnetic=True,
+            declination=declination,
+            obstime=obstime,
+        )
 
-        if height is None:
-            height = 0 * u.m
-
-        location = ECEF(latitude, longitude, height,
-                        representation_type='geodetic')
-        self.frame = LTP(location=location, orientation='NWU', magnetic=True,
-                         declination=declination, obstime=obstime)
-
-    def shower_frame(self) -> BaseCoordinateFrame:
+    def shower_frame(self):
+        # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
         ev = self.core - self.maximum
-        ev /= ev.norm()
-        evB = ev.cross(self.geomagnet)
-        evB /= evB.norm()
-        evvB = ev.cross(evB)
+        ev /= numpy.linalg.norm(ev)
+        ev = ev.T[0]  # [[x], [y], [z]] --> [x, y, z]
+        evB = numpy.cross(ev, self.geomagnet.T[0])
+        evB /= numpy.linalg.norm(evB)
+        evvB = numpy.cross(ev, evB)
 
-        r = Rotation.from_matrix(numpy.array((evB.xyz, evvB.xyz, ev.xyz)).T)
-        return self.frame.rotated(r)
+        # change these unit vector from 'NWU' LTP frame to ECEF frame.
+        # RK TODO: Going back to ECEF frame is a common process for vectors.
+        #          Develop a function to do this.
+        ev = numpy.matmul(self.frame.basis.T, ev)
+        evB = numpy.matmul(self.frame.basis.T, evB)
+        evvB = numpy.matmul(self.frame.basis.T, evvB)
+        self.frame.basis = numpy.vstack((evB, evvB, ev))
 
-    def transform(self, representation: BaseRepresentation,
-                        frame: BaseCoordinateFrame) -> BaseCoordinateFrame:
-        if frame == self.frame:
-            return self.frame.realize_frame(representation)
-        else:
-            coordinates = self.frame._replicate(representation, copy=False)
-            return coordinates.transform_to(frame)
+        return self.frame

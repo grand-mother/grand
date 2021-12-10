@@ -1,13 +1,13 @@
 from enum import IntEnum
 
-__all__ = ['ParticleCode']
+__all__ = ["ParticleCode"]
 
 
 class ParticleCode(IntEnum):
-    '''PDG Monte Carlo particle numbering scheme
+    """PDG Monte Carlo particle numbering scheme
 
-       Ref: http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
-    '''
+    Ref: http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
+    """
 
     # Bosons
     GAMMA = 22

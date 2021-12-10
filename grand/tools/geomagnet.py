@@ -1,105 +1,118 @@
-'''Geomagnetic field wrapper for GRAND packages
-'''
+"""Geomagnetic field wrapper for GRAND packages
+"""
 from __future__ import annotations
 
 from typing import Optional, Union
 from typing_extensions import Final
 
-from .coordinates import ECEF, GeodeticRepresentation, LTP
+from .coordinates import CartesianRepresentation, GeodeticRepresentation
+from .coordinates import ECEF, Geodetic, GRANDCS, LTP, _cartesian_to_horizontal
 from ..libs.gull import Snapshot as _Snapshot
 
-import astropy.units as u
-from astropy.time import Time
 import numpy
+import datetime
+from datetime import date
 
-from astropy.coordinates import EarthLocation
-
-
-_default_model: Final = 'IGRF13'
-'''The default geo-magnetic model, i.e. IGRF13.
+_default_model: Final = "IGRF13"
+"""The default geo-magnetic model, i.e. IGRF13.
    Reference: https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html
-'''
+"""
 
 _default_magnet: Optional[Geomagnet] = None
-'''An instance of Geomagnet with the default geo-magnetic model'''
+"""An instance of Geomagnet with the default geo-magnetic model"""
 
-_default_obstime: Final[Time] = Time('2020-01-01')
-'''The default observation time if none is specified'''
+# _default_obstime: Final[Time] = Time('2020-01-01')
+_default_obstime: Final[datetime.date] = datetime.date(2020, 1, 1)
+"""The default observation time if none is specified"""
 
 
 def __getattr__(name):
-    if name == 'model':
+    if name == "model":
         return _default_model
-    elif name == 'obstime':
-        return _default_obstime.datetime.date
+    elif name == "obstime":
+        # return _default_obstime.datetime.date
+        return _default_obstime
     else:
-        raise AttributeError(f'module {__name__} has no attribute {name}')
+        raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
-def field(coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
-    '''Get the default geo-magnetic field at the given *coordinates*.
-    '''
-    global _default_magnet
-
-    if _default_magnet is None:
-        _default_magnet = Geomagnet()
-    return _default_magnet.field(coordinates)
+# This function is no longer necessary. Might show up in other part of the grandlib.
+def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresentation:
+    """Get the default geo-magnetic field at the given *coordinates*."""
+    # global _default_magnet
+    # if _default_magnet is None:
+    #    #_default_magnet = Geomagnet()
+    # return _default_magnet.field(coordinates)
+    geomagnet = Geomagnet(location=coordinates)
+    return geomagnet.field
 
 
 class Geomagnet:
-    '''Proxy to a geomagnetic model
-    '''
+    """Proxy to a geomagnetic model. 'IGRF13' is used as a default model.
+    Get the geo-magnetic field components [Bx, By, Bz] on any geodetic location of
+    Earth at any given time. For location, either provide latitude (deg), longitude (deg), and
+    height (m) or provide location in ECEF, Geodetic, or GRAND coordinate system. TypeError
+    will occur if location is not provided. For obstime, provide time in isoformat
+    ('2020-01-19') or in datetime.date(2020, 1, 19). If obstime is not provided, a
+    default value ('2020-01-01') is used.
+    """
 
-    def __init__(self, model: str=None) -> None:
+    def __init__(
+        self,
+        model: str = None,
+        latitude: Union[float, numpy.ndarray] = None,
+        longitude: Union[float, numpy.ndarray] = None,
+        height: Union[float, numpy.ndarray] = None,
+        location: Union[ECEF, Geodetic, LTP, GRANDCS] = None,
+        obstime: Union[str, date] = None,
+    ) -> None:
+
+        # print('location:', location, type(location))
         if model is None:
             model = _default_model
-        self._model = model   # type: str
-        self._snapshot = None # type: Optional[_Snapshot]
-        self._date = None     # type: Optional[str]
 
-
-    def field(self, coordinates: Union[ECEF, LTP]) -> Union[ECEF, LTP]:
-        '''Get the geo-magnetic field components
-        '''
-
-        # Update the snapshot, if needed
-        obstime = coordinates.obstime
+        # Make sure time is in isoformat of datetime.date() format.
         if obstime is None:
             obstime = _default_obstime
-        date = obstime.datetime.date()
-        if date != self._date:
-            self._snapshot = _Snapshot(self._model, date)
-            self._date = date
-
-        # Compute the geodetic coordinates
-        cart = coordinates.transform_to(ECEF).cartesian
-        geodetic = cart.represent_as(GeodeticRepresentation)
-
-        # Fetch the magnetic field components in local LTP
-        field = self._snapshot(geodetic.latitude / u.deg,        # type: ignore
-                               geodetic.longitude / u.deg,
-                               geodetic.height / u.m)
-
-        # Encapsulate the result
-        n = geodetic.latitude.size
-        if n == 1:
-            location = EarthLocation(lat=geodetic.latitude,
-                                     lon=geodetic.longitude,
-                                     height=geodetic.height)
-            return LTP(x=field[0] * u.T, y=field[1] * u.T, z=field[2] * u.T,
-                       location=location, obstime=obstime, orientation='ENU',
-                       magnetic=False)
+        elif isinstance(obstime, (str, datetime.date)):
+            pass
         else:
-            ecef = numpy.zeros((n, 3))
-            for i, value in enumerate(field):
-                location = EarthLocation(lat=geodetic.latitude[i],
-                                         lon=geodetic.longitude[i],
-                                         height=geodetic.height[i])
-                ltp = LTP(x=value[0], y=value[1], z=value[2], location=location,
-                          orientation='ENU', magnetic=False)
-                c = ltp.transform_to(ECEF).cartesian
-                ecef[i,0] = c.x
-                ecef[i,1] = c.y
-                ecef[i,2] = c.z
-            return ECEF(x=ecef[:,0] * u.T, y=ecef[:,1] * u.T, z=ecef[:,2] * u.T,
-                        obstime=obstime)
+            raise TypeError(
+                "obstime given is of type %s. Provide obstime in string or datetime.date type.\
+                Example: '2020-01-19' or datetime.date(2020, 1, 19)."
+                % type(obstime)
+            )
+
+        # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
+        # or GRAND cs. OR latitude=deg, longitude=deg, height=meter.
+        if latitude != None and longitude != None and height != None:
+            geodetic_loc = Geodetic(latitude=latitude, longitude=longitude, height=height)
+        elif isinstance(location, (ECEF, Geodetic, GeodeticRepresentation, LTP, GRANDCS)):
+            geodetic_loc = Geodetic(location)
+        else:
+            raise TypeError(
+                "Provide location in ECEF, Geodetic, or GRAND coordinate system instead of type %s.\n \
+                            Location can also be given as latitude=deg, longitude=deg, height=meter."
+                % type(location)
+            )
+
+        self.model = model  # type: str
+        self.obstime = obstime
+        self.location = geodetic_loc
+
+        # Calculate magnetic field
+        self.snapshot = _Snapshot(self.model, self.obstime)
+        Bfield = self.snapshot(geodetic_loc.latitude, geodetic_loc.longitude, geodetic_loc.height)
+
+        # Output magnetic field is either in [Bx, By, Bz] or [[Bx1, By1, Bz1], [Bx2, By2, Bz2], ....]
+        if Bfield.size == 3:
+            Bx, By, Bz = Bfield[0], Bfield[1], Bfield[2]
+        elif Bfield.size > 3:
+            Bx, By, Bz = Bfield[:, 0], Bfield[:, 1], Bfield[:, 2]
+
+        self.field = CartesianRepresentation(x=Bx, y=By, z=Bz)
+
+        # calculate magnetic declination and inclination
+        azimuth, elevation, norm = _cartesian_to_horizontal(Bx, By, Bz)
+        self.declination = azimuth
+        self.inclination = -elevation

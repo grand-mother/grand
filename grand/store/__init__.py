@@ -1,6 +1,6 @@
-'''Storage for the GRAND package
-'''
+"""Storage for the GRAND package
+"""
 
 from .protocol import InvalidBLOB, get
 
-__all__ = ['get', 'InvalidBLOB']
+__all__ = ["get", "InvalidBLOB"]

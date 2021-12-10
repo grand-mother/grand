@@ -1,4 +1,3 @@
-astropy
 cffi
 h5py
 numpy

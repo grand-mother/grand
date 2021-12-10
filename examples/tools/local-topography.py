@@ -1,39 +1,47 @@
 #! /usr/bin/env python
-import astropy.units as u
-from grand import ECEF, LTP, topography
+from grand import ECEF, Geodetic, LTP, topography
 import matplotlib.pyplot as pl
 import numpy as np
 
 
 # Set the local frame origin
-origin = ECEF(latitude=42.923516 * u.deg, longitude=86.716069 * u.deg,
-              representation_type='geodetic')
+origin = Geodetic(
+    latitude=42.923516,
+    longitude=86.716069,
+    height=0,
+)
 
 # Get the corresponding topography data. Note that does are dowloaded from the
 # web and cached which might take some time. Reducing the area results in less
 # data to be downloaded, i.e. speeding up this step
-radius = 200 * u.km
+radius = 200000  # m
 topography.update_data(origin, radius=radius)
 
 
 # Generate a grid of local coordinates using numpy.meshgrid
-x = np.linspace(-radius, radius, 1001)
-y = np.linspace(-radius, radius, 1001)
+x = np.linspace(-1 * radius, radius, 1001)
+y = np.linspace(-1 * radius, radius, 1001)
 X, Y = np.meshgrid(x, y)
-coordinates = LTP(X.flatten(), Y.flatten(), np.zeros(X.size) << u.km,
-                  location=origin, orientation='ENU', magnetic=False)
+coordinates = LTP(
+    x=X.flatten(),
+    y=Y.flatten(),
+    z=np.zeros(X.size),
+    location=origin,
+    orientation="ENU",
+    magnetic=False,
+)
 
 # Get the local ground elevation. Note that local coordinates naturally account
 # for the Earth curvature.
-zg = topography.elevation(coordinates)
+zg = topography.elevation(coordinates, reference="local")
 zg = zg.reshape(X.shape)
 
 # Plot the result using contour levels. The Earth curvature is clearly visible
 # at large distances from the origin.
 pl.figure()
-pl.contourf(x.to_value('km'), y.to_value('km'), zg.to_value('km'), 40)
-pl.colorbar()
-pl.xlabel('easting (km)')
-pl.ylabel('northing (km)')
-pl.title('local altitude (km)')
+pl.contourf(x / 1000, y / 1000, zg / 1000, 40, cmap="terrain")
+pl.colorbar(label="Local Altitude (km)")
+pl.xlabel("Easting (km)")
+pl.ylabel("Northing (km)")
+pl.title("Elevation wrt LTP")
 pl.show()

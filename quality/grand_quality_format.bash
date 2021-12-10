@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd $GRAND_ROOT
-black --check grand
+black -l 100 grand examples

@@ -1,6 +1,6 @@
-'''
+"""
 Run all unit tests for the GRAND package
-'''
+"""
 
 try:
     from . import main
@@ -15,5 +15,5 @@ except ImportError:
     from tests import main
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

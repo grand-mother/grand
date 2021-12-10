@@ -3,16 +3,16 @@ from logging import DEBUG, INFO, WARNING, ERROR
 from typing import cast, Optional
 import sys
 
-__all__ = ['getLogger', 'Logger', 'StreamHandler']
+__all__ = ["getLogger", "Logger", "StreamHandler"]
 
 
 class StreamHandler(logging.Handler):
-    '''
+    """
     A specialised Handler that logs messages below INFO to stdout and above to
     stderr
-    '''
+    """
 
-    terminator = '\n'
+    terminator = "\n"
 
     def flush(self) -> None:
         sys.stdout.flush()
@@ -25,7 +25,7 @@ class StreamHandler(logging.Handler):
             stream = sys.stderr
 
         try:
-            msg:str = self.format(record)
+            msg: str = self.format(record)
             # issue 35046: merged two stream.writes into one.
             stream.write(msg + self.terminator)
             stream.flush()
@@ -35,12 +35,13 @@ class StreamHandler(logging.Handler):
             self.handleError(record)
 
 
-class Logger(logging.getLoggerClass()): # type: ignore
-    '''
+class Logger(logging.getLoggerClass()):  # type: ignore
+    """
     A specialised Logger with predefined usage. The stream and file attributes
     give access to the corresponding handlers. The path attributes allows to set
     the optional output file.
-    '''
+    """
+
     _initial_level = logging.WARNING
 
     def reset(self) -> None:
@@ -49,11 +50,12 @@ class Logger(logging.getLoggerClass()): # type: ignore
 
         # Print formatter
         self._formatter = logging.Formatter(
-            '%(asctime)s [ %(levelname)-7s ] (%(name)s) %(message)s')
+            "%(asctime)s [ %(levelname)-7s ] (%(name)s) %(message)s"
+        )
 
         # Standard output
         try:
-            self.removeHandler(self.stream) # type: ignore
+            self.removeHandler(self.stream)  # type: ignore
         except AttributeError:
             pass
 
@@ -92,10 +94,10 @@ class Logger(logging.getLoggerClass()): # type: ignore
             self.logger.addHandler(self.file)
 
 
-def getLogger(name: str) -> Logger: # XXX make this patchable for external users
-    '''
+def getLogger(name: str) -> Logger:  # XXX make this patchable for external users
+    """
     Get a specialised logger for the given namespace
-    '''
+    """
     base = logging.getLoggerClass()
     logging.setLoggerClass(Logger)
 

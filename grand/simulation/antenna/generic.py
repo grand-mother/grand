@@ -2,16 +2,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from logging import getLogger
-from typing import cast, Optional, Union
+from typing import cast, Optional, Union, Any
+import numpy as np
+from ...tools.coordinates import (
+    ECEF,
+    LTP,
+    GRANDCS,
+    CartesianRepresentation,
+    SphericalRepresentation,
+)  # RK
 
-from astropy.coordinates import BaseRepresentation, CartesianRepresentation
-import astropy.units as u
-import numpy
 
-from ... import io, ECEF, LTP
+from ... import io  # , ECEF, LTP
 
-__all__ = ['Antenna', 'AntennaModel', 'ElectricField', 'MissingFrameError',
-           'Voltage']
+__all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError", "Voltage"]
 
 
 _logger = getLogger(__name__)
@@ -19,64 +23,64 @@ _logger = getLogger(__name__)
 
 @dataclass
 class ElectricField:
-    t: u.Quantity
-    E: BaseRepresentation
-    r: Union[BaseRepresentation, None] = None
-    frame: Union[ECEF, LTP, None] = None
+    t: np.ndarray
+    E: CartesianRepresentation  # RK
+    r: Union[CartesianRepresentation, None] = None
+    frame: Union[ECEF, LTP, GRANDCS, None] = None
 
     @classmethod
     def load(cls, node: io.DataNode):
-        _logger.debug(f'Loading E-field from {node.filename}:{node.path}')
+        _logger.debug(f"Loading E-field from {node.filename}:{node.path}")
 
-        t = node.read('t', dtype='f8')
-        E = node.read('E', dtype='f8')
+        t = node.read("t", dtype="f8")
+        E = node.read("E", dtype="f8")
 
         try:
-            r = node.read('r', dtype='f8')
+            r = node.read("r", dtype="f8")
         except KeyError:
             r = None
 
         try:
-            frame = node.read('frame')
+            frame = node.read("frame")
         except KeyError:
             frame = None
 
         return cls(t, E, r, frame)
 
     def dump(self, node: io.DataNode):
-        _logger.debug(f'Dumping E-field to {node.filename}:{node.path}')
+        _logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
 
-        node.write('t', self.t, unit='ns', dtype='f4')
-        node.write('E', self.E, unit='uV/m', dtype='f4')
+        node.write("t", self.t, dtype="f4")
+        node.write("E", self.E, dtype="f4")
 
         if self.r is not None:
-            node.write('r', self.r, unit='m', dtype='f4')
+            node.write("r", self.r, dtype="f4")
 
         if self.frame is not None:
-            node.write('frame', self.frame)
+            node.write("frame", self.frame)
 
 
 @dataclass
 class Voltage:
-    t: u.Quantity
-    V: u.Quantity
+    t: np.ndarray  # [s]
+    V: np.ndarray  # [?]
 
     @classmethod
     def load(cls, node: io.DataNode):
-        _logger.debug(f'Loading voltage from {node.filename}:{node.path}')
-        t = node.read('t', dtype='f8')
-        V = node.read('V', dtype='f8')
+        _logger.debug(f"Loading voltage from {node.filename}:{node.path}")
+        t = node.read("t", dtype="f8")
+        V = node.read("V", dtype="f8")
         return cls(t, V)
 
     def dump(self, node: io.DataNode):
-        _logger.debug(f'Dumping E-field to {node.filename}:{node.path}')
-        node.write('t', self.t, unit='ns', dtype='f4')
-        node.write('V', self.V, unit='uV', dtype='f4')
+        _logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
+        node.write("t", self.t, dtype="f4")
+        node.write("V", self.V, dtype="f4")
 
 
 class AntennaModel:
-    def effective_length(self, direction: BaseRepresentation,
-        frequency: u.Quantity) -> CartesianRepresentation:
+    # TODO: suspicious code no constructor , no test, dead code ?
+    def effective_length(self, direction, frequency) -> CartesianRepresentation:
         return CartesianRepresentation(0)
 
 
@@ -86,76 +90,112 @@ class MissingFrameError(ValueError):
 
 @dataclass
 class Antenna:
-    model: AntennaModel
-    frame: Union[ECEF, LTP, None] = None
+    model: Any  # if class is used, circular import error occurs.
+    frame: Union[ECEF, LTP, GRANDCS]
 
-    def compute_voltage(self, direction: Union[ECEF, LTP, BaseRepresentation],
-            field: ElectricField, frame: Union[ECEF, LTP, None]=None)          \
-            -> Voltage:
-        # Uniformise the inputs
-        if self.frame is None:
-            antenna_frame = None
-            if (frame is not None) or                                          \
-               (not isinstance(field.E, BaseRepresentation)) or                \
-               (not isinstance(direction, BaseRepresentation)):
-                raise MissingFrameError('missing antenna frame')
-            else:
-                E_frame, dir_frame = None, None
-                E = field.E
+    def effective_length(
+        self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS]
+    ) -> CartesianRepresentation:
+        # 'frame' is shower frame. 'self.frame' is antenna frame.
+
+        if isinstance(xmax, LTP):
+            direction = xmax.ltp_to_ltp(self.frame)  # shower frame --> antenna frame
         else:
-            antenna_frame = cast(Union[ECEF, LTP], self.frame)
-            frame_required = False
+            raise TypeError("Provide Xmax in LTP frame instead of %s" % type(xmax))
 
-            if field.frame is None:
-                E_frame, frame_required = frame, True
-            else:
-                E_frame = field.frame
+        direction_cart = CartesianRepresentation(direction)
+        direction_sphr = SphericalRepresentation(direction_cart)
+        theta, phi = direction_sphr.theta, direction_sphr.phi
 
-            if isinstance(direction, BaseRepresentation):
-                dir_frame, frame_required = frame, True
-            else:
-                dir_frame = direction
+        # Interpolate using a tri-linear interpolation in (f, phi, theta)
+        table = self.model.table
 
-            if frame_required and (frame is None):
-                raise MissingFrameError('missing frame')
+        dtheta = table.theta[1] - table.theta[0]  # deg
+        rt1 = (theta - table.theta[0]) / dtheta
+        it0 = int(np.floor(rt1) % table.theta.size)
+        it1 = it0 + 1
+        if it1 == table.theta.size:  # Prevent overflow
+            it1, rt1 = it0, 0
+        else:
+            rt1 -= np.floor(rt1)
+        rt0 = 1 - rt1
 
-        # Compute the voltage
-        def rfft(q):
-            return numpy.fft.rfft(q.value) * q.unit
-
-        def irfft(q):
-            return numpy.fft.irfft(q.value) * q.unit
+        dphi = table.phi[1] - table.phi[0]  # deg
+        rp1 = (phi - table.phi[0]) / dphi
+        ip0 = int(np.floor(rp1) % table.phi.size)
+        ip1 = ip0 + 1
+        if ip1 == table.phi.size:  # Results are periodic along phi
+            ip1 = 0
+        rp1 -= np.floor(rp1)
+        rp0 = 1 - rp1
 
         def fftfreq(n, t):
-            dt = (t[1] - t[0]).to_value('s')
-            return numpy.fft.fftfreq(n, dt) * u.Hz
+            dt = t[1] - t[0]
+            return np.fft.fftfreq(n, dt)
 
-        E = field.E.represent_as(CartesianRepresentation)
+        def interp(v):
+            fp = (
+                rp0 * rt0 * v[:, ip0, it0]
+                + rp1 * rt0 * v[:, ip1, it0]
+                + rp0 * rt1 * v[:, ip0, it1]
+                + rp1 * rt1 * v[:, ip1, it1]
+            )
+            return np.interp(x, xp, fp, left=0, right=0)
+
+        E = Efield.E
+        Ex = np.fft.rfft(E.x)
+        x = fftfreq(Ex.size, Efield.t)  # frequency [Hz]
+        xp = table.frequency  # frequency [Hz]
+
+        ltr = interp(table.leff_theta)  # LWP. m
+        lta = interp(np.deg2rad(table.phase_theta))  # LWP. rad
+        lpr = interp(table.leff_phi)  # LWP. m
+        lpa = interp(np.deg2rad(table.phase_phi))  # LWP. rad
+
+        # Pack the result as a Cartesian vector with complex values
+        lt = ltr * np.exp(1j * lta)
+        lp = lpr * np.exp(1j * lpa)
+
+        t, p = np.deg2rad(theta), np.deg2rad(phi)
+        ct, st = np.cos(t), np.sin(t)
+        cp, sp = np.cos(p), np.sin(p)
+        lx = lt * ct * cp - sp * lp
+        ly = lt * ct * sp + cp * lp
+        lz = -st * lt
+
+        # Treating Leff as a vector (no change in magnitude) and transforming it to the shower frame from antenna frame.
+        # antenna frame --> ECEF frame --> shower frame  (ToDo: there might be an easier way to do this.)
+        Leff = CartesianRepresentation(x=lx, y=ly, z=lz)
+        Leff = np.matmul(self.frame.basis.T, Leff)  # vector wrt ECEF frame. Antenna --> ECEF
+        Leff = np.matmul(frame.basis, Leff)  # vector wrt shower frame. ECEF --> Shower
+
+        return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
+
+    def compute_voltage(
+        self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS, None] = None
+    ) -> Voltage:
+
+        # frame is shower frame. self.frame is antenna frame.
+        if (self.frame is None) or (frame is None):
+            raise MissingFrameError("missing antenna or shower frame")
+
+        # Compute the voltage. input Leff and field are in shower frame.
+        def rfft(q):
+            return np.fft.rfft(q)
+
+        def irfft(q):
+            return np.fft.irfft(q)
+
+        Leff = self.effective_length(xmax, Efield, frame)
+        E = Efield.E  # E is CartesianRepresentation
         Ex = rfft(E.x)
         Ey = rfft(E.y)
         Ez = rfft(E.z)
-        f = fftfreq(Ex.size, field.t)
-
-        if dir_frame is not None:
-            # Change the direction to the antenna frame
-            if isinstance(direction, BaseRepresentation):
-                direction = dir_frame.realize_frame(direction)
-            direction = direction.transform_to(antenna_frame) # Now compute direction vector data in antenna frame
-            direction = direction.data
-
-        Leff:CartesianRepresentation
-        Leff = self.model.effective_length(direction, f)
-        if antenna_frame is not None:
-            # Change the effective length to the E-field frame
-            tmp = antenna_frame.realize_frame(Leff)
-            tmp = tmp.transform_to(E_frame)
-            # Transorm from antenna_frame to E_frame is a translation.
-            # The Leff vector norm should therefeore not be modified, but it is because it is defined as a point in astropy coordinates
-            Leff = tmp.cartesian
 
         # Here we have to do an ugly patch for Leff values to be correct
-        V = irfft(Ex * (Leff.x  - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
-        t = field.t
-        t = t[:V.size]
+        V = irfft(Ex * (Leff.x - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
+
+        t = Efield.t
+        t = t[: V.size]
 
         return Voltage(t=t, V=V)
