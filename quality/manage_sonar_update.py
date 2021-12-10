@@ -41,10 +41,10 @@ if BRANCH in ['master', 'dev', 'dev_update_sonar_ci1']:
     # name=BRANCH
     name = 'grand'   
     create_sonar_properties(name, name, SHA, LOGIN)
-    exit(0)
+    sys.exit(0)
 elif USER_GIT in USER_SONAR:
     name = f'user_{USER_GIT}'
     create_sonar_properties(name, name, BRANCH, LOGIN)
-    exit(0)
-exit(1)
+    sys.exit(0)
+sys.exit(1)
     
