@@ -19,33 +19,35 @@ jobs:
         path: tmp/numpy-stubs
 
     - name: Initialise the environment
+      env:
+        USER_GIT: ${{github.actor}}    
       run: |
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
       
-    - name: Dynamics analysis and coverage
-      run: |
-        . env/setup.sh
-        coverage run --source=grand -m pytest tests
-        check_score_coverage.py
-        
-    - name: Static analysis with pylint
-      run: |
-        . env/setup.sh                
-        grand_quality_analysis.bash
-        
-    - name: Static type check
-      run: |
-        . env/setup.sh
-        mkdir -p user/grand/stubs
-        mv tmp/numpy-stubs/numpy-stubs user/grand/stubs/numpy
-        MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy                    \
-            --config-file=$PWD/tests/mypy.ini -m grand
-
-    - name: Check documentation examples
-      run: |
-        . env/setup.sh
-        python -m tests --doc
+#     - name: Dynamics analysis and coverage
+#       run: |
+#         . env/setup.sh
+#         coverage run --source=grand -m pytest tests
+#         check_score_coverage.py
+#         
+#     - name: Static analysis with pylint
+#       run: |
+#         . env/setup.sh                
+#         grand_quality_analysis.bash
+#         
+#     - name: Static type check
+#       run: |
+#         . env/setup.sh
+#         mkdir -p user/grand/stubs
+#         mv tmp/numpy-stubs/numpy-stubs user/grand/stubs/numpy
+#         MYPYPATH=$PWD/user/grand/stubs:$PWD/lib/python mypy                    \
+#             --config-file=$PWD/tests/mypy.ini -m grand
+# 
+#     - name: Check documentation examples
+#       run: |
+#         . env/setup.sh
+#         python -m tests --doc
 
 
 #     - name: Upload the coverage
