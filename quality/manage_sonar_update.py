@@ -8,9 +8,7 @@ Created on 22 nov. 2021
 import os
 import sys
 
-USER_SONAR = ['luckyji', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
-#USER_SONAR = [ 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
-
+USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 
 #==================== ENV
 SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
@@ -41,11 +39,13 @@ sonar.python.pylint.reportPaths=quality/report_pylint.txt
     
 #==================== MAIN
 if BRANCH in ['master', 'dev']:
-    name=BRANCH
-    #name = 'grand'   
+    name = BRANCH
+    # name = 'grand'   
     create_sonar_properties(name, name, SHA, LOGIN)    
 elif USER_GIT in USER_SONAR:
     name = f'user_{USER_GIT}'
-    create_sonar_properties(name, name, BRANCH, LOGIN)   
+    create_sonar_properties(name, name, BRANCH, LOGIN)
+else:
+    print("No update SonarQube necessary")
 sys.exit(0)
     

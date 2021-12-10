@@ -12,4 +12,5 @@ if [ -f "$FILE" ]; then
 	grand_quality_analysis.bash
 	sonar-scanner -Dproject.settings=$FILE
 fi 
+# always ok for github CI
 exit 0
