@@ -22,7 +22,7 @@ jobs:
       run: |
         . env/setup.sh
         python -m pip install -r quality/requirements.txt
-     
+
     - name: SonarQube update 
       run: |
         . env/setup.sh
