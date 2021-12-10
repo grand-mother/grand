@@ -64,15 +64,15 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
 
 @dataclass
 class ShowerEvent:
-    energy: Optional[Number] = None
-    zenith: Optional[Number] = None
-    azimuth: Optional[Number] = None
+    energy: Optional[float] = None
+    zenith: Optional[float] = None
+    azimuth: Optional[float] = None
     primary: Optional[ParticleCode] = None
-    frame: Optional[GRANDCS, LTP] = None
+    frame: Optional[Union[GRANDCS, LTP]] = None
     core: Optional[CartesianRepresentation] = None
     geomagnet: Optional[CartesianRepresentation] = None
     maximum: Optional[CartesianRepresentation] = None
-    ground_alt: "altitude asl in meter" = None  # RK
+    ground_alt: float = 0.0
     fields: Optional[FieldsCollection] = None
 
     @classmethod
@@ -175,8 +175,8 @@ class ShowerEvent:
         latitude,
         longitude,
         height=0,
-        declination: Optional[Number] = None,
-        obstime: Union[datetime, time, str, None] = None,
+        declination: Optional[float] = None,
+        obstime: Union[str, datetime] = "2020-01-01",
     ) -> None:
         location = Geodetic(latitude=latitude, longitude=longitude, height=height)  # RK
         self.frame = LTP(

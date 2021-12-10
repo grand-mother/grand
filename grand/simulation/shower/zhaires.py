@@ -6,18 +6,19 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Optional
 
+
+import h5py
+import numpy
+
+
+from .generic import CollectionEntry, FieldsCollection, ShowerEvent
+from ..antenna import ElectricField
+from ..pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP, Geodetic
 from ...tools.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
 )  # , Reference
-
-import h5py
-import numpy
-
-from .generic import CollectionEntry, FieldsCollection, ShowerEvent
-from ..antenna import ElectricField
-from ..pdg import ParticleCode
 
 __all__ = ["InvalidAntennaName", "ZhairesShower"]
 
@@ -219,7 +220,7 @@ class ZhairesShower(ShowerEvent):
         return cls(fields=fields, **inp)
 
     @classmethod
-    def _from_datafile(cls, path: Path) -> ZhairesShower:
+    def _from_datafile(cls, path: Path):
         with h5py.File(path, "r") as fd:
             if not "RunInfo.__table_column_meta__" in fd["/"]:
                 return super()._from_datafile(path)
@@ -237,7 +238,8 @@ class ZhairesShower(ShowerEvent):
             pattern = re.compile("([0-9]+)$")
             for tag, x, y, z, *_ in antennas:
                 tag = tag.decode()
-                antenna = int(pattern.search(tag)[1])
+                # TODO: mypy indicate type error ... disable
+                antenna = int(pattern.search(tag)[1])  # type: ignore[index]
                 r = CartesianRepresentation(x=float(x), y=float(y), z=float(z))  # RK
                 tmp = traces[f"{tag}/efield"][:]
                 efield = tmp.view("f4").reshape(tmp.shape + (-1,))
@@ -245,7 +247,7 @@ class ZhairesShower(ShowerEvent):
                 Ex = numpy.asarray(efield[:, 1], "f8")  # uV/m
                 Ey = numpy.asarray(efield[:, 2], "f8")  # uV/m
                 Ez = numpy.asarray(efield[:, 3], "f8")  # uV/m
-                E = (CartesianRepresentation(x=Ex, y=Ey, z=Ez),)
+                E = CartesianRepresentation(x=Ex, y=Ey, z=Ez)
                 fields[antenna] = CollectionEntry(electric=ElectricField(t=t, E=E, r=r))
 
             primary = {

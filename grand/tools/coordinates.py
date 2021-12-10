@@ -24,19 +24,22 @@ units:
 
 
 from __future__ import annotations
-from ..libs import turtle
 from typing import Optional, Tuple, Union, Any
-import numpy as np
-import datetime
+from datetime import datetime
 import copy as _copy
 import enum
 import os
-from . import DATADIR
+from numbers import Number
 
+import numpy as np
 try:
     from scipy.spatial.transform import Rotation as _Rotation
 except ImportError:
     _Rotation = None
+    
+from ..libs import turtle
+from . import DATADIR
+
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
 grd_origin_lat = 38.88849  # degree
@@ -104,10 +107,9 @@ def geoid_undulation(latitude=None, longitude=None):
 # another coordinate representation. Cartesian, Spherical, and Horizontal
 # coordinate representation are defined.
 def _cartesian_to_spherical(
-    x: Union[float, np.ndarray],
-    y: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
-    # ) -> Tuple[Union[float, np.ndarray]]:
+    x: Union[float, int, np.ndarray],
+    y: Union[float, int, np.ndarray],
+    z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform Cartesian coordinates to spherical"""
     rho2 = x ** 2 + y ** 2
@@ -123,9 +125,9 @@ def _cartesian_to_spherical(
 # converted like cartesian and spherical. If conversion is done, then
 # the same origin for both and ENU basis for cartesian is assumed.
 def _cartesian_to_horizontal(
-    x: Union[float, np.ndarray],
-    y: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    x: Union[float, int, np.ndarray],
+    y: Union[float, int, np.ndarray],
+    z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform Cartesian coordinates to horizontal"""
     theta, phi, r = _cartesian_to_spherical(x, y, z)
@@ -133,9 +135,9 @@ def _cartesian_to_horizontal(
 
 
 def _spherical_to_cartesian(
-    theta: Union[float, np.ndarray],
-    phi: Union[float, np.ndarray],
-    r: Union[float, np.ndarray],
+    theta: Union[float, int, np.ndarray],
+    phi: Union[float, int, np.ndarray],
+    r: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform spherical coordinates to Cartesian"""
     cos_theta = np.cos(np.deg2rad(theta))
@@ -149,9 +151,9 @@ def _spherical_to_cartesian(
 
 
 def _spherical_to_horizontal(
-    theta: Union[float, np.ndarray],
-    phi: Union[float, np.ndarray],
-    r: Union[float, np.ndarray],
+    theta: Union[float, int, np.ndarray],
+    phi: Union[float, int, np.ndarray],
+    r: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform spherical coordinates to horizontal"""
     # return 0.5 * np.pi - phi, 0.5 * np.pi - theta, r
@@ -162,9 +164,9 @@ def _spherical_to_horizontal(
 # converted like cartesian and spherical. If conversion is done, then
 # the same origin for both and ENU basis for cartesian is assumed.
 def _horizontal_to_cartesian(
-    azimuth: Union[float, np.ndarray],
-    elevation: Union[float, np.ndarray],
-    norm: Union[float, np.ndarray],
+    azimuth: Union[float, int, np.ndarray],
+    elevation: Union[float, int, np.ndarray],
+    norm: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform horizontal coordinates to Cartesian"""
     theta, phi, r = _horizontal_to_spherical(azimuth, elevation, norm)
@@ -172,9 +174,9 @@ def _horizontal_to_cartesian(
 
 
 def _horizontal_to_spherical(
-    azimuth: Union[float, np.ndarray],
-    elevation: Union[float, np.ndarray],
-    norm: Union[float, np.ndarray],
+    azimuth: Union[float, int, np.ndarray],
+    elevation: Union[float, int, np.ndarray],
+    norm: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform horizontal coordinates to spherical"""
     # return 0.5 * np.pi - elevation, 0.5 * np.pi - azimuth, norm
@@ -213,9 +215,9 @@ class CartesianRepresentation(Coordinates):
     def __new__(
         cls,
         arg: Any = None,
-        x: Union[float, np.ndarray] = None,
-        y: Union[float, np.ndarray] = None,
-        z: Union[float, np.ndarray] = None,
+        x: Union[Number, np.ndarray] = None,
+        y: Union[Number, np.ndarray] = None,
+        z: Union[Number, np.ndarray] = None,
     ):
         """
         Create a Cartesian coordinates instance
@@ -228,7 +230,7 @@ class CartesianRepresentation(Coordinates):
         elif isinstance(arg, (CartesianRepresentation, ECEF, LTP, GRANDCS)):
             x, y, z = arg.x, arg.y, arg.z
 
-        if isinstance(x, float):
+        if isinstance(x, Number):
             n = 1
         elif isinstance(x, np.ndarray) and isinstance(y, np.ndarray) and isinstance(z, np.ndarray):
             n = len(x)
@@ -299,9 +301,9 @@ class SphericalRepresentation(Coordinates):
     def __new__(
         cls,
         arg: Any = None,
-        theta: Union[float, np.ndarray] = None,
-        phi: Union[float, np.ndarray] = None,
-        r: Union[float, np.ndarray] = None,
+        theta: Union[float, int, np.ndarray] = None,
+        phi: Union[float, int, np.ndarray] = None,
+        r: Union[float, int, np.ndarray] = None,
     ):
         """
         Create a spherical coordinates instance.
@@ -321,7 +323,7 @@ class SphericalRepresentation(Coordinates):
         elif isinstance(arg, SphericalRepresentation):
             theta, phi, r = arg.theta, arg.phi, arg.r
 
-        if isinstance(theta, float):
+        if isinstance(theta, Number):
             n = 1
         elif (
             isinstance(theta, np.ndarray)
@@ -392,9 +394,9 @@ class HorizontalRepresentation(Coordinates):
 
     def __new__(
         cls,
-        azimuth: Union[float, np.ndarray] = None,
-        elevation: Union[float, np.ndarray] = None,
-        norm: Union[float, np.ndarray] = 1.0,
+        azimuth: Union[float, int, np.ndarray] = None,
+        elevation: Union[float, int, np.ndarray] = None,
+        norm: Union[float, int, np.ndarray] = 1.0,
     ):
         """
         Create a horizontal coordinates instance.
@@ -410,7 +412,7 @@ class HorizontalRepresentation(Coordinates):
         elevation: angle from horizontal plane (NE plane) towards zenith.
         norm     : distance from the origin to the point.
         """
-        if isinstance(azimuth, float):
+        if isinstance(azimuth, Number):
             n = 1
         elif (
             isinstance(azimuth, np.ndarray)
@@ -495,14 +497,14 @@ class GeodeticRepresentation(Coordinates):
 
     def __new__(
         cls,
-        latitude: Union[float, np.ndarray] = None,
-        longitude: Union[float, np.ndarray] = None,
-        height: Union[float, np.ndarray] = None,
+        latitude: Union[float, int, np.ndarray] = None,
+        longitude: Union[float, int, np.ndarray] = None,
+        height: Union[float, int, np.ndarray] = None,
     ):
         """
         Create a new instance from latitude, longitude, and height.
         """
-        if isinstance(latitude, float):
+        if isinstance(latitude, Number):
             n = 1
         elif (
             isinstance(latitude, np.ndarray)
@@ -588,9 +590,9 @@ class Geodetic(GeodeticRepresentation):
     def __new__(
         cls,
         arg: Any = None,
-        latitude: Union[float, np.ndarray] = None,
-        longitude: Union[float, np.ndarray] = None,
-        height: Union[float, np.ndarray] = None,
+        latitude: Union[float, int, np.ndarray] = None,
+        longitude: Union[float, int, np.ndarray] = None,
+        height: Union[float, int, np.ndarray] = None,
         *args,
         **kwargs,
     ):
@@ -624,9 +626,9 @@ class Geodetic(GeodeticRepresentation):
     def __init__(
         self,
         arg: Any = None,
-        latitude: Union[float, np.ndarray] = None,
-        longitude: Union[float, np.ndarray] = None,
-        height: Union[float, np.ndarray] = None,
+        latitude: Union[float, int, np.ndarray] = None,
+        longitude: Union[float, int, np.ndarray] = None,
+        height: Union[float, int, np.ndarray] = None,
         reference: Any = "GEOID",
     ):  # options: 'GEOID', 'ELLIPSOID'
         """
@@ -693,7 +695,7 @@ class Geodetic(GeodeticRepresentation):
 							ECEF, Geodetic, GRANDCS or Horizontal.",
                 )
 
-        if isinstance(latitude, (float, np.ndarray)):
+        if isinstance(latitude, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
             self.latitude = latitude
             self.longitude = longitude
@@ -750,14 +752,14 @@ class ECEF(CartesianRepresentation):
     def __new__(
         cls,
         arg: Any = None,
-        x: Union[float, np.ndarray] = None,
-        y: Union[float, np.ndarray] = None,
-        z: Union[float, np.ndarray] = None,
+        x: Union[float, int, np.ndarray] = None,
+        y: Union[float, int, np.ndarray] = None,
+        z: Union[float, int, np.ndarray] = None,
         *args,
         **kwargs,
     ):
 
-        if isinstance(x, (float, np.ndarray)):
+        if isinstance(x, (Number, np.ndarray)):
             return super().__new__(cls, x=x, y=y, z=z)
         elif not isinstance(arg, type(None)):
             if isinstance(arg, (LTP, ECEF, Geodetic, GRANDCS)):
@@ -781,10 +783,10 @@ class ECEF(CartesianRepresentation):
     def __init__(
         self,
         arg: Any = None,
-        x: Union[float, np.ndarray] = None,
-        y: Union[float, np.ndarray] = None,
-        z: Union[float, np.ndarray] = None,
-        obstime: Union[str, datetime.date] = "2020-01-01",
+        x: Union[float, int, np.ndarray] = None,
+        y: Union[float, int, np.ndarray] = None,
+        z: Union[float, int, np.ndarray] = None,
+        obstime: Union[str, datetime] = "2020-01-01",
     ):
 
         self.obstime = obstime
@@ -826,7 +828,7 @@ class ECEF(CartesianRepresentation):
 							ECEF, Geodetic, GRANDCS or Horizontal.",
                 )
 
-        if isinstance(x, (float, np.ndarray)):
+        if isinstance(x, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
             self.x = x
             self.y = y
@@ -880,9 +882,9 @@ class Horizontal(HorizontalRepresentation):
     def __new__(
         cls,
         arg: Any = None,
-        azimuth: Union[float, np.ndarray] = None,
-        elevation: Union[float, np.ndarray] = None,
-        norm: Union[float, np.ndarray] = 1.0,
+        azimuth: Union[float, int, np.ndarray] = None,
+        elevation: Union[float, int, np.ndarray] = None,
+        norm: Union[float, int, np.ndarray] = 1.0,
         location: Any = grandcs_origin,
         vector: bool = False,
     ):
@@ -903,7 +905,7 @@ class Horizontal(HorizontalRepresentation):
         if isinstance(arg, (Horizontal, HorizontalRepresentation)):
             return Horizontal(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm)
 
-        if isinstance(azimuth, (float, np.ndarray)):
+        if isinstance(azimuth, (Number, np.ndarray)):
             # check if input coordinates are of the right kind.
             # Additional check will be performed inside HorizontalRepresentation.
             pass
@@ -996,14 +998,14 @@ class LTP(CartesianRepresentation):
     def __new__(
         cls,
         arg: Any = None,  # input coordinate instance to convert to LTP
-        x: Union[float, np.ndarray] = None,  # x-coordinate at LTP
-        y: Union[float, np.ndarray] = None,  # y-coordinate at LTP
-        z: Union[float, np.ndarray] = None,  # z-coordinate at LTP
+        x: Union[float, int, np.ndarray] = None,  # x-coordinate at LTP
+        y: Union[float, int, np.ndarray] = None,  # y-coordinate at LTP
+        z: Union[float, int, np.ndarray] = None,  # z-coordinate at LTP
         *args,
         **kwargs,
     ):
 
-        if isinstance(x, (float, np.ndarray)):
+        if isinstance(x, (Number, np.ndarray)):
             return super().__new__(cls, x=x, y=y, z=z)
         elif not isinstance(arg, type(None)):
             if isinstance(arg, (LTP, ECEF, Geodetic, GRANDCS)):
@@ -1030,19 +1032,19 @@ class LTP(CartesianRepresentation):
     def __init__(
         self,
         arg: Any = None,  # input coordinate instance to convert to LTP
-        x: Union[float, np.ndarray] = None,  # x-coordinate at LTP.
-        y: Union[float, np.ndarray] = None,  # y-coordinate at LTP
-        z: Union[float, np.ndarray] = None,  # z-coordinate at LTP
-        latitude: Union[float, np.ndarray] = None,  # latitude of LTP's location/origin
-        longitude: Union[float, np.ndarray] = None,  # longitude of LTP's location/origin
-        height: Union[float, np.ndarray] = None,  # height of LTP's location/origin
+        x: Union[float, int, np.ndarray] = None,  # x-coordinate at LTP.
+        y: Union[float, int, np.ndarray] = None,  # y-coordinate at LTP
+        z: Union[float, int, np.ndarray] = None,  # z-coordinate at LTP
+        latitude: Union[float, int, np.ndarray] = None,  # latitude of LTP's location/origin
+        longitude: Union[float, int, np.ndarray] = None,  # longitude of LTP's location/origin
+        height: Union[float, int, np.ndarray] = None,  # height of LTP's location/origin
         reference: str = None,  # reference for Geodetic location
         location: Any = None,  # location of LTP in Geodetic, GRANDCS, or ECEF
         orientation: str = None,  # orientation of LTP. 'NWU', 'ENU' etc
         magnetic: bool = False,  # shift orientation by magnetic declination?
         magmodel: str = "IGRF13",  # if shift, which magnetic model to use?
         declination: Optional[float] = None,  # or simply provide the magnetic declination
-        obstime: Union[str, datetime.date] = "2020-01-01",  # calculate declination of what date?
+        obstime: Union[str, datetime ] = "2020-01-01",  # calculate declination of what date?
         frame: Any = None,
         rotation=None,
     ):
@@ -1159,7 +1161,7 @@ class LTP(CartesianRepresentation):
                 ltp_cord = np.matmul(self.basis, pos_v)
                 x, y, z = ltp_cord[0], ltp_cord[1], ltp_cord[2]
 
-        if isinstance(x, (float, np.ndarray)):
+        if isinstance(x, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
             self.x = x
             self.y = y
@@ -1219,14 +1221,14 @@ class GRANDCS(LTP):
     def __init__(
         self,
         arg: Any = None,
-        x: Union[float, np.ndarray] = None,
-        y: Union[float, np.ndarray] = None,
-        z: Union[float, np.ndarray] = None,
-        latitude: Union[float, np.ndarray] = None,  # latitude of LTP's location/origin
-        longitude: Union[float, np.ndarray] = None,  # longitude of LTP's location/origin
-        height: Union[float, np.ndarray] = None,  # height of LTP's location/origin
+        x: Union[float, int, np.ndarray] = None,
+        y: Union[float, int, np.ndarray] = None,
+        z: Union[float, int, np.ndarray] = None,
+        latitude: Union[float, int, np.ndarray] = None,  # latitude of LTP's location/origin
+        longitude: Union[float, int, np.ndarray] = None,  # longitude of LTP's location/origin
+        height: Union[float, int, np.ndarray] = None,  # height of LTP's location/origin
         location: Any = grandcs_origin,
-        obstime: Union[str, datetime.date] = "2020-01-01",
+        obstime: Union[str, datetime] = "2020-01-01",
         rotation=None,
     ):
 
@@ -1241,7 +1243,7 @@ class GRANDCS(LTP):
 							ECEF, Geodetic, LTP, GRANDCS or Horizontal.",
                 )
         if x is not None:
-            if isinstance(x, (float, np.ndarray)):
+            if isinstance(x, (Number, np.ndarray)):
                 pass
             else:
                 raise TypeError(type(x), "x type must be int, float or np.ndarray.")

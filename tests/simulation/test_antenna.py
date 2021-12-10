@@ -215,7 +215,7 @@ class AntennaTest(TestCase):
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)
 
-        antenna = Antenna(model=self.model)
+        antenna = Antenna(model=self.model, frame=None)
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field, shower_frame)
 
