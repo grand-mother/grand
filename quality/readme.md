@@ -152,22 +152,12 @@ quality/html_mypy/index.html
 with web navigator.
 
 
-# SonarQube in local
+# SonarQube server for grand
 
-SonarQube allows you to visualize the results with a very nice layout. It's possible to install it in local.
+SonarQube server for grand project is available [here](https://sonarqube.grand.in2p3.fr).
 
-## Installation with Docker
+All users have a personal project associated to last branch pushed on github to improve the code quality.
 
-See [installation](https://docs.sonarqube.org/latest/setup/install-server/) for local usage. Docker image is available [here](https://hub.docker.com/_/sonarqube)
-
-
-## Script update
-
-Need to adapt 
-
-```console
-grand_quality_sonar.bash
-```
-
+Ask to Colley JM login and password.
 
 
