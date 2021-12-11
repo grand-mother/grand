@@ -15,7 +15,6 @@ SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
 BRANCH = os.environ["GITHUB_REF_NAME"]
 USER_GIT = os.environ["USER_GIT"]
 LOGIN = sys.argv[1]
-print(LOGIN)
 
 
 #==================== FUNCTION
