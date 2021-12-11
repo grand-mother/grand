@@ -26,6 +26,7 @@ jobs:
     - name: Check SonarQube update
       env:
         USER_GIT: ${{github.actor}}
+        SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
         . env/setup.sh
         manage_sonar_update.py
