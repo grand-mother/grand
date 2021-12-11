@@ -29,8 +29,8 @@ jobs:
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
         . env/setup.sh
-        manage_sonar_update.py
-        . apply_sonar_update.bash
+        manage_sonar_update.py "$SONAR_L"
+        #. apply_sonar_update.bash
 
     - name: Dynamics analysis and coverage
       run: |

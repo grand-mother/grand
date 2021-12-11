@@ -14,7 +14,8 @@ USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
 BRANCH = os.environ["GITHUB_REF_NAME"]
 USER_GIT = os.environ["USER_GIT"]
-LOGIN = os.environ["SONAR_L"]
+LOGIN = sys.argv[1]
+print(LOGIN)
 
 #==================== FUNCTION
 def create_sonar_properties(name="", key="", descr="", login="", n_file='sonar.properties'):
