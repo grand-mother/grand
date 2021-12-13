@@ -265,7 +265,7 @@ class Topography:
             return elevation
         else:
             # TODO: what doing if reference is None ?
-            raise ValueError
+            raise
 
     @staticmethod
     def _as_double_ptr(a):
