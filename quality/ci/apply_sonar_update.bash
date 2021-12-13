@@ -9,7 +9,8 @@ if [ -f "$FILE" ]; then
 	PATH=$PATH:$GRAND_ROOT/sonar/sonar-scanner-4.6.2.2472-linux/bin
 	cd $GRAND_ROOT
 	grand_quality_test_cov.bash
-	grand_quality_analysis.bash
+	pylint grand --rcfile quality/pylint.conf --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --output=quality/report_pylint.txt -r y --exit-zero
+	cat quality/report_pylint.txt
 	sonar-scanner -Dproject.settings=$FILE
 fi 
 # always ok for github CI
