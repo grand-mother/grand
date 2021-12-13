@@ -11,7 +11,7 @@ import sys
 USER_SONAR = ['luckyjim', 'rameshkoirala', 'niess', 'grand-oma', "lwpiotr"]
 
 #==================== ENV
-SHA = "sha:" + os.environ["GITHUB_SHA"][:8]
+SHA = "sha:" + os.environ["GITHUB_SHA"][:6]
 BRANCH = os.environ["GITHUB_REF_NAME"]
 USER_GIT = os.environ["USER_GIT"]
 LOGIN = sys.argv[1]
