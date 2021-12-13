@@ -17,6 +17,11 @@ USER_GIT = os.environ["USER_GIT"]
 LOGIN = sys.argv[1]
 
 
+def check_authorized_user(s_user):
+    # return s_user in USER_SONAR
+    # Ok for all 
+    return True 
+
 #==================== FUNCTION
 def create_sonar_properties(name="", key="", descr="", login="", n_file='sonar.properties'):
     properties = f'sonar.projectName={name}'
@@ -41,7 +46,7 @@ sonar.python.pylint.reportPaths=quality/report_pylint.txt
 if BRANCH in ['master', 'dev']:
     name = 'grand_'+BRANCH
     create_sonar_properties(name, name, SHA, LOGIN)    
-elif USER_GIT in USER_SONAR:
+elif check_authorized_user(USER_GIT):
     name = f'user_{USER_GIT}'
     create_sonar_properties(name, name, BRANCH, LOGIN)
 else:
