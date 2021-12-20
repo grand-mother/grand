@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+# touch something
+
 cd $GRAND_ROOT
 coverage erase
 rm -f quality/report_coverage*
