@@ -5,7 +5,7 @@ Initialize code quality tools in current env.
 After 
 
 ```console
-. env/setup.sh
+source env/setup.sh
 ```
 do 
 
@@ -39,22 +39,12 @@ grand_quality_analysis.bash
 ### Output example
 
 ```console
-Messages by category
---------------------
-
-+-----------+-------+---------+-----------+
-|type       |number |previous |difference |
-+===========+=======+=========+===========+
-|convention | x     |NC       |NC         |
-+-----------+-------+---------+-----------+
-|refactor   | x     |NC       |NC         |
-+-----------+-------+---------+-----------+
-|warning    | x     |NC       |NC         |
-+-----------+-------+---------+-----------+
-|error      | x     |NC       |NC         |
-+-----------+-------+---------+-----------+
-
+grand/tools/fake.py:20: [E0602(undefined-variable), max_2_vectors] Undefined variable 'vb'
+grand/tools/fake.py:45: [E1111(assignment-from-no-return), min_2_vectors_pos] Assigning result of a function call, where the function has no return
+grand/tools/fake.py:47: [E1137(unsupported-assignment-operation), min_2_vectors_pos] 'v_min' does not support item assignment
 ```
+
+You can see the module path and line number where pylint detected a problem and then a description of the problem
 
 ## Check test coverage : 
 
@@ -114,6 +104,21 @@ Open file
 quality/html_coverage/index.html
 ```
 with a web navigator.
+
+### Launch only one test
+
+During a debugging phase, it is practical to launch only the test you are working on, this is possible with the following command
+
+```console
+pytest tests/tools/test_fake.py::test_to_fix
+```
+
+At the end of development re-launched
+
+```console
+grand_quality_test_cov.bash
+```
+to update coverage with correction.
 
 
 ## Check type/annotation
