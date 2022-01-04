@@ -34,7 +34,7 @@ class ZhairesShower(ShowerEvent):
     @classmethod
     def _check_dir(cls, path: Path) -> bool:
         try:
-            info_file = path.glob("*.sry").__next__()
+            _ = path.glob("*.sry").__next__()
         except StopIteration:
             return False
         return True
@@ -49,8 +49,8 @@ class ZhairesShower(ShowerEvent):
         inp: Dict[str, Any] = {}
         try:
             sry_path = path.glob("*.sry").__next__()
-        except StopIteration:
-            raise FileNotFoundError(path / "*.sry")
+        except StopIteration as from_dir_exit:
+            raise FileNotFoundError(path / "*.sry") from from_dir_exit
         else:
 
             def parse_primary(string: str) -> ParticleCode:
@@ -101,14 +101,14 @@ class ZhairesShower(ShowerEvent):
                 ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
                 try:
                     inp_file = path.glob("*.inp").__next__()
-                    print("### zhaires.py: reading groundaltitude from. inp file.")
-                    with open(inp_file) as f:
+                    logger.info("### zhaires.py: reading groundaltitude from. inp file.")
+                    with open(inp_file, encoding='UTF-8') as f:
                         for line in f:
                             if "GroundAltitude" in line:
                                 ground_alt = float(line.split()[1])  # m
                                 inp["ground_alt"] = ground_alt
-                except StopIteration:
-                    raise FileNotFoundError(path / "*.inp")
+                except StopIteration as parse_maximum_exit:
+                    raise FileNotFoundError(path / "*.inp") from parse_maximum_exit
                 return CartesianRepresentation(x=1000 * x, y=1000 * y, z=1000 * z)  # RK. km --> m
 
             converters = (
@@ -224,14 +224,15 @@ class ZhairesShower(ShowerEvent):
         with h5py.File(path, "r") as fd:
             if not "RunInfo.__table_column_meta__" in fd["/"]:
                 return super()._from_datafile(path)
-
+            last_name = ""
             for name in fd["/"].keys():
+                last_name = name
                 if not name.startswith("RunInfo"):
                     break
 
-            event = fd[f"{name}/EventInfo"]
-            antennas = fd[f"{name}/AntennaInfo"]
-            traces = fd[f"{name}/AntennaTraces"]
+            event = fd[f"{last_name}/EventInfo"]
+            antennas = fd[f"{last_name}/AntennaInfo"]
+            traces = fd[f"{last_name}/AntennaTraces"]
 
             fields = FieldsCollection()
 
