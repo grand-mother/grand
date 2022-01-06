@@ -1,5 +1,4 @@
 import logging
-from logging import DEBUG, INFO, WARNING, ERROR
 from typing import cast, Optional
 import sys
 
@@ -31,10 +30,10 @@ class StreamHandler(logging.Handler):
             stream.flush()
         except RecursionError:  # See issue 36272
             raise
-        except Exception:
+        except Exception: # pylint: disable=broad-except
             self.handleError(record)
 
-
+# pylint: disable=attribute-defined-outside-init
 class Logger(logging.getLoggerClass()):  # type: ignore
     """
     A specialised Logger with predefined usage. The stream and file attributes
@@ -55,6 +54,7 @@ class Logger(logging.getLoggerClass()):  # type: ignore
 
         # Standard output
         try:
+            # pylint: disable=access-member-before-definition
             self.removeHandler(self.stream)  # type: ignore
         except AttributeError:
             pass
