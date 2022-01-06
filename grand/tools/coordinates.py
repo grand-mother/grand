@@ -88,6 +88,7 @@ class Reference(enum.IntEnum):
     """Reference level for height in Geodetic coordinate system.
     Reference is also defined in topography.py for Topography use.
     """
+
     ELLIPSOID = enum.auto()
     GEOID = enum.auto()
 

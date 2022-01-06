@@ -30,8 +30,9 @@ class StreamHandler(logging.Handler):
             stream.flush()
         except RecursionError:  # See issue 36272
             raise
-        except Exception: # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             self.handleError(record)
+
 
 # pylint: disable=attribute-defined-outside-init
 class Logger(logging.getLoggerClass()):  # type: ignore

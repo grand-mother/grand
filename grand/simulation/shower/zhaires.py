@@ -102,7 +102,7 @@ class ZhairesShower(ShowerEvent):
                 try:
                     inp_file = path.glob("*.inp").__next__()
                     logger.info("### zhaires.py: reading groundaltitude from. inp file.")
-                    with open(inp_file, encoding='UTF-8') as f:
+                    with open(inp_file, encoding="UTF-8") as f:
                         for line in f:
                             if "GroundAltitude" in line:
                                 ground_alt = float(line.split()[1])  # m
