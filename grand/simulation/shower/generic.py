@@ -131,12 +131,12 @@ class ShowerEvent:
         except KeyError:
             pass
         else:
-            fields: OrderedDict = OrderedDict()
-            kwargs["fields"] = fields
+            l_fields: OrderedDict = OrderedDict()
+            kwargs["fields"] = l_fields
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
-                fields[antenna] = CollectionEntry.load(antenna_node)
+                l_fields[antenna] = CollectionEntry.load(antenna_node)
 
         return cls(**kwargs)
 
