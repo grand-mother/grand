@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Union, Any
+
 import numpy as np
+
 from ...tools.coordinates import (
     ECEF,
     LTP,

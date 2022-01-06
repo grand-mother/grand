@@ -32,7 +32,7 @@ class InvalidAntennaName(ValueError):
 
 class ZhairesShower(ShowerEvent):
     @classmethod
-    def _check_dir(cls, path: Path) -> bool:
+    def check_dir(cls, path: Path) -> bool:
         try:
             _ = path.glob("*.sry").__next__()
         except StopIteration:
