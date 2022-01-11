@@ -26,15 +26,13 @@ from .tools.coordinates import (
     Rotation,
 )
 
-from .logging import getLogger, Logger
-from . import logging, store
+from . import store
 
-GRAND_DATA = osp.join(Path.home(), ".grand")
+GRAND_DATA_PATH = osp.join(Path.home(), ".grand")
 
 
 __all__ = [
     "geomagnet",
-    "getLogger",
     "store",
     "topography",
     "ECEF",
@@ -47,7 +45,5 @@ __all__ = [
     "SphericalRepresentation",
     "CartesianRepresentation",
     "Rotation",
-    "GRAND_DATA",
+    "GRAND_DATA_PATH",
 ]
-
-logger: Logger = getLogger(__name__)

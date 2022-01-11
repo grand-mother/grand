@@ -176,7 +176,8 @@ class Antenna:
     def compute_voltage(
         self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS, None] = None
     ) -> Voltage:
-
+        
+        logger.debug("call compute_voltage()")
         # frame is shower frame. self.frame is antenna frame.
         if (self.frame is None) or (frame is None):
             raise MissingFrameError("missing antenna or shower frame")

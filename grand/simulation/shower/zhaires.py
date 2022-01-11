@@ -201,7 +201,7 @@ class ZhairesShower(ShowerEvent):
             #                    =>    time [ns]      Ex [uVm]    Ey [uVm]   Ez [uVm]
             #                    => -1.1463000E+04  -5.723E-05  -1.946E-04  4.324E-04
             antenna = int(field_path.name[1:].split(".", 1)[0])
-            logger.debug(f"Loading trace for antenna {antenna}")
+            # logger.debug(f"Loading trace for antenna {antenna}")
             data = numpy.loadtxt(field_path)
             t = data[:, 0] * 1.0e-9  # ns --> s
             Ex = data[:, 1]  # uVm
