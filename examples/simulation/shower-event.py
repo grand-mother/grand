@@ -11,15 +11,16 @@ from grand import (
     GRANDCS,
     SphericalRepresentation,
     CartesianRepresentation,
-    GRAND_DATA_PATH
+    GRAND_DATA_PATH,
 )
 from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
-#from grand.logger_default import LOG
+
+# from grand.logger_default import LOG
 from grand.logger_grand import LoggerGrand
 
-LOG = LoggerGrand('info','log.txt')
+LOG = LoggerGrand("info", "log.txt")
 LOG.message_start()
-LOG.logger.info('JMC')
+LOG.logger.info("JMC")
 
 # Load the radio shower simulation data
 showerdir = "../../tests/simulation/data/zhaires"
@@ -42,7 +43,7 @@ print("---------------------------------", "\n")
 #
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
-path_ant = osp.join(GRAND_DATA_PATH,'HorizonAntenna_EWarm_leff_loaded.npy')
+path_ant = osp.join(GRAND_DATA_PATH, "HorizonAntenna_EWarm_leff_loaded.npy")
 antenna_model = TabulatedAntennaModel.load(path_ant)
 
 counter = 0
@@ -109,6 +110,6 @@ for antenna_index, field in shower.fields.items():
     plt.xlabel("Time (ns)")
     plt.ylabel(r"Voltage ($\mu$V)")
     plt.legend(loc="best")
-    
-LOG.message_end()    
+
+LOG.message_end()
 plt.show()
