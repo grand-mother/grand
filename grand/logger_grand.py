@@ -105,10 +105,10 @@ def get_logger_path(pfile):
     @return: grand.xx.yy.zz of module that call this function
     """
     l_sep = osp.sep
-    p_ecpi = pfile.find(l_sep + "grand" + l_sep)
-    if p_ecpi is None:
+    p_grand = pfile.find(l_sep + "grand" + l_sep)
+    if p_grand is None:
         return None
-    g_str = pfile[p_ecpi + 1 : -3].replace(l_sep, ".")
+    g_str = pfile[p_grand + 1 : -3].replace(l_sep, ".")
     print(g_str)
     return g_str
 
