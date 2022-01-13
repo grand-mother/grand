@@ -23,7 +23,9 @@ def check_logger_level(str_level):
     try:
         return DICT_LOG_LEVELS[str_level]
     except KeyError:
-        print(f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, use warning level by default.")
+        print(
+            f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, use warning level by default."
+        )
         time.sleep(1)
         return DICT_LOG_LEVELS["warning"]
 
@@ -35,13 +37,13 @@ class MyFormatter(logging.Formatter):
 
     def formatTime(self, record, datefmt=None):
         """!Define my specific format for log
-        
+
         Doesn't used directly by user, so never call in grand lib
-         
-        @param record: logger internal param 
-        @param datefmt:logger internal param 
+
+        @param record: logger internal param
+        @param datefmt:logger internal param
         """
-     
+
         my_convert = self.converter(record.created)
         if datefmt:
             str_date = my_convert.strftime(datefmt)
@@ -56,8 +58,8 @@ class HandlerForLoggerGrand(object):
 
     def __init__(self, log_level="info", log_dest_path=None, stream=True, root="grand"):
         """!Create a logger with handler for grand
-        
-        @param log_level: standard python logger level : "debug", "info", ...               
+
+        @param log_level: standard python logger level : "debug", "info", ...
         @param log_dest_path: create a log file with path and name log_dest_path
         @param stream: enable standard output
         @param root: define a root logger
@@ -77,9 +79,9 @@ class HandlerForLoggerGrand(object):
             ch.setLevel(check_logger_level(self.log_level))
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
-            self.streamhandler = ch        
+            self.streamhandler = ch
         self.t_start = datetime.now()
-    
+
     def message_start(self):
         """!
         Add message start with date and time
@@ -90,7 +92,7 @@ class HandlerForLoggerGrand(object):
 
     def message_end(self):
         """!
-        Add message end with date, time and duration between start message         
+        Add message end with date, time and duration between start message
         """
         logger.info("")
         logger.info(f"===========> End at {get_now_string()} <===========")
