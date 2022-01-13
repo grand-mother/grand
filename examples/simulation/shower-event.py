@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
 import os.path as osp
+import logging
+
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -13,14 +15,21 @@ from grand import (
     CartesianRepresentation,
     GRAND_DATA_PATH,
 )
+
+
 from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
+from grand.logger_grand import HandlerForLoggerGrand, get_logger_path
 
-# from grand.logger_default import LOG
-from grand.logger_grand import LoggerGrand
+# define a handler for logger : standart output and file log.txt
+handler_log = HandlerForLoggerGrand("debug", "log.txt")
+handler_log.message_start()
 
-LOG = LoggerGrand("info", "log.txt")
-LOG.message_start()
-LOG.logger.info("JMC")
+# specific local logger definition because is a script not a module library
+# __mane__ is "__main__" so used __file__ to know the name file
+logger = logging.getLogger(get_logger_path(__file__))
+
+# example of local logger
+logger.info('JMC')
 
 # Load the radio shower simulation data
 showerdir = "../../tests/simulation/data/zhaires"
@@ -111,5 +120,5 @@ for antenna_index, field in shower.fields.items():
     plt.ylabel(r"Voltage ($\mu$V)")
     plt.legend(loc="best")
 
-LOG.message_end()
+handler_log.message_end()
 plt.show()
