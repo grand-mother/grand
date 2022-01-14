@@ -1,6 +1,7 @@
 """!
 @brief
-  Define output logger (file/stdout) for given level of message and some tools to use logger in script.
+  Define output logger (file/stdout) for given level of message and some tools to use 
+  logger in script.
 
 @note
   This module can be copied and used in other projects by modifying the following 2 variables:
@@ -120,7 +121,8 @@ def _check_logger_level(str_level):
         return DICT_LOG_LEVELS[str_level]
     except KeyError:
         print(
-            f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, use warning level by default."
+            f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, "
+            "use warning level by default."
         )
         time.sleep(1)
         return DICT_LOG_LEVELS["warning"]
@@ -145,7 +147,7 @@ class _MyFormatter(logging.Formatter):
             str_date = my_convert.strftime(datefmt)
         else:
             str_time = my_convert.strftime("%H:%M:%S")
-            str_date = "%s.%03d" % (str_time, record.msecs)
+            str_date = f"%{str_time}.{record.msecs:.3f}"
         return str_date
 
     def format(self, record):
@@ -206,15 +208,15 @@ def create_output_for_logger(
     my_logger.setLevel(_check_logger_level(log_level))
     formatter = _MyFormatter(fmt=TPL_FMT_LOGGER)
     if log_file is not None:
-        fh = logging.FileHandler(log_file, mode="w")
-        fh.setLevel(_check_logger_level(log_level))
-        fh.setFormatter(formatter)
-        my_logger.addHandler(fh)
+        f_hd = logging.FileHandler(log_file, mode="w")
+        f_hd.setLevel(_check_logger_level(log_level))
+        f_hd.setFormatter(formatter)
+        my_logger.addHandler(f_hd)
     if log_stdout:
-        ch = logging.StreamHandler()
-        ch.setLevel(_check_logger_level(log_level))
-        ch.setFormatter(formatter)
-        my_logger.addHandler(ch)
+        s_hd = logging.StreamHandler()
+        s_hd.setLevel(_check_logger_level(log_level))
+        s_hd.setFormatter(formatter)
+        my_logger.addHandler(s_hd)
 
 
 def get_logger_for_script(pfile):
