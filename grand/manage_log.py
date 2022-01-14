@@ -1,31 +1,74 @@
 """!
 @brief
+  Define output logger (file/stdout) for given level of message and some tools to use logger in script.
+  
+@note
+  This module can be copied and used in other projects by modifying the following 2 variables:
+       - NAME_PKG_GIT
+       - NAME_ROOT_LIB
+       
 
-Logger with handler, formatter for GRAND lib and some tools
+@section log_mod How used python logger in library module
 
-@section log_mod How defined logger in GRAND module library
+The best practice is indicated python documentation  <a href="https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial">python documentation</a> is
+simply:
+ 
+ @code{.py}
+ 
+from logging import getLogger
 
-add smt
+logger = getLogger(__name__)
 
-@section log_script How used GRAND logger in script
+def foo(var):
+  logger.debug('call foo()')
+  logger.info(f"var={var}")
+  ...
+ @endcode
+ 
+@warning
+  Use always f-string to include current value of variables in message, or create a string message with ".format" before and give it to logger.
+  
+and that's all. Nothing in "__init__.py". Now in a script
+
+@section log_script How to define logger in a script and outputs
+
+In a script the value of "__name__" is "__main__" so a specific logger definition is provided by this module
+by the function @link get_logger_for_script get_logger_for_script() @endlink called with "__file__" value.
+
+The function @link create_output_for_logger create_output_for_logger() @endlink alllows to define output file/stdout and level of message.
+
+A couple of function  can be useful to:
+  - define message at the beginning and the end of script @link string_begin_script string_xxx_script() @endlink
+  - easily have chronometer @link chrono_start chrono_xxx() @endlink
+
+Example:
 
  @code{.py}
-import logging
-from grand.logger_grand import HandlerForLoggerGrand, get_logger_path
+import grand.manage_log as mlg
 
 # define a handler for logger : standart output and file log.txt
-handler_log = HandlerForLoggerGrand("debug", "log.txt")
-handler_log.message_start()
+mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-# specific local logger definition because is a script not a module library
-# __mane__ is "__main__" so used __file__ to know the name file
-logger = logging.getLogger(get_logger_path(__file__))
+# specific logger definition for script because __mane__ is "__main__"
+logger = mlg.get_logger_for_script(__file__)
+logger.info(mlg.string_begin_script())
+...
 
-# example of local logger
-var = 1
-logger.info(f"var={var}")
 
+logger.info(mlg.chrono_start())
+
+# Xmax, Efield, and input frame are all in shower frame.
+field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
+
+logger.info(mlg.chrono_string_duration())
+...
+
+
+logger.info(mlg.string_end_script())
+plt.show()
  @endcode
+ 
+ 
 """
 
 import os.path as osp
@@ -56,9 +99,9 @@ START_CHRONO = datetime.now()
 logger = logging.getLogger(__name__)
 
 
-#
-# internal function of module
-#
+#########################################
+# Internal functions of module
+#########################################
 
 def _check_logger_level(str_level):
     """!
@@ -114,7 +157,7 @@ class _MyFormatter(logging.Formatter):
         return msg
 
 
-def _get_now_string():
+def _get_string_now():
     """!
     Returns string with current date, time
     """
@@ -136,9 +179,9 @@ def _get_logger_path(pfile):
     return g_str
 
 
-#
-# Public interface
-#
+#############################
+# Public functions of module
+#############################
 
 
 def create_output_for_logger(
@@ -180,7 +223,7 @@ def string_begin_script():
     """
     global START_BEGIN  # pylint: disable=global-statement
     START_BEGIN = datetime.now()
-    ret = f"\n===========> begin at {_get_now_string()} <===========\n\n"
+    ret = f"\n===========> begin at {_get_string_now()} <===========\n\n"
     return ret
 
 
@@ -188,7 +231,7 @@ def string_end_script():
     """!
     Return string end message with date, time and duration
     """
-    ret = f"\n\n===========> End at {_get_now_string()} <===========\n"
+    ret = f"\n\n===========> End at {_get_string_now()} <===========\n"
     ret += f"Duration (h:m:s): {datetime.now()-START_BEGIN}"
     return ret
 
