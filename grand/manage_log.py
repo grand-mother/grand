@@ -1,20 +1,22 @@
 """!
 @brief
   Define output logger (file/stdout) for given level of message and some tools to use logger in script.
-  
+
 @note
   This module can be copied and used in other projects by modifying the following 2 variables:
        - NAME_PKG_GIT
        - NAME_ROOT_LIB
-       
+
 
 @section log_mod How used python logger in library module
 
-The best practice is indicated python documentation  <a href="https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial">python documentation</a> is
-simply:
+The best practice is indicated python documentation  
+<a href="https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial">
+python documentation</a> 
+is simply:
  
  @code{.py}
- 
+
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -24,21 +26,26 @@ def foo(var):
   logger.info(f"var={var}")
   ...
  @endcode
- 
+
 @warning
-  Use always f-string to include current value of variables in message, or create a string message with ".format" before and give it to logger.
-  
+  Use always f-string to include current value of variables in message, or create a 
+  string message with ".format" before and give it to logger.
+
 and that's all. Nothing in "__init__.py". Now in a script
 
 @section log_script How to define logger in a script and outputs
 
-In a script the value of "__name__" is "__main__" so a specific logger definition is provided by this module
-by the function @link get_logger_for_script get_logger_for_script() @endlink called with "__file__" value.
+In a script the value of "__name__" is "__main__" so a specific logger definition is 
+provided by this module by the function @link get_logger_for_script 
+get_logger_for_script() @endlink called with "__file__" value.
 
-The function @link create_output_for_logger create_output_for_logger() @endlink alllows to define output file/stdout and level of message.
+The function @link create_output_for_logger create_output_for_logger() @endlink alllows to define 
+output file/stdout and level 
+of message.
 
 A couple of function  can be useful to:
-  - define message at the beginning and the end of script @link string_begin_script string_xxx_script() @endlink
+  - define message at the beginning and the end of script @link string_begin_script 
+    string_xxx_script() @endlink
   - easily have chronometer @link chrono_start chrono_xxx() @endlink
 
 Example:
@@ -67,7 +74,7 @@ logger.info(mlg.chrono_string_duration())
 logger.info(mlg.string_end_script())
 plt.show()
  @endcode
- 
+
  
 """
 
@@ -82,7 +89,7 @@ NAME_PKG_GIT = "grand"
 NAME_ROOT_LIB = "grand"
 
 
-# constant value to manage logger and its features 
+# constant value to manage logger and its features
 TPL_FMT_LOGGER = "%(asctime)s %(levelname)5s [%(name)s %(lineno)d] %(message)s"
 
 DICT_LOG_LEVELS = {
@@ -102,6 +109,7 @@ logger = logging.getLogger(__name__)
 #########################################
 # Internal functions of module
 #########################################
+
 
 def _check_logger_level(str_level):
     """!
