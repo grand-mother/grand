@@ -147,7 +147,7 @@ class _MyFormatter(logging.Formatter):
             str_date = my_convert.strftime(datefmt)
         else:
             str_time = my_convert.strftime("%H:%M:%S")
-            str_date = f"%{str_time}.{record.msecs:.3f}"
+            str_date = f"{str_time}.{record.msecs:.3f}"
         return str_date
 
     def format(self, record):

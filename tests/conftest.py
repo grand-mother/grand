@@ -9,6 +9,8 @@ import pytest
 
 from grand import GRAND_DATA_PATH
 from grand.simulation import TabulatedAntennaModel
+#import grand.manage_log as mlg
+
 
 GRAND_ROOT = os.getenv("GRAND_ROOT")
 
@@ -18,6 +20,8 @@ def pytest_configure(config):
     if not osp.exists(GRAND_DATA_PATH):
         os.mkdir(GRAND_DATA_PATH)
     grand_download_big_file()
+    # add logger message
+    #mlg.create_output_for_logger("debug", log_stdout=True)
 
 
 def grand_download_big_file():

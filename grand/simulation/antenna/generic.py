@@ -32,7 +32,7 @@ class ElectricField:
 
     @classmethod
     def load(cls, node: io.DataNode):
-        logger.debug("Loading E-field from {node.filename}:{node.path}")
+        logger.debug(f"Loading E-field from {node.filename}:{node.path}")
 
         t = node.read("t", dtype="f8")
         E = node.read("E", dtype="f8")
@@ -50,7 +50,7 @@ class ElectricField:
         return cls(t, E, r, frame)
 
     def dump(self, node: io.DataNode):
-        logger.debug("Dumping E-field to {node.filename}:{node.path}")
+        logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
 
         node.write("t", self.t, dtype="f4")
         node.write("E", self.E, dtype="f4")
