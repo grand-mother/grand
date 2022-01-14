@@ -40,7 +40,6 @@ __all__ = [
     "GeodeticRepresentation",
     "GRANDCS",
     "coordinates",
-    "Logger",
     "LTP",
     "SphericalRepresentation",
     "CartesianRepresentation",
