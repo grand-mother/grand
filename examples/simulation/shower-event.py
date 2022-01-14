@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import os.path as osp
-import logging
 
 
 import numpy as np
