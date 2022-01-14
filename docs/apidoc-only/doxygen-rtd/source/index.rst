@@ -13,10 +13,7 @@ Modules
 .. toctree::
    :maxdepth: 2
    
-   grand.libs
-   grand.simulation
-   grand.store
-   grand.tools
+   grand
 
 Indices and tables
 ==================

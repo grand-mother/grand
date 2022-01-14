@@ -189,7 +189,7 @@ def create_output_for_logger(
 ):
     """!Create a logger with handler for grand
 
-    @param log_level: standard python logger level define in $DICT_LOG_LEVELS
+    @param log_level: standard python logger level define in DICT_LOG_LEVELS
     @param log_file: create a log file with path and name log_file
     @param log_stdout: enable standard output
     @param log_root: define a log_root logger

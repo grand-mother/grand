@@ -1,4 +1,0 @@
-GRAND Library
-=====================
-
-.. doxygennamespace:: GRANDLib 

@@ -17,8 +17,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'GRANDRoot Shpynx doc from Doxygen'
-copyright = '2021, GRAND'
+project = 'GRAND Lib'
+copyright = '2022, GRAND'
 author = 'GRAND'
 
 
@@ -51,5 +51,5 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # Breathe Configuration
-breathe_projects = { "GRANDLib": "../xml/" }
-breathe_default_project = "GRANDLib"
+breathe_projects = { "grand": "../xml/" }
+breathe_default_project = "grand"

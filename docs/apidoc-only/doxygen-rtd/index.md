@@ -4,7 +4,3 @@ Welcome to GRANDLib's documentation!
 ======================================
 
 
-Modules
--------
-
-GRANDLib
