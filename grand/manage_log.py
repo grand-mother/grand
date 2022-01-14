@@ -1,0 +1,209 @@
+"""!
+@brief
+
+Logger with handler, formatter for GRAND lib and some tools
+
+@section log_mod How defined logger in GRAND module library
+
+add smt
+
+@section log_script How used GRAND logger in script
+
+ @code{.py}
+import logging
+from grand.logger_grand import HandlerForLoggerGrand, get_logger_path
+
+# define a handler for logger : standart output and file log.txt
+handler_log = HandlerForLoggerGrand("debug", "log.txt")
+handler_log.message_start()
+
+# specific local logger definition because is a script not a module library
+# __mane__ is "__main__" so used __file__ to know the name file
+logger = logging.getLogger(get_logger_path(__file__))
+
+# example of local logger
+var = 1
+logger.info(f"var={var}")
+
+ @endcode
+"""
+
+import os.path as osp
+import logging
+from datetime import datetime
+import time
+
+
+# value to customize for each project
+NAME_PKG_GIT = "grand"
+NAME_ROOT_LIB = "grand"
+
+
+# constant value to manage logger and its features 
+TPL_FMT_LOGGER = "%(asctime)s %(levelname)5s [%(name)s %(lineno)d] %(message)s"
+
+DICT_LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+    "critical": logging.CRITICAL,
+}
+
+START_BEGIN = datetime.now()
+START_CHRONO = datetime.now()
+
+logger = logging.getLogger(__name__)
+
+
+#
+# internal function of module
+#
+
+def _check_logger_level(str_level):
+    """!
+    @brief
+      Check the validity of the logger level specified
+    """
+    try:
+        return DICT_LOG_LEVELS[str_level]
+    except KeyError:
+        print(
+            f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, use warning level by default."
+        )
+        time.sleep(1)
+        return DICT_LOG_LEVELS["warning"]
+
+
+class _MyFormatter(logging.Formatter):
+    """!Formatter without date and with millisecond by default"""
+
+    converter = datetime.fromtimestamp
+
+    def formatTime(self, record, datefmt=None):
+        """!Define my specific time format for GRAND logger.
+
+        @note
+          This method is not used directly by the user.
+
+        @param record: internal param
+        @param datefmt: internal param
+        """
+        my_convert = self.converter(record.created)
+        if datefmt:
+            str_date = my_convert.strftime(datefmt)
+        else:
+            str_time = my_convert.strftime("%H:%M:%S")
+            str_date = "%s.%03d" % (str_time, record.msecs)
+        return str_date
+
+    def format(self, record):
+        """!
+        Override format function to manage multiline with \n
+
+        @note
+          This method is not used directly by the user.
+
+        @param record: internal param
+        """
+        msg = logging.Formatter.format(self, record)
+
+        if record.message != "":
+            parts = msg.split(record.message)
+            msg = msg.replace("\n", "\n" + parts[0])
+        return msg
+
+
+def _get_now_string():
+    """!
+    Returns string with current date, time
+    """
+    return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _get_logger_path(pfile):
+    """!
+    @param pfile: give __file__ where this is function is call
+    @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
+    """
+    l_sep = osp.sep
+    p_grand = pfile.find(l_sep + NAME_PKG_GIT + l_sep)
+    if p_grand is None:
+        return None
+    # -3 for size of ".py"
+    g_str = pfile[p_grand + 1 : -3].replace(l_sep, ".")
+    print(g_str)
+    return g_str
+
+
+#
+# Public interface
+#
+
+
+def create_output_for_logger(
+    log_level="info", log_file=None, log_stdout=True, log_root=NAME_ROOT_LIB
+):
+    """!Create a logger with handler for grand
+
+    @param log_level: standard python logger level define in $DICT_LOG_LEVELS
+    @param log_file: create a log file with path and name log_file
+    @param log_stdout: enable standard output
+    @param log_root: define a log_root logger
+    """
+    my_logger = logging.getLogger(log_root)
+    my_logger.setLevel(_check_logger_level(log_level))
+    formatter = _MyFormatter(fmt=TPL_FMT_LOGGER)
+    if log_file is not None:
+        fh = logging.FileHandler(log_file, mode="w")
+        fh.setLevel(_check_logger_level(log_level))
+        fh.setFormatter(formatter)
+        my_logger.addHandler(fh)
+    if log_stdout:
+        ch = logging.StreamHandler()
+        ch.setLevel(_check_logger_level(log_level))
+        ch.setFormatter(formatter)
+        my_logger.addHandler(ch)
+
+
+def get_logger_for_script(pfile):
+    """!
+    Return a logger with root logger is defined by the path of the file
+    @param pfile: path of the file, so always call with __file__ value
+    """
+    return logging.getLogger(_get_logger_path(pfile))
+
+
+def string_begin_script():
+    """!
+    Return string start message with date, time
+    """
+    global START_BEGIN  # pylint: disable=global-statement
+    START_BEGIN = datetime.now()
+    ret = f"\n===========> begin at {_get_now_string()} <===========\n\n"
+    return ret
+
+
+def string_end_script():
+    """!
+    Return string end message with date, time and duration
+    """
+    ret = f"\n\n===========> End at {_get_now_string()} <===========\n"
+    ret += f"Duration (h:m:s): {datetime.now()-START_BEGIN}"
+    return ret
+
+
+def chrono_start():
+    """!
+    Start chonometer
+    """
+    global START_CHRONO  # pylint: disable=global-statement
+    START_CHRONO = datetime.now()
+    return "-----> Chrono start"
+
+
+def chrono_string_duration():
+    """!
+    Return string with duration between call chrono_start()
+    """
+    return f"-----> Chrono Duration (h:m:s): {datetime.now()-START_CHRONO}"

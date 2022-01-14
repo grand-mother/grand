@@ -18,18 +18,14 @@ from grand import (
 
 
 from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
-from grand.logger_grand import HandlerForLoggerGrand, get_logger_path
+import grand.manage_log as mlg
 
 # define a handler for logger : standart output and file log.txt
-handler_log = HandlerForLoggerGrand("debug", "log.txt")
-handler_log.message_start()
+mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-# specific local logger definition because is a script not a module library
-# __mane__ is "__main__" so used __file__ to know the name file
-logger = logging.getLogger(get_logger_path(__file__))
-
-# example of local logger
-logger.info('JMC')
+# specific logger definition for script because __mane__ is "__main__"
+logger = mlg.get_logger_for_script(__file__)
+logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
 showerdir = "../../tests/simulation/data/zhaires"
@@ -101,8 +97,11 @@ for antenna_index, field in shower.fields.items():
     # shower frame. This is indicated by the `frame` named argument.
     Exyz = field.electric.E
 
+    logger.info(mlg.chrono_start())
     # Xmax, Efield, and input frame are all in shower frame.
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
+
+    logger.info(mlg.chrono_string_duration())
 
     print("\nVpp=", max(field.voltage.V) - min(field.voltage.V), "\n")
 
@@ -120,5 +119,5 @@ for antenna_index, field in shower.fields.items():
     plt.ylabel(r"Voltage ($\mu$V)")
     plt.legend(loc="best")
 
-handler_log.message_end()
+logger.info(mlg.string_end_script())
 plt.show()
