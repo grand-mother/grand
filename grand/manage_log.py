@@ -8,7 +8,6 @@
        - NAME_PKG_GIT
        - NAME_ROOT_LIB
 
-
 @section log_mod How used python logger in library module
 
 The best practice is indicated in
@@ -17,7 +16,6 @@ python documentation</a>
 is simply:
  
  @code{.py}
-
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -41,8 +39,7 @@ provided by this module by the function @link get_logger_for_script
 get_logger_for_script() @endlink called with "__file__" value.
 
 The function @link create_output_for_logger create_output_for_logger() @endlink alllows to define 
-output file/stdout and level 
-of message.
+output file/stdout and level of message.
 
 A couple of function  can be useful to:
   - define message at the beginning and the end of script @link string_begin_script 
@@ -76,7 +73,6 @@ logger.info(mlg.string_end_script())
 plt.show()
  @endcode
 
- 
 Result log file
 
  @code{.txt}
