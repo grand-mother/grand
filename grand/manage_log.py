@@ -136,7 +136,7 @@ def _check_logger_level(str_level):
     try:
         return DICT_LOG_LEVELS[str_level]
     except KeyError:
-        print(
+        logger.error(
             f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, "
             "use warning level by default."
         )
@@ -201,7 +201,6 @@ def _get_logger_path(pfile):
         return None
     # -3 for size of ".py"
     g_str = pfile[p_grand + 1 : -3].replace(l_sep, ".")
-    print(g_str)
     return g_str
 
 
