@@ -1,4 +1,4 @@
-#pylint: disable=line-too-long
+# pylint: disable=line-too-long
 """!
 @brief
   Define output logger (file/stdout) for given level of message and some tools to use 
@@ -95,7 +95,7 @@ Result log file
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] Duration (h:m:s): 0:00:00.775352
  @endcode
 """
-#pylint: enable=line-too-long
+# pylint: enable=line-too-long
 
 
 import os.path as osp
