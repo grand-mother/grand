@@ -11,7 +11,7 @@
 
 @section log_mod How used python logger in library module
 
-The best practice is indicated python documentation  
+The best practice is indicated in
 <a href="https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial">
 python documentation</a> 
 is simply:
