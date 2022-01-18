@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long
+#! pylint: disable=line-too-long
 """!
 @brief
   Define output logger (file/stdout) for given level of message and some tools to use 
@@ -126,25 +126,106 @@ START_CHRONO = datetime.now()
 logger = logging.getLogger(__name__)
 
 
+
+#############################
+# Public functions of module
+#############################
+
+
+def create_output_for_logger(
+    log_level="info", log_file=None, log_stdout=True, log_root=NAME_ROOT_LIB
+):
+    """!Create a logger with handler for grand
+
+    @param log_level: standard python logger level define in DICT_LOG_LEVELS
+    @param log_file: create a log file with path and name log_file
+    @param log_stdout: enable standard output
+    @param log_root: define a log_root logger
+    """
+    my_logger = logging.getLogger(log_root)
+    my_logger.setLevel(_check_logger_level(log_level))
+    formatter = _MyFormatter(fmt=TPL_FMT_LOGGER)
+    if log_file is not None:
+        f_hd = logging.FileHandler(log_file, mode="w")
+        f_hd.setLevel(_check_logger_level(log_level))
+        f_hd.setFormatter(formatter)
+        my_logger.addHandler(f_hd)
+    if log_stdout:
+        s_hd = logging.StreamHandler()
+        s_hd.setLevel(_check_logger_level(log_level))
+        s_hd.setFormatter(formatter)
+        my_logger.addHandler(s_hd)
+
+
+def close_output_for_looger(log_root=NAME_ROOT_LIB):
+    """! close handler for test
+    """
+    my_logger = logging.getLogger(log_root)
+    handlers = my_logger.handlers[:]
+    for handler in handlers:
+        handler.close()
+        my_logger.removeHandler(handler)
+    
+    
+def get_logger_for_script(pfile):
+    """!
+    Return a logger with root logger is defined by the path of the file
+    @param pfile: path of the file, so always call with __file__ value
+    """
+    return logging.getLogger(_get_logger_path(pfile))
+
+
+def string_begin_script():
+    """!
+    Return string start message with date, time
+    """
+    global START_BEGIN  # pylint: disable=global-statement
+    START_BEGIN = datetime.now()
+    ret = f"\n===========> Begin at {_get_string_now()} <===========\n\n"
+    return ret
+
+
+def string_end_script():
+    """!
+    Return string end message with date, time and duration
+    """
+    ret = f"\n\n===========> End at {_get_string_now()} <===========\n"
+    ret += f"Duration (h:m:s): {datetime.now()-START_BEGIN}"
+    return ret
+
+
+def chrono_start():
+    """!
+    Start chonometer
+    """
+    global START_CHRONO  # pylint: disable=global-statement
+    START_CHRONO = datetime.now()
+    return "-----> Chrono start"
+
+
+def chrono_string_duration():
+    """!
+    Return string with duration between call chrono_start()
+    """
+    return f"-----> Chrono duration (h:m:s): {datetime.now()-START_CHRONO}"
+
+
 #########################################
 # Internal functions of module
 #########################################
 
-
 def _check_logger_level(str_level):
-    """!
-    @brief
-      Check the validity of the logger level specified
+    """!Check the validity of the logger level specified
     """
     try:
         return DICT_LOG_LEVELS[str_level]
     except KeyError:
         logger.error(
             f"keyword '{str_level}' isn't in {DICT_LOG_LEVELS.keys()}, "
-            "use warning level by default."
+            "use debug level by default."
         )
         time.sleep(1)
-        return DICT_LOG_LEVELS["warning"]
+        return DICT_LOG_LEVELS["debug"]
 
 
 class _MyFormatter(logging.Formatter):
@@ -199,82 +280,10 @@ def _get_logger_path(pfile):
     @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
     """
     l_sep = osp.sep
-    p_grand = pfile.find(l_sep + NAME_PKG_GIT + l_sep)
-    if p_grand is None:
+    r_str = l_sep + NAME_PKG_GIT + l_sep
+    p_grand = pfile.find(r_str)
+    if p_grand == -1:
         return None
     # -3 for size of ".py"
     g_str = pfile[p_grand + 1 : -3].replace(l_sep, ".")
     return g_str
-
-
-#############################
-# Public functions of module
-#############################
-
-
-def create_output_for_logger(
-    log_level="info", log_file=None, log_stdout=True, log_root=NAME_ROOT_LIB
-):
-    """!Create a logger with handler for grand
-
-    @param log_level: standard python logger level define in DICT_LOG_LEVELS
-    @param log_file: create a log file with path and name log_file
-    @param log_stdout: enable standard output
-    @param log_root: define a log_root logger
-    """
-    my_logger = logging.getLogger(log_root)
-    my_logger.setLevel(_check_logger_level(log_level))
-    formatter = _MyFormatter(fmt=TPL_FMT_LOGGER)
-    if log_file is not None:
-        f_hd = logging.FileHandler(log_file, mode="w")
-        f_hd.setLevel(_check_logger_level(log_level))
-        f_hd.setFormatter(formatter)
-        my_logger.addHandler(f_hd)
-    if log_stdout:
-        s_hd = logging.StreamHandler()
-        s_hd.setLevel(_check_logger_level(log_level))
-        s_hd.setFormatter(formatter)
-        my_logger.addHandler(s_hd)
-
-
-def get_logger_for_script(pfile):
-    """!
-    Return a logger with root logger is defined by the path of the file
-    @param pfile: path of the file, so always call with __file__ value
-    """
-    return logging.getLogger(_get_logger_path(pfile))
-
-
-def string_begin_script():
-    """!
-    Return string start message with date, time
-    """
-    global START_BEGIN  # pylint: disable=global-statement
-    START_BEGIN = datetime.now()
-    ret = f"\n===========> begin at {_get_string_now()} <===========\n\n"
-    return ret
-
-
-def string_end_script():
-    """!
-    Return string end message with date, time and duration
-    """
-    ret = f"\n\n===========> End at {_get_string_now()} <===========\n"
-    ret += f"Duration (h:m:s): {datetime.now()-START_BEGIN}"
-    return ret
-
-
-def chrono_start():
-    """!
-    Start chonometer
-    """
-    global START_CHRONO  # pylint: disable=global-statement
-    START_CHRONO = datetime.now()
-    return "-----> Chrono start"
-
-
-def chrono_string_duration():
-    """!
-    Return string with duration between call chrono_start()
-    """
-    return f"-----> Chrono Duration (h:m:s): {datetime.now()-START_CHRONO}"
