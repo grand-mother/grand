@@ -30,6 +30,7 @@ import copy as _copy
 import enum
 import os
 from numbers import Number
+from logging import getLogger
 
 import numpy as np
 
@@ -41,6 +42,7 @@ except ImportError:
 from ..libs import turtle
 from . import DATADIR
 
+logger = getLogger(__name__)
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
 grd_origin_lat = 38.88849  # degree
@@ -100,7 +102,7 @@ def geoid_undulation(latitude=None, longitude=None):
     """
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
-
+    logger.info(f"geoid_undulation for {latitude} {longitude}")
     return geoid.elevation(longitude, latitude)
 
 
