@@ -50,7 +50,6 @@ def test_get_logger_for_script_out_pkg():
     logger.info(mlg.chrono_string_duration())            
     logger.info(mlg.string_end_script())
     mlg.close_output_for_logger()
-    return
     with open(fn_log, 'r') as flog:
         all_log = flog.read()
         assert all_log.find(r_log) > 0
