@@ -83,6 +83,9 @@ class ShowerEvent:
             source = cast(Union[Path, str], source)
             filename = f"{source}:/"
             source = Path(source)
+            logger.debug(type(source))
+            logger.debug(source)
+            logger.debug(source.is_dir())
             if source.is_dir():
                 loader = "_from_dir"
 
@@ -104,11 +107,15 @@ class ShowerEvent:
         # print('loader', loader)
 
         try:
+            logger.debug(loader)
             load = getattr(baseclass, loader)
+            logger.debug("getattr")
         except AttributeError as load_exit:
             raise NotImplementedError("Invalid data format") from load_exit
         else:
+            logger.debug(load)
             self = load(source)
+            
 
         if self.fields is not None:
             logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
