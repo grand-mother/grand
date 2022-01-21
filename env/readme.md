@@ -2,6 +2,8 @@
 
 ## Libraries compilation in place under conda 
 
+
+
 ```
 # Checkout
 git clone https://github.com/grand-mother/grand.git
@@ -11,7 +13,7 @@ git checkout dev_noAppim
 # Create env conda "grand_user" (only one time)
 conda env create -f env/conda/grand_user.yml
 
-# Init env
+# Init GRAND env
 conda activate grand_user
 source env/setup.bash
 
@@ -21,25 +23,27 @@ pytest tests
 cd examples/simulation/
 python shower-event.py
 
-# Leave grand env
-conda activate
+# Leave GRAND env
+conda deactivate
 ```
 
 
 
-## With AppImage
+## With AppImage file
+
+
 ```
 # Checkout
 git clone https://github.com/grand-mother/grand.git
 cd grand/
 git checkout dev
 
-# Init env
+# Init GRAND env
 source env/setup_AppImage.bash
 
 # Tests
 which python
-pytest tests
+python -m tests
 cd examples/simulation/
 python shower-event.py
 ```
