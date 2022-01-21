@@ -1,5 +1,5 @@
-cffi
-h5py
-numpy
-scipy
-typing-extensions
+cffi==1.15.0
+h5py==3.6.0
+numpy==1.21.2
+scipy==1.7.3
+typing-extensions==3.10.0.2
