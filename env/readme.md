@@ -16,6 +16,7 @@ conda activate grand_user
 source env/setup.bash
 
 # Tests
+which python
 pytest tests
 cd examples/simulation/
 python shower-event.py
