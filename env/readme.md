@@ -1,4 +1,4 @@
-# Installation
+# GRAND environnement configuration
 
 ## Libraries compilation in place under conda 
 
