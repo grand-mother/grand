@@ -41,11 +41,12 @@ main () {
         fi
     }
 
-    expand_pythonpath "${GRAND_ROOT}"
+    expand_pythonpath ""
 
     # Build the C extensions
 	cd $GRAND_ROOT/src
 	install_ext_lib.bash
+	cd -
 	
     logmsg "--Environment set"
 }
