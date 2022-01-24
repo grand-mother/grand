@@ -45,7 +45,7 @@ main () {
 
     # Build the C extensions
 	cd $GRAND_ROOT/src
-	install_ext_lib.bash
+	./install_ext_lib.bash
 	cd -
 	
     logmsg "--Environment set"
