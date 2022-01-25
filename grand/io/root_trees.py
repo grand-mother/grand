@@ -1,5 +1,17 @@
-# Classes to handle exchange of information between user and ROOT TTrees holding Zhaires simulation data
+"""!
+Classes to handle exchange of information between user and ROOT TTrees holding Zhaires simulation data
 
+@section ROOT for GRAND basic information
+
+This is the interface for accessing GRAND ROOT TTrees that 
+(in its final future state) will not require the user 
+(reader/writer of the TTrees) to have any knowledge of ROOT. It
+ also will hide the internals from the data generator, so that 
+ the changes in the format are not concerning the user.
+
+The TTree interface classes are defined in the GRANDROOTTrees.py file.
+
+"""
 import ROOT
 import numpy as np
 import sys
@@ -47,7 +59,7 @@ class StdVectorList(MutableSequence):
 
 # Mother class for GRAND Tree data classes
 @dataclass
-class GRANDDataTree:
+class DataTree():
     _file: ROOT.TFile = None
     _tree_name: str = ""
     _tree: ROOT.TTree = ROOT.TTree(_tree_name, _tree_name)
@@ -107,17 +119,17 @@ class GRANDDataTree:
     def evt_id(self, val: np.uint32) -> None:
         self._evt_id[0] = val
 
-    def Fill(self):
-        self._tree.Fill()
+    def fill(self):
+        self._tree.fill()
 
-    def Write(self, *args):
-        self._tree.Write(*args)
+    def write(self, *args):
+        self._tree.write(*args)
 
-    def Scan(self, *args):
-        self._tree.Scan(*args)
+    def scan(self, *args):
+        self._tree.scan(*args)
 
-    def GetEvent(self, ev_no):
-        self._tree.GetEntry(ev_no)
+    def get_event(self, ev_no):
+        self._tree.get_entry(ev_no)
         # print(self.__dataclass_fields__)
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
@@ -127,33 +139,33 @@ class GRANDDataTree:
             # print(self.__dataclass_fields__[field].name, u, type(u))
             setattr(self, field[1:], u)
 
-    def GetEntry(self, ev_no):
-        self.GetEvent(ev_no)
+    def get_entry(self, ev_no):
+        self.get_event(ev_no)
 
     # All three methods below return the number of entries
-    def GetEntries(self):
-        return self._tree.GetEntries()
+    def get_entries(self):
+        return self._tree.get_entries()
 
-    def GetNumberOfEntries(self):
-        return self.GetEntries()
+    def get_number_of_entries(self):
+        return self.get_entries()
 
-    def GetNumberOfEvents(self):
-        return self.GetNumberOfEntries()
+    def get_number_of_events(self):
+        return self.get_number_of_entries()
 
-    def AddFriend(self, value):
-        self._tree.AddFriend(value)
+    def add_friend(self, value):
+        self._tree.add_friend(value)
 
-    def RemoveFriend(self, value):
-        self._tree.RemoveFriend(value)
+    def remove_friend(self, value):
+        self._tree.remove_friend(value)
 
-    def BuildIndex(self, run_id, evt_id):
-        self._tree.BuildIndex(run_id, evt_id)
+    def build_index(self, run_id, evt_id):
+        self._tree.build_index(run_id, evt_id)
 
-    def SetTreeIndex(self, value):
-        self._tree.SetTreeIndex(value)
+    def set_tree_index(self, value):
+        self._tree.set_tree_index(value)
 
     # Create branches of the TTree based on the class fields
-    def CreateBranches(self):
+    def create_branches(self):
         # Reset all branch addresses just in case
         self._tree.ResetBranchAddresses()
 
@@ -162,10 +174,10 @@ class GRANDDataTree:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
             if field == "_tree" or field == "_file" or field == "_tree_name": continue
             # Create a branch for the field
-            self.CreateBranchFromField(self.__dataclass_fields__[field])
+            self.create_branch_from_field(self.__dataclass_fields__[field])
 
     # Create a specific branch of a TTree computing its type from the corresponding class field
-    def CreateBranchFromField(self, value):
+    def create_branch_from_field(self, value):
         # Handle numpy arrays
         if isinstance(value.default, np.ndarray):
             # Generate ROOT TTree data type string
@@ -212,14 +224,14 @@ class GRANDDataTree:
             exit()
 
     # All three methods below return the number of entries
-    def Print(self):
+    def print(self):
         return self._tree.Print()
 
 
 
 @dataclass
 # ToDo: this will have evt_id now, and should not have!
-class GRANDShowerRunTree(GRANDDataTree):
+class ShowerRunTree(DataTree):
     _tree_name: str = "GRANDShowerRun"
 
     _site: StdVectorList("string") = StdVectorList("string")  # The GRAND detection site
@@ -234,7 +246,7 @@ class GRANDShowerRunTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def site(self):
@@ -274,7 +286,7 @@ class GRANDShowerRunTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDShowerRunSimdataTree(GRANDDataTree):
+class ShowerRunSimdataTree(DataTree):
     _tree_name: str = "GRANDShowerRunSimdata"
 
     _shower_sim: StdVectorList("string") = StdVectorList("string") # simulation program (and version) used to simulate the shower
@@ -294,7 +306,7 @@ class GRANDShowerRunSimdataTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def shower_sim(self):
@@ -371,7 +383,7 @@ class GRANDShowerRunSimdataTree(GRANDDataTree):
         self._lowe_cut_nucleon[0] = value
 
 @dataclass
-class GRANDShowerTree(GRANDDataTree):
+class ShowerTree(DataTree):
     _tree_name: str = "GRANDShower"
 
     _shower_type: StdVectorList("string") = StdVectorList("string")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
@@ -398,7 +410,7 @@ class GRANDShowerTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def shower_type(self):
@@ -557,7 +569,7 @@ class GRANDShowerTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDShowerSimdataTree(GRANDDataTree):
+class ShowerSimdataTree(DataTree):
     _tree_name: str = "GRANDShowerSimdata"
 
     _rnd_seed: np.ndarray = np.zeros(1, np.float64)  # random seed
@@ -579,7 +591,7 @@ class GRANDShowerSimdataTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def rnd_seed(self):
@@ -697,7 +709,7 @@ class GRANDShowerSimdataTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDEfieldRunSimdataTree(GRANDDataTree):
+class EfieldRunSimdataTree(DataTree):
     _tree_name: str = "GRANDEfieldRunSimdata"
 
     _field_sim: StdVectorList("string") = StdVectorList("string")  # name and model of the electric field simulator
@@ -714,7 +726,7 @@ class GRANDEfieldRunSimdataTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def field_sim(self):
@@ -779,7 +791,7 @@ class GRANDEfieldRunSimdataTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDEfieldEventSimdataTree(GRANDDataTree):
+class EfieldEventSimdataTree(DataTree):
     _tree_name: str = "GRANDEfieldEventSimdata"
 
     _det_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -794,7 +806,7 @@ class GRANDEfieldEventSimdataTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def det_id(self):
@@ -852,7 +864,7 @@ class GRANDEfieldEventSimdataTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDVoltageRunSimdataTree(GRANDDataTree):
+class VoltageRunSimdataTree(DataTree):
     _tree_name: str = "GRANDVoltageRunSimdata"
 
     _signal_sim: StdVectorList("string") = StdVectorList("string")  # name and model of the signal simulator
@@ -865,7 +877,7 @@ class GRANDVoltageRunSimdataTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def signal_sim(self):
@@ -887,7 +899,7 @@ class GRANDVoltageRunSimdataTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDVoltageEventSimdataTree(GRANDDataTree):
+class VoltageEventSimdataTree(DataTree):
     _tree_name: str = "GRANDVoltageEventSimdata"
 
     _det_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -902,7 +914,7 @@ class GRANDVoltageEventSimdataTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def det_id(self):
@@ -960,7 +972,7 @@ class GRANDVoltageEventSimdataTree(GRANDDataTree):
 
 
 @dataclass
-class GRANDADCCountsTree(GRANDDataTree):
+class ADCCountsTree(DataTree):
     _tree_name: str = "GRANDADCCounts"
 
     _det_id: StdVectorList("int") = StdVectorList("int")
@@ -983,7 +995,7 @@ class GRANDADCCountsTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def det_id(self):
@@ -1184,7 +1196,7 @@ class GRANDADCCountsTree(GRANDDataTree):
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
-class GRANDVoltageTree(GRANDDataTree):
+class VoltageTree(DataTree):
     _tree_name: str = "GRANDVoltage"
 
     _det_id: StdVectorList("int") = StdVectorList("int")
@@ -1207,7 +1219,7 @@ class GRANDVoltageTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def det_id(self):
@@ -1408,7 +1420,7 @@ class GRANDVoltageTree(GRANDDataTree):
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
-class GRANDEfieldTree(GRANDDataTree):
+class EfieldTree(DataTree):
     _tree_name: str = "GRANDEfield"
 
     _det_id: StdVectorList("int") = StdVectorList("int")
@@ -1437,7 +1449,7 @@ class GRANDEfieldTree(GRANDDataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        self.CreateBranches()
+        self.create_branches()
 
     @property
     def det_id(self):

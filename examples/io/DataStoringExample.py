@@ -25,7 +25,7 @@ for ev in range(event_count):
 # Create the ADC counts tree
 tadccounts = GRANDADCCountsTree()
 
-# Fill the tree with the generated events
+# fill the tree with the generated events
 for ev in range(event_count):
     tadccounts.evt_id = ev
     # Loop through the event's traces
@@ -67,16 +67,16 @@ for ev in range(event_count):
     tadccounts.trace_y = trace_ys
     tadccounts.trace_z = trace_zs
 
-    tadccounts.Fill()
+    tadccounts.fill()
 
 # tadccounts.Print()
 # tadccounts.tree.Scan("*")
 
 # Build the tree index
-tadccounts.BuildIndex("run_id", "evt_id")
+tadccounts.build_index("run_id", "evt_id")
 
-# Write the tree to the storage
-tadccounts.Write()
+# write the tree to the storage
+tadccounts.write()
 
 # ********** Voltage ****************
 
@@ -88,7 +88,7 @@ adc2v = 0.9/8192
 # Create the ADC counts tree
 tvoltage = GRANDVoltageTree()
 
-# Fill the tree with the generated events
+# fill the tree with the generated events
 for ev in range(event_count):
     tvoltage.evt_id = ev
     # Loop through the event's traces
@@ -131,19 +131,19 @@ for ev in range(event_count):
     tvoltage.trace_y = trace_ys
     tvoltage.trace_z = trace_zs
 
-    tvoltage.Fill()
+    tvoltage.fill()
 
 # tvoltage.Print()
 # tvoltage.tree.Scan("*")
 
 # Build the tree index
-tvoltage.BuildIndex("run_id", "evt_id")
+tvoltage.build_index("run_id", "evt_id")
 
 # Add friends
-tvoltage.AddFriend(tadccounts.tree)
+tvoltage.add_friend(tadccounts.tree)
 
-# Write the tree to the storage
-tvoltage.Write()
+# write the tree to the storage
+tvoltage.write()
 
 # ********** Efield ****************
 
@@ -157,7 +157,7 @@ v2ef = 1.17
 # Create the ADC counts tree
 tefield = GRANDEfieldTree()
 
-# Fill the tree with every second of generated events - dumb selection
+# fill the tree with every second of generated events - dumb selection
 for ev in range(0,event_count,2):
     tefield.evt_id = ev
     # Loop through the event's traces
@@ -229,20 +229,20 @@ for ev in range(0,event_count,2):
     tefield.fft_phase_y = fft_phase_ys
     tefield.fft_phase_z = fft_phase_zs
 
-    tefield.Fill()
+    tefield.fill()
 
 # tefield.Print()
 # tefield.tree.Scan("*")
 
 # Build the tree index
-tefield.BuildIndex("run_id", "evt_id")
+tefield.build_index("run_id", "evt_id")
 
 # Add friends
-tefield.AddFriend(tvoltage.tree)
-tefield.AddFriend(tadccounts.tree)
+tefield.add_friend(tvoltage.tree)
+tefield.add_friend(tadccounts.tree)
 
-# Write the tree to the storage
-tefield.Write()
+# write the tree to the storage
+tefield.write()
 
 tree_file.Close()
 exit()
@@ -250,7 +250,7 @@ exit()
 # Create the ADC counts tree
 tadccounts = GRANDADCCountsTree()
 
-# Fill the tree with the generated events
+# fill the tree with the generated events
 for ev in range(event_count):
     tadccounts.evt_id = ev
     # Loop through the event's traces
@@ -275,7 +275,7 @@ for ev in range(event_count):
     tadccounts.trace_y = trace_ys
     tadccounts.trace_z = trace_zs
 
-    tadccounts.Fill()
+    tadccounts.fill()
 
-# Write the tree to the storage
-tadccounts.Write()
+# write the tree to the storage
+tadccounts.write()
