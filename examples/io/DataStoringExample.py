@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # An example of storing traces to a file
 import numpy as np
-from GRANDRootTrees import *
+from grand.io.root_trees import *
 import ROOT
 
 # Open the file for writing
@@ -23,7 +23,7 @@ for ev in range(event_count):
 # ********** ADC Counts ****************
 
 # Create the ADC counts tree
-tadccounts = GRANDADCCountsTree()
+tadccounts = ADCCountsTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
@@ -86,7 +86,7 @@ tadccounts.write()
 adc2v = 0.9/8192
 
 # Create the ADC counts tree
-tvoltage = GRANDVoltageTree()
+tvoltage = VoltageTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
@@ -155,7 +155,7 @@ from scipy import fftpack
 v2ef = 1.17
 
 # Create the ADC counts tree
-tefield = GRANDEfieldTree()
+tefield = EfieldTree()
 
 # fill the tree with every second of generated events - dumb selection
 for ev in range(0,event_count,2):
@@ -248,7 +248,7 @@ tree_file.Close()
 exit()
 
 # Create the ADC counts tree
-tadccounts = GRANDADCCountsTree()
+tadccounts = ADCCountsTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
