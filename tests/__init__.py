@@ -98,7 +98,7 @@ def main():
             HorizontalRepresentation,
             LTP,
         )
-        import grand.io as io
+        import grand.hdf5 as io
 
         globs = {
             "geomagnet": geomagnet,

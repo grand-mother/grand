@@ -9,7 +9,7 @@ from numbers import Number
 import numpy
 
 from .generic import AntennaModel
-from ... import io
+from grand.io import hdf5
 
 __all__ = ["DataTable", "TabulatedAntennaModel"]
 
@@ -29,12 +29,12 @@ class DataTable:
     leff_phi: Union[Number, numpy.ndarray]
     phase_phi: Union[Number, numpy.ndarray]
 
-    def dump(self, node: io.DataNode) -> None:
+    def dump(self, node: hdf5.DataNode) -> None:
         for field in fields(self):
             node.write(field.name, getattr(self, field.name), dtype="f4")
 
     @classmethod
-    def load(cls, node: io.DataNode) -> DataTable:
+    def load(cls, node: hdf5.DataNode) -> DataTable:
         data = {}
         for field in fields(cls):
             data[field.name] = node.read(field.name)
@@ -45,20 +45,20 @@ class DataTable:
 class TabulatedAntennaModel(AntennaModel):
     table: DataTable
 
-    def dump(self, destination: Union[str, Path, io.DataNode]) -> None:
-        if type(destination) == io.DataNode:
-            node = cast(io.DataNode, destination)
+    def dump(self, destination: Union[str, Path, hdf5.DataNode]) -> None:
+        if type(destination) == hdf5.DataNode:
+            node = cast(hdf5.DataNode, destination)
             self.table.dump(node)
         else:
             path = cast(Union[Path, str], destination)
-            with io.open(path, "w") as node:
+            with hdf5.open(path, "w") as node:
                 self.table.dump(node)
 
     @classmethod
-    def load(cls, source: Union[str, Path, io.DataNode]) -> TabulatedAntennaModel:
+    def load(cls, source: Union[str, Path, hdf5.DataNode]) -> TabulatedAntennaModel:
 
-        if type(source) == io.DataNode:
-            source = cast(io.DataNode, source)
+        if type(source) == hdf5.DataNode:
+            source = cast(hdf5.DataNode, source)
             filename = f"{source.filename}:{source.path}"
             loader = "_load_from_node"
         else:
@@ -84,11 +84,11 @@ class TabulatedAntennaModel(AntennaModel):
     @classmethod
     def _load_from_datafile(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
 
-        with io.open(path) as root:
+        with hdf5.open(path) as root:
             return cls._load_from_node(root)
 
     @classmethod
-    def _load_from_node(cls, node: io.DataNode) -> TabulatedAntennaModel:
+    def _load_from_node(cls, node: hdf5.DataNode) -> TabulatedAntennaModel:
         return cls(table=DataTable.load(node))
 
     @classmethod

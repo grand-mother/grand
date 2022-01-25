@@ -11,7 +11,7 @@ import numpy
 
 from ..pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
-from ... import io
+from grand.io import hdf5
 from ...tools.coordinates import (
     Geodetic,
     LTP,
@@ -31,7 +31,7 @@ class CollectionEntry:
     voltage: Optional[Voltage] = None
 
     @classmethod
-    def load(cls, node: io.DataNode) -> CollectionEntry:
+    def load(cls, node: hdf5.DataNode) -> CollectionEntry:
         try:
             subnode = node["electric"]
         except KeyError:
@@ -48,7 +48,7 @@ class CollectionEntry:
 
         return cls(electric, voltage)
 
-    def dump(self, node: io.DataNode) -> None:
+    def dump(self, node: hdf5.DataNode) -> None:
         if self.electric is not None:
             self.electric.dump(node.branch("electric"))
         if self.voltage is not None:
@@ -73,10 +73,10 @@ class ShowerEvent:
     fields: Optional[FieldsCollection] = None
 
     @classmethod
-    def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
+    def load(cls, source: Union[Path, str, hdf5.DataNode]) -> ShowerEvent:
         baseclass = cls
-        if type(source) == io.DataNode:
-            source = cast(io.DataNode, source)
+        if type(source) == hdf5.DataNode:
+            source = cast(hdf5.DataNode, source)
             filename = f"{source.filename}:{source.path}"
             loader = "_from_datanode"
         else:
@@ -117,11 +117,11 @@ class ShowerEvent:
 
     @classmethod
     def _from_datafile(cls, path: Path) -> ShowerEvent:
-        with io.open(path) as root:
+        with hdf5.open(path) as root:
             return cls._from_datanode(root)
 
     @classmethod
-    def _from_datanode(cls, node: io.DataNode) -> ShowerEvent:
+    def _from_datanode(cls, node: hdf5.DataNode) -> ShowerEvent:
         kwargs = {}
         for name, data in node.elements:
             kwargs[name] = data
@@ -140,16 +140,16 @@ class ShowerEvent:
 
         return cls(**kwargs)
 
-    def dump(self, source: Union[Path, str, io.DataNode]) -> None:
-        if type(source) == io.DataNode:
-            source = cast(io.DataNode, source)
+    def dump(self, source: Union[Path, str, hdf5.DataNode]) -> None:
+        if type(source) == hdf5.DataNode:
+            source = cast(hdf5.DataNode, source)
             self._to_datanode(source)
         else:
             source = cast(Union[Path, str], source)
-            with io.open(source, "w") as root:
+            with hdf5.open(source, "w") as root:
                 self._to_datanode(root)
 
-    def _to_datanode(self, node: io.DataNode):
+    def _to_datanode(self, node: hdf5.DataNode):
         logger.info(f"Dumping shower data to {node.filename}:{node.path}")
 
         for f in fields(self):

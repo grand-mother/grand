@@ -13,7 +13,7 @@ import h5py
 from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
 
-from . import ECEF, LTP, Rotation, CartesianRepresentation
+from grand import ECEF, LTP, Rotation, CartesianRepresentation
 
 __all__ = ["DataNode", "ElementsIterator"]
 

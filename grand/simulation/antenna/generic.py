@@ -15,7 +15,7 @@ from ...tools.coordinates import (
 )  # RK
 
 
-from ... import io  # , ECEF, LTP
+from grand.io import hdf5  # , ECEF, LTP
 
 # __all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError", "Voltage"]
 
@@ -31,7 +31,7 @@ class ElectricField:
     frame: Union[ECEF, LTP, GRANDCS, None] = None
 
     @classmethod
-    def load(cls, node: io.DataNode):
+    def load(cls, node: hdf5.DataNode):
         logger.debug(f"Loading E-field from {node.filename}:{node.path}")
 
         t = node.read("t", dtype="f8")
@@ -49,7 +49,7 @@ class ElectricField:
 
         return cls(t, E, r, frame)
 
-    def dump(self, node: io.DataNode):
+    def dump(self, node: hdf5.DataNode):
         logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
 
         node.write("t", self.t, dtype="f4")
@@ -68,13 +68,13 @@ class Voltage:
     V: np.ndarray  # [?]
 
     @classmethod
-    def load(cls, node: io.DataNode):
+    def load(cls, node: hdf5.DataNode):
         logger.debug("Loading voltage from {node.filename}:{node.path}")
         t = node.read("t", dtype="f8")
         V = node.read("V", dtype="f8")
         return cls(t, V)
 
-    def dump(self, node: io.DataNode):
+    def dump(self, node: hdf5.DataNode):
         logger.debug("Dumping E-field to {node.filename}:{node.path}")
         node.write("t", self.t, dtype="f4")
         node.write("V", self.V, dtype="f4")
