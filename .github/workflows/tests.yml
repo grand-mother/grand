@@ -8,19 +8,15 @@ on:
 
 jobs:
   Linux:
-    runs-on: ubuntu-latest
 
     steps:
+    - uses: docker://jcolley/grand:0.1
     - uses: actions/checkout@v2
-    - uses: actions/checkout@v2
-      with:
-        repository: numpy/numpy-stubs
-        ref: 2c8d8f26adb1eef54571ccc85ef8ad4f2fb90c4c
-        path: tmp/numpy-stubs
 
     - name: Initialise the environment
       run: |
-        . env/setup_AppImage.sh
+        . env/setup.sh
+        root --version
         python -m pip install -r quality/requirements.txt
 
     - name: Check SonarQube update
@@ -28,24 +24,24 @@ jobs:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
-        . env/setup_AppImage.sh
+        . env/setup.sh
         quality/ci/manage_sonar_update.py "$SONAR_L"
         . quality/ci/apply_sonar_update.bash
 
     - name: Dynamics analysis and coverage
       run: |
-        . env/setup_AppImage.sh        
+        . env/setup.sh        
         quality/ci/coverage_if_necessary.bash
         check_score_coverage.py
         
     - name: Static analysis with pylint
       run: |
-        . env/setup_AppImage.sh                
+        . env/setup.sh                
         grand_quality_analysis.bash
         
     - name: Static type check
       run: |
-        . env/setup_AppImage.sh
+        . env/setup.sh
         grand_quality_type.bash 
 
 #     - name: Check documentation examples
