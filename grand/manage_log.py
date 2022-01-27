@@ -1,4 +1,4 @@
-# ! pylint: disable=line-too-long
+#! pylint: disable=line-too-long
 """!
 @brief
   Define output logger (file/stdout) for given level of message and some tools to use 
