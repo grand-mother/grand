@@ -10,11 +10,10 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     
-    steps:
-    - uses: docker://jcolley/grand:0.1
+    steps:    
     - uses: actions/checkout@v2
-
     - name: Initialise the environment
+      uses: docker://jcolley/grand:0.1
       run: |
         . env/setup.sh
         root --version
