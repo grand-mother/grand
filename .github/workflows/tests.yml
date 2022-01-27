@@ -8,7 +8,8 @@ on:
 
 jobs:
   Linux:
-
+    runs-on: ubuntu-latest
+    
     steps:
     - uses: docker://jcolley/grand:0.1
     - uses: actions/checkout@v2
