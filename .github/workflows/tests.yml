@@ -19,8 +19,8 @@ jobs:
         root --version
         pwd
         ls -la
-        cat env/setup.sh
-        . env/setup.sh
+        cat env/setup.sh 
+        . env/setup.sh $PWD
         python -m pip install -r quality/requirements.txt
 
 
