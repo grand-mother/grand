@@ -23,8 +23,8 @@ jobs:
         #env/test.sh TOTO
         env/test.sh $PWD        
         #. env/setup.sh $PWD
-        python -m pip install -r quality/requirements.txt
-
+        python3 -m pip install -r quality/requirements.txt
+        quality/ci/coverage_if_necessary.bash
 
     - name: Check SonarQube update
       env:
