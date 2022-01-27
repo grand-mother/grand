@@ -20,7 +20,7 @@ jobs:
 
     - name: Initialise the environment
       run: |
-        . env/setup.sh
+        . env/setup_AppImage.sh
         python -m pip install -r quality/requirements.txt
 
     - name: Check SonarQube update
@@ -28,29 +28,29 @@ jobs:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
-        . env/setup.sh
+        . env/setup_AppImage.sh
         quality/ci/manage_sonar_update.py "$SONAR_L"
         . quality/ci/apply_sonar_update.bash
 
     - name: Dynamics analysis and coverage
       run: |
-        . env/setup.sh        
+        . env/setup_AppImage.sh        
         quality/ci/coverage_if_necessary.bash
         check_score_coverage.py
         
     - name: Static analysis with pylint
       run: |
-        . env/setup.sh                
+        . env/setup_AppImage.sh                
         grand_quality_analysis.bash
         
     - name: Static type check
       run: |
-        . env/setup.sh
+        . env/setup_AppImage.sh
         grand_quality_type.bash 
 
 #     - name: Check documentation examples
 #       run: |
-#         . env/setup.sh
+#         . env/setup_AppImage.sh
 #         python -m tests --doc
 
 
