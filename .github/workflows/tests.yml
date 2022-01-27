@@ -12,12 +12,12 @@ jobs:
     
     steps:    
     - uses: actions/checkout@v2
-    - name: Initialise the environment
-      uses: docker://jcolley/grand:0.1
+    - name: Initialise the environment      
       run: |
         . env/setup.sh
         root --version
         python -m pip install -r quality/requirements.txt
+      - uses: docker://jcolley/grand:0.1
 
     - name: Check SonarQube update
       env:
