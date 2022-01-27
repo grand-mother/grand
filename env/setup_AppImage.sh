@@ -11,7 +11,6 @@ main () {
     done
 
     local prefix="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
-    mkdir $prefix/bin
     # add to env variable define root pf package
     export GRAND_ROOT=$prefix
     local tag="$(basename ${prefix})"
