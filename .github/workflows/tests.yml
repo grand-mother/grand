@@ -17,7 +17,7 @@ jobs:
     - name: Initialise the environment      
       run: |
         root --version
-        pwd
+        echo $PWD
         ls -la
         cat env/setup.sh 
         . env/setup.sh $PWD
