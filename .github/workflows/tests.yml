@@ -17,7 +17,7 @@ jobs:
         . env/setup.sh
         root --version
         python -m pip install -r quality/requirements.txt
-      - uses: docker://jcolley/grand:0.1
+    - uses: docker://jcolley/grand:0.1
 
     - name: Check SonarQube update
       env:
