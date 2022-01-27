@@ -20,7 +20,7 @@ jobs:
         echo $PWD
         ls -la
         cat env/setup.sh
-        env/test.sh TOTO
+        #env/test.sh TOTO
         env/test.sh $PWD        
         #. env/setup.sh $PWD
         python -m pip install -r quality/requirements.txt
