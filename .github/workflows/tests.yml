@@ -10,8 +10,7 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     container:
-      image: docker://jcolley/grand:0.1
-      workingDir: "$(inputs.params.directory)"
+      image: docker://jcolley/grand:0.1      
       
     steps:    
     - uses: actions/checkout@v2
