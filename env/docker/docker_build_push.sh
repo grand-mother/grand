@@ -1,6 +1,6 @@
 #! /bin/bash
 
-tag=0.3
+tag=0.4
 
 docker build -f Dockerfile_grand_env_dev . --tag=grand_env:$tag
 

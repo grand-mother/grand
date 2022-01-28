@@ -20,7 +20,7 @@ jobs:
         echo $PWD
         ls -la
         cd env
-        . ./test.bash $PWD
+        . ./setup.sh
         python -m pip install -r quality/requirements.txt
         quality/ci/coverage_if_necessary.bash
 
