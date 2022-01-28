@@ -2,7 +2,7 @@
 echo "=========="
 echo $1
 echo "=========="
-export GRAND_ROOT=$1
+export GRAND_ROOT=$PWD/..
 echo "GRAND_ROOT"
 echo $GRAND_ROOT
 export PATH=$PATH:$GRAND_ROOT/quality
