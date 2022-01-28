@@ -19,7 +19,7 @@ jobs:
         echo $USR
         echo $PWD
         ls -la
-        . env/test.sh $PWD
+        . env/test.bash $PWD
         python -m pip install -r quality/requirements.txt
 
 
