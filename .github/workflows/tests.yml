@@ -17,12 +17,12 @@ jobs:
     - name: Initialise the environment      
       run: |
         echo $USR
-        source
         echo $PWD
         ls -la
-        source env/test.bash $PWD
+        cd env
+        . ./test.bash $PWD
         python -m pip install -r quality/requirements.txt
-
+        quality/ci/coverage_if_necessary.bash
 
     - name: Check SonarQube update
       env:
