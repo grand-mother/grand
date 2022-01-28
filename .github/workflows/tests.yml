@@ -18,9 +18,11 @@ jobs:
       run: |
         echo $USR
         echo $PWD
+        echo $SHELL
+        bash
+        echo $SHELL
         ls -la
-        cd env
-        . ./setup.sh
+        source env/setup.sh
         python -m pip install -r quality/requirements.txt
         quality/ci/coverage_if_necessary.bash
 
