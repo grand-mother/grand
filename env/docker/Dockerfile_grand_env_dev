@@ -3,8 +3,8 @@ FROM rootproject/root:6.24.06-ubuntu20.04
 RUN mkdir -p /usr/src/app
 WORKDIR /home
 
-RUN apt-get update && apt -y upgrade\
-#RUN apt-get update\
+#RUN apt-get update && apt -y upgrade\
+RUN apt-get update\
 && apt-get install -y git\
 && apt install -y make\
 && apt install -y libpng-dev\
@@ -18,5 +18,6 @@ RUN python3 -m pip install --upgrade pip\
 
 ENV PATH=".:${PATH}"
 
+ENTRYPOINT ["/bin/bash"]
 SHELL ["/bin/bash", "-c"]
 

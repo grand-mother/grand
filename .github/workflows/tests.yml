@@ -10,7 +10,7 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     container:
-      image: docker://jcolley/grand:0.3   
+      image: docker://jcolley/grand:0.4 
       
     steps:    
     - uses: actions/checkout@v2
@@ -18,8 +18,6 @@ jobs:
       run: |
         echo $USR
         echo $PWD
-        echo $SHELL
-        bash
         echo $SHELL
         ls -la
         source env/setup.sh
