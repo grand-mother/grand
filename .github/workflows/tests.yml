@@ -10,16 +10,17 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     container:
-      image: docker://jcolley/grand:0.2      
+      image: docker://jcolley/grand:0.3   
       
     steps:    
     - uses: actions/checkout@v2
     - name: Initialise the environment      
       run: |
         echo $USR
+        source
         echo $PWD
         ls -la
-        . env/test.bash $PWD
+        source env/test.bash $PWD
         python -m pip install -r quality/requirements.txt
 
 

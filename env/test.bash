@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#echo $1
+echo $1
 #echo "FIN"
 export GRAND_ROOT=$1
 echo "GRAND_ROOT"
