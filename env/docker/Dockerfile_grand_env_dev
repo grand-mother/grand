@@ -1,24 +1,25 @@
 FROM rootproject/root:6.24.06-ubuntu20.04
 
 RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+WORKDIR /home
 
-RUN apt-get update && apt -y upgrade\
+#RUN apt-get update && apt -y upgrade\
+RUN apt-get update\
 && apt-get install -y git\
 && apt install -y make\
 && apt install -y libpng-dev\
 && apt install -y pip
 
-RUN PATH=.:$PATH
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 ######################################################
 # We install all the infra and server python packages
 ######################################################
 COPY requirements.txt /usr/src/app
 RUN python3 -m pip install --upgrade pip\
-&& python3 -m pip install --no-cache-dir -r requirements.txt
+&& python3 -m pip install --no-cache-dir -r /usr/src/app/requirements.txt
 
-
+ENV PATH=".:${PATH}"
 ENV USR grand
 ENV GRAND_UID 208
 ENV GRAND_GID 998

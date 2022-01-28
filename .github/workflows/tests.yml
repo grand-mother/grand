@@ -10,7 +10,7 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     container:
-      image: docker://jcolley/grand:0.1      
+      image: docker://jcolley/grand:0.2      
       
     steps:    
     - uses: actions/checkout@v2
@@ -19,10 +19,7 @@ jobs:
         root --version
         echo $PWD
         ls -la
-        cat env/setup.sh
-        #env/test.sh TOTO
-        . env/test.sh $PWD        
-        #. env/setup.sh $PWD
+        . env/test.sh $PWD
         python -m pip install -r quality/requirements.txt
 
 
@@ -31,7 +28,9 @@ jobs:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
-        . env/setup.sh
+        pwd
+        ls -la
+        . env/test.sh
         quality/ci/manage_sonar_update.py "$SONAR_L"
         . quality/ci/apply_sonar_update.bash
 
