@@ -17,6 +17,7 @@ jobs:
     - name: Initialise the environment      
       run: |
         echo $USR
+        source
         echo $PWD
         ls -la
         env/test.sh $PWD
