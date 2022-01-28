@@ -20,7 +20,7 @@ jobs:
         source
         echo $PWD
         ls -la
-        env/test.sh $PWD
+        . env/test.sh $PWD
         python -m pip install -r quality/requirements.txt
 
 
