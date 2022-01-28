@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd $GRAND_ROOT
+pwd
 FILE=quality/report_coverage.xml
 if [ -f "$FILE" ]; then
 	echo "Skip test coverage already done"	

@@ -8,6 +8,6 @@ echo $GRAND_ROOT
 export PATH=$PATH:$GRAND_ROOT/quality
 export PYTHONPATH=$PYTHONPATH:$GRAND_ROOT
 
-cd $GRAND_ROOT/src
+cd src
 ./install_ext_lib.bash
-cd -
+cd ..
