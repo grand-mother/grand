@@ -16,10 +16,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: Initialise the environment      
       run: |
-        root --version
+        echo $USR
         echo $PWD
         ls -la
-        . env/test.sh $PWD
+        env/test.sh $PWD
         python -m pip install -r quality/requirements.txt
 
 
@@ -30,7 +30,7 @@ jobs:
       run: |
         pwd
         ls -la
-        . env/test.sh
+        . env/test.sh $PWD
         quality/ci/manage_sonar_update.py "$SONAR_L"
         . quality/ci/apply_sonar_update.bash
 
