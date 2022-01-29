@@ -23,6 +23,7 @@ jobs:
         source env/setup.sh
         python -m pip install -r quality/requirements.txt
         quality/ci/coverage_if_necessary.bash
+      shell: bash
 
     - name: Check SonarQube update
       env:
