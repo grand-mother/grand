@@ -37,7 +37,7 @@ def get_root_grand_git():
     if not root:
         l_sep = osp.sep
         full = __file__.split(l_sep)
-        root = l_sep.join(full[:-3])
+        root = l_sep.join(full[:-2])
     return root
 
 
