@@ -15,8 +15,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Initialise the environment      
       run: |
-        source env/setup.sh
-        quality/ci/coverage_if_necessary.bash
+        #source env/setup.sh
+        pwd
+        #quality/ci/coverage_if_necessary.bash
       shell: bash
 
     - name: Check SonarQube update
@@ -24,9 +25,8 @@ jobs:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
-        echo $GRAND_ROOT
+        source env/setup.sh
         pwd
-        cd $GRAND_ROOT
         quality/ci/manage_sonar_update.py "$SONAR_L"
         quality/ci/apply_sonar_update.bash
       shell: bash
