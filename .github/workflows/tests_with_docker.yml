@@ -24,24 +24,24 @@ jobs:
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
         source env/_setup_env.sh
-        #quality/ci/manage_sonar_update.py "$SONAR_L"
-        #quality/ci/apply_sonar_update.bash
+        quality/ci/manage_sonar_update.py "$SONAR_L"
+        quality/ci/apply_sonar_update.bash
       shell: bash
 
     - name: Dynamics analysis and coverage
       run: |
         . env/_setup_env.sh        
-        #quality/ci/coverage_if_necessary.bash
-        #check_score_coverage.py
+        quality/ci/coverage_if_necessary.bash
+        check_score_coverage.py
       shell: bash
         
     - name: Static analysis with pylint
       run: |
         . env/_setup_env.sh
-        #pylint grand --rcfile quality/ci/pylint_ci.conf --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"        
+        pylint grand --rcfile quality/ci/pylint_ci.conf --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"        
       shell: bash
       
-    - name: Static type check
+    - name: Static check for type
       run: |
         . env/_setup_env.sh
         grand_quality_type.bash
