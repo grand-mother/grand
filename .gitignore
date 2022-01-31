@@ -12,7 +12,7 @@ __pycache__
 
 # Ignore build and dist temporaries
 dist
-build*
+src/build*
 *.egg-info
 *.whl
 
