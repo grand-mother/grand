@@ -115,7 +115,7 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
       these methods might change in future.
 
     @param time (array): [ns] time trace
-    @param trace (array):  signal trace - efield(meuV/m)/Voltage(meuV/m)    
+    @param trace (array):  signal trace - efield(meuV/m)/Voltage(meuV/m)
     @param tsampling (integer/float): [ns] desired sampling rate in time
     @param downsamplingmethod (integer):  1 for scipy.resample, 2.scipy.decimate
     @return resampled signal and time trace

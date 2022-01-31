@@ -33,7 +33,7 @@ def get_root_grand_git():
 
     @return (string) : root path of grand git package
     """
-    root = os.getenv('GRAND_ROOT')
+    root = os.getenv("GRAND_ROOT")
     if not root:
         l_sep = osp.sep
         full = __file__.split(l_sep)

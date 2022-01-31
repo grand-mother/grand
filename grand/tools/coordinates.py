@@ -131,7 +131,7 @@ def _cartesian_to_horizontal(
     x: Union[float, int, np.ndarray],
     y: Union[float, int, np.ndarray],
     z: Union[float, int, np.ndarray],
-) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray] ]:
+) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform Cartesian coordinates to horizontal"""
     theta, phi, r = _cartesian_to_spherical(x, y, z)
     return _spherical_to_horizontal(theta, phi, r)
@@ -157,7 +157,7 @@ def _spherical_to_horizontal(
     theta: Union[float, int, np.ndarray],
     phi: Union[float, int, np.ndarray],
     r: Union[float, int, np.ndarray],
-) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray] ]:
+) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform spherical coordinates to horizontal"""
     # return 0.5 * np.pi - phi, 0.5 * np.pi - theta, r
     return 90.0 - phi, 90.0 - theta, r
@@ -180,7 +180,7 @@ def _horizontal_to_spherical(
     azimuth: Union[float, int, np.ndarray],
     elevation: Union[float, int, np.ndarray],
     norm: Union[float, int, np.ndarray],
-) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray] ]:
+) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform horizontal coordinates to spherical"""
     # return 0.5 * np.pi - elevation, 0.5 * np.pi - azimuth, norm
     return 90.0 - elevation, 90.0 - azimuth, norm

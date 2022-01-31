@@ -109,7 +109,6 @@ class ShowerEvent:
             raise NotImplementedError("Invalid data format") from load_exit
         else:
             self = load(source)
-            
 
         if self.fields is not None:
             logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")

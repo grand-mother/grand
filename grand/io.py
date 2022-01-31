@@ -4,6 +4,7 @@ from collections import OrderedDict
 import os
 from typing import Any, Optional, Tuple, Union
 import logging
+
 # import astropy.units as u
 # from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, CartesianRepresentation
 # from astropy.coordinates.representation import REPRESENTATION_CLASSES
@@ -17,7 +18,8 @@ from . import ECEF, LTP, Rotation, CartesianRepresentation
 
 __all__ = ["DataNode", "ElementsIterator"]
 
-logger  = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
 
 class ElementsIterator:
     """

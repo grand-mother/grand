@@ -13,7 +13,7 @@ from grand import (
     SphericalRepresentation,
     CartesianRepresentation,
     GRAND_DATA_PATH,
-    get_root_grand_git
+    get_root_grand_git,
 )
 
 
