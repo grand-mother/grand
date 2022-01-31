@@ -1,14 +1,12 @@
 """GRAND software package
 """
 
+import os
 import os.path as osp
 from pathlib import Path
 
-
 from .tools import geomagnet, topography
 from .tools.topography import geoid_undulation, Reference, Topography
-
-# RK
 from .tools.geomagnet import Geomagnet
 from .tools import coordinates
 from .tools.coordinates import (
@@ -25,16 +23,34 @@ from .tools.coordinates import (
     HorizontalRepresentation,
     Rotation,
 )
+from . import store
 
-from .logging import getLogger, Logger
-from . import logging, store
+GRAND_DATA_PATH = osp.join(Path.home(), ".grand")
 
-GRAND_DATA = osp.join(Path.home(), ".grand")
+
+def get_root_grand_git():
+    """get the root path of grand git package, ex: /home/user/grand
+
+    @return (string) : root path of grand git package
+    """
+    root = os.getenv("GRAND_ROOT")
+    if not root:
+        l_sep = osp.sep
+        full = __file__.split(l_sep)
+        root = l_sep.join(full[:-2])
+    return root
+
+
+def get_root_grand_src():
+    """get root path of grand source, ex: /home/user/grand/grand
+
+    @return (string) : root path of grand source
+    """
+    return osp.join(get_root_grand_git(), "grand")
 
 
 __all__ = [
     "geomagnet",
-    "getLogger",
     "store",
     "topography",
     "ECEF",
@@ -42,12 +58,9 @@ __all__ = [
     "GeodeticRepresentation",
     "GRANDCS",
     "coordinates",
-    "Logger",
     "LTP",
     "SphericalRepresentation",
     "CartesianRepresentation",
     "Rotation",
-    "GRAND_DATA",
+    "GRAND_DATA_PATH",
 ]
-
-logger: Logger = getLogger(__name__)

@@ -9,26 +9,30 @@ on:
 jobs:
   Linux:
     runs-on: ubuntu-latest
-
-    steps:
+    container:
+      image: docker://jcolley/grand:0.4 
+      
+    steps:    
     - uses: actions/checkout@v2
-    - uses: actions/checkout@v2
-      with:
-        repository: numpy/numpy-stubs
-        ref: 2c8d8f26adb1eef54571ccc85ef8ad4f2fb90c4c
-        path: tmp/numpy-stubs
-
-    - name: Initialise the environment
+    - name: Initialise the environment      
       run: |
-        . env/setup.sh
+        echo $USR
+        echo $PWD
+        echo $SHELL
+        ls -la
+        source env/setup.sh
         python -m pip install -r quality/requirements.txt
+        quality/ci/coverage_if_necessary.bash
+      shell: bash
 
     - name: Check SonarQube update
       env:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
-        . env/setup.sh
+        pwd
+        ls -la
+        . env/test.sh $PWD
         quality/ci/manage_sonar_update.py "$SONAR_L"
         . quality/ci/apply_sonar_update.bash
 
@@ -50,7 +54,7 @@ jobs:
 
 #     - name: Check documentation examples
 #       run: |
-#         . env/setup.sh
+#         . env/setup_AppImage.sh
 #         python -m tests --doc
 
 

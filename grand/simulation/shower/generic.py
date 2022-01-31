@@ -6,18 +6,15 @@ from logging import getLogger
 from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
-from time import time
-from numbers import Number
+
 import numpy
 
 from ..pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
 from ... import io
 from ...tools.coordinates import (
-    ECEF,
     Geodetic,
     LTP,
-    Rotation,
     GRANDCS,
     CartesianRepresentation,
 )  # RK
@@ -25,7 +22,7 @@ from ...tools.coordinates import (
 __all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
 
 
-_logger = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 @dataclass
@@ -95,26 +92,26 @@ class ShowerEvent:
                     from .coreas import CoreasShower
                     from .zhaires import ZhairesShower
 
-                    if CoreasShower._check_dir(source):
+                    if CoreasShower.check_dir(source):
                         baseclass = CoreasShower
-                    elif ZhairesShower._check_dir(source):
+                    elif ZhairesShower.check_dir(source):
                         baseclass = ZhairesShower
             else:
-                loader = f"_from_datafile"
+                loader = "_from_datafile"
 
-        _logger.info(f"Loading shower data from {filename}")
+        logger.info(f"Loading shower data from {filename}")
         # print(f'Loading shower data from {filename}')
         # print('loader', loader)
 
         try:
             load = getattr(baseclass, loader)
-        except AttributeError:
-            raise NotImplementedError(f"Invalid data format")
+        except AttributeError as load_exit:
+            raise NotImplementedError("Invalid data format") from load_exit
         else:
             self = load(source)
 
         if self.fields is not None:
-            _logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
+            logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
 
         return self
 
@@ -134,12 +131,12 @@ class ShowerEvent:
         except KeyError:
             pass
         else:
-            fields: OrderedDict = OrderedDict()
-            kwargs["fields"] = fields
+            l_fields: OrderedDict = OrderedDict()
+            kwargs["fields"] = l_fields
 
             for antenna_node in fields_node:
                 antenna = int(antenna_node.name)
-                fields[antenna] = CollectionEntry.load(antenna_node)
+                l_fields[antenna] = CollectionEntry.load(antenna_node)
 
         return cls(**kwargs)
 
@@ -153,7 +150,7 @@ class ShowerEvent:
                 self._to_datanode(root)
 
     def _to_datanode(self, node: io.DataNode):
-        _logger.info(f"Dumping shower data to {node.filename}:{node.path}")
+        logger.info(f"Dumping shower data to {node.filename}:{node.path}")
 
         for f in fields(self):
             k = f.name
@@ -168,7 +165,7 @@ class ShowerEvent:
                     field.dump(n)
 
             m = len(self.fields)
-            _logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
+            logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
 
     def localize(
         self,

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import OrderedDict
 import os
 from typing import Any, Optional, Tuple, Union
+import logging
 
 # import astropy.units as u
 # from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, CartesianRepresentation
@@ -16,6 +17,8 @@ import numpy
 from . import ECEF, LTP, Rotation, CartesianRepresentation
 
 __all__ = ["DataNode", "ElementsIterator"]
+
+logger = logging.getLogger(__name__)
 
 
 class ElementsIterator:
@@ -82,7 +85,7 @@ class DataNode:
     def close(self) -> None:
         self._group.file.close()
 
-    def read(self, *args: str, dtype: Union[numpy.DataType, str, None] = None):
+    def read(self, *args: str, dtype: Union[numpy.dtype, str, None] = None):
         res = len(args) * [None]
         for i, k in enumerate(args):
             v = self._group[k]
@@ -122,7 +125,7 @@ class DataNode:
             # self._write_number(k, v, dtype, unit)
             self._write_number(k, v, dtype)  # RK
 
-    def _unpack(self, dset: _Dataset, dtype: Union[numpy.DataType, str, None] = None) -> Any:
+    def _unpack(self, dset: _Dataset, dtype: Union[numpy.dtype, str, None] = None) -> Any:
         if dset.shape:
             v = dset[:]
             if dtype is not None:
@@ -471,5 +474,6 @@ class ClosingDataNode(DataNode):
 
 
 def open(file, mode="r"):
+    logger.debug(file)
     f = _File(file, mode)
     return ClosingDataNode(f["/"])

@@ -11,12 +11,10 @@ import numpy
 from .generic import AntennaModel
 from ... import io
 
-from ...tools.coordinates import CartesianRepresentation, SphericalRepresentation
-
 __all__ = ["DataTable", "TabulatedAntennaModel"]
 
 
-_logger = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 @dataclass
@@ -72,14 +70,14 @@ class TabulatedAntennaModel(AntennaModel):
             else:
                 loader = "_load_from_datafile"
 
-        _logger.info(f"Loading tabulated antenna model from {filename}")
+        logger.info(f"Loading tabulated antenna model from {filename}")
 
         load = getattr(cls, loader)
         self = load(source)
 
         t = self.table
         n = t.frequency.size * t.theta.size * t.phi.size
-        _logger.info(f"Loaded {n} entries from {filename}")
+        logger.info(f"Loaded {n} entries from {filename}")
 
         return self
 

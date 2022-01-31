@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 
+import os.path as osp
+
+
 import numpy as np
 from matplotlib import pyplot as plt
 from grand import (
@@ -9,12 +12,23 @@ from grand import (
     GRANDCS,
     SphericalRepresentation,
     CartesianRepresentation,
+    GRAND_DATA_PATH,
+    get_root_grand_git,
 )
-from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
 
+
+from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
+import grand.manage_log as mlg
+
+# define a handler for logger : standart output and file log.txt
+mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
+
+# specific logger definition for script because __mane__ is "__main__"
+logger = mlg.get_logger_for_script(__file__)
+logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
-showerdir = "../../tests/simulation/data/zhaires"
+showerdir = osp.join(get_root_grand_git(), "tests/simulation/data/zhaires")
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:
@@ -34,8 +48,9 @@ print("---------------------------------", "\n")
 #
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
-
-antenna_model = TabulatedAntennaModel.load("./HorizonAntenna_EWarm_leff_loaded.npy")
+path_ant = osp.join(GRAND_DATA_PATH, "HorizonAntenna_EWarm_leff_loaded.npy")
+print("JMC", GRAND_DATA_PATH)
+antenna_model = TabulatedAntennaModel.load(path_ant)
 
 counter = 0
 # Loop over electric fields and compute the corresponding voltages
@@ -83,8 +98,11 @@ for antenna_index, field in shower.fields.items():
     # shower frame. This is indicated by the `frame` named argument.
     Exyz = field.electric.E
 
+    logger.info(mlg.chrono_start())
     # Xmax, Efield, and input frame are all in shower frame.
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
+
+    logger.info(mlg.chrono_string_duration())
 
     print("\nVpp=", max(field.voltage.V) - min(field.voltage.V), "\n")
 
@@ -101,5 +119,6 @@ for antenna_index, field in shower.fields.items():
     plt.xlabel("Time (ns)")
     plt.ylabel(r"Voltage ($\mu$V)")
     plt.legend(loc="best")
-    plt.show()
-    input("Type return for next antenna")
+
+logger.info(mlg.string_end_script())
+plt.show()

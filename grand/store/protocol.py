@@ -1,6 +1,9 @@
 import ssl
 import urllib.request
 import zlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _disable_certs() -> None:

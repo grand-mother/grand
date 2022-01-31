@@ -9,7 +9,7 @@ import os.path as osp
 
 import numpy
 
-from grand import ECEF, CartesianRepresentation, LTP, Geodetic, GRAND_DATA
+from grand import ECEF, CartesianRepresentation, LTP, Geodetic, GRAND_DATA_PATH
 
 from grand.simulation import Antenna, ElectricField, MissingFrameError,        \
                              TabulatedAntennaModel, Voltage
@@ -33,7 +33,7 @@ class AntennaTest(TestCase):
         except AttributeError:
             pass
 
-        path_ant = osp.join(GRAND_DATA,'HorizonAntenna_EWarm_leff_loaded.npy')
+        path_ant = osp.join(GRAND_DATA_PATH,'HorizonAntenna_EWarm_leff_loaded.npy')
         if osp.exists(path_ant):
             self._model = TabulatedAntennaModel.load(path_ant)
             return self._model

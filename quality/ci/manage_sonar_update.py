@@ -47,7 +47,7 @@ if BRANCH in ['master', 'dev']:
     create_sonar_properties(name, name, SHA, LOGIN)    
 elif check_authorized_user(USER_GIT):
     name = f'user_{USER_GIT}'
-    create_sonar_properties(name, name, BRANCH, LOGIN)
+    create_sonar_properties(name, name, f"{BRANCH}_{SHA}", LOGIN)
 else:
     print("No update SonarQube necessary")
 sys.exit(0)

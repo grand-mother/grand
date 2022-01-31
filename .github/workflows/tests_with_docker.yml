@@ -1,0 +1,48 @@
+name: Tests with docker
+on:
+  push:
+    paths-ignore:
+    - docs/requirements.txt
+    - examples/**
+
+jobs:
+  Linux:
+    runs-on: ubuntu-20.04
+    container:
+      image: docker://jcolley/grandlib_ci:0.1 
+      
+    steps:    
+    - uses: actions/checkout@v2
+    - name: Initialise the environment      
+      run: |
+        source env/setup.sh
+      shell: bash
+
+    - name: Check SonarQube update
+      env:
+        USER_GIT: ${{github.actor}}
+        SONAR_L: ${{secrets.SONAR_TOKEN}}
+      run: |
+        source env/_setup_env.sh
+        quality/ci/manage_sonar_update.py "$SONAR_L"
+        quality/ci/apply_sonar_update.bash
+      shell: bash
+
+    - name: Dynamics analysis and coverage
+      run: |
+        . env/_setup_env.sh        
+        quality/ci/coverage_if_necessary.bash
+        check_score_coverage.py
+      shell: bash
+        
+    - name: Static analysis with pylint
+      run: |
+        . env/_setup_env.sh
+        pylint grand --rcfile quality/ci/pylint_ci.conf --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"        
+      shell: bash
+      
+    - name: Static check for type
+      run: |
+        . env/_setup_env.sh
+        grand_quality_type.bash
+      shell: bash

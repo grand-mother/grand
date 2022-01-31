@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from logging import getLogger
-from typing import cast, Optional, Union, Any
+from typing import Union, Any
+
 import numpy as np
+
 from ...tools.coordinates import (
     ECEF,
     LTP,
@@ -15,10 +17,10 @@ from ...tools.coordinates import (
 
 from ... import io  # , ECEF, LTP
 
-__all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError", "Voltage"]
+# __all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError", "Voltage"]
 
 
-_logger = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 @dataclass
@@ -26,11 +28,11 @@ class ElectricField:
     t: np.ndarray
     E: CartesianRepresentation  # RK
     r: Union[CartesianRepresentation, None] = None
-    frame: Union[ECEF, LTP, GRANDCS, None] = None
+    frame: Union[LTP, GRANDCS, None] = None
 
     @classmethod
     def load(cls, node: io.DataNode):
-        _logger.debug(f"Loading E-field from {node.filename}:{node.path}")
+        logger.debug(f"Loading E-field from {node.filename}:{node.path}")
 
         t = node.read("t", dtype="f8")
         E = node.read("E", dtype="f8")
@@ -48,7 +50,7 @@ class ElectricField:
         return cls(t, E, r, frame)
 
     def dump(self, node: io.DataNode):
-        _logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
+        logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
 
         node.write("t", self.t, dtype="f4")
         node.write("E", self.E, dtype="f4")
@@ -67,20 +69,20 @@ class Voltage:
 
     @classmethod
     def load(cls, node: io.DataNode):
-        _logger.debug(f"Loading voltage from {node.filename}:{node.path}")
+        logger.debug("Loading voltage from {node.filename}:{node.path}")
         t = node.read("t", dtype="f8")
         V = node.read("V", dtype="f8")
         return cls(t, V)
 
     def dump(self, node: io.DataNode):
-        _logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
+        logger.debug("Dumping E-field to {node.filename}:{node.path}")
         node.write("t", self.t, dtype="f4")
         node.write("V", self.V, dtype="f4")
 
 
 class AntennaModel:
     # TODO: suspicious code no constructor , no test, dead code ?
-    def effective_length(self, direction, frequency) -> CartesianRepresentation:
+    def effective_length(self) -> CartesianRepresentation:
         return CartesianRepresentation(0)
 
 
@@ -91,7 +93,7 @@ class MissingFrameError(ValueError):
 @dataclass
 class Antenna:
     model: Any  # if class is used, circular import error occurs.
-    frame: Union[ECEF, LTP, GRANDCS]
+    frame: Union[LTP, GRANDCS]
 
     def effective_length(
         self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS]
@@ -175,6 +177,7 @@ class Antenna:
         self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS, None] = None
     ) -> Voltage:
 
+        logger.debug("call compute_voltage()")
         # frame is shower frame. self.frame is antenna frame.
         if (self.frame is None) or (frame is None):
             raise MissingFrameError("missing antenna or shower frame")

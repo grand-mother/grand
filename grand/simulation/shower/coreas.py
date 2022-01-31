@@ -1,26 +1,16 @@
 from __future__ import annotations
 
-from collections import OrderedDict
-from datetime import datetime
 from logging import getLogger
-import os
 from pathlib import Path
 import re
 from typing import Dict, Optional, List
 
-# import astropy.constants
-# from astropy.coordinates import CartesianRepresentation,                       \
-#                                PhysicsSphericalRepresentation
-# from astropy.time import Time
-# import astropy.units as u
-
-from grand import CartesianRepresentation, SphericalRepresentation
 import numpy
 
+from grand import CartesianRepresentation, SphericalRepresentation
 from .generic import CollectionEntry, FieldsCollection, ShowerEvent
 from ..antenna import ElectricField
 from ..pdg import ParticleCode
-from ...tools.coordinates import ECEF, LTP
 
 __all__ = ["CoreasShower"]
 
@@ -37,9 +27,9 @@ _id_to_code: Dict[int, ParticleCode] = {
 # RK. TODO: This class has not been checked properly. Rework on this.
 class CoreasShower(ShowerEvent):
     @classmethod
-    def _check_dir(cls, path: Path) -> bool:
+    def check_dir(cls, path: Path) -> bool:
         try:
-            info_file = path.glob("*.reas").__next__()
+            _ = path.glob("*.reas").__next__()
         except StopIteration:
             return False
         return True
@@ -52,8 +42,8 @@ class CoreasShower(ShowerEvent):
         matches = path.glob("*.reas")
         try:
             reas_path = matches.__next__()
-        except StopIteration:
-            raise FileNotFoundError(path / "*.reas")
+        except StopIteration as from_dir_exit:
+            raise FileNotFoundError(path / "*.reas") from from_dir_exit
         else:
             index = int(reas_path.name[3:9])
             reas = cls._parse_reas(path, index)
@@ -80,7 +70,7 @@ class CoreasShower(ShowerEvent):
         )
 
         # unit = u.m)
-        config["core"] = core
+        config["core"] = core  # type: ignore
 
         # geomagnet = PhysicsSphericalRepresentation(
         geomagnet = SphericalRepresentation(
@@ -90,7 +80,7 @@ class CoreasShower(ShowerEvent):
             r=float(reas["MagneticFieldStrength"]) * 1e05,
         )  # nT
         # config['geomagnet'] = geomagnet.represent_as(CartesianRepresentation)
-        config["geomagnet"] = CartesianRepresentation(geomagnet)
+        config["geomagnet"] = CartesianRepresentation(geomagnet)  # type: ignore
 
         distance = float(reas["DistanceOfShowerMaximum"]) * 1e-02  # << u.m
         theta, phi = config["zenith"], config["azimuth"]
@@ -119,7 +109,7 @@ class CoreasShower(ShowerEvent):
         else:
             # cgs2si = (astropy.constants.c / (u.m / u.s)).value * 1E+02 * u.uV / u.m
             cgs2si = 29979245800.0
-            pattern = re.compile("(\d+).dat$")
+            pattern = re.compile(r"(\d+).dat$")
             for antenna_path in fields_path.glob("*.dat"):
                 antenna = int(pattern.search(str(antenna_path))[1])  # type: ignore[index]
                 logger.debug(f"Loading trace for antenna {antenna}")
@@ -169,7 +159,7 @@ class CoreasShower(ShowerEvent):
             return None
 
         data = []
-        pattern = re.compile("(\d+).dat$")
+        pattern = re.compile(r"(\d+).dat$")
         with bins_file.open() as f:
             for line in f:
                 d = line.split()
@@ -190,7 +180,7 @@ class CoreasShower(ShowerEvent):
             return None
 
         data = []
-        pattern = re.compile("(\d+)$")
+        pattern = re.compile(r"(\d+)$")
         with list_file.open() as f:
             for line in f:
                 d = line.split()

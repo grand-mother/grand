@@ -32,9 +32,9 @@ class InvalidAntennaName(ValueError):
 
 class ZhairesShower(ShowerEvent):
     @classmethod
-    def _check_dir(cls, path: Path) -> bool:
+    def check_dir(cls, path: Path) -> bool:
         try:
-            info_file = path.glob("*.sry").__next__()
+            _ = path.glob("*.sry").__next__()
         except StopIteration:
             return False
         return True
@@ -49,8 +49,8 @@ class ZhairesShower(ShowerEvent):
         inp: Dict[str, Any] = {}
         try:
             sry_path = path.glob("*.sry").__next__()
-        except StopIteration:
-            raise FileNotFoundError(path / "*.sry")
+        except StopIteration as from_dir_exit:
+            raise FileNotFoundError(path / "*.sry") from from_dir_exit
         else:
 
             def parse_primary(string: str) -> ParticleCode:
@@ -62,10 +62,12 @@ class ZhairesShower(ShowerEvent):
 
             def parse_frame_location(string: str):
                 lat, lon = string.split("Long:")
-                lat = parse_quantity(lat[:-2])
-                lon = parse_quantity(lon[:-3])
+                lat_f = parse_quantity(lat[:-2])
+                lon_f = parse_quantity(lon[:-3])
                 # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
-                geodetic = Geodetic(latitude=lat, longitude=lon, height=0, reference="ELLIPSOID")
+                geodetic = Geodetic(
+                    latitude=lat_f, longitude=lon_f, height=0, reference="ELLIPSOID"
+                )
                 return ECEF(geodetic)
 
             def parse_date(string: str) -> datetime:
@@ -101,14 +103,14 @@ class ZhairesShower(ShowerEvent):
                 ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
                 try:
                     inp_file = path.glob("*.inp").__next__()
-                    print("### zhaires.py: reading groundaltitude from. inp file.")
-                    with open(inp_file) as f:
+                    logger.info("### zhaires.py: reading groundaltitude from. inp file.")
+                    with open(inp_file, encoding="UTF-8") as f:
                         for line in f:
                             if "GroundAltitude" in line:
                                 ground_alt = float(line.split()[1])  # m
                                 inp["ground_alt"] = ground_alt
-                except StopIteration:
-                    raise FileNotFoundError(path / "*.inp")
+                except StopIteration as parse_maximum_exit:
+                    raise FileNotFoundError(path / "*.inp") from parse_maximum_exit
                 return CartesianRepresentation(x=1000 * x, y=1000 * y, z=1000 * z)  # RK. km --> m
 
             converters = (
@@ -201,7 +203,7 @@ class ZhairesShower(ShowerEvent):
             #                    =>    time [ns]      Ex [uVm]    Ey [uVm]   Ez [uVm]
             #                    => -1.1463000E+04  -5.723E-05  -1.946E-04  4.324E-04
             antenna = int(field_path.name[1:].split(".", 1)[0])
-            logger.debug(f"Loading trace for antenna {antenna}")
+            # logger.debug(f"Loading trace for antenna {antenna}")
             data = numpy.loadtxt(field_path)
             t = data[:, 0] * 1.0e-9  # ns --> s
             Ex = data[:, 1]  # uVm
@@ -224,14 +226,15 @@ class ZhairesShower(ShowerEvent):
         with h5py.File(path, "r") as fd:
             if not "RunInfo.__table_column_meta__" in fd["/"]:
                 return super()._from_datafile(path)
-
+            last_name = ""
             for name in fd["/"].keys():
+                last_name = name
                 if not name.startswith("RunInfo"):
                     break
 
-            event = fd[f"{name}/EventInfo"]
-            antennas = fd[f"{name}/AntennaInfo"]
-            traces = fd[f"{name}/AntennaTraces"]
+            event = fd[f"{last_name}/EventInfo"]
+            antennas = fd[f"{last_name}/AntennaInfo"]
+            traces = fd[f"{last_name}/AntennaTraces"]
 
             fields = FieldsCollection()
 
