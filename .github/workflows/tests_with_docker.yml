@@ -15,9 +15,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Initialise the environment      
       run: |
-        #source env/setup.sh
-        pwd
-        #quality/ci/coverage_if_necessary.bash
+        source env/setup.sh
       shell: bash
 
     - name: Check SonarQube update
@@ -25,24 +23,26 @@ jobs:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{secrets.SONAR_TOKEN}}
       run: |
-        source env/setup.sh
-        pwd
+        source env/_setup_env.sh
         quality/ci/manage_sonar_update.py "$SONAR_L"
         quality/ci/apply_sonar_update.bash
       shell: bash
 
     - name: Dynamics analysis and coverage
       run: |
-        . env/setup.sh        
+        . env/_setup_env.sh        
         quality/ci/coverage_if_necessary.bash
         check_score_coverage.py
+      shell: bash
         
     - name: Static analysis with pylint
       run: |
-        . env/setup.sh                
+        . env/_setup_env.sh                
         grand_quality_analysis.bash
-        
+      shell: bash
+      
     - name: Static type check
       run: |
-        . env/setup.sh
-        grand_quality_type.bash 
+        . env/_setup_env.sh
+        grand_quality_type.bash
+      shell: bash
