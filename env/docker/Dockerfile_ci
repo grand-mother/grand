@@ -1,0 +1,13 @@
+FROM grandlib_base
+
+WORKDIR /home/install
+
+RUN apt-get install -y unzip
+RUN curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+RUN unzip sonar-scanner-cli-4.6.2.2472-linux.zip
+ENV PATH=$PATH:/home/install/sonar-scanner-4.6.2.2472-linux/bin
+
+COPY requirements_qual.txt /home/install/requirements_qual.txt
+RUN python3 -m pip install --no-cache-dir -r /home/install/requirements_qual.txt
+
+WORKDIR /home
