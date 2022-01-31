@@ -18,10 +18,15 @@ cd ..
 docker pull jcolley/grandlib_dev:0.1
 docker run -it --name grand_dev -v `pwd`:/home jcolley/grandlib_dev:0.1
 
+# init in docker
+
 ==> in docker with GRAND env
+root@7fdf26599527:/home#
+root@7fdf26599527:/home# cd grand
+root@7fdf26599527:/home/grand# . env/setup.sh 
 ...
 
-crt+d to quit docker
+ctrl+d to quit docker
 <==
 
 # to return to the container created
