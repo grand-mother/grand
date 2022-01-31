@@ -292,7 +292,7 @@ def _get_logger_path(pfile):
 class _MyFormatter(logging.Formatter):
     """!Formatter without date and with millisecond by default"""
 
-    converter = datetime.fromtimestamp
+    converter = datetime.fromtimestamp # type: ignore
 
     def formatTime(self, record, datefmt=None):
         """!Define my specific time format for GRAND logger.

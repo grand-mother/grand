@@ -28,7 +28,7 @@ class ElectricField:
     t: np.ndarray
     E: CartesianRepresentation  # RK
     r: Union[CartesianRepresentation, None] = None
-    frame: Union[ECEF, LTP, GRANDCS, None] = None
+    frame: Union[LTP, GRANDCS, None] = None
 
     @classmethod
     def load(cls, node: io.DataNode):
@@ -93,7 +93,7 @@ class MissingFrameError(ValueError):
 @dataclass
 class Antenna:
     model: Any  # if class is used, circular import error occurs.
-    frame: Union[ECEF, LTP, GRANDCS]
+    frame: Union[LTP, GRANDCS]
 
     def effective_length(
         self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS]

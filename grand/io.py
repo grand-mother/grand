@@ -83,7 +83,7 @@ class DataNode:
     def close(self) -> None:
         self._group.file.close()
 
-    def read(self, *args: str, dtype: Union[numpy.DataType, str, None] = None):
+    def read(self, *args: str, dtype: Union[numpy.dtype, str, None] = None):
         res = len(args) * [None]
         for i, k in enumerate(args):
             v = self._group[k]
@@ -123,7 +123,7 @@ class DataNode:
             # self._write_number(k, v, dtype, unit)
             self._write_number(k, v, dtype)  # RK
 
-    def _unpack(self, dset: _Dataset, dtype: Union[numpy.DataType, str, None] = None) -> Any:
+    def _unpack(self, dset: _Dataset, dtype: Union[numpy.dtype, str, None] = None) -> Any:
         if dset.shape:
             v = dset[:]
             if dtype is not None:
