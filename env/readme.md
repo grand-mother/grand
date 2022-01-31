@@ -15,7 +15,7 @@ conda env create -f env/conda/grand_user.yml
 
 # Init GRAND env
 conda activate grand_user
-source env/setup.bash
+source env/setup.sh
 
 # Tests
 which python
