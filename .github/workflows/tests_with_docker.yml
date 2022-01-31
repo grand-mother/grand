@@ -37,8 +37,8 @@ jobs:
         
     - name: Static analysis with pylint
       run: |
-        . env/_setup_env.sh                
-        grand_quality_analysis.bash
+        . env/_setup_env.sh
+        pylint grand --rcfile quality/ci/pylint_ci.conf --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
       shell: bash
       
     - name: Static type check
