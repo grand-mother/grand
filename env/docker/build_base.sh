@@ -1,3 +1,3 @@
 #! /bin/bash
 
-docker build -f Dockerfile_base . --tag=grandlib_base
+docker build -f base.dockerfile . --tag=grandlib_base

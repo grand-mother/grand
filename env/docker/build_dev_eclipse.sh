@@ -2,6 +2,6 @@
 
 tag=latest
 
-docker rmi grandlib_dev_eclipse:$tag
+#docker rmi grandlib_dev_eclipse:$tag
 
-docker build -f Dockerfile_dev_eclispe . --tag=grandlib_dev_eclipse:$tag
+docker build -f dev_eclipse.dockerfile . --tag=grandlib_dev_eclipse:$tag
