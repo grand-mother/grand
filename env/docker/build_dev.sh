@@ -3,7 +3,7 @@
 
 tag=latest
 
-docker rmi grandlib_dev:latest
+docker rmi grandlib_dev:$tag
 
 cp ../../quality/requirements.txt requirements_qual.txt
 cp ../../docs/apidoc-only/doxygen-rtd/requirements.txt requirements_docs.txt
