@@ -49,7 +49,6 @@ print("---------------------------------", "\n")
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
 path_ant = osp.join(GRAND_DATA_PATH, "HorizonAntenna_EWarm_leff_loaded.npy")
-print("JMC", GRAND_DATA_PATH)
 antenna_model = TabulatedAntennaModel.load(path_ant)
 
 counter = 0
