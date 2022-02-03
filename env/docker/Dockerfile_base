@@ -26,4 +26,3 @@ WORKDIR /home
 ENV PATH=".:${PATH}"
 ENTRYPOINT ["/bin/bash"]
 SHELL ["/bin/bash", "-c"]
-
