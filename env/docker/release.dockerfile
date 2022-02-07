@@ -1,12 +1,12 @@
 FROM grandlib_dev
 
-RUN mkdir -p /home/install/src/grand
+RUN mkdir -p /opt/grandlib/grand
 
-COPY grand /home/install/src/grand
-WORKDIR /home/install/src/grand
-RUN ls -la
+COPY grand /opt/grandlib/grand
+WORKDIR /opt/grandlib/grand
 RUN env/setup.sh
+RUN pytest tests
 
-ENV PYTHONPATH="/home/install/src/grand:${PYTHONPATH}"
+ENV PYTHONPATH="/opt/grandlib/grand:${PYTHONPATH}"
 
 WORKDIR /home
