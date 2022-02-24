@@ -1,6 +1,6 @@
 FROM rootproject/root:6.24.06-ubuntu20.04
 
-RUN mkdir -p /home/install
+RUN mkdir -p /opt/grandlib
 
 # Add package for C compilation 
 #RUN apt-get update && apt -y upgrade\
@@ -16,9 +16,9 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 
 # install python lib for grand lib
-COPY requirements.txt /home/install/requirements_grandlib.txt
+COPY requirements.txt /opt/grandlib/requirements_grandlib.txt
 RUN python3 -m pip install --upgrade pip\
-&& python3 -m pip install --no-cache-dir -r /home/install/requirements_grandlib.txt
+&& python3 -m pip install --no-cache-dir -r /opt/grandlib/requirements_grandlib.txt
 
 
 # init env docker
@@ -26,4 +26,3 @@ WORKDIR /home
 ENV PATH=".:${PATH}"
 ENTRYPOINT ["/bin/bash"]
 SHELL ["/bin/bash", "-c"]
-
