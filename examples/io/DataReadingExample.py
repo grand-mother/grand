@@ -10,7 +10,6 @@ from root_trees import *
 if len(sys.argv)<2:
     tadccounts = ADCEventTree("stored_data.root")
 else:
-    print("tututu")
     tadccounts = ADCEventTree(sys.argv[1])
 
 tadccounts.get_event(2)
