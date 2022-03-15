@@ -52,3 +52,4 @@ quality/html_*
 docs/apidoc-only/doxygen-rtd/build
 docs/apidoc-only/doxygen-rtd/html
 docs/apidoc-only/doxygen-rtd/xml
+/examples/io/stored_data.root

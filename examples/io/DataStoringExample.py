@@ -1,7 +1,11 @@
 #!/usr/bin/python
 # An example of storing traces to a file
 import numpy as np
-from grand.io.root_trees import *
+# This does not work now...
+#from grand.io.root_trees import *
+import sys
+sys.path.append("../../grand/io")
+from root_trees import *
 import ROOT
 
 # Open the file for writing
@@ -23,11 +27,11 @@ for ev in range(event_count):
 # ********** ADC Counts ****************
 
 # Create the ADC counts tree
-tadccounts = ADCCountsTree()
+tadccounts = ADCEventTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
-    tadccounts.evt_id = ev
+    tadccounts.event_number = ev
     # Loop through the event's traces
     traces_lengths = []
     start_times = []
@@ -63,9 +67,9 @@ for ev in range(event_count):
     tadccounts.e_det_time = e_det_times
     tadccounts.isTriggered = isTriggereds
     tadccounts.sampling_speed = sampling_speeds
-    tadccounts.trace_x = trace_xs
-    tadccounts.trace_y = trace_ys
-    tadccounts.trace_z = trace_zs
+    tadccounts.trace_0 = trace_xs
+    tadccounts.trace_1 = trace_ys
+    tadccounts.trace_2 = trace_zs
 
     tadccounts.fill()
 
@@ -73,7 +77,7 @@ for ev in range(event_count):
 # tadccounts.tree.Scan("*")
 
 # Build the tree index
-tadccounts.build_index("run_id", "evt_id")
+tadccounts.build_index("run_number", "event_number")
 
 # write the tree to the storage
 tadccounts.write()
@@ -86,11 +90,11 @@ tadccounts.write()
 adc2v = 0.9/8192
 
 # Create the ADC counts tree
-tvoltage = VoltageTree()
+tvoltage = VoltageEventTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
-    tvoltage.evt_id = ev
+    tvoltage.event_number = ev
     # Loop through the event's traces
     traces_lengths = []
     start_times = []
@@ -137,7 +141,7 @@ for ev in range(event_count):
 # tvoltage.tree.Scan("*")
 
 # Build the tree index
-tvoltage.build_index("run_id", "evt_id")
+tvoltage.build_index("run_number", "event_number")
 
 # Add friends
 tvoltage.add_friend(tadccounts.tree)
@@ -155,11 +159,11 @@ from scipy import fftpack
 v2ef = 1.17
 
 # Create the ADC counts tree
-tefield = EfieldTree()
+tefield = EfieldEventTree()
 
 # fill the tree with every second of generated events - dumb selection
 for ev in range(0,event_count,2):
-    tefield.evt_id = ev
+    tefield.event_number = ev
     # Loop through the event's traces
     traces_lengths = []
     start_times = []
@@ -235,7 +239,7 @@ for ev in range(0,event_count,2):
 # tefield.tree.Scan("*")
 
 # Build the tree index
-tefield.build_index("run_id", "evt_id")
+tefield.build_index("run_number", "event_number")
 
 # Add friends
 tefield.add_friend(tvoltage.tree)
@@ -248,11 +252,11 @@ tree_file.Close()
 exit()
 
 # Create the ADC counts tree
-tadccounts = ADCCountsTree()
+tadccounts = ADCEventTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
-    tadccounts.evt_id = ev
+    tadccounts.event_number = ev
     # Loop through the event's traces
     traces_lengths = []
     start_times = []

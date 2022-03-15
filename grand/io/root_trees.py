@@ -64,8 +64,8 @@ class DataTree():
     _tree_name: str = ""
     _tree: ROOT.TTree = ROOT.TTree(_tree_name, _tree_name)
 
-    _run_id: np.ndarray = np.zeros(1, np.uint32)
-    _evt_id: np.ndarray = np.zeros(1, np.uint32)
+    _run_number: np.ndarray = np.zeros(1, np.uint32)
+    _event_number: np.ndarray = np.zeros(1, np.uint32)
 
     @property
     def tree(self):
@@ -104,32 +104,32 @@ class DataTree():
                 print(f"The file {self._file} either does not exist or is not a valid ROOT file")
 
     @property
-    def run_id(self):
-        return self._run_id[0]
+    def run_number(self):
+        return self._run_number[0]
 
-    @run_id.setter
-    def run_id(self, val: np.uint32) -> None:
-        self._run_id[0] = val
+    @run_number.setter
+    def run_number(self, val: np.uint32) -> None:
+        self._run_number[0] = val
 
     @property
-    def evt_id(self):
-        return self._evt_id[0]
+    def event_number(self):
+        return self._event_number[0]
 
-    @evt_id.setter
-    def evt_id(self, val: np.uint32) -> None:
-        self._evt_id[0] = val
+    @event_number.setter
+    def event_number(self, val: np.uint32) -> None:
+        self._event_number[0] = val
 
     def fill(self):
-        self._tree.fill()
+        self._tree.Fill()
 
     def write(self, *args):
-        self._tree.write(*args)
+        self._tree.Write(*args)
 
     def scan(self, *args):
-        self._tree.scan(*args)
+        self._tree.Scan(*args)
 
     def get_event(self, ev_no):
-        self._tree.get_entry(ev_no)
+        self._tree.GetEntry(ev_no)
         # print(self.__dataclass_fields__)
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
@@ -144,7 +144,7 @@ class DataTree():
 
     # All three methods below return the number of entries
     def get_entries(self):
-        return self._tree.get_entries()
+        return self._tree.GetEnetries()
 
     def get_number_of_entries(self):
         return self.get_entries()
@@ -153,16 +153,16 @@ class DataTree():
         return self.get_number_of_entries()
 
     def add_friend(self, value):
-        self._tree.add_friend(value)
+        self._tree.AddFriend(value)
 
     def remove_friend(self, value):
-        self._tree.remove_friend(value)
+        self._tree.RemoveFriend(value)
 
     def build_index(self, run_id, evt_id):
-        self._tree.build_index(run_id, evt_id)
+        self._tree.BuildIndex(run_id, evt_id)
 
     def set_tree_index(self, value):
-        self._tree.set_tree_index(value)
+        self._tree.SetTreeIndex(value)
 
     # Create branches of the TTree based on the class fields
     def create_branches(self):
@@ -383,7 +383,7 @@ class ShowerRunSimdataTree(DataTree):
         self._lowe_cut_nucleon[0] = value
 
 @dataclass
-class ShowerTree(DataTree):
+class ShowerEventTree(DataTree):
     _tree_name: str = "GRANDShower"
 
     _shower_type: StdVectorList("string") = StdVectorList("string")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
@@ -569,7 +569,7 @@ class ShowerTree(DataTree):
 
 
 @dataclass
-class ShowerSimdataTree(DataTree):
+class ShowerEventSimdataTree(DataTree):
     _tree_name: str = "GRANDShowerSimdata"
 
     _rnd_seed: np.ndarray = np.zeros(1, np.float64)  # random seed
@@ -794,7 +794,7 @@ class EfieldRunSimdataTree(DataTree):
 class EfieldEventSimdataTree(DataTree):
     _tree_name: str = "GRANDEfieldEventSimdata"
 
-    _det_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
+    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
     _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
     _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
 
@@ -809,22 +809,22 @@ class EfieldEventSimdataTree(DataTree):
         self.create_branches()
 
     @property
-    def det_id(self):
-        return self._det_id
+    def du_id(self):
+        return self._du_id
 
-    @det_id.setter
-    def det_id(self, value):
+    @du_id.setter
+    def du_id(self, value):
         # Clear the vector before setting
-        self._det_id.clear()
+        self._du_id.clear()
 
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._det_id += value
+            self._du_id += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("int")):
-            self._det_id = value
+            self._du_id = value
         else:
-            exit(f"Incorrect type for det_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def t_0(self):
@@ -902,7 +902,7 @@ class VoltageRunSimdataTree(DataTree):
 class VoltageEventSimdataTree(DataTree):
     _tree_name: str = "GRANDVoltageEventSimdata"
 
-    _det_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
+    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
     _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
     _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
 
@@ -917,22 +917,22 @@ class VoltageEventSimdataTree(DataTree):
         self.create_branches()
 
     @property
-    def det_id(self):
-        return self._det_id
+    def du_id(self):
+        return self._du_id
 
-    @det_id.setter
-    def det_id(self, value):
+    @du_id.setter
+    def du_id(self, value):
         # Clear the vector before setting
-        self._det_id.clear()
+        self._du_id.clear()
 
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._det_id += value
+            self._du_id += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("int")):
-            self._det_id = value
+            self._du_id = value
         else:
-            exit(f"Incorrect type for det_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def t_0(self):
@@ -972,20 +972,139 @@ class VoltageEventSimdataTree(DataTree):
 
 
 @dataclass
-class ADCCountsTree(DataTree):
-    _tree_name: str = "GRANDADCCounts"
+class ADCEventTree(DataTree):
+    _tree_name: str = "teventadc"
 
-    _det_id: StdVectorList("int") = StdVectorList("int")
-    _trace_length: StdVectorList("unsigned int") = StdVectorList("unsigned int")  # Do we need it? Can be obtained from traces. On the other hand, small in storage and easy to use. ("Raw/SimPoints in Charles)
-    _start_time: StdVectorList("double") = StdVectorList("double")
-    _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    _det_time: StdVectorList("double") = StdVectorList("double")
-    _e_det_time: StdVectorList("double") = StdVectorList("double")
-    _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    _sampling_speed: StdVectorList("float") = StdVectorList("float")
-    _trace_x: StdVectorList("vector<float>") = StdVectorList("vector<float>")
-    _trace_y: StdVectorList("vector<float>") = StdVectorList("vector<float>")
-    _trace_z: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    ## Common for the whole event
+    ## Event size
+    _event_size: np.ndarray = np.zeros(1, np.uint32)
+    ## Event in the run number
+    _t3_number: np.ndarray = np.zeros(1, np.uint32)
+    ## First detector unit that triggered in the event
+    _first_du: np.ndarray = np.zeros(1, np.uint32)
+    ## Unix time corresponding to the GPS seconds of the trigger
+    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    ## GPS nanoseconds corresponding to the trigger of the first triggered station
+    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
+    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    ## Event format version of the DAQ
+    _event_version: np.ndarray = np.zeros(1, np.uint32)
+    ## Number of detector units in the event - basically the antennas count
+    _du_count: np.ndarray = np.zeros(1, np.uint32)
+
+
+    ## Specific for each Detector Unit
+    ## The T3 trigger number
+    _event_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Detector unit (antenna) ID
+    _du_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Unix time of the trigger for this DU
+    _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Nanoseconds of the trigger for this DU
+    _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
+    _trigger_position: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Same as event_type, but event_type could consist of different triggered DUs
+    _trigger_flag: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Atmospheric temperature (read via I2C)
+    _atm_temperature: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Atmospheric pressure
+    _atm_pressure: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Atmospheric humidity
+    _atm_humidity: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Acceleration of the antenna in X
+    _acceleration_x: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Acceleration of the antenna in Y
+    _acceleration_y: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Acceleration of the antenna in Z
+    _acceleration_z: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Battery voltage
+    _battery_level: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Firmware version
+    _firmware_version: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC sampling frequency in MHz
+    _adc_sampling_frequency: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC sampling resolution in bits
+    _adc_sampling_resolution: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
+    _adc_input_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
+    _adc_enabled_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC samples callected in all channels
+    _adc_samples_count_total: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC samples callected in channel 0
+    _adc_samples_count_channel0: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC samples callected in channel 1
+    _adc_samples_count_channel1: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC samples callected in channel 2
+    _adc_samples_count_channel2: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## ADC samples callected in channel 3
+    _adc_samples_count_channel3: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
+    _trigger_pattern: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Trigger rate - the number of triggers recorded in the second preceding the event
+    _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Clock tick at which the event was triggered (used to calculate the trigger time)
+    _clock_tick: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Clock ticks per second
+    _clock_ticks_per_second: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
+    _gps_offset: StdVectorList("float") = StdVectorList("float")
+    ## GPS leap second
+    _gps_leap_second: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## GPS status
+    _gps_status: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## GPS alarms
+    _gps_alarms: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## GPS warnings
+    _gps_warnings: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## GPS time
+    _gps_time: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Longitude
+    _gps_long: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Latitude
+    _gps_lat: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Altitude
+    _gps_alt: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## GPS temperature
+    _gps_temp: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
+    _digi_ctrl: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
+    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    _channel_properties0: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    _channel_properties1: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    _channel_properties2: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    _channel_properties3: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    _channel_trig_settings0: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    _channel_trig_settings1: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    _channel_trig_settings2: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    _channel_trig_settings3: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    ## ?? What is it? Some kind of the adc trace offset?
+    _ioff: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    # _start_time: StdVectorList("double") = StdVectorList("double")
+    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
+    # _det_time: StdVectorList("double") = StdVectorList("double")
+    # _e_det_time: StdVectorList("double") = StdVectorList("double")
+    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
+    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
+    ## ADC trace 0
+    _trace_0: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    ## ADC trace 1
+    _trace_1: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    ## ADC trace 2
+    _trace_2: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    ## ADC trace 3
+    _trace_3: StdVectorList("vector<short>") = StdVectorList("vector<short>")
 
     def __post_init__(self):
         super().__post_init__()
@@ -998,209 +1117,1171 @@ class ADCCountsTree(DataTree):
         self.create_branches()
 
     @property
-    def det_id(self):
-        return self._det_id
+    def du_id(self):
+        return self._du_id
 
-    @det_id.setter
-    def det_id(self, value):
+    @du_id.setter
+    def du_id(self, value):
         # Clear the vector before setting
-        self._det_id.clear()
+        self._du_id.clear()
 
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._det_id += value
+            self._du_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("int")):
-            self._det_id = value
+            self._du_id = value
         else:
-            exit(f"Incorrect type for det_id {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
 
     @property
-    def trace_length(self):
-        return self._trace_length
+    def event_size(self):
+        return self._event_size
 
-    @trace_length.setter
-    def trace_length(self, value):
+    @event_size.setter
+    def event_size(self, val: np.uint32) -> None:
+        self._run_number[0] = val
+
+    # @property
+    # def start_time(self):
+    #     return self._start_time
+    #
+    # @start_time.setter
+    # def start_time(self, value):
+    #     # Clear the vector before setting
+    #     self._start_time.clear()
+    #
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         self._start_time += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("double")):
+    #         self._start_time = value
+    #     else:
+    #         exit(f"Incorrect type for start_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    #
+    # @property
+    # def rel_peak_time(self):
+    #     return self._rel_peak_time
+    #
+    # @rel_peak_time.setter
+    # def rel_peak_time(self, value):
+    #     # Clear the vector before setting
+    #     self._rel_peak_time.clear()
+    #
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         self._rel_peak_time += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("float")):
+    #         self._rel_peak_time = value
+    #     else:
+    #         exit(f"Incorrect type for rel_peak_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    #
+    # @property
+    # def det_time(self):
+    #     return self._det_time
+    #
+    # @det_time.setter
+    # def det_time(self, value):
+    #     # Clear the vector before setting
+    #     self._det_time.clear()
+    #
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         self._det_time += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("double")):
+    #         self._det_time = value
+    #     else:
+    #         exit(f"Incorrect type for det_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    #
+    # @property
+    # def e_det_time(self):
+    #     return self._e_det_time
+    #
+    # @det_time.setter
+    # def e_det_time(self, value):
+    #     # Clear the vector before setting
+    #     self._e_det_time.clear()
+    #
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         self._e_det_time += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("double")):
+    #         self._e_det_time = value
+    #     else:
+    #         exit(f"Incorrect type for e_det_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    #
+    # @property
+    # def isTriggered(self):
+    #     return self._isTriggered
+    #
+    # @isTriggered.setter
+    # def isTriggered(self, value):
+    #     # Clear the vector before setting
+    #     self._isTriggered.clear()
+    #
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         self._isTriggered += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("bool")):
+    #         self._isTriggered = value
+    #     else:
+    #         exit(f"Incorrect type for isTriggered {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    #
+    # @property
+    # def sampling_speed(self):
+    #     return self._sampling_speed
+    #
+    # @sampling_speed.setter
+    # def sampling_speed(self, value):
+    #     # Clear the vector before setting
+    #     self._sampling_speed.clear()
+    #
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         self._sampling_speed += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("float")):
+    #         self._sampling_speed = value
+    #     else:
+    #         exit(f"Incorrect type for sampling_speed {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+
+    @property
+    def event_size(self):
+        return self._event_size[0]
+
+    @event_size.setter
+    def event_size(self, value: np.uint32) -> None:
+        self._event_size[0] = value
+
+    @property
+    def event_size(self):
+        return np.array(self._event_size)
+
+    @event_size.setter
+    def event_size(self, value: np.uint32) -> None:
+        self._event_size = np.array(value)
+        self._tree.SetBranchAddress("event_size", self._event_size)
+
+    @property
+    def t3_number(self):
+        return self._t3_number[0]
+
+    @t3_number.setter
+    def t3_number(self, value: np.uint32) -> None:
+        self._t3_number[0] = value
+
+    @property
+    def t3_number(self):
+        return np.array(self._t3_number)
+
+    @t3_number.setter
+    def t3_number(self, value: np.uint32) -> None:
+        self._t3_number = np.array(value)
+        self._tree.SetBranchAddress("t3_number", self._t3_number)
+
+    @property
+    def first_du(self):
+        return self._first_du[0]
+
+    @first_du.setter
+    def first_du(self, value: np.uint32) -> None:
+        self._first_du[0] = value
+
+    @property
+    def first_du(self):
+        return np.array(self._first_du)
+
+    @first_du.setter
+    def first_du(self, value: np.uint32) -> None:
+        self._first_du = np.array(value)
+        self._tree.SetBranchAddress("first_du", self._first_du)
+
+    @property
+    def time_seconds(self):
+        return self._time_seconds[0]
+
+    @time_seconds.setter
+    def time_seconds(self, value: np.uint32) -> None:
+        self._time_seconds[0] = value
+
+    @property
+    def time_seconds(self):
+        return np.array(self._time_seconds)
+
+    @time_seconds.setter
+    def time_seconds(self, value: np.uint32) -> None:
+        self._time_seconds = np.array(value)
+        self._tree.SetBranchAddress("time_seconds", self._time_seconds)
+
+    @property
+    def time_nanoseconds(self):
+        return self._time_nanoseconds[0]
+
+    @time_nanoseconds.setter
+    def time_nanoseconds(self, value: np.uint32) -> None:
+        self._time_nanoseconds[0] = value
+
+    @property
+    def time_nanoseconds(self):
+        return np.array(self._time_nanoseconds)
+
+    @time_nanoseconds.setter
+    def time_nanoseconds(self, value: np.uint32) -> None:
+        self._time_nanoseconds = np.array(value)
+        self._tree.SetBranchAddress("time_nanoseconds", self._time_nanoseconds)
+
+    @property
+    def event_type(self):
+        return self._event_type[0]
+
+    @event_type.setter
+    def event_type(self, value: np.uint32) -> None:
+        self._event_type[0] = value
+
+    @property
+    def event_type(self):
+        return np.array(self._event_type)
+
+    @event_type.setter
+    def event_type(self, value: np.uint32) -> None:
+        self._event_type = np.array(value)
+        self._tree.SetBranchAddress("event_type", self._event_type)
+
+    @property
+    def event_version(self):
+        return self._event_version[0]
+
+    @event_version.setter
+    def event_version(self, value: np.uint32) -> None:
+        self._event_version[0] = value
+
+    @property
+    def event_version(self):
+        return np.array(self._event_version)
+
+    @event_version.setter
+    def event_version(self, value: np.uint32) -> None:
+        self._event_version = np.array(value)
+        self._tree.SetBranchAddress("event_version", self._event_version)
+
+    @property
+    def du_count(self):
+        return self._du_count[0]
+
+    @du_count.setter
+    def du_count(self, value: np.uint32) -> None:
+        self._du_count[0] = value
+
+    @property
+    def du_count(self):
+        return np.array(self._du_count)
+
+    @du_count.setter
+    def du_count(self, value: np.uint32) -> None:
+        self._du_count = np.array(value)
+        self._tree.SetBranchAddress("du_count", self._du_count)
+
+    @property
+    def event_id(self):
+        return self._event_id
+
+    @event_id.setter
+    def event_id(self, value) -> None:
         # Clear the vector before setting
-        self._trace_length.clear()
-
+        self._event_id.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._trace_length += value
+            self._event_id += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._event_id = value
+        else:
+            exit(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def du_id(self):
+        return self._du_id
+
+    @du_id.setter
+    def du_id(self, value) -> None:
+        # Clear the vector before setting
+        self._du_id.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._du_id += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._du_id = value
+        else:
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def du_seconds(self):
+        return self._du_seconds
+
+    @du_seconds.setter
+    def du_seconds(self, value) -> None:
+        # Clear the vector before setting
+        self._du_seconds.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._du_seconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._trace_length = value
+            self._du_seconds = value
         else:
-            exit(f"Incorrect type for trace_length {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
-    def start_time(self):
-        return self._start_time
+    def du_nanoseconds(self):
+        return self._du_nanoseconds
 
-    @start_time.setter
-    def start_time(self, value):
+    @du_nanoseconds.setter
+    def du_nanoseconds(self, value) -> None:
         # Clear the vector before setting
-        self._start_time.clear()
-
+        self._du_nanoseconds.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._start_time += value
+            self._du_nanoseconds += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("double")):
-            self._start_time = value
+        elif isinstance(value, ROOT.vector("unsigned int")):
+            self._du_nanoseconds = value
         else:
-            exit(f"Incorrect type for start_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
-    def rel_peak_time(self):
-        return self._rel_peak_time
+    def trigger_position(self):
+        return self._trigger_position
 
-    @rel_peak_time.setter
-    def rel_peak_time(self, value):
+    @trigger_position.setter
+    def trigger_position(self, value) -> None:
         # Clear the vector before setting
-        self._rel_peak_time.clear()
-
+        self._trigger_position.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._rel_peak_time += value
+            self._trigger_position += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._trigger_position = value
+        else:
+            exit(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def trigger_flag(self):
+        return self._trigger_flag
+
+    @trigger_flag.setter
+    def trigger_flag(self, value) -> None:
+        # Clear the vector before setting
+        self._trigger_flag.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._trigger_flag += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._trigger_flag = value
+        else:
+            exit(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def atm_temperature(self):
+        return self._atm_temperature
+
+    @atm_temperature.setter
+    def atm_temperature(self, value) -> None:
+        # Clear the vector before setting
+        self._atm_temperature.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._atm_temperature += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._atm_temperature = value
+        else:
+            exit(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def atm_pressure(self):
+        return self._atm_pressure
+
+    @atm_pressure.setter
+    def atm_pressure(self, value) -> None:
+        # Clear the vector before setting
+        self._atm_pressure.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._atm_pressure += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._atm_pressure = value
+        else:
+            exit(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def atm_humidity(self):
+        return self._atm_humidity
+
+    @atm_humidity.setter
+    def atm_humidity(self, value) -> None:
+        # Clear the vector before setting
+        self._atm_humidity.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._atm_humidity += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._atm_humidity = value
+        else:
+            exit(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def acceleration_x(self):
+        return self._acceleration_x
+
+    @acceleration_x.setter
+    def acceleration_x(self, value) -> None:
+        # Clear the vector before setting
+        self._acceleration_x.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._acceleration_x += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._acceleration_x = value
+        else:
+            exit(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def acceleration_y(self):
+        return self._acceleration_y
+
+    @acceleration_y.setter
+    def acceleration_y(self, value) -> None:
+        # Clear the vector before setting
+        self._acceleration_y.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._acceleration_y += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._acceleration_y = value
+        else:
+            exit(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def acceleration_z(self):
+        return self._acceleration_z
+
+    @acceleration_z.setter
+    def acceleration_z(self, value) -> None:
+        # Clear the vector before setting
+        self._acceleration_z.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._acceleration_z += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._acceleration_z = value
+        else:
+            exit(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def battery_level(self):
+        return self._battery_level
+
+    @battery_level.setter
+    def battery_level(self, value) -> None:
+        # Clear the vector before setting
+        self._battery_level.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._battery_level += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._battery_level = value
+        else:
+            exit(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def firmware_version(self):
+        return self._firmware_version
+
+    @firmware_version.setter
+    def firmware_version(self, value) -> None:
+        # Clear the vector before setting
+        self._firmware_version.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._firmware_version += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._firmware_version = value
+        else:
+            exit(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+
+    @property
+    def adc_sampling_frequency(self):
+        return self._adc_sampling_frequency
+
+    @adc_sampling_frequency.setter
+    def adc_sampling_frequency(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_sampling_frequency.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_sampling_frequency += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_sampling_frequency = value
+        else:
+            exit(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_sampling_resolution(self):
+        return self._adc_sampling_resolution
+
+    @adc_sampling_resolution.setter
+    def adc_sampling_resolution(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_sampling_resolution.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_sampling_resolution += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_sampling_resolution = value
+        else:
+            exit(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_input_channels(self):
+        return self._adc_input_channels
+
+    @adc_input_channels.setter
+    def adc_input_channels(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_input_channels.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_input_channels += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_input_channels = value
+        else:
+            exit(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_enabled_channels(self):
+        return self._adc_enabled_channels
+
+    @adc_enabled_channels.setter
+    def adc_enabled_channels(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_enabled_channels.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_enabled_channels += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_enabled_channels = value
+        else:
+            exit(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_samples_count_total(self):
+        return self._adc_samples_count_total
+
+    @adc_samples_count_total.setter
+    def adc_samples_count_total(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_samples_count_total.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_samples_count_total += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_samples_count_total = value
+        else:
+            exit(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_samples_count_channel0(self):
+        return self._adc_samples_count_channel0
+
+    @adc_samples_count_channel0.setter
+    def adc_samples_count_channel0(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_samples_count_channel0.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_samples_count_channel0 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_samples_count_channel0 = value
+        else:
+            exit(f"Incorrect type for adc_samples_count_channel0 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_samples_count_channel1(self):
+        return self._adc_samples_count_channel1
+
+    @adc_samples_count_channel1.setter
+    def adc_samples_count_channel1(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_samples_count_channel1.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_samples_count_channel1 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_samples_count_channel1 = value
+        else:
+            exit(f"Incorrect type for adc_samples_count_channel1 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_samples_count_channel2(self):
+        return self._adc_samples_count_channel2
+
+    @adc_samples_count_channel2.setter
+    def adc_samples_count_channel2(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_samples_count_channel2.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_samples_count_channel2 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_samples_count_channel2 = value
+        else:
+            exit(f"Incorrect type for adc_samples_count_channel2 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def adc_samples_count_channel3(self):
+        return self._adc_samples_count_channel3
+
+    @adc_samples_count_channel3.setter
+    def adc_samples_count_channel3(self, value) -> None:
+        # Clear the vector before setting
+        self._adc_samples_count_channel3.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._adc_samples_count_channel3 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._adc_samples_count_channel3 = value
+        else:
+            exit(f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def trigger_pattern(self):
+        return self._trigger_pattern
+
+    @trigger_pattern.setter
+    def trigger_pattern(self, value) -> None:
+        # Clear the vector before setting
+        self._trigger_pattern.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._trigger_pattern += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._trigger_pattern = value
+        else:
+            exit(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def trigger_rate(self):
+        return self._trigger_rate
+
+    @trigger_rate.setter
+    def trigger_rate(self, value) -> None:
+        # Clear the vector before setting
+        self._trigger_rate.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._trigger_rate += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._trigger_rate = value
+        else:
+            exit(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def clock_tick(self):
+        return self._clock_tick
+
+    @clock_tick.setter
+    def clock_tick(self, value) -> None:
+        # Clear the vector before setting
+        self._clock_tick.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._clock_tick += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._clock_tick = value
+        else:
+            exit(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def clock_ticks_per_second(self):
+        return self._clock_ticks_per_second
+
+    @clock_ticks_per_second.setter
+    def clock_ticks_per_second(self, value) -> None:
+        # Clear the vector before setting
+        self._clock_ticks_per_second.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._clock_ticks_per_second += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._clock_ticks_per_second = value
+        else:
+            exit(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def gps_offset(self):
+        return self._gps_offset
+
+    @gps_offset.setter
+    def gps_offset(self, value) -> None:
+        # Clear the vector before setting
+        self._gps_offset.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._gps_offset += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._rel_peak_time = value
+            self._gps_offset = value
         else:
-            exit(f"Incorrect type for rel_peak_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
-    def det_time(self):
-        return self._det_time
+    def gps_leap_second(self):
+        return self._gps_leap_second
 
-    @det_time.setter
-    def det_time(self, value):
+    @gps_leap_second.setter
+    def gps_leap_second(self, value) -> None:
         # Clear the vector before setting
-        self._det_time.clear()
-
+        self._gps_leap_second.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._det_time += value
+            self._gps_leap_second += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("double")):
-            self._det_time = value
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_leap_second = value
         else:
-            exit(f"Incorrect type for det_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
-    def e_det_time(self):
-        return self._e_det_time
+    def gps_status(self):
+        return self._gps_status
 
-    @det_time.setter
-    def e_det_time(self, value):
+    @gps_status.setter
+    def gps_status(self, value) -> None:
         # Clear the vector before setting
-        self._e_det_time.clear()
-
+        self._gps_status.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._e_det_time += value
+            self._gps_status += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("double")):
-            self._e_det_time = value
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_status = value
         else:
-            exit(f"Incorrect type for e_det_time {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
-    def isTriggered(self):
-        return self._isTriggered
+    def gps_alarms(self):
+        return self._gps_alarms
 
-    @isTriggered.setter
-    def isTriggered(self, value):
+    @gps_alarms.setter
+    def gps_alarms(self, value) -> None:
         # Clear the vector before setting
-        self._isTriggered.clear()
-
+        self._gps_alarms.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._isTriggered += value
+            self._gps_alarms += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("bool")):
-            self._isTriggered = value
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_alarms = value
         else:
-            exit(f"Incorrect type for isTriggered {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
-    def sampling_speed(self):
-        return self._sampling_speed
+    def gps_warnings(self):
+        return self._gps_warnings
 
-    @sampling_speed.setter
-    def sampling_speed(self, value):
+    @gps_warnings.setter
+    def gps_warnings(self, value) -> None:
         # Clear the vector before setting
-        self._sampling_speed.clear()
-
+        self._gps_warnings.clear()
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._sampling_speed += value
+            self._gps_warnings += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._sampling_speed = value
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_warnings = value
         else:
-            exit(f"Incorrect type for sampling_speed {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
-    def trace_x(self):
-        return self._trace_x
+    def gps_time(self):
+        return self._gps_time
 
-    @trace_x.setter
-    def trace_x(self, value):
+    @gps_time.setter
+    def gps_time(self, value) -> None:
         # Clear the vector before setting
-        self._trace_x.clear()
+        self._gps_time.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._gps_time += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned int")):
+            self._gps_time = value
+        else:
+            exit(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+
+    @property
+    def gps_long(self):
+        return self._gps_long
+
+    @gps_long.setter
+    def gps_long(self, value) -> None:
+        # Clear the vector before setting
+        self._gps_long.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._gps_long += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_long = value
+        else:
+            exit(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def gps_lat(self):
+        return self._gps_lat
+
+    @gps_lat.setter
+    def gps_lat(self, value) -> None:
+        # Clear the vector before setting
+        self._gps_lat.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._gps_lat += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_lat = value
+        else:
+            exit(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def gps_alt(self):
+        return self._gps_alt
+
+    @gps_alt.setter
+    def gps_alt(self, value) -> None:
+        # Clear the vector before setting
+        self._gps_alt.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._gps_alt += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_alt = value
+        else:
+            exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def gps_temp(self):
+        return self._gps_temp
+
+    @gps_temp.setter
+    def gps_temp(self, value) -> None:
+        # Clear the vector before setting
+        self._gps_temp.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._gps_temp += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._gps_temp = value
+        else:
+            exit(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def digi_ctrl(self):
+        return self._digi_ctrl
+
+    @digi_ctrl.setter
+    def digi_ctrl(self, value) -> None:
+        # Clear the vector before setting
+        self._digi_ctrl.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._digi_ctrl += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._digi_ctrl = value
+        else:
+            exit(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def digi_prepost_trig_windows(self):
+        return self._digi_prepost_trig_windows
+
+    @digi_prepost_trig_windows.setter
+    def digi_prepost_trig_windows(self, value) -> None:
+        # Clear the vector before setting
+        self._digi_prepost_trig_windows.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._digi_prepost_trig_windows += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._digi_prepost_trig_windows = value
+        else:
+            exit(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_properties0(self):
+        return self._channel_properties0
+
+    @channel_properties0.setter
+    def channel_properties0(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_properties0.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_properties0 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_properties0 = value
+        else:
+            exit(f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_properties1(self):
+        return self._channel_properties1
+
+    @channel_properties1.setter
+    def channel_properties1(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_properties1.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_properties1 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_properties1 = value
+        else:
+            exit(f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_properties2(self):
+        return self._channel_properties2
+
+    @channel_properties2.setter
+    def channel_properties2(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_properties2.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_properties2 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_properties2 = value
+        else:
+            exit(f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_properties3(self):
+        return self._channel_properties3
+
+    @channel_properties3.setter
+    def channel_properties3(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_properties3.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_properties3 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_properties3 = value
+        else:
+            exit(f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_trig_settings0(self):
+        return self._channel_trig_settings0
+
+    @channel_trig_settings0.setter
+    def channel_trig_settings0(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_trig_settings0.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_trig_settings0 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_trig_settings0 = value
+        else:
+            exit(f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_trig_settings1(self):
+        return self._channel_trig_settings1
+
+    @channel_trig_settings1.setter
+    def channel_trig_settings1(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_trig_settings1.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_trig_settings1 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_trig_settings1 = value
+        else:
+            exit(f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_trig_settings2(self):
+        return self._channel_trig_settings2
+
+    @channel_trig_settings2.setter
+    def channel_trig_settings2(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_trig_settings2.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_trig_settings2 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_trig_settings2 = value
+        else:
+            exit(f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def channel_trig_settings3(self):
+        return self._channel_trig_settings3
+
+    @channel_trig_settings3.setter
+    def channel_trig_settings3(self, value) -> None:
+        # Clear the vector before setting
+        self._channel_trig_settings3.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._channel_trig_settings3 += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+            self._channel_trig_settings3 = value
+        else:
+            exit(f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+
+    @property
+    def ioff(self):
+        return self._ioff
+
+    @ioff.setter
+    def ioff(self, value) -> None:
+        # Clear the vector before setting
+        self._ioff.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._ioff += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._ioff = value
+        else:
+            exit(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def trace_0(self):
+        return self._trace_0
+
+    @trace_0.setter
+    def trace_0(self, value):
+        # Clear the vector before setting
+        self._trace_0.clear()
 
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._trace_x += value
+            self._trace_0 += value
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_x = value
+        elif isinstance(value, ROOT.vector("vector<short>")):
+            self._trace_0 = value
         else:
-            exit(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
+            exit(f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
     @property
-    def trace_y(self):
-        return self._trace_y
+    def trace_1(self):
+        return self._trace_1
 
-    @trace_y.setter
-    def trace_y(self, value):
+    @trace_1.setter
+    def trace_1(self, value):
         # Clear the vector before setting
-        self._trace_y.clear()
+        self._trace_1.clear()
 
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._trace_y += value
+            self._trace_1 += value
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_y = value
+        elif isinstance(value, ROOT.vector("vector<short>")):
+            self._trace_1 = value
         else:
-            exit(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
     @property
-    def trace_z(self):
-        return self._trace_z
+    def trace_2(self):
+        return self._trace_2
 
-    @trace_z.setter
-    def trace_z(self, value):
+    @trace_2.setter
+    def trace_2(self, value):
         # Clear the vector before setting
-        self._trace_z.clear()
+        self._trace_2.clear()
 
         # A list was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._trace_z += value
+            self._trace_2 += value
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_z = value
+        elif isinstance(value, ROOT.vector("vector<short>")):
+            self._trace_2 = value
         else:
-            exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+
+    @property
+    def trace_3(self):
+        return self._trace_3
+
+    @trace_3.setter
+    def trace_3(self, value):
+        # Clear the vector before setting
+        self._trace_3.clear()
+
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._trace_3 += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<short>")):
+            self._trace_3 = value
+        else:
+            exit(f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+
 
 @dataclass
-class VoltageTree(DataTree):
+class VoltageEventTree(DataTree):
     _tree_name: str = "GRANDVoltage"
 
-    _det_id: StdVectorList("int") = StdVectorList("int")
-    _trace_length: StdVectorList("unsigned int") = StdVectorList("unsigned int")  # Do we need it? Can be obtained from traces. On the other hand, small in storage and easy to use. ("Raw/SimPoints in Charles)
+    _du_id: StdVectorList("int") = StdVectorList("int")
+    _event_size: np.ndarray = np.zeros(1, np.uint32)
     _start_time: StdVectorList("double") = StdVectorList("double")
     _rel_peak_time: StdVectorList("float") = StdVectorList("float")
     _det_time: StdVectorList("double") = StdVectorList("double")
@@ -1222,40 +2303,30 @@ class VoltageTree(DataTree):
         self.create_branches()
 
     @property
-    def det_id(self):
-        return self._det_id
+    def du_id(self):
+        return self._du_id
 
-    @det_id.setter
-    def det_id(self, value):
+    @du_id.setter
+    def du_id(self, value):
         # Clear the vector before setting
-        self._det_id.clear()
+        self._du_id.clear()
 
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._det_id += value
+            self._du_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("int")):
-            self._det_id = value
+            self._du_id = value
         else:
-            exit(f"Incorrect type for det_id {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
 
     @property
-    def trace_length(self):
-        return self._trace_length
+    def event_size(self):
+        return self._event_size
 
-    @trace_length.setter
-    def trace_length(self, value):
-        # Clear the vector before setting
-        self._trace_length.clear()
-
-        # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._trace_length += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned int")):
-            self._trace_length = value
-        else:
-            exit(f"Incorrect type for trace_length {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    @event_size.setter
+    def event_size(self, val: np.uint32) -> None:
+        self._run_number[0] = val
 
     @property
     def start_time(self):
@@ -1420,11 +2491,11 @@ class VoltageTree(DataTree):
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
-class EfieldTree(DataTree):
+class EfieldEventTree(DataTree):
     _tree_name: str = "GRANDEfield"
 
-    _det_id: StdVectorList("int") = StdVectorList("int")
-    _trace_length: StdVectorList("unsigned int") = StdVectorList("unsigned int")  # Do we need it? Can be obtained from traces. On the other hand, small in storage and easy to use. ("Raw/SimPoints in Charles)
+    _du_id: StdVectorList("int") = StdVectorList("int")
+    _event_size: np.ndarray = np.zeros(1, np.uint32)
     _start_time: StdVectorList("double") = StdVectorList("double")
     _rel_peak_time: StdVectorList("float") = StdVectorList("float")
     _det_time: StdVectorList("double") = StdVectorList("double")
@@ -1452,40 +2523,30 @@ class EfieldTree(DataTree):
         self.create_branches()
 
     @property
-    def det_id(self):
-        return self._det_id
+    def du_id(self):
+        return self._du_id
 
-    @det_id.setter
-    def det_id(self, value):
+    @du_id.setter
+    def du_id(self, value):
         # Clear the vector before setting
-        self._det_id.clear()
+        self._du_id.clear()
 
         # A list of strings was given
         if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._det_id += value
+            self._du_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("int")):
-            self._det_id = value
+            self._du_id = value
         else:
-            exit(f"Incorrect type for det_id {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
 
     @property
-    def trace_length(self):
-        return self._trace_length
+    def event_size(self):
+        return self._event_size
 
-    @trace_length.setter
-    def trace_length(self, value):
-        # Clear the vector before setting
-        self._trace_length.clear()
-
-        # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            self._trace_length += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned int")):
-            self._trace_length = value
-        else:
-            exit(f"Incorrect type for trace_length {type(value)}. Either a list, an array or a ROOT.vector of ints required.")
+    @event_size.setter
+    def event_size(self, val: np.uint32) -> None:
+        self._run_number[0] = val
 
     @property
     def start_time(self):
