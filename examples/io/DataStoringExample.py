@@ -20,6 +20,14 @@ for ev in range(event_count):
         # X,Y,Z needed for each trace
         traces[-1].append((np.random.randint(-20,21, l).astype(np.float32), np.random.randint(-20,21, l).astype(np.float32), np.random.randint(-20,21, l).astype(np.float32)))
 
+# ********** Generarte Run Tree ****************
+# It needs to be first, so that the Event trees can find it. However, it need some informations from them, so will be filled at the end
+trun = RunTree()
+trun.first_event = 0
+trun.last_event = event_count
+trun.fill()
+trun.write("stored_data.root")
+
 # ********** ADC Counts ****************
 
 # Create the ADC counts tree
