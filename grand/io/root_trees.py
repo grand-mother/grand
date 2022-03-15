@@ -17,9 +17,9 @@ import numpy as np
 import sys
 # This import changes in Python 3.10
 if sys.version_info.major>=3 and sys.version_info.minor<10:
-	from collections import MutableSequence
+    from collections import MutableSequence
 else:
-	from collections.abc import MutableSequence
+    from collections.abc import MutableSequence
 from dataclasses import dataclass, field
 from typing import List, Union
 
@@ -231,11 +231,33 @@ class DataTree():
 
 @dataclass
 # ToDo: this will have evt_id now, and should not have!
-class ShowerRunTree(DataTree):
-    _tree_name: str = "GRANDShowerRun"
+class RunTree(DataTree):
+    _tree_name: str = "trun"
 
-    _site: StdVectorList("string") = StdVectorList("string")  # The GRAND detection site
-    _site_lat_long: np.ndarray = np.zeros(2, np.float32)  # The GRAND detection site lat and lon
+    ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
+    _run_mode: np.ndarray = np.zeros(1, np.uint32)
+    ## Run's first event
+    _first_event: np.ndarray = np.zeros(1, np.uint32)
+    ## First event time
+    _first_event_time: np.ndarray = np.zeros(1, np.uint32)
+    ## Run's last event
+    _last_event: np.ndarray = np.zeros(1, np.uint32)
+    ## Last event time
+    _last_event_time: np.ndarray = np.zeros(1, np.uint32)
+
+    # These are not from the hardware
+    ## Data source: detector, simulation, other
+    _data_source: StdVectorList("string") = StdVectorList("string", ["detector"])
+    ## Data generator: gtot (in this case)
+    _data_generator: StdVectorList("string") = StdVectorList("string", ["GRANDlib"])
+    ## Generator version: gtot version (in this case)
+    _data_generator_version: StdVectorList("string") = StdVectorList("string", ["0.1.0"])
+    ## Site name
+    _site: StdVectorList("string") = StdVectorList("string")
+    ## Site longitude
+    _site_long: np.ndarray = np.zeros(1, np.float32)
+    ## Site latitude
+    _site_lat: np.ndarray = np.zeros(1, np.float32)  # The GRAND detection site lat and lon
     _origin_geoid: np.ndarray = np.zeros(3, np.float32)  # #origin of the coordinate system used for the array
 
     def __post_init__(self):
@@ -247,6 +269,163 @@ class ShowerRunTree(DataTree):
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
+
+    def write(self, *args):
+
+        # Create the indices
+        self._tree.BuildIndex("run_number")
+
+        # Create the TFile if as string ending with ".root" given as a first argument
+        # ToDo: Handle TFile if added as the argument
+        out_file = None
+        if ".root" in args[0][-5:]:
+            # By default append
+            out_file = ROOT.TFile(args[0], "update")
+            self._tree.SetDirectory(out_file)
+            # args passed to the TTree::Write() should be the following
+            args = args[1:]
+
+        self._tree.Write(*args)
+
+        # If TFile was created here, close it
+        if out_file: out_file.Close()
+
+
+    @property
+    def run_mode(self):
+        return self._run_mode[0]
+
+    @run_mode.setter
+    def run_mode(self, value: np.uint32) -> None:
+        self._run_mode[0] = value
+
+    @property
+    def run_mode(self):
+        return np.array(self._run_mode)
+
+    @run_mode.setter
+    def run_mode(self, value: np.uint32) -> None:
+        self._run_mode = np.array(value)
+        self._tree.SetBranchAddress("run_mode", self._run_mode)
+
+    @property
+    def first_event(self):
+        return self._first_event[0]
+
+    @first_event.setter
+    def first_event(self, value: np.uint32) -> None:
+        self._first_event[0] = value
+
+    @property
+    def first_event(self):
+        return np.array(self._first_event)
+
+    @first_event.setter
+    def first_event(self, value: np.uint32) -> None:
+        self._first_event = np.array(value)
+        self._tree.SetBranchAddress("first_event", self._first_event)
+
+    @property
+    def first_event_time(self):
+        return self._first_event_time[0]
+
+    @first_event_time.setter
+    def first_event_time(self, value: np.uint32) -> None:
+        self._first_event_time[0] = value
+
+    @property
+    def first_event_time(self):
+        return np.array(self._first_event_time)
+
+    @first_event_time.setter
+    def first_event_time(self, value: np.uint32) -> None:
+        self._first_event_time = np.array(value)
+        self._tree.SetBranchAddress("first_event_time", self._first_event_time)
+
+    @property
+    def last_event(self):
+        return self._last_event[0]
+
+    @last_event.setter
+    def last_event(self, value: np.uint32) -> None:
+        self._last_event[0] = value
+
+    @property
+    def last_event(self):
+        return np.array(self._last_event)
+
+    @last_event.setter
+    def last_event(self, value: np.uint32) -> None:
+        self._last_event = np.array(value)
+        self._tree.SetBranchAddress("last_event", self._last_event)
+
+    @property
+    def last_event_time(self):
+        return self._last_event_time[0]
+
+    @last_event_time.setter
+    def last_event_time(self, value: np.uint32) -> None:
+        self._last_event_time[0] = value
+
+    @property
+    def last_event_time(self):
+        return np.array(self._last_event_time)
+
+    @last_event_time.setter
+    def last_event_time(self, value: np.uint32) -> None:
+        self._last_event_time = np.array(value)
+        self._tree.SetBranchAddress("last_event_time", self._last_event_time)
+
+    @property
+    def data_source(self):
+        return self._data_source
+
+    @data_source.setter
+    def data_source(self, value) -> None:
+        # Clear the vector before setting
+        self._data_source.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._data_source += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("string")):
+            self._data_source = value
+        else:
+            exit(f"Incorrect type for data_source {type(value)}. Either a list, an array or a ROOT.vector of strings required.")
+
+    @property
+    def data_generator(self):
+        return self._data_generator
+
+    @data_generator.setter
+    def data_generator(self, value) -> None:
+        # Clear the vector before setting
+        self._data_generator.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._data_generator += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("string")):
+            self._data_generator = value
+        else:
+            exit(f"Incorrect type for data_generator {type(value)}. Either a list, an array or a ROOT.vector of strings required.")
+
+    @property
+    def data_generator_version(self):
+        return self._data_generator_version
+
+    @data_generator_version.setter
+    def data_generator_version(self, value) -> None:
+        # Clear the vector before setting
+        self._data_generator_version.clear()
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            self._data_generator_version += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("string")):
+            self._data_generator_version = value
+        else:
+            exit(f"Incorrect type for data_generator_version {type(value)}. Either a list, an array or a ROOT.vector of strings required.")
 
     @property
     def site(self):
@@ -2298,7 +2477,7 @@ class ADCEventTree(DataTree):
 
 @dataclass
 class VoltageEventTree(DataTree):
-    _tree_name: str = "GRANDVoltage"
+    _tree_name: str = "teventvoltage"
 
     _du_id: StdVectorList("int") = StdVectorList("int")
     _event_size: np.ndarray = np.zeros(1, np.uint32)
@@ -2548,7 +2727,7 @@ class VoltageEventTree(DataTree):
 
 @dataclass
 class EfieldEventTree(DataTree):
-    _tree_name: str = "GRANDEfield"
+    _tree_name: str = "teventefield"
 
     _du_id: StdVectorList("int") = StdVectorList("int")
     _event_size: np.ndarray = np.zeros(1, np.uint32)
