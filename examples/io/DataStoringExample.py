@@ -8,10 +8,6 @@ sys.path.append("../../grand/io")
 from root_trees import *
 import ROOT
 
-# Open the file for writing
-# ToDo: this should be somehow in the tree classes
-tree_file = ROOT.TFile("stored_data.root", "recreate")
-
 # Generate random number of traces with random lengths for 10 events, as can be in the real case
 event_count = 10
 traces = []
@@ -44,7 +40,7 @@ for ev in range(event_count):
     trace_ys = []
     trace_zs = []
     for i,trace in enumerate(traces[ev]):
-        print(ev,i, len(trace[0]))
+        # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
         traces_lengths.append(len(trace[0]))
@@ -73,14 +69,9 @@ for ev in range(event_count):
 
     tadccounts.fill()
 
-# tadccounts.Print()
-# tadccounts.tree.Scan("*")
-
-# Build the tree index
-tadccounts.build_index("run_number", "event_number")
-
 # write the tree to the storage
-tadccounts.write()
+tadccounts.write("stored_data.root")
+print("Wrote tadccounts")
 
 # ********** Voltage ****************
 
@@ -107,7 +98,7 @@ for ev in range(event_count):
     trace_ys = []
     trace_zs = []
     for i,trace in enumerate(traces[ev]):
-        print(ev,i, len(trace[0]))
+        # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
         traces_lengths.append(len(trace[0]))
@@ -137,17 +128,9 @@ for ev in range(event_count):
 
     tvoltage.fill()
 
-# tvoltage.Print()
-# tvoltage.tree.Scan("*")
-
-# Build the tree index
-tvoltage.build_index("run_number", "event_number")
-
-# Add friends
-tvoltage.add_friend(tadccounts.tree)
-
 # write the tree to the storage
-tvoltage.write()
+tvoltage.write("stored_data.root")
+print("Wrote tvoltage")
 
 # ********** Efield ****************
 
@@ -183,7 +166,7 @@ for ev in range(0,event_count,2):
     fft_phase_zs = []
 
     for i,trace in enumerate(traces[ev]):
-        print(ev,i, len(trace[0]))
+        # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
         traces_lengths.append(len(trace[0]))
@@ -235,51 +218,8 @@ for ev in range(0,event_count,2):
 
     tefield.fill()
 
-# tefield.Print()
-# tefield.tree.Scan("*")
-
-# Build the tree index
-tefield.build_index("run_number", "event_number")
-
-# Add friends
-tefield.add_friend(tvoltage.tree)
-tefield.add_friend(tadccounts.tree)
-
 # write the tree to the storage
-tefield.write()
+tefield.write("stored_data.root")
+print("Wrote tefield")
 
-tree_file.Close()
-exit()
-
-# Create the ADC counts tree
-tadccounts = ADCEventTree()
-
-# fill the tree with the generated events
-for ev in range(event_count):
-    tadccounts.event_number = ev
-    # Loop through the event's traces
-    traces_lengths = []
-    start_times = []
-    trace_xs = []
-    trace_ys = []
-    trace_zs = []
-    for i,trace in enumerate(traces[ev]):
-        # Dumb values just for filling
-        traces_lengths.append(len(trace[0]))
-        start_times.append(ev*10)
-
-        trace_xs.append(trace[0])
-        trace_ys.append(trace[1])
-        trace_zs.append(trace[2])
-
-    tadccounts.det_id = list(range(len(traces[ev])))
-    tadccounts.trace_length = traces_lengths
-    tadccounts.start_time = start_times
-    tadccounts.trace_x = trace_xs
-    tadccounts.trace_y = trace_ys
-    tadccounts.trace_z = trace_zs
-
-    tadccounts.fill()
-
-# write the tree to the storage
-tadccounts.write()
+# tree_file.Close()

@@ -975,6 +975,26 @@ class VoltageEventSimdataTree(DataTree):
 class ADCEventTree(DataTree):
     _tree_name: str = "teventadc"
 
+    def write(self, *args):
+
+        # Create the indices
+        self.build_index("run_number", "event_number")
+
+        # Create the TFile if as string ending with ".root" given as a first argument
+        # ToDo: Handle TFile if added as the argument
+        out_file = None
+        if ".root" in args[0][-5:]:
+            # By default append
+            out_file = ROOT.TFile(args[0], "update")
+            self._tree.SetDirectory(out_file)
+            # args passed to the TTree::Write() should be the following
+            args = args[1:]
+
+        self._tree.Write(*args)
+
+        # If TFile was created here, close it
+        if out_file: out_file.Close()
+
     ## Common for the whole event
     ## Event size
     _event_size: np.ndarray = np.zeros(1, np.uint32)
@@ -2302,6 +2322,42 @@ class VoltageEventTree(DataTree):
 
         self.create_branches()
 
+    def write(self, *args):
+
+        # Create the indices
+        self.build_index("run_number", "event_number")
+
+        # Create the TFile if as string ending with ".root" given as a first argument
+        # ToDo: Handle TFile if added as the argument
+        out_file = None
+        if ".root" in args[0][-5:]:
+            # By default append
+            out_file = ROOT.TFile(args[0], "update")
+            self._tree.SetDirectory(out_file)
+            # args passed to the TTree::Write() should be the following
+            args = args[1:]
+
+        # Add the ADC tree as a friend if exists already
+        loc_vars = dict(locals())
+        adc_trees = []
+        for key, val in loc_vars.items():
+            if type(val) is ADCEventTree: adc_trees.append(key)
+        # If any ADC tree was found
+        if len(adc_trees)>0:
+            # Warning if there is more than 1 ADCEventTree in memory
+            if len(adc_trees) > 1:
+                print(f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend")
+            # Add the last one ADCEventTree as a friend
+            adc_tree = adc_trees[-1]
+
+            # Add the ADC TTree as a friend
+            self.add_friend(adc_tree)
+
+        self._tree.Write(*args)
+
+        # If TFile was created here, close it
+        if out_file: out_file.Close()
+
     @property
     def du_id(self):
         return self._du_id
@@ -2521,6 +2577,58 @@ class EfieldEventTree(DataTree):
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
+
+    def write(self, *args):
+
+        # Create the indices
+        self.build_index("run_number", "event_number")
+
+        # Create the TFile if as string ending with ".root" given as a first argument
+        # ToDo: Handle TFile if added as the argument
+        out_file = None
+        if ".root" in args[0][-5:]:
+            # By default append
+            out_file = ROOT.TFile(args[0], "update")
+            self._tree.SetDirectory(out_file)
+            # args passed to the TTree::Write() should be the following
+            args = args[1:]
+
+        # Add the ADC tree as a friend if exists already
+        loc_vars = dict(locals())
+        adc_trees = []
+        for key, val in loc_vars.items():
+            if type(val) is ADCEventTree: adc_trees.append(key)
+        # If any ADC tree was found
+        if len(adc_trees)>0:
+            # Warning if there is more than 1 ADCEventTree in memory
+            if len(adc_trees) > 1:
+                print(f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend")
+            # Add the last one ADCEventTree as a friend
+            adc_tree = adc_trees[-1]
+
+            # Add the ADC TTree as a friend
+            self.add_friend(adc_tree.tree)
+
+        # Add the Voltage tree as a friend if exists already
+        voltage_trees = []
+        for key, val in loc_vars.items():
+            if type(val) is VoltageEventTree: voltage_trees.append(key)
+        # If any Voltage tree was found
+        if len(voltage_trees)>0:
+            # Warning if there is more than 1 VoltageEventTree in memory
+            if len(voltage_trees) > 1:
+                print(f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend")
+            # Add the last one VoltageEventTree as a friend
+            voltage_tree = voltage_trees[-1]
+
+            # Add the Voltage TTree as a friend
+            self.add_friend(voltage_tree.tree)
+
+
+        self._tree.Write(*args)
+
+        # If TFile was created here, close it
+        if out_file: out_file.Close()
 
     @property
     def du_id(self):
