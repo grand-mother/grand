@@ -5,7 +5,7 @@ import numpy as np
 #from grand.io.root_trees import *
 import sys
 sys.path.append("../../grand/io")
-from root_trees import *
+from grand.io.root_trees import *
 
 if len(sys.argv)<2:
     tadccounts = ADCEventTree("stored_data.root")

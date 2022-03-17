@@ -5,7 +5,8 @@ import numpy as np
 #from grand.io.root_trees import *
 import sys
 sys.path.append("../../grand/io")
-from root_trees import *
+
+from grand.io.root_trees import *
 import ROOT
 
 # Generate random number of traces with random lengths for 10 events, as can be in the real case
