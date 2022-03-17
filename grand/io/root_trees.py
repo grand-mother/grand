@@ -23,6 +23,8 @@ else:
 from dataclasses import dataclass, field
 from typing import List, Union
 
+## A list of generated Trees
+grand_tree_list = []
 
 # A python list interface to ROOT's std::vector
 class StdVectorList(MutableSequence):
@@ -75,7 +77,15 @@ class DataTree():
     def file(self):
         return self._file
 
+    @classmethod
+    def _type(cls):
+        return (cls)
+
     def __post_init__(self):
+
+        # Append the instance to the list of generated trees - needed later for adding friends
+        grand_tree_list.append(self)
+
         # Work only if _file was specified
         if self._file is None:
             # ToDo: why just the default value doesn't work? Without the thing below, a new GRANDtree will have the same tree object as the previous
@@ -123,7 +133,30 @@ class DataTree():
         self._tree.Fill()
 
     def write(self, *args):
+
+        self.add_proper_friends()
+
+        # Create the TFile if as string ending with ".root" given as a first argument
+        # ToDo: Handle TFile if added as the argument
+        out_file = None
+        if ".root" in args[0][-5:]:
+            # By default append
+            out_file = ROOT.TFile(args[0], "update")
+            self._tree.SetDirectory(out_file)
+            # args passed to the TTree::Write() should be the following
+            args = args[1:]
+
         self._tree.Write(*args)
+
+        # Need to set 0 directory so that closing of the file does not delete the internal TTree
+        self._tree.SetDirectory(ROOT.nullptr)
+
+        # If TFile was created here, close it
+        if out_file: out_file.Close()
+
+    # Add the proper friend trees to this tree (reimplemented in daughter classes)
+    def add_proper_friends(self):
+        pass
 
     def scan(self, *args):
         self._tree.Scan(*args)
@@ -270,26 +303,9 @@ class RunTree(DataTree):
 
         self.create_branches()
 
-    def write(self, *args):
-
+    def add_proper_friends(self):
         # Create the indices
         self._tree.BuildIndex("run_number")
-
-        # Create the TFile if as string ending with ".root" given as a first argument
-        # ToDo: Handle TFile if added as the argument
-        out_file = None
-        if ".root" in args[0][-5:]:
-            # By default append
-            out_file = ROOT.TFile(args[0], "update")
-            self._tree.SetDirectory(out_file)
-            # args passed to the TTree::Write() should be the following
-            args = args[1:]
-
-        self._tree.Write(*args)
-
-        # If TFile was created here, close it
-        if out_file: out_file.Close()
-
 
     @property
     def run_mode(self):
@@ -1154,25 +1170,26 @@ class VoltageEventSimdataTree(DataTree):
 class ADCEventTree(DataTree):
     _tree_name: str = "teventadc"
 
-    def write(self, *args):
+    def add_proper_friends(self):
 
         # Create the indices
         self.build_index("run_number", "event_number")
 
-        # Create the TFile if as string ending with ".root" given as a first argument
-        # ToDo: Handle TFile if added as the argument
-        out_file = None
-        if ".root" in args[0][-5:]:
-            # By default append
-            out_file = ROOT.TFile(args[0], "update")
-            self._tree.SetDirectory(out_file)
-            # args passed to the TTree::Write() should be the following
-            args = args[1:]
+        # Add the Run tree as a friend if exists already
+        loc_vars = dict(locals())
+        run_trees = []
+        for inst in grand_tree_list:
+            if type(inst) is RunTree: run_trees.append(inst)
+        # If any Run tree was found
+        if len(run_trees)>0:
+            # Warning if there is more than 1 RunTree in memory
+            if len(run_trees) > 1:
+                print(f"More than 1 RunTree detected in memory. Adding the last one {run_trees[-1]} as a friend")
+            # Add the last one RunTree as a friend
+            run_tree = run_trees[-1]
 
-        self._tree.Write(*args)
-
-        # If TFile was created here, close it
-        if out_file: out_file.Close()
+            # Add the Run TTree as a friend
+            self.add_friend(run_tree.tree)
 
     ## Common for the whole event
     ## Event size
@@ -2501,26 +2518,17 @@ class VoltageEventTree(DataTree):
 
         self.create_branches()
 
-    def write(self, *args):
+    def add_proper_friends(self):
 
         # Create the indices
         self.build_index("run_number", "event_number")
 
-        # Create the TFile if as string ending with ".root" given as a first argument
-        # ToDo: Handle TFile if added as the argument
-        out_file = None
-        if ".root" in args[0][-5:]:
-            # By default append
-            out_file = ROOT.TFile(args[0], "update")
-            self._tree.SetDirectory(out_file)
-            # args passed to the TTree::Write() should be the following
-            args = args[1:]
+        # Assuming that the RunTree is already a friend of ADC tree, so it does not have to be added as a friend here
 
         # Add the ADC tree as a friend if exists already
-        loc_vars = dict(locals())
         adc_trees = []
-        for key, val in loc_vars.items():
-            if type(val) is ADCEventTree: adc_trees.append(key)
+        for inst in grand_tree_list:
+            if type(inst) is ADCEventTree: adc_trees.append(inst)
         # If any ADC tree was found
         if len(adc_trees)>0:
             # Warning if there is more than 1 ADCEventTree in memory
@@ -2530,12 +2538,7 @@ class VoltageEventTree(DataTree):
             adc_tree = adc_trees[-1]
 
             # Add the ADC TTree as a friend
-            self.add_friend(adc_tree)
-
-        self._tree.Write(*args)
-
-        # If TFile was created here, close it
-        if out_file: out_file.Close()
+            self.add_friend(adc_tree.tree)
 
     @property
     def du_id(self):
@@ -2757,43 +2760,19 @@ class EfieldEventTree(DataTree):
 
         self.create_branches()
 
-    def write(self, *args):
+    def add_proper_friends(self):
 
         # Create the indices
         self.build_index("run_number", "event_number")
 
-        # Create the TFile if as string ending with ".root" given as a first argument
-        # ToDo: Handle TFile if added as the argument
-        out_file = None
-        if ".root" in args[0][-5:]:
-            # By default append
-            out_file = ROOT.TFile(args[0], "update")
-            self._tree.SetDirectory(out_file)
-            # args passed to the TTree::Write() should be the following
-            args = args[1:]
-
-        # Add the ADC tree as a friend if exists already
-        loc_vars = dict(locals())
-        adc_trees = []
-        for key, val in loc_vars.items():
-            if type(val) is ADCEventTree: adc_trees.append(key)
-        # If any ADC tree was found
-        if len(adc_trees)>0:
-            # Warning if there is more than 1 ADCEventTree in memory
-            if len(adc_trees) > 1:
-                print(f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend")
-            # Add the last one ADCEventTree as a friend
-            adc_tree = adc_trees[-1]
-
-            # Add the ADC TTree as a friend
-            self.add_friend(adc_tree.tree)
+        # Assuming that the RunTree and ADC tree are already friends of Voltage tree, so they do not have to be added as a friends here
 
         # Add the Voltage tree as a friend if exists already
         voltage_trees = []
-        for key, val in loc_vars.items():
-            if type(val) is VoltageEventTree: voltage_trees.append(key)
-        # If any Voltage tree was found
-        if len(voltage_trees)>0:
+        for inst in grand_tree_list:
+            if type(inst) is VoltageEventTree: voltage_trees.append(inst)
+        # If any ADC tree was found
+        if len(voltage_trees) > 0:
             # Warning if there is more than 1 VoltageEventTree in memory
             if len(voltage_trees) > 1:
                 print(f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend")
@@ -2802,12 +2781,6 @@ class EfieldEventTree(DataTree):
 
             # Add the Voltage TTree as a friend
             self.add_friend(voltage_tree.tree)
-
-
-        self._tree.Write(*args)
-
-        # If TFile was created here, close it
-        if out_file: out_file.Close()
 
     @property
     def du_id(self):

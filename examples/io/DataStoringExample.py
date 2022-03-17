@@ -28,6 +28,7 @@ trun.first_event = 0
 trun.last_event = event_count
 trun.fill()
 trun.write("stored_data.root")
+print("Wrote trun")
 
 # ********** ADC Counts ****************
 
