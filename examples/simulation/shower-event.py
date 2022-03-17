@@ -13,6 +13,7 @@ from grand import (
     SphericalRepresentation,
     CartesianRepresentation,
     GRAND_DATA_PATH,
+    get_root_grand_git,
 )
 
 
@@ -27,7 +28,7 @@ logger = mlg.get_logger_for_script(__file__)
 logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
-showerdir = "../../tests/simulation/data/zhaires"
+showerdir = osp.join(get_root_grand_git(), "tests/simulation/data/zhaires")
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:

@@ -5,7 +5,7 @@ grand package |workflow| |codecov| |docs| |appimage|
 *Collaboration.*
 
 
-Quick start
+Quick start (needed update)
 -----------
 
 The grand package can be installed from `PyPI`_ using pip, e.g. as:
@@ -32,14 +32,8 @@ Issues can be `reported on GitHub`_.
 
 You can also contribute back to the code with Pull Requests `PR`_. Note that you
 first need to fork and clone this repository. On Linux a development
-environment is provided. It can be enabled by sourcing the `setup.sh`_ script.
+environment is provided. See env/readme.md, a docker environnement is provided.
 
-In order to be accepted your changes are expected to successfully pass the
-integration tests. You can run does locally as:
-
-.. code:: bash
-
-   python -m tests
 
 
 License

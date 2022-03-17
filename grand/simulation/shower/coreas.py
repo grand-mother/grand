@@ -70,7 +70,7 @@ class CoreasShower(ShowerEvent):
         )
 
         # unit = u.m)
-        config["core"] = core
+        config["core"] = core  # type: ignore
 
         # geomagnet = PhysicsSphericalRepresentation(
         geomagnet = SphericalRepresentation(
@@ -80,7 +80,7 @@ class CoreasShower(ShowerEvent):
             r=float(reas["MagneticFieldStrength"]) * 1e05,
         )  # nT
         # config['geomagnet'] = geomagnet.represent_as(CartesianRepresentation)
-        config["geomagnet"] = CartesianRepresentation(geomagnet)
+        config["geomagnet"] = CartesianRepresentation(geomagnet)  # type: ignore
 
         distance = float(reas["DistanceOfShowerMaximum"]) * 1e-02  # << u.m
         theta, phi = config["zenith"], config["azimuth"]

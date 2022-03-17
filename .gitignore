@@ -12,7 +12,7 @@ __pycache__
 
 # Ignore build and dist temporaries
 dist
-build*
+src/build*
 *.egg-info
 *.whl
 
@@ -27,7 +27,6 @@ python3-*.AppDir
 # Ignore local librairies and data
 lib/python*
 grand/libs/lib*.so
-grand/libs/data
 grand/tools/data/topography
 tests/topography
 tests/simulation/data
@@ -53,3 +52,4 @@ docs/apidoc-only/doxygen-rtd/build
 docs/apidoc-only/doxygen-rtd/html
 docs/apidoc-only/doxygen-rtd/xml
 /examples/io/stored_data.root
+

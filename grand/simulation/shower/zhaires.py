@@ -62,10 +62,12 @@ class ZhairesShower(ShowerEvent):
 
             def parse_frame_location(string: str):
                 lat, lon = string.split("Long:")
-                lat = parse_quantity(lat[:-2])
-                lon = parse_quantity(lon[:-3])
+                lat_f = parse_quantity(lat[:-2])
+                lon_f = parse_quantity(lon[:-3])
                 # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
-                geodetic = Geodetic(latitude=lat, longitude=lon, height=0, reference="ELLIPSOID")
+                geodetic = Geodetic(
+                    latitude=lat_f, longitude=lon_f, height=0, reference="ELLIPSOID"
+                )
                 return ECEF(geodetic)
 
             def parse_date(string: str) -> datetime:

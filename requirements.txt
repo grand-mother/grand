@@ -1,5 +1,0 @@
-cffi
-h5py
-numpy
-scipy
-typing-extensions
