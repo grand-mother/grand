@@ -1,13 +1,7 @@
 #!/usr/bin/python
 # An example of storing traces to a file
 import numpy as np
-# This does not work now...
-#from grand.io.root_trees import *
-import sys
-sys.path.append("../../grand/io")
-
 from grand.io.root_trees import *
-import ROOT
 
 # Generate random number of traces with random lengths for 10 events, as can be in the real case
 event_count = 10
