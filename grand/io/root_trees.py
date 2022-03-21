@@ -161,15 +161,20 @@ class DataTree():
     def scan(self, *args):
         self._tree.Scan(*args)
 
-    def get_event(self, ev_no):
-        self._tree.GetEntry(ev_no)
+    # Readout the TTree entry corresponding to the event and run
+    def get_event(self, ev_no, run_no=0):
+        # Run does not have
+        self._tree.GetEntryWithIndex(run_no, ev_no)
         # print(self.__dataclass_fields__)
+        # Assign the TTree branches to the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
             if field == "_tree" or field == "_file" or field == "_tree_name": continue
             # print(field, self.__dataclass_fields__[field])
+            # Read the TTree branch
             u = getattr(self._tree, field[1:])
             # print(self.__dataclass_fields__[field].name, u, type(u))
+            # Assign the TTree branch value to the class field
             setattr(self, field[1:], u)
 
     def get_entry(self, ev_no):
@@ -177,7 +182,7 @@ class DataTree():
 
     # All three methods below return the number of entries
     def get_entries(self):
-        return self._tree.GetEnetries()
+        return self._tree.GetEntries()
 
     def get_number_of_entries(self):
         return self.get_entries()
@@ -290,8 +295,9 @@ class RunTree(DataTree):
     ## Site longitude
     _site_long: np.ndarray = np.zeros(1, np.float32)
     ## Site latitude
-    _site_lat: np.ndarray = np.zeros(1, np.float32)  # The GRAND detection site lat and lon
-    _origin_geoid: np.ndarray = np.zeros(3, np.float32)  # #origin of the coordinate system used for the array
+    _site_lat: np.ndarray = np.zeros(1, np.float32)
+    ## Origin of the coordinate system used for the array
+    _origin_geoid: np.ndarray = np.zeros(3, np.float32)
 
     def __post_init__(self):
         super().__post_init__()
@@ -462,13 +468,22 @@ class RunTree(DataTree):
             exit(f"Incorrect type for site {type(value)}. Either a list or a ROOT.vector of strings required.")
 
     @property
-    def site_lat_long(self):
-        return np.array(self._site_lat_long)
+    def site_long(self):
+        return np.array(self._site_long)
 
-    @site_lat_long.setter
-    def site_lat_long(self, value):
-        self._site_lat_long = np.array(value)
-        self._tree.SetBranchAddress("site_lat_long", self._site_lat_long)
+    @site_long.setter
+    def site_long(self, value):
+        self._site_long = np.array(value)
+        self._tree.SetBranchAddress("site_long", self._site_long)
+
+    @property
+    def site_lat(self):
+        return np.array(self._site_lat)
+
+    @site_lat.setter
+    def site_lat(self, value):
+        self._site_lat = np.array(value)
+        self._tree.SetBranchAddress("site_lat", self._site_lat)
 
     @property
     def origin_geoid(self):
