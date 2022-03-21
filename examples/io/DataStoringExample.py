@@ -1,19 +1,23 @@
 #!/usr/bin/python
 # An example of storing traces to a file
 import numpy as np
+import time
 from grand.io.root_trees import *
 
 # Generate random number of traces with random lengths for 10 events, as can be in the real case
 event_count = 10
+adc_traces = []
 traces = []
 for ev in range(event_count):
     trace_count = np.random.randint(3,7)
+    adc_traces.append([])
     traces.append([])
     for i in range(trace_count):
         # The trace length
         l = np.random.randint(900,1000)
         # X,Y,Z needed for each trace
-        traces[-1].append((np.random.randint(-20,21, l).astype(np.float32), np.random.randint(-20,21, l).astype(np.float32), np.random.randint(-20,21, l).astype(np.float32)))
+        adc_traces[-1].append((np.random.randint(-20,21, l).astype(np.int16), np.random.randint(-20,21, l).astype(np.int16), np.random.randint(-20,21, l).astype(np.int16),np.random.randint(-20,21, l).astype(np.int16)))
+        traces[-1].append(((adc_traces[-1][i][0]*0.9/8192).astype(np.float32), (adc_traces[-1][i][1]*0.9/8192).astype(np.float32), (adc_traces[-1][i][2]*0.9/8192).astype(np.float32)))
 
 # ********** Generarte Run Tree ****************
 # It needs to be first, so that the Event trees can find it. However, it need some informations from them, so will be filled at the end
@@ -31,45 +35,71 @@ tadccounts = ADCEventTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
+    tadccounts.run_number = 0
     tadccounts.event_number = ev
+    # First data unit in the event
+    tadccounts.first_du = 0
+    # As the event time add the current time
+    tadccounts.time_seconds = int(time.mktime(time.gmtime()))
+    # Event nanoseconds 0 for now
+    tadccounts.time_nanoseconds = 0
+    # Triggered event
+    tadccounts.event_type = 0x8000
+    # The number of antennas in the event
+    tadccounts.du_count = len(traces[ev])
+
     # Loop through the event's traces
-    traces_lengths = []
-    start_times = []
-    rel_peak_times = []
-    det_times = []
-    e_det_times = []
-    isTriggereds = []
-    sampling_speeds = []
-    trace_xs = []
-    trace_ys = []
-    trace_zs = []
-    for i,trace in enumerate(traces[ev]):
+    du_id = []
+    du_seconds = []
+    du_nanoseconds = []
+    trigger_position = []
+    trigger_flag = []
+    atm_temperature = []
+    atm_pressure = []
+    atm_humidity = []
+    acceleration_x = []
+    acceleration_y = []
+    acceleration_z = []
+    trace_0 = []
+    trace_1 = []
+    trace_2 = []
+    trace_3 = []
+    for i,trace in enumerate(adc_traces[ev]):
         # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
-        traces_lengths.append(len(trace[0]))
-        start_times.append(ev*10)
-        rel_peak_times.append(ev*11)
-        det_times.append(ev*13)
-        e_det_times.append(ev*14)
-        isTriggereds.append(True)
-        sampling_speeds.append(ev*15)
+        du_id.append(i)
+        du_seconds.append(tadccounts.time_seconds)
+        du_nanoseconds.append(tadccounts.time_nanoseconds)
+        trigger_position.append(i//2)
+        trigger_flag.append(tadccounts.event_type)
+        atm_temperature.append(20+ev//2)
+        atm_pressure.append(1024+ev//2)
+        atm_humidity.append(50+ev//2)
+        acceleration_x.append(ev//2)
+        acceleration_y.append(ev//3)
+        acceleration_z.append(ev//4)
 
-        trace_xs.append(trace[0])
-        trace_ys.append(trace[1])
-        trace_zs.append(trace[2])
+        trace_0.append(trace[0]+1)
+        trace_1.append(trace[1]+2)
+        trace_2.append(trace[2]+3)
+        trace_3.append(trace[3]+4)
 
-    tadccounts.det_id = list(range(len(traces[ev])))
-    tadccounts.trace_length = traces_lengths
-    tadccounts.start_time = start_times
-    tadccounts.rel_peak_time = rel_peak_times
-    tadccounts.det_time = det_times
-    tadccounts.e_det_time = e_det_times
-    tadccounts.isTriggered = isTriggereds
-    tadccounts.sampling_speed = sampling_speeds
-    tadccounts.trace_0 = trace_xs
-    tadccounts.trace_1 = trace_ys
-    tadccounts.trace_2 = trace_zs
+    tadccounts.du_id = du_id
+    tadccounts.du_seconds = du_seconds
+    tadccounts.du_nanoseconds = du_nanoseconds
+    tadccounts.trigger_position = trigger_position
+    tadccounts.trigger_flag = trigger_flag
+    tadccounts.atm_temperature = atm_temperature
+    tadccounts.atm_pressure = atm_pressure
+    tadccounts.atm_humidity = atm_humidity
+    tadccounts.acceleration_x = acceleration_x
+    tadccounts.acceleration_y = acceleration_y
+    tadccounts.acceleration_z = acceleration_z
+    tadccounts.trace_0 = trace_0
+    tadccounts.trace_1 = trace_1
+    tadccounts.trace_2 = trace_2
+    tadccounts.trace_3 = trace_3
 
     tadccounts.fill()
 
@@ -79,7 +109,7 @@ print("Wrote tadccounts")
 
 # ********** Voltage ****************
 
-# Voltage has the same data as ADC counts tree, but the ADC counts are recalculated to voltage
+# Voltage has the same data as ADC counts tree, but recalculated to "real" (usually float) values
 
 # Recalculate ADC counts to voltage, just with a dummy conversion now: 0.9 V is equal to 8192 counts for XiHu data
 adc2v = 0.9/8192
@@ -89,46 +119,70 @@ tvoltage = VoltageEventTree()
 
 # fill the tree with the generated events
 for ev in range(event_count):
+    tvoltage.run_number = 0
     tvoltage.event_number = ev
+    # First data unit in the event
+    tvoltage.first_du = 0
+    # As the event time add the current time
+    tvoltage.time_seconds = int(time.mktime(time.gmtime()))
+    # Event nanoseconds 0 for now
+    tvoltage.time_nanoseconds = 0
+    # Triggered event
+    tvoltage.event_type = 0x8000
+    # The number of antennas in the event
+    tvoltage.du_count = len(traces[ev])
+
     # Loop through the event's traces
-    traces_lengths = []
-    start_times = []
-    rel_peak_times = []
-    det_times = []
-    e_det_times = []
-    isTriggereds = []
-    sampling_speeds = []
-    trace_xs = []
-    trace_ys = []
-    trace_zs = []
+    du_id = []
+    du_seconds = []
+    du_nanoseconds = []
+    trigger_position = []
+    trigger_flag = []
+    atm_temperature = []
+    atm_pressure = []
+    atm_humidity = []
+    acceleration_x = []
+    acceleration_y = []
+    acceleration_z = []
+    trace_x = []
+    trace_y = []
+    trace_z = []
     for i,trace in enumerate(traces[ev]):
         # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
-        traces_lengths.append(len(trace[0]))
-        start_times.append(ev*10)
-        rel_peak_times.append(ev*11)
-        det_times.append(ev*13.2)
-        e_det_times.append(ev*14)
-        isTriggereds.append(True)
-        sampling_speeds.append(ev*15)
+        du_id.append(i)
+        du_seconds.append(tvoltage.time_seconds)
+        du_nanoseconds.append(tvoltage.time_nanoseconds)
+        trigger_position.append(i//2)
+        trigger_flag.append(tvoltage.event_type)
+        atm_temperature.append(20+ev/2)
+        atm_pressure.append(1024+ev/2)
+        atm_humidity.append(50+ev/2)
+        acceleration_x.append(ev/2)
+        acceleration_y.append(ev/3)
+        acceleration_z.append(ev/4)
 
-        # To multiply a list by a number elementwise, convert to a numpy array and back
-        trace_xs.append((np.array(trace[0])*adc2v).tolist())
-        trace_ys.append((np.array(trace[1])*adc2v).tolist())
-        trace_zs.append((np.array(trace[2])*adc2v).tolist())
+        trace_x.append(trace[0])
+        # print(trace_x[-1], type(trace_x[-1]))
+        # exit()
+        trace_y.append(trace[1])
+        trace_x.append(trace[2])
 
-    tvoltage.det_id = list(range(len(traces[ev])))
-    tvoltage.trace_length = traces_lengths
-    tvoltage.start_time = start_times
-    tvoltage.rel_peak_time = rel_peak_times
-    tvoltage.det_time = det_times
-    tvoltage.e_det_time = e_det_times
-    tvoltage.isTriggered = isTriggereds
-    tvoltage.sampling_speed = sampling_speeds
-    tvoltage.trace_x = trace_xs
-    tvoltage.trace_y = trace_ys
-    tvoltage.trace_z = trace_zs
+    tvoltage.du_id = du_id
+    tvoltage.du_seconds = du_seconds
+    tvoltage.du_nanoseconds = du_nanoseconds
+    tvoltage.trigger_position = trigger_position
+    tvoltage.trigger_flag = trigger_flag
+    tvoltage.atm_temperature = atm_temperature
+    tvoltage.atm_pressure = atm_pressure
+    tvoltage.atm_humidity = atm_humidity
+    tvoltage.acceleration_x = acceleration_x
+    tvoltage.acceleration_y = acceleration_y
+    tvoltage.acceleration_z = acceleration_z
+    tvoltage.trace_x = trace_x
+    tvoltage.trace_y = trace_y
+    tvoltage.trace_z = trace_z
 
     tvoltage.fill()
 
