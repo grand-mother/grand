@@ -164,8 +164,6 @@ for ev in range(event_count):
         acceleration_z.append(ev/4)
 
         trace_x.append(trace[0])
-        # print(trace_x[-1], type(trace_x[-1]))
-        # exit()
         trace_y.append(trace[1])
         trace_x.append(trace[2])
 
@@ -192,7 +190,7 @@ print("Wrote tvoltage")
 
 # ********** Efield ****************
 
-# Efield has the same data as ADC counts tree and Voltage tree + FFTs
+# Efield has some of the Voltage tree data + FFTs
 from scipy import fftpack
 
 # Recalculate Voltage to Efield - just an example, so just multiply by a dumb value
@@ -204,15 +202,28 @@ tefield = EfieldEventTree()
 
 # fill the tree with every second of generated events - dumb selection
 for ev in range(0,event_count,2):
+    tefield.run_number = 0
     tefield.event_number = ev
+    # First data unit in the event
+    tefield.first_du = 0
+    # As the event time add the current time
+    tefield.time_seconds = int(time.mktime(time.gmtime()))
+    # Event nanoseconds 0 for now
+    tefield.time_nanoseconds = 0
+    # Triggered event
+    tefield.event_type = 0x8000
+    # The number of antennas in the event
+    tefield.du_count = len(traces[ev])
+
     # Loop through the event's traces
-    traces_lengths = []
-    start_times = []
-    rel_peak_times = []
-    det_times = []
-    e_det_times = []
-    isTriggereds = []
-    sampling_speeds = []
+    du_id = []
+    du_seconds = []
+    du_nanoseconds = []
+    trigger_position = []
+    trigger_flag = []
+    atm_temperature = []
+    atm_pressure = []
+    atm_humidity = []
     trace_xs = []
     trace_ys = []
     trace_zs = []
@@ -227,20 +238,21 @@ for ev in range(0,event_count,2):
         # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
-        traces_lengths.append(len(trace[0]))
-        start_times.append(ev*10)
-        rel_peak_times.append(ev*11)
-        det_times.append(ev*13.5)
-        e_det_times.append(ev*14)
-        isTriggereds.append(True)
-        sampling_speeds.append(ev*15)
+        du_id.append(i)
+        du_seconds.append(tefield.time_seconds)
+        du_nanoseconds.append(tefield.time_nanoseconds)
+        trigger_position.append(i//2)
+        trigger_flag.append(tefield.event_type)
+        atm_temperature.append(20+ev/2)
+        atm_pressure.append(1024+ev/2)
+        atm_humidity.append(50+ev/2)
 
         # To multiply a list by a number elementwise, convert to a numpy array and back
         # Here a real ComputeEfield() function should be called instead of multiplying adc2v
         # ToDo: better read the Voltage trace from the TTree
-        trace_xs.append((np.array(trace[0])*adc2v*v2ef).tolist())
-        trace_ys.append((np.array(trace[1])*adc2v*v2ef).tolist())
-        trace_zs.append((np.array(trace[2])*adc2v*v2ef).tolist())
+        trace_xs.append((np.array(trace[0])*v2ef).astype(np.float32).tolist())
+        trace_ys.append((np.array(trace[1])*v2ef).astype(np.float32).tolist())
+        trace_zs.append((np.array(trace[2])*v2ef).astype(np.float32).tolist())
 
         # FFTS
         fft = fftpack.fft(trace[0])
@@ -256,14 +268,14 @@ for ev in range(0,event_count,2):
         # ToDo: recall how to calculate the phase easily
         fft_phase_zs.append(np.abs(fft))
 
-    tefield.det_id = list(range(len(traces[ev])))
-    tefield.trace_length = traces_lengths
-    tefield.start_time = start_times
-    tefield.rel_peak_time = rel_peak_times
-    tefield.det_time = det_times
-    tefield.e_det_time = e_det_times
-    tefield.isTriggered = isTriggereds
-    tefield.sampling_speed = sampling_speeds
+    tefield.du_id = du_id
+    tefield.du_seconds = du_seconds
+    tefield.du_nanoseconds = du_nanoseconds
+    tefield.trigger_position = trigger_position
+    tefield.trigger_flag = trigger_flag
+    tefield.atm_temperature = atm_temperature
+    tefield.atm_pressure = atm_pressure
+    tefield.atm_humidity = atm_humidity
     tefield.trace_x = trace_xs
     tefield.trace_y = trace_ys
     tefield.trace_z = trace_zs
