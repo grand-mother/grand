@@ -78,9 +78,6 @@ class DataTree():
     _tree_name: str = ""
     _tree: ROOT.TTree = ROOT.TTree(_tree_name, _tree_name)
 
-    _run_number: np.ndarray = np.zeros(1, np.uint32)
-    _event_number: np.ndarray = np.zeros(1, np.uint32)
-
     @property
     def tree(self):
         return self._tree
@@ -125,22 +122,6 @@ class DataTree():
             except:
                 print(f"The file {self._file} either does not exist or is not a valid ROOT file")
 
-    @property
-    def run_number(self):
-        return self._run_number[0]
-
-    @run_number.setter
-    def run_number(self, val: np.uint32) -> None:
-        self._run_number[0] = val
-
-    @property
-    def event_number(self):
-        return self._event_number[0]
-
-    @event_number.setter
-    def event_number(self, val: np.uint32) -> None:
-        self._event_number[0] = val
-
     def fill(self):
         self._tree.Fill()
 
@@ -173,24 +154,8 @@ class DataTree():
     def scan(self, *args):
         self._tree.Scan(*args)
 
-    # Readout the TTree entry corresponding to the event and run
-    def get_event(self, ev_no, run_no=0):
-        # Run does not have
-        self._tree.GetEntryWithIndex(run_no, ev_no)
-        # print(self.__dataclass_fields__)
-        # Assign the TTree branches to the class fields
-        for field in self.__dataclass_fields__:
-            # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name": continue
-            # print(field, self.__dataclass_fields__[field])
-            # Read the TTree branch
-            u = getattr(self._tree, field[1:])
-            # print(self.__dataclass_fields__[field].name, u, type(u))
-            # Assign the TTree branch value to the class field
-            setattr(self, field[1:], u)
-
     def get_entry(self, ev_no):
-        self.get_event(ev_no)
+        self._tree.GetEntry(ev_no)
 
     # All three methods below return the number of entries
     def get_entries(self):
@@ -282,11 +247,76 @@ class DataTree():
     def print(self):
         return self._tree.Print()
 
-
-
+## A mother class for classes with Run values
 @dataclass
-# ToDo: this will have evt_id now, and should not have!
-class RunTree(DataTree):
+class MotherRunTree(DataTree):
+    _run_number: np.ndarray = np.zeros(1, np.uint32)
+
+    @property
+    def run_number(self):
+        return self._run_number[0]
+
+    @run_number.setter
+    def run_number(self, val: np.uint32) -> None:
+        self._run_number[0] = val
+
+    # Readout the TTree entry corresponding to the event and run
+    def get_run(self, run_no):
+        # Run does not have
+        self._tree.GetEntryWithIndex(run_no)
+        # Assign the TTree branches to the class fields
+        for field in self.__dataclass_fields__:
+            # Skip "tree" and "file" fields, as they are not the part of the stored data
+            if field == "_tree" or field == "_file" or field == "_tree_name": continue
+            # print(field, self.__dataclass_fields__[field])
+            # Read the TTree branch
+            u = getattr(self._tree, field[1:])
+            # print(self.__dataclass_fields__[field].name, u, type(u))
+            # Assign the TTree branch value to the class field
+            setattr(self, field[1:], u)
+
+
+## A mother class for classes with Event values
+@dataclass
+class MotherEventTree(DataTree):
+    _run_number: np.ndarray = np.zeros(1, np.uint32)
+    _event_number: np.ndarray = np.zeros(1, np.uint32)
+
+    @property
+    def run_number(self):
+        return self._run_number[0]
+
+    @run_number.setter
+    def run_number(self, val: np.uint32) -> None:
+        self._run_number[0] = val
+
+    @property
+    def event_number(self):
+        return self._event_number[0]
+
+    @event_number.setter
+    def event_number(self, val: np.uint32) -> None:
+        self._event_number[0] = val
+
+    # Readout the TTree entry corresponding to the event and run
+    def get_event(self, ev_no, run_no=0):
+        # Run does not have
+        self._tree.GetEntryWithIndex(run_no, ev_no)
+        # Assign the TTree branches to the class fields
+        for field in self.__dataclass_fields__:
+            # Skip "tree" and "file" fields, as they are not the part of the stored data
+            if field == "_tree" or field == "_file" or field == "_tree_name": continue
+            # print(field, self.__dataclass_fields__[field])
+            # Read the TTree branch
+            u = getattr(self._tree, field[1:])
+            # print(self.__dataclass_fields__[field].name, u, type(u))
+            # Assign the TTree branch value to the class field
+            setattr(self, field[1:], u)
+
+
+## A class wrapping around a TTree holding values commong for the whole run
+@dataclass
+class RunTree(MotherRunTree):
     _tree_name: str = "trun"
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
@@ -449,7 +479,7 @@ class RunTree(DataTree):
 
 
 @dataclass
-class ShowerRunSimdataTree(DataTree):
+class ShowerRunSimdataTree(MotherRunTree):
     _tree_name: str = "GRANDShowerRunSimdata"
 
     _shower_sim: StdString = StdString("") # simulation program (and version) used to simulate the shower
@@ -540,7 +570,7 @@ class ShowerRunSimdataTree(DataTree):
         self._lowe_cut_nucleon[0] = value
 
 @dataclass
-class ShowerEventTree(DataTree):
+class ShowerEventTree(MotherEventTree):
     _tree_name: str = "GRANDShower"
 
     _shower_type: StdString = StdString("")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
@@ -708,7 +738,7 @@ class ShowerEventTree(DataTree):
 
 
 @dataclass
-class ShowerEventSimdataTree(DataTree):
+class ShowerEventSimdataTree(MotherEventTree):
     _tree_name: str = "teventshowersimdata"
 
     ## Event Date and time. TODO:standarize (date format, time format)
@@ -887,7 +917,7 @@ class ShowerEventSimdataTree(DataTree):
 
 
 @dataclass
-class EfieldRunSimdataTree(DataTree):
+class EfieldRunSimdataTree(MotherRunTree):
     _tree_name: str = "trunefieldsimdata"
 
     _field_sim: StdString = StdString("")  # name and model of the electric field simulator
@@ -957,7 +987,7 @@ class EfieldRunSimdataTree(DataTree):
 
 
 @dataclass
-class EfieldEventSimdataTree(DataTree):
+class EfieldEventSimdataTree(MotherEventTree):
     _tree_name: str = "GRANDEfieldEventSimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -1039,7 +1069,7 @@ class EfieldEventSimdataTree(DataTree):
 
 
 @dataclass
-class VoltageRunSimdataTree(DataTree):
+class VoltageRunSimdataTree(MotherRunTree):
     _tree_name: str = "GRANDVoltageRunSimdata"
 
     _signal_sim: StdString = StdString("")  # name and model of the signal simulator
@@ -1068,7 +1098,7 @@ class VoltageRunSimdataTree(DataTree):
 
 
 @dataclass
-class VoltageEventSimdataTree(DataTree):
+class VoltageEventSimdataTree(MotherEventTree):
     _tree_name: str = "GRANDVoltageEventSimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -1141,7 +1171,7 @@ class VoltageEventSimdataTree(DataTree):
 
 
 @dataclass
-class ADCEventTree(DataTree):
+class ADCEventTree(MotherEventTree):
     _tree_name: str = "teventadc"
 
     def add_proper_friends(self):
@@ -2395,7 +2425,7 @@ class ADCEventTree(DataTree):
 
 
 @dataclass
-class VoltageEventTree(DataTree):
+class VoltageEventTree(MotherEventTree):
     _tree_name: str = "teventvoltage"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -3692,7 +3722,7 @@ class VoltageEventTree(DataTree):
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
-class EfieldEventTree(DataTree):
+class EfieldEventTree(MotherEventTree):
     _tree_name: str = "teventefield"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -4227,4 +4257,5 @@ class EfieldEventTree(DataTree):
             self._fft_phase_z = value
         else:
             exit(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+
 
