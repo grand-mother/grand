@@ -47,6 +47,7 @@ class StdVectorList(MutableSequence):
         return self.vector[index]
 
     def append(self, value):
+        # exit()
         # std::vector does not want numpy types for push_back, need to use .item()
         if isinstance(value, np.generic):
             self.vector.push_back(value.item())
@@ -173,9 +174,6 @@ class DataTree():
     def remove_friend(self, value):
         self._tree.RemoveFriend(value)
 
-    def build_index(self, run_id, evt_id):
-        self._tree.BuildIndex(run_id, evt_id)
-
     def set_tree_index(self, value):
         self._tree.SetTreeIndex(value)
 
@@ -187,7 +185,7 @@ class DataTree():
         # Loop through the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name": continue
+            if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id": continue
             # Create a branch for the field
             self.create_branch_from_field(self.__dataclass_fields__[field])
 
@@ -275,6 +273,9 @@ class MotherRunTree(DataTree):
             # Assign the TTree branch value to the class field
             setattr(self, field[1:], u)
 
+    def build_index(self, run_id):
+        self._tree.BuildIndex(run_id)
+
 
 ## A mother class for classes with Event values
 @dataclass
@@ -312,6 +313,9 @@ class MotherEventTree(DataTree):
             # print(self.__dataclass_fields__[field].name, u, type(u))
             # Assign the TTree branch value to the class field
             setattr(self, field[1:], u)
+
+    def build_index(self, run_id, evt_id):
+        self._tree.BuildIndex(run_id, evt_id)
 
 
 ## A class wrapping around a TTree holding values commong for the whole run
@@ -4259,3 +4263,114 @@ class EfieldEventTree(MotherEventTree):
             exit(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 
+## A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle
+@dataclass
+class DetectorInfo(DataTree):
+    _tree_name: str = "tdetectorinfo"
+
+    ## Detector Unit id
+    _du_id: np.ndarray = np.zeros(1, np.float32)
+    ## Currently read out unit. Not publicly visible
+    _cur_du_id: int = -1
+    ## Detector longitude
+    _long: np.ndarray = np.zeros(1, np.float32)
+    ## Detector latitude
+    _lat: np.ndarray = np.zeros(1, np.float32)
+    ## Detector altitude
+    _alt: np.ndarray = np.zeros(1, np.float32)
+    ## Detector type
+    _type: StdString = StdString("antenna")
+    ## Detector description
+    _description: StdString = StdString("")
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName()=="":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    def __len__(self):
+        return self._tree.GetEntries()
+
+    # def __delitem__(self, index):
+    #     self.vector.erase(index)
+    #
+    # def insert(self, index, value):
+    #     self.vector.insert(index, value)
+    #
+    # def __setitem__(self, index, value):
+    #     self.vector[index] = value
+
+    def __getitem__(self, index):
+        # Read the unit if not read already
+        if self._cur_du_id != index:
+            self._tree.GetEntryWithIndex(index)
+            self._cur_du_id = index
+        return self
+
+    ## Don't really add friends, just generates an index
+    def add_proper_friends(self):
+
+        # Create the index
+        self._tree.BuildIndex("du_id")
+
+
+    @property
+    def du_id(self):
+        return self._du_id[0]
+
+    @du_id.setter
+    def du_id(self, value: int) -> None:
+        self._du_id[0] = value
+
+    @property
+    def long(self):
+        return self._long[0]
+
+    @long.setter
+    def long(self, value: np.float32) -> None:
+        self._long[0] = value
+
+    @property
+    def lat(self):
+        return self._lat[0]
+
+    @lat.setter
+    def lat(self, value: np.float32) -> None:
+        self._lat[0] = value
+
+    @property
+    def alt(self):
+        return self._alt[0]
+
+    @alt.setter
+    def alt(self, value: np.float32) -> None:
+        self._alt[0] = value
+
+    @property
+    def type(self):
+        return str(self._type)
+
+    @type.setter
+    def type(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._type.string.assign(value)
+
+    @property
+    def description(self):
+        return str(self._description)
+
+    @description.setter
+    def description(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._description.string.assign(value)
