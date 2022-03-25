@@ -77,7 +77,7 @@ class StdString():
 class DataTree():
     _file: ROOT.TFile = None
     _tree_name: str = ""
-    _tree: ROOT.TTree = ROOT.TTree(_tree_name, _tree_name)
+    _tree: ROOT.TTree = None
 
     @property
     def tree(self):
@@ -89,39 +89,41 @@ class DataTree():
 
     @classmethod
     def _type(cls):
-        return (cls)
+        return cls
 
     def __post_init__(self):
 
         # Append the instance to the list of generated trees - needed later for adding friends
         grand_tree_list.append(self)
 
-        # Work only if _file was specified
+        # If no file was specified, just create the tree
         if self._file is None:
-            # ToDo: why just the default value doesn't work? Without the thing below, a new GRANDtree will have the same tree object as the previous
             self._tree = ROOT.TTree(self._tree_name, self._tree_name)
-            return 0
-        # TFile was given
-        if type(self._file) is ROOT.TFile:
-            # Try to init with the TTree from this file
-            try:
-                self._tree = self._file.Get(self._tree_name)
-            except:
-                print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}")
-        # String was given
-        elif type(self._file) is str:
-            # Check if this is a valid TFile
-            try:
-                # For now, open in read/only
-                # ToDo: How to make secure read/write open?
-                self._file = ROOT.TFile(self._file, "read")
+        # If the file was specified, try to get the tree from that file
+        else:
+            # TFile was given
+            if type(self._file) is ROOT.TFile:
                 # Try to init with the TTree from this file
                 try:
                     self._tree = self._file.Get(self._tree_name)
                 except:
-                    print(f"No valid {self._tree_name} TTree in the file {self._file}")
-            except:
-                print(f"The file {self._file} either does not exist or is not a valid ROOT file")
+                    print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
+                    self._tree = ROOT.TTree(self._tree_name, self._tree_name)
+            # String was given
+            elif type(self._file) is str:
+                # If the file with that filename is already opened, use it (do not reopen)
+                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file):
+                    self._file = f
+                # If not opened, open
+                else:
+                    self._file = ROOT.TFile(self._file, "update")
+
+                # Try to init with the TTree from this file
+                self._tree = self._file.Get(self._tree_name)
+                # If no TTree in the file, create one
+                if not self._tree:
+                    print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
+                    self._tree = ROOT.TTree(self._tree_name, self._tree_name)
 
     def fill(self):
         self._tree.Fill()
@@ -130,23 +132,24 @@ class DataTree():
 
         self.add_proper_friends()
 
-        # Create the TFile if as string ending with ".root" given as a first argument
+        # If no TFile assigned to the tree and string ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
-        out_file = None
-        if ".root" in args[0][-5:]:
+        creating_file = False
+        if not self._file and ".root" in args[0][-5:]:
             # By default append
-            out_file = ROOT.TFile(args[0], "update")
-            self._tree.SetDirectory(out_file)
+            self._file = ROOT.TFile(args[0], "update")
+            self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
             args = args[1:]
+            creating_file = True
 
         self._tree.Write(*args)
 
-        # Need to set 0 directory so that closing of the file does not delete the internal TTree
-        self._tree.SetDirectory(ROOT.nullptr)
-
         # If TFile was created here, close it
-        if out_file: out_file.Close()
+        if creating_file:
+            # Need to set 0 directory so that closing of the file does not delete the internal TTree
+            self._tree.SetDirectory(ROOT.nullptr)
+            self._file.Close()
 
     # Add the proper friend trees to this tree (reimplemented in daughter classes)
     def add_proper_friends(self):
