@@ -29,36 +29,36 @@ grand_tree_list = []
 # A python list interface to ROOT's std::vector
 class StdVectorList(MutableSequence):
     def __init__(self, vec_type, value=[]):
-        self.vector = ROOT.vector(vec_type)(value)
+        self._vector = ROOT.vector(vec_type)(value)
 
     def __len__(self):
-        return self.vector.size()
+        return self._vector.size()
 
     def __delitem__(self, index):
-        self.vector.erase(index)
+        self._vector.erase(index)
 
     def insert(self, index, value):
-        self.vector.insert(index, value)
+        self._vector.insert(index, value)
 
     def __setitem__(self, index, value):
-        self.vector[index] = value
+        self._vector[index] = value
 
     def __getitem__(self, index):
-        return self.vector[index]
+        return self._vector[index]
 
     def append(self, value):
         # exit()
         # std::vector does not want numpy types for push_back, need to use .item()
         if isinstance(value, np.generic):
-            self.vector.push_back(value.item())
+            self._vector.push_back(value.item())
         else:
-            self.vector.push_back(value)
+            self._vector.push_back(value)
 
     def clear(self):
-        self.vector.clear()
+        self._vector.clear()
 
     def __repr__(self):
-        return str(list(self.vector))
+        return str(list(self._vector))
 
 # A python string interface to ROOT's std::string
 class StdString():
@@ -236,7 +236,7 @@ class DataTree():
         # elif "vector" in str(type(value.default)):
         elif isinstance(value.type, StdVectorList):
             # Create the branch
-            self._tree.Branch(value.name[1:], getattr(self, value.name).vector)
+            self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
         elif id(value.type)==id(StdString):
