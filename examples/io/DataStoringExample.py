@@ -166,7 +166,7 @@ for ev in range(event_count):
 
         trace_x.append(trace[0])
         trace_y.append(trace[1])
-        trace_x.append(trace[2])
+        trace_z.append(trace[2])
 
     tvoltage.du_id = du_id
     tvoltage.du_seconds = du_seconds
