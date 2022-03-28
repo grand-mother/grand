@@ -87,14 +87,18 @@ class DataTree():
     def file(self):
         return self._file
 
+    @file.setter
+    def file(self, val: ROOT.TFile) -> None:
+        self.SetFile(val)
+
     @classmethod
     def _type(cls):
         return cls
 
-    def __post_init__(self):
+    ## Set the tree's file and init/readout the tree from it
+    def SetFile(self, f):
 
-        # Append the instance to the list of generated trees - needed later for adding friends
-        grand_tree_list.append(self)
+        self._file = f
 
         # If no file was specified, just create the tree
         if self._file is None:
@@ -124,6 +128,13 @@ class DataTree():
                 if not self._tree:
                     print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
                     self._tree = ROOT.TTree(self._tree_name, self._tree_name)
+
+
+    def __post_init__(self):
+        # Append the instance to the list of generated trees - needed later for adding friends
+        grand_tree_list.append(self)
+
+        if self._file or not self._tree: self.SetFile(self._file)
 
     def fill(self):
         self._tree.Fill()
