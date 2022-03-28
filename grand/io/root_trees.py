@@ -159,7 +159,9 @@ class DataTree():
         self._tree.Scan(*args)
 
     def get_entry(self, ev_no):
-        self._tree.GetEntry(ev_no)
+        res = self._tree.GetEntry(ev_no)
+        self.assign_branches()
+        return res
 
     # All three methods below return the number of entries
     def get_entries(self):
@@ -180,7 +182,7 @@ class DataTree():
     def set_tree_index(self, value):
         self._tree.SetTreeIndex(value)
 
-    # Create branches of the TTree based on the class fields
+    ## Create branches of the TTree based on the class fields
     def create_branches(self):
         # Reset all branch addresses just in case
         self._tree.ResetBranchAddresses()
@@ -192,7 +194,7 @@ class DataTree():
             # Create a branch for the field
             self.create_branch_from_field(self.__dataclass_fields__[field])
 
-    # Create a specific branch of a TTree computing its type from the corresponding class field
+    ## Create a specific branch of a TTree computing its type from the corresponding class field
     def create_branch_from_field(self, value):
         # Handle numpy arrays
         if isinstance(value.default, np.ndarray):
@@ -244,7 +246,30 @@ class DataTree():
             print(f"Unsupported type {value.type}. Can't create a branch.")
             exit()
 
-    # All three methods below return the number of entries
+    ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
+    def assign_branches(self):
+        # Assign the TTree branches to the class fields
+        for field in self.__dataclass_fields__:
+            # Skip "tree" and "file" fields, as they are not the part of the stored data
+            if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id": continue
+            # print(field, self.__dataclass_fields__[field])
+            # Read the TTree branch
+            u = getattr(self._tree, field[1:])
+            # print(self.__dataclass_fields__[field].name, u, type(u))
+            # Assign the TTree branch value to the class field
+            setattr(self, field[1:], u)
+
+    ## Get entry with indices
+    def get_entry_with_index(self, run_no=0, evt_no=0):
+        res = self._tree.GetEntryWithIndex(run_no, evt_no)
+        if res==0 or res==-1:
+            print(f"No event with event number {evt_no} and run number {run_no} in the tree. Please provide proper numbers.")
+            return 0
+
+        self.assign_branches()
+        return res
+
+    ## All three methods below return the number of entries
     def print(self):
         return self._tree.Print()
 
@@ -261,20 +286,32 @@ class MotherRunTree(DataTree):
     def run_number(self, val: np.uint32) -> None:
         self._run_number[0] = val
 
-    # Readout the TTree entry corresponding to the event and run
+    ## List runs in the tree
+    def print_list_of_runs(self):
+        count = self._tree.Draw("run_number", "", "goff")
+        runs = self._tree.GetV1()
+        print("List of runs in the tree:")
+        for i in range(count):
+            print(int(runs[i]))
+
+    ## Gets list of runs in the tree together
+    def get_list_of_runs(self):
+        count = self._tree.Draw("run_number", "", "goff")
+        runs = self._tree.GetV1()
+        return [int(runs[i]) for i in range(count)]
+
+    # Readout the TTree entry corresponding to the run
     def get_run(self, run_no):
-        # Run does not have
-        self._tree.GetEntryWithIndex(run_no)
-        # Assign the TTree branches to the class fields
-        for field in self.__dataclass_fields__:
-            # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name": continue
-            # print(field, self.__dataclass_fields__[field])
-            # Read the TTree branch
-            u = getattr(self._tree, field[1:])
-            # print(self.__dataclass_fields__[field].name, u, type(u))
-            # Assign the TTree branch value to the class field
-            setattr(self, field[1:], u)
+        # Try to get the run from the tree
+        res = self._tree.GetEntryWithIndex(run_no)
+        # If no such entry, return
+        if res==0 or res==-1:
+            print(f"No run with run number {run_no}. Please provide a proper number.")
+            return 0
+
+        self.assign_branches()
+
+        return res
 
     def build_index(self, run_id):
         self._tree.BuildIndex(run_id)
@@ -302,21 +339,37 @@ class MotherEventTree(DataTree):
     def event_number(self, val: np.uint32) -> None:
         self._event_number[0] = val
 
-    # Readout the TTree entry corresponding to the event and run
-    def get_event(self, ev_no, run_no=0):
-        # Run does not have
-        self._tree.GetEntryWithIndex(run_no, ev_no)
-        # Assign the TTree branches to the class fields
-        for field in self.__dataclass_fields__:
-            # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name": continue
-            # print(field, self.__dataclass_fields__[field])
-            # Read the TTree branch
-            u = getattr(self._tree, field[1:])
-            # print(self.__dataclass_fields__[field].name, u, type(u))
-            # Assign the TTree branch value to the class field
-            setattr(self, field[1:], u)
+    ## List events in the tree together with runs
+    def print_list_of_events(self):
+        count = self._tree.Draw("event_number:run_number", "", "goff")
+        events = self._tree.GetV1()
+        runs = self._tree.GetV2()
+        print("List of events in the tree:")
+        print("event_number run_number")
+        for i in range(count):
+            print(int(events[i]), int(runs[i]))
 
+    ## Gets list of events in the tree together with runs
+    def get_list_of_events(self):
+        count = self._tree.Draw("event_number:run_number", "", "goff")
+        events = self._tree.GetV1()
+        runs = self._tree.GetV2()
+        return [(int(events[i]), int(runs[i])) for i in range(count)]
+
+    ## Readout the TTree entry corresponding to the event and run
+    def get_event(self, ev_no, run_no=0):
+        # Try to get the requested entry
+        res = self._tree.GetEntryWithIndex(run_no, ev_no)
+        # If no such entry, return
+        if res==0 or res==-1:
+            print(f"No event with event number {ev_no} and run number {run_no} in the tree. Please provide proper numbers.")
+            return 0
+
+        self.assign_branches()
+
+        return res
+
+    ## Builds index based on run_id and evt_id for the TTree
     def build_index(self, run_id, evt_id):
         self._tree.BuildIndex(run_id, evt_id)
 
