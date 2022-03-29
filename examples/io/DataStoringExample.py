@@ -2,7 +2,14 @@
 # An example of storing traces to a file
 import numpy as np
 import time
+import sys
 from grand.io.root_trees import *
+
+# Check if a filename was provided on the command line
+if len(sys.argv)==2 and sys.argv[1][-5:]==".root":
+    filename = sys.argv[1]
+else:
+    filename = "stored_data.root"
 
 # Generate random number of traces with random lengths for 10 events, as can be in the real case
 event_count = 10
@@ -26,7 +33,7 @@ trun.site = "dummy site"
 trun.first_event = 0
 trun.last_event = event_count
 trun.fill()
-trun.write("stored_data.root")
+trun.write(filename)
 print("Wrote trun")
 
 # ********** ADC Counts ****************
@@ -105,7 +112,7 @@ for ev in range(event_count):
     tadccounts.fill()
 
 # write the tree to the storage
-tadccounts.write("stored_data.root")
+tadccounts.write(filename)
 print("Wrote tadccounts")
 
 # ********** Voltage ****************
@@ -186,7 +193,7 @@ for ev in range(event_count):
     tvoltage.fill()
 
 # write the tree to the storage
-tvoltage.write("stored_data.root")
+tvoltage.write(filename)
 print("Wrote tvoltage")
 
 # ********** Efield ****************
@@ -290,7 +297,7 @@ for ev in range(0,event_count,2):
     tefield.fill()
 
 # write the tree to the storage
-tefield.write("stored_data.root")
+tefield.write(filename)
 print("Wrote tefield")
 
-# tree_file.Close()
+print(f"Finished writing file {filename}")
