@@ -44,7 +44,14 @@ class StdVectorList(MutableSequence):
         self._vector[index] = value
 
     def __getitem__(self, index):
-        return self._vector[index]
+        # If this is a vector of vectors, convert a subvector to list for the return
+        if len(self._vector) > 0:
+            if "std.vector" in str(type(self._vector[index])):
+                return list(self._vector[index])
+            else:
+                return self._vector[index]
+        else:
+            return None
 
     def append(self, value):
         # exit()
@@ -892,7 +899,7 @@ class ShowerEventSimdataTree(MotherEventTree):
             self._prim_energy += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._prim_energy = value
+            self._prim_energy._vector = value
         else:
             exit(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
 
@@ -910,7 +917,7 @@ class ShowerEventSimdataTree(MotherEventTree):
             self._prim_type += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<string>")):
-            self._prim_type = value
+            self._prim_type._vector = value
         else:
             exit(f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required.")
 
@@ -936,7 +943,7 @@ class ShowerEventSimdataTree(MotherEventTree):
             self._prim_inj_alt_shc += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("float")):
-            self._prim_inj_alt_shc = value
+            self._prim_inj_alt_shc._vector = value
         else:
             exit(f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -1094,7 +1101,7 @@ class EfieldEventSimdataTree(MotherEventTree):
             self._du_id += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("int")):
-            self._du_id = value
+            self._du_id._vector = value
         else:
             exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -1111,7 +1118,7 @@ class EfieldEventSimdataTree(MotherEventTree):
             self._t_0 += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("float")):
-            self._t_0 = value
+            self._t_0._vector = value
         else:
             exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -1128,7 +1135,7 @@ class EfieldEventSimdataTree(MotherEventTree):
             self._p2p += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("float")):
-            self._p2p = value
+            self._p2p._vector = value
         else:
             exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -1194,7 +1201,7 @@ class VoltageEventSimdataTree(MotherEventTree):
             self._du_id += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("int")):
-            self._du_id = value
+            self._du_id._vector = value
         else:
             exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -1212,7 +1219,7 @@ class VoltageEventSimdataTree(MotherEventTree):
             self._t_0 += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("float")):
-            self._t_0 = value
+            self._t_0._vector = value
         else:
             exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -1230,7 +1237,7 @@ class VoltageEventSimdataTree(MotherEventTree):
             self._p2p += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("float")):
-            self._p2p = value
+            self._p2p._vector = value
         else:
             exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -1478,7 +1485,7 @@ class ADCEventTree(MotherEventTree):
             self._event_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._event_id = value
+            self._event_id._vector = value
         else:
             exit(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1495,7 +1502,7 @@ class ADCEventTree(MotherEventTree):
             self._du_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._du_id = value
+            self._du_id._vector = value
         else:
             exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1512,7 +1519,7 @@ class ADCEventTree(MotherEventTree):
             self._du_seconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._du_seconds = value
+            self._du_seconds._vector = value
         else:
             exit(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -1529,7 +1536,7 @@ class ADCEventTree(MotherEventTree):
             self._du_nanoseconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._du_nanoseconds = value
+            self._du_nanoseconds._vector = value
         else:
             exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -1546,7 +1553,7 @@ class ADCEventTree(MotherEventTree):
             self._trigger_position += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_position = value
+            self._trigger_position._vector = value
         else:
             exit(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1563,7 +1570,7 @@ class ADCEventTree(MotherEventTree):
             self._trigger_flag += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_flag = value
+            self._trigger_flag._vector = value
         else:
             exit(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1580,7 +1587,7 @@ class ADCEventTree(MotherEventTree):
             self._atm_temperature += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._atm_temperature = value
+            self._atm_temperature._vector = value
         else:
             exit(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1597,7 +1604,7 @@ class ADCEventTree(MotherEventTree):
             self._atm_pressure += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._atm_pressure = value
+            self._atm_pressure._vector = value
         else:
             exit(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1614,7 +1621,7 @@ class ADCEventTree(MotherEventTree):
             self._atm_humidity += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._atm_humidity = value
+            self._atm_humidity._vector = value
         else:
             exit(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1631,7 +1638,7 @@ class ADCEventTree(MotherEventTree):
             self._acceleration_x += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._acceleration_x = value
+            self._acceleration_x._vector = value
         else:
             exit(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1648,7 +1655,7 @@ class ADCEventTree(MotherEventTree):
             self._acceleration_y += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._acceleration_y = value
+            self._acceleration_y._vector = value
         else:
             exit(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1665,7 +1672,7 @@ class ADCEventTree(MotherEventTree):
             self._acceleration_z += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._acceleration_z = value
+            self._acceleration_z._vector = value
         else:
             exit(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1682,7 +1689,7 @@ class ADCEventTree(MotherEventTree):
             self._battery_level += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._battery_level = value
+            self._battery_level._vector = value
         else:
             exit(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1699,7 +1706,7 @@ class ADCEventTree(MotherEventTree):
             self._firmware_version += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._firmware_version = value
+            self._firmware_version._vector = value
         else:
             exit(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1717,7 +1724,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_sampling_frequency += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_sampling_frequency = value
+            self._adc_sampling_frequency._vector = value
         else:
             exit(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1734,7 +1741,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_sampling_resolution += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_sampling_resolution = value
+            self._adc_sampling_resolution._vector = value
         else:
             exit(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1751,7 +1758,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_input_channels += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_input_channels = value
+            self._adc_input_channels._vector = value
         else:
             exit(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1768,7 +1775,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_enabled_channels += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_enabled_channels = value
+            self._adc_enabled_channels._vector = value
         else:
             exit(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1785,7 +1792,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_samples_count_total += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_total = value
+            self._adc_samples_count_total._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1802,7 +1809,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_samples_count_channel0 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel0 = value
+            self._adc_samples_count_channel0._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel0 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1819,7 +1826,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_samples_count_channel1 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel1 = value
+            self._adc_samples_count_channel1._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel1 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1836,7 +1843,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_samples_count_channel2 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel2 = value
+            self._adc_samples_count_channel2._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel2 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1853,7 +1860,7 @@ class ADCEventTree(MotherEventTree):
             self._adc_samples_count_channel3 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel3 = value
+            self._adc_samples_count_channel3._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1870,7 +1877,7 @@ class ADCEventTree(MotherEventTree):
             self._trigger_pattern += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_pattern = value
+            self._trigger_pattern._vector = value
         else:
             exit(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1887,7 +1894,7 @@ class ADCEventTree(MotherEventTree):
             self._trigger_rate += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_rate = value
+            self._trigger_rate._vector = value
         else:
             exit(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1904,7 +1911,7 @@ class ADCEventTree(MotherEventTree):
             self._clock_tick += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._clock_tick = value
+            self._clock_tick._vector = value
         else:
             exit(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1921,7 +1928,7 @@ class ADCEventTree(MotherEventTree):
             self._clock_ticks_per_second += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._clock_ticks_per_second = value
+            self._clock_ticks_per_second._vector = value
         else:
             exit(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1938,7 +1945,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_offset += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_offset = value
+            self._gps_offset._vector = value
         else:
             exit(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -1955,7 +1962,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_leap_second += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_leap_second = value
+            self._gps_leap_second._vector = value
         else:
             exit(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1972,7 +1979,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_status += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_status = value
+            self._gps_status._vector = value
         else:
             exit(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -1989,7 +1996,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_alarms += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_alarms = value
+            self._gps_alarms._vector = value
         else:
             exit(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2006,7 +2013,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_warnings += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_warnings = value
+            self._gps_warnings._vector = value
         else:
             exit(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2023,7 +2030,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_time += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._gps_time = value
+            self._gps_time._vector = value
         else:
             exit(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -2040,7 +2047,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_long += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_long = value
+            self._gps_long._vector = value
         else:
             exit(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2057,7 +2064,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_lat += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_lat = value
+            self._gps_lat._vector = value
         else:
             exit(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2074,7 +2081,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_alt += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_alt = value
+            self._gps_alt._vector = value
         else:
             exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2091,7 +2098,7 @@ class ADCEventTree(MotherEventTree):
             self._gps_temp += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_temp = value
+            self._gps_temp._vector = value
         else:
             exit(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2108,7 +2115,7 @@ class ADCEventTree(MotherEventTree):
             self._digi_ctrl += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_ctrl = value
+            self._digi_ctrl._vector = value
         else:
             exit(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2125,7 +2132,7 @@ class ADCEventTree(MotherEventTree):
             self._digi_prepost_trig_windows += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_prepost_trig_windows = value
+            self._digi_prepost_trig_windows._vector = value
         else:
             exit(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2142,7 +2149,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_properties0 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties0 = value
+            self._channel_properties0._vector = value
         else:
             exit(f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2159,7 +2166,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_properties1 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties1 = value
+            self._channel_properties1._vector = value
         else:
             exit(f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2176,7 +2183,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_properties2 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties2 = value
+            self._channel_properties2._vector = value
         else:
             exit(f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2193,7 +2200,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_properties3 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties3 = value
+            self._channel_properties3._vector = value
         else:
             exit(f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2210,7 +2217,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_trig_settings0 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings0 = value
+            self._channel_trig_settings0._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2227,7 +2234,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_trig_settings1 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings1 = value
+            self._channel_trig_settings1._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2244,7 +2251,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_trig_settings2 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings2 = value
+            self._channel_trig_settings2._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2261,7 +2268,7 @@ class ADCEventTree(MotherEventTree):
             self._channel_trig_settings3 += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings3 = value
+            self._channel_trig_settings3._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -2278,7 +2285,7 @@ class ADCEventTree(MotherEventTree):
             self._ioff += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._ioff = value
+            self._ioff._vector._vector = value
         else:
             exit(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2296,7 +2303,7 @@ class ADCEventTree(MotherEventTree):
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<short>")):
             # With vectors, I think the address is assigned, so in principle the below is needed only on the first setting of the branch
-            self._trace_0 = value
+            self._trace_0._vector = value
         else:
             exit(f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
@@ -2313,7 +2320,7 @@ class ADCEventTree(MotherEventTree):
             self._trace_1 += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<short>")):
-            self._trace_1 = value
+            self._trace_1._vector = value
         else:
             exit(f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
@@ -2330,7 +2337,7 @@ class ADCEventTree(MotherEventTree):
             self._trace_2 += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<short>")):
-            self._trace_2 = value
+            self._trace_2._vector = value
         else:
             exit(f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
@@ -2347,7 +2354,7 @@ class ADCEventTree(MotherEventTree):
             self._trace_3 += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<short>")):
-            self._trace_3 = value
+            self._trace_3._vector = value
         else:
             exit(f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
@@ -2599,7 +2606,7 @@ class VoltageEventTree(MotherEventTree):
             self._event_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._event_id = value
+            self._event_id._vector = value
         else:
             exit(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2616,7 +2623,7 @@ class VoltageEventTree(MotherEventTree):
             self._du_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._du_id = value
+            self._du_id._vector = value
         else:
             exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2633,7 +2640,7 @@ class VoltageEventTree(MotherEventTree):
             self._du_seconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._du_seconds = value
+            self._du_seconds._vector = value
         else:
             exit(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -2650,7 +2657,7 @@ class VoltageEventTree(MotherEventTree):
             self._du_nanoseconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._du_nanoseconds = value
+            self._du_nanoseconds._vector = value
         else:
             exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -2667,7 +2674,7 @@ class VoltageEventTree(MotherEventTree):
             self._trigger_position += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_position = value
+            self._trigger_position._vector = value
         else:
             exit(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2684,7 +2691,7 @@ class VoltageEventTree(MotherEventTree):
             self._trigger_flag += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_flag = value
+            self._trigger_flag._vector = value
         else:
             exit(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2701,7 +2708,7 @@ class VoltageEventTree(MotherEventTree):
             self._atm_temperature += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._atm_temperature = value
+            self._atm_temperature._vector = value
         else:
             exit(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2718,7 +2725,7 @@ class VoltageEventTree(MotherEventTree):
             self._atm_pressure += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._atm_pressure = value
+            self._atm_pressure._vector = value
         else:
             exit(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2735,7 +2742,7 @@ class VoltageEventTree(MotherEventTree):
             self._atm_humidity += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._atm_humidity = value
+            self._atm_humidity._vector = value
         else:
             exit(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2752,7 +2759,7 @@ class VoltageEventTree(MotherEventTree):
             self._acceleration_x += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._acceleration_x = value
+            self._acceleration_x._vector = value
         else:
             exit(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2769,7 +2776,7 @@ class VoltageEventTree(MotherEventTree):
             self._acceleration_y += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._acceleration_y = value
+            self._acceleration_y._vector = value
         else:
             exit(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2786,7 +2793,7 @@ class VoltageEventTree(MotherEventTree):
             self._acceleration_z += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._acceleration_z = value
+            self._acceleration_z._vector = value
         else:
             exit(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2803,7 +2810,7 @@ class VoltageEventTree(MotherEventTree):
             self._battery_level += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._battery_level = value
+            self._battery_level._vector = value
         else:
             exit(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -2820,7 +2827,7 @@ class VoltageEventTree(MotherEventTree):
             self._firmware_version += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._firmware_version = value
+            self._firmware_version._vector = value
         else:
             exit(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2838,7 +2845,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_sampling_frequency += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_sampling_frequency = value
+            self._adc_sampling_frequency._vector = value
         else:
             exit(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2855,7 +2862,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_sampling_resolution += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_sampling_resolution = value
+            self._adc_sampling_resolution._vector = value
         else:
             exit(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2872,7 +2879,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_input_channels += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_input_channels = value
+            self._adc_input_channels._vector = value
         else:
             exit(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2889,7 +2896,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_enabled_channels += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_enabled_channels = value
+            self._adc_enabled_channels._vector = value
         else:
             exit(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2906,7 +2913,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_samples_count_total += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_total = value
+            self._adc_samples_count_total._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2923,7 +2930,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_samples_count_channel_x += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel_x = value
+            self._adc_samples_count_channel_x._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2940,7 +2947,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_samples_count_channel_y += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel_y = value
+            self._adc_samples_count_channel_y._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2957,7 +2964,7 @@ class VoltageEventTree(MotherEventTree):
             self._adc_samples_count_channel_z += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_samples_count_channel_z = value
+            self._adc_samples_count_channel_z._vector = value
         else:
             exit(f"Incorrect type for adc_samples_count_channel_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2974,7 +2981,7 @@ class VoltageEventTree(MotherEventTree):
             self._trigger_pattern += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_pattern = value
+            self._trigger_pattern._vector = value
         else:
             exit(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -2991,7 +2998,7 @@ class VoltageEventTree(MotherEventTree):
             self._trigger_rate += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_rate = value
+            self._trigger_rate._vector = value
         else:
             exit(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3008,7 +3015,7 @@ class VoltageEventTree(MotherEventTree):
             self._clock_tick += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._clock_tick = value
+            self._clock_tick._vector = value
         else:
             exit(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3025,7 +3032,7 @@ class VoltageEventTree(MotherEventTree):
             self._clock_ticks_per_second += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._clock_ticks_per_second = value
+            self._clock_ticks_per_second._vector = value
         else:
             exit(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3042,7 +3049,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_offset += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_offset = value
+            self._gps_offset._vector = value
         else:
             exit(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3059,7 +3066,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_leap_second += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_leap_second = value
+            self._gps_leap_second._vector = value
         else:
             exit(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3076,7 +3083,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_status += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_status = value
+            self._gps_status._vector = value
         else:
             exit(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3093,7 +3100,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_alarms += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_alarms = value
+            self._gps_alarms._vector = value
         else:
             exit(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3110,7 +3117,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_warnings += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._gps_warnings = value
+            self._gps_warnings._vector = value
         else:
             exit(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3127,7 +3134,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_time += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._gps_time = value
+            self._gps_time._vector = value
         else:
             exit(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -3144,7 +3151,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_long += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_long = value
+            self._gps_long._vector = value
         else:
             exit(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3161,7 +3168,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_lat += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_lat = value
+            self._gps_lat._vector = value
         else:
             exit(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3178,7 +3185,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_alt += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_alt = value
+            self._gps_alt._vector = value
         else:
             exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3195,7 +3202,7 @@ class VoltageEventTree(MotherEventTree):
             self._gps_temp += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_temp = value
+            self._gps_temp._vector = value
         else:
             exit(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3212,7 +3219,7 @@ class VoltageEventTree(MotherEventTree):
             self._digi_ctrl += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_ctrl = value
+            self._digi_ctrl._vector = value
         else:
             exit(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3229,7 +3236,7 @@ class VoltageEventTree(MotherEventTree):
             self._digi_prepost_trig_windows += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_prepost_trig_windows = value
+            self._digi_prepost_trig_windows._vector = value
         else:
             exit(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3246,7 +3253,7 @@ class VoltageEventTree(MotherEventTree):
             self._channel_properties_x += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties_x = value
+            self._channel_properties_x._vector = value
         else:
             exit(f"Incorrect type for channel_properties_x {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3263,7 +3270,7 @@ class VoltageEventTree(MotherEventTree):
             self._channel_properties_y += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties_y = value
+            self._channel_properties_y._vector = value
         else:
             exit(f"Incorrect type for channel_properties_y {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3280,7 +3287,7 @@ class VoltageEventTree(MotherEventTree):
             self._channel_properties_z += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties_z = value
+            self._channel_properties_z._vector = value
         else:
             exit(f"Incorrect type for channel_properties_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3297,7 +3304,7 @@ class VoltageEventTree(MotherEventTree):
             self._channel_trig_settings_x += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings_x = value
+            self._channel_trig_settings_x._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings_x {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3314,7 +3321,7 @@ class VoltageEventTree(MotherEventTree):
             self._channel_trig_settings_y += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings_y = value
+            self._channel_trig_settings_y._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings_y {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3331,7 +3338,7 @@ class VoltageEventTree(MotherEventTree):
             self._channel_trig_settings_z += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings_z = value
+            self._channel_trig_settings_z._vector = value
         else:
             exit(f"Incorrect type for channel_trig_settings_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3348,7 +3355,7 @@ class VoltageEventTree(MotherEventTree):
             self._ioff += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._ioff = value
+            self._ioff._vector = value
         else:
             exit(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3366,7 +3373,7 @@ class VoltageEventTree(MotherEventTree):
             self._trace_x += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_x = value
+            self._trace_x._vector = value
         else:
             exit(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
@@ -3383,7 +3390,7 @@ class VoltageEventTree(MotherEventTree):
             self._trace_y += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_y = value
+            self._trace_y._vector = value
         else:
             exit(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3400,7 +3407,7 @@ class VoltageEventTree(MotherEventTree):
             self._trace_z += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_z = value
+            self._trace_z._vector = value
         else:
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3554,7 +3561,7 @@ class EfieldEventTree(MotherEventTree):
             self._du_id += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._du_id = value
+            self._du_id._vector = value
         else:
             exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3571,7 +3578,7 @@ class EfieldEventTree(MotherEventTree):
             self._du_seconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._du_seconds = value
+            self._du_seconds._vector = value
         else:
             exit(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -3588,7 +3595,7 @@ class EfieldEventTree(MotherEventTree):
             self._du_nanoseconds += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned int")):
-            self._du_nanoseconds = value
+            self._du_nanoseconds._vector = value
         else:
             exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
@@ -3605,7 +3612,7 @@ class EfieldEventTree(MotherEventTree):
             self._trigger_position += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_position = value
+            self._trigger_position._vector = value
         else:
             exit(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3622,7 +3629,7 @@ class EfieldEventTree(MotherEventTree):
             self._trigger_flag += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_flag = value
+            self._trigger_flag._vector = value
         else:
             exit(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3639,7 +3646,7 @@ class EfieldEventTree(MotherEventTree):
             self._atm_temperature += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._atm_temperature = value
+            self._atm_temperature._vector = value
         else:
             exit(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3656,7 +3663,7 @@ class EfieldEventTree(MotherEventTree):
             self._atm_pressure += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._atm_pressure = value
+            self._atm_pressure._vector = value
         else:
             exit(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3673,7 +3680,7 @@ class EfieldEventTree(MotherEventTree):
             self._atm_humidity += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._atm_humidity = value
+            self._atm_humidity._vector = value
         else:
             exit(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3690,7 +3697,7 @@ class EfieldEventTree(MotherEventTree):
             self._trigger_pattern += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_pattern = value
+            self._trigger_pattern._vector = value
         else:
             exit(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3707,7 +3714,7 @@ class EfieldEventTree(MotherEventTree):
             self._trigger_rate += value
         # A vector was given
         elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_rate = value
+            self._trigger_rate._vector = value
         else:
             exit(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
@@ -3724,7 +3731,7 @@ class EfieldEventTree(MotherEventTree):
             self._gps_long += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_long = value
+            self._gps_long._vector = value
         else:
             exit(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3741,7 +3748,7 @@ class EfieldEventTree(MotherEventTree):
             self._gps_lat += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_lat = value
+            self._gps_lat._vector = value
         else:
             exit(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3758,7 +3765,7 @@ class EfieldEventTree(MotherEventTree):
             self._gps_alt += value
         # A vector was given
         elif isinstance(value, ROOT.vector("float")):
-            self._gps_alt = value
+            self._gps_alt._vector = value
         else:
             exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
@@ -3775,7 +3782,7 @@ class EfieldEventTree(MotherEventTree):
             self._digi_prepost_trig_windows += value
         # A vector was given
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_prepost_trig_windows = value
+            self._digi_prepost_trig_windows._vector = value
         else:
             exit(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
@@ -3792,7 +3799,7 @@ class EfieldEventTree(MotherEventTree):
             self._trace_x += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_x = value
+            self._trace_x._vector = value
         else:
             exit(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
@@ -3809,7 +3816,7 @@ class EfieldEventTree(MotherEventTree):
             self._trace_y += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_y = value
+            self._trace_y._vector = value
         else:
             exit(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3826,7 +3833,7 @@ class EfieldEventTree(MotherEventTree):
             self._trace_z += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_z = value
+            self._trace_z._vector = value
         else:
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3843,7 +3850,7 @@ class EfieldEventTree(MotherEventTree):
             self._fft_mag_x += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_mag_x = value
+            self._fft_mag_x._vector = value
         else:
             exit(f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3860,7 +3867,7 @@ class EfieldEventTree(MotherEventTree):
             self._fft_mag_y += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_mag_y = value
+            self._fft_mag_y._vector = value
         else:
             exit(f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3877,7 +3884,7 @@ class EfieldEventTree(MotherEventTree):
             self._fft_mag_z += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_mag_z = value
+            self._fft_mag_z._vector = value
         else:
             exit(f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3894,7 +3901,7 @@ class EfieldEventTree(MotherEventTree):
             self._fft_phase_x += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_phase_x = value
+            self._fft_phase_x._vector = value
         else:
             exit(f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3911,7 +3918,7 @@ class EfieldEventTree(MotherEventTree):
             self._fft_phase_y += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_phase_y = value
+            self._fft_phase_y._vector = value
         else:
             exit(f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
@@ -3928,7 +3935,7 @@ class EfieldEventTree(MotherEventTree):
             self._fft_phase_z += value
         # A vector of strings was given
         elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_phase_z = value
+            self._fft_phase_z._vector = value
         else:
             exit(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
