@@ -1,36 +1,37 @@
 ## The grandlib classes following https://docs.google.com/document/d/1P0AwR3U3MVZyU1ewIobWkJPZmVkxKCAw/edit
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 import numpy as np
 from typing import Any
 from grand.io.root_trees import *
+import os
 
-## A class describing a single antenna
+## A class describing a single antenna; ToDo: Should it be antenna, or more general: Detector?
 @dataclass
 class Antenna():
     ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
-    _position : np.ndarray = np.zeros(3, np.float32)
+    position: np.ndarray = np.zeros(3, np.float32)
     ## Antenna tilt
-    _tilt : np.ndarray = np.zeros(3, np.float32)
+    tilt: np.ndarray = np.zeros(3, np.float32)
     ## Antenna acceleration - this comes from hardware. ToDo: perhaps recalculate to tilt or remove tilt?
-    _acceleration : np.ndarray = np.zeros(3, np.float32)
+    acceleration: np.ndarray = np.zeros(3, np.float32)
 
     ## The antenna model
-    _model : Any = 0
+    model: Any = 0
 
-    # Parameters below come from the hardware, but do we want them here?
+    # ToDo: Parameters below come from the hardware, but do we want them here?
     ## Atmospheric temperature (read via I2C)
-    _atm_temperature: float = 0
+    atm_temperature: float = 0
     ## Atmospheric pressure
-    _atm_pressure: float = 0
+    atm_pressure: float = 0
     ## Atmospheric humidity
-    _atm_humidity: float = 0
+    atm_humidity: float = 0
     ## Battery voltage
-    _battery_level: float = 0
+    battery_level: float = 0
     ## Firmware version
-    _firmware_version: float = 0
+    firmware_version: float = 0
 
-    ## Maybe these should go some how to the Timetrace3D?
+    ## Maybe these should go somehow to the Timetrace3D?
     # ## ADC sampling frequency in MHz
     # _adc_sampling_frequency: float = 0
     # ## ADC sampling resolution in bits
@@ -54,24 +55,25 @@ class Antenna():
     # ## Trigger rate - the number of triggers recorded in the second preceding the event
     # _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
 
-    ## Clock tick at which the event was triggered (used to calculate the trigger time)
-    _clock_tick: np.uint16 = 0
-    ## Clock ticks per second
-    _clock_ticks_per_second: np.uint16 = 0
-    ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
-    _gps_offset: float = 0
-    ## GPS leap second
-    _gps_leap_second: np.uint16 = 0
-    ## GPS status
-    _gps_status: np.uint16 = 0
-    ## GPS alarms
-    _gps_alarms: np.uint16 = 0
-    ## GPS warnings
-    _gps_warnings: np.uint16 = 0
-    ## GPS time
-    _gps_time: int = 0
-    ## GPS temperature
-    _gps_temp: float = 0
+    # I don't think it is useful for the user
+    # ## Clock tick at which the event was triggered (used to calculate the trigger time)
+    # clock_tick: np.uint16 = 0
+    # ## Clock ticks per second
+    # clock_ticks_per_second: np.uint16 = 0
+    # ## GPS offset - offset between the PPS and the real second (in GPS).
+    # gps_offset: float = 0
+    # ## GPS leap second
+    # gps_leap_second: np.uint16 = 0
+    # ## GPS status
+    # gps_status: np.uint16 = 0
+    # ## GPS alarms
+    # gps_alarms: np.uint16 = 0
+    # ## GPS warnings
+    # gps_warnings: np.uint16 = 0
+    # ## GPS time
+    # gps_time: int = 0
+    # ## GPS temperature
+    # gps_temp: float = 0
 
 
 
@@ -118,23 +120,23 @@ class Voltage(Timetrace3D):
 @dataclass
 class Efield(Timetrace3D):
     ## Polarization angle of the reconstructed Efield in the shower plane [deg]
-    _eta: float = 0
+    eta: float = 0
     ## Ratio of the geomagnetic to charge excess contributions
-    _a_ratio: float = 0
+    a_ratio: float = 0
 
 ## A class for holding a shower
 @dataclass
 class Shower():
     ## Shower energy [eV]
-    _energy: float = 0
+    energy: float = 0
     ## Shower Xmax [g/cm2]
-    _Xmax: float = 0
+    Xmax: float = 0
     ## Shower position in the site's reference frame
-    _Xmaxpos: np.ndarray = np.zeros(3, dtype=np.float32)
+    Xmaxpos: np.ndarray = np.zeros(3, dtype=np.float32)
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-    _origin_geoid: np.ndarray = np.zeros(3, dtype=np.float32)
+    origin_geoid: np.ndarray = np.zeros(3, dtype=np.float32)
     ## Poistion of the core on the ground in the site's reference frame
-    _core_ground_pos: np.ndarray = np.zeros(3, dtype=np.float32)
+    core_ground_pos: np.ndarray = np.zeros(3, dtype=np.float32)
 
 ## A class for holding an event
 @dataclass
@@ -158,25 +160,27 @@ class Event():
     efields: list[Efield] = None
 
     # Reconstruction parameters
+    ## Was this event reconstructed?
+    is_reconstructed: bool = False
     ## Is this event associated to a single wave based on reconstruction
-    _is_wave: bool = False
+    is_wave: bool = False
     ## Vector of origin of plane wave fit
-    _origin_planewave: np.ndarray = np.zeros(3, np.float32)
+    origin_planewave: np.ndarray = np.zeros(3, np.float32)
     ## Chi2 of plane wave fit
-    _chi2_planewave: np.ndarray = np.zeros(3, np.float32)
+    chi2_planewave: np.ndarray = np.zeros(3, np.float32)
     ## Position of the source according to spherical fit
-    _origin_sphere: np.ndarray = np.zeros(3, np.float32)
+    origin_sphere: np.ndarray = np.zeros(3, np.float32)
     ## Chi2 of spherical fit
-    _chi2_sphere: np.ndarray = np.zeros(3, np.float32)
+    chi2_sphere: np.ndarray = np.zeros(3, np.float32)
 
     ## Is this an EAS?
-    _is_eas: bool = False
+    is_eas: bool = False
 
     ## Reconstructed shower
-    _shower: Shower() = None
+    shower: Shower() = None
 
     ## Simualted shower for simulations
-    _simShower: Shower() = None
+    simShower: Shower() = None
 
     # *** Run related properties
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
@@ -276,8 +280,10 @@ class Event():
     def fill_event_from_eventvoltage_tree(self):
         self.teventvoltage.get_event(self.event_number, self.run_number)
         self.voltages = []
+        self.antennas = []
         # Loop through traces
         for i in range(len(self.teventvoltage.trace_x)):
+            # Fill the voltage trace part
             v = Voltage()
             tx = self.teventvoltage.trace_x[i]
             v.n_points = len(tx)
@@ -285,6 +291,15 @@ class Event():
             v.trace_y = self.teventvoltage.trace_y[i]
             v.trace_z = self.teventvoltage.trace_z[i]
             self.voltages.append(v)
+
+            # Fill the antenna part
+            a = Antenna()
+            a.atm_temperature = self.teventvoltage.atm_temperature[i]
+            a.atm_pressure = self.teventvoltage.atm_pressure[i]
+            a.atm_humidity = self.teventvoltage.atm_humidity[i]
+            a.battery_level = self.teventvoltage.battery_level[i]
+            a.firmware_version = self.teventvoltage.firmware_version[i]
+            self.antennas.append(a)
 
         # ## The trace length
         # _n_points: int = 0
@@ -294,13 +309,6 @@ class Event():
         # _t0: np.datetime64 = np.datetime64(0, 'ns')
         # ## Trigger time as unix time with nanoseconds
         # _trigger_time: np.datetime64 = np.datetime64(0, 'ns')
-        #
-        # ## Trace vector in X
-        # _trace_x: np.ndarray = np.zeros(1, np.float)
-        # ## Trace vector in Y
-        # _trace_y: np.ndarray = np.zeros(1, np.float)
-        # ## Trace vector in Z
-        # _trace_z: np.ndarray = np.zeros(1, np.float)
         #
         # ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
         # ## Hilbert envelope vector in X
@@ -328,10 +336,29 @@ class Event():
     ## Print all the class values
     def print(self):
         # Assign the TTree branches to the class fields
-        for field in self.__dataclass_fields__:
-            # Skip "tree" and "file" fields, as they are not the part of the stored data
-            # if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id": continue
-            print(field, self.__dataclass_fields__[field])
-            # Read the TTree branch
-            # u = getattr(self._tree, field[1:])
-            # print(self.__dataclass_fields__[field].name, u, type(u))
+        for field in fields(self):
+            # Skip the list fields
+            if any(x in field.name for x in {"antennas", "voltages", "efields"}): continue
+            print("{:<30} {:>30}".format(field.name, str(getattr(self, field.name))))
+
+        # Now deal with the list fields separately
+
+        print("Antennas:")
+        print("\t{:<30} {:>30}".format("No of antennas:", len(self.antennas)))
+        print("\t{:<30} {:>30}".format("Position:", str([a.position for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Tilt:", str([a.tilt for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Acceleration:", str([a.acceleration for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Humidity:", str([a.atm_humidity for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Pressure:", str([a.atm_pressure for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Temperature:", str([a.atm_temperature for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Battery level:", str([a.battery_level for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Firmware version:", str([a.firmware_version for a in self.antennas])))
+
+        print("Voltages:")
+        print("\t{:<30} {:>30}".format("Triggered status:", str([tr.is_triggered for tr in self.voltages])))
+        print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace_x) for tr in self.voltages])))
+        print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace_x[0] for tr in self.voltages])))
+
+        print("Efields:")
+        print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace_x) for tr in self.efields])))
+        print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace_x[0] for tr in self.efields])))
