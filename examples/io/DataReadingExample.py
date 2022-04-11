@@ -12,7 +12,7 @@ else:
 #tadccounts.get_event(10002, 2201)
 tadccounts.get_event(2)
 print("ADCCounts readout: tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0]")
-print(tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0)
+print(tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0])
 
 
 tefield = EfieldEventTree("stored_data.root")
