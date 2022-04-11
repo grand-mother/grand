@@ -124,7 +124,7 @@ class DataTree():
             # String was given
             elif type(self._file) is str:
                 # If the file with that filename is already opened, use it (do not reopen)
-                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file):
+                if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file)):
                     self._file = f
                 # If not opened, open
                 else:
@@ -213,19 +213,24 @@ class DataTree():
         self._tree.SetTreeIndex(value)
 
     ## Create branches of the TTree based on the class fields
-    def create_branches(self):
+    def create_branches(self, set_if_exists=True):
         # Reset all branch addresses just in case
         self._tree.ResetBranchAddresses()
+
+        # If branches already exist, set their address instead of creating, if requested
+        set_branches = False
+        if set_if_exists and len(self._tree.GetListOfBranches())>0:
+            set_branches = True
 
         # Loop through the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
             if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
             # Create a branch for the field
-            self.create_branch_from_field(self.__dataclass_fields__[field])
+            self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
 
     ## Create a specific branch of a TTree computing its type from the corresponding class field
-    def create_branch_from_field(self, value):
+    def create_branch_from_field(self, value, set_branches=False):
         # Handle numpy arrays
         if isinstance(value.default, np.ndarray):
             # Generate ROOT TTree data type string
@@ -261,17 +266,29 @@ class DataTree():
                 val_type = "/O"
 
             # Create the branch
-            self._tree.Branch(value.name[1:], getattr(self, value.name), value.name[1:] + val_type)
+            if not set_branches:
+                self._tree.Branch(value.name[1:], getattr(self, value.name), value.name[1:] + val_type)
+            # Or set its address
+            else:
+                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name))
         # ROOT vectors as StdVectorList
         # elif "vector" in str(type(value.default)):
         elif isinstance(value.type, StdVectorList):
             # Create the branch
-            self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
+            if not set_branches:
+                self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
+            # Or set its address
+            else:
+                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
         elif id(value.type)==id(StdString):
             # Create the branch
-            self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+            if not set_branches:
+                self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+            # Or set its address
+            else:
+                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
         else:
             print(f"Unsupported type {value.type}. Can't create a branch.")
             exit()
@@ -359,9 +376,10 @@ class MotherRunTree(DataTree):
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):
-        self._tree.Draw("run_number", "", "goff")
-        self._entry_list = [int(el) for el in self._tree.GetV1()]
-        print("Existing entry list", self._entry_list)
+        # Fill the entry list if there are some entries in the tree
+        if self._tree.Draw("run_number", "", "goff") > 0:
+            self._entry_list = [int(el) for el in self._tree.GetV1()]
+            print("Existing entry list", self._entry_list)
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
@@ -442,8 +460,11 @@ class MotherEventTree(DataTree):
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):
-        self._tree.Draw("run_number:entry_number", "", "goff")
-        self._entry_list = [(int(el[0]),int(el[1])) for el in zip(self._tree.GetV1(), self._tree.GetV2())]
+        # Fill the entry list if there are some entries in the tree
+        if (count := self._tree.Draw("run_number:event_number", "", "goff")) > 0:
+            v1 = np.array(np.frombuffer(self._tree.GetV1(), dtype=np.float64, count=count))
+            v2 = np.array(np.frombuffer(self._tree.GetV2(), dtype=np.float64, count=count))
+            self._entry_list = [(int(el[0]),int(el[1])) for el in zip(v1, v2)]
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
@@ -930,6 +951,18 @@ class ShowerEventSimdataTree(MotherEventTree):
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
+
+    @property
+    def date(self):
+        return str(self._date)
+
+    @date.setter
+    def date(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._date.string.assign(value)
 
     @property
     def rnd_seed(self):
