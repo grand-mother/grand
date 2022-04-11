@@ -29,6 +29,7 @@ for ev in range(event_count):
 # ********** Generarte Run Tree ****************
 # It needs to be first, so that the Event trees can find it. However, it need some informations from them, so will be filled at the end
 trun = RunTree()
+trun.run_number = 0
 trun.site = "dummy site"
 trun.first_event = 0
 trun.last_event = event_count
