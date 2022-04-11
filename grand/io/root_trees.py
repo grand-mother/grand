@@ -165,6 +165,9 @@ class DataTree():
             args = args[1:]
             creating_file = True
 
+        # If the writing options are not explicitly specified, add kWriteDelete option, that deletes the old cycle after writing the new cycle in the TFile
+        if len(args)<2:
+            args = ["", ROOT.TObject.kWriteDelete]
         self._tree.Write(*args)
 
         # If TFile was created here, close it
@@ -298,7 +301,7 @@ class DataTree():
         # Assign the TTree branches to the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id": continue
+            if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
             u = getattr(self._tree, field[1:])
@@ -336,7 +339,7 @@ class MotherRunTree(DataTree):
     def fill(self):
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
-            raise RuntimeError(f"A run with run_number={self.run_number} already exists in the TTree. Exiting.")
+            raise NotUniqueEvent(f"A run with run_number={self.run_number} already exists in the TTree.")
 
         # Fill the tree
         self._tree.Fill()
@@ -377,9 +380,9 @@ class MotherRunTree(DataTree):
     ## Fills the entry list from the tree
     def fill_entry_list(self):
         # Fill the entry list if there are some entries in the tree
-        if self._tree.Draw("run_number", "", "goff") > 0:
-            self._entry_list = [int(el) for el in self._tree.GetV1()]
-            print("Existing entry list", self._entry_list)
+        if (count := self._tree.Draw("run_number", "", "goff")) > 0:
+            v1 = np.array(np.frombuffer(self._tree.GetV1(), dtype=np.float64, count=count))
+            self._entry_list = [int(el) for el in v1]
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
@@ -415,7 +418,7 @@ class MotherEventTree(DataTree):
     def fill(self):
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
-            raise RuntimeError(f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree. Exiting.")
+            raise NotUniqueEvent(f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree.")
 
         # Fill the tree
         self._tree.Fill()
@@ -4089,6 +4092,9 @@ class DetectorInfo(DataTree):
         # Create the index
         self._tree.BuildIndex("du_id")
 
+    ## Fill the tree
+    def fill(self):
+        self._tree.Fill()
 
     @property
     def du_id(self):
@@ -4145,3 +4151,6 @@ class DetectorInfo(DataTree):
             exit(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._description.string.assign(value)
+
+class NotUniqueEvent(Exception):
+    pass
