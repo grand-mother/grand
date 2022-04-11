@@ -12,7 +12,7 @@ if len(sys.argv)==2:
     e.run_number = 0
     e.event_number = 0
     e.fill_event_from_trees()
-    # e.print()
+    e.print()
     print(e.data_source)
     for i,v in enumerate(e.voltages):
         print(i, v.trace_x)
