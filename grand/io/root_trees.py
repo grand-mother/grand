@@ -28,8 +28,11 @@ grand_tree_list = []
 
 # A python list interface to ROOT's std::vector
 class StdVectorList(MutableSequence):
+    vec_type = ""
+
     def __init__(self, vec_type, value=[]):
         self._vector = ROOT.vector(vec_type)(value)
+        self.vec_type = vec_type
 
     def __len__(self):
         return self._vector.size()
@@ -65,6 +68,10 @@ class StdVectorList(MutableSequence):
         self._vector.clear()
 
     def __repr__(self):
+        if len(self._vector) > 0:
+            if "std.vector" in str(type(self._vector[0])):
+                return str([list(el) for el in self._vector])
+
         return str(list(self._vector))
 
 # A python string interface to ROOT's std::string
