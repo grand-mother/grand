@@ -23,7 +23,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True):
     '''
     This routine will read a ZHAireS simulation located in InputFlder and put it in the RootFileHandle. 
-    RunID is the ID if the run is going to be associated with, which should be already on the existing on the file.
+    RunID is the ID of the run is going to be associated with, which should be already existing in the file.
     EventID is the ID of the Event
     
     The function will write only the "Event section of the file. The Run section will be done in other function"
@@ -200,11 +200,19 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # _low_energy_model: StdVectorList("string") = StdVectorList("string")  # high energy model (and version) used TODO: standarize
         # _cpu_time: np.ndarray = np.zeros(3, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
 
-        # Run.run_number = RunID
-        # Run.site = Site
-        # Run.site_long = Long
-        # Run.site_lat = Lat
+        Run.run_number = RunID
+        Run.site = Site
+        Run.site_long = Long
+        Run.site_lat = Lat
 
+        # Fill and write the Run tree for this event
+        try:
+            Run.fill()
+            print("Writing Run")
+            Run.write()
+        # If this Run already exists just don't fill
+        except NotUniqueEvent:
+            pass
 
         SimShower.run_number = RunID
         SimShower.event_number = EventID
@@ -268,7 +276,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # SimEfield_Detector=GRANDRoot.Setup_SimEfieldDetector_Branches(SimEfield_tree,create_branches)      #TODO: Decide if this goes in a separate tree, or is kept inside SimEfield
 
         Efield = EfieldEventTree(FileName)
-        Detectors = DetectorInfo(FileName)
+        # Detectors = DetectorInfo(FileName)
 
 	    #########################################################################################################################
         # Part I: get the information
@@ -319,25 +327,26 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
         # ToDo: but is it needed? We have gps position for every detector for every event. Either remove it and assume they do not change, or do not use DetectorInfo at all, I think
 
-        # Loop through antennas
-        for du_id in range(len(IDs)):
-            # Populate what we can
-            Detectors.du_id = du_id
-            #
-            # tmp_v = ROOT.vector("float")()
-            # tmp_v.assign(ant_position)
-            Detectors.long = antx[du_id]
-            Detectors.lat = anty[du_id]
-            Detectors.alt = antz[du_id]
-            # I think here should be antenna, while generator goes into run info
-            Detectors.type = "antenna"
-            Detectors.description = IDs[du_id]
-            #
-            # ToDo: I don't know what is t9 for a detector!
-            # t0=antt[ant_number]
-            # SimEfield_Detector['t_0'].push_back(t0)
-            Detectors.fill()
-        Detectors.write()
+        # # Loop through antennas
+        # for du_id in range(len(IDs)):
+        #     print(du_id)
+        #     # Populate what we can
+        #     Detectors.du_id = du_id
+        #     #
+        #     # tmp_v = ROOT.vector("float")()
+        #     # tmp_v.assign(ant_position)
+        #     Detectors.long = antx[du_id]
+        #     Detectors.lat = anty[du_id]
+        #     Detectors.alt = antz[du_id]
+        #     # I think here should be antenna, while generator goes into run info
+        #     Detectors.type = "antenna"
+        #     Detectors.description = IDs[du_id]
+        #     #
+        #     # ToDo: I don't know what is t9 for a detector!
+        #     # t0=antt[ant_number]
+        #     # SimEfield_Detector['t_0'].push_back(t0)
+        #     Detectors.fill()
+        # Detectors.write()
 
         # I hope the above are descriptions of all the antennas possible
         # Fill the detectors info with them
