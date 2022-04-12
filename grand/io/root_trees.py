@@ -241,6 +241,7 @@ class DataTree():
             # Skip "tree" and "file" fields, as they are not the part of the stored data
             if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
             # Create a branch for the field
+            # print(self.__dataclass_fields__[field])
             self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
 
     ## Create a specific branch of a TTree computing its type from the corresponding class field
@@ -249,35 +250,35 @@ class DataTree():
         if isinstance(value.default, np.ndarray):
             # Generate ROOT TTree data type string
 
-            # Array size or lack of it
-            if value.default.ndim == 1:
-                val_type = "/"
+            # If the value is a (1D) numpy array with more than 1 value, make it an (1D) array in ROOT
+            if value.default.size > 1:
+                val_type = f"[{value.default.size}]"
             else:
-                val_type = f"[{value.default.ndim}]/"
+                val_type = ""
 
             # Data type
             if value.default.dtype == np.int8:
-                val_type = "/B"
+                val_type += "/B"
             elif value.default.dtype == np.uint8:
-                val_type = "/b"
+                val_type += "/b"
             elif value.default.dtype == np.int16:
-                val_type = "/S"
+                val_type += "/S"
             elif value.default.dtype == np.uint16:
-                val_type = "/s"
+                val_type += "/s"
             elif value.default.dtype == np.int32:
-                val_type = "/I"
+                val_type += "/I"
             elif value.default.dtype == np.uint32:
-                val_type = "/i"
+                val_type += "/i"
             elif value.default.dtype == np.int64:
-                val_type = "/L"
+                val_type += "/L"
             elif value.default.dtype == np.uint64:
-                val_type = "/l"
+                val_type += "/l"
             elif value.default.dtype == np.float32:
-                val_type = "/F"
+                val_type += "/F"
             elif value.default.dtype == np.float64:
-                val_type = "/D"
+                val_type += "/D"
             elif value.default.dtype == np.bool_:
-                val_type = "/O"
+                val_type += "/O"
 
             # Create the branch
             if not set_branches:
