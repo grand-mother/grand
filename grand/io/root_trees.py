@@ -655,7 +655,7 @@ class RunTree(MotherRunTree):
 
 @dataclass
 class ShowerRunSimdataTree(MotherRunTree):
-    _tree_name: str = "GRANDShowerRunSimdata"
+    _tree_name: str = "trunsimdata"
 
     _shower_sim: StdString = StdString("") # simulation program (and version) used to simulate the shower
     _rel_thin: np.ndarray = np.zeros(1, np.float32)  # relative thinning energy
@@ -746,7 +746,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
 @dataclass
 class ShowerEventTree(MotherEventTree):
-    _tree_name: str = "GRANDShower"
+    _tree_name: str = "teventshower"
 
     _shower_type: StdString = StdString("")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
     _shower_energy: np.ndarray = np.zeros(1, np.float32)  # shower energy (GeV)  Check unit conventions.
@@ -1172,7 +1172,7 @@ class EfieldRunSimdataTree(MotherRunTree):
 
 @dataclass
 class EfieldEventSimdataTree(MotherEventTree):
-    _tree_name: str = "GRANDEfieldEventSimdata"
+    _tree_name: str = "teventefieldsimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
     _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
@@ -1251,7 +1251,7 @@ class EfieldEventSimdataTree(MotherEventTree):
 
 @dataclass
 class VoltageRunSimdataTree(MotherRunTree):
-    _tree_name: str = "GRANDVoltageRunSimdata"
+    _tree_name: str = "trunvoltagesimdata"
 
     _signal_sim: StdString = StdString("")  # name and model of the signal simulator
 
@@ -1280,7 +1280,7 @@ class VoltageRunSimdataTree(MotherRunTree):
 
 @dataclass
 class VoltageEventSimdataTree(MotherEventTree):
-    _tree_name: str = "GRANDVoltageEventSimdata"
+    _tree_name: str = "teventvoltagesimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
     _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
