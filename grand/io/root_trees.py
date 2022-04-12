@@ -359,6 +359,10 @@ class MotherRunTree(DataTree):
         # Add the current run_number and event_number to the entry_list
         self._entry_list.append(self.run_number)
 
+    def add_proper_friends(self):
+        # Create the indices
+        self._tree.BuildIndex("run_number")
+
     ## List runs in the tree
     def print_list_of_runs(self):
         count = self._tree.Draw("run_number", "", "goff")
@@ -437,6 +441,95 @@ class MotherEventTree(DataTree):
 
         # Add the current run_number and event_number to the entry_list
         self._entry_list.append((self.run_number, self.event_number))
+
+
+    def add_proper_friends(self):
+        # Create the indices
+        self.build_index("run_number", "event_number")
+
+        # Add the Run tree as a friend if exists already
+        loc_vars = dict(locals())
+        run_trees = []
+        for inst in grand_tree_list:
+            if type(inst) is RunTree: run_trees.append(inst)
+        # If any Run tree was found
+        if len(run_trees)>0:
+            # Warning if there is more than 1 RunTree in memory
+            if len(run_trees) > 1:
+                print(f"More than 1 RunTree detected in memory. Adding the last one {run_trees[-1]} as a friend")
+            # Add the last one RunTree as a friend
+            run_tree = run_trees[-1]
+
+            # Add the Run TTree as a friend
+            self.add_friend(run_tree.tree)
+
+        # Do not add ADCEventTree as a friend to itself
+        if not isinstance(self, ADCEventTree):
+            # Add the ADC tree as a friend if exists already
+            adc_trees = []
+            for inst in grand_tree_list:
+                if type(inst) is ADCEventTree: adc_trees.append(inst)
+            # If any ADC tree was found
+            if len(adc_trees)>0:
+                # Warning if there is more than 1 ADCEventTree in memory
+                if len(adc_trees) > 1:
+                    print(f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend")
+                # Add the last one ADCEventTree as a friend
+                adc_tree = adc_trees[-1]
+
+                # Add the ADC TTree as a friend
+                self.add_friend(adc_tree.tree)
+
+        # Do not add VoltageEventTree as a friend to itself
+        if not isinstance(self, VoltageEventTree):
+            # Add the Voltage tree as a friend if exists already
+            voltage_trees = []
+            for inst in grand_tree_list:
+                if type(inst) is VoltageEventTree: voltage_trees.append(inst)
+            # If any ADC tree was found
+            if len(voltage_trees) > 0:
+                # Warning if there is more than 1 VoltageEventTree in memory
+                if len(voltage_trees) > 1:
+                    print(f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend")
+                # Add the last one VoltageEventTree as a friend
+                voltage_tree = voltage_trees[-1]
+
+                # Add the Voltage TTree as a friend
+                self.add_friend(voltage_tree.tree)
+
+        # Do not add EfieldEventTree as a friend to itself
+        if not isinstance(self, EfieldEventTree):
+            # Add the Efield tree as a friend if exists already
+            efield_trees = []
+            for inst in grand_tree_list:
+                if type(inst) is EfieldEventTree: efield_trees.append(inst)
+            # If any ADC tree was found
+            if len(efield_trees) > 0:
+                # Warning if there is more than 1 EfieldEventTree in memory
+                if len(efield_trees) > 1:
+                    print(f"More than 1 EfieldEventTree detected in memory. Adding the last one {efield_trees[-1]} as a friend")
+                # Add the last one EfieldEventTree as a friend
+                efield_tree = efield_trees[-1]
+
+                # Add the Efield TTree as a friend
+                self.add_friend(efield_tree.tree)
+
+        # Do not add ShowerEventTree as a friend to itself
+        if not isinstance(self, ShowerEventTree):
+            # Add the Shower tree as a friend if exists already
+            shower_trees = []
+            for inst in grand_tree_list:
+                if type(inst) is ShowerEventTree: shower_trees.append(inst)
+            # If any ADC tree was found
+            if len(shower_trees) > 0:
+                # Warning if there is more than 1 ShowerEventTree in memory
+                if len(shower_trees) > 1:
+                    print(f"More than 1 ShowerEventTree detected in memory. Adding the last one {shower_trees[-1]} as a friend")
+                # Add the last one ShowerEventTree as a friend
+                shower_tree = shower_trees[-1]
+
+                # Add the Shower TTree as a friend
+                self.add_friend(shower_tree.tree)
 
 
     ## List events in the tree together with runs
@@ -531,10 +624,6 @@ class RunTree(MotherRunTree):
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
-
-    def add_proper_friends(self):
-        # Create the indices
-        self._tree.BuildIndex("run_number")
 
     @property
     def run_mode(self):
@@ -1354,27 +1443,6 @@ class VoltageEventSimdataTree(MotherEventTree):
 @dataclass
 class ADCEventTree(MotherEventTree):
     _tree_name: str = "teventadc"
-
-    def add_proper_friends(self):
-
-        # Create the indices
-        self.build_index("run_number", "event_number")
-
-        # Add the Run tree as a friend if exists already
-        loc_vars = dict(locals())
-        run_trees = []
-        for inst in grand_tree_list:
-            if type(inst) is RunTree: run_trees.append(inst)
-        # If any Run tree was found
-        if len(run_trees)>0:
-            # Warning if there is more than 1 RunTree in memory
-            if len(run_trees) > 1:
-                print(f"More than 1 RunTree detected in memory. Adding the last one {run_trees[-1]} as a friend")
-            # Add the last one RunTree as a friend
-            run_tree = run_trees[-1]
-
-            # Add the Run TTree as a friend
-            self.add_friend(run_tree.tree)
 
     ## Common for the whole event
     ## Event size
@@ -2616,28 +2684,6 @@ class VoltageEventTree(MotherEventTree):
 
         self.create_branches()
 
-    def add_proper_friends(self):
-
-        # Create the indices
-        self.build_index("run_number", "event_number")
-
-        # Assuming that the RunTree is already a friend of ADC tree, so it does not have to be added as a friend here
-
-        # Add the ADC tree as a friend if exists already
-        adc_trees = []
-        for inst in grand_tree_list:
-            if type(inst) is ADCEventTree: adc_trees.append(inst)
-        # If any ADC tree was found
-        if len(adc_trees)>0:
-            # Warning if there is more than 1 ADCEventTree in memory
-            if len(adc_trees) > 1:
-                print(f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend")
-            # Add the last one ADCEventTree as a friend
-            adc_tree = adc_trees[-1]
-
-            # Add the ADC TTree as a friend
-            self.add_friend(adc_tree.tree)
-
     @property
     def event_size(self):
         return self._event_size[0]
@@ -3602,28 +3648,6 @@ class EfieldEventTree(MotherEventTree):
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
-
-    def add_proper_friends(self):
-
-        # Create the indices
-        self.build_index("run_number", "event_number")
-
-        # Assuming that the RunTree and ADC tree are already friends of Voltage tree, so they do not have to be added as a friends here
-
-        # Add the Voltage tree as a friend if exists already
-        voltage_trees = []
-        for inst in grand_tree_list:
-            if type(inst) is VoltageEventTree: voltage_trees.append(inst)
-        # If any ADC tree was found
-        if len(voltage_trees) > 0:
-            # Warning if there is more than 1 VoltageEventTree in memory
-            if len(voltage_trees) > 1:
-                print(f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend")
-            # Add the last one VoltageEventTree as a friend
-            voltage_tree = voltage_trees[-1]
-
-            # Add the Voltage TTree as a friend
-            self.add_friend(voltage_tree.tree)
 
     @property
     def time_seconds(self):
