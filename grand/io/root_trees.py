@@ -157,7 +157,7 @@ class DataTree():
     def fill(self):
         pass
 
-    def write(self, *args):
+    def write(self, *args, close_file=True):
         # Add the tree friends to this tree
         self.add_proper_friends()
 
@@ -165,8 +165,12 @@ class DataTree():
         # ToDo: Handle TFile if added as the argument
         creating_file = False
         if not self._file and ".root" in args[0][-5:]:
-            # By default append
-            self._file = ROOT.TFile(args[0], "update")
+            self._file = args[0]
+            if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file)):
+                self._file = f
+            else:
+                # By default append
+                self._file = ROOT.TFile(args[0], "update")
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
             args = args[1:]
@@ -178,7 +182,7 @@ class DataTree():
         self._tree.Write(*args)
 
         # If TFile was created here, close it
-        if creating_file:
+        if creating_file and close_file:
             # Need to set 0 directory so that closing of the file does not delete the internal TTree
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
