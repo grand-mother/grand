@@ -3,6 +3,7 @@
 import numpy as np
 import time
 import sys
+from datetime import datetime
 from grand.io.root_trees import *
 
 # Check if a filename was provided on the command line
@@ -297,8 +298,40 @@ for ev in range(0,event_count,2):
 
     tefield.fill()
 
-# write the tree to the storage
-tefield.write(filename)
+# write the tree to the storage, but don't close the file - it will be used for tshower
+# ToDo: is this correct? Not sure if I should use the file opened for writing when I am reading
+tefield.write(filename, close_file=False)
 print("Wrote tefield")
+
+# Generation of shower data for each event - this should be reonstruction, but here just dumb values
+tshower = ShowerEventTree()
+# Loop through all Efield entries
+for i in range(tefield.get_entries()):
+    # Get the Efield event
+    tefield.get_entry(i)
+
+    tshower.run_number = tefield.run_number
+    tshower.event_number = tefield.event_number
+
+    tshower.shower_type = "particle"
+    tshower.shower_energy = np.random.random(1)*1e8
+    tshower.shower_azimuth = np.random.random(1)*360
+    tshower.shower_zenith = np.random.random(1)*180-90
+    tshower.shower_core_pos = np.random.random(3)
+    tshower.atmos_model = "dense air dummy"
+    tshower.atmos_model_param = np.random.random(3)
+    tshower.magnetic_field = np.random.random(3)
+    tshower.date = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+    tshower.ground_alt = 3000. + np.random.randint(0,1000)
+    tshower.xmax_grams = np.random.random(1) * 500
+    tshower.xmax_pos_shc = np.random.random(3)
+    tshower.xmax_alt = np.random.randint(3000,5000)*1.
+    tshower.gh_fit_param = np.random.random(3)
+    tshower.core_time = np.random.randint(0, 10000)*1.
+
+    tshower.fill()
+
+tshower.write(filename)
+print("Wrote tshower")
 
 print(f"Finished writing file {filename}")
