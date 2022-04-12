@@ -261,6 +261,17 @@ class Event():
             # Make teventefield really None
             self.teventefield = None
 
+        # Check the EventShower tree existence
+        if teventshower:=self.file.Get("teventshower"):
+            self.teventshower = ShowerEventTree(_tree=teventshower)
+            # Fill part of the event from teventshower
+            self.fill_event_from_eventshower_tree()
+        else:
+            print("No EventShower tree. Shower information will not be available.")
+            # Make teventshower really None
+            self.teventshower = None
+
+
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self):
         # Read the event into the class
@@ -320,6 +331,8 @@ class Event():
 
     ## Fill part of the event from the EventEfield tree
     def fill_event_from_eventefield_tree(self):
+        # Initialise the Shower
+        self.shower = Shower()
         self.teventefield.get_event(self.event_number, self.run_number)
         self.efields = []
         # Loop through traces
@@ -332,16 +345,36 @@ class Event():
             v.trace_z = self.teventefield.trace_z[i]
             self.efields.append(v)
 
+    ## Fill part of the event from the EventShower tree
+    def fill_event_from_eventshower_tree(self):
+        self.teventshower.get_event(self.event_number, self.run_number)
+        ## Shower energy [eV]
+        self.shower.energy = self.teventshower.shower_energy
+        ## Shower Xmax [g/cm2]
+        self.shower.Xmax = self.teventshower.xmax_grams
+        ## Shower position in the site's reference frame
+        self.shower.Xmaxpos = self.teventshower.xmax_pos_shc
+        ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
+        self.shower.origin_geoid = np.zeros(3)
+        ## Poistion of the core on the ground in the site's reference frame
+        self.shower.core_ground_pos = self.teventshower.shower_core_pos
 
     ## Print all the class values
     def print(self):
         # Assign the TTree branches to the class fields
         for field in fields(self):
             # Skip the list fields
-            if any(x in field.name for x in {"antennas", "voltages", "efields"}): continue
+            if any(x in field.name for x in {"antennas", "voltages", "efields", "shower"}): continue
             print("{:<30} {:>30}".format(field.name, str(getattr(self, field.name))))
 
         # Now deal with the list fields separately
+
+        print("Shower:")
+        print("\t{:<30} {:>30}".format("Energy:", self.shower.energy))
+        print("\t{:<30} {:>30}".format("Xmax [g/cm2]:", self.shower.Xmax))
+        print("\t{:<30} {:>30}".format("Xmax position:", str(self.shower.Xmaxpos)))
+        print("\t{:<30} {:>30}".format("Origin geoid:", str(self.shower.origin_geoid)))
+        print("\t{:<30} {:>30}".format("Core ground pos:", str(self.shower.core_ground_pos)))
 
         print("Antennas:")
         print("\t{:<30} {:>30}".format("No of antennas:", len(self.antennas)))
