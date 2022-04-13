@@ -24,7 +24,8 @@ print("\nEfield readout: tefield.event_number, tefield.det_time[0], tefield.trac
 print("The event_number of tadccounts changed to 4 when tefield event with event_number 4 was requested")
 print(tefield.event_number, tefield.du_seconds[0], tefield.trace_x[0][0], tadccounts.event_number)
 
-# Hard exit to avoid ROOT crash on defriending - until they fix
-import os
-os._exit(1)
+# Hard exit to avoid ROOT crash on defriending - not needed for ROOT 6.26.02 and above
+if ROOT.gROOT.GetVersionInt() < 62602:
+    import os
+    os._exit(1)
 

@@ -19,7 +19,10 @@ if len(sys.argv)==2:
     for i,ef in enumerate(e.efields):
         print(i, ef.trace_x)
 
-    os._exit(1)
+    # Hard exit to avoid ROOT crash on defriending - not needed for ROOT 6.26.02 and above
+    if ROOT.gROOT.GetVersionInt() < 62602:
+        import os
+        os._exit(1)
     e.file.Close()
 
 else:
