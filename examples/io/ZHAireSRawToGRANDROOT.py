@@ -241,9 +241,10 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         #TODO:low_energy_model
         SimShower.cpu_time = CPUTime
 
-        print("Filling SimShower")
+        print("Filling ShowerEventSimdataTree")
         SimShower.fill()
         SimShower.write()
+        print("Wrote ShowerEventSimdataTree")
 
         # SimShower_tree.Fill()  #TODO:we might want to sumbit all the Fill Commands (or at least the Write comands) together at the end to ensure we write down to file complete records. # LWP: no problem for both. Also, there are options like AutoSave() etc., for writing, which we should consider
         # SimShower_tree.SetTreeIndex(ROOT.nullptr)
@@ -305,8 +306,8 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # Part II: Fill SimEfield TTree	
         ############################################################################################################################ 
         #Populate what we can
-        Efield.run_id = RunID
-        Efield.evt_id = EventID
+        Efield.run_number = RunID
+        Efield.event_number = EventID
         ## At the moment these are commented out, because I think they should go into EfieldRun
         # SimEfield.field_sim = FieldSimulator                #TODO: Decide if this goes into the SimEfieldRun Info
         # # print(SimEfield['field_sim'])
