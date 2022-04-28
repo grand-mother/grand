@@ -1,7 +1,6 @@
 #!/usr/bin/python
-# Example use of the grandlib classes
+# Example use of the grandlib classes for stored data read-out
 import sys
-import os
 from grand.grandlib_classes.grandlib_classes import *
 
 e = Event()
