@@ -26,7 +26,7 @@ from typing import List, Union
 ## A list of generated Trees
 grand_tree_list = []
 
-# A python list interface to ROOT's std::vector
+## A python list interface to ROOT's std::vector
 class StdVectorList(MutableSequence):
     vec_type = ""
 
@@ -74,7 +74,7 @@ class StdVectorList(MutableSequence):
 
         return str(list(self._vector))
 
-# A python string interface to ROOT's std::string
+## A python string interface to ROOT's std::string
 class StdString():
     def __init__(self, value):
         self.string = ROOT.string(value)
@@ -86,12 +86,18 @@ class StdString():
         return str(self.string)
 
 
-# Mother class for GRAND Tree data classes
+## Mother class for GRAND Tree data classes
 @dataclass
 class DataTree():
+    ## File handle
     _file: ROOT.TFile = None
-    _tree_name: str = ""
+    ## File name
+    _file_name: str = None
+    ## Tree object
     _tree: ROOT.TTree = None
+    ## Tree name
+    _tree_name: str = ""
+    ## A list of run_numbers or (run_number, event_number) pairs in the Tree
     _entry_list: list = field(default_factory=list)
 
     @property
@@ -104,55 +110,76 @@ class DataTree():
 
     @file.setter
     def file(self, val: ROOT.TFile) -> None:
-        self.SetFile(val)
+        self._set_file(val)
 
     @classmethod
     def _type(cls):
         return cls
 
-    ## Set the tree's file and init/readout the tree from it
-    def SetFile(self, f):
-
-        self._file = f
-
-        # If no file was specified, just create the tree
-        if self._file is None:
-            self._tree = ROOT.TTree(self._tree_name, self._tree_name)
-        # If the file was specified, try to get the tree from that file
-        else:
-            # TFile was given
-            if type(self._file) is ROOT.TFile:
-                # Try to init with the TTree from this file
-                try:
-                    self._tree = self._file.Get(self._tree_name)
-                except:
-                    print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
-                    self._tree = ROOT.TTree(self._tree_name, self._tree_name)
-            # String was given
-            elif type(self._file) is str:
-                # If the file with that filename is already opened, use it (do not reopen)
-                if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file)):
-                    self._file = f
-                # If not opened, open
-                else:
-                    self._file = ROOT.TFile(self._file, "update")
-
-                # Try to init with the TTree from this file
-                self._tree = self._file.Get(self._tree_name)
-                # If no TTree in the file, create one
-                if not self._tree:
-                    print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
-                    self._tree = ROOT.TTree(self._tree_name, self._tree_name)
-
-            # Fill the runs/events numbers from the tree (important if it already existed)
-            self.fill_entry_list()
-
-
     def __post_init__(self):
         # Append the instance to the list of generated trees - needed later for adding friends
         grand_tree_list.append(self)
 
-        if self._file or not self._tree: self.SetFile(self._file)
+        # Init _file from TFile object
+        if self._file is not None:
+            self._set_file(self._file)
+        # or init _file from a name string
+        elif self._file_name is not None and self._file_name!="":
+            self._set_file(self._file_name)
+
+        # Init tree from the name string
+        if self._tree is None and self._tree_name is not None:
+            self._set_tree(self._tree_name)
+        # or create the tree
+        else:
+            self._create_tree()
+
+    ## Set the tree's file
+    def _set_file(self, f):
+
+        # If the ROOT TFile is given, just use it
+        if isinstance(f, ROOT.TFile):
+            self._file = f
+            self._file_name = self._file.GetName()
+        # If the filename string is given, open/create the ROOT file with this name
+        else:
+            self._file_name = f
+            print(self._file_name)
+            # If the file with that filename is already opened, use it (do not reopen)
+            if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)):
+                self._file = f
+            # If not opened, open
+            else:
+                # Update mode both for adding entries and reading
+                self._file = ROOT.TFile(self._file_name, "update")
+
+    ## Init/readout the tree from a file
+    def _set_tree(self, t):
+        # If the ROOT TTree is given, just use it
+        if isinstance(t, ROOT.TTree):
+            self._tree = t
+            self._tree_name = t.GetName()
+        # If the tree name string is given, open/create the ROOT TTree with this name
+        else:
+            self._tree_name = t
+
+            # Try to init with the TTree from file
+            if self._file is not None:
+                self._tree = self._file.Get(self._tree_name)
+                # There was no such tree in the file, so create one
+                if self._tree==None:
+                    print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
+                    self._create_tree()
+            else:
+                self._create_tree()
+
+        # Fill the runs/events numbers from the tree (important if it already existed)
+        self.fill_entry_list()
+
+    ## Create the tree
+    def _create_tree(self, tree_name=""):
+        if tree_name!="": self._tree_name = tree_name
+        self._tree = ROOT.TTree(self._tree_name, self._tree_name)
 
     def fill(self):
         pass
@@ -161,20 +188,23 @@ class DataTree():
         # Add the tree friends to this tree
         self.add_proper_friends()
 
-        # If no TFile assigned to the tree and string ending with ".root" given as a first argument, create the TFile
+        # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
         creating_file = False
-        if not self._file and ".root" in args[0][-5:]:
-            self._file = args[0]
-            if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file)):
+        if len(args)>0 and ".root" in args[0][-5:]:
+            self._file_name = args[0]
+            if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)):
                 self._file = f
             else:
                 # By default append
                 self._file = ROOT.TFile(args[0], "update")
+            # Make the tree save itself in this file
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
             args = args[1:]
             creating_file = True
+
+        # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
 
         # If the writing options are not explicitly specified, add kWriteDelete option, that deletes the old cycle after writing the new cycle in the TFile
         if len(args)<2:
@@ -239,7 +269,7 @@ class DataTree():
         # Loop through the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
+            if field == "_tree" or field == "_file" or field == "_file_name" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
             # Create a branch for the field
             # print(self.__dataclass_fields__[field])
             self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
@@ -313,7 +343,7 @@ class DataTree():
         # Assign the TTree branches to the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
+            if field == "_tree" or field == "_file" or field == "_file_name" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
             u = getattr(self._tree, field[1:])
@@ -434,7 +464,7 @@ class MotherEventTree(DataTree):
     def fill(self):
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
-            raise NotUniqueEvent(f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree.")
+            raise NotUniqueEvent(f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree {self._tree.GetName()}.")
 
         # Fill the tree
         self._tree.Fill()
@@ -567,11 +597,13 @@ class MotherEventTree(DataTree):
         self._tree.BuildIndex(run_id, evt_id)
 
     ## Fills the entry list from the tree
-    def fill_entry_list(self):
+    def fill_entry_list(self, tree=None):
+        if tree is None:
+            tree = self._tree
         # Fill the entry list if there are some entries in the tree
-        if (count := self._tree.Draw("run_number:event_number", "", "goff")) > 0:
-            v1 = np.array(np.frombuffer(self._tree.GetV1(), dtype=np.float64, count=count))
-            v2 = np.array(np.frombuffer(self._tree.GetV2(), dtype=np.float64, count=count))
+        if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
+            v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count))
+            v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count))
             self._entry_list = [(int(el[0]),int(el[1])) for el in zip(v1, v2)]
 
     ## Check if specified run_number/event_number already exist in the tree
@@ -4188,5 +4220,6 @@ class DetectorInfo(DataTree):
 
         self._description.string.assign(value)
 
+## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
     pass
