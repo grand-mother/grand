@@ -119,7 +119,6 @@ class DataTree():
     def __post_init__(self):
         # Append the instance to the list of generated trees - needed later for adding friends
         grand_tree_list.append(self)
-
         # Init _file from TFile object
         if self._file is not None:
             self._set_file(self._file)
@@ -136,7 +135,6 @@ class DataTree():
 
     ## Set the tree's file
     def _set_file(self, f):
-
         # If the ROOT TFile is given, just use it
         if isinstance(f, ROOT.TFile):
             self._file = f
@@ -171,6 +169,7 @@ class DataTree():
                     print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
                     self._create_tree()
             else:
+                print(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
 
         # Fill the runs/events numbers from the tree (important if it already existed)
@@ -752,7 +751,7 @@ class RunTree(MotherRunTree):
 
     @site_long.setter
     def site_long(self, value):
-        self._site_long = np.array(value)
+        self._site_long = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("site_long", self._site_long)
 
     @property
@@ -761,7 +760,7 @@ class RunTree(MotherRunTree):
 
     @site_lat.setter
     def site_lat(self, value):
-        self._site_lat = np.array(value)
+        self._site_lat = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("site_lat", self._site_lat)
 
     @property
@@ -770,7 +769,7 @@ class RunTree(MotherRunTree):
 
     @origin_geoid.setter
     def origin_geoid(self, value):
-        self._origin_geoid = np.array(value)
+        self._origin_geoid = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("origin_geoid", self._origin_geoid)
 
 
@@ -937,7 +936,7 @@ class ShowerEventTree(MotherEventTree):
 
     @shower_core_pos.setter
     def shower_core_pos(self, value):
-        self._shower_core_pos = np.array(value)
+        self._shower_core_pos = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("shower_core_pos", self._shower_core_pos)
 
     @property
@@ -958,7 +957,7 @@ class ShowerEventTree(MotherEventTree):
 
     @atmos_model_param.setter
     def atmos_model_param(self, value):
-        self._atmos_model_param = np.array(value)
+        self._atmos_model_param = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("atmos_model_param", self._atmos_model_param)
 
     @property
@@ -967,7 +966,7 @@ class ShowerEventTree(MotherEventTree):
 
     @magnetic_field.setter
     def magnetic_field(self, value):
-        self._magnetic_field = np.array(value)
+        self._magnetic_field = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("magnetic_field", self._magnetic_field)
 
     @property
@@ -1004,7 +1003,7 @@ class ShowerEventTree(MotherEventTree):
 
     @xmax_pos_shc.setter
     def xmax_pos_shc(self, value):
-        self._xmax_pos_shc = np.array(value)
+        self._xmax_pos_shc = np.array(value).astype(np.float64)
         self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
 
     @property
@@ -1021,7 +1020,7 @@ class ShowerEventTree(MotherEventTree):
 
     @gh_fit_param.setter
     def gh_fit_param(self, value):
-        self._gh_fit_param = np.array(value)
+        self._gh_fit_param = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("gh_fit_param", self._gh_fit_param)
 
     @property
@@ -1157,7 +1156,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @prim_injpoint_shc.setter
     def prim_injpoint_shc(self, value):
-        self._prim_injpoint_shc = np.array(value)
+        self._prim_injpoint_shc = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("prim_injpoint_shc", self._prim_injpoint_shc)
 
     @property
@@ -1184,7 +1183,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @prim_inj_dir_shc.setter
     def prim_inj_dir_shc(self, value):
-        self._prim_inj_dir_shc = np.array(value)
+        self._prim_inj_dir_shc = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("prim_inj_dir_shc", self._prim_inj_dir_shc)
 
     @property
@@ -1217,7 +1216,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @cpu_time.setter
     def cpu_time(self, value):
-        self._cpu_time = np.array(value)
+        self._cpu_time = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("cpu_time", self._cpu_time)
 
 
