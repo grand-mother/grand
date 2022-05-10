@@ -61,20 +61,19 @@ for event_number in range(event_count):
         e.trace_z = v.trace_z*v2ef
         event.efields.append(e)
 
-        # The shower part
-        event.shower = Shower()
-        event.shower.energy = np.random.rand()
-        ## Shower Xmax [g/cm2]
-        event.shower.Xmax = np.random.randint(1000, 4000)/10.
-        ## Shower position in the site's reference frame
-        event.shower.Xmaxpos = np.random.rand(3)*1000
-        ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-        event.shower.origin_geoid = np.zeros(3)
-        ## Poistion of the core on the ground in the site's reference frame
-        event.shower.core_ground_pos = np.random.rand(4)*1000
+    # The shower part
+    event.shower = Shower()
+    event.shower.energy = np.random.rand()
+    ## Shower Xmax [g/cm2]
+    event.shower.Xmax = np.random.randint(1000, 4000)/10.
+    ## Shower position in the site's reference frame
+    event.shower.Xmaxpos = np.random.rand(3)*1000
+    ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
+    event.shower.origin_geoid = np.zeros(3)
+    ## Poistion of the core on the ground in the site's reference frame
+    event.shower.core_ground_pos = np.random.rand(4)*1000
 
 
 
     event.write(filename)
     print(f"Wrote event {event_number}")
-
