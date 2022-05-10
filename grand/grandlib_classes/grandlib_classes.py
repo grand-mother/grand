@@ -5,6 +5,7 @@ import numpy as np
 from typing import Any
 from grand.io.root_trees import *
 import os
+import ROOT
 
 ## A class describing a single antenna; ToDo: Should it be antenna, or more general: Detector?
 @dataclass
@@ -210,6 +211,12 @@ class Event():
     ## Origin of the coordinate system used for the array
     origin_geoid: np.ndarray = np.zeros(3, np.float32)
 
+    # Internal trees
+    trun: ROOT.TTree = None
+    teventvoltage: ROOT.TTree = None
+    teventefield: ROOT.TTree = None
+    teventshower: ROOT.TTree = None
+
 
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
@@ -232,7 +239,7 @@ class Event():
         # *** Check what TTrees are available and fill according to their availability
 
         # Check the Run tree existence
-        if trun:=self.file.Get("trun"):
+        if trun := self.file.Get("trun"):
             self.trun = RunTree(_tree=trun)
             # Fill part of the event from trun
             self.fill_event_from_runtree()
@@ -242,7 +249,7 @@ class Event():
             self.trun = None
 
         # Check the EventVoltage tree existence
-        if teventvoltage:=self.file.Get("teventvoltage"):
+        if teventvoltage := self.file.Get("teventvoltage"):
             self.teventvoltage = VoltageEventTree(_tree=teventvoltage)
             # Fill part of the event from teventvoltage
             self.fill_event_from_eventvoltage_tree()
@@ -252,7 +259,7 @@ class Event():
             self.teventvoltage = None
 
         # Check the EventEfield tree existence
-        if teventefield:=self.file.Get("teventefield"):
+        if teventefield := self.file.Get("teventefield"):
             self.teventefield = EfieldEventTree(_tree=teventefield)
             # Fill part of the event from teventefield
             self.fill_event_from_eventefield_tree()
@@ -262,7 +269,7 @@ class Event():
             self.teventefield = None
 
         # Check the EventShower tree existence
-        if teventshower:=self.file.Get("teventshower"):
+        if teventshower := self.file.Get("teventshower"):
             self.teventshower = ShowerEventTree(_tree=teventshower)
             # Fill part of the event from teventshower
             self.fill_event_from_eventshower_tree()
@@ -395,3 +402,178 @@ class Event():
         print("Efields:")
         print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace_x) for tr in self.efields])))
         print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace_x[0] for tr in self.efields])))
+
+    ## Write the Event to a file
+    def write(self, common_filename=None, shower_filename=None, efields_filename=None, voltages_filename=None, run_filename=None):
+
+        # Give common_filename to all the filenames if not specified
+        if common_filename:
+            if not shower_filename: shower_filename = common_filename
+            if not efields_filename: efields_filename = common_filename
+            if not voltages_filename: voltages_filename = common_filename
+            if not run_filename: run_filename = common_filename
+
+        # Invoke saving for each part
+        self.write_shower(shower_filename)
+        self.write_efields(efields_filename)
+        self.write_voltages(voltages_filename)
+        self.write_run(run_filename)
+
+    ## Write the run to a file
+    def write_run(self, filename):
+        self.fill_run_tree(filename=filename)
+        self.trun.write(filename)
+
+    ## Write the voltages to a file
+    def write_voltages(self, filename):
+        self.fill_voltage_tree(filename=filename)
+        self.teventvoltage.write(filename)
+
+    ## Write the efields to a file
+    def write_efields(self, filename):
+        self.fill_efield_tree(filename=filename)
+        self.teventefield.write(filename)
+
+    ## Write the shower to a file
+    def write_shower(self, filename):
+        self.fill_shower_tree(filename=filename)
+        self.teventshower.write(filename)
+
+
+    ## Fill the run tree from this Event
+    def fill_run_tree(self, overwrite=False, filename=None):
+        # Fill only if the tree not initialised yet
+        if self.trun is not None and not overwrite:
+            print(self.trun)
+            raise TreeExists("The trun TTree already exists!")
+
+        # Look for the RunTree with the same file and name in the memory
+        for el in globals()["grand_tree_list"]:
+            # If the RunTree with the same file and name in the memory exists, use it
+            if type(el)==RunTree and el._tree_name=="trun" and el._file_name==filename:
+                self.trun = el
+                break
+        # No same RunTree in memory - create a new one
+        else:
+            self.trun = RunTree(_file_name=filename, _tree_name="trun")
+
+        # Copy the event into the tree
+        self.trun.run_number = self.run_number
+        self.trun.run_mode = self.run_mode
+        self.trun.data_source = self.data_source
+        self.trun.data_generator = self.data_generator
+        self.trun.data_generator_version = self.data_generator_version
+        self.trun.site = self.site
+        self.trun.site_long = self.site_long
+        self.trun.site_lat = self.site_lat
+        self.trun.origin_geoid = self.origin_geoid
+
+        # Fill the tree with values
+        try:
+            self.trun.fill()
+        # If this Run already exists just don't fill
+        except NotUniqueEvent:
+            pass
+
+
+    ## Fill the voltage tree from this Event
+    def fill_voltage_tree(self, overwrite=False, filename=None):
+        # Fill only if the tree not initialised yet
+        if self.teventvoltage is not None and not overwrite:
+            print(self.teventvoltage)
+            raise TreeExists("The teventvoltage TTree already exists!")
+
+        # Look for the VoltageEventTree with the same file and name in the memory
+        for el in globals()["grand_tree_list"]:
+            # If the VoltageEventTree with the same file and name in the memory exists, use it
+            if type(el)==VoltageEventTree and el._tree_name=="teventvoltage" and el._file_name==filename:
+                self.teventvoltage = el
+                break
+        # No same VoltageEventTree in memory - create a new one
+        else:
+            self.teventvoltage = VoltageEventTree(_file_name = filename)
+
+        self.teventvoltage.run_number = self.run_number
+        self.teventvoltage.event_number = self.event_number
+
+        # Loop through voltages and antennas and copy the contents into the tree
+        for v,a in zip(self.voltages, self.antennas):
+            self.teventvoltage.trace_x.append(np.array(v.trace_x).astype(np.float32))
+            self.teventvoltage.trace_y.append(np.array(v.trace_y).astype(np.float32))
+            self.teventvoltage.trace_z.append(np.array(v.trace_z).astype(np.float32))
+
+            self.teventvoltage.atm_temperature.append(a.atm_temperature)
+            self.teventvoltage.atm_pressure.append(a.atm_pressure)
+            self.teventvoltage.atm_humidity.append(a.atm_humidity)
+            self.teventvoltage.battery_level.append(a.battery_level)
+            self.teventvoltage.firmware_version.append(a.firmware_version)
+
+        self.teventvoltage.fill()
+
+    ## Fill the efield tree from this Event
+    def fill_efield_tree(self, overwrite=False, filename=None):
+        # Fill only if the tree not initialised yet
+        if self.teventefield is not None and not overwrite:
+            print(self.teventefield)
+            raise TreeExists("The teventefield TTree already exists!")
+
+        # Look for the EfieldEventTree with the same file and name in the memory
+        for el in globals()["grand_tree_list"]:
+            # If the EfieldEventTree with the same file and name in the memory exists, use it
+            if type(el)==EfieldEventTree and el._tree_name=="teventefield" and el._file_name==filename:
+                self.teventefield = el
+                break
+        # No same EfieldEventTree in memory - create a new one
+        else:
+            self.teventefield = EfieldEventTree(_file_name = filename)
+
+        self.teventefield.run_number = self.run_number
+        self.teventefield.event_number = self.event_number
+
+        # Loop through efields and copy the contents into the tree
+        for v in self.efields:
+            self.teventefield.trace_x.append(np.array(v.trace_x).astype(np.float32))
+            self.teventefield.trace_x.append(np.array(v.trace_y).astype(np.float32))
+            self.teventefield.trace_x.append(np.array(v.trace_z).astype(np.float32))
+
+        self.teventefield.fill()
+
+    ## Fill the shower tree from this Event
+    def fill_shower_tree(self, overwrite=False, filename=None):
+        # Fill only if the tree not initialised yet
+        if self.teventshower is not None and not overwrite:
+            print(self.teventshower)
+            raise TreeExists("The teventshower TTree already exists!")
+
+        # Look for the ShowerEventTree with the same file and name in the memory
+        for el in globals()["grand_tree_list"]:
+            # If the ShowerEventTree with the same file and name in the memory exists, use it
+            if type(el)==ShowerEventTree and el._tree_name=="teventshower" and el._file_name==filename:
+                self.teventshower = el
+                break
+        # No same ShowerEventTree in memory - create a new one
+        else:
+            self.teventshower = ShowerEventTree(_file_name = filename)
+
+        self.teventshower.run_number = self.run_number
+        self.teventshower.event_number = self.event_number
+
+
+        self.teventshower.shower_energy = self.shower.energy
+        ## Shower Xmax [g/cm2]
+        self.teventshower.xmax_grams = self.shower.Xmax
+        ## Shower position in the site's reference frame
+        self.teventshower.xmax_pos_shc = self.shower.Xmaxpos
+        ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
+        #self.shower.origin_geoid = np.zeros(3)
+        ## Poistion of the core on the ground in the site's reference frame
+        self.teventshower.shower_core_pos = self.shower.core_ground_pos
+
+        self.teventshower.fill()
+
+
+
+## Exception risen if the TTree already exists
+class TreeExists(Exception):
+    pass
+
