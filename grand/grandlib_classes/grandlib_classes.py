@@ -404,7 +404,7 @@ class Event():
         print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace_x[0] for tr in self.efields])))
 
     ## Write the Event to a file
-    def write(self, common_filename=None, shower_filename=None, efields_filename=None, voltages_filename=None, run_filename=None):
+    def write(self, common_filename=None, shower_filename=None, efields_filename=None, voltages_filename=None, run_filename=None, overwrite=False):
 
         # Give common_filename to all the filenames if not specified
         if common_filename:
@@ -420,24 +420,24 @@ class Event():
         self.write_run(run_filename)
 
     ## Write the run to a file
-    def write_run(self, filename):
+    def write_run(self, filename, overwrite=False):
         self.fill_run_tree(filename=filename)
-        self.trun.write(filename)
+        self.trun.write(filename, overwrite=overwrite)
 
     ## Write the voltages to a file
-    def write_voltages(self, filename):
+    def write_voltages(self, filename, overwrite=False):
         self.fill_voltage_tree(filename=filename)
-        self.teventvoltage.write(filename)
+        self.teventvoltage.write(filename, overwrite=overwrite)
 
     ## Write the efields to a file
-    def write_efields(self, filename):
+    def write_efields(self, filename, overwrite=False):
         self.fill_efield_tree(filename=filename)
-        self.teventefield.write(filename)
+        self.teventefield.write(filename, overwrite=overwrite)
 
     ## Write the shower to a file
-    def write_shower(self, filename):
+    def write_shower(self, filename, overwrite=False):
         self.fill_shower_tree(filename=filename)
-        self.teventshower.write(filename)
+        self.teventshower.write(filename, overwrite=overwrite)
 
 
     ## Fill the run tree from this Event
@@ -533,8 +533,8 @@ class Event():
         # Loop through efields and copy the contents into the tree
         for v in self.efields:
             self.teventefield.trace_x.append(np.array(v.trace_x).astype(np.float32))
-            self.teventefield.trace_x.append(np.array(v.trace_y).astype(np.float32))
-            self.teventefield.trace_x.append(np.array(v.trace_z).astype(np.float32))
+            self.teventefield.trace_y.append(np.array(v.trace_y).astype(np.float32))
+            self.teventefield.trace_z.append(np.array(v.trace_z).astype(np.float32))
 
         self.teventefield.fill()
 
