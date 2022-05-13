@@ -1,4 +1,4 @@
-FROM rootproject/root:6.24.06-ubuntu20.04
+FROM rootproject/root:6.26.02-ubuntu20.04
 
 RUN mkdir -p /opt/grandlib
 
@@ -12,12 +12,15 @@ RUN apt-get update\
 
 
 # python is python3
-RUN ln -s /usr/bin/python3 /usr/bin/python
+# with 6.26.02-ubuntu20.04
+# ln: failed to create symbolic link '/usr/bin/python': File exists
+#RUN ln -s /usr/bin/python3 /usr/bin/python
 
 
 # install python lib for grand lib
 COPY requirements.txt /opt/grandlib/requirements_grandlib.txt
 RUN python3 -m pip install --upgrade pip\
+&& python3 -m pip install --upgrade pip\
 && python3 -m pip install --no-cache-dir -r /opt/grandlib/requirements_grandlib.txt
 
 
