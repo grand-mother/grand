@@ -2,15 +2,14 @@
 
 # parameter must be a git name tag/branch
 
-tag=latest
 
-docker rmi grandlib_release:$tag
+docker rmi grandlib_release
 
 git clone https://github.com/grand-mother/grand.git
 cd grand
 git checkout $1
 cd ..
 
-docker build -f ./release.dockerfile . --tag=grandlib_release:$tag
+docker build -f ./release.dockerfile . --tag=grandlib_release
 
 rm -rf grand
