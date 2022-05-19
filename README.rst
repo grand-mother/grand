@@ -8,7 +8,7 @@ grand package |workflow| |codecov| |docs| |appimage|
 Environment
 -----------
 
-GRAND library can be used under `docker`_ to define a correct environment, else you must install `ROOT`_ library and compile 'TURTLE'_ and 'GULL'_ library under your computer.
+GRAND library can be used under `docker`_ to define a correct environment, else you must install `ROOT`_ library and compile `TURTLE`_ and `GULL`_ library under your computer.
 
 
 Documentation
