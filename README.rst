@@ -10,7 +10,7 @@ Environment
 
 GRAND library can be used under `docker`_ to define a correct environment, else you must install `ROOT`_ library and compile `TURTLE`_ and `GULL`_ library under your computer.
 
-Don't forget to initialize grand library before use it with script **setup.sh** in **env** directory
+Don't forget to initialize grand library before use it with script **env/setup.sh** only in the root of the package
 
 .. code:: bash
    
