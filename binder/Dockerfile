@@ -16,7 +16,7 @@ RUN apt-get update\
 # ln: failed to create symbolic link '/usr/bin/python': File exists
 #RUN ln -s /usr/bin/python3 /usr/bin/python
 
-
+WORKDIR /opt/grandlib
 # install python lib for grand lib
 COPY requirements.txt /opt/grandlib/requirements_grandlib.txt
 RUN python3 -m pip install --upgrade pip\
@@ -26,7 +26,7 @@ RUN python3 -m pip install --upgrade pip\
 # install the notebook package
 RUN pip install --no-cache notebook jupyterlab
 
-RUN mkdir -p /opt/grandlib
+WORKDIR /opt/grandlib
 RUN git clone https://github.com/grand-mother/grand.git
 
 WORKDIR /opt/grandlib/grand
