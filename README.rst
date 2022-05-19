@@ -5,22 +5,16 @@ grand package |workflow| |codecov| |docs| |appimage|
 *Collaboration.*
 
 
-Quick start (needed update)
+Environment
 -----------
 
-The grand package can be installed from `PyPI`_ using pip, e.g. as:
+GRAND library can be used under `docker`_ to define the correct environment.
 
-.. code:: bash
+Also you must install `ROOT`_ library and compile 'TUTLE'_ and 'GULL'_ library under your computer.
 
-   pip install grand
 
-Note that Python 3.8 or above is required. On Linux you can get it as an
-`AppImage`_ including grand dependencies as:
-
-.. code:: bash
-
-   wget https://github.com/grand-mother/grand/releases/download/appimage/python3-x86_64.AppImage
-   chmod u+x python3-x86_64.AppImage
+Documentation
+----------- 
 
 Check the `online documentation`_ for further details.
 
@@ -55,6 +49,8 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 .. Externals links
 
 .. _AppImage: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
+
+.. _grandlib docker: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
 
 .. _GRAND: http://grand.cnrs.fr
 
