@@ -8,9 +8,7 @@ grand package |workflow| |codecov| |docs| |appimage|
 Environment
 -----------
 
-GRAND library can be used under `docker`_ to define the correct environment.
-
-Also you must install `ROOT`_ library and compile 'TUTLE'_ and 'GULL'_ library under your computer.
+GRAND library can be used under `docker`_ to define a correct environment, else you must install `ROOT`_ library and compile 'TURTLE'_ and 'GULL'_ library under your computer.
 
 
 Documentation
@@ -50,7 +48,13 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 
 .. _AppImage: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
 
-.. _grandlib docker: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
+.. _docker: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
+
+.. _ROOT: https://root.cern/install/
+
+.. _TURTLE : https://github.com/niess/gull
+
+.. _GULL: https://github.com/niess/gull
 
 .. _GRAND: http://grand.cnrs.fr
 
