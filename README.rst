@@ -48,11 +48,11 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 
 .. _AppImage: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
 
-.. _docker: https://github.com/grand-mother/python/releases/download/continuous/python3-x86_64.AppImage
+.. _docker: https://github.com/grand-mother/grand/wiki
 
 .. _ROOT: https://root.cern/install/
 
-.. _TURTLE : https://github.com/niess/gull
+.. _TURTLE: https://github.com/niess/gull
 
 .. _GULL: https://github.com/niess/gull
 
