@@ -1,1 +1,1 @@
-FROM grandlib/binder:2.0
+FROM grandlib/binder:2.1
