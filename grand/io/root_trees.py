@@ -183,7 +183,7 @@ class DataTree():
     def fill(self):
         pass
 
-    def write(self, *args, close_file=True):
+    def write(self, *args, close_file=True, **kwargs):
         # Add the tree friends to this tree
         self.add_proper_friends()
 
@@ -194,6 +194,11 @@ class DataTree():
             self._file_name = args[0]
             if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)):
                 self._file = f
+            # Overwrite requested
+            # ToDo: this does not really seem to work now
+            elif kwargs["overwrite"]:
+                print("overwriting")
+                self._file = ROOT.TFile(args[0], "recreate")
             else:
                 # By default append
                 self._file = ROOT.TFile(args[0], "update")
@@ -1482,7 +1487,7 @@ class ADCEventTree(MotherEventTree):
     _t3_number: np.ndarray = np.zeros(1, np.uint32)
     ## First detector unit that triggered in the event
     _first_du: np.ndarray = np.zeros(1, np.uint32)
-    ## Unix time corresponding to the GPS seconds of the trigger
+    ## Unix time corresponding to the GPS seconds of the first triggered station
     _time_seconds: np.ndarray = np.zeros(1, np.uint32)
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
@@ -2608,6 +2613,10 @@ class VoltageEventTree(MotherEventTree):
     _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Nanoseconds of the trigger for this DU
     _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Unix time of the start of the trace for this DU
+    # _du_t0_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Nanoseconds of the start of the trace for this DU
+    # _du_t0_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
     _trigger_position: StdVectorList("unsigned short") = StdVectorList("unsigned short")
     ## Same as event_type, but event_type could consist of different triggered DUs
@@ -2670,6 +2679,12 @@ class VoltageEventTree(MotherEventTree):
     _gps_lat: StdVectorList("float") = StdVectorList("float")
     ## Altitude
     _gps_alt: StdVectorList("float") = StdVectorList("float")
+    ## X position in site's referential
+    _pos_x: StdVectorList("float") = StdVectorList("float")
+    ## Y position in site's referential
+    _pos_y: StdVectorList("float") = StdVectorList("float")
+    ## Z position in site's referential
+    _pos_z: StdVectorList("float") = StdVectorList("float")
     ## GPS temperature
     _gps_temp: StdVectorList("float") = StdVectorList("float")
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
@@ -2846,6 +2861,40 @@ class VoltageEventTree(MotherEventTree):
             self._du_nanoseconds._vector = value
         else:
             exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+
+    # @property
+    # def du_t0_seconds(self):
+    #     return self._du_t0_seconds
+    #
+    # @du_t0_seconds.setter
+    # def du_t0_seconds(self, value) -> None:
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         # Clear the vector before setting
+    #         self._du_t0_seconds.clear()
+    #         self._du_t0_seconds += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned int")):
+    #         self._du_t0_seconds._vector = value
+    #     else:
+    #         exit(f"Incorrect type for du_t0_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+    #
+    # @property
+    # def du_t0_nanoseconds(self):
+    #     return self._du_t0_nanoseconds
+    #
+    # @du_t0_nanoseconds.setter
+    # def du_t0_nanoseconds(self, value) -> None:
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         # Clear the vector before setting
+    #         self._du_t0_nanoseconds.clear()
+    #         self._du_t0_nanoseconds += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned int")):
+    #         self._du_t0_nanoseconds._vector = value
+    #     else:
+    #         exit(f"Incorrect type for du_t0_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def trigger_position(self):
@@ -3393,6 +3442,57 @@ class VoltageEventTree(MotherEventTree):
             exit(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
+    def pos_x(self):
+        return self._pos_x
+
+    @pos_x.setter
+    def pos_x(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._pos_x.clear()
+            self._pos_x += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._pos_x._vector = value
+        else:
+            exit(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+    @property
+    def pos_y(self):
+        return self._pos_y
+
+    @pos_y.setter
+    def pos_y(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._pos_y.clear()
+            self._pos_y += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._pos_y._vector = value
+        else:
+            exit(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+    @property
+    def pos_z(self):
+        return self._pos_z
+
+    @pos_z.setter
+    def pos_z(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._pos_z.clear()
+            self._pos_z += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._pos_z._vector = value
+        else:
+            exit(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+    @property
     def digi_ctrl(self):
         return self._digi_ctrl
 
@@ -3628,6 +3728,10 @@ class EfieldEventTree(MotherEventTree):
     _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Nanoseconds of the trigger for this DU
     _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Unix time of the start of the trace for this DU
+    # _du_t0_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    ## Nanoseconds of the start of the trace for this DU
+    # _du_t0_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
     _trigger_position: StdVectorList("unsigned short") = StdVectorList("unsigned short")
     ## Same as event_type, but event_type could consist of different triggered DUs
@@ -3648,6 +3752,12 @@ class EfieldEventTree(MotherEventTree):
     _gps_lat: StdVectorList("float") = StdVectorList("float")
     ## Altitude
     _gps_alt: StdVectorList("float") = StdVectorList("float")
+    ## X position in site's referential
+    _pos_x: StdVectorList("float") = StdVectorList("float")
+    ## Y position in site's referential
+    _pos_y: StdVectorList("float") = StdVectorList("float")
+    ## Z position in site's referential
+    _pos_z: StdVectorList("float") = StdVectorList("float")
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
     _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
 
@@ -3762,6 +3872,40 @@ class EfieldEventTree(MotherEventTree):
             self._du_nanoseconds._vector = value
         else:
             exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+
+    # @property
+    # def du_t0_seconds(self):
+    #     return self._du_t0_seconds
+    #
+    # @du_t0_seconds.setter
+    # def du_t0_seconds(self, value) -> None:
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         # Clear the vector before setting
+    #         self._du_t0_seconds.clear()
+    #         self._du_t0_seconds += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned int")):
+    #         self._du_t0_seconds._vector = value
+    #     else:
+    #         exit(f"Incorrect type for du_t0_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+    #
+    # @property
+    # def du_t0_nanoseconds(self):
+    #     return self._du_t0_nanoseconds
+    #
+    # @du_t0_nanoseconds.setter
+    # def du_t0_nanoseconds(self, value) -> None:
+    #     # A list of strings was given
+    #     if isinstance(value, list) or isinstance(value, np.ndarray):
+    #         # Clear the vector before setting
+    #         self._du_t0_nanoseconds.clear()
+    #         self._du_t0_nanoseconds += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned int")):
+    #         self._du_t0_nanoseconds._vector = value
+    #     else:
+    #         exit(f"Incorrect type for du_t0_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def trigger_position(self):
@@ -3932,6 +4076,57 @@ class EfieldEventTree(MotherEventTree):
             self._gps_alt._vector = value
         else:
             exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+    @property
+    def pos_x(self):
+        return self._pos_x
+
+    @pos_x.setter
+    def pos_x(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._pos_x.clear()
+            self._pos_x += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._pos_x._vector = value
+        else:
+            exit(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+    @property
+    def pos_y(self):
+        return self._pos_y
+
+    @pos_y.setter
+    def pos_y(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._pos_y.clear()
+            self._pos_y += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._pos_y._vector = value
+        else:
+            exit(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+    @property
+    def pos_z(self):
+        return self._pos_z
+
+    @pos_z.setter
+    def pos_z(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._pos_z.clear()
+            self._pos_z += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._pos_z._vector = value
+        else:
+            exit(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def digi_prepost_trig_windows(self):

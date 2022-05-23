@@ -343,7 +343,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         #     Detectors.type = "antenna"
         #     Detectors.description = IDs[du_id]
         #     #
-        #     # ToDo: I don't know what is t9 for a detector!
+        #     # ToDo: I don't know what is t0 for a detector!
         #     # t0=antt[ant_number]
         #     # SimEfield_Detector['t_0'].push_back(t0)
         #     Detectors.fill()
@@ -373,6 +373,16 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
             # Efield.time_nanoseconds =
             # Efield.event_type =
             Efield.du_count = len(tracefiles)
+
+            # Get the min and max time (traces start/end times) around ZHAireS t0
+            tmin = AiresInfo.GetTimeWindowMinFromSry(sryfile[0])
+            tmax = AiresInfo.GetTimeWindowMaxFromSry(sryfile[0])
+
+            # Find the earliest trace
+            t0_min = np.min(antt)
+
+            # The start of the earliest trace: t0_min+tmin (as tmin is negative) should be the 0.0 time to whic all the traces start times relate
+            trel = t0_min-tmin
 
             for ant in tracefiles:
                 #print("into antenna", ant)
@@ -422,9 +432,22 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
                 # We are copying here, to change to the continuous arrangement in memory
                 Efield.du_id.append(DetectorID)
 
+                # Traces
                 Efield.trace_x.append(np.array(efield[:,1], dtype=np.float32))
                 Efield.trace_y.append(np.array(efield[:,2], dtype=np.float32))
                 Efield.trace_z.append(np.array(efield[:,3], dtype=np.float32))
+
+                # Antenna positions in site's referential in [m]
+                Efield.pos_x.append(ant_position[0])
+                Efield.pos_y.append(ant_position[1])
+                Efield.pos_z.append(ant_position[2])
+
+                # Traces starts
+                # Efield.du_t0_seconds.append((ant[ant_number]-trel)//1e9)
+                # Efield.du_t0_nanoseconds.apend(ant[ant_number]-trel-Efield.du_t0_seconds[-1]*1e9)
+
+                # ToDo: should SlopeA and SlopeB placeholders be added? Not sure, because perhaps this kind of constant geometry will be held somewhere else, as it's not measured. Unless acceleration from gps means that
+
 
                 # ToDo: at least some of the below should be filled in, but I don't know where are they stored in the simulation
                 # _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
@@ -444,7 +467,8 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
                 # _trigger_pattern: StdVectorList("unsigned short") = StdVectorList("unsigned short")
                 # ## Trigger rate - the number of triggers recorded in the second preceding the event
                 # _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-                # ## Longitude
+                # ToDo: That's incorrect! From the ant positions in the site's referential I should calculate geodetic coordinates (assuming some geodetic site's centre)
+                # Can be done with Ramesh's stuff exemplified in https://github.com/grand-mother/grand/blob/master/examples/tools/coordinates_tutorial.ipynb
                 Efield.gps_long.append(ant_position[0])
                 Efield.gps_lat.append(ant_position[1])
                 Efield.gps_alt.append(ant_position[2])
