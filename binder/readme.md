@@ -1,14 +1,16 @@
+# Binder service
+
 https://mybinder.org/
 
 
-https://github.com/binder-examples/minimal-dockerfile
+# Deal with docker file
 
-In docker file
+https://github.com/binder-examples/minimal-dockerfile
 
 https://mybinder.readthedocs.io/en/latest/tutorials/dockerfile.html
 
 
-binder already ok :
+# Binder for grandlib
 
 https://mybinder.org/v2/gh/grand-mother/grand/dev_binder?labpath=examples
 
