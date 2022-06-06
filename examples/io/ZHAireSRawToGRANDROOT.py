@@ -317,6 +317,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
         Efield = EfieldEventTree(FileName)
         # Detectors = DetectorInfo(FileName)
+        EfieldRunSimdata = EfieldRunSimdataTree(FileName)
 
 	    #########################################################################################################################
         # Part I: get the information
@@ -348,13 +349,24 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         ## At the moment these are commented out, because I think they should go into EfieldRun
         # SimEfield.field_sim = FieldSimulator                #TODO: Decide if this goes into the SimEfieldRun Info
         # # print(SimEfield['field_sim'])
-        # SimEfield.refractivity_model = RefractionIndexModel #TODO: Decide if this goes into the SimEfieldRun Info
-        # SimEfield.refractivity_param = RefractionIndexParameters    #TODO: Decide if this goes into the SimEfieldRun Info. If we want to support time or location differences in the index of refraction...probabbly keep it here
-        # SimEfield.t_pre = TimeWindowMin                             #TODO: Decide if this goes into the SimEfieldRun Info
-        # SimEfield.t_post = TimeWindowMax                            #TODO: Decide if this goes into the SimEfieldRun Info
-        # SimEfield.t_bin_size = TimeBinSize                          #TODO: Decide if this goes into the SimEfieldRun Info . If we want to support sims with different trace sizes, this must go here. It might be needed, its difficult (and/or inefficient) to treat all traces as the same lenght. Trace lenght depends on geometry
+        EfieldRunSimdata.run_number = RunID
+        EfieldRunSimdata.refractivity_model = RefractionIndexModel
+        EfieldRunSimdata.refractivity_model_parameters = RefractionIndexParameters
+        EfieldRunSimdata.t_pre = TimeWindowMin
+        EfieldRunSimdata.t_post = TimeWindowMax
+        EfieldRunSimdata.t_bin_size = TimeBinSize
 
- 
+        # Fill and write the EfieldRunSimdata tree for this event
+        try:
+            print("Filling EfieldRunSimdata")
+            EfieldRunSimdata.fill()
+            EfieldRunSimdata.write()
+            print("Wrote EfieldRunSimdata")
+        # If this Run already exists just don't fill
+        except NotUniqueEvent:
+            pass
+
+
         ############################################################################################################################# 
         # Fill SimEfield Detector part
         ############################################################################################################################ 
@@ -412,8 +424,8 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
             Efield.du_count = len(tracefiles)
 
             # Get the min and max time (traces start/end times) around ZHAireS t0
-            tmin = AiresInfo.GetTimeWindowMinFromSry(sryfile[0])
-            tmax = AiresInfo.GetTimeWindowMaxFromSry(sryfile[0])
+            tmin = TimeWindowMin
+            tmax = TimeWindowMax
 
             # Find the earliest trace
             t0_min = np.min(antt)
