@@ -117,9 +117,13 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # SimShower = GRANDRoot.Setup_GRANDShower_Branches(SimShower_tree, create_branches)
         # #print("simshower branches", SimShower)
 
+        # The tree with whole Run information
         Run = RunTree(FileName)
         print("NOW SIMSHOWER")
+        # The tree with general simulation-only information
         SimShower = ShowerEventSimdataTree(FileName)
+        # The tree with ZHAireS only information
+        SimZhairesShower = ShowerEventZHAireSTree(FileName)
         # print(Run.tree, SimShower.tree)
         # exit()
 
@@ -172,6 +176,9 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
             CorePosition=(0,0,0)  
         print("CorePosition:",CorePosition)
 
+        FieldSimulator=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])
+        # FieldSimulator="ZHAireS "+str(FieldSimulator)
+
         #TODO: These are ZHAireS specific parameters. Other simulators wont have these parameters, and might have others. How to handle this?
         #Should we save the input and sry file inside the ROOT file? like a string? And parse simulation software specific parameters from there?
         # LWP: perhaps we should have a separate tree for universal simulator parameters (that would not exist for a real experiment) and specific trees for specific simulators? But then we can forget about automatic parsing of such non-universal ttree. Perhaps some longish string in the universal simulator tree, to be parsed if anyone wants and knows how to, would be better?
@@ -182,7 +189,6 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         MuonEnergyCut=AiresInfo.GetMuonEnergyCutFromSry(sryfile[0])
         MesonEnergyCut=AiresInfo.GetMesonEnergyCutFromSry(sryfile[0])
         NucleonEnergyCut=AiresInfo.GetNucleonEnergyCutFromSry(sryfile[0])
-
 
         ############################################################################################################################# 
         # Part II: Fill SimShower TTree	#TODO: Discuss with Lech: Should this be all a function in GRANDRoot once its mature? to hide all pushback and all those things? And so other people do the same?
@@ -204,6 +210,9 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         Run.site = Site
         Run.site_long = Long
         Run.site_lat = Lat
+        Run.data_source = "simulation"
+        Run.data_generator = "ZHAireS"
+        Run.data_generator_version = str(FieldSimulator)
 
         # Fill and write the Run tree for this event
         try:
@@ -216,6 +225,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
         SimShower.run_number = RunID
         SimShower.event_number = EventID
+        SimShower.event_name = EventName
         SimShower.date = Date
         # Easy to implement, but should multiple primaries be in "shower_type" or in "prim_type"? For now commenting out
         # SimShower['shower_type'].push_back(str(Primary))       #TODO: Support multiple primaries (use a ROOT.Vector, like for the trace)
@@ -236,6 +246,8 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         #TODO:prim_inj_dir_shc
         SimShower.xmax_grams = SlantXmax
         SimShower.xmax_alt = XmaxAltitude
+        SimShower.xmax_distance = XmaxDistance
+        SimShower.xmax_pos_shc = XmaxPosition
         #TODO:gh_fit_param
         SimShower.hadronic_model = HadronicModel
         #TODO:low_energy_model
@@ -250,6 +262,33 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # SimShower_tree.SetTreeIndex(ROOT.nullptr)
         # SimShower_tree.BuildIndex("run_id", "evt_id")
         # SimShower_tree.Write("", ROOT.TObject.kWriteDelete)
+
+        # Fill the ZHAireS only information
+
+        RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])
+        WeightFactor=AiresInfo.GetWeightFactorFromSry(sryfile[0])
+        GammaEnergyCut=AiresInfo.GetGammaEnergyCutFromSry(sryfile[0])
+        ElectronEnergyCut=AiresInfo.GetElectronEnergyCutFromSry(sryfile[0])
+        MuonEnergyCut=AiresInfo.GetMuonEnergyCutFromSry(sryfile[0])
+        MesonEnergyCut=AiresInfo.GetMesonEnergyCutFromSry(sryfile[0])
+        NucleonEnergyCut=AiresInfo.GetNucleonEnergyCutFromSry(sryfile[0])
+
+        SimZhairesShower.run_number = RunID
+        SimZhairesShower.event_number = EventID
+        SimZhairesShower.relative_thining = RelativeThinning
+        SimZhairesShower.weight_factor = WeightFactor
+        SimZhairesShower.gamma_energy_cut = GammaEnergyCut
+        SimZhairesShower.electron_energy_cut = ElectronEnergyCut
+        SimZhairesShower.muon_energy_cut = MuonEnergyCut
+        SimZhairesShower.meson_energy_cut = MesonEnergyCut
+        SimZhairesShower.nucleon_energy_cut = NucleonEnergyCut
+        SimZhairesShower.other_parameters = ""
+
+        print("Filling SimZhairesShower")
+        SimZhairesShower.fill()
+        SimZhairesShower.write()
+        print("Wrote SimZhairesShower")
+
 
     #############################################################################################################################
     #	SimEfieldInfo
@@ -285,8 +324,6 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         #TODO: Get Refractivity Model parameters from the sry
 
         #Getting all the information i need for	SimEfield
-        FieldSimulator=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])
-        FieldSimulator="ZHAireS "+str(FieldSimulator)
         RefractionIndexModel="Exponential" #TODO: UNHARDCODE THIS
         RefractionIndexParameters=[1.0003250,-0.1218] #TODO: UNHARDCODE THIS
         print("Warning, hard coded RefractionIndexModel",RefractionIndexModel,RefractionIndexParameters)
@@ -381,8 +418,9 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
             # Find the earliest trace
             t0_min = np.min(antt)
 
-            # The start of the earliest trace: t0_min+tmin (as tmin is negative) should be the 0.0 time to whic all the traces start times relate
-            trel = t0_min-tmin
+            # The start of the earliest trace: t0_min+tmin (as tmin is negative) should be the 0.0 time to which all the traces start times relate
+            # Adding tmin, because it is negative
+            trel = t0_min+tmin
 
             for ant in tracefiles:
                 #print("into antenna", ant)
@@ -442,9 +480,10 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
                 Efield.pos_y.append(ant_position[1])
                 Efield.pos_z.append(ant_position[2])
 
-                # Traces starts
-                # Efield.du_t0_seconds.append((ant[ant_number]-trel)//1e9)
-                # Efield.du_t0_nanoseconds.apend(ant[ant_number]-trel-Efield.du_t0_seconds[-1]*1e9)
+                # Trigger time - this is not a real trigger time since no trigger simulations, and values should be in unix time and nanoseconds
+                # But used relatively they should play the role of a very dummy trigger time - better this than nothing
+                Efield.du_seconds.append(int((antt[ant_number]-trel)//1e9))
+                Efield.du_nanoseconds.append(int(antt[ant_number]-trel-Efield.du_seconds[-1]*1e9))
 
                 # ToDo: should SlopeA and SlopeB placeholders be added? Not sure, because perhaps this kind of constant geometry will be held somewhere else, as it's not measured. Unless acceleration from gps means that
 
@@ -504,9 +543,10 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
                 #TODO: Fill p2p and hilbert amplitudes
                 #print("end anenna",ant_number)
-            print("Saving SimEfield")
+            print("Filling SimEfield")
             Efield.fill()
             Efield.write()
+            print("Wrote SimEfield")
             # SimEfield_tree.Fill()
             # #This is to remove the friend if it exists before
             # SimEfield_tree.RemoveFriend(SimShower_tree)
