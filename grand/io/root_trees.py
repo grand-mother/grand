@@ -142,7 +142,7 @@ class DataTree():
         # If the filename string is given, open/create the ROOT file with this name
         else:
             self._file_name = f
-            print(self._file_name)
+            # print(self._file_name)
             # If the file with that filename is already opened, use it (do not reopen)
             if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)):
                 self._file = f
@@ -447,6 +447,7 @@ class MotherRunTree(DataTree):
 @dataclass
 class MotherEventTree(DataTree):
     _run_number: np.ndarray = np.zeros(1, np.uint32)
+    # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     _event_number: np.ndarray = np.zeros(1, np.uint32)
 
     @property
@@ -1041,6 +1042,9 @@ class ShowerEventTree(MotherEventTree):
 class ShowerEventSimdataTree(MotherEventTree):
     _tree_name: str = "teventshowersimdata"
 
+    ## Event name
+    _event_name: StdString = StdString("")
+
     ## Event Date and time. TODO:standarize (date format, time format)
     _date: StdString = StdString("")
     ## Random seed
@@ -1076,6 +1080,8 @@ class ShowerEventSimdataTree(MotherEventTree):
     _xmax_grams: np.ndarray = np.zeros(1, np.float32)
     ## Shower Xmax position in shower coordinates
     _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)
+    ## Distance of Xmax  [m]
+    _xmax_distance: np.ndarray = np.zeros(1, np.float64)
     ## Altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
     _xmax_alt: np.ndarray = np.zeros(1, np.float64)
     _hadronic_model: StdString = StdString("")  # high energy hadronic model (and version) used TODO: standarize
@@ -1093,6 +1099,18 @@ class ShowerEventSimdataTree(MotherEventTree):
         self.create_branches()
 
     @property
+    def event_name(self):
+        return str(self._event_name)
+
+    @event_name.setter
+    def event_name(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._event_name.string.assign(value)
+
+    @property
     def date(self):
         return str(self._date)
 
@@ -1100,7 +1118,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     def date(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._date.string.assign(value)
 
@@ -1137,6 +1155,21 @@ class ShowerEventSimdataTree(MotherEventTree):
         else:
             exit(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
 
+    @property
+    def shower_azimuth(self):
+        return self._shower_azimuth[0]
+
+    @shower_azimuth.setter
+    def shower_azimuth(self, value):
+        self._shower_azimuth[0] = value
+
+    @property
+    def shower_zenith(self):
+        return self._shower_zenith[0]
+
+    @shower_zenith.setter
+    def shower_zenith(self, value):
+        self._shower_zenith[0] = value
 
     @property
     def prim_type(self):
@@ -1190,6 +1223,69 @@ class ShowerEventSimdataTree(MotherEventTree):
     def prim_inj_dir_shc(self, value):
         self._prim_inj_dir_shc = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("prim_inj_dir_shc", self._prim_inj_dir_shc)
+
+    @property
+    def atmos_model(self):
+        return str(self._atmos_model)
+
+    @atmos_model.setter
+    def atmos_model(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._atmos_model.string.assign(value)
+
+    @property
+    def atmos_model_param(self):
+        return np.array(self._atmos_model_param)
+
+    @atmos_model_param.setter
+    def atmos_model_param(self, value):
+        self._atmos_model_param = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("atmos_model_param", self._atmos_model_param)
+
+    @property
+    def magnetic_field(self):
+        return np.array(self._magnetic_field)
+
+    @magnetic_field.setter
+    def magnetic_field(self, value):
+        self._magnetic_field = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("magnetic_field", self._magnetic_field)
+
+    @property
+    def xmax_grams(self):
+        return self._xmax_grams[0]
+
+    @xmax_grams.setter
+    def xmax_grams(self, value):
+        self._xmax_grams[0] = value
+
+    @property
+    def xmax_pos_shc(self):
+        return np.array(self._xmax_pos_shc)
+
+    @xmax_pos_shc.setter
+    def xmax_pos_shc(self, value):
+        self._xmax_pos_shc = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
+
+    @property
+    def xmax_distance(self):
+        return self._xmax_distance[0]
+
+    @xmax_distance.setter
+    def xmax_distance(self, value):
+        self._xmax_distance[0] = value
+
+    @property
+    def xmax_alt(self):
+        return self._xmax_alt[0]
+
+    @xmax_alt.setter
+    def xmax_alt(self, value):
+        self._xmax_alt[0] = value
 
     @property
     def hadronic_model(self):
@@ -4413,6 +4509,124 @@ class DetectorInfo(DataTree):
             exit(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._description.string.assign(value)
+
+@dataclass
+class ShowerEventZHAireSTree(MotherEventTree):
+    _tree_name: str = "teventshowerzhaires"
+
+    # ToDo: we need explanations of these parameters
+
+    _relative_thining: StdString = StdString("")
+    _weight_factor: np.ndarray = np.zeros(1, np.float64)
+    _gamma_energy_cut: StdString = StdString("")
+    _electron_energy_cut: StdString = StdString("")
+    _muon_energy_cut: StdString = StdString("")
+    _meson_energy_cut: StdString = StdString("")
+    _nucleon_energy_cut: StdString = StdString("")
+    _other_parameters: StdString = StdString("")
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    @property
+    def relative_thining(self):
+        return str(self._relative_thining)
+
+    @relative_thining.setter
+    def relative_thining(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._relative_thining.string.assign(value)
+
+    @property
+    def weight_factor(self):
+        return self._weight_factor[0]
+
+    @weight_factor.setter
+    def weight_factor(self, value: np.float64) -> None:
+        self._weight_factor[0] = value
+
+    @property
+    def gamma_energy_cut(self):
+        return str(self._gamma_energy_cut)
+
+    @gamma_energy_cut.setter
+    def gamma_energy_cut(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._gamma_energy_cut.string.assign(value)
+
+    @property
+    def electron_energy_cut(self):
+        return str(self._electron_energy_cut)
+
+    @electron_energy_cut.setter
+    def electron_energy_cut(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._electron_energy_cut.string.assign(value)
+
+    @property
+    def muon_energy_cut(self):
+        return str(self._muon_energy_cut)
+
+    @muon_energy_cut.setter
+    def muon_energy_cut(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._muon_energy_cut.string.assign(value)
+
+    @property
+    def meson_energy_cut(self):
+        return str(self._meson_energy_cut)
+
+    @meson_energy_cut.setter
+    def meson_energy_cut(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._meson_energy_cut.string.assign(value)
+
+    @property
+    def nucleon_energy_cut(self):
+        return str(self._nucleon_energy_cut)
+
+    @nucleon_energy_cut.setter
+    def nucleon_energy_cut(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._nucleon_energy_cut.string.assign(value)
+
+    @property
+    def other_parameters(self):
+        return str(self._other_parameters)
+
+    @other_parameters.setter
+    def other_parameters(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._other_parameters.string.assign(value)
+
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
