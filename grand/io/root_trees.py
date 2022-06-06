@@ -1325,9 +1325,13 @@ class ShowerEventSimdataTree(MotherEventTree):
 class EfieldRunSimdataTree(MotherRunTree):
     _tree_name: str = "trunefieldsimdata"
 
-    _field_sim: StdString = StdString("")  # name and model of the electric field simulator
-    _refractivity_model: StdString = StdString("")  # name of the atmospheric index of refraction model
-    _t_pre: np.ndarray = np.zeros(1, np.float32)  # The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
+    ## Name and model of the electric field simulator
+    # _field_sim: StdString = StdString("")
+    ## Name of the atmospheric index of refraction model
+    _refractivity_model: StdString = StdString("")
+    _refractivity_model_parameters: StdVectorList("double") = StdVectorList("double")
+    ## The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
+    _t_pre: np.ndarray = np.zeros(1, np.float32)
     _t_post: np.ndarray = np.zeros(1, np.float32)
     _t_bin_size: np.ndarray = np.zeros(1, np.float32)
 
@@ -1341,17 +1345,17 @@ class EfieldRunSimdataTree(MotherRunTree):
 
         self.create_branches()
 
-    @property
-    def field_sim(self):
-        return str(self._field_sim)
-
-    @field_sim.setter
-    def field_sim(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._field_sim.string.assign(value)
+    # @property
+    # def field_sim(self):
+    #     return str(self._field_sim)
+    #
+    # @field_sim.setter
+    # def field_sim(self, value):
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+    #
+    #     self._field_sim.string.assign(value)
 
     @property
     def refractivity_model(self):
@@ -1365,6 +1369,22 @@ class EfieldRunSimdataTree(MotherRunTree):
 
         self._refractivity_model.string.assign(value)
 
+    @property
+    def refractivity_model_parameters(self):
+        return self._refractivity_model_parameters
+
+    @refractivity_model_parameters.setter
+    def refractivity_model_parameters(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._refractivity_model_parameters.clear()
+            self._refractivity_model_parameters += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._refractivity_model_parameters._vector = value
+        else:
+            exit(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def t_pre(self):
