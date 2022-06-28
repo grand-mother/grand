@@ -333,7 +333,7 @@ def CEL(e_theta, e_phi, N, f0, unit, show_flag):
     # s11_complex is the antenna test data
 
     # Complex electric field 30-250MHz
-    REfile = ".//Complex_RE.mat"
+    REfile = "Complex_RE.mat"
     RE = h5py.File(REfile, "r")
     RE_zb = np.transpose(RE["data_rE_ALL"])
     re_complex = RE_zb.view("complex")
@@ -346,7 +346,7 @@ def CEL(e_theta, e_phi, N, f0, unit, show_flag):
     s11_complex = np.zeros((effective, 3), dtype=complex)  # 3 ports
     for p in range(3):
         str_p = str(p + 1)
-        filename = ".//antennaVSWR//" + str_p + ".s1p"
+        filename = os.path.join("antennaVSWR", + str_p + ".s1p")
         freq = np.loadtxt(filename, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             re = np.loadtxt(filename, usecols=1)
@@ -441,7 +441,7 @@ def gala(lst, N, f0, f1, show_flag):
     # % ----------------------output - ---------------------------------- %
     # v_complex_double, galactic_v_time
 
-    GALAshowFile = ".//30_250galactic.mat"
+    GALAshowFile = "30_250galactic.mat"
     GALAshow = h5py.File(GALAshowFile, "r")
     GALApsd_dbm = np.transpose(GALAshow["psd_narrow_huatu"])
     GALApower_dbm = np.transpose(GALAshow["p_narrow_huatu"])
@@ -549,7 +549,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
     for p in range(3):
         #  LNA parameter
         str_p = str(p + 1)
-        LNA_Address = ".//LNASparameter//" + str_p + ".s2p"
+        LNA_Address = os.path.join("LNASparameter",str_p + ".s2p")
         freq = np.loadtxt(LNA_Address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(LNA_Address, usecols=1)
@@ -672,7 +672,7 @@ def filter_get(N, f0, unit, show_flag):
         #  cable参数
         # str_p = str(p + 1)
         # cable_Address = ".//data//cableparameter//" + str_p + ".s2p"
-        cable_Address = ".//cableparameter//cable.s2p"
+        cable_Address = os.path.join("cableparameter","cable.s2p")
         freq = np.loadtxt(cable_Address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(cable_Address, usecols=1)
@@ -749,7 +749,7 @@ def filter_get(N, f0, unit, show_flag):
         #  filter parameter
         # str_p = str(p + 1)
         # filter_Address = ".//data//filterparameter//" + str_p + ".s2p"
-        filter_Address = ".//filterparameter//1.s2p"
+        filter_Address = os.path.join("filterparameter","1.s2p")
         freq = np.loadtxt(filter_Address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(filter_Address, usecols=1)
@@ -854,25 +854,29 @@ def mkdir(path):
 def main_xdu_rf(rootdir):
 
     # =====================================================!!!Start the main program from here!!!=========================================
+    os.chdir(rootdir)
     print(rootdir)
     verse = []
     target = []
+    
     for root in os.listdir(rootdir):
         # print(root)
         # print(os.path.isdir(root))
         # if os.path.isdir(root) == True:            #Determine whether it is a folder
         verse.append(root)
-        # print(root)
-    # print(verse)
-    # print(type(verse))
+        print(root)
+    print("verse",verse)
+    print(type(verse))
     # =====================================If the folder starts with Stshp, add the target to be processed================================
     for item in verse:
         if item.startswith("Stshp_") == True:
             target.append(item)
-    # print(target)
+        print(item)
+    print("target",target)
 
     for i in range(0, len(target)):
-        file_dir = os.path.join("..", "data", target[i])
+        #file_dir = os.path.join("..", "data", target[i])
+        file_dir = target[i]
         print(file_dir)
         list1 = target[i].split("_")
         content = []
@@ -897,21 +901,21 @@ def main_xdu_rf(rootdir):
 
         if savetxt == 1:
             if noise_flag == 0:
-                outfile_voc = os.path.join("..", "result", target[i], "output_withoutnoise", "voc")
+                outfile_voc = os.path.join( "result", target[i], "output_withoutnoise", "voc")
                 outfile_vlna = os.path.join(
-                    "..", "result", target[i], "output_withoutnoise", "Vlna"
+                     "result", target[i], "output_withoutnoise", "Vlna"
                 )
                 outfile_vcable = os.path.join(
-                    "..", "result", target[i], "output_withoutnoise", "Vlna_cable"
+                     "result", target[i], "output_withoutnoise", "Vlna_cable"
                 )
                 outfile_vfilter = os.path.join(
-                    "..", "result", target[i], "output_withoutnoise", "Vfilter"
+                     "result", target[i], "output_withoutnoise", "Vfilter"
                 )
             elif noise_flag == 1:
-                outfile_voc = os.path.join("..", "result", target[i], "output", "voc")
-                outfile_vlna = os.path.join("..", "result", target[i], "output", "Vlna")
-                outfile_vcable = os.path.join("..", "result", target[i], "output", "Vlna_cable")
-                outfile_vfilter = os.path.join("..", "result", target[i], "output", "Vfilter")
+                outfile_voc = os.path.join( "result", target[i], "output", "voc")
+                outfile_vlna = os.path.join( "result", target[i], "output", "Vlna")
+                outfile_vcable = os.path.join("result", target[i], "output", "Vlna_cable")
+                outfile_vfilter = os.path.join( "result", target[i], "output", "Vfilter")
             mkdir(outfile_voc)
             mkdir(outfile_vlna)
             mkdir(outfile_vcable)
@@ -929,12 +933,14 @@ def main_xdu_rf(rootdir):
             + " degree;          case num is:"
             + str(case)
         )
-        path_par = os.path.join("..", "result", target[i], "parameter.txt")
+        path_par = os.path.join("result", target[i], "parameter.txt")
         with open(path_par, "w") as f:
             f.write(case_index)
 
             source_root = os.path.join(file_dir, "antpos.dat")
-            target_root = os.path.join("..", "result", target[i])
+            target_root = os.path.join( "result", target[i])
+            print("before shutil.copy")
+            print(source_root, target_root)
             shutil.copy(source_root, target_root)
 
             # ===================================Arbitrary input file first generates input parameters needed by subroutine================================================
@@ -1100,3 +1106,8 @@ def main_xdu_rf(rootdir):
             # ======================delete target_trace=============================================
 
         del target_trace
+
+
+if __name__ == '__main__':
+    print("XDU")
+    main_xdu_rf("/home/jcolley/projet/grand_wk/binder/xdu")
