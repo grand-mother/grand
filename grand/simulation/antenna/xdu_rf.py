@@ -4,19 +4,20 @@ Adaption of RF simulation chain for grandlib from
   * Authors : PengFei
 """
 # This Python file uses the following encoding: utf-8
-import h5py
+
 import os
 import os.path
 import shutil
-from scipy.fftpack import fft
-from scipy.fftpack import ifft
+import math
+import random
+import h5py
+
+from numpy.ma import log10, abs
+from scipy import interpolate
+from scipy.fftpack import fft, ifft
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-import math
-from numpy.ma import log10, abs
-from scipy import interpolate
-import random
 
 
 # ==============================time domain shower Edata get===============================
@@ -49,7 +50,7 @@ def time_data_get(filename, Ts, show_flag):
     N = math.ceil(fs)
     f0 = fs / N  # base frequency, Frequency resolution
     f = np.arange(0, N) * f0  # frequency sequence
-    f1 = f[0:int(N / 2) + 1]
+    f1 = f[0 : int(N / 2) + 1]
     # Take only half, pay attention to odd and even numbers, odd numbers: the floor(N / 2 + 1) is conjugated to floor(N / 2 + 1) + 1;
     # Even number: floor(N / 2 + 1)-1 and floor(N / 2 + 1) + 1 are conjugated;
 
@@ -67,34 +68,36 @@ def time_data_get(filename, Ts, show_flag):
         posz = np.argmax(ez)
         hang = max(posx, posy, posz)
         if hang >= N:
-            t_cut[0: N - 500] = t[hang - (N - 500): hang]
-            t_cut[N - 500: N] = t[hang: hang + 500]
+            t_cut[0 : N - 500] = t[hang - (N - 500) : hang]
+            t_cut[N - 500 : N] = t[hang : hang + 500]
 
-            ex_cut[0: N - 500] = ex[hang - (N - 500): hang]
-            ex_cut[N - 500: N] = ex[hang: hang + 500]
+            ex_cut[0 : N - 500] = ex[hang - (N - 500) : hang]
+            ex_cut[N - 500 : N] = ex[hang : hang + 500]
 
-            ey_cut[0: N - 500] = ey[hang - (N - 500): hang]
-            ey_cut[N - 500: N] = ey[hang: hang + 500]
+            ey_cut[0 : N - 500] = ey[hang - (N - 500) : hang]
+            ey_cut[N - 500 : N] = ey[hang : hang + 500]
 
-            ez_cut[0: N - 500] = ez[hang - (N - 500): hang]
-            ez_cut[N - 500: N] = ez[hang: hang + 500]
+            ez_cut[0 : N - 500] = ez[hang - (N - 500) : hang]
+            ez_cut[N - 500 : N] = ez[hang : hang + 500]
         else:
             t_cut[0:N] = t[0:N]
-            ex_cut[0: N] = ex[0: N]
-            ey_cut[0: N] = ey[0: N]
-            ez_cut[0: N] = ez[0: N]
+            ex_cut[0:N] = ex[0:N]
+            ey_cut[0:N] = ey[0:N]
+            ez_cut[0:N] = ez[0:N]
     else:
         t_cut[0:lt] = t[0:]
-        ex_cut[0: lt] = ex[0:]
-        ey_cut[0: lt] = ey[0:]
-        ez_cut[0: lt] = ez[0:]
+        ex_cut[0:lt] = ex[0:]
+        ey_cut[0:lt] = ey[0:]
+        ez_cut[0:lt] = ez[0:]
         a = t[-1] + Ts
-        b = t[-1] + Ts * (N - lt + 2)  # There is always a problem with the accuracy of decimal addition and subtraction. After +2, no matter if the decimal becomes .9999 or .000001, it is guaranteed to get the first n-lt number.
+        b = t[-1] + Ts * (
+            N - lt + 2
+        )  # There is always a problem with the accuracy of decimal addition and subtraction. After +2, no matter if the decimal becomes .9999 or .000001, it is guaranteed to get the first n-lt number.
         add = np.arange(a, b, Ts)
-        t_cut[lt:] = add[:(N - lt)]
+        t_cut[lt:] = add[: (N - lt)]
     if show_flag == 1:
         plt.figure(figsize=(9, 3))
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 3, 1)
         plt.plot(t_cut, ex_cut)
         plt.xlabel("time(ns)", fontsize=15)
@@ -146,18 +149,18 @@ def fftget(data_ori, N, f1, show_flag):
         data_fft_m[:, i] = abs(data_fft[:, i]) * 2 / N  # Amplitude
         data_fft_m[0] = data_fft_m[0] / 2
 
-        data_fft_m_single = data_fft_m[0: len(f1)]  # unilateral
+        data_fft_m_single = data_fft_m[0 : len(f1)]  # unilateral
 
         data_fft_p = np.angle(data_fft, deg=True)  # phase
         data_fft_p = np.mod(data_fft_p, 2 * 180)
         # data_fft_p_deg = np.rad2deg(data_fft_p)
-        data_fft_p_single = data_fft_p[0: len(f1)]
+        data_fft_p_single = data_fft_p[0 : len(f1)]
 
-    string = np.array(['x', 'y', 'z'])
+    string = np.array(["x", "y", "z"])
     if show_flag == 1:
         plt.figure(figsize=(9, 3))
         for j in range(lienum):
-            plt.rcParams['font.sans-serif'] = ['Times New Roman']
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
             plt.subplot(1, 3, j + 1)
             plt.plot(f1, data_fft_m_single[:, j])
             plt.xlabel("Frequency(MHz)", fontsize=15)
@@ -169,7 +172,7 @@ def fftget(data_ori, N, f1, show_flag):
 
         plt.figure(figsize=(9, 3))
         for j in range(lienum):
-            plt.rcParams['font.sans-serif'] = ['Times New Roman']
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
             plt.subplot(1, 3, j + 1)
             plt.plot(f1, data_fft_p_single[:, j])
             plt.xlabel("Frequency(MHz)", fontsize=15)
@@ -204,22 +207,22 @@ def ifftget(data_ori, N, f1, true):
     if true == 1:
         for i in range(lienum):
             data_ori_m[:, i] = abs(data_ori[:, i])  # Amplitude
-            data_ori_m_single = data_ori_m[0: len(f1)]  # unilateral
+            data_ori_m_single = data_ori_m[0 : len(f1)]  # unilateral
 
             data_ori_p[:, i] = np.angle(data_ori[:, i], deg=True)  # phase
             data_ori_p[:, i] = np.mod(data_ori_p[:, i], 2 * 180)
-            data_ori_p_single = data_ori_p[0: len(f1)]
+            data_ori_p_single = data_ori_p[0 : len(f1)]
 
     elif true == 2:
         for i in range(lienum):
             data_ori_m[:, i] = abs(data_ori[:, i]) * 2 / N
             data_ori_m[0] = data_ori_m[0] / 2
 
-            data_ori_m_single = data_ori_m[0: len(f1)]  # 单边
+            data_ori_m_single = data_ori_m[0 : len(f1)]  # 单边
 
             data_ori_p = np.angle(data_ori, deg=True)  # 相位
             data_ori_p = np.mod(data_ori_p, 2 * 180)  # -pi到pi转为0到2pi
-            data_ori_p_single = data_ori_p[0: len(f1)]
+            data_ori_p_single = data_ori_p[0 : len(f1)]
 
     # % % 时域
     data_ifft = np.zeros((N, lienum))
@@ -229,7 +232,7 @@ def ifftget(data_ori, N, f1, true):
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
 
 
-#==================================interpolation=======================================
+# ==================================interpolation=======================================
 def inter(data_complex_five, e_theta, e_phi):
     # This Python file uses the following encoding: utf-8
 
@@ -253,17 +256,19 @@ def inter(data_complex_five, e_theta, e_phi):
     for i in range(numf):
         for j in range(3):
             for k in range(3):
-                data_complex[:,:] = data_complex_five[i, j, k,:,:]
+                data_complex[:, :] = data_complex_five[i, j, k, :, :]
                 L1 = data_complex[down_theta, down_phi]
                 L2 = data_complex[up_theta, down_phi]
                 L3 = data_complex[down_theta, up_phi]
                 L4 = data_complex[up_theta, up_phi]
-                rt1 = (e_theta - down_theta) / 1.
+                rt1 = (e_theta - down_theta) / 1.0
                 rt0 = 1.0 - rt1
-                rp1 = (e_phi - down_phi) / 1.
+                rp1 = (e_phi - down_phi) / 1.0
                 rp0 = 1.0 - rp1
 
-                data_new[i, j, k] = rt0 * rp0 * L1 + rt1 * rp0 * L2 + rt0 * rp1 * L3 + rt1 * rp1 * L4
+                data_new[i, j, k] = (
+                    rt0 * rp0 * L1 + rt1 * rp0 * L2 + rt0 * rp1 * L3 + rt1 * rp1 * L4
+                )
     return np.array(data_new)
 
 
@@ -292,7 +297,7 @@ def expan(N, f0, f1, f2, data):
         add = np.arange(f_hang_end + 1, N - effective + 1, 1)
         duichen = np.arange(N - 1, N - effective + 1 - 1, -1)
         data_expansion[add] = 0
-        data_expansion[f_hang_start: f_hang_end + 1] = data
+        data_expansion[f_hang_start : f_hang_end + 1] = data
         data_expansion[duichen] = data[1:].conjugate()
     else:
         a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
@@ -302,7 +307,7 @@ def expan(N, f0, f1, f2, data):
         add = np.array(add)
         duichen = np.arange(N - f_hang_start, N - f_hang_start - effective, -1)
         data_expansion[add] = 0
-        data_expansion[f_hang_start: f_hang_end + 1] = data[:]
+        data_expansion[f_hang_start : f_hang_end + 1] = data[:]
         data_expansion[duichen] = data.conjugate()
 
     return f, data_expansion
@@ -329,10 +334,10 @@ def CEL(e_theta, e_phi, N, f0, unit, show_flag):
 
     # Complex electric field 30-250MHz
     REfile = ".//Complex_RE.mat"
-    RE = h5py.File(REfile, 'r')
-    RE_zb = np.transpose(RE['data_rE_ALL'])
-    re_complex = RE_zb.view('complex')
-    f_radiation = np.transpose(RE['f_radiation'])  # mhz
+    RE = h5py.File(REfile, "r")
+    RE_zb = np.transpose(RE["data_rE_ALL"])
+    re_complex = RE_zb.view("complex")
+    f_radiation = np.transpose(RE["f_radiation"])  # mhz
     effective = max(f_radiation.shape[0], f_radiation.shape[1])
 
     e_radiation = inter(re_complex, e_theta, e_phi)
@@ -393,23 +398,27 @@ def CEL(e_theta, e_phi, N, f0, unit, show_flag):
             [f, Lce_complex_expansion[:, i, p]] = expan(N, f0, f1, f2, Lce_complex_short[:, i, p])
     if show_flag == 1:
         plt.figure()
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         for p in range(3):
             plt.plot(freq, dB[p])
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{11}/dB} $", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right', fontsize=15)
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right", fontsize=15)
         plt.title(r"$\mathregular{S_{11}}$" + " of Antenna", fontsize=15)
         plt.show()
 
-        string = np.array(['X', 'Y', 'Z'])
+        string = np.array(["X", "Y", "Z"])
         plt.figure(figsize=(9, 3))
         for i in range(3):
-            plt.rcParams['font.sans-serif'] = ['Times New Roman']
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
             plt.subplot(1, 3, i + 1)
             for j in range(3):
                 plt.plot(f, abs(Lce_complex_expansion[:, j, i]))
-            plt.legend(["X polarization", "Y polarization", "Z polarization"], loc='upper right', fontsize=9)
+            plt.legend(
+                ["X polarization", "Y polarization", "Z polarization"],
+                loc="upper right",
+                fontsize=9,
+            )
             plt.xlabel("Frequency(MHz)", fontsize=15)
             plt.ylabel("Equivalent length / m", fontsize=15)
             plt.title(r"$\mathregular{L_e}$" + " in " + string[i] + " direction", fontsize=15)
@@ -433,34 +442,34 @@ def gala(lst, N, f0, f1, show_flag):
     # v_complex_double, galactic_v_time
 
     GALAshowFile = ".//30_250galactic.mat"
-    GALAshow = h5py.File(GALAshowFile, 'r')
-    GALApsd_dbm = np.transpose(GALAshow['psd_narrow_huatu'])
-    GALApower_dbm = np.transpose(GALAshow['p_narrow_huatu'])
-    GALAvoltage = np.transpose(GALAshow['v_amplitude'])
-    GALApower_mag = np.transpose(GALAshow['p_narrow'])
-    GALAfreq = GALAshow['freq_all']
+    GALAshow = h5py.File(GALAshowFile, "r")
+    GALApsd_dbm = np.transpose(GALAshow["psd_narrow_huatu"])
+    GALApower_dbm = np.transpose(GALAshow["p_narrow_huatu"])
+    GALAvoltage = np.transpose(GALAshow["v_amplitude"])
+    GALApower_mag = np.transpose(GALAshow["p_narrow"])
+    GALAfreq = GALAshow["freq_all"]
 
     if show_flag == 1:
         plt.figure(figsize=(9, 3))
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 3, 1)
         for g in range(3):
             plt.plot(GALAfreq, GALApsd_dbm[:, g, lst])
-        plt.legend(["port X", "port Y", "port Z"], loc='upper right')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("PSD(dBm/Hz)", fontsize=15)
         plt.title("Galactic Noise PSD", fontsize=15)
         plt.subplot(1, 3, 2)
         for g in range(3):
             plt.plot(GALAfreq, GALApower_dbm[:, g, lst])
-        plt.legend(["port X", "port Y", "port Z"], loc='upper right')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Power(dBm)", fontsize=15)
         plt.title("Galactic Noise Power", fontsize=15)
         plt.subplot(1, 3, 3)
         for g in range(3):
             plt.plot(GALAfreq, GALAvoltage[:, g, lst])
-        plt.legend(["port X", "port Y", "port Z"], loc='upper right')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Voltage(uV)", fontsize=15)
         plt.title("Galactic Noise Voltage", fontsize=15)
@@ -494,9 +503,13 @@ def gala(lst, N, f0, f1, show_flag):
     for kk in range(176):
 
         for port in range(3):
-            [f, v_complex_double[kk,:, port]] = expan(N, f0, f_start, f_end, v_complex[kk,:, port])
+            [f, v_complex_double[kk, :, port]] = expan(
+                N, f0, f_start, f_end, v_complex[kk, :, port]
+            )
             # print(v_complex_double[k, :, port])
-        [galactic_v_time[kk], galactic_v_m_single[kk], galactic_v_p_single[kk]] = ifftget(v_complex_double[kk], N, f1, 2)
+        [galactic_v_time[kk], galactic_v_m_single[kk], galactic_v_p_single[kk]] = ifftget(
+            v_complex_double[kk], N, f1, 2
+        )
 
         return v_complex_double, galactic_v_time
 
@@ -588,22 +601,22 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
     if show_flag == 1:
         # drawing
         plt.figure()
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         for p in range(3):
             plt.plot(freq, dBs21[p])
         plt.ylim(20, 25)
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{21}/dB} $", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right', fontsize=15)
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right", fontsize=15)
         plt.title(r"$\mathregular{S_{21}}$" + " of LNA test", fontsize=15)
         plt.show()
 
         plt.figure(figsize=(9, 3))
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 3, 1)
         for p in range(3):
             plt.plot(f, abs(rou1[:, p]))
-        plt.legend(["port X", "port Y", "port Z"], loc='upper right')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{mag(\rho_1)}$", fontsize=15)
         plt.xlim(30, 250)
@@ -611,7 +624,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
         plt.subplot(1, 3, 2)
         for p in range(3):
             plt.plot(f, abs(rou2[:, p]))
-        plt.legend(["port X", "port Y", "port Z"], loc='upper right')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{mag(\rho_2)}$", fontsize=15)
         plt.xlim(30, 250)
@@ -619,7 +632,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
         plt.subplot(1, 3, 3)
         for p in range(3):
             plt.plot(f, abs(rou3[:, p]))
-        plt.legend(["port X", "port Y", "port Z"], loc='upper right')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{mag(\rho_3)}$", fontsize=15)
         plt.xlim(30, 250)
@@ -708,20 +721,20 @@ def filter_get(N, f0, unit, show_flag):
     # drawing
     if show_flag == 1:
         plt.figure(figsize=(6, 3))
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 2, 1)
         for p in range(3):
             plt.plot(freq, dBs11_cable[p])
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{11}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right')
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.subplot(1, 2, 2)
         for p in range(3):
             plt.plot(freq, dBs21_cable[p])
         plt.ylim(-10, 0)
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right')
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.suptitle("S parameters of cable", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
@@ -790,31 +803,31 @@ def filter_get(N, f0, unit, show_flag):
     # drawing
     if show_flag == 1:
         plt.figure(figsize=(6, 3))
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 2, 1)
         for p in range(3):
             plt.plot(freq, dBs11[p])
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{11}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right')
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.subplot(1, 2, 2)
         for p in range(3):
             plt.plot(freq, dBs21[p])
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right')
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.suptitle("S parameters of Filter", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
         plt.show()
 
         plt.figure()
-        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         for p in range(3):
             plt.plot(freq, dBs21_add_VGA[p])
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc='lower right')
+        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.title("S parameters of Filter add VGA", fontsize=15)
         plt.show()
 
@@ -828,7 +841,9 @@ def mkdir(path):
     folder = os.path.exists(path)
 
     if not folder:  # Determine whether there is a folder, if it does not exist, create a folder
-        os.makedirs(path)  # makedirs If the path does not exist when creating the file, it will be created
+        os.makedirs(
+            path
+        )  # makedirs If the path does not exist when creating the file, it will be created
         print("---  new folder...  ---")
         print("---  OK  ---")
 
@@ -836,77 +851,92 @@ def mkdir(path):
         print("--- folder already exist!  ---")
 
 
-def main_rf():
-    
-    #=====================================================!!!Start the main program from here!!!=========================================
-    rootdir = "..//data//"
+def main_xdu_rf(rootdir):
+
+    # =====================================================!!!Start the main program from here!!!=========================================
     print(rootdir)
     verse = []
     target = []
     for root in os.listdir(rootdir):
-            # print(root)
+        # print(root)
         # print(os.path.isdir(root))
         # if os.path.isdir(root) == True:            #Determine whether it is a folder
-            verse.append(root)
-            # print(root)
+        verse.append(root)
+        # print(root)
     # print(verse)
     # print(type(verse))
-    #=====================================If the folder starts with Stshp, add the target to be processed================================
+    # =====================================If the folder starts with Stshp, add the target to be processed================================
     for item in verse:
-        if item.startswith('Stshp_') == True:
+        if item.startswith("Stshp_") == True:
             target.append(item)
     # print(target)
-    
+
     for i in range(0, len(target)):
-        file_dir = "..//data//" + target[i]
+        file_dir = os.path.join("..", "data", target[i])
         print(file_dir)
-        list1 = target[i].split('_')
+        list1 = target[i].split("_")
         content = []
         target_trace = []
-    
+
         primary = list1[3]
         energy = float(list1[4])
         e_theta = float(list1[5])
         e_phi = float(list1[6])
         case = float(list1[7])
-    
-        print("primary is:" , primary)
+
+        print("primary is:", primary)
         print("energy is:", energy, "Eev")
         print("theta is:", e_theta, "degree")
         print("phi is:", e_phi, "degree")
         print("case num is:", case)
-    #==================================switch===========================================
-    
+        # ==================================switch===========================================
+
         savetxt = 1  # savetxt=0 Don't save output file ,savetxt=1 save output file
         show_flag = 0
         noise_flag = 0
-    
+
         if savetxt == 1:
             if noise_flag == 0:
-                outfile_voc = "..//result//" + target[i] + '//output_withoutnoise//voc'
-                outfile_vlna = "..//result//" + target[i] + '//output_withoutnoise//Vlna'
-                outfile_vcable = "..//result//" + target[i] + '//output_withoutnoise//Vlna_cable'
-                outfile_vfilter = "..//result//" + target[i] + '//output_withoutnoise//Vfilter'
+                outfile_voc = os.path.join("..", "result", target[i], "output_withoutnoise", "voc")
+                outfile_vlna = os.path.join(
+                    "..", "result", target[i], "output_withoutnoise", "Vlna"
+                )
+                outfile_vcable = os.path.join(
+                    "..", "result", target[i], "output_withoutnoise", "Vlna_cable"
+                )
+                outfile_vfilter = os.path.join(
+                    "..", "result", target[i], "output_withoutnoise", "Vfilter"
+                )
             elif noise_flag == 1:
-                outfile_voc = "..//result//" + target[i] + '//output//voc'
-                outfile_vlna = "..//result//" + target[i] + '//output//Vlna'
-                outfile_vcable = "..//result//" + target[i] + '//output//Vlna_cable'
-                outfile_vfilter = "..//result//" + target[i] + '//output//Vfilter'
-    
+                outfile_voc = os.path.join("..", "result", target[i], "output", "voc")
+                outfile_vlna = os.path.join("..", "result", target[i], "output", "Vlna")
+                outfile_vcable = os.path.join("..", "result", target[i], "output", "Vlna_cable")
+                outfile_vfilter = os.path.join("..", "result", target[i], "output", "Vfilter")
             mkdir(outfile_voc)
             mkdir(outfile_vlna)
             mkdir(outfile_vcable)
             mkdir(outfile_vfilter)
-    #==========================Write particle type, energy level, angle, and event number into parameter.txt========================
-        case_index = 'primary is:' + str(primary) + ';           energy is: ' + str(energy) + ' Eev;          theta is: ' + str(
-            e_theta) + ' degree;          phi is: ' + str(e_phi) + ' degree;          case num is:' + str(case)
-        with open("..//result//" + target[i] + "//parameter.txt", 'w') as f:
+        # ==== Write particle type, energy level, angle, and event number into parameter.txt========================
+        case_index = (
+            "primary is:"
+            + str(primary)
+            + ";           energy is: "
+            + str(energy)
+            + " Eev;          theta is: "
+            + str(e_theta)
+            + " degree;          phi is: "
+            + str(e_phi)
+            + " degree;          case num is:"
+            + str(case)
+        )
+        path_par = os.path.join("..", "result", target[i], "parameter.txt")
+        with open(path_par, "w") as f:
             f.write(case_index)
-    
-            source_root = file_dir + '//antpos.dat'
-            target_root = "..//result//" + target[i]
+
+            source_root = os.path.join(file_dir, "antpos.dat")
+            target_root = os.path.join("..", "result", target[i])
             shutil.copy(source_root, target_root)
-    
+
             # ===================================Arbitrary input file first generates input parameters needed by subroutine================================================
             #  ================================Change according to actual situation==========================================
             # Select the galactic noise LST at the LST moment
@@ -915,8 +945,8 @@ def main_rf():
             lst = 18
             Ts = 0.5  # Manually enter the same time interval as the .trace file
             randomn = 0
-            E_path = file_dir + '//a' + str(randomn) + '.trace'
-    
+            E_path = os.path.join(file_dir, "a" + str(randomn) + ".trace")
+
             for a in os.listdir(file_dir):
                 # print(root)
                 # print(os.path.isdir(root))
@@ -924,63 +954,75 @@ def main_rf():
                 content.append(a)
             for b in content:
                 # print(os.path.splitext(b)[1])
-                if os.path.splitext(b)[1] == '.trace':
-                    if b.startswith('a') == True:
+                if os.path.splitext(b)[1] == ".trace":
+                    if b.startswith("a") == True:
                         target_trace.append(b)
-    
+
             #  ===========================start calculating===================
-            [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(E_path, Ts, show_flag)  # Signal interception
-    
+            [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(
+                E_path, Ts, show_flag
+            )  # Signal interception
+
             Edata = ex_cut
             Edata = np.column_stack((Edata, ey_cut))
             Edata = np.column_stack((Edata, ez_cut))
-    
-            [E_shower_fft, E_shower_fft_m_single, E_shower_fft_p_single] = fftget(Edata, N, f1,
-                                                                                  show_flag)  # Frequency domain signal
+
+            [E_shower_fft, E_shower_fft_m_single, E_shower_fft_p_single] = fftget(
+                Edata, N, f1, show_flag
+            )  # Frequency domain signal
             # =======Equivalent length================
             [Lce_complex, antennas11_complex_short] = CEL(e_theta, e_phi, N, f0, 1, show_flag)
-    
+
             Lcehang = Lce_complex.shape[0]
             Lcelie = Lce_complex.shape[2]
             # ======Galaxy noise power spectrum density, power, etc.=====================
             [galactic_v_complex_double, galactic_v_time] = gala(lst, N, f0, f1, show_flag)
             # =================== LNA=====================================================
-            [rou1_complex, rou2_complex, rou3_complex] = LNA_get(antennas11_complex_short, N, f0, 1, show_flag)
+            [rou1_complex, rou2_complex, rou3_complex] = LNA_get(
+                antennas11_complex_short, N, f0, 1, show_flag
+            )
             # =======================  cable  filter VGA balun=============================================
             [cable_coefficient, filter_coefficient] = filter_get(N, f0, 1, show_flag)
-    
-    # ===============================Start loop calculation========================================================================
+
+        # ===============================Start loop calculation========================================================================
         for num in range(len(target_trace)):
             # air shower,input file
-            E_path = file_dir + '//a' + str(num) + '.trace'
-            xunhuan = '//a' + str(num) + '_trace.txt'
-    
+            E_path = os.path.join(file_dir, "a" + str(num) + ".trace")
+            xunhuan = "a" + str(num) + "_trace.txt"
+
             # Output file path and name
             #  ===========================start calculating===========================================================
-            [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(E_path, Ts, show_flag)  # Signal interception
-    
+            [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(
+                E_path, Ts, show_flag
+            )  # Signal interception
+
             Edata = ex_cut
             Edata = np.column_stack((Edata, ey_cut))
             Edata = np.column_stack((Edata, ez_cut))
-    
-            [E_shower_fft, E_shower_fft_m_single, E_shower_fft_p_single] = fftget(Edata, N, f1,
-                                                                                  show_flag)  # Frequency domain signal
-    
+
+            [E_shower_fft, E_shower_fft_m_single, E_shower_fft_p_single] = fftget(
+                Edata, N, f1, show_flag
+            )  # Frequency domain signal
+
             # =======Equivalent length================
-    
+
             # ======Open circuit voltage of air shower=================
             Voc_shower_complex = np.zeros((Lcehang, Lcelie), dtype=complex)
             # Frequency domain signal
             for p in range(Lcelie):
-                Voc_shower_complex[:, p] = Lce_complex[:, 0, p] * E_shower_fft[:, 0] + Lce_complex[:, 1, p] * E_shower_fft[:,
-                                                                                                              1] + Lce_complex[:, 2,
-                                                                                                                   p] * E_shower_fft[:,
-                                                                                                                        2] + 0
+                Voc_shower_complex[:, p] = (
+                    Lce_complex[:, 0, p] * E_shower_fft[:, 0]
+                    + Lce_complex[:, 1, p] * E_shower_fft[:, 1]
+                    + Lce_complex[:, 2, p] * E_shower_fft[:, 2]
+                    + 0
+                )
             # time domain signal
-            [Voc_shower_t, Voc_shower_m_single, Voc_shower_p_single] = ifftget(Voc_shower_complex, N, f1, 2)
-    
+            [Voc_shower_t, Voc_shower_m_single, Voc_shower_p_single] = ifftget(
+                Voc_shower_complex, N, f1, 2
+            )
+
             # ======Galaxy noise power spectrum density, power, etc.=====================
-    
+
             # ===========Voltage with added noise=======================================
             Voc_noise_t = np.zeros((Lcehang, Lcelie))
             Voc_noise_complex = np.zeros((Lcehang, Lcelie), dtype=complex)
@@ -989,27 +1031,42 @@ def main_rf():
                     Voc_noise_t[:, p] = Voc_shower_t[:, p]
                     Voc_noise_complex[:, p] = Voc_shower_complex[:, p]
                 elif noise_flag == 1:
-                    Voc_noise_t[:, p] = Voc_shower_t[:, p] + galactic_v_time[random.randint(a=0, b=175),:, p]
-                    Voc_noise_complex[:, p] = Voc_shower_complex[:, p] + galactic_v_complex_double[random.randint(a=0, b=175),:, p]
-    
-            [Voc_noise_t_ifft, Voc_noise_m_single, Voc_noise_p_single] = ifftget(Voc_noise_complex, N, f1, 2)
-    
+                    Voc_noise_t[:, p] = (
+                        Voc_shower_t[:, p] + galactic_v_time[random.randint(a=0, b=175), :, p]
+                    )
+                    Voc_noise_complex[:, p] = (
+                        Voc_shower_complex[:, p]
+                        + galactic_v_complex_double[random.randint(a=0, b=175), :, p]
+                    )
+
+            [Voc_noise_t_ifft, Voc_noise_m_single, Voc_noise_p_single] = ifftget(
+                Voc_noise_complex, N, f1, 2
+            )
+
             # ==================Voltage after LNA=====================================================
             V_LNA_complex = np.zeros((N, Lcelie), dtype=complex)
             for p in range(Lcelie):
-                V_LNA_complex[:, p] = rou1_complex[:, p] * rou2_complex[:, p] * rou3_complex[:, p] * Voc_noise_complex[:, p] + 0
+                V_LNA_complex[:, p] = (
+                    rou1_complex[:, p]
+                    * rou2_complex[:, p]
+                    * rou3_complex[:, p]
+                    * Voc_noise_complex[:, p]
+                    + 0
+                )
             [V_LNA_t, V_LNA_m_single, V_LNA_p_single] = ifftget(V_LNA_complex, N, f1, 2)
-    
+
             # ======================Voltage after  cable=============================================
             V_cable_complex = np.zeros((N, Lcelie), dtype=complex)
             for p in range(Lcelie):
                 V_cable_complex[:, p] = V_LNA_complex[:, p] * cable_coefficient[:, p] + 0
             [V_cable_t, V_cable_m_single, V_cable_p_single] = ifftget(V_cable_complex, N, f1, 2)
-    
+
             # ======================Voltage after filter=============================================
             V_filter_complex = np.zeros((N, Lcelie), dtype=complex)
             for p in range(Lcelie):
-                V_filter_complex[:, p] = V_LNA_complex[:, p] * cable_coefficient[:, p] * filter_coefficient[:, p] + 0
+                V_filter_complex[:, p] = (
+                    V_LNA_complex[:, p] * cable_coefficient[:, p] * filter_coefficient[:, p] + 0
+                )
             [V_filter_t, V_filter_m_single, V_filter_p_single] = ifftget(V_filter_complex, N, f1, 2)
             # ====================Voltage after ADC======================================
             Length_AD = 14  # Significant bit of the value, plus a sign bit in addition to this
@@ -1022,24 +1079,24 @@ def main_rf():
                 # Open circuit voltage
                 V_output1 = np.zeros((N, Lcelie + 1))
                 V_output1[:, 0] = t_cut
-                V_output1[:, 1:] = Voc_shower_t[:,:]
+                V_output1[:, 1:] = Voc_shower_t[:, :]
                 np.savetxt(outfile_voc + xunhuan, V_output1, fmt="%.10e", delimiter=" ")
                 # LNA
                 V_output4 = np.zeros((N, Lcelie + 1))
                 V_output4[:, 0] = t_cut
-                V_output4[:, 1:] = V_LNA_t[:,:]
+                V_output4[:, 1:] = V_LNA_t[:, :]
                 np.savetxt(outfile_vlna + xunhuan, V_output4, fmt="%.10e", delimiter=" ")
                 # cable
                 V_output2 = np.zeros((N, Lcelie + 1))
                 V_output2[:, 0] = t_cut
-                V_output2[:, 1:] = V_cable_t[:,:]
+                V_output2[:, 1:] = V_cable_t[:, :]
                 np.savetxt(outfile_vcable + xunhuan, V_output2, fmt="%.10e", delimiter=" ")
                 # filter
                 V_output3 = np.zeros((N, Lcelie + 1))
                 V_output3[:, 0] = t_cut
-                V_output3[:, 1:] = V_filter_t[:,:]
+                V_output3[:, 1:] = V_filter_t[:, :]
                 np.savetxt(outfile_vfilter + xunhuan, V_output3, fmt="%.10e", delimiter=" ")
-    
+
             # ======================delete target_trace=============================================
-    
+
         del target_trace

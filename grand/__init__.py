@@ -24,7 +24,8 @@ from .tools.coordinates import (
     Rotation,
 )
 from . import store
-   
+
+
 def get_root_grand_git():
     """get the root path of grand git package, ex: /home/user/grand
 
@@ -48,11 +49,11 @@ def get_root_grand_src():
 
 OPTS_DATA_PATH = osp.join(get_root_grand_src(), "tools/data/huge")
 
-if os.path.isfile(osp.join(OPTS_DATA_PATH,"use_instead_HOME.grand")):
+if os.path.isfile(osp.join(OPTS_DATA_PATH, "use_instead_HOME.grand")):
     GRAND_DATA_PATH = OPTS_DATA_PATH
 else:
     GRAND_DATA_PATH = osp.join(Path.home(), ".grand")
- 
+
 
 __all__ = [
     "geomagnet",
