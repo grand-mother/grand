@@ -47,12 +47,7 @@ def get_root_grand_src():
     return osp.join(get_root_grand_git(), "grand")
 
 
-OPTS_DATA_PATH = osp.join(get_root_grand_src(), "tools/data/huge")
-
-if os.path.isfile(osp.join(OPTS_DATA_PATH, "use_instead_HOME.grand")):
-    GRAND_DATA_PATH = OPTS_DATA_PATH
-else:
-    GRAND_DATA_PATH = osp.join(Path.home(), ".grand")
+GRAND_DATA_PATH = osp.join(get_root_grand_src(), "data")
 
 
 __all__ = [
