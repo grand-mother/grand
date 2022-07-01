@@ -14,7 +14,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grand.num.signal import  fftget,ifftget
+from grand.num.signal import fftget, ifftget
 from grand.simu.elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
 
@@ -247,7 +247,9 @@ def main_xdu_rf(rootdir):
             Lcehang = Lce_complex.shape[0]
             Lcelie = Lce_complex.shape[2]
             # ======Galaxy noise power spectrum density, power, etc.=====================
-            [galactic_v_complex_double, galactic_v_time] = galaxy_radio_signal(lst, N, f0, f1, show_flag)
+            [galactic_v_complex_double, galactic_v_time] = galaxy_radio_signal(
+                lst, N, f0, f1, show_flag
+            )
             # =================== LNA=====================================================
             [rou1_complex, rou2_complex, rou3_complex] = LNA_get(
                 antennas11_complex_short, N, f0, 1, show_flag
