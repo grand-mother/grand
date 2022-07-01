@@ -6,7 +6,7 @@ from typing import Union, Any
 
 import numpy as np
 
-from ...tools.coordinates import (
+from grand.tools.coordinates import (
     ECEF,
     LTP,
     GRANDCS,
@@ -96,7 +96,10 @@ class Antenna:
     frame: Union[LTP, GRANDCS]
 
     def effective_length(
-        self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS]
+        self,
+        xmax: LTP,
+        Efield: ElectricField,
+        frame: Union[LTP, GRANDCS],
     ) -> CartesianRepresentation:
         # 'frame' is shower frame. 'self.frame' is antenna frame.
 
@@ -155,15 +158,17 @@ class Antenna:
         lpa = interp(np.deg2rad(table.phase_phi))  # LWP. rad
 
         # Pack the result as a Cartesian vector with complex values
-        lt = ltr * np.exp(1j * lta)
-        lp = lpr * np.exp(1j * lpa)
+        # fmt: off
+        lt = ltr*np.exp( 1j*lta )
+        lp = lpr*np.exp( 1j*lpa )
 
         t, p = np.deg2rad(theta), np.deg2rad(phi)
         ct, st = np.cos(t), np.sin(t)
         cp, sp = np.cos(p), np.sin(p)
-        lx = lt * ct * cp - sp * lp
-        ly = lt * ct * sp + cp * lp
-        lz = -st * lt
+        lx = lt*ct*cp - sp*lp
+        ly = lt*ct*sp + cp*lp
+        lz = -st*lt
+        # fmt: on
 
         # Treating Leff as a vector (no change in magnitude) and transforming it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame  (ToDo: there might be an easier way to do this.)
@@ -174,7 +179,10 @@ class Antenna:
         return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
 
     def compute_voltage(
-        self, xmax: LTP, Efield: ElectricField, frame: Union[LTP, GRANDCS, None] = None
+        self,
+        xmax: LTP,
+        Efield: ElectricField,
+        frame: Union[LTP, GRANDCS, None] = None,
     ) -> Voltage:
 
         logger.debug("call compute_voltage()")
@@ -196,7 +204,11 @@ class Antenna:
         Ez = rfft(E.z)
 
         # Here we have to do an ugly patch for Leff values to be correct
-        V = irfft(Ex * (Leff.x - Leff.x[0]) + Ey * (Leff.y - Leff.y[0]) + Ez * (Leff.z - Leff.z[0]))
+        # fmt: off
+        V = irfft( Ex*(Leff.x - Leff.x[0]) 
+                 + Ey*(Leff.y - Leff.y[0])
+                 + Ez*(Leff.z - Leff.z[0]))
+        # fmt: on
 
         t = Efield.t
         t = t[: V.size]

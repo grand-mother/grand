@@ -8,7 +8,7 @@ from urllib import request
 import pytest
 
 from grand import GRAND_DATA_PATH
-from grand.simulation import TabulatedAntennaModel
+from grand.simu import TabulatedAntennaModel
 #import grand.manage_log as mlg
 
 

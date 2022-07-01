@@ -8,9 +8,9 @@ from typing import Dict, Optional, List
 import numpy
 
 from grand import CartesianRepresentation, SphericalRepresentation
-from .generic import CollectionEntry, FieldsCollection, ShowerEvent
-from ..antenna import ElectricField
-from ..pdg import ParticleCode
+from grand.simu.shower.generic import CollectionEntry, FieldsCollection, ShowerEvent
+from grand.simu.antenna import ElectricField
+from grand.simu.pdg import ParticleCode
 
 __all__ = ["CoreasShower"]
 
