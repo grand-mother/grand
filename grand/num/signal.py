@@ -161,3 +161,157 @@ def add_noise(trace, vrms):
     noisy_traces = np.add(trace, noise)
 
     return noisy_traces
+
+
+def complex_expansion(N, f0, f1, f2, data):
+    """!
+    # This Python file uses the following encoding: utf-8
+
+    # = == == == == This procedure is used as a subroutine to complete the expansion of the spectrum == == == == =
+    # % N is the number of frequency points, that is, the spectrum that needs to be expanded
+    # % f0 is the frequency step, MHz
+    # % f1 is the starting frequency of the spectrum to be expanded, f2 is the cutoff frequency of the spectrum to be expanded
+    # % The program only considers that the length of the expanded data is less than floor(N / 2), such as N = 10, the length of the expanded data <= 5; N = 9, the length of the expanded data <= 4
+    # data 1 dimension
+    """
+    
+    f = np.arange(0, N) * f0  # Frequency sequence
+    effective = len(data)
+    delta_start = abs(f - f1)  # Difference from f1
+    delta_end = abs(f - f2)  # Difference with f2
+    f_hang_start = np.where(delta_start == min(delta_start))  # The row with the smallest difference
+    f_hang_start = f_hang_start[0][0]
+    f_hang_end = np.where(delta_end == min(delta_end))
+    f_hang_end = f_hang_end[0][0]
+    data_expansion = np.zeros((N), dtype=complex)
+    if f_hang_start == 0:
+        data_expansion[0] = data[0]
+        add = np.arange(f_hang_end + 1, N - effective + 1, 1)
+        duichen = np.arange(N - 1, N - effective + 1 - 1, -1)
+        data_expansion[add] = 0
+        data_expansion[f_hang_start : f_hang_end + 1] = data
+        data_expansion[duichen] = data[1:].conjugate()
+    else:
+        a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
+        a2 = np.arange(f_hang_end + 1, N - f_hang_start - effective + 1, 1).tolist()
+        a3 = np.arange(N - f_hang_start + 1, N, 1).tolist()  # Need to make up 0;
+        add = a1 + a2 + a3
+        add = np.array(add)
+        duichen = np.arange(N - f_hang_start, N - f_hang_start - effective, -1)
+        data_expansion[add] = 0
+        data_expansion[f_hang_start : f_hang_end + 1] = data[:]
+        data_expansion[duichen] = data.conjugate()
+
+    return f, data_expansion
+
+# ================================================FFT get=============================================
+def fftget(data_ori, N, f1, show_flag):
+    # This Python file uses the following encoding: utf-8
+
+    # = == == == == This program is used as a subroutine to complete the FFT of data and generate parameters according to requirements == == == == =
+    #  ----------------------input- ---------------------------------- %
+    # % data_ori:time domain data, matrix form
+    # % show_flag:flag of showing picture
+    # % N:number of FFT points
+    # % f1:Unilateral frequency
+    # % ----------------------output - ---------------------------------- %
+    # % data_fft:Frequency domain complex data
+    # % data_fft_m_single:Frequency domain amplitude unilateral spectrum
+    # % data_fft:Frequency domain phase
+
+    lienum = data_ori.shape[1]
+    data_fft = np.zeros((N, lienum), dtype=complex)
+    data_fft_m = np.zeros((int(N), lienum))
+    # data_fft_m_single = np.zeros((int(N/2), lienum))
+    # data_fft_p = np.zeros((int(N), lienum))
+    # data_fft_p_single = np.zeros((int(N/2), lienum))
+
+    for i in range(lienum):
+        data_fft[:, i] = fft(data_ori[:, i])
+
+        data_fft_m[:, i] = abs(data_fft[:, i]) * 2 / N  # Amplitude
+        data_fft_m[0] = data_fft_m[0] / 2
+
+        data_fft_m_single = data_fft_m[0 : len(f1)]  # unilateral
+
+        data_fft_p = np.angle(data_fft, deg=True)  # phase
+        data_fft_p = np.mod(data_fft_p, 2 * 180)
+        # data_fft_p_deg = np.rad2deg(data_fft_p)
+        data_fft_p_single = data_fft_p[0 : len(f1)]
+
+    string = np.array(["x", "y", "z"])
+    if show_flag == 1:
+        plt.figure(figsize=(9, 3))
+        for j in range(lienum):
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
+            plt.subplot(1, 3, j + 1)
+            plt.plot(f1, data_fft_m_single[:, j])
+            plt.xlabel("Frequency(MHz)", fontsize=15)
+            plt.ylabel("E" + string[j] + "(uv/m)", fontsize=15)
+            plt.suptitle("Electric Field Spectrum", fontsize=15)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)  # The smaller the value, the farther away
+        plt.show()
+
+        plt.figure(figsize=(9, 3))
+        for j in range(lienum):
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
+            plt.subplot(1, 3, j + 1)
+            plt.plot(f1, data_fft_p_single[:, j])
+            plt.xlabel("Frequency(MHz)", fontsize=15)
+            plt.ylabel("E" + string[j] + "(deg)", fontsize=15)
+            plt.suptitle("Electric Field Phase", fontsize=15)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+        plt.show()
+
+    return np.array(data_fft), np.array(data_fft_m_single), np.array(data_fft_p_single)
+
+
+# =====================================IFFT get=================================================
+def ifftget(data_ori, N, f1, true):
+    # This Python file uses the following encoding: utf-8
+
+    # %= == == == == This program is used as a subroutine to complete the Fourier change of data and generate parameters according to requirements == == == == =
+    # % ----------------------input - ---------------------------------- %
+    # % data_ori:Frequency domain data, complex numbers
+    # % true  1 indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. 2 indicates that the complex number is obtained after Fourier transform;
+    # % N:number of FFT points
+    # % t:time sequence
+    # ns
+    # % ----------------------output - ---------------------------------- %
+    # % data_ifft :time domain data
+
+    lienum = data_ori.shape[1]
+
+    # %= == == == == == == == == == == == == == == First draw the spectrum phase == == == == == ==
+    data_ori_m = np.zeros((int(N), lienum))
+    data_ori_p = np.zeros((int(N), lienum))
+    if true == 1:
+        for i in range(lienum):
+            data_ori_m[:, i] = abs(data_ori[:, i])  # Amplitude
+            data_ori_m_single = data_ori_m[0 : len(f1)]  # unilateral
+
+            data_ori_p[:, i] = np.angle(data_ori[:, i], deg=True)  # phase
+            data_ori_p[:, i] = np.mod(data_ori_p[:, i], 2 * 180)
+            data_ori_p_single = data_ori_p[0 : len(f1)]
+
+    elif true == 2:
+        for i in range(lienum):
+            data_ori_m[:, i] = abs(data_ori[:, i]) * 2 / N
+            data_ori_m[0] = data_ori_m[0] / 2
+
+            data_ori_m_single = data_ori_m[0 : len(f1)]  # 单边
+
+            data_ori_p = np.angle(data_ori, deg=True)  # 相位
+            data_ori_p = np.mod(data_ori_p, 2 * 180)  # -pi到pi转为0到2pi
+            data_ori_p_single = data_ori_p[0 : len(f1)]
+
+    # % % 时域
+    data_ifft = np.zeros((N, lienum))
+    for i in range(lienum):
+        data_ifft[:, i] = ifft(data_ori[:, i]).real
+
+    return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
+
+
