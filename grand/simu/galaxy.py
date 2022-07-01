@@ -26,40 +26,42 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
 
     @return : v_complex_double, galactic_v_time
     """
-    GALAshowFile = "30_250galactic.mat"
-    GALAshow = h5py.File(GALAshowFile, "r")
-    GALApsd_dbm = np.transpose(GALAshow["psd_narrow_huatu"])
-    GALApower_dbm = np.transpose(GALAshow["p_narrow_huatu"])
-    GALAvoltage = np.transpose(GALAshow["v_amplitude"])
-    GALApower_mag = np.transpose(GALAshow["p_narrow"])
-    GALAfreq = GALAshow["freq_all"]
-    if show_flag:
+    def plot():
         plt.figure(figsize=(9, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 3, 1)
         for l_g in range(3):
-            plt.plot(GALAfreq, GALApsd_dbm[:, l_g, lst])
+            plt.plot(gala_freq, gala_psd_dbm[:, l_g, lst])
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("PSD(dBm/Hz)", fontsize=15)
         plt.title("Galactic Noise PSD", fontsize=15)
         plt.subplot(1, 3, 2)
         for l_g in range(3):
-            plt.plot(GALAfreq, GALApower_dbm[:, l_g, lst])
+            plt.plot(gala_freq, gala_power_dbm[:, l_g, lst])
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Power(dBm)", fontsize=15)
         plt.title("Galactic Noise Power", fontsize=15)
         plt.subplot(1, 3, 3)
         for l_g in range(3):
-            plt.plot(GALAfreq, GALAvoltage[:, l_g, lst])
+            plt.plot(gala_freq, gala_voltage[:, l_g, lst])
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Voltage(uV)", fontsize=15)
         plt.title("Galactic Noise Voltage", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        plt.show()
+        
+    gala_file = "30_250galactic.mat"
+    gala_show = h5py.File(gala_file, "r")
+    gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
+    gala_power_dbm = np.transpose(gala_show["p_narrow_huatu"])
+    gala_voltage = np.transpose(gala_show["v_amplitude"])
+    gala_power_mag = np.transpose(gala_show["p_narrow"])
+    gala_freq = gala_show["freq_all"]
+    if show_flag: 
+        plot()
     #
     f_start = 30
     f_end = 250
@@ -69,7 +71,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
     galactic_v_m_single = np.zeros((176, int(size_out / 2) + 1, 3), dtype=float)
     galactic_v_p_single = np.zeros((176, int(size_out / 2) + 1, 3), dtype=float)
     unit_uv = 1e6
-    V_amplitude = 2 * np.sqrt(GALApower_mag * R) * unit_uv
+    V_amplitude = 2 * np.sqrt(gala_power_mag * R) * unit_uv
     aa = np.zeros((176, 221, 3), dtype=float)
     phase = np.zeros((176, 221, 3), dtype=float)
     v_complex = np.zeros((176, 221, 3), dtype=complex)
@@ -83,7 +85,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
     #
     for kk in range(176):
         for port in range(3):
-            [f, v_complex_double[kk, :, port]] = complex_expansion(
+            [freq, v_complex_double[kk, :, port]] = complex_expansion(
                 size_out,
                 f0,
                 f_start,

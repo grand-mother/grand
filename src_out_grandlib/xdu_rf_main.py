@@ -14,6 +14,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+from grand import grand_add_path_data
 from grand.num.signal import fftget, ifftget
 from grand.simu.elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
@@ -120,7 +121,7 @@ def time_data_get(filename, Ts, show_flag):
 
 
 
-def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag):
+def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag=False):
     # This Python file uses the following encoding: utf-8
 
     # from complex_expansion import expan
@@ -137,7 +138,7 @@ def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag):
     # f frequency sequence, the default unit is MHz
     # Lce_complex_expansion is the equivalent length of a specific incident direction
     # s11_complex is the antenna test data
-    raise
+    
     return toto, tutu
 
 
