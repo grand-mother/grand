@@ -1,4 +1,8 @@
 """
-Created on 1 juil. 2022
-
+Simulation start from shower with Efield to ADU of detector voltage
 """
+
+
+def main_script_simulation():
+    # todo
+    pass
