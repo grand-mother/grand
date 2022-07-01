@@ -9,10 +9,12 @@ import pytest
 
 from grand import GRAND_DATA_PATH
 from grand.simu import TabulatedAntennaModel
-#import grand.manage_log as mlg
+
 
 
 GRAND_ROOT = os.getenv("GRAND_ROOT")
+
+DEPOT_GITHUB = "https://github.com/grand-mother/store/releases/download/101"
 
 
 def pytest_configure(config):
@@ -24,10 +26,10 @@ def pytest_configure(config):
     #mlg.create_output_for_logger("debug", log_stdout=True)
 
 
-def grand_download_big_file():
+def grand_download_big_file(depot=DEPOT_GITHUB):
     name_file = "HorizonAntenna_EWarm_leff_loaded.npy"
     download_big_file(
-        f"https://github.com/grand-mother/store/releases/download/101/{name_file}",
+        f"{depot}/{name_file}",
         osp.join(GRAND_DATA_PATH, name_file),
     )
 
