@@ -10,12 +10,7 @@ import os.path
 import shutil
 import math
 import random
-import h5py
 
-from numpy.ma import log10, abs
-from scipy import interpolate
-from scipy.fftpack import fft, ifft
-import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
