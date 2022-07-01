@@ -63,11 +63,11 @@ def get_fft(time, trace, specialwindow=False):
     @returns (array): [Mhz]frequency , fft trace(complex)
     """
     # length of  the trace
-    dlength = trace.shape[1]  
+    dlength = trace.shape[1]
     # time step in sec
     tstep = (time[1] - time[0]) * 1e-9
     # unit [MHz]
-    freq = np.fft.rfftfreq(dlength, tstep) / 1e06  
+    freq = np.fft.rfftfreq(dlength, tstep) / 1e06
     if not specialwindow:
         trace_fft = np.fft.rfft(trace)
     else:
@@ -131,7 +131,7 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
     @return resampled signal and time trace
     """
     # in [ns]
-    tstep = time[1] - time[0] 
+    tstep = time[1] - time[0]
     samplingrate = tsampling / tstep
     dlength = trace.shape[1]
 
@@ -216,13 +216,12 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
     return freq, data_expan
 
 
-
-
 def fftget(data_ori, size_fft, freq_uni, show_flag=False):
     """!
     This program is used as a subroutine to complete the FFT of data and generate parameters according to requirements == == == == =
 
     @authors PengFei and Xidian group
+
     @param data_ori (array): time domain data, matrix form
     @param size_fft (int): number of FFT points
     @param freq_uni (float): Unilateral frequency
@@ -277,6 +276,7 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
     This program is used as a subroutine to complete the Fourier change of data and generate parameters according to requirements == == == == =
 
     @authors PengFei and Xidian group
+
     @param data_ori:Frequency domain data, complex numbers
     @param b_complex : True  indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. False indicates that the complex number is obtained after Fourier transform;
     @param size_fft:number of FFT points
