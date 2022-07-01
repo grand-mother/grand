@@ -1,6 +1,20 @@
+#
+#
+#
+# =======================================================
+#    / \
+#   / | \        ** READ ONLY ****** NOT MODIFY **
+#  /  *  \
+# ---------
+# =======================================================
+#
+#
+#
 # From : https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
-# Authprs : PengFei
+# @authors PengFei and Xidian group
 # This Python file uses the following encoding: utf-8
+
+
 import h5py
 import os
 import os.path
