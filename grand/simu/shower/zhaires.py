@@ -13,7 +13,7 @@ import numpy
 
 from grand.simu.shower.generic import CollectionEntry, FieldsCollection, ShowerEvent
 from grand.simu.antenna import ElectricField
-from grand.simu.pdg import ParticleCode
+from grand.simu.shower.pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP, Geodetic
 from ...tools.coordinates import (
     CartesianRepresentation,

@@ -9,7 +9,7 @@ from datetime import datetime
 
 import numpy
 
-from grand.simu import ParticleCode
+from grand.simu.shower.pdg import ParticleCode
 from grand.simu import ElectricField, Voltage
 from ... import io
 from ...tools.coordinates import (

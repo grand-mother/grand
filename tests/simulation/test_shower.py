@@ -11,7 +11,7 @@ import numpy
 
 from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
 from grand.simu import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
-from grand.simu.pdg import ParticleCode
+from grand.simu.shower.pdg import ParticleCode
 from grand.simu.shower.generic import CollectionEntry
 from tests import TestCase
 
