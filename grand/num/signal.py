@@ -62,9 +62,12 @@ def get_fft(time, trace, specialwindow=False):
 
     @returns (array): [Mhz]frequency , fft trace(complex)
     """
-    dlength = trace.shape[1]  # length of  the trace
-    tstep = (time[1] - time[0]) * 1e-9  # time step in sec
-    freq = np.fft.rfftfreq(dlength, tstep) / 1e06  # MHz
+    # length of  the trace
+    dlength = trace.shape[1]  
+    # time step in sec
+    tstep = (time[1] - time[0]) * 1e-9
+    # unit [MHz]
+    freq = np.fft.rfftfreq(dlength, tstep) / 1e06  
     if not specialwindow:
         trace_fft = np.fft.rfft(trace)
     else:
@@ -104,11 +107,9 @@ def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
     else:
         logger.debug("continuing with raw signal ...")
         filt = trace
-
     hilbert_amp = np.abs(hilbert(filt, axis=-1))
     peakamp = max([max(hilbert_amp[0]), max(hilbert_amp[1]), max(hilbert_amp[2])])
     peaktime = time[np.argwhere(hilbert_amp == peakamp)[0][1]]
-
     return peaktime, peakamp
 
 
@@ -129,8 +130,8 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
     @param downsamplingmethod (integer):  1 for scipy.resample, 2.scipy.decimate
     @return resampled signal and time trace
     """
-
-    tstep = time[1] - time[0]  # ns
+    # in [ns]
+    tstep = time[1] - time[0] 
     samplingrate = tsampling / tstep
     dlength = trace.shape[1]
 
@@ -150,7 +151,6 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
             raise ValueError("choose a valid method number")
         time_resampled = np.linspace(time[0], time[-1], len(resampled[0]), endpoint=False)
     resampled = np.array(resampled).reshape(3, len(resampled[0]))
-
     return resampled, time_resampled
 
 
@@ -166,10 +166,8 @@ def add_noise(trace, vrms):
 
     @return (array): noisy voltage trace
     """
-
     noise = np.random.normal(0, vrms, size=trace.shape[1])
     noisy_traces = np.add(trace, noise)
-
     return noisy_traces
 
 
@@ -185,24 +183,26 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
     @param f_start (float): is the starting frequency of the spectrum to be expanded, f_cut is the cutoff frequency of the spectrum to be expanded
     @param f_cut (float): The program only considers that the length of the expanded data is less than floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5; size_out = 9, the length of the expanded data <= 4
 
-    @return (array, array): freq, data_expansion
+    @return (array, array): freq, data_expan
     """
-    freq = np.arange(0, size_out) * f_step  # Frequency sequence
+    # Frequency sequence
+    freq = np.arange(0, size_out) * f_step
     effective = len(data)
-    delta_start = abs(freq - f_start)  # Difference from f_start
-    delta_end = abs(freq - f_cut)  # Difference with f_cut
-    f_hang_start = np.where(delta_start == min(delta_start))  # The row with the smallest difference
+    delta_start = abs(freq - f_start)
+    delta_end = abs(freq - f_cut)
+    # The row with the smallest difference
+    f_hang_start = np.where(delta_start == min(delta_start))
     f_hang_start = f_hang_start[0][0]
     f_hang_end = np.where(delta_end == min(delta_end))
     f_hang_end = f_hang_end[0][0]
-    data_expansion = np.zeros((size_out), dtype=complex)
+    data_expan = np.zeros((size_out), dtype=complex)
     if f_hang_start == 0:
-        data_expansion[0] = data[0]
+        data_expan[0] = data[0]
         add = np.arange(f_hang_end + 1, size_out - effective + 1, 1)
         duichen = np.arange(size_out - 1, size_out - effective + 1 - 1, -1)
-        data_expansion[add] = 0
-        data_expansion[f_hang_start : f_hang_end + 1] = data
-        data_expansion[duichen] = data[1:].conjugate()
+        data_expan[add] = 0
+        data_expan[f_hang_start : f_hang_end + 1] = data
+        data_expan[duichen] = data[1:].conjugate()
     else:
         a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
         a2 = np.arange(f_hang_end + 1, size_out - f_hang_start - effective + 1, 1).tolist()
@@ -210,14 +210,14 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
         add = a1 + a2 + a3
         add = np.array(add)
         duichen = np.arange(size_out - f_hang_start, size_out - f_hang_start - effective, -1)
-        data_expansion[add] = 0
-        data_expansion[f_hang_start : f_hang_end + 1] = data[:]
-        data_expansion[duichen] = data.conjugate()
+        data_expan[add] = 0
+        data_expan[f_hang_start : f_hang_end + 1] = data[:]
+        data_expan[duichen] = data.conjugate()
+    return freq, data_expan
 
-    return freq, data_expansion
 
 
-# ================================================FFT get=============================================
+
 def fftget(data_ori, size_fft, freq_uni, show_flag=False):
     """!
     This program is used as a subroutine to complete the FFT of data and generate parameters according to requirements == == == == =
@@ -237,11 +237,14 @@ def fftget(data_ori, size_fft, freq_uni, show_flag=False):
     data_fft_m = np.zeros((int(size_fft), lienum))
     for l_i in range(lienum):
         data_fft[:, l_i] = fft(data_ori[:, l_i])
-        data_fft_m[:, l_i] = abs(data_fft[:, l_i]) * 2 / size_fft  # Amplitude
+        # Amplitude
+        data_fft_m[:, l_i] = abs(data_fft[:, l_i]) * 2 / size_fft
         data_fft_m[0] = data_fft_m[0] / 2
-        data_fft_m_single = data_fft_m[0 : len(freq_uni)]  # unilateral
-        data_fft_p = np.angle(data_fft, deg=True)  # phase
-        data_fft_p = np.mod(data_fft_p, 2 * 180)
+        # unilateral
+        data_fft_m_single = data_fft_m[0 : len(freq_uni)]
+        # phase
+        data_fft_p = np.angle(data_fft, deg=True)
+        data_fft_p = np.mod(data_fft_p, 360)
         # data_fft_p_deg = np.rad2deg(data_fft_p)
         data_fft_p_single = data_fft_p[0 : len(freq_uni)]
     if show_flag:
@@ -256,7 +259,6 @@ def fftget(data_ori, size_fft, freq_uni, show_flag=False):
             plt.suptitle("Electric Field Spectrum", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)  # The smaller the value, the farther away
-        plt.show()
         plt.figure(figsize=(9, 3))
         for l_j in range(lienum):
             plt.rcParams["font.sans-serif"] = ["Times New Roman"]
@@ -267,8 +269,6 @@ def fftget(data_ori, size_fft, freq_uni, show_flag=False):
             plt.suptitle("Electric Field Phase", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        plt.show()
-    #
     return np.array(data_fft), np.array(data_fft_m_single), np.array(data_fft_p_single)
 
 
