@@ -134,7 +134,6 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
     tstep = time[1] - time[0]
     samplingrate = tsampling / tstep
     dlength = trace.shape[1]
-
     if samplingrate < 1:
         logger.debug("performing umsampling ...")
         resampled = [resample(x, round(1 / samplingrate) * dlength) for x in trace]
@@ -218,7 +217,8 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
 
 def fftget(data_ori, size_fft, freq_uni, show_flag=False):
     """!
-    This program is used as a subroutine to complete the FFT of data and generate parameters according to requirements == == == == =
+    This program is used as a subroutine to complete the FFT
+    of data and generate parameters according to requirements
 
     @authors PengFei and Xidian group
 
@@ -273,7 +273,8 @@ def fftget(data_ori, size_fft, freq_uni, show_flag=False):
 
 def ifftget(data_ori, size_fft, a_time, b_complex):
     """!
-    This program is used as a subroutine to complete the Fourier change of data and generate parameters according to requirements == == == == =
+    This program is used as a subroutine to complete the Fourier change of data
+    and generate parameters according to requirements
 
     @authors PengFei and Xidian group
 
@@ -308,5 +309,4 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
     data_ifft = np.zeros((size_fft, lienum))
     for l_i in range(lienum):
         data_ifft[:, l_i] = ifft(data_ori[:, l_i]).real
-
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
