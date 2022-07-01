@@ -201,6 +201,7 @@ def close_output_for_logger(log_root=NAME_ROOT_LIB):
 def get_logger_for_script(pfile):
     """!
     Return a logger with root logger is defined by the path of the file
+
     @param pfile: path of the file, so always call with __file__ value
     """
     global SCRIPT_ROOT_LOGGER  # pylint: disable=global-statement
