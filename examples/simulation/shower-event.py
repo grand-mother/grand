@@ -2,9 +2,11 @@
 
 import os.path as osp
 
-
 import numpy as np
 from matplotlib import pyplot as plt
+
+from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
+import grand.manage_log as mlg
 from grand import (
     ECEF,
     Geodetic,
@@ -16,9 +18,6 @@ from grand import (
     get_root_grand_git,
 )
 
-
-from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
-import grand.manage_log as mlg
 
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)

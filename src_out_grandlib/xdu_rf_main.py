@@ -1,9 +1,9 @@
 """!
 Adaption of RF simulation chain for grandlib from
   * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
-  * Authors : PengFei
+
+@authors PengFei and Xidian group
 """
-# This Python file uses the following encoding: utf-8
 
 import os
 import os.path
@@ -117,6 +117,28 @@ def time_data_get(filename, Ts, show_flag):
         plt.show()
 
     return np.array(t_cut), np.array(ex_cut), np.array(ey_cut), np.array(ez_cut), fs, f0, f, f1, N
+
+
+
+def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag):
+    # This Python file uses the following encoding: utf-8
+
+    # from complex_expansion import expan
+
+    # = == == == == This program is used as a subroutine to complete the calculation and expansion of the 30-250MHz complex equivalent length == == == == =
+    #  ----------------------input- ---------------------------------- %
+    # filename address, S1P file (delete the previous string of s1p file in advance, put the test results of the three ports in the antennaVSWR folder, and name them 1 2 3 in turn)
+    # % show_flag :flag of showing picture
+    # N is the extended length
+    # e_theta, e_phi is the direction of incidence
+    # If unit is 0, the test data is in the form of real and imaginary parts, and 1 is in the form of db and phase.
+    # f0 is the frequency resolution,
+    # % ----------------------output - ---------------------------------- %
+    # f frequency sequence, the default unit is MHz
+    # Lce_complex_expansion is the equivalent length of a specific incident direction
+    # s11_complex is the antenna test data
+    raise
+    return toto, tutu
 
 
 def main_xdu_rf(rootdir):
@@ -242,7 +264,7 @@ def main_xdu_rf(rootdir):
                 Edata, N, f1, show_flag
             )  # Frequency domain signal
             # =======Equivalent length================
-            [Lce_complex, antennas11_complex_short] = CEL(e_theta, e_phi, N, f0, 1, show_flag)
+            [Lce_complex, antennas11_complex_short] = dummy_CEL(e_theta, e_phi, N, f0, 1, show_flag)
 
             Lcehang = Lce_complex.shape[0]
             Lcelie = Lce_complex.shape[2]

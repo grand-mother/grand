@@ -1,29 +1,27 @@
 """
-Simulation of electronic material of detector:
+Simulation of electronic material of detector
 """
 
-import os
 import os.path
-import shutil
 import math
-import random
-import h5py
 
 from numpy.ma import log10, abs
 from scipy import interpolate
-from scipy.fftpack import fft, ifft
-import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grand.num.signal import complex_expansion, ifftget, fftget
+from grand.num.signal import complex_expansion
 
-# ===========================================LNAparameter get===========================================
-def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
-    # This Python file uses the following encoding: utf-8
 
-    # from complex_expansion import expan
+def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
+    """!
 
+    @param antennas11_complex_short:
+    @param N:
+    @param f0:
+    @param unit:
+    @param show_flag:
+    """
     # = == == == == This program is used as a subroutine to complete the calculation and expansion of the LNA partial pressure coefficient == == == == =
     #  ----------------------input - ---------------------------------- %
     # antennas11_complex_short is the program after the interpolation of the antenna standing wave test result
@@ -104,7 +102,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
     rou2 = (1 + LNA_Gama_complex) / (1 - antenna_Gama_complex * LNA_Gama_complex)
     rou3 = LNA_s21_complex / (1 + LNA_Gama_complex)
 
-    if show_flag == 1:
+    if show_flag:
         # drawing
         plt.figure()
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
@@ -145,14 +143,17 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag):
         plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        plt.show()
-
     return rou1, rou2, rou3
 
 
-# ===============================================Filterparameter get====================================
-def filter_get(N, f0, unit, show_flag):
-    # This Python file uses the following encoding: utf-8
+def filter_get(N, f0, unit, show_flag=False):
+    """!
+
+    @param N:
+    @param f0:
+    @param unit:
+    @param show_flag:
+    """
 
     # = == == == == This program is used as a subroutine to complete the calculation and expansion of the S parameters of the cable and filter == == == == =
     #  ----------------------input - ---------------------------------- %
@@ -225,7 +226,7 @@ def filter_get(N, f0, unit, show_flag):
         s21_complex = res21new + 1j * ims21new
         [f, cable_s21_complex[:, p]] = complex_expansion(N, f0, f_start, f_end, s21_complex)
     # drawing
-    if show_flag == 1:
+    if show_flag:
         plt.figure(figsize=(6, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 2, 1)
@@ -244,8 +245,6 @@ def filter_get(N, f0, unit, show_flag):
         plt.suptitle("S parameters of cable", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        plt.show()
-
     cable_coefficient = (1 + cable_Gama_complex) * cable_s21_complex
 
     #  =================filter=========================================
@@ -307,7 +306,7 @@ def filter_get(N, f0, unit, show_flag):
         s21_complex = res21new + 1j * ims21new
         [f, filter_s21_complex[:, p]] = complex_expansion(N, f0, f_start, f_end, s21_complex)
     # drawing
-    if show_flag == 1:
+    if show_flag:
         plt.figure(figsize=(6, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 2, 1)
@@ -325,8 +324,6 @@ def filter_get(N, f0, unit, show_flag):
         plt.suptitle("S parameters of Filter", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        plt.show()
-
         plt.figure()
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         for p in range(3):
@@ -335,8 +332,5 @@ def filter_get(N, f0, unit, show_flag):
         plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
         plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.title("S parameters of Filter add VGA", fontsize=15)
-        plt.show()
-
     filter_coefficient = (1 + filter_Gama_complex) * filter_s21_complex
-
     return cable_coefficient, filter_coefficient
