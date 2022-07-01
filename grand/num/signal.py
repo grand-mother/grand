@@ -12,12 +12,16 @@ from logging import getLogger
 
 import numpy as np
 from scipy.signal import hilbert, resample, decimate, butter, lfilter
+from scipy.fftpack import fft, ifft
+import matplotlib.pyplot as plt
 
 logger = getLogger(__name__)
 
 
 def get_filter(time, trace, fr_min, fr_max):
-    """!Filter signal  in given bandwidth
+    """!
+    Filter signal  in given bandwidth
+
     @note
       At present Butterworth filter only is implemented, others: what
       is close to hardware filter?
@@ -41,7 +45,9 @@ def get_filter(time, trace, fr_min, fr_max):
 
 
 def get_fft(time, trace, specialwindow=False):
-    """!Compute the one-dimensional discrete Fourier Transform for real input
+    """!
+    Compute the one-dimensional discrete Fourier Transform for real input
+
     @note
       - numpy rfft pack calculates only positive frequency parts exploiting Hermitian-Symmetry,
         the returned array is complex and of length N/2+1
@@ -80,7 +86,8 @@ def get_inverse_fft(trace):
 
 
 def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
-    """!Get Peak and time of EField trace, either filtered or unfiltered
+    """!
+    Get Peak and time of EField trace, either filtered or unfiltered
 
     @param time (array): time
     @param trace (array): ElectricField (muV/m) vectors to be filtered- expected
@@ -107,7 +114,9 @@ def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
 
 def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
 
-    """!Performs digitization/resampling of signal trace for a given sampling rate
+    """!
+    Performs digitization/resampling of signal trace for a given sampling rate
+
     @note
       There are several ways of resampling- scipy.resample seems most
       common for up/down sampling, an extra method is also added for
@@ -146,7 +155,8 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
 
 
 def add_noise(trace, vrms):
-    """!Add normal random noise on traces
+    """!
+    Add normal random noise on traces
 
     @todo
       Later should be modified to add measured noise
@@ -163,155 +173,140 @@ def add_noise(trace, vrms):
     return noisy_traces
 
 
-def complex_expansion(N, f0, f1, f2, data):
+def complex_expansion(size_out, f_step, f_start, f_cut, data):
     """!
-    # This Python file uses the following encoding: utf-8
+    This procedure is used as a subroutine to complete the expansion
+    of the spectrum
 
-    # = == == == == This procedure is used as a subroutine to complete the expansion of the spectrum == == == == =
-    # % N is the number of frequency points, that is, the spectrum that needs to be expanded
-    # % f0 is the frequency step, MHz
-    # % f1 is the starting frequency of the spectrum to be expanded, f2 is the cutoff frequency of the spectrum to be expanded
-    # % The program only considers that the length of the expanded data is less than floor(N / 2), such as N = 10, the length of the expanded data <= 5; N = 9, the length of the expanded data <= 4
-    # data 1 dimension
+    @authors PengFei and Xidian group
+
+    @param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
+    @param f_step (float): is the frequency step, MHz
+    @param f_start (float): is the starting frequency of the spectrum to be expanded, f_cut is the cutoff frequency of the spectrum to be expanded
+    @param f_cut (float): The program only considers that the length of the expanded data is less than floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5; size_out = 9, the length of the expanded data <= 4
+
+    @return (array, array): freq, data_expansion
     """
-    
-    f = np.arange(0, N) * f0  # Frequency sequence
+    freq = np.arange(0, size_out) * f_step  # Frequency sequence
     effective = len(data)
-    delta_start = abs(f - f1)  # Difference from f1
-    delta_end = abs(f - f2)  # Difference with f2
+    delta_start = abs(freq - f_start)  # Difference from f_start
+    delta_end = abs(freq - f_cut)  # Difference with f_cut
     f_hang_start = np.where(delta_start == min(delta_start))  # The row with the smallest difference
     f_hang_start = f_hang_start[0][0]
     f_hang_end = np.where(delta_end == min(delta_end))
     f_hang_end = f_hang_end[0][0]
-    data_expansion = np.zeros((N), dtype=complex)
+    data_expansion = np.zeros((size_out), dtype=complex)
     if f_hang_start == 0:
         data_expansion[0] = data[0]
-        add = np.arange(f_hang_end + 1, N - effective + 1, 1)
-        duichen = np.arange(N - 1, N - effective + 1 - 1, -1)
+        add = np.arange(f_hang_end + 1, size_out - effective + 1, 1)
+        duichen = np.arange(size_out - 1, size_out - effective + 1 - 1, -1)
         data_expansion[add] = 0
         data_expansion[f_hang_start : f_hang_end + 1] = data
         data_expansion[duichen] = data[1:].conjugate()
     else:
         a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
-        a2 = np.arange(f_hang_end + 1, N - f_hang_start - effective + 1, 1).tolist()
-        a3 = np.arange(N - f_hang_start + 1, N, 1).tolist()  # Need to make up 0;
+        a2 = np.arange(f_hang_end + 1, size_out - f_hang_start - effective + 1, 1).tolist()
+        a3 = np.arange(size_out - f_hang_start + 1, size_out, 1).tolist()  # Need to make up 0;
         add = a1 + a2 + a3
         add = np.array(add)
-        duichen = np.arange(N - f_hang_start, N - f_hang_start - effective, -1)
+        duichen = np.arange(size_out - f_hang_start, size_out - f_hang_start - effective, -1)
         data_expansion[add] = 0
         data_expansion[f_hang_start : f_hang_end + 1] = data[:]
         data_expansion[duichen] = data.conjugate()
 
-    return f, data_expansion
+    return freq, data_expansion
+
 
 # ================================================FFT get=============================================
-def fftget(data_ori, N, f1, show_flag):
-    # This Python file uses the following encoding: utf-8
+def fftget(data_ori, size_fft, freq_uni, show_flag=False):
+    """!
+    This program is used as a subroutine to complete the FFT of data and generate parameters according to requirements == == == == =
 
-    # = == == == == This program is used as a subroutine to complete the FFT of data and generate parameters according to requirements == == == == =
-    #  ----------------------input- ---------------------------------- %
-    # % data_ori:time domain data, matrix form
-    # % show_flag:flag of showing picture
-    # % N:number of FFT points
-    # % f1:Unilateral frequency
-    # % ----------------------output - ---------------------------------- %
-    # % data_fft:Frequency domain complex data
-    # % data_fft_m_single:Frequency domain amplitude unilateral spectrum
-    # % data_fft:Frequency domain phase
+    @authors PengFei and Xidian group
+    @param data_ori (array): time domain data, matrix form
+    @param size_fft (int): number of FFT points
+    @param freq_uni (float): Unilateral frequency
+    @param show_flag (bool): flag of showing picture
 
+    @return data_fft:Frequency domain complex data
+    @return data_fft_m_single:Frequency domain amplitude unilateral spectrum
+    @return data_fft:Frequency domain phase
+    """
     lienum = data_ori.shape[1]
-    data_fft = np.zeros((N, lienum), dtype=complex)
-    data_fft_m = np.zeros((int(N), lienum))
-    # data_fft_m_single = np.zeros((int(N/2), lienum))
-    # data_fft_p = np.zeros((int(N), lienum))
-    # data_fft_p_single = np.zeros((int(N/2), lienum))
-
-    for i in range(lienum):
-        data_fft[:, i] = fft(data_ori[:, i])
-
-        data_fft_m[:, i] = abs(data_fft[:, i]) * 2 / N  # Amplitude
+    data_fft = np.zeros((size_fft, lienum), dtype=complex)
+    data_fft_m = np.zeros((int(size_fft), lienum))
+    for l_i in range(lienum):
+        data_fft[:, l_i] = fft(data_ori[:, l_i])
+        data_fft_m[:, l_i] = abs(data_fft[:, l_i]) * 2 / size_fft  # Amplitude
         data_fft_m[0] = data_fft_m[0] / 2
-
-        data_fft_m_single = data_fft_m[0 : len(f1)]  # unilateral
-
+        data_fft_m_single = data_fft_m[0 : len(freq_uni)]  # unilateral
         data_fft_p = np.angle(data_fft, deg=True)  # phase
         data_fft_p = np.mod(data_fft_p, 2 * 180)
         # data_fft_p_deg = np.rad2deg(data_fft_p)
-        data_fft_p_single = data_fft_p[0 : len(f1)]
-
-    string = np.array(["x", "y", "z"])
-    if show_flag == 1:
+        data_fft_p_single = data_fft_p[0 : len(freq_uni)]
+    if show_flag:
+        s_xyz = np.array(["x", "y", "z"])
         plt.figure(figsize=(9, 3))
-        for j in range(lienum):
+        for l_j in range(lienum):
             plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-            plt.subplot(1, 3, j + 1)
-            plt.plot(f1, data_fft_m_single[:, j])
+            plt.subplot(1, 3, l_j + 1)
+            plt.plot(freq_uni, data_fft_m_single[:, l_j])
             plt.xlabel("Frequency(MHz)", fontsize=15)
-            plt.ylabel("E" + string[j] + "(uv/m)", fontsize=15)
+            plt.ylabel("E" + s_xyz[l_j] + "(uv/m)", fontsize=15)
             plt.suptitle("Electric Field Spectrum", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)  # The smaller the value, the farther away
         plt.show()
-
         plt.figure(figsize=(9, 3))
-        for j in range(lienum):
+        for l_j in range(lienum):
             plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-            plt.subplot(1, 3, j + 1)
-            plt.plot(f1, data_fft_p_single[:, j])
+            plt.subplot(1, 3, l_j + 1)
+            plt.plot(freq_uni, data_fft_p_single[:, l_j])
             plt.xlabel("Frequency(MHz)", fontsize=15)
-            plt.ylabel("E" + string[j] + "(deg)", fontsize=15)
+            plt.ylabel("E" + s_xyz[l_j] + "(deg)", fontsize=15)
             plt.suptitle("Electric Field Phase", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
         plt.show()
-
+    #
     return np.array(data_fft), np.array(data_fft_m_single), np.array(data_fft_p_single)
 
 
-# =====================================IFFT get=================================================
-def ifftget(data_ori, N, f1, true):
-    # This Python file uses the following encoding: utf-8
+def ifftget(data_ori, size_fft, a_time, b_complex):
+    """!
+    This program is used as a subroutine to complete the Fourier change of data and generate parameters according to requirements == == == == =
 
-    # %= == == == == This program is used as a subroutine to complete the Fourier change of data and generate parameters according to requirements == == == == =
-    # % ----------------------input - ---------------------------------- %
-    # % data_ori:Frequency domain data, complex numbers
-    # % true  1 indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. 2 indicates that the complex number is obtained after Fourier transform;
-    # % N:number of FFT points
-    # % t:time sequence
-    # ns
-    # % ----------------------output - ---------------------------------- %
-    # % data_ifft :time domain data
+    @authors PengFei and Xidian group
+    @param data_ori:Frequency domain data, complex numbers
+    @param b_complex : True  indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. False indicates that the complex number is obtained after Fourier transform;
+    @param size_fft:number of FFT points
+    @param a_time:time sequence
 
+    @return data_ifft :time domain data,
+    """
     lienum = data_ori.shape[1]
-
-    # %= == == == == == == == == == == == == == == First draw the spectrum phase == == == == == ==
-    data_ori_m = np.zeros((int(N), lienum))
-    data_ori_p = np.zeros((int(N), lienum))
-    if true == 1:
-        for i in range(lienum):
-            data_ori_m[:, i] = abs(data_ori[:, i])  # Amplitude
-            data_ori_m_single = data_ori_m[0 : len(f1)]  # unilateral
-
-            data_ori_p[:, i] = np.angle(data_ori[:, i], deg=True)  # phase
-            data_ori_p[:, i] = np.mod(data_ori_p[:, i], 2 * 180)
-            data_ori_p_single = data_ori_p[0 : len(f1)]
-
-    elif true == 2:
-        for i in range(lienum):
-            data_ori_m[:, i] = abs(data_ori[:, i]) * 2 / N
+    s_array = len(a_time)
+    #  First draw the spectrum phase == == == == == ==
+    data_ori_m = np.zeros((int(size_fft), lienum))
+    data_ori_p = np.zeros((int(size_fft), lienum))
+    if b_complex:
+        for l_i in range(lienum):
+            data_ori_m[:, l_i] = abs(data_ori[:, l_i])  # Amplitude
+            data_ori_m_single = data_ori_m[0:s_array]  # unilateral
+            data_ori_p[:, l_i] = np.angle(data_ori[:, l_i], deg=True)  # phase
+            data_ori_p[:, l_i] = np.mod(data_ori_p[:, l_i], 360)
+            data_ori_p_single = data_ori_p[0:s_array]
+    else:
+        for l_i in range(lienum):
+            data_ori_m[:, l_i] = abs(data_ori[:, l_i]) * 2 / size_fft
             data_ori_m[0] = data_ori_m[0] / 2
-
-            data_ori_m_single = data_ori_m[0 : len(f1)]  # 单边
-
-            data_ori_p = np.angle(data_ori, deg=True)  # 相位
-            data_ori_p = np.mod(data_ori_p, 2 * 180)  # -pi到pi转为0到2pi
-            data_ori_p_single = data_ori_p[0 : len(f1)]
-
-    # % % 时域
-    data_ifft = np.zeros((N, lienum))
-    for i in range(lienum):
-        data_ifft[:, i] = ifft(data_ori[:, i]).real
+            data_ori_m_single = data_ori_m[0:s_array]
+            data_ori_p = np.angle(data_ori, deg=True)
+            data_ori_p = np.mod(data_ori_p, 2 * 180)
+            data_ori_p_single = data_ori_p[0:s_array]
+    #
+    data_ifft = np.zeros((size_fft, lienum))
+    for l_i in range(lienum):
+        data_ifft[:, l_i] = ifft(data_ori[:, l_i]).real
 
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
-
-
