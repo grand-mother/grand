@@ -1,53 +1,48 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import os.path as osp
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
+from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
 import grand.manage_log as mlg
-from grand import (
-    ECEF,
-    Geodetic,
-    LTP,
-    GRANDCS,
-    SphericalRepresentation,
-    CartesianRepresentation,
-    GRAND_DATA_PATH,
-    get_root_grand_git,
-)
+from grand import ECEF, Geodetic, LTP, GRANDCS
+from grand import SphericalRepresentation
+from grand import grand_add_path_data, grand_get_path_root_pkg
 
+
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-# specific logger definition for script because __mane__ is "__main__"
-logger = mlg.get_logger_for_script(__file__)
 logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
-showerdir = osp.join(get_root_grand_git(), "tests/simulation/data/zhaires")
+showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:
     shower.localize(39.5, 90.5)  # Coreas showers have no
     # localization info. This must
     # be set manually
-print("---------------------------------")
-print("Zenith (Zhaires?!) =", shower.zenith)
-print("Azimuth (Zhaires?!) =", shower.azimuth)
-print("Xmax=", shower.maximum.flatten())
-print("Core=", shower.core.flatten())
-print("obstime=", shower.frame.obstime, "\n")
-print(vars(shower.frame), "Shower frame")
-print("---------------------------------", "\n")
+logger.info("---------------------------------")
+logger.info(f"Zenith (Zhaires?!) {shower.zenith}")
+logger.info(f"Azimuth (Zhaires?!) {shower.azimuth}")
+logger.info(f"Xmax={shower.maximum.flatten()}")
+logger.info(f"Core={shower.core.flatten()}")
+logger.info(f"obstime={shower.frame.obstime}")
+logger.info(f"{vars(shower.frame)} Shower frame")
+logger.info("---------------------------------")
 
 # Define an antenna model
 #
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
-path_ant = osp.join(GRAND_DATA_PATH, "HorizonAntenna_EWarm_leff_loaded.npy")
+path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
+# path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
 antenna_model = TabulatedAntennaModel.load(path_ant)
 
 counter = 0
@@ -78,15 +73,13 @@ for antenna_index, field in shower.fields.items():
     )
     antenna = Antenna(model=antenna_model, frame=antenna_frame)
 
-    print(antenna_index, "Antenna pos in shower frame", antpos_wrt_shower.flatten())
-    print(
-        vars(antenna_location),
-        antenna_location.flatten(),
-        "antenna pos LTP in shower frame",
+    logger.info(f"{antenna_index} Antenna pos in shower frame {antpos_wrt_shower.flatten()}")
+    logger.info(
+        f"{vars(antenna_location)} {antenna_location.flatten()} antenna pos LTP in shower frame"
     )
-    print("---------------------------------", "\n")
-    print(vars(antenna_frame), "antenna frame")
-    print("---------------------------------", "\n")
+    logger.info("---------------------------------")
+    logger.info(f"{vars(antenna_frame)} antenna frame")
+    logger.info("---------------------------------")
 
     # Compute the voltage on the antenna
     #
@@ -98,11 +91,12 @@ for antenna_index, field in shower.fields.items():
 
     logger.info(mlg.chrono_start())
     # Xmax, Efield, and input frame are all in shower frame.
+    logger.debug("compute_voltage")
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
 
     logger.info(mlg.chrono_string_duration())
 
-    print("\nVpp=", max(field.voltage.V) - min(field.voltage.V), "\n")
+    logger.info(f"\nVpp= {max(field.voltage.V) - min(field.voltage.V)}")
 
     plt.figure()
     plt.subplot(211)
@@ -111,12 +105,14 @@ for antenna_index, field in shower.fields.items():
     plt.plot(field.electric.t, Exyz.z, label="Ez")
     plt.xlabel("Time (ns)")
     plt.ylabel(r"Efield ($\mu$V/m)")
+    plt.grid()
     plt.legend(loc="best")
     plt.subplot(212)
     plt.plot(field.voltage.t, field.voltage.V, label="V$_{EW}$")
     plt.xlabel("Time (ns)")
     plt.ylabel(r"Voltage ($\mu$V)")
     plt.legend(loc="best")
+    plt.grid()
 
 logger.info(mlg.string_end_script())
 plt.show()

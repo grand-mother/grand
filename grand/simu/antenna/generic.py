@@ -172,10 +172,11 @@ class Antenna:
 
         # Treating Leff as a vector (no change in magnitude) and transforming it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame  (ToDo: there might be an easier way to do this.)
+        logger.debug(f"type lx: {type(lx)}")
         Leff = CartesianRepresentation(x=lx, y=ly, z=lz)
         Leff = np.matmul(self.frame.basis.T, Leff)  # vector wrt ECEF frame. Antenna --> ECEF
         Leff = np.matmul(frame.basis, Leff)  # vector wrt shower frame. ECEF --> Shower
-
+        logger.debug(f"type Leff: {type(Leff)}")
         return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
 
     def compute_voltage(

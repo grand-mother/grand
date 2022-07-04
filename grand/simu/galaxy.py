@@ -1,4 +1,4 @@
-"""
+"""!
 Simulation of galaxy emission in radio frequency
 """
 
@@ -26,6 +26,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
 
     @return : v_complex_double, galactic_v_time
     """
+
     def plot():
         plt.figure(figsize=(9, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
@@ -52,7 +53,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
         plt.title("Galactic Noise Voltage", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        
+
     gala_file = "30_250galactic.mat"
     gala_show = h5py.File(gala_file, "r")
     gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
@@ -60,7 +61,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
     gala_voltage = np.transpose(gala_show["v_amplitude"])
     gala_power_mag = np.transpose(gala_show["p_narrow"])
     gala_freq = gala_show["freq_all"]
-    if show_flag: 
+    if show_flag:
         plot()
     #
     f_start = 30

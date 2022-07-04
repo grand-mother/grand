@@ -49,6 +49,7 @@ def grand_get_path_grandlib():
 
 GRAND_DATA_PATH = osp.join(grand_get_path_root_pkg(), "data")
 
+
 def grand_add_path_data(s_file):
     return os.path.join(GRAND_DATA_PATH, s_file)
 

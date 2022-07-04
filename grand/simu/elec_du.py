@@ -1,5 +1,5 @@
-"""
-Simulation of electronic material of detector
+"""!
+Simulation of the effects on the signal of the electronics of the detector
 """
 
 import os.path
@@ -17,7 +17,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
     """!
 
     @authors PengFei and Xidian group
-    
+
     @param antennas11_complex_short:
     @param N:
     @param f0:
@@ -73,7 +73,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        
+
     z0 = 50
     antenna_gama_complex = np.zeros((N, 3), dtype=complex)
     for p in range(3):
@@ -105,7 +105,6 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
             mags11 = 10 ** (dbs11 / 20)
             res11 = mags11 * np.cos(degs11 / 180 * math.pi)
             ims11 = mags11 * np.sin(degs11 / 180 * math.pi)
-
             dbs21 = np.loadtxt(lna_address, usecols=3)
             degs21 = np.loadtxt(lna_address, usecols=4)
             mags21 = 10 ** (dbs21 / 20)
@@ -114,7 +113,6 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         if p == 0:
             dbs21 = np.zeros((3, len(freq)))
         dbs21[p] = dbs21
-
         # 插值为30-250mhz间隔1mhz一个数据
         freqnew = np.arange(30, 251, 1)
         f_res11 = interpolate.interp1d(freq, res11, kind="cubic")
@@ -123,7 +121,6 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         ims11new = f_ims11(freqnew)
         s11_complex = res11new + 1j * ims11new
         [f, lna_gama_complex[:, p]] = complex_expansion(N, f0, f_start, f_end, s11_complex)
-
         f_res21 = interpolate.interp1d(freq, res21, kind="cubic")
         res21new = f_res21(freqnew)
         f_ims21 = interpolate.interp1d(freq, ims21, kind="cubic")
@@ -142,9 +139,9 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
 
 def filter_get(N, f0, unit, show_flag=False):
     """!
-    
+
     @authors PengFei and Xidian group
-    
+
     @param N:
     @param f0:
     @param unit:
@@ -182,7 +179,7 @@ def filter_get(N, f0, unit, show_flag=False):
         plt.suptitle("S parameters of cable", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        
+
     def plot2():
         plt.figure(figsize=(6, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
@@ -210,7 +207,6 @@ def filter_get(N, f0, unit, show_flag=False):
         plt.legend(["port X", "port Y", "port Z"], loc="lower right")
         plt.title("S parameters of Filter add VGA", fontsize=15)
 
-        
     gain_vga = -1.5  # dB
     r_balun = 630 * 2 / 650
     # test filter without VGA
