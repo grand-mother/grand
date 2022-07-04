@@ -200,7 +200,10 @@ def close_output_for_logger(log_root=NAME_ROOT_LIB):
 
 def get_logger_for_script(pfile):
     """!
-    Return a logger with root logger is defined by the path of the file
+    Return a logger with root logger is defined by the path of the file.
+
+    @note
+      Must be call before create_output_for_logger()
 
     @param pfile: path of the file, so always call with __file__ value
     """
@@ -286,7 +289,8 @@ def _get_logger_path(pfile):
     else:
         # out package git
         # -3 for size of ".py"
-        g_str = pfile[1:-3].replace(l_sep, ".")
+        logger.debug("out package git")
+        g_str = pfile[0:-3].replace(l_sep, ".")
     return g_str
 
 
