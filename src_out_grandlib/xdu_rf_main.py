@@ -6,7 +6,7 @@ Adaption of RF simulation chain for grandlib from
 """
 
 import os
-import os.path
+import os.path as osp
 import shutil
 import math
 import random
@@ -18,6 +18,13 @@ from grand import grand_add_path_data
 from grand.num.signal import fftget, ifftget
 from grand.simu.elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
+from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
+from grand import grand_add_path_data, grand_get_path_root_pkg
+from grand import ECEF, Geodetic, LTP, GRANDCS
+
+showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
+SHOWER = ShowerEvent.load(showerdir)
+IDX_ANT = 0
 
 # ==============================time domain shower Edata get===============================
 def time_data_get(filename, Ts, show_flag):
@@ -114,8 +121,7 @@ def time_data_get(filename, Ts, show_flag):
 
         plt.suptitle("E Fields of Shower in Time Domain", fontsize=15)
         plt.tight_layout()
-        plt.subplots_adjust(top=0.85)
-        plt.show()
+        plt.subplots_adjust(top=0.85)        
 
     return np.array(t_cut), np.array(ex_cut), np.array(ey_cut), np.array(ez_cut), fs, f0, f, f1, N
 
@@ -138,8 +144,47 @@ def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag=False):
     # f frequency sequence, the default unit is MHz
     # Lce_complex_expansion is the equivalent length of a specific incident direction
     # s11_complex is the antenna test data
-    
-    return toto, tutu
+# for i in range(3):  # Polarization i = 1, 2, 3 respectively represent xyz polarization
+#         for p in range(3):
+#             # Xyz polarization of a single port
+#             Lce_complex_short[:, i, p] = e_radiation[:, p, i] / fenmu[:, p]
+#             [f, Lce_complex_expansion[:, i, p]] = expan(N, f0, f1, f2, Lce_complex_short[:, i, p])    
+        # for p in range(Lcelie):
+        #     Voc_shower_complex[:, p] = Lce_complex[:, 0, p] * E_shower_fft[:, 0]  
+    Lce_complex_expansion = np.zeros((N, 3, 3), dtype=complex)
+    ants = get_antenna()
+    for idx_ant in range(3):
+        for idx_axis in range(3):
+            Lce_complex_expansion[:,idx_axis, idx_ant] = ants[idx_ant].dft_effv_len[idx_axis]
+    return Lce_complex_expansion
+
+def get_antenna():
+    pos_ant = SHOWER.fields[IDX_ANT].electric.r
+    antenna_location = LTP(
+        x=pos_ant.x,
+        y=pos_ant.y,
+        z=pos_ant.z,
+        frame=SHOWER.frame,
+    )
+    antenna_frame = LTP(
+        location=antenna_location,
+        orientation="NWU",
+        magnetic=True
+    )
+    ant_3axis = [1,2,3]
+    # EW
+    path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
+    antenna_model = TabulatedAntennaModel.load(path_ant)    
+    ant_3axis[0] = Antenna(model=antenna_model, frame=antenna_frame)
+    # SN
+    path_ant = grand_add_path_data("detector/GP300Antenna_SNarm_leff.npy")
+    antenna_model = TabulatedAntennaModel.load(path_ant)    
+    ant_3axis[1] = Antenna(model=antenna_model, frame=antenna_frame)
+    # Z
+    path_ant = grand_add_path_data("detector/GP300Antenna_Zarm_leff.npy")
+    antenna_model = TabulatedAntennaModel.load(path_ant)    
+    ant_3axis[2] = Antenna(model=antenna_model, frame=antenna_frame)
+    return ant_3axis
 
 
 def main_xdu_rf(rootdir):
@@ -396,8 +441,15 @@ def main_xdu_rf(rootdir):
             # ======================delete target_trace=============================================
 
         del target_trace
+        
 
+def test_get_antenna():
+    ant = get_antenna()
+    for key, val in ant.items():
+        print(key, val.model.n_file)
 
 if __name__ == "__main__":
+    #test_get_antenna()
     print("XDU")
     main_xdu_rf("/home/jcolley/projet/grand_wk/binder/xdu")
+    plt.show()
