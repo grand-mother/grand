@@ -1,3 +1,7 @@
+"""!
+Extract informations from ZHAires simulation
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -6,10 +10,8 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Optional
 
-
 import h5py
 import numpy
-
 
 from grand.simu.shower.generic import CollectionEntry, FieldsCollection, ShowerEvent
 from grand.simu.antenna import ElectricField
@@ -18,7 +20,7 @@ from ...tools.coordinates import ECEF, LTP, Geodetic
 from ...tools.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
-)  # , Reference
+) 
 
 __all__ = ["InvalidAntennaName", "ZhairesShower"]
 
@@ -41,78 +43,87 @@ class ZhairesShower(ShowerEvent):
 
     @classmethod
     def _from_dir(cls, path: Path) -> ZhairesShower:
+        '''!
+        Extract informations about ZHAires simulation from xxx.sry file 
+        
+        @note:
+          Zhaires has a fixed coordinate frame at a location with 'NWU'
+          orientation at the sea level:
+              - 'N' is the magnetic north, 
+              - 'W' is 90 deg west from 'N', 
+              - 'U' is upward towards zenith.
+        
+        @param cls: class dict
+        @param path (TBD): path of simulation 
+        '''
+        def parse_primary(string: str) -> ParticleCode:
+            return {"Proton": ParticleCode.PROTON, "Iron": ParticleCode.IRON}[string.strip()]
+
+        def parse_quantity(string: str):
+            words = string.split()
+            return float(words[0])
+
+        def parse_frame_location(string: str):
+            lat, lon = string.split("Long:")
+            lat_f = parse_quantity(lat[:-2])
+            lon_f = parse_quantity(lon[:-3])
+            # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
+            geodetic = Geodetic(
+                latitude=lat_f, longitude=lon_f, height=0, reference="ELLIPSOID"
+            )
+            return ECEF(geodetic)
+
+        def parse_date(string: str) -> datetime:
+            return datetime.strptime(string.strip(), "%d/%b/%Y")
+
+        def parse_frame_direction(string: str):
+            inp["_origin"] = inp["frame"]
+
+            string = string.strip()
+            if string == "Local magnetic north":
+                return "NWU"
+            else:
+                raise NotImplementedError(string)
+
+        def parse_geomagnet_intensity(string: str):  # -> u.Quantity:
+            return float(string.split()[0]) * 1e-3  # uT --> nT
+
+        def parse_geomagnet_angles(string: str) -> CartesianRepresentation:
+            intensity = inp["geomagnet"]
+            inclination, _, _, declination, _ = string.split()
+            theta = 90 + float(inclination)  # deg
+            inp["_declination"] = float(declination)  # deg
+            # phi=0 because x-axis is parallel to the magnetic north.
+            spherical = SphericalRepresentation(theta=theta, phi=0, r=intensity)
+            return CartesianRepresentation(spherical)
+
+        def parse_maximum(string: str) -> CartesianRepresentation:
+            _, _, *xyz = string.split()
+            x, y, z = map(float, xyz)
+
+            ## Xmax is given as CartesianRepresentation defined in the shower frame.
+            # Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
+            ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
+            try:
+                inp_file = path.glob("*.inp").__next__()
+                logger.info("### zhaires.py: reading groundaltitude from. inp file.")
+                with open(inp_file, encoding="UTF-8") as f:
+                    for line in f:
+                        if "GroundAltitude" in line:
+                            ground_alt = float(line.split()[1])  # m
+                            inp["ground_alt"] = ground_alt
+            except StopIteration as parse_maximum_exit:
+                raise FileNotFoundError(path / "*.inp") from parse_maximum_exit
+            return CartesianRepresentation(x=1000 * x, y=1000 * y, z=1000 * z)  # RK. km --> m
+        
         if not path.exists():
             raise FileNotFoundError(path)
-
-        # Note: Zhaires has a fixed coordinate frame at a location with 'NWU' orientation at the sea level.
-        # 'N' is the magnetic north, 'W' is 90 deg west from 'N', and 'U' is upward towards zenith.
         inp: Dict[str, Any] = {}
         try:
             sry_path = path.glob("*.sry").__next__()
         except StopIteration as from_dir_exit:
             raise FileNotFoundError(path / "*.sry") from from_dir_exit
         else:
-
-            def parse_primary(string: str) -> ParticleCode:
-                return {"Proton": ParticleCode.PROTON, "Iron": ParticleCode.IRON}[string.strip()]
-
-            def parse_quantity(string: str):
-                words = string.split()
-                return float(words[0])
-
-            def parse_frame_location(string: str):
-                lat, lon = string.split("Long:")
-                lat_f = parse_quantity(lat[:-2])
-                lon_f = parse_quantity(lon[:-3])
-                # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
-                geodetic = Geodetic(
-                    latitude=lat_f, longitude=lon_f, height=0, reference="ELLIPSOID"
-                )
-                return ECEF(geodetic)
-
-            def parse_date(string: str) -> datetime:
-                return datetime.strptime(string.strip(), "%d/%b/%Y")
-
-            def parse_frame_direction(string: str):
-                inp["_origin"] = inp["frame"]
-
-                string = string.strip()
-                if string == "Local magnetic north":
-                    return "NWU"
-                else:
-                    raise NotImplementedError(string)
-
-            def parse_geomagnet_intensity(string: str):  # -> u.Quantity:
-                return float(string.split()[0]) * 1e-3  # uT --> nT
-
-            def parse_geomagnet_angles(string: str) -> CartesianRepresentation:
-                intensity = inp["geomagnet"]
-                inclination, _, _, declination, _ = string.split()
-                theta = 90 + float(inclination)  # deg
-                inp["_declination"] = float(declination)  # deg
-                # phi=0 because x-axis is parallel to the magnetic north.
-                spherical = SphericalRepresentation(theta=theta, phi=0, r=intensity)
-                return CartesianRepresentation(spherical)
-
-            def parse_maximum(string: str) -> CartesianRepresentation:
-                _, _, *xyz = string.split()
-                x, y, z = map(float, xyz)
-
-                ## Xmax is given as CartesianRepresentation defined in the shower frame.
-                # Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
-                ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
-                try:
-                    inp_file = path.glob("*.inp").__next__()
-                    logger.info("### zhaires.py: reading groundaltitude from. inp file.")
-                    with open(inp_file, encoding="UTF-8") as f:
-                        for line in f:
-                            if "GroundAltitude" in line:
-                                ground_alt = float(line.split()[1])  # m
-                                inp["ground_alt"] = ground_alt
-                except StopIteration as parse_maximum_exit:
-                    raise FileNotFoundError(path / "*.inp") from parse_maximum_exit
-                return CartesianRepresentation(x=1000 * x, y=1000 * y, z=1000 * z)  # RK. km --> m
-
             converters = (
                 ("(Lat", "frame", parse_frame_location),
                 ("Date", "_obstime", parse_date),
@@ -129,7 +140,6 @@ class ZhairesShower(ShowerEvent):
                 ("I:", "geomagnet", parse_geomagnet_angles),
                 ("Location of max.(Km)", "maximum", parse_maximum),
             )
-
             i = 0
             tag, k, convert = converters[i]
             with sry_path.open() as f:
@@ -143,16 +153,15 @@ class ZhairesShower(ShowerEvent):
                         tag, k, convert = converters[i]
                     except IndexError:
                         break
-
         origin = inp.pop("_origin")
         declination = inp.pop("_declination")
         obstime = inp.pop("_obstime")
         orientation = inp["frame"]
         ground_alt = inp["ground_alt"]
-
+        # RK. x, y and z are given in ECEF.
         ecef = ECEF(
-            x=origin[0][0], y=origin[1][0], z=origin[2][0]
-        )  # RK. x, y and z are given in ECEF.
+            x=origin[0][0], y=origin[1][0], z=origin[2][0],
+        )  
         inp["frame"] = LTP(
             location=ecef,
             orientation=orientation,
@@ -177,7 +186,6 @@ class ZhairesShower(ShowerEvent):
                         continue
                     words = line.split()
                     match = pattern.search(words[1])
-
                     if match is None:
                         raise InvalidAntennaName(words[1])
                     antenna = int(match.group(1))
@@ -195,7 +203,6 @@ class ZhairesShower(ShowerEvent):
                     #    z = float(words[4]), #* u.m, # z-coordinate in LTP frame.
                     #    frame = inp['frame']
                     # )
-
         fields: Optional[FieldsCollection] = None
         raw_fields = {}
         for field_path in path.glob("a*.trace"):
@@ -213,12 +220,10 @@ class ZhairesShower(ShowerEvent):
                 t, CartesianRepresentation(x=Ex, y=Ey, z=Ez), positions[antenna]
             )
             raw_fields[antenna] = CollectionEntry(electric)
-
         if raw_fields:
             fields = FieldsCollection()
             for key in sorted(raw_fields.keys()):
                 fields[key] = raw_fields[key]
-
         return cls(fields=fields, **inp)
 
     @classmethod
