@@ -139,44 +139,48 @@ class Antenna:
             return np.fft.fftfreq(n, dt)
 
         def interp(v):
-            fp = (
-                rp0 * rt0 * v[:, ip0, it0]
-                + rp1 * rt0 * v[:, ip1, it0]
-                + rp0 * rt1 * v[:, ip0, it1]
-                + rp1 * rt1 * v[:, ip1, it1]
-            )
+            # fmt: off
+            fp =  rp0*rt0*v[:, ip0, it0] \
+                + rp1*rt0*v[:, ip1, it0] \
+                + rp0*rt1*v[:, ip0, it1] \
+                + rp1*rt1*v[:, ip1, it1]
+            # fmt: on
             return np.interp(x, xp, fp, left=0, right=0)
 
         E = Efield.E
         Ex = np.fft.rfft(E.x)
-        x = fftfreq(Ex.size, Efield.t)  # frequency [Hz]
-        xp = table.frequency  # frequency [Hz]
-
+        # frequency [Hz]
+        x = fftfreq(Ex.size, Efield.t)
+        # frequency [Hz]
+        xp = table.frequency
         ltr = interp(table.leff_theta)  # LWP. m
         lta = interp(np.deg2rad(table.phase_theta))  # LWP. rad
         lpr = interp(table.leff_phi)  # LWP. m
         lpa = interp(np.deg2rad(table.phase_phi))  # LWP. rad
-
         # Pack the result as a Cartesian vector with complex values
         # fmt: off
         lt = ltr*np.exp( 1j*lta )
         lp = lpr*np.exp( 1j*lpa )
-
-        t, p = np.deg2rad(theta), np.deg2rad(phi)
-        ct, st = np.cos(t), np.sin(t)
-        cp, sp = np.cos(p), np.sin(p)
+        t_rad, p_rad = np.deg2rad(theta), np.deg2rad(phi)
+        ct, st = np.cos(t_rad), np.sin(t_rad)
+        cp, sp = np.cos(p_rad), np.sin(p_rad)
         lx = lt*ct*cp - sp*lp
         ly = lt*ct*sp + cp*lp
         lz = -st*lt
         # fmt: on
-
-        # Treating Leff as a vector (no change in magnitude) and transforming it to the shower frame from antenna frame.
-        # antenna frame --> ECEF frame --> shower frame  (ToDo: there might be an easier way to do this.)
+        # Treating Leff as a vector (no change in magnitude) and transforming 
+        # it to the shower frame from antenna frame.
+        # antenna frame --> ECEF frame --> shower frame
+        # TODO: there might be an easier way to do this.
         logger.debug(f"type lx: {type(lx)}")
         Leff = CartesianRepresentation(x=lx, y=ly, z=lz)
-        Leff = np.matmul(self.frame.basis.T, Leff)  # vector wrt ECEF frame. Antenna --> ECEF
-        Leff = np.matmul(frame.basis, Leff)  # vector wrt shower frame. ECEF --> Shower
+        # vector wrt ECEF frame. Antenna --> ECEF
+        Leff = np.matmul(self.frame.basis.T, Leff)
+        # vector wrt shower frame. ECEF --> Shower
+        Leff = np.matmul(frame.basis, Leff)
         logger.debug(f"type Leff: {type(Leff)}")
+        # store effective length
+        self.dft_effv_len = Leff
         return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
 
     def compute_voltage(
