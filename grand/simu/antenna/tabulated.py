@@ -5,6 +5,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Union, cast
 from numbers import Number
+import os.path as osp
 
 import numpy
 
@@ -44,7 +45,8 @@ class DataTable:
 @dataclass
 class TabulatedAntennaModel(AntennaModel):
     table: DataTable
-
+    n_file: ...="TBD"
+    
     def dump(self, destination: Union[str, Path, io.DataNode]) -> None:
         if type(destination) == io.DataNode:
             node = cast(io.DataNode, destination)
@@ -55,8 +57,7 @@ class TabulatedAntennaModel(AntennaModel):
                 self.table.dump(node)
 
     @classmethod
-    def load(cls, source: Union[str, Path, io.DataNode]) -> TabulatedAntennaModel:
-
+    def load(cls, source: Union[str, Path, io.DataNode]) -> TabulatedAntennaModel:        
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
             filename = f"{source.filename}:{source.path}"
@@ -74,7 +75,7 @@ class TabulatedAntennaModel(AntennaModel):
 
         load = getattr(cls, loader)
         self = load(source)
-
+        self.n_file = osp.basename(source)        
         t = self.table
         n = t.frequency.size * t.theta.size * t.phi.size
         logger.info(f"Loaded {n} entries from {filename}")
