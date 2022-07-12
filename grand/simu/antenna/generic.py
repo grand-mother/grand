@@ -148,9 +148,11 @@ class Antenna:
             return np.interp(x, xp, fp, left=0, right=0)
 
         E = Efield.E
+        logger.debug(E.x.shape)
         Ex = np.fft.rfft(E.x)
         # frequency [Hz]
         x = fftfreq(Ex.size, Efield.t)
+        logger.debug(x.shape)
         # frequency [Hz]
         xp = table.frequency
         ltr = interp(table.leff_theta)  # LWP. m
@@ -168,7 +170,7 @@ class Antenna:
         ly = lt*ct*sp + cp*lp
         lz = -st*lt
         # fmt: on
-        # Treating Leff as a vector (no change in magnitude) and transforming 
+        # Treating Leff as a vector (no change in magnitude) and transforming
         # it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame
         # TODO: there might be an easier way to do this.
@@ -181,6 +183,7 @@ class Antenna:
         logger.debug(f"type Leff: {type(Leff)}")
         # store effective length
         self.dft_effv_len = Leff
+        logger.debug(Leff.x.shape)
         return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
 
     def compute_voltage(
