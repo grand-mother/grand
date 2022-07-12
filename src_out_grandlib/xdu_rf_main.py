@@ -12,6 +12,8 @@ import math
 import random
 
 import numpy as np
+from numpy.ma import log10, abs
+from scipy import interpolate
 import matplotlib.pyplot as plt
 
 from grand import grand_add_path_data
@@ -21,10 +23,44 @@ from grand.simu.galaxy import galaxy_radio_signal
 from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
 from grand import grand_add_path_data, grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
+import grand.manage_log as mlg
 
-showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
-SHOWER = ShowerEvent.load(showerdir)
+# showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
+# ShowerEvent.load(showerdir)
+SHOWER = None
 IDX_ANT = 0
+
+path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
+G_antenna_model_ew = TabulatedAntennaModel.load(path_ant)    
+path_ant = grand_add_path_data("detector/GP300Antenna_SNarm_leff.npy")
+G_antenna_model_sn = TabulatedAntennaModel.load(path_ant)    
+path_ant = grand_add_path_data("detector/GP300Antenna_Zarm_leff.npy")
+G_antenna_model_z = TabulatedAntennaModel.load(path_ant)    
+
+# specific logger definition for script because __mane__ is "__main__"
+logger = mlg.get_logger_for_script(__file__)
+
+# define a handler for logger : standart output and file log.txt
+mlg.create_output_for_logger("info", log_file="log.txt", log_stdout=True)
+
+
+
+def halfcplx_fullcplx(v_half, even=True):
+    '''!
+    Return fft with full complex format where vector has half complex format,
+    ie v_half=rfft(signal).
+    
+    @note:
+      Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html 
+    
+    @param v_half (array 1D complex): complex vector in half complex format, ie from rfft(signal)
+    @param even (bool): True if size of signal is even
+    
+    @return (array 1D complex) : fft(signal) in full complex format
+    '''
+    if even:
+        return np.concatenate((v_half, np.flip(np.conj(v_half[1:-1]))))
+    return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
 
 # ==============================time domain shower Edata get===============================
 def time_data_get(filename, Ts, show_flag):
@@ -53,10 +89,12 @@ def time_data_get(filename, Ts, show_flag):
     # = == == == == == == == == == =Time-frequency parameter generation == == == == == == == == == == == == == == == == == == == == ==
     # = == == =In order to make the frequency resolution 1MHz, the number of sampling points = sampling frequency == == == =
     fs = 1 / Ts * 1000  # sampling frequency, MHZ
-    N = math.ceil(fs)
+    #N = math.ceil(fs)
+    N = len(t)
+    print(N, len(t))
     f0 = fs / N  # base frequency, Frequency resolution
     f = np.arange(0, N) * f0  # frequency sequence
-    f1 = f[0 : int(N / 2) + 1]
+    f1 = f[0: int(N / 2) + 1]
     # Take only half, pay attention to odd and even numbers, odd numbers: the floor(N / 2 + 1) is conjugated to floor(N / 2 + 1) + 1;
     # Even number: floor(N / 2 + 1)-1 and floor(N / 2 + 1) + 1 are conjugated;
 
@@ -74,17 +112,17 @@ def time_data_get(filename, Ts, show_flag):
         posz = np.argmax(ez)
         hang = max(posx, posy, posz)
         if hang >= N:
-            t_cut[0 : N - 500] = t[hang - (N - 500) : hang]
-            t_cut[N - 500 : N] = t[hang : hang + 500]
+            t_cut[0: N - 500] = t[hang - (N - 500): hang]
+            t_cut[N - 500: N] = t[hang: hang + 500]
 
-            ex_cut[0 : N - 500] = ex[hang - (N - 500) : hang]
-            ex_cut[N - 500 : N] = ex[hang : hang + 500]
+            ex_cut[0: N - 500] = ex[hang - (N - 500): hang]
+            ex_cut[N - 500: N] = ex[hang: hang + 500]
 
-            ey_cut[0 : N - 500] = ey[hang - (N - 500) : hang]
-            ey_cut[N - 500 : N] = ey[hang : hang + 500]
+            ey_cut[0: N - 500] = ey[hang - (N - 500): hang]
+            ey_cut[N - 500: N] = ey[hang: hang + 500]
 
-            ez_cut[0 : N - 500] = ez[hang - (N - 500) : hang]
-            ez_cut[N - 500 : N] = ez[hang : hang + 500]
+            ez_cut[0: N - 500] = ez[hang - (N - 500): hang]
+            ez_cut[N - 500: N] = ez[hang: hang + 500]
         else:
             t_cut[0:N] = t[0:N]
             ex_cut[0:N] = ex[0:N]
@@ -101,6 +139,8 @@ def time_data_get(filename, Ts, show_flag):
         )  # There is always a problem with the accuracy of decimal addition and subtraction. After +2, no matter if the decimal becomes .9999 or .000001, it is guaranteed to get the first n-lt number.
         add = np.arange(a, b, Ts)
         t_cut[lt:] = add[: (N - lt)]
+        
+    logger.debug(f"ex_cut size is {len(ex_cut)}")
     if show_flag == 1:
         plt.figure(figsize=(9, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
@@ -126,8 +166,7 @@ def time_data_get(filename, Ts, show_flag):
     return np.array(t_cut), np.array(ex_cut), np.array(ey_cut), np.array(ez_cut), fs, f0, f, f1, N
 
 
-
-def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag=False):
+def dummy_CEL(idx_ant, e_theta, e_phi, N, f0, unit, show_flag=False):
     # This Python file uses the following encoding: utf-8
 
     # from complex_expansion import expan
@@ -152,14 +191,50 @@ def dummy_CEL(e_theta, e_phi, N, f0, unit, show_flag=False):
         # for p in range(Lcelie):
         #     Voc_shower_complex[:, p] = Lce_complex[:, 0, p] * E_shower_fft[:, 0]  
     Lce_complex_expansion = np.zeros((N, 3, 3), dtype=complex)
-    ants = get_antenna()
+    ants = get_antenna(idx_ant)
     for idx_ant in range(3):
+        ants[idx_ant].effective_length(SHOWER.maximum, SHOWER.fields[idx_ant].electric, SHOWER.frame)
         for idx_axis in range(3):
-            Lce_complex_expansion[:,idx_axis, idx_ant] = ants[idx_ant].dft_effv_len[idx_axis]
-    return Lce_complex_expansion
+            Lce_complex_expansion[:, idx_axis, idx_ant] = halfcplx_fullcplx(ants[idx_ant].dft_effv_len[idx_axis], (N%2)==0)
+    
+    # Interpolation: 30-250mhz interval 1mhz
+    f_start = 30
+    f_end = 250
+    f_df = 1
+    # +1 : f_end included
+    f_size = (f_end - f_start) // f_df + 1
+    s11_complex = np.zeros((f_size, 3), dtype=complex)
+    for p in range(3):
+        str_p = str(p + 1)
+        # filename = ".//antennaVSWR//" + str_p + ".s1p"
+        filename = grand_add_path_data(f"detector/antennaVSWR/{str_p}.s1p")
+        freq = np.loadtxt(filename, usecols=0) / 1e6  # HZ to MHz
+        if unit == 0:
+            re = np.loadtxt(filename, usecols=1)
+            im = np.loadtxt(filename, usecols=2)
+            db = 20 * log10(abs(re + 1j * im))
+        elif unit == 1:
+            db = np.loadtxt(filename, usecols=1)
+            deg = np.loadtxt(filename, usecols=2)
+            mag = 10 ** (db / 20)
+            re = mag * np.cos(deg / 180 * math.pi)
+            im = mag * np.sin(deg / 180 * math.pi)
+        if p == 0:
+            dB = np.zeros((3, len(freq)))
+        dB[p] = db
+        #
+        freqnew = np.arange(f_start, f_end + f_df, f_df)
+        f_re = interpolate.interp1d(freq, re, kind="cubic")
+        renew = f_re(freqnew)
+        f_im = interpolate.interp1d(freq, im, kind="cubic")
+        imnew = f_im(freqnew)
+        s11_complex[:, p] = renew + 1j * imnew
+    #
+    return Lce_complex_expansion, s11_complex
 
-def get_antenna():
-    pos_ant = SHOWER.fields[IDX_ANT].electric.r
+
+def get_antenna(idx_ant):
+    pos_ant = SHOWER.fields[idx_ant].electric.r
     antenna_location = LTP(
         x=pos_ant.x,
         y=pos_ant.y,
@@ -171,30 +246,24 @@ def get_antenna():
         orientation="NWU",
         magnetic=True
     )
-    ant_3axis = [1,2,3]
+    ant_3axis = [1, 2, 3]
     # EW
-    path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
-    antenna_model = TabulatedAntennaModel.load(path_ant)    
-    ant_3axis[0] = Antenna(model=antenna_model, frame=antenna_frame)
+    ant_3axis[0] = Antenna(model=G_antenna_model_ew, frame=antenna_frame)
     # SN
-    path_ant = grand_add_path_data("detector/GP300Antenna_SNarm_leff.npy")
-    antenna_model = TabulatedAntennaModel.load(path_ant)    
-    ant_3axis[1] = Antenna(model=antenna_model, frame=antenna_frame)
+    ant_3axis[1] = Antenna(model=G_antenna_model_sn, frame=antenna_frame)
     # Z
-    path_ant = grand_add_path_data("detector/GP300Antenna_Zarm_leff.npy")
-    antenna_model = TabulatedAntennaModel.load(path_ant)    
-    ant_3axis[2] = Antenna(model=antenna_model, frame=antenna_frame)
+    ant_3axis[2] = Antenna(model=G_antenna_model_z, frame=antenna_frame)
     return ant_3axis
 
 
 def main_xdu_rf(rootdir):
-
+    global SHOWER
     # =====================================================!!!Start the main program from here!!!=========================================
     os.chdir(rootdir)
     print(rootdir)
     verse = []
     target = []
-
+    logger.info(mlg.string_begin_script())
     for root in os.listdir(rootdir):
         # print(root)
         # print(os.path.isdir(root))
@@ -208,12 +277,12 @@ def main_xdu_rf(rootdir):
         if item.startswith("Stshp_") == True:
             target.append(item)
         print(item)
-    print("target", target)
-
+    logger.info(f"target={target}")
     for i in range(0, len(target)):
         # file_dir = os.path.join("..", "data", target[i])
         file_dir = target[i]
         print(file_dir)
+        SHOWER = ShowerEvent.load(file_dir)
         list1 = target[i].split("_")
         content = []
         target_trace = []
@@ -256,15 +325,15 @@ def main_xdu_rf(rootdir):
         # ==== Write particle type, energy level, angle, and event number into parameter.txt========================
         case_index = (
             "primary is:"
-            + str(primary)
-            + ";           energy is: "
-            + str(energy)
-            + " Eev;          theta is: "
-            + str(e_theta)
-            + " degree;          phi is: "
-            + str(e_phi)
-            + " degree;          case num is:"
-            + str(case)
+            +str(primary)
+            +";           energy is: "
+            +str(energy)
+            +" Eev;          theta is: "
+            +str(e_theta)
+            +" degree;          phi is: "
+            +str(e_phi)
+            +" degree;          case num is:"
+            +str(case)
         )
         path_par = os.path.join("result", target[i], "parameter.txt")
         with open(path_par, "w") as f:
@@ -299,9 +368,9 @@ def main_xdu_rf(rootdir):
 
             #  ===========================start calculating===================
             [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(
-                E_path, Ts, show_flag
+                E_path, Ts, False
             )  # Signal interception
-
+            #plt.show()
             Edata = ex_cut
             Edata = np.column_stack((Edata, ey_cut))
             Edata = np.column_stack((Edata, ez_cut))
@@ -309,27 +378,29 @@ def main_xdu_rf(rootdir):
             [E_shower_fft, E_shower_fft_m_single, E_shower_fft_p_single] = fftget(
                 Edata, N, f1, show_flag
             )  # Frequency domain signal
-            # =======Equivalent length================
-            [Lce_complex, antennas11_complex_short] = dummy_CEL(e_theta, e_phi, N, f0, 1, show_flag)
 
-            Lcehang = Lce_complex.shape[0]
-            Lcelie = Lce_complex.shape[2]
             # ======Galaxy noise power spectrum density, power, etc.=====================
             [galactic_v_complex_double, galactic_v_time] = galaxy_radio_signal(
                 lst, N, f0, f1, show_flag
             )
-            # =================== LNA=====================================================
-            [rou1_complex, rou2_complex, rou3_complex] = LNA_get(
-                antennas11_complex_short, N, f0, 1, show_flag
-            )
+
             # =======================  cable  filter VGA balun=============================================
             [cable_coefficient, filter_coefficient] = filter_get(N, f0, 1, show_flag)
 
         # ===============================Start loop calculation========================================================================
-        for num in range(len(target_trace)):
+        for num in range(len(target_trace)):            
             # air shower,input file
             E_path = os.path.join(file_dir, "a" + str(num) + ".trace")
-            xunhuan = "a" + str(num) + "_trace.txt"
+            xunhuan = "a" + str(num) + ".trace"
+            # =======Equivalent length================
+            [Lce_complex, antennas11_complex_short] = dummy_CEL(num, e_theta, e_phi, N, f0, 1, show_flag)
+            Lcehang = Lce_complex.shape[0]
+            Lcelie = Lce_complex.shape[2]
+            logger.debug(Lce_complex.shape)
+            # =================== LNA=====================================================
+            [rou1_complex, rou2_complex, rou3_complex] = LNA_get(
+                antennas11_complex_short, N, f0, 1, show_flag
+            )            
 
             # Output file path and name
             #  ===========================start calculating===========================================================
@@ -342,7 +413,7 @@ def main_xdu_rf(rootdir):
             Edata = np.column_stack((Edata, ez_cut))
 
             [E_shower_fft, E_shower_fft_m_single, E_shower_fft_p_single] = fftget(
-                Edata, N, f1, show_flag
+                Edata, N, f1, False
             )  # Frequency domain signal
 
             # =======Equivalent length================
@@ -353,9 +424,8 @@ def main_xdu_rf(rootdir):
             for p in range(Lcelie):
                 Voc_shower_complex[:, p] = (
                     Lce_complex[:, 0, p] * E_shower_fft[:, 0]
-                    + Lce_complex[:, 1, p] * E_shower_fft[:, 1]
-                    + Lce_complex[:, 2, p] * E_shower_fft[:, 2]
-                    + 0
+                    +Lce_complex[:, 1, p] * E_shower_fft[:, 1]
+                    +Lce_complex[:, 2, p] * E_shower_fft[:, 2]
                 )
             # time domain signal
             [Voc_shower_t, Voc_shower_m_single, Voc_shower_p_single] = ifftget(
@@ -373,11 +443,11 @@ def main_xdu_rf(rootdir):
                     Voc_noise_complex[:, p] = Voc_shower_complex[:, p]
                 elif noise_flag == 1:
                     Voc_noise_t[:, p] = (
-                        Voc_shower_t[:, p] + galactic_v_time[random.randint(a=0, b=175), :, p]
+                        Voc_shower_t[:, p] + galactic_v_time[random.randint(a=0, b=175),:, p]
                     )
                     Voc_noise_complex[:, p] = (
                         Voc_shower_complex[:, p]
-                        + galactic_v_complex_double[random.randint(a=0, b=175), :, p]
+                        +galactic_v_complex_double[random.randint(a=0, b=175),:, p]
                     )
 
             [Voc_noise_t_ifft, Voc_noise_m_single, Voc_noise_p_single] = ifftget(
@@ -387,13 +457,11 @@ def main_xdu_rf(rootdir):
             # ==================Voltage after LNA=====================================================
             V_LNA_complex = np.zeros((N, Lcelie), dtype=complex)
             for p in range(Lcelie):
-                V_LNA_complex[:, p] = (
-                    rou1_complex[:, p]
-                    * rou2_complex[:, p]
-                    * rou3_complex[:, p]
-                    * Voc_noise_complex[:, p]
-                    + 0
-                )
+                V_LNA_complex[:, p] = rou1_complex[:, p] \
+                                    * rou2_complex[:, p] \
+                                    * rou3_complex[:, p] \
+                                    * Voc_noise_complex[:, p]
+                
             [V_LNA_t, V_LNA_m_single, V_LNA_p_single] = ifftget(V_LNA_complex, N, f1, 2)
 
             # ======================Voltage after  cable=============================================
@@ -420,36 +488,38 @@ def main_xdu_rf(rootdir):
                 # Open circuit voltage
                 V_output1 = np.zeros((N, Lcelie + 1))
                 V_output1[:, 0] = t_cut
-                V_output1[:, 1:] = Voc_shower_t[:, :]
-                np.savetxt(outfile_voc + xunhuan, V_output1, fmt="%.10e", delimiter=" ")
+                V_output1[:, 1:] = Voc_shower_t[:,:]
+                np.savetxt(outfile_voc + "/"+xunhuan, V_output1, fmt="%.10e", delimiter=" ")
                 # LNA
                 V_output4 = np.zeros((N, Lcelie + 1))
                 V_output4[:, 0] = t_cut
-                V_output4[:, 1:] = V_LNA_t[:, :]
-                np.savetxt(outfile_vlna + xunhuan, V_output4, fmt="%.10e", delimiter=" ")
+                V_output4[:, 1:] = V_LNA_t[:,:]
+                np.savetxt(outfile_vlna + "/"+ xunhuan, V_output4, fmt="%.10e", delimiter=" ")
                 # cable
                 V_output2 = np.zeros((N, Lcelie + 1))
                 V_output2[:, 0] = t_cut
-                V_output2[:, 1:] = V_cable_t[:, :]
-                np.savetxt(outfile_vcable + xunhuan, V_output2, fmt="%.10e", delimiter=" ")
+                V_output2[:, 1:] = V_cable_t[:,:]
+                np.savetxt(outfile_vcable+ "/" + xunhuan, V_output2, fmt="%.10e", delimiter=" ")
                 # filter
                 V_output3 = np.zeros((N, Lcelie + 1))
                 V_output3[:, 0] = t_cut
-                V_output3[:, 1:] = V_filter_t[:, :]
-                np.savetxt(outfile_vfilter + xunhuan, V_output3, fmt="%.10e", delimiter=" ")
+                V_output3[:, 1:] = V_filter_t[:,:]
+                np.savetxt(outfile_vfilter + "/"+ xunhuan, V_output3, fmt="%.10e", delimiter=" ")
 
             # ======================delete target_trace=============================================
-
-        del target_trace
         
+        del target_trace
+        plt.show()
+    logger.info(mlg.string_end_script())
 
 def test_get_antenna():
     ant = get_antenna()
     for key, val in ant.items():
         print(key, val.model.n_file)
 
+
 if __name__ == "__main__":
-    #test_get_antenna()
+    # test_get_antenna()
     print("XDU")
     main_xdu_rf("/home/jcolley/projet/grand_wk/binder/xdu")
     plt.show()
