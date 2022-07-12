@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from grand.num.signal import complex_expansion
+from grand import grand_add_path_data
 
 
 def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
@@ -39,7 +40,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         plt.figure()
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         for p in range(3):
-            plt.plot(freq, dbs21[p])
+            plt.plot(freq, dbs21_a[p])
         plt.ylim(20, 25)
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel(r"$\mathregular{S_{21}/dB} $", fontsize=15)
@@ -91,7 +92,8 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
     for p in range(3):
         #  LNA parameter
         str_p = str(p + 1)
-        lna_address = os.path.join("LNASparameter", str_p + ".s2p")
+        lna_address = os.path.join("detector","LNASparameter",f"{ str_p}.s2p")
+        lna_address = grand_add_path_data(lna_address)
         freq = np.loadtxt(lna_address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(lna_address, usecols=1)
@@ -111,8 +113,8 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
             res21 = mags21 * np.cos(degs21 / 180 * math.pi)
             ims21 = mags21 * np.sin(degs21 / 180 * math.pi)
         if p == 0:
-            dbs21 = np.zeros((3, len(freq)))
-        dbs21[p] = dbs21
+            dbs21_a = np.zeros((3, len(freq)))
+        dbs21_a[p] = dbs21
         # 插值为30-250mhz间隔1mhz一个数据
         freqnew = np.arange(30, 251, 1)
         f_res11 = interpolate.interp1d(freq, res11, kind="cubic")
@@ -218,7 +220,8 @@ def filter_get(N, f0, unit, show_flag=False):
         #  cable参数
         # str_p = str(p + 1)
         # cable_address = ".//data//cableparameter//" + str_p + ".s2p"
-        cable_address = os.path.join("cableparameter", "cable.s2p")
+        cable_address = os.path.join("detector","cableparameter", "cable.s2p")
+        cable_address = grand_add_path_data(cable_address)
         freq = np.loadtxt(cable_address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(cable_address, usecols=1)
@@ -270,7 +273,8 @@ def filter_get(N, f0, unit, show_flag=False):
         #  filter parameter
         # str_p = str(p + 1)
         # filter_address = ".//data//filterparameter//" + str_p + ".s2p"
-        filter_address = os.path.join("filterparameter", "1.s2p")
+        filter_address = os.path.join("detector","filterparameter", "1.s2p")
+        filter_address  = grand_add_path_data(filter_address)
         freq = np.loadtxt(filter_address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(filter_address, usecols=1)
@@ -298,12 +302,12 @@ def filter_get(N, f0, unit, show_flag=False):
             ims21 = mags21 * np.sin(degs21 / 180 * math.pi)
         # Filter S parameter display
         if p == 0:
-            dbs21 = np.zeros((3, len(freq)))
-            dBs11 = np.zeros((3, len(freq)))
-            dbs21_add_vga = np.zeros((3, len(freq)))
-        dbs21[p] = dbs21
-        dBs11[p] = dbs11
-        dbs21_add_vga[p] = dbs21_add_vga
+            dbs21_a = np.zeros((3, len(freq)))
+            dBs11_a = np.zeros((3, len(freq)))
+            dbs21_add_vga_a = np.zeros((3, len(freq)))
+        dbs21_a[p] = dbs21
+        dBs11_a[p] = dbs11
+        dbs21_add_vga_a[p] = dbs21_add_vga
         # 插值为30-250mhz间隔1mhz一个数据
         freqnew = np.arange(30, 251, 1)
         f_res11 = interpolate.interp1d(freq, res11, kind="cubic")
