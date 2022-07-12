@@ -68,14 +68,14 @@ Example:
  @code{.py}
 import grand.manage_log as mlg
 
+# specific logger definition for script because __mane__ is "__main__"
+logger = mlg.get_logger_for_script(__file__)
+
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-# specific logger definition for script because __mane__ is "__main__"
-logger = mlg.get_logger_for_script(__file__)
 logger.info(mlg.string_begin_script())
 ...
-
 
 logger.info(mlg.chrono_start())
 
