@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from grand.num.signal import complex_expansion, ifftget
+from grand import grand_add_path_data, grand_get_path_root_pkg
 
 
 def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
@@ -54,7 +55,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
-    gala_file = "30_250galactic.mat"
+    gala_file = grand_add_path_data("sky/30_250galactic.mat")
     gala_show = h5py.File(gala_file, "r")
     gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
     gala_power_dbm = np.transpose(gala_show["p_narrow_huatu"])
