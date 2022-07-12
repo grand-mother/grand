@@ -20,7 +20,7 @@ from ...tools.coordinates import ECEF, LTP, Geodetic
 from ...tools.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
-) 
+)
 
 __all__ = ["InvalidAntennaName", "ZhairesShower"]
 
@@ -43,19 +43,20 @@ class ZhairesShower(ShowerEvent):
 
     @classmethod
     def _from_dir(cls, path: Path) -> ZhairesShower:
-        '''!
-        Extract informations about ZHAires simulation from xxx.sry file 
-        
+        """!
+        Extract informations about ZHAires simulation from xxx.sry file
+
         @note:
           Zhaires has a fixed coordinate frame at a location with 'NWU'
           orientation at the sea level:
-              - 'N' is the magnetic north, 
-              - 'W' is 90 deg west from 'N', 
+              - 'N' is the magnetic north,
+              - 'W' is 90 deg west from 'N',
               - 'U' is upward towards zenith.
-        
+
         @param cls: class dict
-        @param path (TBD): path of simulation 
-        '''
+        @param path (TBD): path of simulation
+        """
+
         def parse_primary(string: str) -> ParticleCode:
             return {"Proton": ParticleCode.PROTON, "Iron": ParticleCode.IRON}[string.strip()]
 
@@ -68,9 +69,7 @@ class ZhairesShower(ShowerEvent):
             lat_f = parse_quantity(lat[:-2])
             lon_f = parse_quantity(lon[:-3])
             # Rk. Based on shower-event.py, reference of height is wrt ellipsoid instead of geoid.
-            geodetic = Geodetic(
-                latitude=lat_f, longitude=lon_f, height=0, reference="ELLIPSOID"
-            )
+            geodetic = Geodetic(latitude=lat_f, longitude=lon_f, height=0, reference="ELLIPSOID")
             return ECEF(geodetic)
 
         def parse_date(string: str) -> datetime:
@@ -100,7 +99,7 @@ class ZhairesShower(ShowerEvent):
         def parse_maximum(string: str) -> CartesianRepresentation:
             _, _, *xyz = string.split()
             x, y, z = map(float, xyz)
-
+            
             ## Xmax is given as CartesianRepresentation defined in the shower frame.
             # Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
             ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
@@ -115,7 +114,7 @@ class ZhairesShower(ShowerEvent):
             except StopIteration as parse_maximum_exit:
                 raise FileNotFoundError(path / "*.inp") from parse_maximum_exit
             return CartesianRepresentation(x=1000 * x, y=1000 * y, z=1000 * z)  # RK. km --> m
-        
+
         if not path.exists():
             raise FileNotFoundError(path)
         inp: Dict[str, Any] = {}
@@ -138,11 +137,14 @@ class ZhairesShower(ShowerEvent):
                     parse_geomagnet_intensity,
                 ),
                 ("I:", "geomagnet", parse_geomagnet_angles),
-                ("Location of max.(Km)", "maximum", parse_maximum),
+                # deprecated 19.04.08:("Location of max.(Km)", "maximum", parse_maximum),
+                ("Pos. Max.", "maximum", parse_maximum),
             )
             i = 0
             tag, k, convert = converters[i]
+            print(len(converters))
             with sry_path.open() as f:
+                print(f"converters: tag={tag}, k={k}")
                 for line in f:
                     start = line.find(tag)
                     if start < 0:
@@ -150,8 +152,10 @@ class ZhairesShower(ShowerEvent):
                     inp[k] = convert(line[start + len(tag) + 1 :])
                     i = i + 1
                     try:
-                        tag, k, convert = converters[i]
+                        print(f"converters: tag={tag}, k={k}")
+                        tag, k, convert = converters[i]                                         
                     except IndexError:
+                        # end of list converters
                         break
         origin = inp.pop("_origin")
         declination = inp.pop("_declination")
@@ -160,8 +164,10 @@ class ZhairesShower(ShowerEvent):
         ground_alt = inp["ground_alt"]
         # RK. x, y and z are given in ECEF.
         ecef = ECEF(
-            x=origin[0][0], y=origin[1][0], z=origin[2][0],
-        )  
+            x=origin[0][0],
+            y=origin[1][0],
+            z=origin[2][0],
+        )
         inp["frame"] = LTP(
             location=ecef,
             orientation=orientation,
