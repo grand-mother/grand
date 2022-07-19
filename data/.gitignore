@@ -3,4 +3,5 @@
 
 # except 
 !readme.md
+!*.py
 !.gitignore
