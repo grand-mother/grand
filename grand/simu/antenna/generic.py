@@ -102,7 +102,6 @@ class Antenna:
         frame: Union[LTP, GRANDCS],
     ) -> CartesianRepresentation:
         # 'frame' is shower frame. 'self.frame' is antenna frame.
-
         if isinstance(xmax, LTP):
             direction = xmax.ltp_to_ltp(self.frame)  # shower frame --> antenna frame
         else:
