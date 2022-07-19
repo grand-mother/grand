@@ -90,7 +90,6 @@ class Reference(enum.IntEnum):
     """Reference level for height in Geodetic coordinate system.
     Reference is also defined in topography.py for Topography use.
     """
-
     ELLIPSOID = enum.auto()
     GEOID = enum.auto()
 
@@ -102,7 +101,6 @@ def geoid_undulation(latitude=None, longitude=None):
     """
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
-    logger.info(f"geoid_undulation for {latitude} {longitude}")
     return geoid.elevation(longitude, latitude)
 
 

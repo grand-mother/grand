@@ -90,8 +90,8 @@ def time_data_get(filename, Ts, show_flag):
     # = == == =In order to make the frequency resolution 1MHz, the number of sampling points = sampling frequency == == == =
     fs = 1 / Ts * 1000  # sampling frequency, MHZ
     #N = math.ceil(fs)
+    # JMC: remove fix length to 2000, use size of trace
     N = len(t)
-    print(N, len(t))
     f0 = fs / N  # base frequency, Frequency resolution
     f = np.arange(0, N) * f0  # frequency sequence
     f1 = f[0: int(N / 2) + 1]
@@ -246,21 +246,21 @@ def get_antenna(idx_ant):
         orientation="NWU",
         magnetic=True
     )
-    ant_3axis = [1, 2, 3]
+    ant_3d = [1, 2, 3]
     # EW
-    ant_3axis[0] = Antenna(model=G_antenna_model_ew, frame=antenna_frame)
+    ant_3d[0] = Antenna(model=G_antenna_model_ew, frame=antenna_frame)
     # SN
-    ant_3axis[1] = Antenna(model=G_antenna_model_sn, frame=antenna_frame)
+    ant_3d[1] = Antenna(model=G_antenna_model_sn, frame=antenna_frame)
     # Z
-    ant_3axis[2] = Antenna(model=G_antenna_model_z, frame=antenna_frame)
-    return ant_3axis
+    ant_3d[2] = Antenna(model=G_antenna_model_z, frame=antenna_frame)
+    return ant_3d
 
 
 def main_xdu_rf(rootdir):
     global SHOWER
     # =====================================================!!!Start the main program from here!!!=========================================
     os.chdir(rootdir)
-    print(rootdir)
+    logger.info(rootdir)
     verse = []
     target = []
     logger.info(mlg.string_begin_script())
@@ -269,19 +269,18 @@ def main_xdu_rf(rootdir):
         # print(os.path.isdir(root))
         # if os.path.isdir(root) == True:            #Determine whether it is a folder
         verse.append(root)
-        print(root)
-    print("verse", verse)
-    print(type(verse))
+        
+    
     # =====================================If the folder starts with Stshp, add the target to be processed================================
     for item in verse:
         if item.startswith("Stshp_") == True:
             target.append(item)
-        print(item)
+       
     logger.info(f"target={target}")
     for i in range(0, len(target)):
         # file_dir = os.path.join("..", "data", target[i])
         file_dir = target[i]
-        print(file_dir)
+        logger.debug(file_dir)
         SHOWER = ShowerEvent.load(file_dir)
         list1 = target[i].split("_")
         content = []
@@ -293,11 +292,11 @@ def main_xdu_rf(rootdir):
         e_phi = float(list1[6])
         case = float(list1[7])
 
-        print("primary is:", primary)
-        print("energy is:", energy, "Eev")
-        print("theta is:", e_theta, "degree")
-        print("phi is:", e_phi, "degree")
-        print("case num is:", case)
+        logger.info(f"primary is: {primary}")
+        logger.info(f"energy is: {energy} Eev")
+        logger.info(f"theta is: {e_theta} degree")
+        logger.info(f"phi is: {e_phi} degree")
+        logger.info(f"case num is: {case}")
         # ==================================switch===========================================
 
         savetxt = 1  # savetxt=0 Don't save output file ,savetxt=1 save output file
@@ -341,8 +340,6 @@ def main_xdu_rf(rootdir):
 
             source_root = os.path.join(file_dir, "antpos.dat")
             target_root = os.path.join("result", target[i])
-            print("before shutil.copy")
-            print(source_root, target_root)
             shutil.copy(source_root, target_root)
 
             # ===================================Arbitrary input file first generates input parameters needed by subroutine================================================

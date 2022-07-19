@@ -142,9 +142,7 @@ class ZhairesShower(ShowerEvent):
             )
             i = 0
             tag, k, convert = converters[i]
-            print(len(converters))
             with sry_path.open() as f:
-                print(f"converters: tag={tag}, k={k}")
                 for line in f:
                     start = line.find(tag)
                     if start < 0:
@@ -152,7 +150,6 @@ class ZhairesShower(ShowerEvent):
                     inp[k] = convert(line[start + len(tag) + 1 :])
                     i = i + 1
                     try:
-                        print(f"converters: tag={tag}, k={k}")
                         tag, k, convert = converters[i]                                         
                     except IndexError:
                         # end of list converters
