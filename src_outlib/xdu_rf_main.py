@@ -257,6 +257,9 @@ def get_antenna(idx_ant):
 
 
 def main_xdu_rf(rootdir):
+    """
+    @param rootdir (path): directory with ZHAires simulation named Stshpxxxx
+    """
     global SHOWER
     # =====================================================!!!Start the main program from here!!!=========================================
     os.chdir(rootdir)
@@ -265,12 +268,8 @@ def main_xdu_rf(rootdir):
     target = []
     logger.info(mlg.string_begin_script())
     for root in os.listdir(rootdir):
-        # print(root)
-        # print(os.path.isdir(root))
-        # if os.path.isdir(root) == True:            #Determine whether it is a folder
         verse.append(root)
-        
-    
+            
     # =====================================If the folder starts with Stshp, add the target to be processed================================
     for item in verse:
         if item.startswith("Stshp_") == True:
@@ -285,20 +284,17 @@ def main_xdu_rf(rootdir):
         list1 = target[i].split("_")
         content = []
         target_trace = []
-
         primary = list1[3]
         energy = float(list1[4])
         e_theta = float(list1[5])
         e_phi = float(list1[6])
         case = float(list1[7])
-
         logger.info(f"primary is: {primary}")
         logger.info(f"energy is: {energy} Eev")
         logger.info(f"theta is: {e_theta} degree")
         logger.info(f"phi is: {e_phi} degree")
         logger.info(f"case num is: {case}")
         # ==================================switch===========================================
-
         savetxt = 1  # savetxt=0 Don't save output file ,savetxt=1 save output file
         show_flag = 0
         noise_flag = 0
@@ -337,11 +333,11 @@ def main_xdu_rf(rootdir):
         path_par = os.path.join("result", target[i], "parameter.txt")
         with open(path_par, "w") as f:
             f.write(case_index)
-
+            #TODO: JMC pb indentation ? 
+            # <= ?
             source_root = os.path.join(file_dir, "antpos.dat")
             target_root = os.path.join("result", target[i])
             shutil.copy(source_root, target_root)
-
             # ===================================Arbitrary input file first generates input parameters needed by subroutine================================================
             #  ================================Change according to actual situation==========================================
             # Select the galactic noise LST at the LST moment
@@ -353,16 +349,13 @@ def main_xdu_rf(rootdir):
             E_path = os.path.join(file_dir, "a" + str(randomn) + ".trace")
 
             for a in os.listdir(file_dir):
-                # print(root)
-                # print(os.path.isdir(root))
-                # if os.path.isdir(root) == True:            #判断是否为文件夹
                 content.append(a)
             for b in content:
                 # print(os.path.splitext(b)[1])
                 if os.path.splitext(b)[1] == ".trace":
                     if b.startswith("a") == True:
                         target_trace.append(b)
-
+            nb_ant = len(target_trace)
             #  ===========================start calculating===================
             [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(
                 E_path, Ts, False
@@ -378,17 +371,18 @@ def main_xdu_rf(rootdir):
 
             # ======Galaxy noise power spectrum density, power, etc.=====================
             [galactic_v_complex_double, galactic_v_time] = galaxy_radio_signal(
-                lst, N, f0, f1, show_flag
+                lst, N, f0, f1, nb_ant, show_flag
             )
 
             # =======================  cable  filter VGA balun=============================================
             [cable_coefficient, filter_coefficient] = filter_get(N, f0, 1, show_flag)
-
+            # <= ?
         # ===============================Start loop calculation========================================================================
         for num in range(len(target_trace)):            
             # air shower,input file
             E_path = os.path.join(file_dir, "a" + str(num) + ".trace")
             xunhuan = "a" + str(num) + ".trace"
+            logger.info(f'Processing ============> {xunhuan}')
             # =======Equivalent length================
             [Lce_complex, antennas11_complex_short] = dummy_CEL(num, e_theta, e_phi, N, f0, 1, show_flag)
             Lcehang = Lce_complex.shape[0]

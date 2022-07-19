@@ -12,7 +12,7 @@ from grand.num.signal import complex_expansion, ifftget
 from grand import grand_add_path_data, grand_get_path_root_pkg
 
 
-def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
+def galaxy_radio_signal(lst, size_out, f0, f1, nb_ant, show_flag=False):
     """!
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
@@ -68,24 +68,26 @@ def galaxy_radio_signal(lst, size_out, f0, f1, show_flag=False):
     f_start = 30
     f_end = 250
     R = 50
-    v_complex_double = np.zeros((176, size_out, 3), dtype=complex)
-    galactic_v_time = np.zeros((176, size_out, 3), dtype=float)
-    galactic_v_m_single = np.zeros((176, int(size_out / 2) + 1, 3), dtype=float)
-    galactic_v_p_single = np.zeros((176, int(size_out / 2) + 1, 3), dtype=float)
+    v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
+    galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
+    galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
+    galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
     unit_uv = 1e6
-    V_amplitude = 2 * np.sqrt(gala_power_mag * R) * unit_uv
-    aa = np.zeros((176, 221, 3), dtype=float)
-    phase = np.zeros((176, 221, 3), dtype=float)
-    v_complex = np.zeros((176, 221, 3), dtype=complex)
-    for mm in range(176):
+    V_amplitude = gala_voltage[:, :, lst-1]
+    aa = np.zeros((nb_ant, 221, 3), dtype=float)
+    phase = np.zeros((nb_ant, 221, 3), dtype=float)
+    v_complex = np.zeros((nb_ant, 221, 3), dtype=complex)
+    for mm in range(nb_ant):
         for ff in range(221):
             for pp in range(3):
+                # Generates a normal distribution with 0 as the mean and V_amplitude[ff, pp] as the standard deviation
                 aa[mm, ff, pp] = np.random.normal(loc=0, scale=V_amplitude[ff, pp])
+                # phase of random Gauss noise
                 phase[mm, ff, pp] = 2 * np.pi * random.random()
                 v_complex[mm, ff, pp] = abs(aa[mm, ff, pp] * size_out / 2)
                 v_complex[mm, ff, pp] *= np.exp(1j * phase[mm, ff, pp])
     #
-    for kk in range(176):
+    for kk in range(nb_ant):
         for port in range(3):
             [freq, v_complex_double[kk, :, port]] = complex_expansion(
                 size_out,

@@ -74,7 +74,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-
+    # characteristic impedance
     z0 = 50
     antenna_gama_complex = np.zeros((N, 3), dtype=complex)
     for p in range(3):
