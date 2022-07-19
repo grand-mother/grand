@@ -95,8 +95,8 @@ class TabulatedAntennaModel(AntennaModel):
         n_theta = len(numpy.unique(theta[0, :]))
         n_phi = int(R.shape[1] / n_theta)
         shape = (n_f, n_phi, n_theta)
-        #logger.debug(shape)
-        #logger.debug(lefft.shape)
+        # logger.debug(shape)
+        # logger.debug(lefft.shape)
         dtype = "f4"
         f = f[:, 0].astype(dtype) * 1.0e6  # MHz --> Hz
         theta = theta[0, :n_theta].astype(dtype)  # deg

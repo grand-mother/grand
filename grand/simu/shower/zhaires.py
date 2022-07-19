@@ -99,7 +99,7 @@ class ZhairesShower(ShowerEvent):
         def parse_maximum(string: str) -> CartesianRepresentation:
             _, _, *xyz = string.split()
             x, y, z = map(float, xyz)
-            
+
             ## Xmax is given as CartesianRepresentation defined in the shower frame.
             # Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
             ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
@@ -150,7 +150,7 @@ class ZhairesShower(ShowerEvent):
                     inp[k] = convert(line[start + len(tag) + 1 :])
                     i = i + 1
                     try:
-                        tag, k, convert = converters[i]                                         
+                        tag, k, convert = converters[i]
                     except IndexError:
                         # end of list converters
                         break

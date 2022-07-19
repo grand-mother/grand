@@ -74,6 +74,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+
     # characteristic impedance
     z0 = 50
     antenna_gama_complex = np.zeros((N, 3), dtype=complex)
@@ -92,7 +93,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
     for p in range(3):
         #  LNA parameter
         str_p = str(p + 1)
-        lna_address = os.path.join("detector","LNASparameter",f"{ str_p}.s2p")
+        lna_address = os.path.join("detector", "LNASparameter", f"{ str_p}.s2p")
         lna_address = grand_add_path_data(lna_address)
         freq = np.loadtxt(lna_address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
@@ -220,7 +221,7 @@ def filter_get(N, f0, unit, show_flag=False):
         #  cable参数
         # str_p = str(p + 1)
         # cable_address = ".//data//cableparameter//" + str_p + ".s2p"
-        cable_address = os.path.join("detector","cableparameter", "cable.s2p")
+        cable_address = os.path.join("detector", "cableparameter", "cable.s2p")
         cable_address = grand_add_path_data(cable_address)
         freq = np.loadtxt(cable_address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
@@ -273,8 +274,8 @@ def filter_get(N, f0, unit, show_flag=False):
         #  filter parameter
         # str_p = str(p + 1)
         # filter_address = ".//data//filterparameter//" + str_p + ".s2p"
-        filter_address = os.path.join("detector","filterparameter", "1.s2p")
-        filter_address  = grand_add_path_data(filter_address)
+        filter_address = os.path.join("detector", "filterparameter", "1.s2p")
+        filter_address = grand_add_path_data(filter_address)
         freq = np.loadtxt(filter_address, usecols=0) / 1e6  # HZ to MHz
         if unit == 0:
             res11 = np.loadtxt(filter_address, usecols=1)

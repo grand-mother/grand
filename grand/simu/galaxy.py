@@ -73,7 +73,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, nb_ant, show_flag=False):
     galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
     galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
     unit_uv = 1e6
-    V_amplitude = gala_voltage[:, :, lst-1]
+    V_amplitude = gala_voltage[:, :, lst - 1]
     aa = np.zeros((nb_ant, 221, 3), dtype=float)
     phase = np.zeros((nb_ant, 221, 3), dtype=float)
     v_complex = np.zeros((nb_ant, 221, 3), dtype=complex)

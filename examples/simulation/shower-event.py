@@ -21,7 +21,7 @@ logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
 showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
-showerdir= "/home/jcolley/projet/grand_wk/binder/xdu/Stshp_MZS_QGS204JET_Proton_3.98_79.6_90.0_9"
+showerdir = "/home/jcolley/projet/grand_wk/binder/xdu/Stshp_MZS_QGS204JET_Proton_3.98_79.6_90.0_9"
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:
@@ -41,10 +41,10 @@ logger.info("---------------------------------")
 #
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
-#path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
+# path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
 path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
 antenna_model = TabulatedAntennaModel.load(path_ant)
-#logger.debug(antenna_model)
+# logger.debug(antenna_model)
 
 counter = 0
 # Loop over electric fields and compute the corresponding voltages
@@ -107,7 +107,7 @@ for antenna_index, field in shower.fields.items():
 
     plt.figure()
     plt.subplot(211)
-    plt.title('example/simulation/shower-event.py')
+    plt.title("example/simulation/shower-event.py")
     plt.plot(field.electric.t, Exyz.x, label="Ex")
     plt.plot(field.electric.t, Exyz.y, label="Ey")
     plt.plot(field.electric.t, Exyz.z, label="Ez")
