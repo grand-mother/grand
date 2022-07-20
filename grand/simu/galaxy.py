@@ -24,6 +24,7 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
     @param freq_samp (float): is the frequency resolution,
     #TODO: freq_1 description not clear
     @param freq_1 (float): is the frequency point of the unilateral spectrum
+    @param nb_ant (int): number of antennas 
     @param show_flag (bool): print figure
 
     @return : v_complex_double, galactic_v_time
@@ -81,7 +82,8 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
     for l_ant in range(nb_ant):
         for l_fq in range(nb_freq):
             for l_axis in range(3):
-                # Generates a normal distribution with 0 as the mean and v_amplitude[l_fq, l_axis] as the standard deviation
+                # Generates a normal distribution with 0 as the mean and 
+                # v_amplitude[l_fq, l_axis] as the standard deviation
                 a_nor[l_ant, l_fq, l_axis] = np.random.normal(
                     loc=0, scale=v_amplitude[l_fq, l_axis]
                 )
@@ -91,13 +93,13 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
                 v_complex[l_ant, l_fq, l_axis] *= np.exp(1j * phase[l_ant, l_fq, l_axis])
     #
     for l_ant in range(nb_ant):
-        for port in range(3):
-            [_, v_complex_double[l_ant, :, port]] = complex_expansion(
+        for l_axis in range(3):
+            [_, v_complex_double[l_ant, :, l_axis]] = complex_expansion(
                 size_out,
                 freq_samp,
                 f_start,
                 f_end,
-                v_complex[l_ant, :, port],
+                v_complex[l_ant, :, l_axis],
             )
         [galactic_v_time[l_ant], galactic_v_m_single[l_ant], galactic_v_p_single[l_ant]] = ifftget(
             v_complex_double[l_ant],
