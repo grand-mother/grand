@@ -23,7 +23,7 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
     @param size_out (int): is the extended length
     @param freq_samp (float): is the frequency resolution,
     #TODO: freq_1 description not clear
-    @param freq_1 (float): is the frequency point of the unilateral spectrum 
+    @param freq_1 (float): is the frequency point of the unilateral spectrum
     @param show_flag (bool): print figure
 
     @return : v_complex_double, galactic_v_time

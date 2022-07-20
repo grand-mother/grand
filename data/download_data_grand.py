@@ -40,7 +40,8 @@ FILE_MODEL = "grand_model_2207.tar.gz"
 
 # 1- test if download is necessary
 if os.path.exists(grand_add_path_data('detector')):
-    print('Skip download')
+    print("==============================")
+    print('Skip download data model')
     sys.exit(0)
 
 tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)

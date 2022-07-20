@@ -11,6 +11,7 @@ import os.path as osp
 import shutil
 import math
 import random
+import argparse
 
 import numpy as np
 from numpy.ma import log10, abs
@@ -261,6 +262,7 @@ def main_xdu_rf(rootdir):
     """
     @param rootdir (path): directory with ZHAires simulation named Stshpxxxx
     """
+    #TODO: this function is too long, split it     
     global SHOWER
     # =====================================================!!!Start the main program from here!!!=========================================
     os.chdir(rootdir)
@@ -511,7 +513,12 @@ def test_get_antenna():
 
 
 if __name__ == "__main__":
-    # test_get_antenna()
-    print("XDU")
-    main_xdu_rf("/home/jcolley/projet/grand_wk/binder/xdu")
+    parser = argparse.ArgumentParser(
+        description='ecpi script: run ecpi pipeline')
+    parser.add_argument('path_simu',
+                        help='path to ZHAires simulation')
+    # retrieve argument
+    args = parser.parse_args()    
+    #main_xdu_rf("/home/jcolley/projet/grand_wk/binder/xdu")
+    main_xdu_rf(args.path_simu)
     plt.show()
