@@ -46,7 +46,8 @@ if os.path.exists(grand_add_path_data('detector')):
 tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
 
 # 2- download
-print("Download data model for GRAND")
+print("==============================")
+print("Download data model (~ 1GB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")
@@ -55,6 +56,7 @@ except:
     sys.exit(1)
     
 # 3- extract
+print("==============================")
 print('Extract tar file')
 try:
     my_tar = tarfile.open(tar_file)
@@ -63,4 +65,5 @@ try:
 except:
     print(f"Extract failed '{tar_file}'")
     sys.exit(1)
+print("data model available in grand/data directory !")
 sys.exit(0) 
