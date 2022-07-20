@@ -28,7 +28,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, nb_ant, show_flag=False):
     @return : v_complex_double, galactic_v_time
     """
 
-    def plot():
+    def plot():  # pragma: no cover
         plt.figure(figsize=(9, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 3, 1)
@@ -60,7 +60,7 @@ def galaxy_radio_signal(lst, size_out, f0, f1, nb_ant, show_flag=False):
     gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
     gala_power_dbm = np.transpose(gala_show["p_narrow_huatu"])
     gala_voltage = np.transpose(gala_show["v_amplitude"])
-    #gala_power_mag = np.transpose(gala_show["p_narrow"])
+    # gala_power_mag = np.transpose(gala_show["p_narrow"])
     gala_freq = gala_show["freq_all"]
     if show_flag:
         plot()
@@ -79,7 +79,9 @@ def galaxy_radio_signal(lst, size_out, f0, f1, nb_ant, show_flag=False):
         for l_fq in range(221):
             for l_axis in range(3):
                 # Generates a normal distribution with 0 as the mean and V_amplitude[l_fq, l_axis] as the standard deviation
-                a_nor[l_ant, l_fq, l_axis] = np.random.normal(loc=0, scale=V_amplitude[l_fq, l_axis])
+                a_nor[l_ant, l_fq, l_axis] = np.random.normal(
+                    loc=0, scale=V_amplitude[l_fq, l_axis]
+                )
                 # phase of random Gauss noise
                 phase[l_ant, l_fq, l_axis] = 2 * np.pi * random.random()
                 v_complex[l_ant, l_fq, l_axis] = abs(a_nor[l_ant, l_fq, l_axis] * size_out / 2)

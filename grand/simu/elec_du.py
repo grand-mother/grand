@@ -35,7 +35,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
     # f0 is the frequency resolution,
     # % ----------------------output - ---------------------------------- %
     # rou1 rou2 rou3
-    def plot():
+    def plot():  # pragma: no cover
         # drawing
         plt.figure()
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
@@ -163,7 +163,7 @@ def filter_get(N, f0, unit, show_flag=False):
     # % ----------------------output - ---------------------------------- %
     # cable_coefficient
     # filter_coefficient
-    def plot():
+    def plot():  # pragma: no cover
         plt.figure(figsize=(6, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 2, 1)
@@ -183,7 +183,7 @@ def filter_get(N, f0, unit, show_flag=False):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
-    def plot2():
+    def plot2():  # pragma: no cover
         plt.figure(figsize=(6, 3))
         plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         plt.subplot(1, 2, 1)
