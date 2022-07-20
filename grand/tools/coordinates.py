@@ -102,7 +102,6 @@ def geoid_undulation(latitude=None, longitude=None):
     """
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
-    logger.info(f"geoid_undulation for {latitude} {longitude}")
     return geoid.elevation(longitude, latitude)
 
 
@@ -115,11 +114,11 @@ def _cartesian_to_spherical(
     z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform Cartesian coordinates to spherical"""
-    rho2 = x ** 2 + y ** 2
+    rho2 = x**2 + y**2
     rho = np.sqrt(rho2)
     theta = np.rad2deg(np.arctan2(rho, z))
     phi = np.rad2deg(np.arctan2(y, x))
-    r = np.sqrt(rho2 + z ** 2)
+    r = np.sqrt(rho2 + z**2)
 
     return theta, phi, r
 

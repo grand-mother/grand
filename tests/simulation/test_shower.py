@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.simulation.shower module
+Unit tests for the grand.simu.shower module
 """
 
 from collections import OrderedDict
@@ -10,9 +10,9 @@ import unittest
 import numpy
 
 from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
-from grand.simulation import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
-from grand.simulation.pdg import ParticleCode
-from grand.simulation.shower.generic import CollectionEntry
+from grand.simu import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
+from grand.simu.shower.pdg import ParticleCode
+from grand.simu.shower.generic import CollectionEntry
 from tests import TestCase
 
 

@@ -5,6 +5,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Union, cast
 from numbers import Number
+import os.path as osp
 
 import numpy
 
@@ -44,6 +45,7 @@ class DataTable:
 @dataclass
 class TabulatedAntennaModel(AntennaModel):
     table: DataTable
+    n_file: ... = "TBD"
 
     def dump(self, destination: Union[str, Path, io.DataNode]) -> None:
         if type(destination) == io.DataNode:
@@ -56,7 +58,6 @@ class TabulatedAntennaModel(AntennaModel):
 
     @classmethod
     def load(cls, source: Union[str, Path, io.DataNode]) -> TabulatedAntennaModel:
-
         if type(source) == io.DataNode:
             source = cast(io.DataNode, source)
             filename = f"{source.filename}:{source.path}"
@@ -69,21 +70,17 @@ class TabulatedAntennaModel(AntennaModel):
                 loader = "_load_from_numpy"
             else:
                 loader = "_load_from_datafile"
-
         logger.info(f"Loading tabulated antenna model from {filename}")
-
         load = getattr(cls, loader)
         self = load(source)
-
+        self.n_file = osp.basename(source)
         t = self.table
         n = t.frequency.size * t.theta.size * t.phi.size
         logger.info(f"Loaded {n} entries from {filename}")
-
         return self
 
     @classmethod
     def _load_from_datafile(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
-
         with io.open(path) as root:
             return cls._load_from_node(root)
 
@@ -94,12 +91,12 @@ class TabulatedAntennaModel(AntennaModel):
     @classmethod
     def _load_from_numpy(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
         f, R, X, theta, phi, lefft, leffp, phaset, phasep = numpy.load(path)
-
         n_f = f.shape[0]
         n_theta = len(numpy.unique(theta[0, :]))
         n_phi = int(R.shape[1] / n_theta)
         shape = (n_f, n_phi, n_theta)
-
+        # logger.debug(shape)
+        # logger.debug(lefft.shape)
         dtype = "f4"
         f = f[:, 0].astype(dtype) * 1.0e6  # MHz --> Hz
         theta = theta[0, :n_theta].astype(dtype)  # deg
@@ -108,11 +105,9 @@ class TabulatedAntennaModel(AntennaModel):
         X = X.reshape(shape).astype(dtype)  # Ohm
         lefft = lefft.reshape(shape).astype(dtype)  # m
         leffp = leffp.reshape(shape).astype(dtype)  # m
-
         # RK TODO: Make sure going from rad to deg does not affect calculations somewhere else.
         phaset = phaset.reshape(shape).astype(dtype)  # deg
         phasep = phasep.reshape(shape).astype(dtype)  # deg
-
         t = DataTable(
             frequency=f,
             theta=theta,

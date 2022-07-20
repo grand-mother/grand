@@ -24,8 +24,9 @@ from .tools.coordinates import (
     Rotation,
 )
 from . import store
-   
-def get_root_grand_git():
+
+
+def grand_get_path_root_pkg():
     """get the root path of grand git package, ex: /home/user/grand
 
     @return (string) : root path of grand git package
@@ -38,21 +39,20 @@ def get_root_grand_git():
     return root
 
 
-def get_root_grand_src():
+def grand_get_path_grandlib():
     """get root path of grand source, ex: /home/user/grand/grand
 
     @return (string) : root path of grand source
     """
-    return osp.join(get_root_grand_git(), "grand")
+    return osp.join(grand_get_path_root_pkg(), "grand")
 
 
-OPTS_DATA_PATH = osp.join(get_root_grand_src(), "tools/data/huge")
+GRAND_DATA_PATH = osp.join(grand_get_path_root_pkg(), "data")
 
-if os.path.isfile(osp.join(OPTS_DATA_PATH,"use_instead_HOME.grand")):
-    GRAND_DATA_PATH = OPTS_DATA_PATH
-else:
-    GRAND_DATA_PATH = osp.join(Path.home(), ".grand")
- 
+
+def grand_add_path_data(s_file):
+    return os.path.join(GRAND_DATA_PATH, s_file)
+
 
 __all__ = [
     "geomagnet",
@@ -68,4 +68,5 @@ __all__ = [
     "CartesianRepresentation",
     "Rotation",
     "GRAND_DATA_PATH",
+    "grand_add_path_data",
 ]

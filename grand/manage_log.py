@@ -68,14 +68,14 @@ Example:
  @code{.py}
 import grand.manage_log as mlg
 
+# specific logger definition for script because __mane__ is "__main__"
+logger = mlg.get_logger_for_script(__file__)
+
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-# specific logger definition for script because __mane__ is "__main__"
-logger = mlg.get_logger_for_script(__file__)
 logger.info(mlg.string_begin_script())
 ...
-
 
 logger.info(mlg.chrono_start())
 
@@ -97,13 +97,13 @@ Result log file
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] ===========> begin at 2022-01-17T11:28:09Z <===========
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
-11:28:09.622  INFO [grand.simulation.shower.generic 102] Loading shower data from ../../tests/simulation/data/zhaires:/
-11:28:09.625  INFO [grand.simulation.shower.zhaires 104] ### zhaires.py: reading groundaltitude from. inp file.
-11:28:10.030  INFO [grand.simulation.shower.generic 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/
-11:28:10.030  INFO [grand.simulation.antenna.tabulated 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
-11:28:10.077  INFO [grand.simulation.antenna.tabulated 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
+11:28:09.622  INFO [grand.simu.shower.generic 102] Loading shower data from ../../tests/simulation/data/zhaires:/
+11:28:09.625  INFO [grand.simu.shower.zhaires 104] ### zhaires.py: reading groundaltitude from. inp file.
+11:28:10.030  INFO [grand.simu.shower.generic 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/
+11:28:10.030  INFO [grand.simu.antenna.tabulated 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
+11:28:10.077  INFO [grand.simu.antenna.tabulated 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
 11:28:10.183  INFO [grand.examples.simulation.shower-event 99] -----> Chrono start
-11:28:10.183 DEBUG [grand.simulation.antenna.generic 180] call compute_voltage()
+11:28:10.183 DEBUG [grand.simu.antenna.generic 180] call compute_voltage()
 11:28:10.244  INFO [grand.examples.simulation.shower-event 103] -----> Chrono Duration (h:m:s): 0:00:00.060869
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
@@ -200,7 +200,11 @@ def close_output_for_logger(log_root=NAME_ROOT_LIB):
 
 def get_logger_for_script(pfile):
     """!
-    Return a logger with root logger is defined by the path of the file
+    Return a logger with root logger is defined by the path of the file.
+
+    @note
+      Must be call before create_output_for_logger()
+
     @param pfile: path of the file, so always call with __file__ value
     """
     global SCRIPT_ROOT_LOGGER  # pylint: disable=global-statement
@@ -285,7 +289,8 @@ def _get_logger_path(pfile):
     else:
         # out package git
         # -3 for size of ".py"
-        g_str = pfile[1:-3].replace(l_sep, ".")
+        logger.debug("out package git")
+        g_str = pfile[0:-3].replace(l_sep, ".")
     return g_str
 
 

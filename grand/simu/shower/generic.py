@@ -9,8 +9,8 @@ from datetime import datetime
 
 import numpy
 
-from ..pdg import ParticleCode
-from ..antenna import ElectricField, Voltage
+from grand.simu.shower.pdg import ParticleCode
+from grand.simu import ElectricField, Voltage
 from ... import io
 from ...tools.coordinates import (
     Geodetic,
@@ -89,8 +89,8 @@ class ShowerEvent:
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
                     # in order to avoid circular references
-                    from .coreas import CoreasShower
-                    from .zhaires import ZhairesShower
+                    from grand.simu import CoreasShower
+                    from grand.simu import ZhairesShower
 
                     if CoreasShower.check_dir(source):
                         baseclass = CoreasShower
