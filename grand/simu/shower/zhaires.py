@@ -97,15 +97,17 @@ class ZhairesShower(ShowerEvent):
             return CartesianRepresentation(spherical)
 
         def parse_maximum(string: str) -> CartesianRepresentation:
+            """!
+            @note:
+                Xmax is given as CartesianRepresentation defined in the shower frame.
+                Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
+                "Previously: Dirty hack by OMH for now" -> not necessary now. RK.            
+            """
             _, _, *xyz = string.split()
             x, y, z = map(float, xyz)
-
-            ## Xmax is given as CartesianRepresentation defined in the shower frame.
-            # Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
-            ## "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
             try:
                 inp_file = path.glob("*.inp").__next__()
-                logger.info("### zhaires.py: reading groundaltitude from. inp file.")
+                logger.info(f"reading groundaltitude from : {inp_file}")
                 with open(inp_file, encoding="UTF-8") as f:
                     for line in f:
                         if "GroundAltitude" in line:
@@ -123,6 +125,8 @@ class ZhairesShower(ShowerEvent):
         except StopIteration as from_dir_exit:
             raise FileNotFoundError(path / "*.sry") from from_dir_exit
         else:
+            print(sry_path)
+            print(type(sry_path))
             converters = (
                 ("(Lat", "frame", parse_frame_location),
                 ("Date", "_obstime", parse_date),
@@ -137,9 +141,17 @@ class ZhairesShower(ShowerEvent):
                     parse_geomagnet_intensity,
                 ),
                 ("I:", "geomagnet", parse_geomagnet_angles),
-                # deprecated 19.04.08:("Location of max.(Km)", "maximum", parse_maximum),
-                ("Pos. Max.", "maximum", parse_maximum),
             )
+            # deprecated 19.04.08:
+            #   ("Location of max.(Km)", "maximum", parse_maximum)
+            # so check is present before add it
+            with sry_path.open() as f:
+                sry_all = f.read()
+                # now add the wright tuple element
+                if sry_all.find("Pos. Max.") > 0:
+                    converters += (("Pos. Max.", "maximum", parse_maximum),)
+                else:
+                    converters += (("Location of max.(Km)", "maximum", parse_maximum),)
             i = 0
             tag, k, convert = converters[i]
             with sry_path.open() as f:
@@ -158,7 +170,10 @@ class ZhairesShower(ShowerEvent):
         declination = inp.pop("_declination")
         obstime = inp.pop("_obstime")
         orientation = inp["frame"]
-        ground_alt = inp["ground_alt"]
+        try:
+            ground_alt = inp["ground_alt"]
+        except:
+            parse_maximum()
         # RK. x, y and z are given in ECEF.
         ecef = ECEF(
             x=origin[0][0],
