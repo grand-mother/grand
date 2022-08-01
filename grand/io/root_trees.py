@@ -1,16 +1,7 @@
-"""!
-Classes to handle exchange of information between user and ROOT TTrees holding Zhaires simulation data
+"""
+Read/Write python interface to GRAND data (real and simulated) stored in Cern ROOT TTrees.
 
-@section ROOT for GRAND basic information
-
-This is the interface for accessing GRAND ROOT TTrees that 
-(in its final future state) will not require the user 
-(reader/writer of the TTrees) to have any knowledge of ROOT. It
- also will hide the internals from the data generator, so that 
- the changes in the format are not concerning the user.
-
-The TTree interface classes are defined in the GRANDROOTTrees.py file.
-
+This is the interface for accessing GRAND ROOT TTrees that do not require the user (reader/writer of the TTrees) to have any knowledge of ROOT. It also hides the internals from the data generator, so that the changes in the format are not concerning the user.
 """
 import ROOT
 import numpy as np
@@ -21,17 +12,24 @@ if sys.version_info.major>=3 and sys.version_info.minor<10:
 else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
-from typing import List, Union
+#from typing import List, Union
 
 ## A list of generated Trees
 grand_tree_list = []
+"""Internal list of generated Trees"""
 
-## A python list interface to ROOT's std::vector
 class StdVectorList(MutableSequence):
-    vec_type = ""
+    """A python list interface to ROOT's std::vector"""
+    #vec_type = ""
 
     def __init__(self, vec_type, value=[]):
+        """
+        Args:
+            vec_type: C++ type for the std::vector (eg. "float", "string", etc.)
+            value: list with which to init the vector
+        """
         self._vector = ROOT.vector(vec_type)(value)
+        #: C++ type for the std::vector (eg. "float", "string", etc.)
         self.vec_type = vec_type
 
     def __len__(self):
@@ -41,6 +39,7 @@ class StdVectorList(MutableSequence):
         self._vector.erase(index)
 
     def insert(self, index, value):
+        """Insert the value to the vector at index"""
         self._vector.insert(index, value)
 
     def __setitem__(self, index, value):
@@ -57,7 +56,7 @@ class StdVectorList(MutableSequence):
             return None
 
     def append(self, value):
-        # exit()
+        """Append the value to the list"""
         # std::vector does not want numpy types for push_back, need to use .item()
         if isinstance(value, np.generic):
             self._vector.push_back(value.item())
@@ -65,6 +64,7 @@ class StdVectorList(MutableSequence):
             self._vector.push_back(value)
 
     def clear(self):
+        """Remove all the values from the vector"""
         self._vector.clear()
 
     def __repr__(self):
@@ -74,8 +74,8 @@ class StdVectorList(MutableSequence):
 
         return str(list(self._vector))
 
-## A python string interface to ROOT's std::string
 class StdString():
+    """A python string interface to ROOT's std::string"""
     def __init__(self, value):
         self.string = ROOT.string(value)
 
@@ -86,26 +86,30 @@ class StdString():
         return str(self.string)
 
 
-## Mother class for GRAND Tree data classes
 @dataclass
-class DataTree():
-    ## File handle
+class DataTree:
+    """
+    Mother class for GRAND Tree data classes
+    """
+    # File handle
     _file: ROOT.TFile = None
-    ## File name
-    _file_name: str = None
-    ## Tree object
+    # File name
+    _file_name: str = None #: hjehe
+    # Tree object
     _tree: ROOT.TTree = None
-    ## Tree name
+    # Tree name
     _tree_name: str = ""
-    ## A list of run_numbers or (run_number, event_number) pairs in the Tree
+    # A list of run_numbers or (run_number, event_number) pairs in the Tree
     _entry_list: list = field(default_factory=list)
 
     @property
     def tree(self):
+        """The ROOT TTree in which the variables' values are stored"""
         return self._tree
 
     @property
     def file(self):
+        """The ROOT TFile in which the tree is stored"""
         return self._file
 
     @file.setter
@@ -181,9 +185,11 @@ class DataTree():
         self._tree = ROOT.TTree(self._tree_name, self._tree_name)
 
     def fill(self):
+        """Adds the current variable values as a new event to the tree"""
         pass
 
     def write(self, *args, close_file=True, **kwargs):
+        """Write the tree to the file"""
         # Add the tree friends to this tree
         self.add_proper_friends()
 
@@ -196,7 +202,7 @@ class DataTree():
                 self._file = f
             # Overwrite requested
             # ToDo: this does not really seem to work now
-            elif kwargs["overwrite"]:
+            elif "overwrite" in kwargs:
                 print("overwriting")
                 self._file = ROOT.TFile(args[0], "recreate")
             else:
@@ -223,45 +229,57 @@ class DataTree():
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):
+        """Fills the entry list from the tree"""
         pass
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
+        """Check if specified run_number/event_number already exist in the tree"""
         pass
 
     ## Add the proper friend trees to this tree (reimplemented in daughter classes)
     def add_proper_friends(self):
+        """Add the proper friend trees to this tree (reimplemented in daughter classes)"""
         pass
 
     def scan(self, *args):
+        """Print out the values of the specified members of the tree (TTree::Scan() interface)"""
         self._tree.Scan(*args)
 
     def get_entry(self, ev_no):
+        """Read into memory the ev_no entry of the tree"""
         res = self._tree.GetEntry(ev_no)
         self.assign_branches()
         return res
 
     ## All three methods below return the number of entries
     def get_entries(self):
+        """Return the number of events in the tree"""
         return self._tree.GetEntries()
 
     def get_number_of_entries(self):
+        """Return the number of events in the tree"""
         return self.get_entries()
 
     def get_number_of_events(self):
+        """Return the number of events in the tree"""
         return self.get_number_of_entries()
 
     def add_friend(self, value):
+        """Add a friend to the tree"""
         self._tree.AddFriend(value)
 
     def remove_friend(self, value):
+        """Remove a friend from the tree"""
         self._tree.RemoveFriend(value)
 
     def set_tree_index(self, value):
+        """Set the tree index (necessary for working with friends)"""
         self._tree.SetTreeIndex(value)
 
     ## Create branches of the TTree based on the class fields
     def create_branches(self, set_if_exists=True):
+        """Create branches of the TTree based on the class fields"""
         # Reset all branch addresses just in case
         self._tree.ResetBranchAddresses()
 
@@ -280,6 +298,7 @@ class DataTree():
 
     ## Create a specific branch of a TTree computing its type from the corresponding class field
     def create_branch_from_field(self, value, set_branches=False):
+        """Create a specific branch of a TTree computing its type from the corresponding class field"""
         # Handle numpy arrays
         if isinstance(value.default, np.ndarray):
             # Generate ROOT TTree data type string
@@ -344,6 +363,7 @@ class DataTree():
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
+        """Assign branches to the instance - without calling it, the instance does not show the values read to the TTree"""
         # Assign the TTree branches to the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
@@ -357,6 +377,7 @@ class DataTree():
 
     ## Get entry with indices
     def get_entry_with_index(self, run_no=0, evt_no=0):
+        """Get the event with run_no and evt_no"""
         res = self._tree.GetEntryWithIndex(run_no, evt_no)
         if res==0 or res==-1:
             print(f"No event with event number {evt_no} and run number {run_no} in the tree. Please provide proper numbers.")
@@ -365,17 +386,20 @@ class DataTree():
         self.assign_branches()
         return res
 
-    ## All three methods below return the number of entries
+    ## Print out the tree scheme
     def print(self):
+        """Print out the tree scheme"""
         return self._tree.Print()
 
 ## A mother class for classes with Run values
 @dataclass
 class MotherRunTree(DataTree):
+    """A mother class for classes with Run values"""
     _run_number: np.ndarray = np.zeros(1, np.uint32)
 
     @property
     def run_number(self):
+        """The run number for this tree entry"""
         return self._run_number[0]
 
     @run_number.setter
@@ -383,6 +407,7 @@ class MotherRunTree(DataTree):
         self._run_number[0] = val
 
     def fill(self):
+        """Adds the current variable values as a new event to the tree"""
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
             raise NotUniqueEvent(f"A run with run_number={self.run_number} already exists in the TTree.")
@@ -394,11 +419,13 @@ class MotherRunTree(DataTree):
         self._entry_list.append(self.run_number)
 
     def add_proper_friends(self):
+        """Add proper friends to this tree"""
         # Create the indices
         self._tree.BuildIndex("run_number")
 
     ## List runs in the tree
     def print_list_of_runs(self):
+        """List runs in the tree"""
         count = self._tree.Draw("run_number", "", "goff")
         runs = self._tree.GetV1()
         print("List of runs in the tree:")
@@ -407,12 +434,14 @@ class MotherRunTree(DataTree):
 
     ## Gets list of runs in the tree together
     def get_list_of_runs(self):
+        """Gets list of runs in the tree together"""
         count = self._tree.Draw("run_number", "", "goff")
         runs = self._tree.GetV1()
         return [int(runs[i]) for i in range(count)]
 
     # Readout the TTree entry corresponding to the run
     def get_run(self, run_no):
+        """Readout the TTree entry corresponding to the run"""
         # Try to get the run from the tree
         res = self._tree.GetEntryWithIndex(run_no)
         # If no such entry, return
@@ -425,10 +454,12 @@ class MotherRunTree(DataTree):
         return res
 
     def build_index(self, run_id):
+        """Build the tree index (necessary for working with friends)"""
         self._tree.BuildIndex(run_id)
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):
+        """Fills the entry list from the tree"""
         # Fill the entry list if there are some entries in the tree
         if (count := self._tree.Draw("run_number", "", "goff")) > 0:
             v1 = np.array(np.frombuffer(self._tree.GetV1(), dtype=np.float64, count=count))
@@ -436,6 +467,7 @@ class MotherRunTree(DataTree):
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
+        """Check if specified run_number/event_number already exist in the tree"""
         # If the entry list does not exist, the event is unique
         if self._entry_list and self.run_number in self._entry_list:
             return False
@@ -446,12 +478,14 @@ class MotherRunTree(DataTree):
 ## A mother class for classes with Event values
 @dataclass
 class MotherEventTree(DataTree):
+    """A mother class for classes with Event values"""
     _run_number: np.ndarray = np.zeros(1, np.uint32)
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     _event_number: np.ndarray = np.zeros(1, np.uint32)
 
     @property
     def run_number(self):
+        """The run number of the current event"""
         return self._run_number[0]
 
     @run_number.setter
@@ -460,6 +494,7 @@ class MotherEventTree(DataTree):
 
     @property
     def event_number(self):
+        """The event number of the current event"""
         return self._event_number[0]
 
     @event_number.setter
@@ -467,6 +502,7 @@ class MotherEventTree(DataTree):
         self._event_number[0] = val
 
     def fill(self):
+        """Adds the current variable values as a new event to the tree"""
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
             raise NotUniqueEvent(f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree {self._tree.GetName()}.")
@@ -479,6 +515,7 @@ class MotherEventTree(DataTree):
 
 
     def add_proper_friends(self):
+        """Add proper friends to this tree"""
         # Create the indices
         self.build_index("run_number", "event_number")
 
@@ -569,6 +606,7 @@ class MotherEventTree(DataTree):
 
     ## List events in the tree together with runs
     def print_list_of_events(self):
+        """List events in the tree together with runs"""
         count = self._tree.Draw("event_number:run_number", "", "goff")
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
@@ -579,6 +617,7 @@ class MotherEventTree(DataTree):
 
     ## Gets list of events in the tree together with runs
     def get_list_of_events(self):
+        """Gets list of events in the tree together with runs"""
         count = self._tree.Draw("event_number:run_number", "", "goff")
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
@@ -586,6 +625,7 @@ class MotherEventTree(DataTree):
 
     ## Readout the TTree entry corresponding to the event and run
     def get_event(self, ev_no, run_no=0):
+        """Readout the TTree entry corresponding to the event and run"""
         # Try to get the requested entry
         res = self._tree.GetEntryWithIndex(run_no, ev_no)
         # If no such entry, return
@@ -599,10 +639,12 @@ class MotherEventTree(DataTree):
 
     ## Builds index based on run_id and evt_id for the TTree
     def build_index(self, run_id, evt_id):
+        """Builds index based on run_id and evt_id for the TTree"""
         self._tree.BuildIndex(run_id, evt_id)
 
     ## Fills the entry list from the tree
     def fill_entry_list(self, tree=None):
+        """Fills the entry list from the tree"""
         if tree is None:
             tree = self._tree
         # Fill the entry list if there are some entries in the tree
@@ -613,15 +655,17 @@ class MotherEventTree(DataTree):
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
+        """Check if specified run_number/event_number already exist in the tree"""
         # If the entry list does not exist, the event is unique
         if self._entry_list and (self.run_number, self.event_number) in self._entry_list:
             return False
 
         return True
 
-## A class wrapping around a TTree holding values commong for the whole run
+## A class wrapping around a TTree holding values common for the whole run
 @dataclass
 class RunTree(MotherRunTree):
+    """A class wrapping around a TTree holding values common for the whole run"""
     _tree_name: str = "trun"
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
@@ -664,6 +708,7 @@ class RunTree(MotherRunTree):
 
     @property
     def run_mode(self):
+        """Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment"""
         return self._run_mode[0]
 
     @run_mode.setter
@@ -672,6 +717,7 @@ class RunTree(MotherRunTree):
 
     @property
     def first_event(self):
+        """Run's first event"""
         return self._first_event[0]
 
     @first_event.setter
@@ -680,6 +726,7 @@ class RunTree(MotherRunTree):
 
     @property
     def first_event_time(self):
+        """First event time"""
         return self._first_event_time[0]
 
     @first_event_time.setter
@@ -688,6 +735,7 @@ class RunTree(MotherRunTree):
 
     @property
     def last_event(self):
+        """Run's last event"""
         return self._last_event[0]
 
     @last_event.setter
@@ -696,6 +744,7 @@ class RunTree(MotherRunTree):
 
     @property
     def last_event_time(self):
+        """Last event time"""
         return self._last_event_time[0]
 
     @last_event_time.setter
@@ -704,6 +753,7 @@ class RunTree(MotherRunTree):
 
     @property
     def data_source(self):
+        """Data source: detector, simulation, other"""
         return str(self._data_source)
 
     @data_source.setter
@@ -716,6 +766,7 @@ class RunTree(MotherRunTree):
 
     @property
     def data_generator(self):
+        """Data generator: gtot (in this case)"""
         return str(self._data_generator)
 
     @data_generator.setter
@@ -728,6 +779,7 @@ class RunTree(MotherRunTree):
 
     @property
     def data_generator_version(self):
+        """Generator version: gtot version (in this case)"""
         return str(self._data_generator_version)
 
     @data_generator_version.setter
@@ -740,6 +792,7 @@ class RunTree(MotherRunTree):
 
     @property
     def site(self):
+        """Site name"""
         return str(self._site)
 
     @site.setter
@@ -753,6 +806,7 @@ class RunTree(MotherRunTree):
 
     @property
     def site_long(self):
+        """Site longitude"""
         return np.array(self._site_long)
 
     @site_long.setter
@@ -762,6 +816,7 @@ class RunTree(MotherRunTree):
 
     @property
     def site_lat(self):
+        """Site latitude"""
         return np.array(self._site_lat)
 
     @site_lat.setter
@@ -771,6 +826,7 @@ class RunTree(MotherRunTree):
 
     @property
     def origin_geoid(self):
+        """Origin of the coordinate system used for the array"""
         return np.array(self._origin_geoid)
 
     @origin_geoid.setter
@@ -780,7 +836,9 @@ class RunTree(MotherRunTree):
 
 
 @dataclass
+## The class for storing shower simulation-only data common for a whole run
 class ShowerRunSimdataTree(MotherRunTree):
+    """The class for storing shower simulation-only data common for a whole run"""
     _tree_name: str = "trunsimdata"
 
     _shower_sim: StdString = StdString("") # simulation program (and version) used to simulate the shower
@@ -804,6 +862,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def shower_sim(self):
+        """Simulation program (and version) used to simulate the shower"""
         return str(self._shower_sim)
 
     @shower_sim.setter
@@ -816,6 +875,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def rel_thin(self):
+        """relative thinning energy"""
         return self._rel_thin[0]
 
     @rel_thin.setter
@@ -824,6 +884,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def weight_factor(self):
+        """weight factor"""
         return self._weight_factor[0]
 
     @weight_factor.setter
@@ -832,6 +893,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def lowe_cut_e(self):
+        """low energy cut for electrons(GeV)"""
         return self._lowe_cut_e[0]
 
     @lowe_cut_e.setter
@@ -840,6 +902,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def lowe_cut_gamma(self):
+        """low energy cut for gammas(GeV)"""
         return self._lowe_cut_gamma[0]
 
     @lowe_cut_gamma.setter
@@ -848,6 +911,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def lowe_cut_mu(self):
+        """low energy cut for muons(GeV)"""
         return self._lowe_cut_mu[0]
 
     @lowe_cut_mu.setter
@@ -856,6 +920,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def lowe_cut_meson(self):
+        """low energy cut for mesons(GeV)"""
         return self._lowe_cut_meson[0]
 
     @lowe_cut_meson.setter
@@ -864,6 +929,7 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     @property
     def lowe_cut_nucleon(self):
+        """low energy cut for nucleons(GeV)"""
         return self._lowe_cut_nucleon[0]
 
     @lowe_cut_nucleon.setter
@@ -871,7 +937,9 @@ class ShowerRunSimdataTree(MotherRunTree):
         self._lowe_cut_nucleon[0] = value
 
 @dataclass
+## The class for storing shower data common for each event
 class ShowerEventTree(MotherEventTree):
+    """The class for storing shower data common for each event"""
     _tree_name: str = "teventshower"
 
     _shower_type: StdString = StdString("")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
@@ -902,6 +970,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def shower_type(self):
+        """Shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize"""
         return str(self._shower_type)
 
     @shower_type.setter
@@ -914,6 +983,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def shower_energy(self):
+        """Shower energy (GeV). ToDo: Check unit conventions."""
         return self._shower_energy[0]
 
     @shower_energy.setter
@@ -922,6 +992,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def shower_azimuth(self):
+        """Shower azimuth. TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neutrino convention is problematic for round earth. Also, geoid vs sphere problem"""
         return self._shower_azimuth[0]
 
     @shower_azimuth.setter
@@ -930,6 +1001,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def shower_zenith(self):
+        """Shower zenith. TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neutrino convention is problematic for round earth"""
         return self._shower_zenith[0]
 
     @shower_zenith.setter
@@ -938,6 +1010,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def shower_core_pos(self):
+        """Shower core position TODO: Coordinates in geoid?. Undefined for neutrinos."""
         return np.array(self._shower_core_pos)
 
     @shower_core_pos.setter
@@ -947,6 +1020,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def atmos_model(self):
+        """Atmospheric model name. TODO: standarize"""
         return str(self._atmos_model)
 
     @atmos_model.setter
@@ -959,6 +1033,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def atmos_model_param(self):
+        """Atmospheric model parameters. TODO: Think about this. Different models and softwares can have different parameters"""
         return np.array(self._atmos_model_param)
 
     @atmos_model_param.setter
@@ -968,6 +1043,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def magnetic_field(self):
+        """Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense."""
         return np.array(self._magnetic_field)
 
     @magnetic_field.setter
@@ -977,6 +1053,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def date(self):
+        """Event Date and time. TODO: standarize (date format, time format)"""
         return str(self._date)
 
     @date.setter
@@ -989,6 +1066,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def ground_alt(self):
+        """Ground Altitude (m)"""
         return self._ground_alt[0]
 
     @ground_alt.setter
@@ -997,6 +1075,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def xmax_grams(self):
+        """Shower Xmax depth (g/cm2 along the shower axis)."""
         return self._xmax_grams[0]
 
     @xmax_grams.setter
@@ -1005,6 +1084,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def xmax_pos_shc(self):
+        """Shower Xmax position in shower coordinates."""
         return np.array(self._xmax_pos_shc)
 
     @xmax_pos_shc.setter
@@ -1014,6 +1094,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def xmax_alt(self):
+        """Altitude of Xmax (m, in the shower simulation earth. It's important for the index of refraction)."""
         return self._xmax_alt[0]
 
     @xmax_alt.setter
@@ -1022,6 +1103,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def gh_fit_param(self):
+        """X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)."""
         return np.array(self._gh_fit_param)
 
     @gh_fit_param.setter
@@ -1031,6 +1113,7 @@ class ShowerEventTree(MotherEventTree):
 
     @property
     def core_time(self):
+        """ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?"""
         return self._core_time[0]
 
     @core_time.setter
@@ -1039,7 +1122,9 @@ class ShowerEventTree(MotherEventTree):
 
 
 @dataclass
+## The class for storing a shower simulation-only data for each event
 class ShowerEventSimdataTree(MotherEventTree):
+    """The class for storing a shower simulation-only data for each event"""
     _tree_name: str = "teventshowersimdata"
 
     ## Event name
@@ -1100,6 +1185,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def event_name(self):
+        """Event name"""
         return str(self._event_name)
 
     @event_name.setter
@@ -1112,6 +1198,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def date(self):
+        """Event Date and time. TODO:standarize (date format, time format)"""
         return str(self._date)
 
     @date.setter
@@ -1124,6 +1211,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def rnd_seed(self):
+        """Random seed"""
         return self._rnd_seed[0]
 
     @rnd_seed.setter
@@ -1132,6 +1220,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def energy_in_neutrinos(self):
+        """Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy"""
         return self._energy_in_neutrinos[0]
 
     @energy_in_neutrinos.setter
@@ -1140,6 +1229,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def prim_energy(self):
+        """Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector"""
         return self._prim_energy
 
     @prim_energy.setter
@@ -1157,6 +1247,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def shower_azimuth(self):
+        """Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem"""
         return self._shower_azimuth[0]
 
     @shower_azimuth.setter
@@ -1165,6 +1256,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def shower_zenith(self):
+        """Shower zenith TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth"""
         return self._shower_zenith[0]
 
     @shower_zenith.setter
@@ -1173,6 +1265,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def prim_type(self):
+        """Primary particle type TODO: standarize (PDG?)"""
         return self._prim_type
 
     @prim_type.setter
@@ -1190,6 +1283,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def prim_injpoint_shc(self):
+        """Primary injection point in Shower coordinates"""
         return np.array(self._prim_injpoint_shc)
 
     @prim_injpoint_shc.setter
@@ -1199,6 +1293,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def prim_inj_alt_shc(self):
+        """Primary injection altitude in Shower Coordinates"""
         return self._prim_inj_alt_shc
 
     @prim_inj_alt_shc.setter
@@ -1217,6 +1312,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def prim_inj_dir_shc(self):
+        """primary injection direction in Shower Coordinates"""
         return np.array(self._prim_inj_dir_shc)
 
     @prim_inj_dir_shc.setter
@@ -1226,6 +1322,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def atmos_model(self):
+        """Atmospheric model name TODO:standarize"""
         return str(self._atmos_model)
 
     @atmos_model.setter
@@ -1238,6 +1335,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def atmos_model_param(self):
+        """Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters"""
         return np.array(self._atmos_model_param)
 
     @atmos_model_param.setter
@@ -1247,6 +1345,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def magnetic_field(self):
+        """Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense."""
         return np.array(self._magnetic_field)
 
     @magnetic_field.setter
@@ -1256,6 +1355,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def xmax_grams(self):
+        """Shower Xmax depth (g/cm2 along the shower axis)"""
         return self._xmax_grams[0]
 
     @xmax_grams.setter
@@ -1264,6 +1364,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def xmax_pos_shc(self):
+        """Shower Xmax position in shower coordinates"""
         return np.array(self._xmax_pos_shc)
 
     @xmax_pos_shc.setter
@@ -1273,6 +1374,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def xmax_distance(self):
+        """Distance of Xmax [m]"""
         return self._xmax_distance[0]
 
     @xmax_distance.setter
@@ -1281,6 +1383,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def xmax_alt(self):
+        """Altitude of Xmax (m, in the shower simulation earth. Its important for the index of refraction )"""
         return self._xmax_alt[0]
 
     @xmax_alt.setter
@@ -1289,6 +1392,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def hadronic_model(self):
+        """High energy hadronic model (and version) used TODO: standarize"""
         return str(self._hadronic_model)
 
     @hadronic_model.setter
@@ -1301,6 +1405,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def low_energy_model(self):
+        """High energy model (and version) used TODO: standarize"""
         return str(self._low_energy_model)
 
     @low_energy_model.setter
@@ -1313,6 +1418,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @property
     def cpu_time(self):
+        """Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation"""
         return np.array(self._cpu_time)
 
     @cpu_time.setter
@@ -1322,7 +1428,9 @@ class ShowerEventSimdataTree(MotherEventTree):
 
 
 @dataclass
+## The class for storing Efield simulation-only data common for a whole run
 class EfieldRunSimdataTree(MotherRunTree):
+    """The class for storing Efield simulation-only data common for a whole run"""
     _tree_name: str = "trunefieldsimdata"
 
     ## Name and model of the electric field simulator
@@ -1359,6 +1467,7 @@ class EfieldRunSimdataTree(MotherRunTree):
 
     @property
     def refractivity_model(self):
+        """Name of the atmospheric index of refraction model"""
         return str(self._refractivity_model)
 
     @refractivity_model.setter
@@ -1371,6 +1480,7 @@ class EfieldRunSimdataTree(MotherRunTree):
 
     @property
     def refractivity_model_parameters(self):
+        """Refractivity model parameters"""
         return self._refractivity_model_parameters
 
     @refractivity_model_parameters.setter
@@ -1388,6 +1498,7 @@ class EfieldRunSimdataTree(MotherRunTree):
 
     @property
     def t_pre(self):
+        """Starting time of antenna data collection time window. The window starts at t0+t_pre, thus t_pre is usually negative."""
         return self._t_pre[0]
 
     @t_pre.setter
@@ -1396,6 +1507,7 @@ class EfieldRunSimdataTree(MotherRunTree):
 
     @property
     def t_post(self):
+        """Finishing time of antenna data collection time window. The window ends at t0+t_post."""
         return self._t_post[0]
 
     @t_post.setter
@@ -1404,6 +1516,7 @@ class EfieldRunSimdataTree(MotherRunTree):
 
     @property
     def t_bin_size(self):
+        """Time bin size"""
         return self._t_bin_size[0]
 
     @t_bin_size.setter
@@ -1412,7 +1525,9 @@ class EfieldRunSimdataTree(MotherRunTree):
 
 
 @dataclass
+## The class for storing Efield simulation-only data common for each event
 class EfieldEventSimdataTree(MotherEventTree):
+    """The class for storing Efield simulation-only data common for each event"""
     _tree_name: str = "teventefieldsimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -1440,6 +1555,7 @@ class EfieldEventSimdataTree(MotherEventTree):
 
     @property
     def du_id(self):
+        """Detector ID"""
         return self._du_id
 
     @du_id.setter
@@ -1457,6 +1573,7 @@ class EfieldEventSimdataTree(MotherEventTree):
 
     @property
     def t_0(self):
+        """Time window t0"""
         return self._t_0
 
     @t_0.setter
@@ -1474,6 +1591,7 @@ class EfieldEventSimdataTree(MotherEventTree):
 
     @property
     def p2p(self):
+        """Peak 2 peak amplitudes (x,y,z,modulus)"""
         return self._p2p
 
     @p2p.setter
@@ -1491,7 +1609,9 @@ class EfieldEventSimdataTree(MotherEventTree):
 
 
 @dataclass
+## The class for storing voltage simulation-only data common for a whole run
 class VoltageRunSimdataTree(MotherRunTree):
+    """The class for storing voltage simulation-only data common for a whole run"""
     _tree_name: str = "trunvoltagesimdata"
 
     _signal_sim: StdString = StdString("")  # name and model of the signal simulator
@@ -1508,6 +1628,7 @@ class VoltageRunSimdataTree(MotherRunTree):
 
     @property
     def signal_sim(self):
+        """Name and model of the signal simulator"""
         return str(self._signal_sim)
 
     @signal_sim.setter
@@ -1520,7 +1641,9 @@ class VoltageRunSimdataTree(MotherRunTree):
 
 
 @dataclass
+## The class for storing voltage simulation-only data common for each event
 class VoltageEventSimdataTree(MotherEventTree):
+    """The class for storing voltage simulation-only data common for each event"""
     _tree_name: str = "teventvoltagesimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -1539,6 +1662,7 @@ class VoltageEventSimdataTree(MotherEventTree):
 
     @property
     def du_id(self):
+        """Detector ID"""
         return self._du_id
 
     @du_id.setter
@@ -1557,6 +1681,7 @@ class VoltageEventSimdataTree(MotherEventTree):
 
     @property
     def t_0(self):
+        """Time window t0"""
         return self._t_0
 
     @t_0.setter
@@ -1575,6 +1700,7 @@ class VoltageEventSimdataTree(MotherEventTree):
 
     @property
     def p2p(self):
+        """Peak 2 peak amplitudes (x,y,z,modulus)"""
         return self._p2p
 
     @p2p.setter
@@ -1593,7 +1719,9 @@ class VoltageEventSimdataTree(MotherEventTree):
 
 
 @dataclass
+## The class for storing ADC traces and associated values for each event
 class ADCEventTree(MotherEventTree):
+    """The class for storing ADC traces and associated values for each event"""
     _tree_name: str = "teventadc"
 
     ## Common for the whole event
@@ -1739,6 +1867,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def event_size(self):
+        """Event size"""
         return self._event_size[0]
 
     @event_size.setter
@@ -1747,6 +1876,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def t3_number(self):
+        """Event in the run number"""
         return self._t3_number[0]
 
     @t3_number.setter
@@ -1755,6 +1885,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def first_du(self):
+        """First detector unit that triggered in the event"""
         return self._first_du[0]
 
     @first_du.setter
@@ -1763,6 +1894,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def time_seconds(self):
+        """Unix time corresponding to the GPS seconds of the first triggered station"""
         return self._time_seconds[0]
 
     @time_seconds.setter
@@ -1771,6 +1903,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def time_nanoseconds(self):
+        """GPS nanoseconds corresponding to the trigger of the first triggered station"""
         return self._time_nanoseconds[0]
 
     @time_nanoseconds.setter
@@ -1779,6 +1912,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def event_type(self):
+        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
         return self._event_type[0]
 
     @event_type.setter
@@ -1787,6 +1921,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def event_version(self):
+        """Event format version of the DAQ"""
         return self._event_version[0]
 
     @event_version.setter
@@ -1795,6 +1930,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def du_count(self):
+        """Number of detector units in the event - basically the antennas count"""
         return self._du_count[0]
 
     @du_count.setter
@@ -1803,6 +1939,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def event_id(self):
+        """The T3 trigger number"""
         return self._event_id
 
     @event_id.setter
@@ -1820,6 +1957,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def du_id(self):
+        """Detector unit (antenna) ID"""
         return self._du_id
 
     @du_id.setter
@@ -1837,6 +1975,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def du_seconds(self):
+        """Unix time of the trigger for this DU"""
         return self._du_seconds
 
     @du_seconds.setter
@@ -1854,6 +1993,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def du_nanoseconds(self):
+        """Nanoseconds of the trigger for this DU"""
         return self._du_nanoseconds
 
     @du_nanoseconds.setter
@@ -1871,6 +2011,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trigger_position(self):
+        """Trigger position in the trace (trigger start = nanoseconds - 2*sample number)"""
         return self._trigger_position
 
     @trigger_position.setter
@@ -1888,6 +2029,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trigger_flag(self):
+        """Same as event_type, but event_type could consist of different triggered DUs"""
         return self._trigger_flag
 
     @trigger_flag.setter
@@ -1905,6 +2047,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def atm_temperature(self):
+        """Atmospheric temperature (read via I2C)"""
         return self._atm_temperature
 
     @atm_temperature.setter
@@ -1922,6 +2065,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def atm_pressure(self):
+        """Atmospheric pressure"""
         return self._atm_pressure
 
     @atm_pressure.setter
@@ -1939,6 +2083,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def atm_humidity(self):
+        """Atmospheric humidity"""
         return self._atm_humidity
 
     @atm_humidity.setter
@@ -1956,6 +2101,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def acceleration_x(self):
+        """Acceleration of the antenna in X"""
         return self._acceleration_x
 
     @acceleration_x.setter
@@ -1973,6 +2119,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def acceleration_y(self):
+        """Acceleration of the antenna in Y"""
         return self._acceleration_y
 
     @acceleration_y.setter
@@ -1990,6 +2137,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def acceleration_z(self):
+        """Acceleration of the antenna in Z"""
         return self._acceleration_z
 
     @acceleration_z.setter
@@ -2007,6 +2155,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def battery_level(self):
+        """Battery voltage"""
         return self._battery_level
 
     @battery_level.setter
@@ -2024,6 +2173,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def firmware_version(self):
+        """Firmware version"""
         return self._firmware_version
 
     @firmware_version.setter
@@ -2042,6 +2192,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_sampling_frequency(self):
+        """ADC sampling frequency in MHz"""
         return self._adc_sampling_frequency
 
     @adc_sampling_frequency.setter
@@ -2059,6 +2210,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_sampling_resolution(self):
+        """ADC sampling resolution in bits"""
         return self._adc_sampling_resolution
 
     @adc_sampling_resolution.setter
@@ -2076,6 +2228,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_input_channels(self):
+        """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
         return self._adc_input_channels
 
     @adc_input_channels.setter
@@ -2093,6 +2246,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_enabled_channels(self):
+        """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
         return self._adc_enabled_channels
 
     @adc_enabled_channels.setter
@@ -2110,6 +2264,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_total(self):
+        """ADC samples callected in all channels"""
         return self._adc_samples_count_total
 
     @adc_samples_count_total.setter
@@ -2127,6 +2282,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel0(self):
+        """ADC samples callected in channel 0"""
         return self._adc_samples_count_channel0
 
     @adc_samples_count_channel0.setter
@@ -2144,6 +2300,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel1(self):
+        """ADC samples callected in channel 1"""
         return self._adc_samples_count_channel1
 
     @adc_samples_count_channel1.setter
@@ -2161,6 +2318,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel2(self):
+        """ADC samples callected in channel 2"""
         return self._adc_samples_count_channel2
 
     @adc_samples_count_channel2.setter
@@ -2178,6 +2336,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel3(self):
+        """ADC samples callected in channel 3"""
         return self._adc_samples_count_channel3
 
     @adc_samples_count_channel3.setter
@@ -2195,6 +2354,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trigger_pattern(self):
+        """Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?"""
         return self._trigger_pattern
 
     @trigger_pattern.setter
@@ -2212,6 +2372,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trigger_rate(self):
+        """Trigger rate - the number of triggers recorded in the second preceding the event"""
         return self._trigger_rate
 
     @trigger_rate.setter
@@ -2229,6 +2390,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def clock_tick(self):
+        """Clock tick at which the event was triggered (used to calculate the trigger time)"""
         return self._clock_tick
 
     @clock_tick.setter
@@ -2246,6 +2408,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def clock_ticks_per_second(self):
+        """Clock ticks per second"""
         return self._clock_ticks_per_second
 
     @clock_ticks_per_second.setter
@@ -2263,6 +2426,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_offset(self):
+        """GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?"""
         return self._gps_offset
 
     @gps_offset.setter
@@ -2280,6 +2444,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_leap_second(self):
+        """GPS leap second"""
         return self._gps_leap_second
 
     @gps_leap_second.setter
@@ -2297,6 +2462,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_status(self):
+        """GPS status"""
         return self._gps_status
 
     @gps_status.setter
@@ -2314,6 +2480,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_alarms(self):
+        """GPS alarms"""
         return self._gps_alarms
 
     @gps_alarms.setter
@@ -2331,6 +2498,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_warnings(self):
+        """GPS warnings"""
         return self._gps_warnings
 
     @gps_warnings.setter
@@ -2348,6 +2516,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_time(self):
+        """GPS time"""
         return self._gps_time
 
     @gps_time.setter
@@ -2365,6 +2534,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_long(self):
+        """Longitude"""
         return self._gps_long
 
     @gps_long.setter
@@ -2382,6 +2552,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_lat(self):
+        """Latitude"""
         return self._gps_lat
 
     @gps_lat.setter
@@ -2399,6 +2570,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_alt(self):
+        """Altitude"""
         return self._gps_alt
 
     @gps_alt.setter
@@ -2416,6 +2588,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def gps_temp(self):
+        """GPS temperature"""
         return self._gps_temp
 
     @gps_temp.setter
@@ -2433,6 +2606,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def digi_ctrl(self):
+        """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?"""
         return self._digi_ctrl
 
     @digi_ctrl.setter
@@ -2450,6 +2624,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def digi_prepost_trig_windows(self):
+        """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
         return self._digi_prepost_trig_windows
 
     @digi_prepost_trig_windows.setter
@@ -2467,6 +2642,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_properties0(self):
+        """Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties0
 
     @channel_properties0.setter
@@ -2484,6 +2660,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_properties1(self):
+        """Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties1
 
     @channel_properties1.setter
@@ -2501,6 +2678,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_properties2(self):
+        """Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties2
 
     @channel_properties2.setter
@@ -2518,6 +2696,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_properties3(self):
+        """Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties3
 
     @channel_properties3.setter
@@ -2535,6 +2714,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings0(self):
+        """Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings0
 
     @channel_trig_settings0.setter
@@ -2552,6 +2732,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings1(self):
+        """Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings1
 
     @channel_trig_settings1.setter
@@ -2569,6 +2750,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings2(self):
+        """Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings2
 
     @channel_trig_settings2.setter
@@ -2586,6 +2768,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings3(self):
+        """Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings3
 
     @channel_trig_settings3.setter
@@ -2603,6 +2786,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def ioff(self):
+        """?? What is it? Some kind of the adc trace offset?"""
         return self._ioff
 
     @ioff.setter
@@ -2620,6 +2804,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trace_0(self):
+        """ADC trace 0"""
         return self._trace_0
 
     @trace_0.setter
@@ -2638,6 +2823,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trace_1(self):
+        """ADC trace 1"""
         return self._trace_1
 
     @trace_1.setter
@@ -2655,6 +2841,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trace_2(self):
+        """ADC trace 2"""
         return self._trace_2
 
     @trace_2.setter
@@ -2672,6 +2859,7 @@ class ADCEventTree(MotherEventTree):
 
     @property
     def trace_3(self):
+        """ADC trace 3"""
         return self._trace_3
 
     @trace_3.setter
@@ -2689,7 +2877,9 @@ class ADCEventTree(MotherEventTree):
 
 
 @dataclass
+## The class for storing voltage traces and associated values for each event
 class VoltageEventTree(MotherEventTree):
+    """The class for storing voltage traces and associated values for each event"""
     _tree_name: str = "teventvoltage"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -2795,14 +2985,14 @@ class VoltageEventTree(MotherEventTree):
     _gps_lat: StdVectorList("float") = StdVectorList("float")
     ## Altitude
     _gps_alt: StdVectorList("float") = StdVectorList("float")
+    ## GPS temperature
+    _gps_temp: StdVectorList("float") = StdVectorList("float")
     ## X position in site's referential
     _pos_x: StdVectorList("float") = StdVectorList("float")
     ## Y position in site's referential
     _pos_y: StdVectorList("float") = StdVectorList("float")
     ## Z position in site's referential
     _pos_z: StdVectorList("float") = StdVectorList("float")
-    ## GPS temperature
-    _gps_temp: StdVectorList("float") = StdVectorList("float")
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
     _digi_ctrl: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
@@ -2848,6 +3038,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def event_size(self):
+        """Event size"""
         return self._event_size[0]
 
     @event_size.setter
@@ -2856,6 +3047,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def t3_number(self):
+        """Event in the run number"""
         return self._t3_number[0]
 
     @t3_number.setter
@@ -2864,6 +3056,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def first_du(self):
+        """First detector unit that triggered in the event"""
         return self._first_du[0]
 
     @first_du.setter
@@ -2872,6 +3065,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def time_seconds(self):
+        """Unix time corresponding to the GPS seconds of the trigger"""
         return self._time_seconds[0]
 
     @time_seconds.setter
@@ -2880,6 +3074,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def time_nanoseconds(self):
+        """GPS nanoseconds corresponding to the trigger of the first triggered station"""
         return self._time_nanoseconds[0]
 
     @time_nanoseconds.setter
@@ -2888,6 +3083,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def event_type(self):
+        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
         return self._event_type[0]
 
     @event_type.setter
@@ -2896,6 +3092,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def event_version(self):
+        """Event format version of the DAQ"""
         return self._event_version[0]
 
     @event_version.setter
@@ -2904,6 +3101,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def du_count(self):
+        """Number of detector units in the event - basically the antennas count"""
         return self._du_count[0]
 
     @du_count.setter
@@ -2912,6 +3110,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def event_id(self):
+        """The T3 trigger number"""
         return self._event_id
 
     @event_id.setter
@@ -2929,6 +3128,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def du_id(self):
+        """Detector unit (antenna) ID"""
         return self._du_id
 
     @du_id.setter
@@ -2946,6 +3146,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def du_seconds(self):
+        """Unix time of the trigger for this DU"""
         return self._du_seconds
 
     @du_seconds.setter
@@ -2963,6 +3164,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def du_nanoseconds(self):
+        """Nanoseconds of the trigger for this DU"""
         return self._du_nanoseconds
 
     @du_nanoseconds.setter
@@ -3014,6 +3216,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trigger_position(self):
+        """Trigger position in the trace (trigger start = nanoseconds - 2*sample number)"""
         return self._trigger_position
 
     @trigger_position.setter
@@ -3031,6 +3234,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trigger_flag(self):
+        """Same as event_type, but event_type could consist of different triggered DUs"""
         return self._trigger_flag
 
     @trigger_flag.setter
@@ -3048,6 +3252,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def atm_temperature(self):
+        """Atmospheric temperature (read via I2C)"""
         return self._atm_temperature
 
     @atm_temperature.setter
@@ -3065,6 +3270,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def atm_pressure(self):
+        """Atmospheric pressure"""
         return self._atm_pressure
 
     @atm_pressure.setter
@@ -3082,6 +3288,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def atm_humidity(self):
+        """Atmospheric humidity"""
         return self._atm_humidity
 
     @atm_humidity.setter
@@ -3099,6 +3306,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def acceleration_x(self):
+        """Acceleration of the antenna in X"""
         return self._acceleration_x
 
     @acceleration_x.setter
@@ -3116,6 +3324,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def acceleration_y(self):
+        """Acceleration of the antenna in Y"""
         return self._acceleration_y
 
     @acceleration_y.setter
@@ -3133,6 +3342,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def acceleration_z(self):
+        """Acceleration of the antenna in Z"""
         return self._acceleration_z
 
     @acceleration_z.setter
@@ -3150,6 +3360,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def battery_level(self):
+        """Battery voltage"""
         return self._battery_level
 
     @battery_level.setter
@@ -3167,6 +3378,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def firmware_version(self):
+        """Firmware version"""
         return self._firmware_version
 
     @firmware_version.setter
@@ -3185,6 +3397,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_sampling_frequency(self):
+        """ADC sampling frequency in MHz"""
         return self._adc_sampling_frequency
 
     @adc_sampling_frequency.setter
@@ -3202,6 +3415,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_sampling_resolution(self):
+        """ADC sampling resolution in bits"""
         return self._adc_sampling_resolution
 
     @adc_sampling_resolution.setter
@@ -3219,6 +3433,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_input_channels(self):
+        """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
         return self._adc_input_channels
 
     @adc_input_channels.setter
@@ -3236,6 +3451,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_enabled_channels(self):
+        """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
         return self._adc_enabled_channels
 
     @adc_enabled_channels.setter
@@ -3253,6 +3469,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_total(self):
+        """ADC samples callected in all channels"""
         return self._adc_samples_count_total
 
     @adc_samples_count_total.setter
@@ -3270,6 +3487,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel_x(self):
+        """ADC samples callected in channel x"""
         return self._adc_samples_count_channel_x
 
     @adc_samples_count_channel_x.setter
@@ -3287,6 +3505,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel_y(self):
+        """ADC samples callected in channel y"""
         return self._adc_samples_count_channel_y
 
     @adc_samples_count_channel_y.setter
@@ -3304,6 +3523,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def adc_samples_count_channel_z(self):
+        """ADC samples callected in channel z"""
         return self._adc_samples_count_channel_z
 
     @adc_samples_count_channel_z.setter
@@ -3321,6 +3541,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trigger_pattern(self):
+        """Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?"""
         return self._trigger_pattern
 
     @trigger_pattern.setter
@@ -3338,6 +3559,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trigger_rate(self):
+        """Trigger rate - the number of triggers recorded in the second preceding the event"""
         return self._trigger_rate
 
     @trigger_rate.setter
@@ -3355,6 +3577,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def clock_tick(self):
+        """Clock tick at which the event was triggered (used to calculate the trigger time)"""
         return self._clock_tick
 
     @clock_tick.setter
@@ -3372,6 +3595,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def clock_ticks_per_second(self):
+        """Clock ticks per second"""
         return self._clock_ticks_per_second
 
     @clock_ticks_per_second.setter
@@ -3389,6 +3613,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_offset(self):
+        """GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?"""
         return self._gps_offset
 
     @gps_offset.setter
@@ -3406,6 +3631,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_leap_second(self):
+        """GPS leap second"""
         return self._gps_leap_second
 
     @gps_leap_second.setter
@@ -3423,6 +3649,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_status(self):
+        """GPS status"""
         return self._gps_status
 
     @gps_status.setter
@@ -3440,6 +3667,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_alarms(self):
+        """GPS alarms"""
         return self._gps_alarms
 
     @gps_alarms.setter
@@ -3457,6 +3685,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_warnings(self):
+        """GPS warnings"""
         return self._gps_warnings
 
     @gps_warnings.setter
@@ -3474,6 +3703,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_time(self):
+        """GPS time"""
         return self._gps_time
 
     @gps_time.setter
@@ -3491,6 +3721,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_long(self):
+        """Longitude"""
         return self._gps_long
 
     @gps_long.setter
@@ -3508,6 +3739,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_lat(self):
+        """Latitude"""
         return self._gps_lat
 
     @gps_lat.setter
@@ -3525,6 +3757,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_alt(self):
+        """Altitude"""
         return self._gps_alt
 
     @gps_alt.setter
@@ -3542,6 +3775,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def gps_temp(self):
+        """GPS temperature"""
         return self._gps_temp
 
     @gps_temp.setter
@@ -3559,6 +3793,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def pos_x(self):
+        """X position in site's referential"""
         return self._pos_x
 
     @pos_x.setter
@@ -3576,6 +3811,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def pos_y(self):
+        """Y position in site's referential"""
         return self._pos_y
 
     @pos_y.setter
@@ -3593,6 +3829,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def pos_z(self):
+        """Z position in site's referential"""
         return self._pos_z
 
     @pos_z.setter
@@ -3610,6 +3847,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def digi_ctrl(self):
+        """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?"""
         return self._digi_ctrl
 
     @digi_ctrl.setter
@@ -3627,6 +3865,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def digi_prepost_trig_windows(self):
+        """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
         return self._digi_prepost_trig_windows
 
     @digi_prepost_trig_windows.setter
@@ -3644,6 +3883,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def channel_properties_x(self):
+        """Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties_x
 
     @channel_properties_x.setter
@@ -3661,6 +3901,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def channel_properties_y(self):
+        """Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties_y
 
     @channel_properties_y.setter
@@ -3678,6 +3919,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def channel_properties_z(self):
+        """Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?"""
         return self._channel_properties_z
 
     @channel_properties_z.setter
@@ -3695,6 +3937,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings_x(self):
+        """Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings_x
 
     @channel_trig_settings_x.setter
@@ -3712,6 +3955,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings_y(self):
+        """Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings_y
 
     @channel_trig_settings_y.setter
@@ -3729,6 +3973,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def channel_trig_settings_z(self):
+        """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
         return self._channel_trig_settings_z
 
     @channel_trig_settings_z.setter
@@ -3746,6 +3991,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def ioff(self):
+        """?? What is it? Some kind of the adc trace offset?"""
         return self._ioff
 
     @ioff.setter
@@ -3764,6 +4010,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trace_x(self):
+        """Voltage trace in X direction"""
         return self._trace_x
 
     @trace_x.setter
@@ -3781,6 +4028,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trace_y(self):
+        """Voltage trace in Y direction"""
         return self._trace_y
 
     @trace_y.setter
@@ -3798,6 +4046,7 @@ class VoltageEventTree(MotherEventTree):
 
     @property
     def trace_z(self):
+        """Voltage trace in Z direction"""
         return self._trace_z
 
     @trace_z.setter
@@ -3814,7 +4063,9 @@ class VoltageEventTree(MotherEventTree):
             exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
+## The class for storing Efield traces and associated values for each event
 class EfieldEventTree(MotherEventTree):
+    """The class for storing Efield traces and associated values for each event"""
     _tree_name: str = "teventefield"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -3908,6 +4159,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def time_seconds(self):
+        """Unix time corresponding to the GPS seconds of the trigger"""
         return self._time_seconds[0]
 
     @time_seconds.setter
@@ -3916,6 +4168,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def time_nanoseconds(self):
+        """GPS nanoseconds corresponding to the trigger of the first triggered station"""
         return self._time_nanoseconds[0]
 
     @time_nanoseconds.setter
@@ -3924,6 +4177,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def event_type(self):
+        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
         return self._event_type[0]
 
     @event_type.setter
@@ -3932,6 +4186,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def du_count(self):
+        """Number of detector units in the event - basically the antennas count"""
         return self._du_count[0]
 
     @du_count.setter
@@ -3940,6 +4195,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def du_id(self):
+        """Detector unit (antenna) ID"""
         return self._du_id
 
     @du_id.setter
@@ -3957,6 +4213,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def du_seconds(self):
+        """Unix time of the trigger for this DU"""
         return self._du_seconds
 
     @du_seconds.setter
@@ -3974,6 +4231,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def du_nanoseconds(self):
+        """Nanoseconds of the trigger for this DU"""
         return self._du_nanoseconds
 
     @du_nanoseconds.setter
@@ -4025,6 +4283,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trigger_position(self):
+        """Trigger position in the trace (trigger start = nanoseconds - 2*sample number)"""
         return self._trigger_position
 
     @trigger_position.setter
@@ -4042,6 +4301,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trigger_flag(self):
+        """Same as event_type, but event_type could consist of different triggered DUs"""
         return self._trigger_flag
 
     @trigger_flag.setter
@@ -4059,6 +4319,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def atm_temperature(self):
+        """Atmospheric temperature (read via I2C)"""
         return self._atm_temperature
 
     @atm_temperature.setter
@@ -4076,6 +4337,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def atm_pressure(self):
+        """Atmospheric pressure"""
         return self._atm_pressure
 
     @atm_pressure.setter
@@ -4093,6 +4355,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def atm_humidity(self):
+        """Atmospheric humidity"""
         return self._atm_humidity
 
     @atm_humidity.setter
@@ -4110,6 +4373,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trigger_pattern(self):
+        """Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?"""
         return self._trigger_pattern
 
     @trigger_pattern.setter
@@ -4127,6 +4391,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trigger_rate(self):
+        """Trigger rate - the number of triggers recorded in the second preceding the event"""
         return self._trigger_rate
 
     @trigger_rate.setter
@@ -4144,6 +4409,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def gps_long(self):
+        """Longitude"""
         return self._gps_long
 
     @gps_long.setter
@@ -4161,6 +4427,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def gps_lat(self):
+        """Latitude"""
         return self._gps_lat
 
     @gps_lat.setter
@@ -4178,6 +4445,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def gps_alt(self):
+        """Altitude"""
         return self._gps_alt
 
     @gps_alt.setter
@@ -4195,6 +4463,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def pos_x(self):
+        """X position in site's referential"""
         return self._pos_x
 
     @pos_x.setter
@@ -4212,6 +4481,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def pos_y(self):
+        """Y position in site's referential"""
         return self._pos_y
 
     @pos_y.setter
@@ -4229,6 +4499,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def pos_z(self):
+        """Z position in site's referential"""
         return self._pos_z
 
     @pos_z.setter
@@ -4246,6 +4517,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def digi_prepost_trig_windows(self):
+        """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
         return self._digi_prepost_trig_windows
 
     @digi_prepost_trig_windows.setter
@@ -4263,6 +4535,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trace_x(self):
+        """Efield trace in X direction"""
         return self._trace_x
 
     @trace_x.setter
@@ -4280,6 +4553,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trace_y(self):
+        """Efield trace in Y direction"""
         return self._trace_y
 
     @trace_y.setter
@@ -4297,6 +4571,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def trace_z(self):
+        """Efield trace in Z direction"""
         return self._trace_z
 
     @trace_z.setter
@@ -4314,6 +4589,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def fft_mag_x(self):
+        """FFT magnitude in X direction"""
         return self._fft_mag_x
 
     @fft_mag_x.setter
@@ -4331,6 +4607,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def fft_mag_y(self):
+        """FFT magnitude in Y direction"""
         return self._fft_mag_y
 
     @fft_mag_y.setter
@@ -4348,6 +4625,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def fft_mag_z(self):
+        """FFT magnitude in Z direction"""
         return self._fft_mag_z
 
     @fft_mag_z.setter
@@ -4365,6 +4643,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def fft_phase_x(self):
+        """FFT phase in X direction"""
         return self._fft_phase_x
 
     @fft_phase_x.setter
@@ -4382,6 +4661,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def fft_phase_y(self):
+        """FFT phase in Y direction"""
         return self._fft_phase_y
 
     @fft_phase_y.setter
@@ -4399,6 +4679,7 @@ class EfieldEventTree(MotherEventTree):
 
     @property
     def fft_phase_z(self):
+        """FFT phase in Z direction"""
         return self._fft_phase_z
 
     @fft_phase_z.setter
@@ -4418,6 +4699,7 @@ class EfieldEventTree(MotherEventTree):
 ## A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle
 @dataclass
 class DetectorInfo(DataTree):
+    """A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle"""
     _tree_name: str = "tdetectorinfo"
 
     ## Detector Unit id
@@ -4466,16 +4748,18 @@ class DetectorInfo(DataTree):
 
     ## Don't really add friends, just generates an index
     def add_proper_friends(self):
-
+        """Don't really add friends, just generates an index"""
         # Create the index
         self._tree.BuildIndex("du_id")
 
     ## Fill the tree
     def fill(self):
+        """Fill the tree"""
         self._tree.Fill()
 
     @property
     def du_id(self):
+        """Detector Unit id"""
         return self._du_id[0]
 
     @du_id.setter
@@ -4484,6 +4768,7 @@ class DetectorInfo(DataTree):
 
     @property
     def long(self):
+        """Detector longitude"""
         return self._long[0]
 
     @long.setter
@@ -4492,6 +4777,7 @@ class DetectorInfo(DataTree):
 
     @property
     def lat(self):
+        """Detector latitude"""
         return self._lat[0]
 
     @lat.setter
@@ -4500,6 +4786,7 @@ class DetectorInfo(DataTree):
 
     @property
     def alt(self):
+        """Detector altitude"""
         return self._alt[0]
 
     @alt.setter
@@ -4508,6 +4795,7 @@ class DetectorInfo(DataTree):
 
     @property
     def type(self):
+        """Detector type"""
         return str(self._type)
 
     @type.setter
@@ -4520,6 +4808,7 @@ class DetectorInfo(DataTree):
 
     @property
     def description(self):
+        """Detector description"""
         return str(self._description)
 
     @description.setter
@@ -4531,7 +4820,9 @@ class DetectorInfo(DataTree):
         self._description.string.assign(value)
 
 @dataclass
+## The class for storing shower data for each event specific to ZHAireS only
 class ShowerEventZHAireSTree(MotherEventTree):
+    """The class for storing shower data for each event specific to ZHAireS only"""
     _tree_name: str = "teventshowerzhaires"
 
     # ToDo: we need explanations of these parameters
@@ -4557,6 +4848,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def relative_thining(self):
+        """Relative thinning energy"""
         return str(self._relative_thining)
 
     @relative_thining.setter
@@ -4569,6 +4861,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def weight_factor(self):
+        """Weight factor"""
         return self._weight_factor[0]
 
     @weight_factor.setter
@@ -4577,6 +4870,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def gamma_energy_cut(self):
+        """Low energy cut for gammas(GeV)"""
         return str(self._gamma_energy_cut)
 
     @gamma_energy_cut.setter
@@ -4589,6 +4883,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def electron_energy_cut(self):
+        """Low energy cut for electrons (GeV)"""
         return str(self._electron_energy_cut)
 
     @electron_energy_cut.setter
@@ -4601,6 +4896,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def muon_energy_cut(self):
+        """Low energy cut for muons (GeV)"""
         return str(self._muon_energy_cut)
 
     @muon_energy_cut.setter
@@ -4613,6 +4909,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def meson_energy_cut(self):
+        """Low energy cut for mesons (GeV)"""
         return str(self._meson_energy_cut)
 
     @meson_energy_cut.setter
@@ -4625,6 +4922,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def nucleon_energy_cut(self):
+        """Low energy cut for nucleons (GeV)"""
         return str(self._nucleon_energy_cut)
 
     @nucleon_energy_cut.setter
@@ -4637,6 +4935,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
     @property
     def other_parameters(self):
+        """Other parameters"""
         return str(self._other_parameters)
 
     @other_parameters.setter
@@ -4650,4 +4949,5 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
+    """Exception raised when an already existing event/run is added to a tree"""
     pass
