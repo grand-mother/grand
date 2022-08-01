@@ -19,8 +19,6 @@ tadccounts.get_event(*list_of_events[0])
 print("ADCCounts readout: tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0]")
 print(tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0])
 print(tadccounts.trace_0[0][0])
-exit()
-
 
 tefield = EfieldEventTree("stored_data.root")
 #tvoltage = GRANDVoltageTree("stored_data.root")
