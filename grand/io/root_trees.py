@@ -834,890 +834,6 @@ class RunTree(MotherRunTree):
         self._origin_geoid = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("origin_geoid", self._origin_geoid)
 
-
-@dataclass
-## The class for storing shower simulation-only data common for a whole run
-class ShowerRunSimdataTree(MotherRunTree):
-    """The class for storing shower simulation-only data common for a whole run"""
-    _tree_name: str = "trunsimdata"
-
-    _shower_sim: StdString = StdString("") # simulation program (and version) used to simulate the shower
-    _rel_thin: np.ndarray = np.zeros(1, np.float32)  # relative thinning energy
-    _weight_factor: np.ndarray = np.zeros(1, np.float32)  # weight factor
-    _lowe_cut_e: np.ndarray = np.zeros(1, np.float32)  # low energy cut for electrons(GeV)
-    _lowe_cut_gamma: np.ndarray = np.zeros(1, np.float32)  # low energy cut for gammas(GeV)
-    _lowe_cut_mu: np.ndarray = np.zeros(1, np.float32)  # low energy cut for muons(GeV)
-    _lowe_cut_meson: np.ndarray = np.zeros(1, np.float32)  # low energy cut for mesons(GeV)
-    _lowe_cut_nucleon: np.ndarray = np.zeros(1, np.float32)  # low energy cut for nuceleons(GeV)
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def shower_sim(self):
-        """Simulation program (and version) used to simulate the shower"""
-        return str(self._shower_sim)
-
-    @shower_sim.setter
-    def shower_sim(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._shower_sim.string.assign(value)
-
-    @property
-    def rel_thin(self):
-        """relative thinning energy"""
-        return self._rel_thin[0]
-
-    @rel_thin.setter
-    def rel_thin(self, value):
-        self._rel_thin[0] = value
-
-    @property
-    def weight_factor(self):
-        """weight factor"""
-        return self._weight_factor[0]
-
-    @weight_factor.setter
-    def weight_factor(self, value):
-        self._weight_factor[0] = value
-
-    @property
-    def lowe_cut_e(self):
-        """low energy cut for electrons(GeV)"""
-        return self._lowe_cut_e[0]
-
-    @lowe_cut_e.setter
-    def lowe_cut_e(self, value):
-        self._lowe_cut_e[0] = value
-
-    @property
-    def lowe_cut_gamma(self):
-        """low energy cut for gammas(GeV)"""
-        return self._lowe_cut_gamma[0]
-
-    @lowe_cut_gamma.setter
-    def lowe_cut_gamma(self, value):
-        self._lowe_cut_gamma[0] = value
-
-    @property
-    def lowe_cut_mu(self):
-        """low energy cut for muons(GeV)"""
-        return self._lowe_cut_mu[0]
-
-    @lowe_cut_mu.setter
-    def lowe_cut_mu(self, value):
-        self._lowe_cut_mu[0] = value
-
-    @property
-    def lowe_cut_meson(self):
-        """low energy cut for mesons(GeV)"""
-        return self._lowe_cut_meson[0]
-
-    @lowe_cut_meson.setter
-    def lowe_cut_meson(self, value):
-        self._lowe_cut_meson[0] = value
-
-    @property
-    def lowe_cut_nucleon(self):
-        """low energy cut for nucleons(GeV)"""
-        return self._lowe_cut_nucleon[0]
-
-    @lowe_cut_nucleon.setter
-    def lowe_cut_nucleon(self, value):
-        self._lowe_cut_nucleon[0] = value
-
-@dataclass
-## The class for storing shower data common for each event
-class ShowerEventTree(MotherEventTree):
-    """The class for storing shower data common for each event"""
-    _tree_name: str = "teventshower"
-
-    _shower_type: StdString = StdString("")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
-    _shower_energy: np.ndarray = np.zeros(1, np.float32)  # shower energy (GeV)  Check unit conventions.
-    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)  # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_zenith: np.ndarray = np.zeros(1, np.float32)  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_core_pos: np.ndarray = np.zeros(4, np.float32)  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
-    _atmos_model: StdString = StdString("")  # Atmospheric model name TODO:standarize
-    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _magnetic_field: np.ndarray = np.zeros(3, np.float32)  # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _date: StdString = StdString("")  # Event Date and time. TODO:standarize (date format, time format)
-    _ground_alt: np.ndarray = np.zeros(1, np.float32)  # Ground Altitude (m)
-    _xmax_grams: np.ndarray = np.zeros(1, np.float32)  # shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)  # shower Xmax position in shower coordinates
-    _xmax_alt: np.ndarray = np.zeros(1, np.float64)  # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _gh_fit_param: np.ndarray = np.zeros(3, np.float32)  # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
-    _core_time: np.ndarray = np.zeros(1, np.float64)  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def shower_type(self):
-        """Shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize"""
-        return str(self._shower_type)
-
-    @shower_type.setter
-    def shower_type(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._shower_type.string.assign(value)
-
-    @property
-    def shower_energy(self):
-        """Shower energy (GeV). ToDo: Check unit conventions."""
-        return self._shower_energy[0]
-
-    @shower_energy.setter
-    def shower_energy(self, value):
-        self._shower_energy[0] = value
-
-    @property
-    def shower_azimuth(self):
-        """Shower azimuth. TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neutrino convention is problematic for round earth. Also, geoid vs sphere problem"""
-        return self._shower_azimuth[0]
-
-    @shower_azimuth.setter
-    def shower_azimuth(self, value):
-        self._shower_azimuth[0] = value
-
-    @property
-    def shower_zenith(self):
-        """Shower zenith. TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neutrino convention is problematic for round earth"""
-        return self._shower_zenith[0]
-
-    @shower_zenith.setter
-    def shower_zenith(self, value):
-        self._shower_zenith[0] = value
-
-    @property
-    def shower_core_pos(self):
-        """Shower core position TODO: Coordinates in geoid?. Undefined for neutrinos."""
-        return np.array(self._shower_core_pos)
-
-    @shower_core_pos.setter
-    def shower_core_pos(self, value):
-        self._shower_core_pos = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("shower_core_pos", self._shower_core_pos)
-
-    @property
-    def atmos_model(self):
-        """Atmospheric model name. TODO: standarize"""
-        return str(self._atmos_model)
-
-    @atmos_model.setter
-    def atmos_model(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._atmos_model.string.assign(value)
-
-    @property
-    def atmos_model_param(self):
-        """Atmospheric model parameters. TODO: Think about this. Different models and softwares can have different parameters"""
-        return np.array(self._atmos_model_param)
-
-    @atmos_model_param.setter
-    def atmos_model_param(self, value):
-        self._atmos_model_param = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("atmos_model_param", self._atmos_model_param)
-
-    @property
-    def magnetic_field(self):
-        """Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense."""
-        return np.array(self._magnetic_field)
-
-    @magnetic_field.setter
-    def magnetic_field(self, value):
-        self._magnetic_field = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("magnetic_field", self._magnetic_field)
-
-    @property
-    def date(self):
-        """Event Date and time. TODO: standarize (date format, time format)"""
-        return str(self._date)
-
-    @date.setter
-    def date(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._date.string.assign(value)
-
-    @property
-    def ground_alt(self):
-        """Ground Altitude (m)"""
-        return self._ground_alt[0]
-
-    @ground_alt.setter
-    def ground_alt(self, value):
-        self._ground_alt[0] = value
-
-    @property
-    def xmax_grams(self):
-        """Shower Xmax depth (g/cm2 along the shower axis)."""
-        return self._xmax_grams[0]
-
-    @xmax_grams.setter
-    def xmax_grams(self, value):
-        self._xmax_grams[0] = value
-
-    @property
-    def xmax_pos_shc(self):
-        """Shower Xmax position in shower coordinates."""
-        return np.array(self._xmax_pos_shc)
-
-    @xmax_pos_shc.setter
-    def xmax_pos_shc(self, value):
-        self._xmax_pos_shc = np.array(value).astype(np.float64)
-        self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
-
-    @property
-    def xmax_alt(self):
-        """Altitude of Xmax (m, in the shower simulation earth. It's important for the index of refraction)."""
-        return self._xmax_alt[0]
-
-    @xmax_alt.setter
-    def xmax_alt(self, value):
-        self._xmax_alt[0] = value
-
-    @property
-    def gh_fit_param(self):
-        """X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)."""
-        return np.array(self._gh_fit_param)
-
-    @gh_fit_param.setter
-    def gh_fit_param(self, value):
-        self._gh_fit_param = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("gh_fit_param", self._gh_fit_param)
-
-    @property
-    def core_time(self):
-        """ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?"""
-        return self._core_time[0]
-
-    @core_time.setter
-    def core_time(self, value):
-        self._core_time[0] = value
-
-
-@dataclass
-## The class for storing a shower simulation-only data for each event
-class ShowerEventSimdataTree(MotherEventTree):
-    """The class for storing a shower simulation-only data for each event"""
-    _tree_name: str = "teventshowersimdata"
-
-    ## Event name
-    _event_name: StdString = StdString("")
-
-    ## Event Date and time. TODO:standarize (date format, time format)
-    _date: StdString = StdString("")
-    ## Random seed
-    _rnd_seed: np.ndarray = np.zeros(1, np.float64)
-    ## Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy
-    _energy_in_neutrinos: np.ndarray = np.zeros(1, np.float32)
-    # _prim_energy: np.ndarray = np.zeros(1, np.float32)  # primary energy (GeV) TODO: Support multiple primaries. Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
-    ## Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
-    _prim_energy: StdVectorList("float") = StdVectorList("float")
-    ## Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)
-    ## Shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_zenith: np.ndarray = np.zeros(1, np.float32)
-    # _prim_type: StdVectorList("string") = StdVectorList("string")  # primary particle type TODO: Support multiple primaries. standarize (PDG?)
-    ## Primary particle type TODO: standarize (PDG?)
-    _prim_type: StdVectorList("string") = StdVectorList("string")
-    # _prim_injpoint_shc: np.ndarray = np.zeros(4, np.float32)  # primary injection point in Shower coordinates TODO: Support multiple primaries
-    ## Primary injection point in Shower coordinates
-    _prim_injpoint_shc: StdVectorList("vector<float>") = StdVectorList("vector<float>")
-    # _prim_inj_alt_shc: np.ndarray = np.zeros(1, np.float32)  # primary injection altitude in Shower Coordinates TODO: Support multiple primaries
-    ## Primary injection altitude in Shower Coordinates
-    _prim_inj_alt_shc: StdVectorList("float") = StdVectorList("float")
-    # _prim_inj_dir_shc: np.ndarray = np.zeros(3, np.float32)  # primary injection direction in Shower Coordinates  TODO: Support multiple primaries
-    ## primary injection direction in Shower Coordinates
-    _prim_inj_dir_shc: StdVectorList("vector<float>") = StdVectorList("vector<float>")
-    ## Atmospheric model name TODO:standarize
-    _atmos_model: StdString = StdString("")
-    # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)
-    # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _magnetic_field: np.ndarray = np.zeros(3, np.float32)
-    ## Shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_grams: np.ndarray = np.zeros(1, np.float32)
-    ## Shower Xmax position in shower coordinates
-    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)
-    ## Distance of Xmax  [m]
-    _xmax_distance: np.ndarray = np.zeros(1, np.float64)
-    ## Altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _xmax_alt: np.ndarray = np.zeros(1, np.float64)
-    _hadronic_model: StdString = StdString("")  # high energy hadronic model (and version) used TODO: standarize
-    _low_energy_model: StdString = StdString("")  # high energy model (and version) used TODO: standarize
-    _cpu_time: np.ndarray = np.zeros(1, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def event_name(self):
-        """Event name"""
-        return str(self._event_name)
-
-    @event_name.setter
-    def event_name(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._event_name.string.assign(value)
-
-    @property
-    def date(self):
-        """Event Date and time. TODO:standarize (date format, time format)"""
-        return str(self._date)
-
-    @date.setter
-    def date(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._date.string.assign(value)
-
-    @property
-    def rnd_seed(self):
-        """Random seed"""
-        return self._rnd_seed[0]
-
-    @rnd_seed.setter
-    def rnd_seed(self, value):
-        self._rnd_seed[0] = value
-
-    @property
-    def energy_in_neutrinos(self):
-        """Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy"""
-        return self._energy_in_neutrinos[0]
-
-    @energy_in_neutrinos.setter
-    def energy_in_neutrinos(self, value):
-        self._energy_in_neutrinos[0] = value
-
-    @property
-    def prim_energy(self):
-        """Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector"""
-        return self._prim_energy
-
-    @prim_energy.setter
-    def prim_energy(self, value):
-        # A list of strings was given
-        if isinstance(value, list):
-            # Clear the vector before setting
-            self._prim_energy.clear()
-            self._prim_energy += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._prim_energy._vector = value
-        else:
-            exit(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
-
-    @property
-    def shower_azimuth(self):
-        """Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem"""
-        return self._shower_azimuth[0]
-
-    @shower_azimuth.setter
-    def shower_azimuth(self, value):
-        self._shower_azimuth[0] = value
-
-    @property
-    def shower_zenith(self):
-        """Shower zenith TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth"""
-        return self._shower_zenith[0]
-
-    @shower_zenith.setter
-    def shower_zenith(self, value):
-        self._shower_zenith[0] = value
-
-    @property
-    def prim_type(self):
-        """Primary particle type TODO: standarize (PDG?)"""
-        return self._prim_type
-
-    @prim_type.setter
-    def prim_type(self, value):
-        # A list of strings was given
-        if isinstance(value, list):
-            # Clear the vector before setting
-            self._prim_type.clear()
-            self._prim_type += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<string>")):
-            self._prim_type._vector = value
-        else:
-            exit(f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required.")
-
-    @property
-    def prim_injpoint_shc(self):
-        """Primary injection point in Shower coordinates"""
-        return np.array(self._prim_injpoint_shc)
-
-    @prim_injpoint_shc.setter
-    def prim_injpoint_shc(self, value):
-        self._prim_injpoint_shc = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("prim_injpoint_shc", self._prim_injpoint_shc)
-
-    @property
-    def prim_inj_alt_shc(self):
-        """Primary injection altitude in Shower Coordinates"""
-        return self._prim_inj_alt_shc
-
-    @prim_inj_alt_shc.setter
-    def prim_inj_alt_shc(self, value):
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._prim_inj_alt_shc.clear()
-            self._prim_inj_alt_shc += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._prim_inj_alt_shc._vector = value
-        else:
-            exit(f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
-
-
-    @property
-    def prim_inj_dir_shc(self):
-        """primary injection direction in Shower Coordinates"""
-        return np.array(self._prim_inj_dir_shc)
-
-    @prim_inj_dir_shc.setter
-    def prim_inj_dir_shc(self, value):
-        self._prim_inj_dir_shc = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("prim_inj_dir_shc", self._prim_inj_dir_shc)
-
-    @property
-    def atmos_model(self):
-        """Atmospheric model name TODO:standarize"""
-        return str(self._atmos_model)
-
-    @atmos_model.setter
-    def atmos_model(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._atmos_model.string.assign(value)
-
-    @property
-    def atmos_model_param(self):
-        """Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters"""
-        return np.array(self._atmos_model_param)
-
-    @atmos_model_param.setter
-    def atmos_model_param(self, value):
-        self._atmos_model_param = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("atmos_model_param", self._atmos_model_param)
-
-    @property
-    def magnetic_field(self):
-        """Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense."""
-        return np.array(self._magnetic_field)
-
-    @magnetic_field.setter
-    def magnetic_field(self, value):
-        self._magnetic_field = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("magnetic_field", self._magnetic_field)
-
-    @property
-    def xmax_grams(self):
-        """Shower Xmax depth (g/cm2 along the shower axis)"""
-        return self._xmax_grams[0]
-
-    @xmax_grams.setter
-    def xmax_grams(self, value):
-        self._xmax_grams[0] = value
-
-    @property
-    def xmax_pos_shc(self):
-        """Shower Xmax position in shower coordinates"""
-        return np.array(self._xmax_pos_shc)
-
-    @xmax_pos_shc.setter
-    def xmax_pos_shc(self, value):
-        self._xmax_pos_shc = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
-
-    @property
-    def xmax_distance(self):
-        """Distance of Xmax [m]"""
-        return self._xmax_distance[0]
-
-    @xmax_distance.setter
-    def xmax_distance(self, value):
-        self._xmax_distance[0] = value
-
-    @property
-    def xmax_alt(self):
-        """Altitude of Xmax (m, in the shower simulation earth. Its important for the index of refraction )"""
-        return self._xmax_alt[0]
-
-    @xmax_alt.setter
-    def xmax_alt(self, value):
-        self._xmax_alt[0] = value
-
-    @property
-    def hadronic_model(self):
-        """High energy hadronic model (and version) used TODO: standarize"""
-        return str(self._hadronic_model)
-
-    @hadronic_model.setter
-    def hadronic_model(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._hadronic_model.string.assign(value)
-
-    @property
-    def low_energy_model(self):
-        """High energy model (and version) used TODO: standarize"""
-        return str(self._low_energy_model)
-
-    @low_energy_model.setter
-    def low_energy_model(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._low_energy_model.string.assign(value)
-
-    @property
-    def cpu_time(self):
-        """Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation"""
-        return np.array(self._cpu_time)
-
-    @cpu_time.setter
-    def cpu_time(self, value):
-        self._cpu_time = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("cpu_time", self._cpu_time)
-
-
-@dataclass
-## The class for storing Efield simulation-only data common for a whole run
-class EfieldRunSimdataTree(MotherRunTree):
-    """The class for storing Efield simulation-only data common for a whole run"""
-    _tree_name: str = "trunefieldsimdata"
-
-    ## Name and model of the electric field simulator
-    # _field_sim: StdString = StdString("")
-    ## Name of the atmospheric index of refraction model
-    _refractivity_model: StdString = StdString("")
-    _refractivity_model_parameters: StdVectorList("double") = StdVectorList("double")
-    ## The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
-    _t_pre: np.ndarray = np.zeros(1, np.float32)
-    _t_post: np.ndarray = np.zeros(1, np.float32)
-    _t_bin_size: np.ndarray = np.zeros(1, np.float32)
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    # @property
-    # def field_sim(self):
-    #     return str(self._field_sim)
-    #
-    # @field_sim.setter
-    # def field_sim(self, value):
-    #     # Not a string was given
-    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-    #         exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-    #
-    #     self._field_sim.string.assign(value)
-
-    @property
-    def refractivity_model(self):
-        """Name of the atmospheric index of refraction model"""
-        return str(self._refractivity_model)
-
-    @refractivity_model.setter
-    def refractivity_model(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._refractivity_model.string.assign(value)
-
-    @property
-    def refractivity_model_parameters(self):
-        """Refractivity model parameters"""
-        return self._refractivity_model_parameters
-
-    @refractivity_model_parameters.setter
-    def refractivity_model_parameters(self, value) -> None:
-        # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._refractivity_model_parameters.clear()
-            self._refractivity_model_parameters += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
-            self._refractivity_model_parameters._vector = value
-        else:
-            exit(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
-
-    @property
-    def t_pre(self):
-        """Starting time of antenna data collection time window. The window starts at t0+t_pre, thus t_pre is usually negative."""
-        return self._t_pre[0]
-
-    @t_pre.setter
-    def t_pre(self, value):
-        self._t_pre[0] = value
-
-    @property
-    def t_post(self):
-        """Finishing time of antenna data collection time window. The window ends at t0+t_post."""
-        return self._t_post[0]
-
-    @t_post.setter
-    def t_post(self, value):
-        self._t_post[0] = value
-
-    @property
-    def t_bin_size(self):
-        """Time bin size"""
-        return self._t_bin_size[0]
-
-    @t_bin_size.setter
-    def t_bin_size(self, value):
-        self._t_bin_size[0] = value
-
-
-@dataclass
-## The class for storing Efield simulation-only data common for each event
-class EfieldEventSimdataTree(MotherEventTree):
-    """The class for storing Efield simulation-only data common for each event"""
-    _tree_name: str = "teventefieldsimdata"
-
-    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
-    _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
-    _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
-
-    # _event_size: np.ndarray = np.zeros(1, np.uint32)
-    # _start_time: StdVectorList("double") = StdVectorList("double")
-    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    # _det_time: StdVectorList("double") = StdVectorList("double")
-    # _e_det_time: StdVectorList("double") = StdVectorList("double")
-    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def du_id(self):
-        """Detector ID"""
-        return self._du_id
-
-    @du_id.setter
-    def du_id(self, value):
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._du_id.clear()
-            self._du_id += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_id._vector = value
-        else:
-            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-    @property
-    def t_0(self):
-        """Time window t0"""
-        return self._t_0
-
-    @t_0.setter
-    def t_0(self, value):
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._t_0.clear()
-            self._t_0 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._t_0._vector = value
-        else:
-            exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-    @property
-    def p2p(self):
-        """Peak 2 peak amplitudes (x,y,z,modulus)"""
-        return self._p2p
-
-    @p2p.setter
-    def p2p(self, value):
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._p2p.clear()
-            self._p2p += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._p2p._vector = value
-        else:
-            exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-
-@dataclass
-## The class for storing voltage simulation-only data common for a whole run
-class VoltageRunSimdataTree(MotherRunTree):
-    """The class for storing voltage simulation-only data common for a whole run"""
-    _tree_name: str = "trunvoltagesimdata"
-
-    _signal_sim: StdString = StdString("")  # name and model of the signal simulator
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def signal_sim(self):
-        """Name and model of the signal simulator"""
-        return str(self._signal_sim)
-
-    @signal_sim.setter
-    def signal_sim(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
-
-        self._signal_sim.string.assign(value)
-
-
-@dataclass
-## The class for storing voltage simulation-only data common for each event
-class VoltageEventSimdataTree(MotherEventTree):
-    """The class for storing voltage simulation-only data common for each event"""
-    _tree_name: str = "teventvoltagesimdata"
-
-    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
-    _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
-    _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def du_id(self):
-        """Detector ID"""
-        return self._du_id
-
-    @du_id.setter
-    def du_id(self, value):
-
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._du_id.clear()
-            self._du_id += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_id._vector = value
-        else:
-            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-    @property
-    def t_0(self):
-        """Time window t0"""
-        return self._t_0
-
-    @t_0.setter
-    def t_0(self, value):
-
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._t_0.clear()
-            self._t_0 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._t_0._vector = value
-        else:
-            exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-    @property
-    def p2p(self):
-        """Peak 2 peak amplitudes (x,y,z,modulus)"""
-        return self._p2p
-
-    @p2p.setter
-    def p2p(self, value):
-
-        # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            # Clear the vector before setting
-            self._p2p.clear()
-            self._p2p += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._p2p._vector = value
-        else:
-            exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-
 @dataclass
 ## The class for storing ADC traces and associated values for each event
 class ADCEventTree(MotherEventTree):
@@ -4695,129 +3811,885 @@ class EfieldEventTree(MotherEventTree):
         else:
             exit(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
-
-## A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle
 @dataclass
-class DetectorInfo(DataTree):
-    """A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle"""
-    _tree_name: str = "tdetectorinfo"
+## The class for storing shower data common for each event
+class ShowerEventTree(MotherEventTree):
+    """The class for storing shower data common for each event"""
+    _tree_name: str = "teventshower"
 
-    ## Detector Unit id
-    _du_id: np.ndarray = np.zeros(1, np.float32)
-    ## Currently read out unit. Not publicly visible
-    _cur_du_id: int = -1
-    ## Detector longitude
-    _long: np.ndarray = np.zeros(1, np.float32)
-    ## Detector latitude
-    _lat: np.ndarray = np.zeros(1, np.float32)
-    ## Detector altitude
-    _alt: np.ndarray = np.zeros(1, np.float32)
-    ## Detector type
-    _type: StdString = StdString("antenna")
-    ## Detector description
-    _description: StdString = StdString("")
+    _shower_type: StdString = StdString("")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
+    _shower_energy: np.ndarray = np.zeros(1, np.float32)  # shower energy (GeV)  Check unit conventions.
+    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)  # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
+    _shower_zenith: np.ndarray = np.zeros(1, np.float32)  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
+    _shower_core_pos: np.ndarray = np.zeros(4, np.float32)  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
+    _atmos_model: StdString = StdString("")  # Atmospheric model name TODO:standarize
+    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
+    _magnetic_field: np.ndarray = np.zeros(3, np.float32)  # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
+    _date: StdString = StdString("")  # Event Date and time. TODO:standarize (date format, time format)
+    _ground_alt: np.ndarray = np.zeros(1, np.float32)  # Ground Altitude (m)
+    _xmax_grams: np.ndarray = np.zeros(1, np.float32)  # shower Xmax depth  (g/cm2 along the shower axis)
+    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)  # shower Xmax position in shower coordinates
+    _xmax_alt: np.ndarray = np.zeros(1, np.float64)  # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
+    _gh_fit_param: np.ndarray = np.zeros(3, np.float32)  # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
+    _core_time: np.ndarray = np.zeros(1, np.float64)  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
 
     def __post_init__(self):
         super().__post_init__()
 
-        if self._tree.GetName()=="":
+        if self._tree.GetName() == "":
             self._tree.SetName(self._tree_name)
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
 
-    def __len__(self):
-        return self._tree.GetEntries()
+    @property
+    def shower_type(self):
+        """Shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize"""
+        return str(self._shower_type)
 
-    # def __delitem__(self, index):
-    #     self.vector.erase(index)
-    #
-    # def insert(self, index, value):
-    #     self.vector.insert(index, value)
-    #
-    # def __setitem__(self, index, value):
-    #     self.vector[index] = value
+    @shower_type.setter
+    def shower_type(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
-    def __getitem__(self, index):
-        # Read the unit if not read already
-        if self._cur_du_id != index:
-            self._tree.GetEntryWithIndex(index)
-            self._cur_du_id = index
-        return self
+        self._shower_type.string.assign(value)
 
-    ## Don't really add friends, just generates an index
-    def add_proper_friends(self):
-        """Don't really add friends, just generates an index"""
-        # Create the index
-        self._tree.BuildIndex("du_id")
+    @property
+    def shower_energy(self):
+        """Shower energy (GeV). ToDo: Check unit conventions."""
+        return self._shower_energy[0]
 
-    ## Fill the tree
-    def fill(self):
-        """Fill the tree"""
-        self._tree.Fill()
+    @shower_energy.setter
+    def shower_energy(self, value):
+        self._shower_energy[0] = value
+
+    @property
+    def shower_azimuth(self):
+        """Shower azimuth. TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neutrino convention is problematic for round earth. Also, geoid vs sphere problem"""
+        return self._shower_azimuth[0]
+
+    @shower_azimuth.setter
+    def shower_azimuth(self, value):
+        self._shower_azimuth[0] = value
+
+    @property
+    def shower_zenith(self):
+        """Shower zenith. TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neutrino convention is problematic for round earth"""
+        return self._shower_zenith[0]
+
+    @shower_zenith.setter
+    def shower_zenith(self, value):
+        self._shower_zenith[0] = value
+
+    @property
+    def shower_core_pos(self):
+        """Shower core position TODO: Coordinates in geoid?. Undefined for neutrinos."""
+        return np.array(self._shower_core_pos)
+
+    @shower_core_pos.setter
+    def shower_core_pos(self, value):
+        self._shower_core_pos = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("shower_core_pos", self._shower_core_pos)
+
+    @property
+    def atmos_model(self):
+        """Atmospheric model name. TODO: standarize"""
+        return str(self._atmos_model)
+
+    @atmos_model.setter
+    def atmos_model(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._atmos_model.string.assign(value)
+
+    @property
+    def atmos_model_param(self):
+        """Atmospheric model parameters. TODO: Think about this. Different models and softwares can have different parameters"""
+        return np.array(self._atmos_model_param)
+
+    @atmos_model_param.setter
+    def atmos_model_param(self, value):
+        self._atmos_model_param = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("atmos_model_param", self._atmos_model_param)
+
+    @property
+    def magnetic_field(self):
+        """Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense."""
+        return np.array(self._magnetic_field)
+
+    @magnetic_field.setter
+    def magnetic_field(self, value):
+        self._magnetic_field = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("magnetic_field", self._magnetic_field)
+
+    @property
+    def date(self):
+        """Event Date and time. TODO: standarize (date format, time format)"""
+        return str(self._date)
+
+    @date.setter
+    def date(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._date.string.assign(value)
+
+    @property
+    def ground_alt(self):
+        """Ground Altitude (m)"""
+        return self._ground_alt[0]
+
+    @ground_alt.setter
+    def ground_alt(self, value):
+        self._ground_alt[0] = value
+
+    @property
+    def xmax_grams(self):
+        """Shower Xmax depth (g/cm2 along the shower axis)."""
+        return self._xmax_grams[0]
+
+    @xmax_grams.setter
+    def xmax_grams(self, value):
+        self._xmax_grams[0] = value
+
+    @property
+    def xmax_pos_shc(self):
+        """Shower Xmax position in shower coordinates."""
+        return np.array(self._xmax_pos_shc)
+
+    @xmax_pos_shc.setter
+    def xmax_pos_shc(self, value):
+        self._xmax_pos_shc = np.array(value).astype(np.float64)
+        self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
+
+    @property
+    def xmax_alt(self):
+        """Altitude of Xmax (m, in the shower simulation earth. It's important for the index of refraction)."""
+        return self._xmax_alt[0]
+
+    @xmax_alt.setter
+    def xmax_alt(self, value):
+        self._xmax_alt[0] = value
+
+    @property
+    def gh_fit_param(self):
+        """X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)."""
+        return np.array(self._gh_fit_param)
+
+    @gh_fit_param.setter
+    def gh_fit_param(self, value):
+        self._gh_fit_param = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("gh_fit_param", self._gh_fit_param)
+
+    @property
+    def core_time(self):
+        """ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?"""
+        return self._core_time[0]
+
+    @core_time.setter
+    def core_time(self, value):
+        self._core_time[0] = value
+
+@dataclass
+## The class for storing voltage simulation-only data common for a whole run
+class VoltageRunSimdataTree(MotherRunTree):
+    """The class for storing voltage simulation-only data common for a whole run"""
+    _tree_name: str = "trunvoltagesimdata"
+
+    _signal_sim: StdString = StdString("")  # name and model of the signal simulator
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    @property
+    def signal_sim(self):
+        """Name and model of the signal simulator"""
+        return str(self._signal_sim)
+
+    @signal_sim.setter
+    def signal_sim(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._signal_sim.string.assign(value)
+
+
+@dataclass
+## The class for storing voltage simulation-only data common for each event
+class VoltageEventSimdataTree(MotherEventTree):
+    """The class for storing voltage simulation-only data common for each event"""
+    _tree_name: str = "teventvoltagesimdata"
+
+    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
+    _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
+    _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
 
     @property
     def du_id(self):
-        """Detector Unit id"""
-        return self._du_id[0]
+        """Detector ID"""
+        return self._du_id
 
     @du_id.setter
-    def du_id(self, value: int) -> None:
-        self._du_id[0] = value
+    def du_id(self, value):
+
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._du_id.clear()
+            self._du_id += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("int")):
+            self._du_id._vector = value
+        else:
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
-    def long(self):
-        """Detector longitude"""
-        return self._long[0]
+    def t_0(self):
+        """Time window t0"""
+        return self._t_0
 
-    @long.setter
-    def long(self, value: np.float32) -> None:
-        self._long[0] = value
+    @t_0.setter
+    def t_0(self, value):
 
-    @property
-    def lat(self):
-        """Detector latitude"""
-        return self._lat[0]
-
-    @lat.setter
-    def lat(self, value: np.float32) -> None:
-        self._lat[0] = value
-
-    @property
-    def alt(self):
-        """Detector altitude"""
-        return self._alt[0]
-
-    @alt.setter
-    def alt(self, value: np.float32) -> None:
-        self._alt[0] = value
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._t_0.clear()
+            self._t_0 += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._t_0._vector = value
+        else:
+            exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
-    def type(self):
-        """Detector type"""
-        return str(self._type)
+    def p2p(self):
+        """Peak 2 peak amplitudes (x,y,z,modulus)"""
+        return self._p2p
 
-    @type.setter
-    def type(self, value):
+    @p2p.setter
+    def p2p(self, value):
+
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._p2p.clear()
+            self._p2p += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._p2p._vector = value
+        else:
+            exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+
+
+@dataclass
+## The class for storing Efield simulation-only data common for a whole run
+class EfieldRunSimdataTree(MotherRunTree):
+    """The class for storing Efield simulation-only data common for a whole run"""
+    _tree_name: str = "trunefieldsimdata"
+
+    ## Name and model of the electric field simulator
+    # _field_sim: StdString = StdString("")
+    ## Name of the atmospheric index of refraction model
+    _refractivity_model: StdString = StdString("")
+    _refractivity_model_parameters: StdVectorList("double") = StdVectorList("double")
+    ## The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
+    _t_pre: np.ndarray = np.zeros(1, np.float32)
+    _t_post: np.ndarray = np.zeros(1, np.float32)
+    _t_bin_size: np.ndarray = np.zeros(1, np.float32)
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    # @property
+    # def field_sim(self):
+    #     return str(self._field_sim)
+    #
+    # @field_sim.setter
+    # def field_sim(self, value):
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+    #
+    #     self._field_sim.string.assign(value)
+
+    @property
+    def refractivity_model(self):
+        """Name of the atmospheric index of refraction model"""
+        return str(self._refractivity_model)
+
+    @refractivity_model.setter
+    def refractivity_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
-        self._type.string.assign(value)
+        self._refractivity_model.string.assign(value)
 
     @property
-    def description(self):
-        """Detector description"""
-        return str(self._description)
+    def refractivity_model_parameters(self):
+        """Refractivity model parameters"""
+        return self._refractivity_model_parameters
 
-    @description.setter
-    def description(self, value):
+    @refractivity_model_parameters.setter
+    def refractivity_model_parameters(self, value) -> None:
+        # A list of strings was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._refractivity_model_parameters.clear()
+            self._refractivity_model_parameters += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("unsigned short")):
+            self._refractivity_model_parameters._vector = value
+        else:
+            exit(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+
+    @property
+    def t_pre(self):
+        """Starting time of antenna data collection time window. The window starts at t0+t_pre, thus t_pre is usually negative."""
+        return self._t_pre[0]
+
+    @t_pre.setter
+    def t_pre(self, value):
+        self._t_pre[0] = value
+
+    @property
+    def t_post(self):
+        """Finishing time of antenna data collection time window. The window ends at t0+t_post."""
+        return self._t_post[0]
+
+    @t_post.setter
+    def t_post(self, value):
+        self._t_post[0] = value
+
+    @property
+    def t_bin_size(self):
+        """Time bin size"""
+        return self._t_bin_size[0]
+
+    @t_bin_size.setter
+    def t_bin_size(self, value):
+        self._t_bin_size[0] = value
+
+
+@dataclass
+## The class for storing Efield simulation-only data common for each event
+class EfieldEventSimdataTree(MotherEventTree):
+    """The class for storing Efield simulation-only data common for each event"""
+    _tree_name: str = "teventefieldsimdata"
+
+    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
+    _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
+    _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
+
+    # _event_size: np.ndarray = np.zeros(1, np.uint32)
+    # _start_time: StdVectorList("double") = StdVectorList("double")
+    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
+    # _det_time: StdVectorList("double") = StdVectorList("double")
+    # _e_det_time: StdVectorList("double") = StdVectorList("double")
+    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
+    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
+
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    @property
+    def du_id(self):
+        """Detector ID"""
+        return self._du_id
+
+    @du_id.setter
+    def du_id(self, value):
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._du_id.clear()
+            self._du_id += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("int")):
+            self._du_id._vector = value
+        else:
+            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+
+    @property
+    def t_0(self):
+        """Time window t0"""
+        return self._t_0
+
+    @t_0.setter
+    def t_0(self, value):
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._t_0.clear()
+            self._t_0 += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._t_0._vector = value
+        else:
+            exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+
+    @property
+    def p2p(self):
+        """Peak 2 peak amplitudes (x,y,z,modulus)"""
+        return self._p2p
+
+    @p2p.setter
+    def p2p(self, value):
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._p2p.clear()
+            self._p2p += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._p2p._vector = value
+        else:
+            exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+
+@dataclass
+## The class for storing shower simulation-only data common for a whole run
+class ShowerRunSimdataTree(MotherRunTree):
+    """The class for storing shower simulation-only data common for a whole run"""
+    _tree_name: str = "trunsimdata"
+
+    _shower_sim: StdString = StdString("") # simulation program (and version) used to simulate the shower
+    _rel_thin: np.ndarray = np.zeros(1, np.float32)  # relative thinning energy
+    _weight_factor: np.ndarray = np.zeros(1, np.float32)  # weight factor
+    _lowe_cut_e: np.ndarray = np.zeros(1, np.float32)  # low energy cut for electrons(GeV)
+    _lowe_cut_gamma: np.ndarray = np.zeros(1, np.float32)  # low energy cut for gammas(GeV)
+    _lowe_cut_mu: np.ndarray = np.zeros(1, np.float32)  # low energy cut for muons(GeV)
+    _lowe_cut_meson: np.ndarray = np.zeros(1, np.float32)  # low energy cut for mesons(GeV)
+    _lowe_cut_nucleon: np.ndarray = np.zeros(1, np.float32)  # low energy cut for nuceleons(GeV)
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    @property
+    def shower_sim(self):
+        """Simulation program (and version) used to simulate the shower"""
+        return str(self._shower_sim)
+
+    @shower_sim.setter
+    def shower_sim(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
-        self._description.string.assign(value)
+        self._shower_sim.string.assign(value)
+
+    @property
+    def rel_thin(self):
+        """relative thinning energy"""
+        return self._rel_thin[0]
+
+    @rel_thin.setter
+    def rel_thin(self, value):
+        self._rel_thin[0] = value
+
+    @property
+    def weight_factor(self):
+        """weight factor"""
+        return self._weight_factor[0]
+
+    @weight_factor.setter
+    def weight_factor(self, value):
+        self._weight_factor[0] = value
+
+    @property
+    def lowe_cut_e(self):
+        """low energy cut for electrons(GeV)"""
+        return self._lowe_cut_e[0]
+
+    @lowe_cut_e.setter
+    def lowe_cut_e(self, value):
+        self._lowe_cut_e[0] = value
+
+    @property
+    def lowe_cut_gamma(self):
+        """low energy cut for gammas(GeV)"""
+        return self._lowe_cut_gamma[0]
+
+    @lowe_cut_gamma.setter
+    def lowe_cut_gamma(self, value):
+        self._lowe_cut_gamma[0] = value
+
+    @property
+    def lowe_cut_mu(self):
+        """low energy cut for muons(GeV)"""
+        return self._lowe_cut_mu[0]
+
+    @lowe_cut_mu.setter
+    def lowe_cut_mu(self, value):
+        self._lowe_cut_mu[0] = value
+
+    @property
+    def lowe_cut_meson(self):
+        """low energy cut for mesons(GeV)"""
+        return self._lowe_cut_meson[0]
+
+    @lowe_cut_meson.setter
+    def lowe_cut_meson(self, value):
+        self._lowe_cut_meson[0] = value
+
+    @property
+    def lowe_cut_nucleon(self):
+        """low energy cut for nucleons(GeV)"""
+        return self._lowe_cut_nucleon[0]
+
+    @lowe_cut_nucleon.setter
+    def lowe_cut_nucleon(self, value):
+        self._lowe_cut_nucleon[0] = value
+
+@dataclass
+## The class for storing a shower simulation-only data for each event
+class ShowerEventSimdataTree(MotherEventTree):
+    """The class for storing a shower simulation-only data for each event"""
+    _tree_name: str = "teventshowersimdata"
+
+    ## Event name
+    _event_name: StdString = StdString("")
+
+    ## Event Date and time. TODO:standarize (date format, time format)
+    _date: StdString = StdString("")
+    ## Random seed
+    _rnd_seed: np.ndarray = np.zeros(1, np.float64)
+    ## Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy
+    _energy_in_neutrinos: np.ndarray = np.zeros(1, np.float32)
+    # _prim_energy: np.ndarray = np.zeros(1, np.float32)  # primary energy (GeV) TODO: Support multiple primaries. Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
+    ## Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
+    _prim_energy: StdVectorList("float") = StdVectorList("float")
+    ## Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
+    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)
+    ## Shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
+    _shower_zenith: np.ndarray = np.zeros(1, np.float32)
+    # _prim_type: StdVectorList("string") = StdVectorList("string")  # primary particle type TODO: Support multiple primaries. standarize (PDG?)
+    ## Primary particle type TODO: standarize (PDG?)
+    _prim_type: StdVectorList("string") = StdVectorList("string")
+    # _prim_injpoint_shc: np.ndarray = np.zeros(4, np.float32)  # primary injection point in Shower coordinates TODO: Support multiple primaries
+    ## Primary injection point in Shower coordinates
+    _prim_injpoint_shc: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    # _prim_inj_alt_shc: np.ndarray = np.zeros(1, np.float32)  # primary injection altitude in Shower Coordinates TODO: Support multiple primaries
+    ## Primary injection altitude in Shower Coordinates
+    _prim_inj_alt_shc: StdVectorList("float") = StdVectorList("float")
+    # _prim_inj_dir_shc: np.ndarray = np.zeros(3, np.float32)  # primary injection direction in Shower Coordinates  TODO: Support multiple primaries
+    ## primary injection direction in Shower Coordinates
+    _prim_inj_dir_shc: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    ## Atmospheric model name TODO:standarize
+    _atmos_model: StdString = StdString("")
+    # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
+    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)
+    # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
+    _magnetic_field: np.ndarray = np.zeros(3, np.float32)
+    ## Shower Xmax depth  (g/cm2 along the shower axis)
+    _xmax_grams: np.ndarray = np.zeros(1, np.float32)
+    ## Shower Xmax position in shower coordinates
+    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)
+    ## Distance of Xmax  [m]
+    _xmax_distance: np.ndarray = np.zeros(1, np.float64)
+    ## Altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
+    _xmax_alt: np.ndarray = np.zeros(1, np.float64)
+    _hadronic_model: StdString = StdString("")  # high energy hadronic model (and version) used TODO: standarize
+    _low_energy_model: StdString = StdString("")  # high energy model (and version) used TODO: standarize
+    _cpu_time: np.ndarray = np.zeros(1, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    @property
+    def event_name(self):
+        """Event name"""
+        return str(self._event_name)
+
+    @event_name.setter
+    def event_name(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._event_name.string.assign(value)
+
+    @property
+    def date(self):
+        """Event Date and time. TODO:standarize (date format, time format)"""
+        return str(self._date)
+
+    @date.setter
+    def date(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._date.string.assign(value)
+
+    @property
+    def rnd_seed(self):
+        """Random seed"""
+        return self._rnd_seed[0]
+
+    @rnd_seed.setter
+    def rnd_seed(self, value):
+        self._rnd_seed[0] = value
+
+    @property
+    def energy_in_neutrinos(self):
+        """Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy"""
+        return self._energy_in_neutrinos[0]
+
+    @energy_in_neutrinos.setter
+    def energy_in_neutrinos(self, value):
+        self._energy_in_neutrinos[0] = value
+
+    @property
+    def prim_energy(self):
+        """Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector"""
+        return self._prim_energy
+
+    @prim_energy.setter
+    def prim_energy(self, value):
+        # A list of strings was given
+        if isinstance(value, list):
+            # Clear the vector before setting
+            self._prim_energy.clear()
+            self._prim_energy += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<float>")):
+            self._prim_energy._vector = value
+        else:
+            exit(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
+
+    @property
+    def shower_azimuth(self):
+        """Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem"""
+        return self._shower_azimuth[0]
+
+    @shower_azimuth.setter
+    def shower_azimuth(self, value):
+        self._shower_azimuth[0] = value
+
+    @property
+    def shower_zenith(self):
+        """Shower zenith TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth"""
+        return self._shower_zenith[0]
+
+    @shower_zenith.setter
+    def shower_zenith(self, value):
+        self._shower_zenith[0] = value
+
+    @property
+    def prim_type(self):
+        """Primary particle type TODO: standarize (PDG?)"""
+        return self._prim_type
+
+    @prim_type.setter
+    def prim_type(self, value):
+        # A list of strings was given
+        if isinstance(value, list):
+            # Clear the vector before setting
+            self._prim_type.clear()
+            self._prim_type += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<string>")):
+            self._prim_type._vector = value
+        else:
+            exit(f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required.")
+
+    @property
+    def prim_injpoint_shc(self):
+        """Primary injection point in Shower coordinates"""
+        return np.array(self._prim_injpoint_shc)
+
+    @prim_injpoint_shc.setter
+    def prim_injpoint_shc(self, value):
+        self._prim_injpoint_shc = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("prim_injpoint_shc", self._prim_injpoint_shc)
+
+    @property
+    def prim_inj_alt_shc(self):
+        """Primary injection altitude in Shower Coordinates"""
+        return self._prim_inj_alt_shc
+
+    @prim_inj_alt_shc.setter
+    def prim_inj_alt_shc(self, value):
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray):
+            # Clear the vector before setting
+            self._prim_inj_alt_shc.clear()
+            self._prim_inj_alt_shc += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._prim_inj_alt_shc._vector = value
+        else:
+            exit(f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+
+
+    @property
+    def prim_inj_dir_shc(self):
+        """primary injection direction in Shower Coordinates"""
+        return np.array(self._prim_inj_dir_shc)
+
+    @prim_inj_dir_shc.setter
+    def prim_inj_dir_shc(self, value):
+        self._prim_inj_dir_shc = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("prim_inj_dir_shc", self._prim_inj_dir_shc)
+
+    @property
+    def atmos_model(self):
+        """Atmospheric model name TODO:standarize"""
+        return str(self._atmos_model)
+
+    @atmos_model.setter
+    def atmos_model(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._atmos_model.string.assign(value)
+
+    @property
+    def atmos_model_param(self):
+        """Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters"""
+        return np.array(self._atmos_model_param)
+
+    @atmos_model_param.setter
+    def atmos_model_param(self, value):
+        self._atmos_model_param = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("atmos_model_param", self._atmos_model_param)
+
+    @property
+    def magnetic_field(self):
+        """Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense."""
+        return np.array(self._magnetic_field)
+
+    @magnetic_field.setter
+    def magnetic_field(self, value):
+        self._magnetic_field = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("magnetic_field", self._magnetic_field)
+
+    @property
+    def xmax_grams(self):
+        """Shower Xmax depth (g/cm2 along the shower axis)"""
+        return self._xmax_grams[0]
+
+    @xmax_grams.setter
+    def xmax_grams(self, value):
+        self._xmax_grams[0] = value
+
+    @property
+    def xmax_pos_shc(self):
+        """Shower Xmax position in shower coordinates"""
+        return np.array(self._xmax_pos_shc)
+
+    @xmax_pos_shc.setter
+    def xmax_pos_shc(self, value):
+        self._xmax_pos_shc = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
+
+    @property
+    def xmax_distance(self):
+        """Distance of Xmax [m]"""
+        return self._xmax_distance[0]
+
+    @xmax_distance.setter
+    def xmax_distance(self, value):
+        self._xmax_distance[0] = value
+
+    @property
+    def xmax_alt(self):
+        """Altitude of Xmax (m, in the shower simulation earth. Its important for the index of refraction )"""
+        return self._xmax_alt[0]
+
+    @xmax_alt.setter
+    def xmax_alt(self, value):
+        self._xmax_alt[0] = value
+
+    @property
+    def hadronic_model(self):
+        """High energy hadronic model (and version) used TODO: standarize"""
+        return str(self._hadronic_model)
+
+    @hadronic_model.setter
+    def hadronic_model(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._hadronic_model.string.assign(value)
+
+    @property
+    def low_energy_model(self):
+        """High energy model (and version) used TODO: standarize"""
+        return str(self._low_energy_model)
+
+    @low_energy_model.setter
+    def low_energy_model(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._low_energy_model.string.assign(value)
+
+    @property
+    def cpu_time(self):
+        """Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation"""
+        return np.array(self._cpu_time)
+
+    @cpu_time.setter
+    def cpu_time(self, value):
+        self._cpu_time = np.array(value).astype(np.float32)
+        self._tree.SetBranchAddress("cpu_time", self._cpu_time)
 
 @dataclass
 ## The class for storing shower data for each event specific to ZHAireS only
@@ -4946,6 +4818,128 @@ class ShowerEventZHAireSTree(MotherEventTree):
 
         self._other_parameters.string.assign(value)
 
+## A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle
+@dataclass
+class DetectorInfo(DataTree):
+    """A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle"""
+    _tree_name: str = "tdetectorinfo"
+
+    ## Detector Unit id
+    _du_id: np.ndarray = np.zeros(1, np.float32)
+    ## Currently read out unit. Not publicly visible
+    _cur_du_id: int = -1
+    ## Detector longitude
+    _long: np.ndarray = np.zeros(1, np.float32)
+    ## Detector latitude
+    _lat: np.ndarray = np.zeros(1, np.float32)
+    ## Detector altitude
+    _alt: np.ndarray = np.zeros(1, np.float32)
+    ## Detector type
+    _type: StdString = StdString("antenna")
+    ## Detector description
+    _description: StdString = StdString("")
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName()=="":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+    def __len__(self):
+        return self._tree.GetEntries()
+
+    # def __delitem__(self, index):
+    #     self.vector.erase(index)
+    #
+    # def insert(self, index, value):
+    #     self.vector.insert(index, value)
+    #
+    # def __setitem__(self, index, value):
+    #     self.vector[index] = value
+
+    def __getitem__(self, index):
+        # Read the unit if not read already
+        if self._cur_du_id != index:
+            self._tree.GetEntryWithIndex(index)
+            self._cur_du_id = index
+        return self
+
+    ## Don't really add friends, just generates an index
+    def add_proper_friends(self):
+        """Don't really add friends, just generates an index"""
+        # Create the index
+        self._tree.BuildIndex("du_id")
+
+    ## Fill the tree
+    def fill(self):
+        """Fill the tree"""
+        self._tree.Fill()
+
+    @property
+    def du_id(self):
+        """Detector Unit id"""
+        return self._du_id[0]
+
+    @du_id.setter
+    def du_id(self, value: int) -> None:
+        self._du_id[0] = value
+
+    @property
+    def long(self):
+        """Detector longitude"""
+        return self._long[0]
+
+    @long.setter
+    def long(self, value: np.float32) -> None:
+        self._long[0] = value
+
+    @property
+    def lat(self):
+        """Detector latitude"""
+        return self._lat[0]
+
+    @lat.setter
+    def lat(self, value: np.float32) -> None:
+        self._lat[0] = value
+
+    @property
+    def alt(self):
+        """Detector altitude"""
+        return self._alt[0]
+
+    @alt.setter
+    def alt(self, value: np.float32) -> None:
+        self._alt[0] = value
+
+    @property
+    def type(self):
+        """Detector type"""
+        return str(self._type)
+
+    @type.setter
+    def type(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._type.string.assign(value)
+
+    @property
+    def description(self):
+        """Detector description"""
+        return str(self._description)
+
+    @description.setter
+    def description(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            exit(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._description.string.assign(value)
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
