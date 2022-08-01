@@ -1171,7 +1171,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     _xmax_alt: np.ndarray = np.zeros(1, np.float64)
     _hadronic_model: StdString = StdString("")  # high energy hadronic model (and version) used TODO: standarize
     _low_energy_model: StdString = StdString("")  # high energy model (and version) used TODO: standarize
-    _cpu_time: np.ndarray = np.zeros(3, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    _cpu_time: np.ndarray = np.zeros(1, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
 
     def __post_init__(self):
         super().__post_init__()
