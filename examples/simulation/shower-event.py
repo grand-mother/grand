@@ -21,7 +21,7 @@ logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
 showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
-showerdir = "/home/jcolley/projet/grand_wk/binder/xdu/Stshp_MZS_QGS204JET_Proton_3.98_79.6_90.0_9"
+#showerdir = "/home/jcolley/projet/grand_wk/binder/xdu/Stshp_MZS_QGS204JET_Proton_3.98_79.6_90.0_9"
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:
