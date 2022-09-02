@@ -3812,7 +3812,7 @@ class EfieldEventTree(MotherEventTree):
             exit(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
-## The class for storing shower data common for each event
+## The class for storing reconstructed shower data common for each event
 class ShowerEventTree(MotherEventTree):
     """The class for storing shower data common for each event"""
     _tree_name: str = "teventshower"
@@ -4169,7 +4169,7 @@ class EfieldRunSimdataTree(MotherRunTree):
             self._refractivity_model_parameters.clear()
             self._refractivity_model_parameters += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("double")):
             self._refractivity_model_parameters._vector = value
         else:
             exit(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
