@@ -1,7 +1,7 @@
 #! /bin/bash
 
-rm build/grand/_core.abi3.so
-rm build/lib/*.so
+rm -f build/grand/_core.abi3.so
+rm -f build/lib/*.so
 
 make
 
