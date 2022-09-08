@@ -1,11 +1,9 @@
 '''
-Created on Sep 5, 2022
-
-@author: root
+simple event table 
 '''
-import grand.io.root.base as iorb
+import grand.io.root.event.efield as ioree
 
-class MasterEfieldByAntenna(object):
+class EventTable(object):
     '''
     debut gerb : 
     sE=ior.EfieldEventTree('Coarse1.root')
@@ -23,11 +21,12 @@ class MasterEfieldByAntenna(object):
         '''
         Constructor
         '''
-        pass
+        self.unit = ""
+        
 
     def read(self, data_f):
         self.data_f = data_f
-        sE = iorb.EfieldEventTree(data_f)
+        sE = ioree.EfieldEventTree(data_f)
         # hard coding event number
         sE.get_event(0)
         self.sE = sE
