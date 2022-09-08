@@ -11,7 +11,7 @@ import numpy
 
 from grand.simu.shower.pdg import ParticleCode
 from grand.simu import ElectricField, Voltage
-from grand.io import io
+from grand.io import io_node as io
 from grand.geo.coordinates import (
     Geodetic,
     LTP,
