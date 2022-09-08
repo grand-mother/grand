@@ -6,10 +6,10 @@ import os.path as osp
 from pathlib import Path
 
 from grand.geo import geomagnet, topography
-from grand.geo import geoid_undulation, Reference, Topography
-from grand.geo import Geomagnet
+from grand.geo.topography import geoid_undulation, Reference, Topography
 from grand.geo import coordinates
-from grand.geo import (
+from grand.geo.geomagnet import Geomagnet
+from grand.geo.coordinates import (
     Coordinates,
     CartesianRepresentation,
     SphericalRepresentation,

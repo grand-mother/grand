@@ -1,5 +1,5 @@
 import grand.manage_log as mlg
-from grand.tools.coordinates import geoid_undulation
+from grand.geo.coordinates import geoid_undulation
 
 
 def test_check_logger_level():

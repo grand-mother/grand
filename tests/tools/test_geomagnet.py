@@ -11,14 +11,14 @@ import datetime
 # from astropy.coordinates import EarthLocation, ITRS
 
 import grand.geo as tools
-from grand.tools.coordinates import (
+from grand.geo.coordinates import (
     GeodeticRepresentation,
     LTP,
     Geodetic,
     CartesianRepresentation,
     ECEF,
 )
-from grand.tools.geomagnet import Geomagnet
+from grand.geo.geomagnet import Geomagnet
 from tests import TestCase
 
 

@@ -6,7 +6,7 @@ from typing import Union, Any
 
 import numpy as np
 
-from grand.tools.coordinates import (
+from grand.geo.coordinates import (
     ECEF,
     LTP,
     GRANDCS,

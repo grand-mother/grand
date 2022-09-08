@@ -16,8 +16,8 @@ import numpy
 from grand.simu.shower.generic import CollectionEntry, FieldsCollection, ShowerEvent
 from grand.simu.antenna import ElectricField
 from grand.simu.shower.pdg import ParticleCode
-from grand.geo import ECEF, LTP, Geodetic
-from grand.geo import (
+from grand.geo.coordinates import ECEF, LTP, Geodetic
+from grand.geo.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
 )
