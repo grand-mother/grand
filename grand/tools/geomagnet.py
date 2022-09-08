@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Optional, Union
 from typing_extensions import Final
 
-from .coordinates import CartesianRepresentation, GeodeticRepresentation
-from .coordinates import ECEF, Geodetic, GRANDCS, LTP, _cartesian_to_horizontal
+from grand.geo import CartesianRepresentation, GeodeticRepresentation
+from grand.geo import ECEF, Geodetic, GRANDCS, LTP, _cartesian_to_horizontal
 from ..libs.gull import Snapshot as _Snapshot
 
 import numpy

@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.tools.topography module
+Unit tests for the grand.geo.topography module
 """
 import os
 import unittest
@@ -10,11 +10,11 @@ import numpy
 # import astropy.units as u
 
 import grand.store as store
-import grand.tools as tools
+import grand.geo as tools
 
-# from grand.tools.coordinates import ECEF, GeodeticRepresentation, LTP
-# from grand.tools import topography
-# from grand.tools.topography import Topography
+# from grand.geo.coordinates import ECEF, GeodeticRepresentation, LTP
+# from grand.geo import topography
+# from grand.geo.topography import Topography
 from tests import TestCase
 
 from grand import Topography, geoid_undulation  # , Reference

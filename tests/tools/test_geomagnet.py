@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.tools.geomagnet module
+Unit tests for the grand.geo.geomagnet module
 """
 
 import unittest
@@ -10,7 +10,7 @@ import datetime
 # import astropy.units as u
 # from astropy.coordinates import EarthLocation, ITRS
 
-import grand.tools as tools
+import grand.geo as tools
 from grand.tools.coordinates import (
     GeodeticRepresentation,
     LTP,

@@ -10,9 +10,8 @@ from typing import Optional, Union, Any
 from typing_extensions import Final
 
 import numpy as np
-
-from . import DATADIR
-from .coordinates import (
+grand.geofrom . import DATADIR
+from grand.geo import (
     ECEF,
     Geodetic,
     GeodeticRepresentation,
