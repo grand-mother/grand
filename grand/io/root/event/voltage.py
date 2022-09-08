@@ -3,7 +3,7 @@
 '''
 
 from grand.io.root.base import *
-    
+from .mother_event import MotherEventTree   
 
 
 @dataclass
