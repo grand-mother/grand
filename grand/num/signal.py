@@ -310,3 +310,22 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
     for l_i in range(lienum):
         data_ifft[:, l_i] = ifft(data_ori[:, l_i]).real
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
+
+
+def halfcplx_fullcplx(v_half, even=True):
+    '''!
+    Return fft with full complex format where vector has half complex format,
+    ie v_half=rfft(signal).
+    
+    @note:
+      Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html 
+    
+    @param v_half (array 1D complex): complex vector in half complex format, ie from rfft(signal)
+    @param even (bool): True if size of signal is even
+    
+    @return (array 1D complex) : fft(signal) in full complex format
+    '''
+    if even:
+        return np.concatenate((v_half, np.flip(np.conj(v_half[1:-1]))))
+    return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
+
