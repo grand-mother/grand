@@ -114,7 +114,7 @@ class TraceArrayDC1(object):
         self.a3_trace[:, 2,:] = np.array(self.ttree_evt.trace_z, dtype=np.float32)
         return True
     
-    def find_max_trace(self):
+    def find_max_traces(self):
         '''
         find absolute maximal vale in trace for each detector
         :param self:

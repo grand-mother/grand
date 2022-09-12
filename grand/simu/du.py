@@ -17,6 +17,8 @@ from grand.simu.elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
 from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
 from grand.store.trace import TraceArrayDC1
+from grand.io.root.event.shower import ShowerEventSimdataTree
+
 
 logger = getLogger(__name__)
 
@@ -154,6 +156,7 @@ class SimuDetectorUnitEffect(object):
     def set_file_efield(self, f_root):
         # TODO: ????
         self.o_traces = TraceArrayDC1(f_root)
+        self.ttree_shower_def = 
         self._init_du_effect()
 
     def process_du_effect_all_events(self):
