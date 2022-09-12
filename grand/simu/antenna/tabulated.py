@@ -10,7 +10,7 @@ import os.path as osp
 import numpy
 
 from .generic import AntennaModel
-from grand.io import io
+from grand.io import io_node as io
 
 __all__ = ["DataTable", "TabulatedAntennaModel"]
 

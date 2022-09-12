@@ -9,12 +9,12 @@ import unittest
 
 import numpy
 
-from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
+from grand import store, LTP, CartesianRepresentation, SphericalRepresentation
 from grand.simu import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
 from grand.simu.shower.pdg import ParticleCode
 from grand.simu.shower.generic import CollectionEntry
 from tests import TestCase
-
+from grand.io import io_node as io
 
 class ShowerTest(TestCase):
     """Unit tests for the shower module"""
