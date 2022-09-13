@@ -22,7 +22,6 @@ units:
 
 """
 
-
 from __future__ import annotations
 from typing import Optional, Tuple, Union, Any
 from datetime import datetime
@@ -114,11 +113,11 @@ def _cartesian_to_spherical(
     z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform Cartesian coordinates to spherical"""
-    rho2 = x**2 + y**2
+    rho2 = x ** 2 + y ** 2
     rho = np.sqrt(rho2)
     theta = np.rad2deg(np.arctan2(rho, z))
     phi = np.rad2deg(np.arctan2(y, x))
-    r = np.sqrt(rho2 + z**2)
+    r = np.sqrt(rho2 + z ** 2)
 
     return theta, phi, r
 
@@ -193,7 +192,7 @@ class Coordinates(np.ndarray):
     where 3 is for 3D coordinates and n is the number of entries.
     """
 
-    def __new__(cls, n: Optional[int] = None):
+    def __new__(cls, n: Optional[int]=None):
         """
         Create 3xn ndarray coordinates instance with n random entries for all 3D coordinate system.
         n: number of coordinate points.
@@ -216,10 +215,10 @@ class CartesianRepresentation(Coordinates):
 
     def __new__(
         cls,
-        arg: Any = None,
-        x: Union[float, np.ndarray] = None,
-        y: Union[float, np.ndarray] = None,
-        z: Union[float, np.ndarray] = None,
+        arg: Any=None,
+        x: Union[float, np.ndarray]=None,
+        y: Union[float, np.ndarray]=None,
+        z: Union[float, np.ndarray]=None,
     ):
         """
         Create a Cartesian coordinates instance
@@ -252,6 +251,7 @@ class CartesianRepresentation(Coordinates):
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
         # replace x-coordinates with input x. x can be int, float, or ndarray.
+        # logger.debug("coucou in")
         obj[0] = x
         # replace y-coordinates with input y. y can be int, float, or ndarray.
         obj[1] = y
@@ -302,10 +302,10 @@ class SphericalRepresentation(Coordinates):
 
     def __new__(
         cls,
-        arg: Any = None,
-        theta: Union[float, int, np.ndarray] = None,
-        phi: Union[float, int, np.ndarray] = None,
-        r: Union[float, int, np.ndarray] = None,
+        arg: Any=None,
+        theta: Union[float, int, np.ndarray]=None,
+        phi: Union[float, int, np.ndarray]=None,
+        r: Union[float, int, np.ndarray]=None,
     ):
         """
         Create a spherical coordinates instance.
@@ -355,18 +355,22 @@ class SphericalRepresentation(Coordinates):
         # replace 2-coordinates with input r. r can be int, float, or ndarray.
         obj[2] = r
         return obj
-
+       
     @property
     def theta(self):
-        return self[0]
-
+        logger.debug(f"{type(self)} {type(self[0])}")
+        #TODO: self[0] and self have same type !!!!!
+        # use float(self[0]) instead self[0] ?
+        return float(self[0])
+    
+    
     @theta.setter
     def theta(self, v):
         self[0] = v
 
     @property
     def phi(self):
-        return self[1]
+        return float(self[1])
 
     @phi.setter
     def phi(self, v):
@@ -396,9 +400,9 @@ class HorizontalRepresentation(Coordinates):
 
     def __new__(
         cls,
-        azimuth: Union[float, int, np.ndarray] = None,
-        elevation: Union[float, int, np.ndarray] = None,
-        norm: Union[float, int, np.ndarray] = 1.0,
+        azimuth: Union[float, int, np.ndarray]=None,
+        elevation: Union[float, int, np.ndarray]=None,
+        norm: Union[float, int, np.ndarray]=1.0,
     ):
         """
         Create a horizontal coordinates instance.
@@ -499,9 +503,9 @@ class GeodeticRepresentation(Coordinates):
 
     def __new__(
         cls,
-        latitude: Union[float, int, np.ndarray] = None,
-        longitude: Union[float, int, np.ndarray] = None,
-        height: Union[float, int, np.ndarray] = None,
+        latitude: Union[float, int, np.ndarray]=None,
+        longitude: Union[float, int, np.ndarray]=None,
+        height: Union[float, int, np.ndarray]=None,
     ):
         """
         Create a new instance from latitude, longitude, and height.
@@ -591,10 +595,10 @@ class Geodetic(GeodeticRepresentation):
 
     def __new__(
         cls,
-        arg: Any = None,
-        latitude: Union[float, int, np.ndarray] = None,
-        longitude: Union[float, int, np.ndarray] = None,
-        height: Union[float, int, np.ndarray] = None,
+        arg: Any=None,
+        latitude: Union[float, int, np.ndarray]=None,
+        longitude: Union[float, int, np.ndarray]=None,
+        height: Union[float, int, np.ndarray]=None,
         *args,
         **kwargs,
     ):
@@ -627,11 +631,11 @@ class Geodetic(GeodeticRepresentation):
 
     def __init__(
         self,
-        arg: Any = None,
-        latitude: Union[float, int, np.ndarray] = None,
-        longitude: Union[float, int, np.ndarray] = None,
-        height: Union[float, int, np.ndarray] = None,
-        reference: Any = "GEOID",
+        arg: Any=None,
+        latitude: Union[float, int, np.ndarray]=None,
+        longitude: Union[float, int, np.ndarray]=None,
+        height: Union[float, int, np.ndarray]=None,
+        reference: Any="GEOID",
     ):  # options: 'GEOID', 'ELLIPSOID'
         """
         Create a new instance from another point instance or from
@@ -753,10 +757,10 @@ class ECEF(CartesianRepresentation):
 
     def __new__(
         cls,
-        arg: Any = None,
-        x: Union[float, int, np.ndarray] = None,
-        y: Union[float, int, np.ndarray] = None,
-        z: Union[float, int, np.ndarray] = None,
+        arg: Any=None,
+        x: Union[float, int, np.ndarray]=None,
+        y: Union[float, int, np.ndarray]=None,
+        z: Union[float, int, np.ndarray]=None,
         *args,
         **kwargs,
     ):
@@ -784,11 +788,11 @@ class ECEF(CartesianRepresentation):
 
     def __init__(
         self,
-        arg: Any = None,
-        x: Union[float, int, np.ndarray] = None,
-        y: Union[float, int, np.ndarray] = None,
-        z: Union[float, int, np.ndarray] = None,
-        obstime: Union[str, datetime] = "2020-01-01",
+        arg: Any=None,
+        x: Union[float, int, np.ndarray]=None,
+        y: Union[float, int, np.ndarray]=None,
+        z: Union[float, int, np.ndarray]=None,
+        obstime: Union[str, datetime]="2020-01-01",
     ):
 
         self.obstime = obstime
@@ -862,6 +866,7 @@ grandcs_origin = Geodetic(
     reference="GEOID",
 )
 
+
 # RK: Merged into Horizontal. Delete this class.
 class HorizontalVector(HorizontalRepresentation):
     """
@@ -883,12 +888,12 @@ class Horizontal(HorizontalRepresentation):
 
     def __new__(
         cls,
-        arg: Any = None,
-        azimuth: Union[float, int, np.ndarray] = None,
-        elevation: Union[float, int, np.ndarray] = None,
-        norm: Union[float, int, np.ndarray] = 1.0,
-        location: Any = grandcs_origin,
-        vector: bool = False,
+        arg: Any=None,
+        azimuth: Union[float, int, np.ndarray]=None,
+        elevation: Union[float, int, np.ndarray]=None,
+        norm: Union[float, int, np.ndarray]=1.0,
+        location: Any=grandcs_origin,
+        vector: bool=False,
     ):
         """
         n: number of coordinate points. 3xn np.ndarray object will be instantiated
@@ -999,11 +1004,11 @@ class LTP(CartesianRepresentation):
 
     def __new__(
         cls,
-        arg: Any = None,  # input coordinate instance to convert to LTP
-        x: Union[float, int, np.ndarray] = None,  # x-coordinate at LTP
-        y: Union[float, int, np.ndarray] = None,  # y-coordinate at LTP
-        z: Union[float, int, np.ndarray] = None,  # z-coordinate at LTP
-        *args,
+        arg: Any=None,  # input coordinate instance to convert to LTP
+        x: Union[float, int, np.ndarray]=None,  # x-coordinate at LTP
+        y: Union[float, int, np.ndarray]=None,  # y-coordinate at LTP
+        z: Union[float, int, np.ndarray]=None,  # z-coordinate at LTP
+        * args,
         **kwargs,
     ):
 
@@ -1033,21 +1038,21 @@ class LTP(CartesianRepresentation):
 
     def __init__(
         self,
-        arg: Any = None,  # input coordinate instance to convert to LTP
-        x: Union[float, int, np.ndarray] = None,  # x-coordinate at LTP.
-        y: Union[float, int, np.ndarray] = None,  # y-coordinate at LTP
-        z: Union[float, int, np.ndarray] = None,  # z-coordinate at LTP
-        latitude: Union[float, int, np.ndarray] = None,  # latitude of LTP's location/origin
-        longitude: Union[float, int, np.ndarray] = None,  # longitude of LTP's location/origin
-        height: Union[float, int, np.ndarray] = None,  # height of LTP's location/origin
-        reference: str = None,  # reference for Geodetic location
-        location: Any = None,  # location of LTP in Geodetic, GRANDCS, or ECEF
-        orientation: str = None,  # orientation of LTP. 'NWU', 'ENU' etc
-        magnetic: bool = False,  # shift orientation by magnetic declination?
-        magmodel: str = "IGRF13",  # if shift, which magnetic model to use?
-        declination: Union[float, np.ndarray] = None,  # or simply provide the magnetic declination
-        obstime: Union[str, datetime] = "2020-01-01",  # calculate declination of what date?
-        frame: Any = None,
+        arg: Any=None,  # input coordinate instance to convert to LTP
+        x: Union[float, int, np.ndarray]=None,  # x-coordinate at LTP.
+        y: Union[float, int, np.ndarray]=None,  # y-coordinate at LTP
+        z: Union[float, int, np.ndarray]=None,  # z-coordinate at LTP
+        latitude: Union[float, int, np.ndarray]=None,  # latitude of LTP's location/origin
+        longitude: Union[float, int, np.ndarray]=None,  # longitude of LTP's location/origin
+        height: Union[float, int, np.ndarray]=None,  # height of LTP's location/origin
+        reference: str=None,  # reference for Geodetic location
+        location: Any=None,  # location of LTP in Geodetic, GRANDCS, or ECEF
+        orientation: str=None,  # orientation of LTP. 'NWU', 'ENU' etc
+        magnetic: bool=False,  # shift orientation by magnetic declination?
+        magmodel: str="IGRF13",  # if shift, which magnetic model to use?
+        declination: Union[float, np.ndarray]=None,  # or simply provide the magnetic declination
+        obstime: Union[str, datetime]="2020-01-01",  # calculate declination of what date?
+        frame: Any=None,
         rotation=None,
     ):
 
@@ -1222,15 +1227,15 @@ class GRANDCS(LTP):
 
     def __init__(
         self,
-        arg: Any = None,
-        x: Union[float, int, np.ndarray] = None,
-        y: Union[float, int, np.ndarray] = None,
-        z: Union[float, int, np.ndarray] = None,
-        latitude: Union[float, int, np.ndarray] = None,  # latitude of LTP's location/origin
-        longitude: Union[float, int, np.ndarray] = None,  # longitude of LTP's location/origin
-        height: Union[float, int, np.ndarray] = None,  # height of LTP's location/origin
-        location: Any = grandcs_origin,
-        obstime: Union[str, datetime] = "2020-01-01",
+        arg: Any=None,
+        x: Union[float, int, np.ndarray]=None,
+        y: Union[float, int, np.ndarray]=None,
+        z: Union[float, int, np.ndarray]=None,
+        latitude: Union[float, int, np.ndarray]=None,  # latitude of LTP's location/origin
+        longitude: Union[float, int, np.ndarray]=None,  # longitude of LTP's location/origin
+        height: Union[float, int, np.ndarray]=None,  # height of LTP's location/origin
+        location: Any=grandcs_origin,
+        obstime: Union[str, datetime]="2020-01-01",
         rotation=None,
     ):
 

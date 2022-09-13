@@ -17,8 +17,6 @@ from grand.tools.coordinates import (
 
 from grand.io import io_node as io  # , ECEF, LTP
 
-# __all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError", "Voltage"]
-
 
 logger = getLogger(__name__)
 
@@ -124,14 +122,16 @@ class Antenna:
         # compute Efield direction in spherical coordinate in antenna frame
         direction_cart = CartesianRepresentation(direction)
         direction_sphr = SphericalRepresentation(direction_cart)
-        theta_Efield, phi_efield = direction_sphr.theta, direction_sphr.phi
+        theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
+        logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
+        #logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)
         # table store antenna response
         table = self.model.table
         # delta theta in degree
         dtheta = table.theta[1] - table.theta[0]
-        # theta_Efield between index it0 and it1 in theta antenna response representation
-        rt1 = (theta_Efield - table.theta[0]) / dtheta
+        # theta_efield between index it0 and it1 in theta antenna response representation
+        rt1 = (theta_efield - table.theta[0]) / dtheta
         # prevent > 360 deg or >180 deg ?
         it0 = int(np.floor(rt1) % table.theta.size)
         it1 = it0 + 1
@@ -166,7 +166,7 @@ class Antenna:
         # fmt: off
         lt = ltr*np.exp( 1j*lta )
         lp = lpr*np.exp( 1j*lpa )
-        t_rad, p_rad = np.deg2rad(theta_Efield), np.deg2rad(phi_efield)
+        t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         ct, st = np.cos(t_rad), np.sin(t_rad)
         cp, sp = np.cos(p_rad), np.sin(p_rad)
         lx = lt*ct*cp - sp*lp
@@ -177,8 +177,14 @@ class Antenna:
         # it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame
         # TODO: there might be an easier way to do this.
-        logger.debug(f"type lx: {type(lx)}")
+        logger.debug(f"type lx: {type(lx)} lt: {type(lt)}, {lx}")
+        logger.debug("jmc avant")
+        self.lx = lx.copy()
+        self.ly = ly.copy()
+        self.lz = lz.copy()
         self.leff_frame_ant = CartesianRepresentation(x=lx, y=ly, z=lz)
+        logger.debug("jmc fin")
+        logger.debug(f"{self.leff_frame_ant.x}")
         # vector wrt ECEF frame. Antenna --> ECEF
         Leff = np.matmul(self.frame.basis.T, self.leff_frame_ant.copy())
         # vector wrt shower frame. ECEF --> Shower
@@ -188,6 +194,110 @@ class Antenna:
         self.dft_effv_len = Leff
         logger.debug(Leff.x.shape)
         return CartesianRepresentation(x=Leff.x, y=Leff.y, z=Leff.z)
+
+
+    def effective_length_cor(
+        self,
+        xmax: LTP,
+        Efield: ElectricField,
+        frame: Union[LTP, GRANDCS],
+    ) -> CartesianRepresentation:
+
+        def fftfreq(n, t):
+            dt = t[1] - t[0]
+            return np.fft.fftfreq(n, dt)
+
+        def interp(v):
+            # fmt: off
+            fp =  rp0*rt0*v[:, ip0, it0] \
+                + rp1*rt0*v[:, ip1, it0] \
+                + rp0*rt1*v[:, ip0, it1] \
+                + rp1*rt1*v[:, ip1, it1]
+            # fmt: on
+            return np.interp(x, xp, fp, left=0, right=0)
+
+        # 'frame' is shower frame. 'self.frame' is antenna frame.
+        if isinstance(xmax, LTP):
+            # shower frame --> antenna frame
+            direction = xmax.ltp_to_ltp(self.frame)
+        else:
+            raise TypeError("Provide Xmax in LTP frame instead of %s" % type(xmax))
+        # compute Efield direction in spherical coordinate in antenna frame
+        direction_cart = CartesianRepresentation(direction)
+        direction_sphr = SphericalRepresentation(direction_cart)
+        theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
+        logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
+        #logger.debug(f"{theta_efield.r}")
+        # Interpolate using a tri-linear interpolation in (f, phi, theta)
+        # table store antenna response
+        table = self.model.table
+        # delta theta in degree
+        dtheta = table.theta[1] - table.theta[0]
+        # theta_efield between index it0 and it1 in theta antenna response representation
+        rt1 = (theta_efield - table.theta[0]) / dtheta
+        # prevent > 360 deg or >180 deg ?
+        it0 = int(np.floor(rt1) % table.theta.size)
+        it1 = it0 + 1
+        if it1 == table.theta.size:  # Prevent overflow
+            it1, rt1 = it0, 0
+        else:
+            rt1 -= np.floor(rt1)
+        rt0 = 1 - rt1
+        # phi_Efield between index ip0 and ip1 in phi antenna response representation
+        dphi = table.phi[1] - table.phi[0]  # deg
+        rp1 = (phi_efield - table.phi[0]) / dphi
+        ip0 = int(np.floor(rp1) % table.phi.size)
+        ip1 = ip0 + 1
+        if ip1 == table.phi.size:  # Results are periodic along phi
+            ip1 = 0
+        rp1 -= np.floor(rp1)
+        rp0 = 1 - rp1
+        # fft
+        E = Efield.E
+        logger.debug(E.x.shape)
+        Ex = np.fft.rfft(E.x)
+        # frequency [Hz]
+        x = fftfreq(Ex.size, Efield.t)
+        logger.debug(x.shape)
+        # frequency [Hz]
+        xp = table.frequency
+        ltr = interp(table.leff_theta)  # LWP. m
+        lta = interp(np.deg2rad(table.phase_theta))  # LWP. rad
+        lpr = interp(table.leff_phi)  # LWP. m
+        lpa = interp(np.deg2rad(table.phase_phi))  # LWP. rad
+        # Pack the result as a Cartesian vector with complex values
+        # fmt: off
+        lt = ltr*np.exp( 1j*lta )
+        lp = lpr*np.exp( 1j*lpa )
+        t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
+        ct, st = np.cos(t_rad), np.sin(t_rad)
+        cp, sp = np.cos(p_rad), np.sin(p_rad)
+        lx = lt*ct*cp - sp*lp
+        ly = lt*ct*sp + cp*lp
+        lz = -st*lt
+        # fmt: on
+        # Treating Leff as a vector (no change in magnitude) and transforming
+        # it to the shower frame from antenna frame.
+        # antenna frame --> ECEF frame --> shower frame
+        # TODO: there might be an easier way to do this.
+        logger.debug(f"type lx: {type(lx)} lt: {type(lt)}, {lx}")
+        logger.debug("jmc avant")
+        self.lx = lx.copy()
+        self.ly = ly.copy()
+        self.lz = lz.copy()
+        self.leff_frame_ant = CartesianRepresentation(x=lx, y=ly, z=lz)
+        logger.debug("jmc fin")
+        logger.debug(f"{self.leff_frame_ant.x}")
+        # vector wrt ECEF frame. Antenna --> ECEF
+        a_leff_frame_ant =  np.array([self.lx,  self.ly , self.lz ])
+        Leff = np.matmul(self.frame.basis.T, a_leff_frame_ant)
+        # vector wrt shower frame. ECEF --> Shower
+        Leff = np.matmul(frame.basis, Leff)
+        logger.debug(f"type Leff: {type(Leff)}")
+        # store effective length
+        self.dft_effv_len = Leff
+        logger.debug(Leff.shape)
+        return Leff
 
     def compute_voltage(
         self,
@@ -215,10 +325,49 @@ class Antenna:
         Ez = rfft(E.z)
 
         # Here we have to do an ugly patch for Leff values to be correct
+        
         # fmt: off
         V = irfft( Ex*(Leff.x - Leff.x[0]) 
                  + Ey*(Leff.y - Leff.y[0])
                  + Ez*(Leff.z - Leff.z[0]))
+        # fmt: on
+
+        t = Efield.t
+        t = t[: V.size]
+
+        return Voltage(t=t, V=V)
+
+    def compute_voltage_cor(
+        self,
+        xmax: LTP,
+        Efield: ElectricField,
+        frame: Union[LTP, GRANDCS, None] = None,
+    ) -> Voltage:
+
+        logger.debug("call compute_voltage()")
+        # frame is shower frame. self.frame is antenna frame.
+        if (self.frame is None) or (frame is None):
+            raise MissingFrameError("missing antenna or shower frame")
+
+        # Compute the voltage. input Leff and field are in shower frame.
+        def rfft(q):
+            return np.fft.rfft(q)
+
+        def irfft(q):
+            return np.fft.irfft(q)
+
+        Leff = self.effective_length_cor(xmax, Efield, frame)
+        E = Efield.E  # E is CartesianRepresentation
+        Ex = rfft(E.x)
+        Ey = rfft(E.y)
+        Ez = rfft(E.z)
+
+        # Here we have to do an ugly patch for Leff values to be correct
+        
+        # fmt: off
+        V = irfft( Ex*(Leff[0] - Leff[0,0]) 
+                 + Ey*(Leff[1] - Leff[1,0])
+                 + Ez*(Leff[2] - Leff[2,0]))
         # fmt: on
 
         t = Efield.t
