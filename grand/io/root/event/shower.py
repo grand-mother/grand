@@ -9,7 +9,7 @@ from .mother_event import MotherEventTree
 @dataclass
 ## The class for storing shower data common for each event
 class ShowerEventTree(MotherEventTree):
-    """The class for storing shower data common for each event"""
+    """The class for storing reconstructed shower data common for each event"""
 
     _tree_name: str = "teventshower"
 

@@ -371,7 +371,7 @@ class EfieldRunSimdataTree(MotherRunTree):
             self._refractivity_model_parameters.clear()
             self._refractivity_model_parameters += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("double")):
             self._refractivity_model_parameters._vector = value
         else:
             exit(
