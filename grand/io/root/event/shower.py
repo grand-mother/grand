@@ -349,7 +349,6 @@ class ShowerEventSimdataTree(MotherEventTree):
     @prim_energy.setter
     def prim_energy(self, value):
         # A list of strings was given
-        print(type(value))
         if isinstance(value, list):
             # Clear the vector before setting
             self._prim_energy.clear()
@@ -388,7 +387,6 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @prim_type.setter
     def prim_type(self, value):
-        print(type(value))
         # A list of strings was given
         if isinstance(value, list):
             # Clear the vector before setting
@@ -398,7 +396,7 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, cppyy.gbl.std.vector("string")):
             self._prim_type._vector = value
         else:
-            exit(
+            raise(
                 f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required."
             )
 
