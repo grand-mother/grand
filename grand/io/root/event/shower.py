@@ -1,33 +1,59 @@
-'''
+"""
 
-'''
+"""
 
 from grand.io.root.base import *
 from .mother_event import MotherEventTree
-    
 
 
 @dataclass
 ## The class for storing shower data common for each event
 class ShowerEventTree(MotherEventTree):
     """The class for storing shower data common for each event"""
+
     _tree_name: str = "teventshower"
 
-    _shower_type: StdString = StdString("")  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
-    _shower_energy: np.ndarray = np.zeros(1, np.float32)  # shower energy (GeV)  Check unit conventions.
-    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)  # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_zenith: np.ndarray = np.zeros(1, np.float32)  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_core_pos: np.ndarray = np.zeros(4, np.float32)  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
+    _shower_type: StdString = StdString(
+        ""
+    )  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
+    _shower_energy: np.ndarray = np.zeros(
+        1, np.float32
+    )  # shower energy (GeV)  Check unit conventions.
+    _shower_azimuth: np.ndarray = np.zeros(
+        1, np.float32
+    )  # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
+    _shower_zenith: np.ndarray = np.zeros(
+        1, np.float32
+    )  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
+    _shower_core_pos: np.ndarray = np.zeros(
+        4, np.float32
+    )  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
     _atmos_model: StdString = StdString("")  # Atmospheric model name TODO:standarize
-    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _magnetic_field: np.ndarray = np.zeros(3, np.float32)  # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _date: StdString = StdString("")  # Event Date and time. TODO:standarize (date format, time format)
+    _atmos_model_param: np.ndarray = np.zeros(
+        3, np.float32
+    )  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
+    _magnetic_field: np.ndarray = np.zeros(
+        3, np.float32
+    )  # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
+    _date: StdString = StdString(
+        ""
+    )  # Event Date and time. TODO:standarize (date format, time format)
     _ground_alt: np.ndarray = np.zeros(1, np.float32)  # Ground Altitude (m)
-    _xmax_grams: np.ndarray = np.zeros(1, np.float32)  # shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)  # shower Xmax position in shower coordinates
-    _xmax_alt: np.ndarray = np.zeros(1, np.float64)  # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _gh_fit_param: np.ndarray = np.zeros(3, np.float32)  # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
-    _core_time: np.ndarray = np.zeros(1, np.float64)  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
+    _xmax_grams: np.ndarray = np.zeros(
+        1, np.float32
+    )  # shower Xmax depth  (g/cm2 along the shower axis)
+    _xmax_pos_shc: np.ndarray = np.zeros(
+        3, np.float64
+    )  # shower Xmax position in shower coordinates
+    _xmax_alt: np.ndarray = np.zeros(
+        1, np.float64
+    )  # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
+    _gh_fit_param: np.ndarray = np.zeros(
+        3, np.float32
+    )  # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
+    _core_time: np.ndarray = np.zeros(
+        1, np.float64
+    )  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
 
     def __post_init__(self):
         super().__post_init__()
@@ -48,7 +74,9 @@ class ShowerEventTree(MotherEventTree):
     def shower_type(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._shower_type.string.assign(value)
 
@@ -98,7 +126,9 @@ class ShowerEventTree(MotherEventTree):
     def atmos_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._atmos_model.string.assign(value)
 
@@ -131,7 +161,9 @@ class ShowerEventTree(MotherEventTree):
     def date(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._date.string.assign(value)
 
@@ -192,11 +224,11 @@ class ShowerEventTree(MotherEventTree):
         self._core_time[0] = value
 
 
-
 @dataclass
 ## The class for storing a shower simulation-only data for each event
 class ShowerEventSimdataTree(MotherEventTree):
     """The class for storing a shower simulation-only data for each event"""
+
     _tree_name: str = "teventshowersimdata"
 
     ## Event name
@@ -241,9 +273,15 @@ class ShowerEventSimdataTree(MotherEventTree):
     _xmax_distance: np.ndarray = np.zeros(1, np.float64)
     ## Altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
     _xmax_alt: np.ndarray = np.zeros(1, np.float64)
-    _hadronic_model: StdString = StdString("")  # high energy hadronic model (and version) used TODO: standarize
-    _low_energy_model: StdString = StdString("")  # high energy model (and version) used TODO: standarize
-    _cpu_time: np.ndarray = np.zeros(1, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    _hadronic_model: StdString = StdString(
+        ""
+    )  # high energy hadronic model (and version) used TODO: standarize
+    _low_energy_model: StdString = StdString(
+        ""
+    )  # high energy model (and version) used TODO: standarize
+    _cpu_time: np.ndarray = np.zeros(
+        1, np.float32
+    )  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
 
     def __post_init__(self):
         super().__post_init__()
@@ -264,7 +302,9 @@ class ShowerEventSimdataTree(MotherEventTree):
     def event_name(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._event_name.string.assign(value)
 
@@ -277,7 +317,9 @@ class ShowerEventSimdataTree(MotherEventTree):
     def date(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._date.string.assign(value)
 
@@ -315,7 +357,9 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._prim_energy._vector = value
         else:
-            exit(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required."
+            )
 
     @property
     def shower_azimuth(self):
@@ -351,7 +395,9 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<string>")):
             self._prim_type._vector = value
         else:
-            exit(f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required.")
+            exit(
+                f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required."
+            )
 
     @property
     def prim_injpoint_shc(self):
@@ -379,8 +425,9 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._prim_inj_alt_shc._vector = value
         else:
-            exit(f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
-
+            exit(
+                f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def prim_inj_dir_shc(self):
@@ -401,7 +448,9 @@ class ShowerEventSimdataTree(MotherEventTree):
     def atmos_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._atmos_model.string.assign(value)
 
@@ -471,7 +520,9 @@ class ShowerEventSimdataTree(MotherEventTree):
     def hadronic_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._hadronic_model.string.assign(value)
 
@@ -484,7 +535,9 @@ class ShowerEventSimdataTree(MotherEventTree):
     def low_energy_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._low_energy_model.string.assign(value)
 
@@ -498,10 +551,12 @@ class ShowerEventSimdataTree(MotherEventTree):
         self._cpu_time = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("cpu_time", self._cpu_time)
 
+
 @dataclass
 ## The class for storing shower data for each event specific to ZHAireS only
 class ShowerEventZHAireSTree(MotherEventTree):
     """The class for storing shower data for each event specific to ZHAireS only"""
+
     _tree_name: str = "teventshowerzhaires"
 
     # ToDo: we need explanations of these parameters
@@ -534,7 +589,9 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def relative_thining(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._relative_thining.string.assign(value)
 
@@ -556,7 +613,9 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def gamma_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._gamma_energy_cut.string.assign(value)
 
@@ -569,7 +628,9 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def electron_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._electron_energy_cut.string.assign(value)
 
@@ -582,7 +643,9 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def muon_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._muon_energy_cut.string.assign(value)
 
@@ -595,7 +658,9 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def meson_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._meson_energy_cut.string.assign(value)
 
@@ -608,7 +673,9 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def nucleon_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._nucleon_energy_cut.string.assign(value)
 
@@ -621,8 +688,8 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def other_parameters(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._other_parameters.string.assign(value)
-
-

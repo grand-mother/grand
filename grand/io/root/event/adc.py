@@ -1,17 +1,16 @@
-'''
+"""
 
-'''
+"""
 
 from grand.io.root.base import *
 from .mother_event import MotherEventTree
 
-    
-    
 
 @dataclass
 ## The class for storing ADC traces and associated values for each event
 class ADCEventTree(MotherEventTree):
     """The class for storing ADC traces and associated values for each event"""
+
     _tree_name: str = "teventadc"
 
     ## Common for the whole event
@@ -31,7 +30,6 @@ class ADCEventTree(MotherEventTree):
     _event_version: np.ndarray = np.zeros(1, np.uint32)
     ## Number of detector units in the event - basically the antennas count
     _du_count: np.ndarray = np.zeros(1, np.uint32)
-
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
@@ -111,23 +109,41 @@ class ADCEventTree(MotherEventTree):
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
     _digi_ctrl: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties0: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties0: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties1: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties1: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties2: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties2: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties3: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties3: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings0: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings0: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings1: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings1: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings2: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings2: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings3: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings3: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
     ## ?? What is it? Some kind of the adc trace offset?
     _ioff: StdVectorList("unsigned short") = StdVectorList("unsigned short")
     # _start_time: StdVectorList("double") = StdVectorList("double")
@@ -148,7 +164,7 @@ class ADCEventTree(MotherEventTree):
     def __post_init__(self):
         super().__post_init__()
 
-        if self._tree.GetName()=="":
+        if self._tree.GetName() == "":
             self._tree.SetName(self._tree_name)
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
@@ -243,7 +259,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._event_id._vector = value
         else:
-            exit(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def du_id(self):
@@ -261,7 +279,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._du_id._vector = value
         else:
-            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def du_seconds(self):
@@ -279,7 +299,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_seconds._vector = value
         else:
-            exit(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            exit(
+                f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
+            )
 
     @property
     def du_nanoseconds(self):
@@ -297,7 +319,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_nanoseconds._vector = value
         else:
-            exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            exit(
+                f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
+            )
 
     @property
     def trigger_position(self):
@@ -315,7 +339,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_position._vector = value
         else:
-            exit(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def trigger_flag(self):
@@ -333,7 +359,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_flag._vector = value
         else:
-            exit(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def atm_temperature(self):
@@ -351,7 +379,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._atm_temperature._vector = value
         else:
-            exit(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def atm_pressure(self):
@@ -369,7 +399,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._atm_pressure._vector = value
         else:
-            exit(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def atm_humidity(self):
@@ -387,7 +419,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._atm_humidity._vector = value
         else:
-            exit(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def acceleration_x(self):
@@ -405,7 +439,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._acceleration_x._vector = value
         else:
-            exit(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def acceleration_y(self):
@@ -423,7 +459,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._acceleration_y._vector = value
         else:
-            exit(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def acceleration_z(self):
@@ -441,7 +479,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._acceleration_z._vector = value
         else:
-            exit(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def battery_level(self):
@@ -459,7 +499,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._battery_level._vector = value
         else:
-            exit(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def firmware_version(self):
@@ -477,8 +519,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._firmware_version._vector = value
         else:
-            exit(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
-
+            exit(
+                f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_sampling_frequency(self):
@@ -496,7 +539,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_sampling_frequency._vector = value
         else:
-            exit(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_sampling_resolution(self):
@@ -514,7 +559,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_sampling_resolution._vector = value
         else:
-            exit(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_input_channels(self):
@@ -532,7 +579,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_input_channels._vector = value
         else:
-            exit(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_enabled_channels(self):
@@ -550,7 +599,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_enabled_channels._vector = value
         else:
-            exit(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_samples_count_total(self):
@@ -568,7 +619,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_total._vector = value
         else:
-            exit(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_samples_count_channel0(self):
@@ -586,7 +639,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel0._vector = value
         else:
-            exit(f"Incorrect type for adc_samples_count_channel0 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_samples_count_channel0 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_samples_count_channel1(self):
@@ -604,7 +659,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel1._vector = value
         else:
-            exit(f"Incorrect type for adc_samples_count_channel1 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_samples_count_channel1 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_samples_count_channel2(self):
@@ -622,7 +679,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel2._vector = value
         else:
-            exit(f"Incorrect type for adc_samples_count_channel2 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_samples_count_channel2 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def adc_samples_count_channel3(self):
@@ -640,7 +699,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel3._vector = value
         else:
-            exit(f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def trigger_pattern(self):
@@ -658,7 +719,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_pattern._vector = value
         else:
-            exit(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def trigger_rate(self):
@@ -676,7 +739,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_rate._vector = value
         else:
-            exit(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def clock_tick(self):
@@ -694,7 +759,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._clock_tick._vector = value
         else:
-            exit(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def clock_ticks_per_second(self):
@@ -712,7 +779,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._clock_ticks_per_second._vector = value
         else:
-            exit(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_offset(self):
@@ -730,7 +799,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_offset._vector = value
         else:
-            exit(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def gps_leap_second(self):
@@ -748,7 +819,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_leap_second._vector = value
         else:
-            exit(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_status(self):
@@ -766,7 +839,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_status._vector = value
         else:
-            exit(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_alarms(self):
@@ -784,7 +859,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_alarms._vector = value
         else:
-            exit(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_warnings(self):
@@ -802,7 +879,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_warnings._vector = value
         else:
-            exit(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_time(self):
@@ -820,7 +899,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._gps_time._vector = value
         else:
-            exit(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            exit(
+                f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
+            )
 
     @property
     def gps_long(self):
@@ -838,7 +919,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_long._vector = value
         else:
-            exit(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_lat(self):
@@ -856,7 +939,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_lat._vector = value
         else:
-            exit(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_alt(self):
@@ -874,7 +959,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_alt._vector = value
         else:
-            exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_temp(self):
@@ -892,7 +979,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_temp._vector = value
         else:
-            exit(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def digi_ctrl(self):
@@ -910,7 +999,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_ctrl._vector = value
         else:
-            exit(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def digi_prepost_trig_windows(self):
@@ -928,7 +1019,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_prepost_trig_windows._vector = value
         else:
-            exit(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_properties0(self):
@@ -946,7 +1039,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties0._vector = value
         else:
-            exit(f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_properties1(self):
@@ -964,7 +1059,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties1._vector = value
         else:
-            exit(f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_properties2(self):
@@ -982,7 +1079,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties2._vector = value
         else:
-            exit(f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_properties3(self):
@@ -1000,7 +1099,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties3._vector = value
         else:
-            exit(f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_trig_settings0(self):
@@ -1018,7 +1119,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings0._vector = value
         else:
-            exit(f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_trig_settings1(self):
@@ -1036,7 +1139,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings1._vector = value
         else:
-            exit(f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_trig_settings2(self):
@@ -1054,7 +1159,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings2._vector = value
         else:
-            exit(f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def channel_trig_settings3(self):
@@ -1072,7 +1179,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings3._vector = value
         else:
-            exit(f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def ioff(self):
@@ -1090,7 +1199,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._ioff._vector._vector = value
         else:
-            exit(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def trace_0(self):
@@ -1109,7 +1220,9 @@ class ADCEventTree(MotherEventTree):
             # With vectors, I think the address is assigned, so in principle the below is needed only on the first setting of the branch
             self._trace_0._vector = value
         else:
-            exit(f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+            exit(
+                f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+            )
 
     @property
     def trace_1(self):
@@ -1127,7 +1240,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<short>")):
             self._trace_1._vector = value
         else:
-            exit(f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
+            exit(
+                f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+            )
 
     @property
     def trace_2(self):
@@ -1145,7 +1260,9 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<short>")):
             self._trace_2._vector = value
         else:
-            exit(f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+            exit(
+                f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+            )
 
     @property
     def trace_3(self):
@@ -1163,4 +1280,6 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<short>")):
             self._trace_3._vector = value
         else:
-            exit(f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+            exit(
+                f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+            )

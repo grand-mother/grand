@@ -1,4 +1,3 @@
-
 from grand.io.root.base import *
 
 
@@ -6,6 +5,7 @@ from grand.io.root.base import *
 @dataclass
 class MotherRunTree(DataTree):
     """A mother class for classes with Run values"""
+
     _run_number: np.ndarray = np.zeros(1, np.uint32)
 
     @property
@@ -21,7 +21,9 @@ class MotherRunTree(DataTree):
         """Adds the current variable values as a new event to the tree"""
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
-            raise NotUniqueEvent(f"A run with run_number={self.run_number} already exists in the TTree.")
+            raise NotUniqueEvent(
+                f"A run with run_number={self.run_number} already exists in the TTree."
+            )
 
         # Fill the tree
         self._tree.Fill()
@@ -56,7 +58,7 @@ class MotherRunTree(DataTree):
         # Try to get the run from the tree
         res = self._tree.GetEntryWithIndex(run_no)
         # If no such entry, return
-        if res==0 or res==-1:
+        if res == 0 or res == -1:
             print(f"No run with run number {run_no}. Please provide a proper number.")
             return 0
 
@@ -85,10 +87,12 @@ class MotherRunTree(DataTree):
 
         return True
 
+
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass
 class RunTree(MotherRunTree):
     """A class wrapping around a TTree holding values common for the whole run"""
+
     _tree_name: str = "trun"
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
@@ -183,7 +187,9 @@ class RunTree(MotherRunTree):
     def data_source(self, value) -> None:
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._data_source.string.assign(value)
 
@@ -196,7 +202,9 @@ class RunTree(MotherRunTree):
     def data_generator(self, value) -> None:
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._data_generator.string.assign(value)
 
@@ -209,7 +217,9 @@ class RunTree(MotherRunTree):
     def data_generator_version(self, value) -> None:
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._data_generator_version.string.assign(value)
 
@@ -222,10 +232,11 @@ class RunTree(MotherRunTree):
     def site(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._site.string.assign(value)
-
 
     @property
     def site_long(self):
@@ -262,6 +273,7 @@ class RunTree(MotherRunTree):
 ## The class for storing voltage simulation-only data common for a whole run
 class VoltageRunSimdataTree(MotherRunTree):
     """The class for storing voltage simulation-only data common for a whole run"""
+
     _tree_name: str = "trunvoltagesimdata"
 
     _signal_sim: StdString = StdString("")  # name and model of the signal simulator
@@ -285,16 +297,18 @@ class VoltageRunSimdataTree(MotherRunTree):
     def signal_sim(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._signal_sim.string.assign(value)
-
 
 
 @dataclass
 ## The class for storing Efield simulation-only data common for a whole run
 class EfieldRunSimdataTree(MotherRunTree):
     """The class for storing Efield simulation-only data common for a whole run"""
+
     _tree_name: str = "trunefieldsimdata"
 
     ## Name and model of the electric field simulator
@@ -338,7 +352,9 @@ class EfieldRunSimdataTree(MotherRunTree):
     def refractivity_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._refractivity_model.string.assign(value)
 
@@ -358,7 +374,9 @@ class EfieldRunSimdataTree(MotherRunTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._refractivity_model_parameters._vector = value
         else:
-            exit(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def t_pre(self):
@@ -388,14 +406,16 @@ class EfieldRunSimdataTree(MotherRunTree):
         self._t_bin_size[0] = value
 
 
-
 @dataclass
 ## The class for storing shower simulation-only data common for a whole run
 class ShowerRunSimdataTree(MotherRunTree):
     """The class for storing shower simulation-only data common for a whole run"""
+
     _tree_name: str = "trunsimdata"
 
-    _shower_sim: StdString = StdString("") # simulation program (and version) used to simulate the shower
+    _shower_sim: StdString = StdString(
+        ""
+    )  # simulation program (and version) used to simulate the shower
     _rel_thin: np.ndarray = np.zeros(1, np.float32)  # relative thinning energy
     _weight_factor: np.ndarray = np.zeros(1, np.float32)  # weight factor
     _lowe_cut_e: np.ndarray = np.zeros(1, np.float32)  # low energy cut for electrons(GeV)
@@ -423,7 +443,9 @@ class ShowerRunSimdataTree(MotherRunTree):
     def shower_sim(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._shower_sim.string.assign(value)
 
@@ -489,4 +511,3 @@ class ShowerRunSimdataTree(MotherRunTree):
     @lowe_cut_nucleon.setter
     def lowe_cut_nucleon(self, value):
         self._lowe_cut_nucleon[0] = value
-

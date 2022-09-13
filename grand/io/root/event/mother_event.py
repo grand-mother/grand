@@ -1,6 +1,6 @@
-'''
+"""
 
-'''
+"""
 
 from grand.io.root.base import *
 
@@ -8,6 +8,7 @@ from grand.io.root.base import *
 @dataclass
 class MotherEventTree(DataTree):
     """A mother class for classes with Event values"""
+
     _run_number: np.ndarray = np.zeros(1, np.uint32)
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     _event_number: np.ndarray = np.zeros(1, np.uint32)
@@ -34,14 +35,15 @@ class MotherEventTree(DataTree):
         """Adds the current variable values as a new event to the tree"""
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
-            raise NotUniqueEvent(f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree {self._tree.GetName()}.")
+            raise NotUniqueEvent(
+                f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree {self._tree.GetName()}."
+            )
 
         # Fill the tree
         self._tree.Fill()
 
         # Add the current run_number and event_number to the entry_list
         self._entry_list.append((self.run_number, self.event_number))
-
 
     def add_proper_friends(self):
         """Add proper friends to this tree"""
@@ -52,12 +54,15 @@ class MotherEventTree(DataTree):
         loc_vars = dict(locals())
         run_trees = []
         for inst in grand_tree_list:
-            if type(inst) is RunTree: run_trees.append(inst)
+            if type(inst) is RunTree:
+                run_trees.append(inst)
         # If any Run tree was found
-        if len(run_trees)>0:
+        if len(run_trees) > 0:
             # Warning if there is more than 1 RunTree in memory
             if len(run_trees) > 1:
-                print(f"More than 1 RunTree detected in memory. Adding the last one {run_trees[-1]} as a friend")
+                print(
+                    f"More than 1 RunTree detected in memory. Adding the last one {run_trees[-1]} as a friend"
+                )
             # Add the last one RunTree as a friend
             run_tree = run_trees[-1]
 
@@ -69,12 +74,15 @@ class MotherEventTree(DataTree):
             # Add the ADC tree as a friend if exists already
             adc_trees = []
             for inst in grand_tree_list:
-                if type(inst) is ADCEventTree: adc_trees.append(inst)
+                if type(inst) is ADCEventTree:
+                    adc_trees.append(inst)
             # If any ADC tree was found
-            if len(adc_trees)>0:
+            if len(adc_trees) > 0:
                 # Warning if there is more than 1 ADCEventTree in memory
                 if len(adc_trees) > 1:
-                    print(f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend")
+                    print(
+                        f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend"
+                    )
                 # Add the last one ADCEventTree as a friend
                 adc_tree = adc_trees[-1]
 
@@ -86,12 +94,15 @@ class MotherEventTree(DataTree):
             # Add the Voltage tree as a friend if exists already
             voltage_trees = []
             for inst in grand_tree_list:
-                if type(inst) is VoltageEventTree: voltage_trees.append(inst)
+                if type(inst) is VoltageEventTree:
+                    voltage_trees.append(inst)
             # If any ADC tree was found
             if len(voltage_trees) > 0:
                 # Warning if there is more than 1 VoltageEventTree in memory
                 if len(voltage_trees) > 1:
-                    print(f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend")
+                    print(
+                        f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend"
+                    )
                 # Add the last one VoltageEventTree as a friend
                 voltage_tree = voltage_trees[-1]
 
@@ -103,12 +114,15 @@ class MotherEventTree(DataTree):
             # Add the Efield tree as a friend if exists already
             efield_trees = []
             for inst in grand_tree_list:
-                if type(inst) is EfieldEventTree: efield_trees.append(inst)
+                if type(inst) is EfieldEventTree:
+                    efield_trees.append(inst)
             # If any ADC tree was found
             if len(efield_trees) > 0:
                 # Warning if there is more than 1 EfieldEventTree in memory
                 if len(efield_trees) > 1:
-                    print(f"More than 1 EfieldEventTree detected in memory. Adding the last one {efield_trees[-1]} as a friend")
+                    print(
+                        f"More than 1 EfieldEventTree detected in memory. Adding the last one {efield_trees[-1]} as a friend"
+                    )
                 # Add the last one EfieldEventTree as a friend
                 efield_tree = efield_trees[-1]
 
@@ -120,18 +134,20 @@ class MotherEventTree(DataTree):
             # Add the Shower tree as a friend if exists already
             shower_trees = []
             for inst in grand_tree_list:
-                if type(inst) is ShowerEventTree: shower_trees.append(inst)
+                if type(inst) is ShowerEventTree:
+                    shower_trees.append(inst)
             # If any ADC tree was found
             if len(shower_trees) > 0:
                 # Warning if there is more than 1 ShowerEventTree in memory
                 if len(shower_trees) > 1:
-                    print(f"More than 1 ShowerEventTree detected in memory. Adding the last one {shower_trees[-1]} as a friend")
+                    print(
+                        f"More than 1 ShowerEventTree detected in memory. Adding the last one {shower_trees[-1]} as a friend"
+                    )
                 # Add the last one ShowerEventTree as a friend
                 shower_tree = shower_trees[-1]
 
                 # Add the Shower TTree as a friend
                 self.add_friend(shower_tree.tree)
-
 
     ## List events in the tree together with runs
     def print_list_of_events(self):
@@ -158,8 +174,10 @@ class MotherEventTree(DataTree):
         # Try to get the requested entry
         res = self._tree.GetEntryWithIndex(run_no, ev_no)
         # If no such entry, return
-        if res==0 or res==-1:
-            print(f"No event with event number {ev_no} and run number {run_no} in the tree. Please provide proper numbers.")
+        if res == 0 or res == -1:
+            print(
+                f"No event with event number {ev_no} and run number {run_no} in the tree. Please provide proper numbers."
+            )
             return 0
 
         self.assign_branches()
@@ -180,7 +198,7 @@ class MotherEventTree(DataTree):
         if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
             v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count))
             v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count))
-            self._entry_list = [(int(el[0]),int(el[1])) for el in zip(v1, v2)]
+            self._entry_list = [(int(el[0]), int(el[1])) for el in zip(v1, v2)]
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
@@ -190,7 +208,3 @@ class MotherEventTree(DataTree):
             return False
 
         return True
-    
-    
-
-

@@ -22,7 +22,6 @@ units:
 
 """
 
-
 from __future__ import annotations
 from typing import Optional, Tuple, Union, Any
 from datetime import datetime
@@ -114,11 +113,11 @@ def _cartesian_to_spherical(
     z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform Cartesian coordinates to spherical"""
-    rho2 = x**2 + y**2
+    rho2 = x ** 2 + y ** 2
     rho = np.sqrt(rho2)
     theta = np.rad2deg(np.arctan2(rho, z))
     phi = np.rad2deg(np.arctan2(y, x))
-    r = np.sqrt(rho2 + z**2)
+    r = np.sqrt(rho2 + z ** 2)
 
     return theta, phi, r
 
@@ -252,6 +251,7 @@ class CartesianRepresentation(Coordinates):
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
         # replace x-coordinates with input x. x can be int, float, or ndarray.
+        # logger.debug("coucou in")
         obj[0] = x
         # replace y-coordinates with input y. y can be int, float, or ndarray.
         obj[1] = y
@@ -358,7 +358,10 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def theta(self):
-        return self[0]
+        logger.debug(f"{type(self)} {type(self[0])}")
+        # TODO: self[0] and self have same type !!!!!
+        # use float(self[0]) instead self[0] ?
+        return float(self[0])
 
     @theta.setter
     def theta(self, v):
@@ -366,7 +369,7 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def phi(self):
-        return self[1]
+        return float(self[1])
 
     @phi.setter
     def phi(self, v):
@@ -861,6 +864,7 @@ grandcs_origin = Geodetic(
     height=grd_origin_height,
     reference="GEOID",
 )
+
 
 # RK: Merged into Horizontal. Delete this class.
 class HorizontalVector(HorizontalRepresentation):

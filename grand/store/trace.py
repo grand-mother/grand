@@ -1,11 +1,11 @@
-'''
+"""
 prototype to store trace from io.root with numpy array
-'''
+"""
 
 import grand.io.root.event.efield as ioree
 import numpy as np
 
-'''
+"""
     debut gerb : 
     sE=ior.EfieldEventTree('Coarse1.root')
     sE.get_list_of_events()
@@ -15,25 +15,33 @@ import numpy as np
     sE.pos_x position detecteur
     sE.du_nanoseconds date event
     sE.trace_x efield sur x
-    '''
+    """
 
-    
+
 class TraceTableDC1(object):
-    '''
+    """
     use one structured numpy array ~ astropy Table
-    '''
-    
+    """
+
     def __init__(self):
-        '''
+        """
         Constructor
-        '''
+        """
         self.unit_trace = ""
-        self.dtype_table = np.dtype([('id_det', 'i4'), ('tps', 'f8'), ('x', 'f4', (999,)), ('y', 'f4', (999,)), ('z', 'f4', (999,))])
+        self.dtype_table = np.dtype(
+            [
+                ("id_det", "i4"),
+                ("tps", "f8"),
+                ("x", "f4", (999,)),
+                ("y", "f4", (999,)),
+                ("z", "f4", (999,)),
+            ]
+        )
         # table of trace of event
         self.t_trace = None
         self.nb_events = -1
         # number detector in event
-        self.nb_det = -1 
+        self.nb_det = -1
         self.idx_event = -1
 
     def read_efield_event(self, f_name):
@@ -45,8 +53,8 @@ class TraceTableDC1(object):
         if len(self.l_events) == 0:
             raise
         self.idx_event = -1
-        return self.next_event()        
-    
+        return self.next_event()
+
     def next_event(self):
         self.idx_event += 1
         if self.idx_event >= self.nb_events:
@@ -60,23 +68,23 @@ class TraceTableDC1(object):
         print(self.ttree_evt.du_id)
         print(self.ttree_evt.trace_x)
         print(len(self.ttree_evt.trace_x))
-        self.t_trace['id_det'] = self.ttree_evt.du_id
-        self.t_trace['tps'] = self.ttree_evt.du_nanoseconds
-        self.t_trace['x'] = self.ttree_evt.trace_x
-        self.t_trace['y'] = self.ttree_evt.trace_y
-        self.t_trace['z'] = self.ttree_evt.trace_z
+        self.t_trace["id_det"] = self.ttree_evt.du_id
+        self.t_trace["tps"] = self.ttree_evt.du_nanoseconds
+        self.t_trace["x"] = self.ttree_evt.trace_x
+        self.t_trace["y"] = self.ttree_evt.trace_y
+        self.t_trace["z"] = self.ttree_evt.trace_z
         return True
 
 
 class TraceArrayDC1(object):
-    '''
+    """
     use sevral numpy array to store trace and id du , time
-    '''    
+    """
 
     def __init__(self):
-        '''
+        """
         Constructor
-        '''
+        """
         self.unit_trace = ""
         # table of trace of event
         self.a_du = None
@@ -84,7 +92,7 @@ class TraceArrayDC1(object):
         self.a3_trace = None
         self.nb_events = -1
         # number detector in event
-        self.nb_det = -1 
+        self.nb_det = -1
         self.idx_event = -1
 
     def read_efield_event(self, f_name):
@@ -96,8 +104,8 @@ class TraceArrayDC1(object):
         if len(self.l_events) == 0:
             raise
         self.idx_event = -1
-        return self.next_event()      
-    
+        return self.next_event()
+
     def next_event(self):
         self.idx_event += 1
         if self.idx_event >= self.nb_events:
@@ -109,15 +117,14 @@ class TraceArrayDC1(object):
         self.a3_trace = np.empty((self.nb_det, 3, self.trace_size), dtype=np.float32)
         self.t_du = np.array(self.ttree_evt.du_id, dtype=np.int16)
         self.t_tps = np.array(self.ttree_evt.du_nanoseconds, dtype=np.float32)
-        self.a3_trace[:, 0,:] = np.array(self.ttree_evt.trace_x, dtype=np.float32)
-        self.a3_trace[:, 1,:] = np.array(self.ttree_evt.trace_y, dtype=np.float32)
-        self.a3_trace[:, 2,:] = np.array(self.ttree_evt.trace_z, dtype=np.float32)
+        self.a3_trace[:, 0, :] = np.array(self.ttree_evt.trace_x, dtype=np.float32)
+        self.a3_trace[:, 1, :] = np.array(self.ttree_evt.trace_y, dtype=np.float32)
+        self.a3_trace[:, 2, :] = np.array(self.ttree_evt.trace_z, dtype=np.float32)
         return True
-    
+
     def find_max_traces(self):
-        '''
+        """
         find absolute maximal vale in trace for each detector
         :param self:
-        '''
+        """
         return np.max(np.abs(self.a3_trace), axis=(1, 2))
-

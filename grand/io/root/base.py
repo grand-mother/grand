@@ -6,21 +6,25 @@ This is the interface for accessing GRAND ROOT TTrees that do not require the us
 import ROOT
 import numpy as np
 import sys
+
 # This import changes in Python 3.10
-if sys.version_info.major>=3 and sys.version_info.minor<10:
+if sys.version_info.major >= 3 and sys.version_info.minor < 10:
     from collections import MutableSequence
 else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
-#from typing import List, Union
+
+# from typing import List, Union
 
 ## A list of generated Trees
 grand_tree_list = []
 """Internal list of generated Trees"""
 
+
 class StdVectorList(MutableSequence):
     """A python list interface to ROOT's std::vector"""
-    #vec_type = ""
+
+    # vec_type = ""
 
     def __init__(self, vec_type, value=[]):
         """
@@ -74,8 +78,10 @@ class StdVectorList(MutableSequence):
 
         return str(list(self._vector))
 
-class StdString():
+
+class StdString:
     """A python string interface to ROOT's std::string"""
+
     def __init__(self, value):
         self.string = ROOT.string(value)
 
@@ -91,10 +97,11 @@ class DataTree:
     """
     Mother class for GRAND Tree data classes
     """
+
     # File handle
     _file: ROOT.TFile = None
     # File name
-    _file_name: str = None #: hjehe
+    _file_name: str = None  #: hjehe
     # Tree object
     _tree: ROOT.TTree = None
     # Tree name
@@ -127,7 +134,7 @@ class DataTree:
         if self._file is not None:
             self._set_file(self._file)
         # or init _file from a name string
-        elif self._file_name is not None and self._file_name!="":
+        elif self._file_name is not None and self._file_name != "":
             self._set_file(self._file_name)
 
         # Init tree from the name string
@@ -148,7 +155,7 @@ class DataTree:
             self._file_name = f
             # print(self._file_name)
             # If the file with that filename is already opened, use it (do not reopen)
-            if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)):
+            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
             # If not opened, open
             else:
@@ -169,8 +176,10 @@ class DataTree:
             if self._file is not None:
                 self._tree = self._file.Get(self._tree_name)
                 # There was no such tree in the file, so create one
-                if self._tree==None:
-                    print(f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one.")
+                if self._tree == None:
+                    print(
+                        f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
+                    )
                     self._create_tree()
             else:
                 print(f"creating tree {self._tree_name} {self._file}")
@@ -181,7 +190,8 @@ class DataTree:
 
     ## Create the tree
     def _create_tree(self, tree_name=""):
-        if tree_name!="": self._tree_name = tree_name
+        if tree_name != "":
+            self._tree_name = tree_name
         self._tree = ROOT.TTree(self._tree_name, self._tree_name)
 
     def fill(self):
@@ -196,9 +206,9 @@ class DataTree:
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
         creating_file = False
-        if len(args)>0 and ".root" in args[0][-5:]:
+        if len(args) > 0 and ".root" in args[0][-5:]:
             self._file_name = args[0]
-            if (f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)):
+            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
             # Overwrite requested
             # ToDo: this does not really seem to work now
@@ -217,7 +227,7 @@ class DataTree:
         # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
 
         # If the writing options are not explicitly specified, add kWriteDelete option, that deletes the old cycle after writing the new cycle in the TFile
-        if len(args)<2:
+        if len(args) < 2:
             args = ["", ROOT.TObject.kWriteDelete]
         self._tree.Write(*args)
 
@@ -285,13 +295,21 @@ class DataTree:
 
         # If branches already exist, set their address instead of creating, if requested
         set_branches = False
-        if set_if_exists and len(self._tree.GetListOfBranches())>0:
+        if set_if_exists and len(self._tree.GetListOfBranches()) > 0:
             set_branches = True
 
         # Loop through the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_file_name" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
+            if (
+                field == "_tree"
+                or field == "_file"
+                or field == "_file_name"
+                or field == "_tree_name"
+                or field == "_cur_du_id"
+                or field == "_entry_list"
+            ):
+                continue
             # Create a branch for the field
             # print(self.__dataclass_fields__[field])
             self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
@@ -335,7 +353,9 @@ class DataTree:
 
             # Create the branch
             if not set_branches:
-                self._tree.Branch(value.name[1:], getattr(self, value.name), value.name[1:] + val_type)
+                self._tree.Branch(
+                    value.name[1:], getattr(self, value.name), value.name[1:] + val_type
+                )
             # Or set its address
             else:
                 self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name))
@@ -350,7 +370,7 @@ class DataTree:
                 self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
-        elif id(value.type)==id(StdString):
+        elif id(value.type) == id(StdString):
             # Create the branch
             if not set_branches:
                 self._tree.Branch(value.name[1:], getattr(self, value.name).string)
@@ -367,7 +387,15 @@ class DataTree:
         # Assign the TTree branches to the class fields
         for field in self.__dataclass_fields__:
             # Skip "tree" and "file" fields, as they are not the part of the stored data
-            if field == "_tree" or field == "_file" or field == "_file_name" or field == "_tree_name" or field == "_cur_du_id" or field == "_entry_list": continue
+            if (
+                field == "_tree"
+                or field == "_file"
+                or field == "_file_name"
+                or field == "_tree_name"
+                or field == "_cur_du_id"
+                or field == "_entry_list"
+            ):
+                continue
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
             u = getattr(self._tree, field[1:])
@@ -379,8 +407,10 @@ class DataTree:
     def get_entry_with_index(self, run_no=0, evt_no=0):
         """Get the event with run_no and evt_no"""
         res = self._tree.GetEntryWithIndex(run_no, evt_no)
-        if res==0 or res==-1:
-            print(f"No event with event number {evt_no} and run number {run_no} in the tree. Please provide proper numbers.")
+        if res == 0 or res == -1:
+            print(
+                f"No event with event number {evt_no} and run number {run_no} in the tree. Please provide proper numbers."
+            )
             return 0
 
         self.assign_branches()
@@ -392,12 +422,11 @@ class DataTree:
         return self._tree.Print()
 
 
-
-
 ## A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle
 @dataclass
 class DetectorInfo(DataTree):
     """A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle"""
+
     _tree_name: str = "tdetectorinfo"
 
     ## Detector Unit id
@@ -418,7 +447,7 @@ class DetectorInfo(DataTree):
     def __post_init__(self):
         super().__post_init__()
 
-        if self._tree.GetName()=="":
+        if self._tree.GetName() == "":
             self._tree.SetName(self._tree_name)
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
@@ -500,7 +529,9 @@ class DetectorInfo(DataTree):
     def type(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._type.string.assign(value)
 
@@ -513,11 +544,15 @@ class DetectorInfo(DataTree):
     def description(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            exit(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
+            exit(
+                f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
         self._description.string.assign(value)
+
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
     """Exception raised when an already existing event/run is added to a tree"""
+
     pass

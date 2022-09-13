@@ -101,7 +101,7 @@ class ZhairesShower(ShowerEvent):
             @note:
                 Xmax is given as CartesianRepresentation defined in the shower frame.
                 Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
-                "Previously: Dirty hack by OMH for now" -> not necessary now. RK.            
+                "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
             """
             _, _, *xyz = string.split()
             x, y, z = map(float, xyz)

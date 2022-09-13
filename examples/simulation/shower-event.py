@@ -21,7 +21,6 @@ logger.info(mlg.string_begin_script())
 
 # Load the radio shower simulation data
 showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
-#showerdir = "/home/jcolley/projet/grand_wk/binder/xdu/Stshp_MZS_QGS204JET_Proton_3.98_79.6_90.0_9"
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:
@@ -95,16 +94,12 @@ for antenna_index, field in shower.fields.items():
     # of observation and the electric field components are provided in the
     # shower frame. This is indicated by the `frame` named argument.
     Exyz = field.electric.E
-
     logger.info(mlg.chrono_start())
     # Xmax, Efield, and input frame are all in shower frame.
     logger.debug("compute_voltage")
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
-
     logger.info(mlg.chrono_string_duration())
-
     logger.info(f"\nVpp= {max(field.voltage.V) - min(field.voltage.V)}")
-
     plt.figure()
     plt.subplot(211)
     plt.title("example/simulation/shower-event.py")

@@ -7,7 +7,7 @@ from datetime import datetime
 from grand.io.root_trees import *
 
 # Check if a filename was provided on the command line
-if len(sys.argv)==2 and sys.argv[1][-5:]==".root":
+if len(sys.argv) == 2 and sys.argv[1][-5:] == ".root":
     filename = sys.argv[1]
 else:
     filename = "stored_data.root"
@@ -17,15 +17,28 @@ event_count = 10
 adc_traces = []
 traces = []
 for ev in range(event_count):
-    trace_count = np.random.randint(3,7)
+    trace_count = np.random.randint(3, 7)
     adc_traces.append([])
     traces.append([])
     for i in range(trace_count):
         # The trace length
-        l = np.random.randint(900,1000)
+        l = np.random.randint(900, 1000)
         # X,Y,Z needed for each trace
-        adc_traces[-1].append((np.random.randint(-20,21, l).astype(np.int16), np.random.randint(-20,21, l).astype(np.int16), np.random.randint(-20,21, l).astype(np.int16),np.random.randint(-20,21, l).astype(np.int16)))
-        traces[-1].append(((adc_traces[-1][i][0]*0.9/8192).astype(np.float32), (adc_traces[-1][i][1]*0.9/8192).astype(np.float32), (adc_traces[-1][i][2]*0.9/8192).astype(np.float32)))
+        adc_traces[-1].append(
+            (
+                np.random.randint(-20, 21, l).astype(np.int16),
+                np.random.randint(-20, 21, l).astype(np.int16),
+                np.random.randint(-20, 21, l).astype(np.int16),
+                np.random.randint(-20, 21, l).astype(np.int16),
+            )
+        )
+        traces[-1].append(
+            (
+                (adc_traces[-1][i][0] * 0.9 / 8192).astype(np.float32),
+                (adc_traces[-1][i][1] * 0.9 / 8192).astype(np.float32),
+                (adc_traces[-1][i][2] * 0.9 / 8192).astype(np.float32),
+            )
+        )
 
 # ********** Generarte Run Tree ****************
 # It needs to be first, so that the Event trees can find it. However, it need some informations from them, so will be filled at the end
@@ -74,26 +87,26 @@ for ev in range(event_count):
     trace_1 = []
     trace_2 = []
     trace_3 = []
-    for i,trace in enumerate(adc_traces[ev]):
+    for i, trace in enumerate(adc_traces[ev]):
         # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
         du_id.append(i)
         du_seconds.append(tadccounts.time_seconds)
         du_nanoseconds.append(tadccounts.time_nanoseconds)
-        trigger_position.append(i//2)
+        trigger_position.append(i // 2)
         trigger_flag.append(tadccounts.event_type)
-        atm_temperature.append(20+ev//2)
-        atm_pressure.append(1024+ev//2)
-        atm_humidity.append(50+ev//2)
-        acceleration_x.append(ev//2)
-        acceleration_y.append(ev//3)
-        acceleration_z.append(ev//4)
+        atm_temperature.append(20 + ev // 2)
+        atm_pressure.append(1024 + ev // 2)
+        atm_humidity.append(50 + ev // 2)
+        acceleration_x.append(ev // 2)
+        acceleration_y.append(ev // 3)
+        acceleration_z.append(ev // 4)
 
-        trace_0.append(trace[0]+1)
-        trace_1.append(trace[1]+2)
-        trace_2.append(trace[2]+3)
-        trace_3.append(trace[3]+4)
+        trace_0.append(trace[0] + 1)
+        trace_1.append(trace[1] + 2)
+        trace_2.append(trace[2] + 3)
+        trace_3.append(trace[3] + 4)
 
     tadccounts.du_id = du_id
     tadccounts.du_seconds = du_seconds
@@ -122,7 +135,7 @@ print("Wrote tadccounts")
 # Voltage has the same data as ADC counts tree, but recalculated to "real" (usually float) values
 
 # Recalculate ADC counts to voltage, just with a dummy conversion now: 0.9 V is equal to 8192 counts for XiHu data
-adc2v = 0.9/8192
+adc2v = 0.9 / 8192
 
 # Create the ADC counts tree
 tvoltage = VoltageEventTree()
@@ -157,21 +170,21 @@ for ev in range(event_count):
     trace_x = []
     trace_y = []
     trace_z = []
-    for i,trace in enumerate(traces[ev]):
+    for i, trace in enumerate(traces[ev]):
         # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
         du_id.append(i)
         du_seconds.append(tvoltage.time_seconds)
         du_nanoseconds.append(tvoltage.time_nanoseconds)
-        trigger_position.append(i//2)
+        trigger_position.append(i // 2)
         trigger_flag.append(tvoltage.event_type)
-        atm_temperature.append(20+ev/2)
-        atm_pressure.append(1024+ev/2)
-        atm_humidity.append(50+ev/2)
-        acceleration_x.append(ev/2)
-        acceleration_y.append(ev/3)
-        acceleration_z.append(ev/4)
+        atm_temperature.append(20 + ev / 2)
+        atm_pressure.append(1024 + ev / 2)
+        atm_humidity.append(50 + ev / 2)
+        acceleration_x.append(ev / 2)
+        acceleration_y.append(ev / 3)
+        acceleration_z.append(ev / 4)
 
         trace_x.append(trace[0])
         trace_y.append(trace[1])
@@ -211,7 +224,7 @@ v2ef = 1.17
 tefield = EfieldEventTree()
 
 # fill the tree with every second of generated events - dumb selection
-for ev in range(0,event_count,2):
+for ev in range(0, event_count, 2):
     tefield.run_number = 0
     tefield.event_number = ev
     # First data unit in the event
@@ -244,25 +257,25 @@ for ev in range(0,event_count,2):
     fft_phase_ys = []
     fft_phase_zs = []
 
-    for i,trace in enumerate(traces[ev]):
+    for i, trace in enumerate(traces[ev]):
         # print(ev,i, len(trace[0]))
 
         # Dumb values just for filling
         du_id.append(i)
         du_seconds.append(tefield.time_seconds)
         du_nanoseconds.append(tefield.time_nanoseconds)
-        trigger_position.append(i//2)
+        trigger_position.append(i // 2)
         trigger_flag.append(tefield.event_type)
-        atm_temperature.append(20+ev/2)
-        atm_pressure.append(1024+ev/2)
-        atm_humidity.append(50+ev/2)
+        atm_temperature.append(20 + ev / 2)
+        atm_pressure.append(1024 + ev / 2)
+        atm_humidity.append(50 + ev / 2)
 
         # To multiply a list by a number elementwise, convert to a numpy array and back
         # Here a real ComputeEfield() function should be called instead of multiplying adc2v
         # ToDo: better read the Voltage trace from the TTree
-        trace_xs.append((np.array(trace[0])*v2ef).astype(np.float32).tolist())
-        trace_ys.append((np.array(trace[1])*v2ef).astype(np.float32).tolist())
-        trace_zs.append((np.array(trace[2])*v2ef).astype(np.float32).tolist())
+        trace_xs.append((np.array(trace[0]) * v2ef).astype(np.float32).tolist())
+        trace_ys.append((np.array(trace[1]) * v2ef).astype(np.float32).tolist())
+        trace_zs.append((np.array(trace[2]) * v2ef).astype(np.float32).tolist())
 
         # FFTS
         fft = fftpack.fft(trace[0])
@@ -314,20 +327,20 @@ for i in range(tefield.get_entries()):
     tshower.event_number = tefield.event_number
 
     tshower.shower_type = "particle"
-    tshower.shower_energy = np.random.random(1)*1e8
-    tshower.shower_azimuth = np.random.random(1)*360
-    tshower.shower_zenith = np.random.random(1)*180-90
+    tshower.shower_energy = np.random.random(1) * 1e8
+    tshower.shower_azimuth = np.random.random(1) * 360
+    tshower.shower_zenith = np.random.random(1) * 180 - 90
     tshower.shower_core_pos = np.random.random(3)
     tshower.atmos_model = "dense air dummy"
     tshower.atmos_model_param = np.random.random(3)
     tshower.magnetic_field = np.random.random(3)
     tshower.date = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-    tshower.ground_alt = 3000. + np.random.randint(0,1000)
+    tshower.ground_alt = 3000.0 + np.random.randint(0, 1000)
     tshower.xmax_grams = np.random.random(1) * 500
     tshower.xmax_pos_shc = np.random.random(3)
-    tshower.xmax_alt = np.random.randint(3000,5000)*1.
+    tshower.xmax_alt = np.random.randint(3000, 5000) * 1.0
     tshower.gh_fit_param = np.random.random(3)
-    tshower.core_time = np.random.randint(0, 10000)*1.
+    tshower.core_time = np.random.randint(0, 10000) * 1.0
 
     tshower.fill()
 

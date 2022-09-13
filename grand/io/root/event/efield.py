@@ -1,6 +1,6 @@
-'''
+"""
 
-'''
+"""
 
 from grand.io.root.base import *
 from .mother_event import MotherEventTree
@@ -10,6 +10,7 @@ from .mother_event import MotherEventTree
 ## The class for storing Efield traces and associated values for each event
 class EfieldEventTree(MotherEventTree):
     """The class for storing Efield traces and associated values for each event"""
+
     _tree_name: str = "teventefield"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -30,7 +31,6 @@ class EfieldEventTree(MotherEventTree):
     _event_type: np.ndarray = np.zeros(1, np.uint32)
     ## Number of detector units in the event - basically the antennas count
     _du_count: np.ndarray = np.zeros(1, np.uint32)
-
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
@@ -70,7 +70,9 @@ class EfieldEventTree(MotherEventTree):
     ## Z position in site's referential
     _pos_z: StdVectorList("float") = StdVectorList("float")
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList(
+        "vector<unsigned short>"
+    )
 
     ## Efield trace in X direction
     _trace_x: StdVectorList("vector<float>") = StdVectorList("vector<float>")
@@ -94,7 +96,7 @@ class EfieldEventTree(MotherEventTree):
     def __post_init__(self):
         super().__post_init__()
 
-        if self._tree.GetName()=="":
+        if self._tree.GetName() == "":
             self._tree.SetName(self._tree_name)
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
@@ -153,7 +155,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._du_id._vector = value
         else:
-            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def du_seconds(self):
@@ -171,7 +175,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_seconds._vector = value
         else:
-            exit(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            exit(
+                f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
+            )
 
     @property
     def du_nanoseconds(self):
@@ -189,7 +195,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_nanoseconds._vector = value
         else:
-            exit(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            exit(
+                f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
+            )
 
     # @property
     # def du_t0_seconds(self):
@@ -241,7 +249,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_position._vector = value
         else:
-            exit(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def trigger_flag(self):
@@ -259,7 +269,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_flag._vector = value
         else:
-            exit(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def atm_temperature(self):
@@ -277,7 +289,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_temperature._vector = value
         else:
-            exit(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def atm_pressure(self):
@@ -295,7 +309,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_pressure._vector = value
         else:
-            exit(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def atm_humidity(self):
@@ -313,7 +329,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_humidity._vector = value
         else:
-            exit(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def trigger_pattern(self):
@@ -331,7 +349,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_pattern._vector = value
         else:
-            exit(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def trigger_rate(self):
@@ -349,7 +369,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_rate._vector = value
         else:
-            exit(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            exit(
+                f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+            )
 
     @property
     def gps_long(self):
@@ -367,7 +389,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_long._vector = value
         else:
-            exit(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def gps_lat(self):
@@ -385,7 +409,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_lat._vector = value
         else:
-            exit(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def gps_alt(self):
@@ -403,7 +429,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_alt._vector = value
         else:
-            exit(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def pos_x(self):
@@ -421,7 +449,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_x._vector = value
         else:
-            exit(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def pos_y(self):
@@ -439,7 +469,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_y._vector = value
         else:
-            exit(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def pos_z(self):
@@ -457,7 +489,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_z._vector = value
         else:
-            exit(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            exit(
+                f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
 
     @property
     def digi_prepost_trig_windows(self):
@@ -475,7 +509,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_prepost_trig_windows._vector = value
         else:
-            exit(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            exit(
+                f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+            )
 
     @property
     def trace_x(self):
@@ -493,7 +529,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_x._vector = value
         else:
-            exit(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
+            exit(
+                f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+            )
 
     @property
     def trace_y(self):
@@ -511,7 +549,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_y._vector = value
         else:
-            exit(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def trace_z(self):
@@ -529,7 +569,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_z._vector = value
         else:
-            exit(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def fft_mag_x(self):
@@ -547,7 +589,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_mag_x._vector = value
         else:
-            exit(f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def fft_mag_y(self):
@@ -565,7 +609,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_mag_y._vector = value
         else:
-            exit(f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def fft_mag_z(self):
@@ -583,7 +629,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_mag_z._vector = value
         else:
-            exit(f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def fft_phase_x(self):
@@ -601,7 +649,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_phase_x._vector = value
         else:
-            exit(f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def fft_phase_y(self):
@@ -619,7 +669,9 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_phase_y._vector = value
         else:
-            exit(f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def fft_phase_z(self):
@@ -637,14 +689,16 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_phase_z._vector = value
         else:
-            exit(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
+            exit(
+                f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
 
 @dataclass
 ## The class for storing Efield simulation-only data common for each event
 class EfieldEventSimdataTree(MotherEventTree):
     """The class for storing Efield simulation-only data common for each event"""
+
     _tree_name: str = "teventefieldsimdata"
 
     _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
@@ -658,7 +712,6 @@ class EfieldEventSimdataTree(MotherEventTree):
     # _e_det_time: StdVectorList("double") = StdVectorList("double")
     # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
     # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-
 
     def __post_init__(self):
         super().__post_init__()
@@ -686,7 +739,9 @@ class EfieldEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("int")):
             self._du_id._vector = value
         else:
-            exit(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def t_0(self):
@@ -704,7 +759,9 @@ class EfieldEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._t_0._vector = value
         else:
-            exit(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            exit(
+                f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )
 
     @property
     def p2p(self):
@@ -722,6 +779,6 @@ class EfieldEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._p2p._vector = value
         else:
-            exit(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
-
-
+            exit(
+                f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required."
+            )

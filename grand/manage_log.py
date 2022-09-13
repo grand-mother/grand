@@ -290,7 +290,7 @@ def _get_logger_path(pfile):
         # out package git
         # -3 for size of ".py"
         logger.debug("out package git")
-        if pfile[0] == l_sep:            
+        if pfile[0] == l_sep:
             g_str = pfile[1:-3].replace(l_sep, ".")
         else:
             g_str = pfile[0:-3].replace(l_sep, ".")
