@@ -19,6 +19,7 @@ from scipy import interpolate
 import matplotlib.pyplot as plt
 
 from grand import grand_add_path_data
+from grand.io.root_trees import VoltageEventTree
 from grand.num.signal import fftget, ifftget
 from grand.simu.elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
@@ -26,6 +27,7 @@ from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
 from grand import grand_add_path_data, grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 import grand.manage_log as mlg
+from grand.io.root_trees import *
 
 # showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
 # ShowerEvent.load(showerdir)
@@ -320,6 +322,10 @@ def main_xdu_rf(rootdir):
             os.makedirs(outfile_vlna, exist_ok=True)
             os.makedirs(outfile_vcable, exist_ok=True)
             os.makedirs(outfile_vfilter, exist_ok=True)
+
+            tvoltage = VoltageEventTree() #Create tvoltage to be saved
+            path_root_vfilter = outfile_vfilter + "/" + "a.root"
+
         # ==== Write particle type, energy level, angle, and event number into parameter.txt========================
         case_index = (
             "primary is:"
@@ -380,8 +386,13 @@ def main_xdu_rf(rootdir):
             # =======================  cable  filter VGA balun=============================================
             [cable_coefficient, filter_coefficient] = filter_get(N, f0, 1, show_flag)
             # <= ?
+        # ===============================Set root file params========================================================================
+        if savetxt == 1:
+            tvoltage.du_count = len(target_trace)
+            tvoltage.run_number = case
+
         # ===============================Start loop calculation========================================================================
-        for num in range(len(target_trace)):            
+        for num in range(len(target_trace)):
             # air shower,input file
             E_path = os.path.join(file_dir, "a" + str(num) + ".trace")
             xunhuan = "a" + str(num) + ".trace"
@@ -500,10 +511,65 @@ def main_xdu_rf(rootdir):
                 V_output3[:, 1:] = V_filter_t[:,:]
                 np.savetxt(outfile_vfilter + "/"+ xunhuan, V_output3, fmt="%.10e", delimiter=" ")
 
+
+            # ======================output to root file=============================================
+
+
+
+                trace_t = list(V_output3[:, 0])
+                trace_x = list(V_output3[:, 1])
+                trace_y = list(V_output3[:, 2])
+                trace_z = list(V_output3[:, 3])
+                print("trace 0 " + str(trace_t[0]))
+                print("nano " + str(trace_t[1]-trace_t[0]))
+                tvoltage.du_seconds.append(0)
+                tvoltage.du_nanoseconds.append(int((trace_t[1]-trace_t[0])*10000))
+                tvoltage.du_id.append(num)
+
+                #tvoltage.run_number = case
+                #tvoltage.event_number = num
+                #tvoltage.first_du = num
+                #tvoltage.time_seconds = int(time.mktime(time.gmtime()))
+                # Event nanoseconds 0 for now
+                #tvoltage.time_nanoseconds = 0
+                #tvoltage.du_count = num
+                #tvoltage.event_type = 0x8000
+                tvoltage.trace_x.append(trace_x)
+                tvoltage.trace_y.append(trace_y)
+                tvoltage.trace_z.append(trace_z)
+
+                # First data unit in the event
+                #tvoltage.first_du = 0
+                # As the event time add the current time
+                #tvoltage.time_seconds = int(time.mktime(time.gmtime()))
+                # Event nanoseconds 0 for now
+                #tvoltage.time_nanoseconds = 0
+                # Triggered event
+                #tvoltage.event_type = 0x8000
+                # The number of antennas in the event
+                #tvoltage.du_count = len(traces[ev])
+                #tvoltage.du_id = du_id
+                #tvoltage.du_seconds = du_seconds
+                #tvoltage.du_nanoseconds = du_nanoseconds
+                #tvoltage.trigger_position = trigger_position
+                #tvoltage.trigger_flag = trigger_flag
+                #tvoltage.atm_temperature = atm_temperature
+                #tvoltage.atm_pressure = atm_pressure
+                #tvoltage.atm_humidity = atm_humidity
+                #tvoltage.acceleration_x = acceleration_x
+                #tvoltage.acceleration_y = acceleration_y
+                #tvoltage.acceleration_z = acceleration_z
+
+
+
             # ======================delete target_trace=============================================
         
         del target_trace
         plt.show()
+
+    tvoltage.fill()
+    tvoltage.write(path_root_vfilter)
+    print("Wrote tvoltage in " + path_root_vfilter)
     logger.info(mlg.string_end_script())
 
 def test_get_antenna():
