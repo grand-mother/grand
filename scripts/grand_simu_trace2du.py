@@ -386,7 +386,7 @@ def main_xdu_rf(rootdir):
             # =======================  cable  filter VGA balun=============================================
             [cable_coefficient, filter_coefficient] = filter_get(N, f0, 1, show_flag)
             # <= ?
-        # ===============================Set root file params========================================================================
+        # ===============================Set global VoltageEvent params========================================================================
         if savetxt == 1:
             tvoltage.du_count = len(target_trace)
             tvoltage.run_number = case
@@ -512,53 +512,19 @@ def main_xdu_rf(rootdir):
                 np.savetxt(outfile_vfilter + "/"+ xunhuan, V_output3, fmt="%.10e", delimiter=" ")
 
 
-            # ======================output to root file=============================================
-
-
-
+            # ======================output to VoltageEvent root file=============================================
                 trace_t = list(V_output3[:, 0])
                 trace_x = list(V_output3[:, 1])
                 trace_y = list(V_output3[:, 2])
                 trace_z = list(V_output3[:, 3])
-                print("trace 0 " + str(trace_t[0]))
-                print("nano " + str(trace_t[1]-trace_t[0]))
-                tvoltage.du_seconds.append(0)
-                tvoltage.du_nanoseconds.append(int((trace_t[1]-trace_t[0])*10000))
+
+                tvoltage.du_seconds.append(int(trace_t[0]*0)) #du_seconds is unsigned int (we have negative values)
+                tvoltage.du_nanoseconds.append(int((trace_t[1]-trace_t[0])*10)) #du_nanoseconds is unsigned int (we have 0.5)
                 tvoltage.du_id.append(num)
 
-                #tvoltage.run_number = case
-                #tvoltage.event_number = num
-                #tvoltage.first_du = num
-                #tvoltage.time_seconds = int(time.mktime(time.gmtime()))
-                # Event nanoseconds 0 for now
-                #tvoltage.time_nanoseconds = 0
-                #tvoltage.du_count = num
-                #tvoltage.event_type = 0x8000
                 tvoltage.trace_x.append(trace_x)
                 tvoltage.trace_y.append(trace_y)
                 tvoltage.trace_z.append(trace_z)
-
-                # First data unit in the event
-                #tvoltage.first_du = 0
-                # As the event time add the current time
-                #tvoltage.time_seconds = int(time.mktime(time.gmtime()))
-                # Event nanoseconds 0 for now
-                #tvoltage.time_nanoseconds = 0
-                # Triggered event
-                #tvoltage.event_type = 0x8000
-                # The number of antennas in the event
-                #tvoltage.du_count = len(traces[ev])
-                #tvoltage.du_id = du_id
-                #tvoltage.du_seconds = du_seconds
-                #tvoltage.du_nanoseconds = du_nanoseconds
-                #tvoltage.trigger_position = trigger_position
-                #tvoltage.trigger_flag = trigger_flag
-                #tvoltage.atm_temperature = atm_temperature
-                #tvoltage.atm_pressure = atm_pressure
-                #tvoltage.atm_humidity = atm_humidity
-                #tvoltage.acceleration_x = acceleration_x
-                #tvoltage.acceleration_y = acceleration_y
-                #tvoltage.acceleration_z = acceleration_z
 
 
 
@@ -566,10 +532,11 @@ def main_xdu_rf(rootdir):
         
         del target_trace
         plt.show()
-
-    tvoltage.fill()
-    tvoltage.write(path_root_vfilter)
-    print("Wrote tvoltage in " + path_root_vfilter)
+    # ======================Save root file======================
+    if savetxt == 1:
+        tvoltage.fill()
+        tvoltage.write(path_root_vfilter)
+        print("Wrote tvoltage in " + path_root_vfilter)
     logger.info(mlg.string_end_script())
 
 def test_get_antenna():
