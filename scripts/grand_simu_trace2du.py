@@ -536,7 +536,7 @@ def main_xdu_rf(rootdir):
     if savetxt == 1:
         tvoltage.fill()
         tvoltage.write(path_root_vfilter)
-        print("Wrote tvoltage in " + path_root_vfilter)
+        logger.info(f"Wrote tvoltage in: {path_root_vfilter}")
     logger.info(mlg.string_end_script())
 
 def test_get_antenna():
