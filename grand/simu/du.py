@@ -156,7 +156,7 @@ class SimuDetectorUnitEffect(object):
     def set_file_efield(self, f_root):
         # TODO: ????
         self.o_traces = TraceArrayDC1(f_root)
-        self.ttree_shower_def = 
+        self.ttree_shower_def = 1
         self._init_du_effect()
 
     def process_du_effect_all_events(self):
