@@ -13,6 +13,7 @@ import math
 import random
 import argparse
 
+import numpy
 import numpy as np
 from numpy.ma import log10, abs
 from scipy import interpolate
@@ -388,8 +389,24 @@ def main_xdu_rf(rootdir):
             # <= ?
         # ===============================Set global VoltageEvent params========================================================================
         if savetxt == 1:
-            tvoltage.du_count = len(target_trace)
+            tvoltage.du_count = nb_ant
             tvoltage.run_number = case
+        # ========================= Get first point and renormalisation of times =================================
+        mintime = 1E100
+        firstdet = 0
+        for num in range(nb_ant):
+            filename = os.path.join(file_dir, "a" + str(num) + ".trace")
+            t = np.loadtxt(filename, usecols=0)
+            tmin = t.min()
+            if tmin <= mintime:
+                mintime = tmin
+                firstdet = num
+        tvoltage.first_du = firstdet
+        tvoltage.time_seconds = 0
+        tvoltage.time_nanoseconds = 0
+        #tvoltage.time_seconds = numpy.uint32(int(mintime))
+        #print(tvoltage.time_seconds)
+
 
         # ===============================Start loop calculation========================================================================
         for num in range(len(target_trace)):
@@ -412,7 +429,6 @@ def main_xdu_rf(rootdir):
             [t_cut, ex_cut, ey_cut, ez_cut, fs, f0, f, f1, N] = time_data_get(
                 E_path, Ts, show_flag
             )  # Signal interception
-
             Edata = ex_cut
             Edata = np.column_stack((Edata, ey_cut))
             Edata = np.column_stack((Edata, ez_cut))
@@ -518,15 +534,18 @@ def main_xdu_rf(rootdir):
                 trace_y = list(V_output3[:, 2])
                 trace_z = list(V_output3[:, 3])
 
-                tvoltage.du_seconds.append(int(trace_t[0]*0)) #du_seconds is unsigned int (we have negative values)
-                tvoltage.du_nanoseconds.append(int((trace_t[1]-trace_t[0])*10)) #du_nanoseconds is unsigned int (we have 0.5)
+                # times in ns -> shifted to the first detection (as integer is needed we loose decimals !!!!)
+                tvoltage.du_nanoseconds.append(round(trace_t[0]-mintime))
+                tvoltage.du_seconds.append(0)
+                # sampling in Mhz
+                sampling_ns = trace_t[1] - trace_t[0]
+                sampling_mhz = int(1000/sampling_ns)
+                tvoltage.adc_sampling_frequency.append(sampling_mhz)
                 tvoltage.du_id.append(num)
 
                 tvoltage.trace_x.append(trace_x)
                 tvoltage.trace_y.append(trace_y)
                 tvoltage.trace_z.append(trace_z)
-
-
 
             # ======================delete target_trace=============================================
         
