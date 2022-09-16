@@ -2,7 +2,8 @@
 # An example of reading data from a file
 import numpy as np
 import sys
-from grand.io.root_trees import *
+from grand.io.root.event.efield import *
+from grand.io.root.event.adc import *
 
 if len(sys.argv) < 2:
     tadccounts = ADCEventTree("stored_data.root")

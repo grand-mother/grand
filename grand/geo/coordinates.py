@@ -251,7 +251,6 @@ class CartesianRepresentation(Coordinates):
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
         # replace x-coordinates with input x. x can be int, float, or ndarray.
-        # logger.debug("coucou in")
         obj[0] = x
         # replace y-coordinates with input y. y can be int, float, or ndarray.
         obj[1] = y
@@ -361,15 +360,17 @@ class SphericalRepresentation(Coordinates):
         logger.debug(f"{type(self)} {type(self[0])}")
         # TODO: self[0] and self have same type !!!!!
         # use float(self[0]) instead self[0] ?
-        return float(self[0])
-
+        #return float(self[0])
+        return self[0]
+       
     @theta.setter
     def theta(self, v):
         self[0] = v
 
     @property
     def phi(self):
-        return float(self[1])
+       #return float(self[1])
+        return self[1]
 
     @phi.setter
     def phi(self, v):

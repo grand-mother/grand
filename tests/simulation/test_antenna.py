@@ -9,7 +9,7 @@ import os.path as osp
 
 import numpy
 
-from grand import ECEF, CartesianRepresentation, LTP, Geodetic, GRAND_DATA_PATH
+from grand import ECEF, CartesianRepresentation, LTP, GRAND_DATA_PATH
 
 from grand.simu import Antenna, ElectricField, MissingFrameError,        \
                              TabulatedAntennaModel, Voltage
