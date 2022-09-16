@@ -1,6 +1,5 @@
 from .antenna import (
     Antenna,
-    AntennaModel,
     ElectricField,
     MissingFrameError,
     TabulatedAntennaModel,

@@ -78,11 +78,6 @@ class Voltage:
         node.write("V", self.V, dtype="f4")
 
 
-class AntennaModel:
-    # TODO: suspicious code no constructor , no test, dead code ?
-    def effective_length(self) -> CartesianRepresentation:
-        return CartesianRepresentation(0)
-
 
 class MissingFrameError(ValueError):
     pass

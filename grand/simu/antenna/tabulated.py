@@ -9,7 +9,6 @@ import os.path as osp
 
 import numpy
 
-from .generic import AntennaModel
 from grand.io import io_node as io
 
 __all__ = ["DataTable", "TabulatedAntennaModel"]
@@ -43,7 +42,7 @@ class DataTable:
 
 
 @dataclass
-class TabulatedAntennaModel(AntennaModel):
+class TabulatedAntennaModel(object):
     table: DataTable
     n_file: ... = "TBD"
 
