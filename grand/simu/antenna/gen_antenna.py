@@ -23,7 +23,7 @@ logger = getLogger(__name__)
 class ElectricField:
     a_time: np.ndarray
     e_xyz: CartesianRepresentation  # RK
-    par_r: Union[CartesianRepresentation, None] = None
+    pos_xyz: Union[CartesianRepresentation, None] = None
     frame: Union[LTP, GRANDCS, None] = None
 
     def __post_init__(self):
@@ -54,8 +54,8 @@ class ElectricField:
         node.write("t", self.a_time, dtype="f4")
         node.write("E", self.e_xyz, dtype="f4")
 
-        if self.par_r is not None:
-            node.write("r", self.par_r, dtype="f4")
+        if self.pos_xyz is not None:
+            node.write("r", self.pos_xyz, dtype="f4")
 
         if self.frame is not None:
             node.write("frame", self.frame)
@@ -85,11 +85,11 @@ class MissingFrameError(ValueError):
 
 @dataclass
 class Antenna:
-    model: Any  # if class is used, circular import error occurs.
+    model_leff: Any 
     frame: Union[LTP, GRANDCS]
 
     def __post_init__(self):
-        assert isinstance(self.model, TabulatedAntennaModel)
+        assert isinstance(self.model_leff, TabulatedAntennaModel)
 
     def effective_length(
         self,
@@ -97,13 +97,42 @@ class Antenna:
         Efield: ElectricField,
         frame: Union[LTP, GRANDCS],
     ) -> CartesianRepresentation:
+        '''
+        Interpolate effective length in Fourier space by double linear interpolation 
+        in direction of the Efield source at antenna position
+        
+        :param xmax:
+        :param Efield:
+        :param frame:
+        '''
         def fftfreq(size, a_time):
             delta = a_time[1] - a_time[0]
             logger.debug(f"dt_ns = {delta*1e9:.2f}")
             logger.debug(f"{size}")
             return np.fft.fftfreq(size, delta)
 
-        def interp(val):
+        def interp_sphere_freq(val):
+            ''' Linear interpolation (see np.interp() doc) on the frequency axis
+            Used to interpolate antenna response in Fourier space defined by modulus and argument 
+            for 2 axis theta and phi
+            => so used 4 times, val is 
+              * modulus phi
+              * argument phi
+              * modulus theta
+              * argument theta
+            
+            The function to be interpolated is itself interpolated by weighting 4 functions frame the direction 
+            to be interpolated.
+            Interpolation on a sphere => 2 dimension (theta, phi) so 4 positions/values to define interpolation
+            defined  by index:
+              * ip0, ip1 for phi axis
+              * it0, it1 for theta axis
+            weight used:
+              * rp0, rp1 for phi axis, with rp0 + rp1 = 1 [1]
+              * rt0, rt1 for theta axis, with rt0 + rt1 = 1 [2]
+            it's also a linear interpolation
+            '''
+            # we have: rp0*rt0 + rp1*rt0+ rp0*rt1 + rp1*rt1 = 1, with [1] and [2]
             # fmt: off
             val_ref =  rp0*rt0*val[:, ip0, it0] \
                      + rp1*rt0*val[:, ip1, it0] \
@@ -133,7 +162,7 @@ class Antenna:
         # logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)
         # table store antenna response
-        table = self.model.table
+        table = self.model_leff.table
         # delta theta in degree
         dtheta = table.theta[1] - table.theta[0]
         # theta_efield between index it0 and it1 in theta antenna response representation
@@ -164,10 +193,10 @@ class Antenna:
         freq_interp_hz = fftfreq(Ex.size, Efield.a_time)
         # frequency [Hz]
         freq_ref_hz = table.frequency
-        ltr = interp(table.leff_theta)  # LWP. m
-        lta = interp(np.deg2rad(table.phase_theta))  # LWP. rad
-        lpr = interp(table.leff_phi)  # LWP. m
-        lpa = interp(np.deg2rad(table.phase_phi))  # LWP. rad
+        ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
+        lta = interp_sphere_freq(np.deg2rad(table.phase_theta))  # LWP. rad
+        lpr = interp_sphere_freq(table.leff_phi)  # LWP. m
+        lpa = interp_sphere_freq(np.deg2rad(table.phase_phi))  # LWP. rad
         # Pack the result as a Cartesian vector with complex values
         # fmt: off
         lt = ltr*np.exp( 1j*lta )
