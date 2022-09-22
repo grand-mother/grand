@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 #I use this environment variable to let python know where to find it, but alternatively you just copy the AiresInfoFunctions.py file on the same dir you are using this.
 #ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
 #sys.path.append(ZHAIRESPYTHON)
-import grand.simu.shower.AiresInfoFunctionsGRANDROOT as AiresInfo
+import src_outlib.AiresInfoFunctionsGRANDROOT as AiresInfo
 from grand.io.root.run import RunTree
 from grand.io.root.event.shower import *
 from copy import deepcopy
