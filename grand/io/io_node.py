@@ -5,11 +5,6 @@ import os
 from typing import Any, Optional, Tuple, Union
 import logging
 
-# import astropy.units as u
-# from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, CartesianRepresentation
-# from astropy.coordinates.representation import REPRESENTATION_CLASSES
-# from astropy.time import Time
-
 import h5py
 from h5py import Dataset as _Dataset, File as _File, Group as _Group
 import numpy
