@@ -30,6 +30,8 @@ import enum
 import os
 from numbers import Number
 from logging import getLogger
+import warnings
+
 
 import numpy as np
 
@@ -42,6 +44,8 @@ from ..libs import turtle
 from . import DATADIR
 
 logger = getLogger(__name__)
+# add protection against casting complex to real
+warnings.filterwarnings(action="error", category=np.ComplexWarning)
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
 grd_origin_lat = 38.88849  # degree
@@ -258,6 +262,10 @@ class CartesianRepresentation(Coordinates):
         obj[2] = z
         return obj
 
+    def info(self):
+        ret = f"CartesianRepresentation: shape {self.shape}, min:{np.min(self)} max:{np.max(self)}"
+        return ret
+
     @property
     def x(self):
         return self[0]
@@ -360,16 +368,16 @@ class SphericalRepresentation(Coordinates):
         logger.debug(f"{type(self)} {type(self[0])}")
         # TODO: self[0] and self have same type !!!!!
         # use float(self[0]) instead self[0] ?
-        #return float(self[0])
+        # return float(self[0])
         return self[0]
-       
+
     @theta.setter
     def theta(self, v):
         self[0] = v
 
     @property
     def phi(self):
-       #return float(self[1])
+        # return float(self[1])
         return self[1]
 
     @phi.setter
