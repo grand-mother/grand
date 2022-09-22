@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
 
-import numpy
+import np as np
 
 from grand.simu.shower.pdg import ParticleCode
 from grand.simu import ElectricField, Voltage
@@ -77,13 +77,15 @@ class ShowerEvent:
     def load_root(self, d_shower):
         self.energy = d_shower.prim_energy
         self.zenith = d_shower.shower_zenith
-        self.zenith = 85
+        self.zenith = 0
         self.azimuth = d_shower.shower_azimuth
         self.azimuth = 0
         self.primary = d_shower.prim_type
         #TODO: DC1 find information in file ROOT
         self.localize(39.5, 90.5)
         xmax = d_shower.xmax_pos_shc
+        xmax= np.array([150750.  ,    0.,  15560.], dtype=np.float32)
+        logger.debug(xmax)
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 
     @classmethod
@@ -194,18 +196,18 @@ class ShowerEvent:
     def shower_frame(self):
         # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
         ev = self.core - self.maximum
-        ev /= numpy.linalg.norm(ev)
+        ev /= np.linalg.norm(ev)
         ev = ev.T[0]  # [[x], [y], [z]] --> [x, y, z]
-        evB = numpy.cross(ev, self.geomagnet.T[0])
-        evB /= numpy.linalg.norm(evB)
-        evvB = numpy.cross(ev, evB)
+        evB = np.cross(ev, self.geomagnet.T[0])
+        evB /= np.linalg.norm(evB)
+        evvB = np.cross(ev, evB)
 
         # change these unit vector from 'NWU' LTP frame to ECEF frame.
         # RK TODO: Going back to ECEF frame is a common process for vectors.
         #          Develop a function to do this.
-        ev = numpy.matmul(self.frame.basis.T, ev)
-        evB = numpy.matmul(self.frame.basis.T, evB)
-        evvB = numpy.matmul(self.frame.basis.T, evvB)
-        self.frame.basis = numpy.vstack((evB, evvB, ev))
+        ev = np.matmul(self.frame.basis.T, ev)
+        evB = np.matmul(self.frame.basis.T, evB)
+        evvB = np.matmul(self.frame.basis.T, evvB)
+        self.frame.basis = np.vstack((evB, evvB, ev))
 
         return self.frame
