@@ -46,7 +46,7 @@ class ShowerTest(TestCase):
         self.assertEqual(a.voltage, None)
         self.assertEqual(b.voltage, None)
         a, b = a.electric, b.electric
-        self.assertCartesian(a.par_r, b.par_r, 4)
+        self.assertCartesian(a.pos_xyz, b.pos_xyz, 4)
         self.assertQuantity(a.a_time, b.a_time, 7)
         self.assertCartesian(a.e_xyz, b.e_xyz, 5)
 

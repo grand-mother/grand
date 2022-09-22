@@ -69,7 +69,7 @@ for antenna_index, field in shower.fields.items():
     #
     # The antenna is placed within the shower frame. It is oriented along the
     # local magnetic North by using an ENU/LTP frame (x: East, y: North, z: Upward)
-    antpos_wrt_shower = field.electric.par_r
+    antpos_wrt_shower = field.electric.pos_xyz
     # RK: if antenna location was saved in LTP frame in zhaires.py, next step would not required.
     antenna_location = LTP(
         x=antpos_wrt_shower.x,
@@ -84,7 +84,7 @@ for antenna_index, field in shower.fields.items():
         magnetic=True,
         obstime=shower.frame.obstime,
     )
-    antenna = Antenna(model=antenna_model, frame=antenna_frame)
+    antenna = Antenna(model_leff=antenna_model, frame=antenna_frame)
 
     logger.info(f"{antenna_index} Antenna pos in shower frame {antpos_wrt_shower.flatten()}")
     logger.info(

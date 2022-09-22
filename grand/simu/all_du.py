@@ -85,11 +85,11 @@ class SimuDetectorUnitEffect(object):
         logger.info(antenna_location)
         antenna_frame = LTP(location=antenna_location, orientation="NWU", magnetic=True)
         self.ant_leff = [1, 2, 3]
-        self.ant_leff[0] = Antenna(model=self.leff_sn, frame=antenna_frame)
-        self.ant_leff[1] = Antenna(model=self.leff_ew, frame=antenna_frame)
-        ant_z = Antenna(model=self.leff_z, frame=antenna_frame)
+        self.ant_leff[0] = Antenna(model_leff=self.leff_sn, frame=antenna_frame)
+        self.ant_leff[1] = Antenna(model_leff=self.leff_ew, frame=antenna_frame)
+        ant_z = Antenna(model_leff=self.leff_z, frame=antenna_frame)
         self.ant_leff[2] = ant_z
-        tt_a = ant_z.model.table.leff_theta
+        tt_a = ant_z.model_leff.table.leff_theta
         logger.info(f"ant_z : {np.min(tt_a):.3e} {np.max(tt_a):.3e}")
 
     def _init_du_effect(self):
@@ -136,7 +136,7 @@ class SimuDetectorUnitEffect(object):
         """
         logger.info(f"==============>  Processing du with id: {self.du_id[idx_du]}")
         self._get_ant_leff(idx_du)
-        logger.info(self.ant_leff[0].model)
+        logger.info(self.ant_leff[0].model_leff)
         d_efield = coord.CartesianRepresentation(
             x=self.du_efield[idx_du, 0], y=self.du_efield[idx_du, 1], z=self.du_efield[idx_du, 2]
         )

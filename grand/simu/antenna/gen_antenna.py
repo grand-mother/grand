@@ -98,7 +98,7 @@ class Antenna:
         frame: Union[LTP, GRANDCS],
     ) -> CartesianRepresentation:
         '''
-        Interpolate effective length in Fourier space by double linear interpolation 
+        Interpolate effective length in Fourier space by tripler (theta, phi, frequency) linear interpolation 
         in direction of the Efield source at antenna position
         
         :param xmax:
@@ -113,6 +113,7 @@ class Antenna:
 
         def interp_sphere_freq(val):
             ''' Linear interpolation (see np.interp() doc) on the frequency axis
+            
             Used to interpolate antenna response in Fourier space defined by modulus and argument 
             for 2 axis theta and phi
             => so used 4 times, val is 
@@ -121,30 +122,30 @@ class Antenna:
               * modulus theta
               * argument theta
             
-            The function to be interpolated is itself interpolated by weighting 4 functions frame the direction 
-            to be interpolated.
+            The function to be interpolated is itself interpolated by weighting 4 functions
             Interpolation on a sphere => 2 dimension (theta, phi) so 4 positions/values to define interpolation
-            defined  by index:
+            positions defined  by index:
               * ip0, ip1 for phi axis
               * it0, it1 for theta axis
             weight used:
               * rp0, rp1 for phi axis, with rp0 + rp1 = 1 [1]
               * rt0, rt1 for theta axis, with rt0 + rt1 = 1 [2]
-            it's also a linear interpolation
             '''
-            # we have: rp0*rt0 + rp1*rt0+ rp0*rt1 + rp1*rt1 = 1, with [1] and [2]
             # fmt: off
-            val_ref =  rp0*rt0*val[:, ip0, it0] \
+            val_sphere_interpol =  rp0*rt0*val[:, ip0, it0] \
                      + rp1*rt0*val[:, ip1, it0] \
                      + rp0*rt1*val[:, ip0, it1] \
                      + rp1*rt1*val[:, ip1, it1]
             # fmt: on
+            # With [1] and [2]
+            # we have: rp0*rt0 + rp1*rt0+ rp0*rt1 + rp1*rt1 = 1
+            # so sum of weight is 1, it's also a linear interpolation by angle on sphere
             half_idx = freq_interp_hz.shape[0] // 2
             logger.debug(f"Ref freq: {freq_ref_hz[0]:.3e} {np.max(freq_ref_hz):.3e}")
             logger.debug(f"Interp  : {freq_interp_hz[0]:.3e} {np.max(freq_interp_hz):.3e}")
-            val_interp = np.interp(freq_interp_hz, freq_ref_hz, val_ref, left=0, right=0)
+            val_interp = np.interp(freq_interp_hz, freq_ref_hz, val_sphere_interpol, left=0, right=0)
             logger.debug(f"val initia : {np.min(val):.3e} {np.max(val):.3e}")
-            logger.debug(f"Ref    val : {np.min(val_ref):.3e} {np.max(val_ref):.3e}")
+            logger.debug(f"Ref    val : {np.min(val_sphere_interpol):.3e} {np.max(val_sphere_interpol):.3e}")
             logger.debug(f"Interp val : {np.min(val_interp):.3e} {np.max(val_interp):.3e}")
             return val_interp
 
@@ -159,6 +160,7 @@ class Antenna:
         direction_sphr = SphericalRepresentation(direction_cart)
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
+        logger.debug(f"Source direction (degree): North_gap={float(phi_efield):.1f}, Zenith_dist={float(theta_efield):.1f}")
         # logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)
         # table store antenna response

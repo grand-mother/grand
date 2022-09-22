@@ -46,6 +46,11 @@ class TabulatedAntennaModel(object):
     table: DataTable
     n_file: ... = "TBD"
 
+    def __str__(self):
+        ret = f"TabulatedAntennaModel, shape freq {self.table.frequency.shape}"
+        ret += f"\nleff_theta: {self.table.leff_theta.shape} {self.table.leff_theta.dtype}"
+        return ret
+
     def dump(self, destination: Union[str, Path, io.DataNode]) -> None:
         if type(destination) == io.DataNode:
             node = cast(io.DataNode, destination)
