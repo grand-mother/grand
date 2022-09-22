@@ -12,7 +12,7 @@ import numpy
 from grand import store, LTP, CartesianRepresentation, SphericalRepresentation
 from grand.simu import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
 from grand.simu.shower.pdg import ParticleCode
-from grand.simu.shower.generic import CollectionEntry
+from grand.simu.shower.gen_shower import CollectionEntry
 from tests import TestCase
 from grand.io import io_node as io
 
@@ -46,9 +46,9 @@ class ShowerTest(TestCase):
         self.assertEqual(a.voltage, None)
         self.assertEqual(b.voltage, None)
         a, b = a.electric, b.electric
-        self.assertCartesian(a.r, b.r, 4)
-        self.assertQuantity(a.t, b.t, 7)
-        self.assertCartesian(a.E, b.E, 5)
+        self.assertCartesian(a.par_r, b.par_r, 4)
+        self.assertQuantity(a.a_time, b.a_time, 7)
+        self.assertCartesian(a.e_xyz, b.e_xyz, 5)
 
     def test_generic(self):
         settings = {

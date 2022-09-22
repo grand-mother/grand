@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 import h5py
 import numpy
 
-from grand.simu.shower.generic import CollectionEntry, FieldsCollection, ShowerEvent
+from grand.simu.shower.gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
 from grand.simu.antenna import ElectricField
 from grand.simu.shower.pdg import ParticleCode
 from grand.geo.coordinates import ECEF, LTP, Geodetic

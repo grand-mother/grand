@@ -12,12 +12,14 @@ import numpy
 from grand.simu.shower.pdg import ParticleCode
 from grand.simu import ElectricField, Voltage
 from grand.io import io_node as io
+from grand.io.root.event.shower import ShowerEventSimdataTree
 from grand.geo.coordinates import (
     Geodetic,
     LTP,
     GRANDCS,
     CartesianRepresentation,
 )  # RK
+from fontTools.ttLib.tables import D_S_I_G_
 
 __all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
 
@@ -72,6 +74,18 @@ class ShowerEvent:
     ground_alt: float = 0.0
     fields: Optional[FieldsCollection] = None
 
+    def load_root(self, d_shower):
+        self.energy = d_shower.prim_energy
+        self.zenith = d_shower.shower_zenith
+        self.zenith = 85
+        self.azimuth = d_shower.shower_azimuth
+        self.azimuth = 0
+        self.primary = d_shower.prim_type
+        #TODO: DC1 find information in file ROOT
+        self.localize(39.5, 90.5)
+        xmax = d_shower.xmax_pos_shc
+        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
+
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         baseclass = cls
@@ -85,7 +99,6 @@ class ShowerEvent:
             source = Path(source)
             if source.is_dir():
                 loader = "_from_dir"
-
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
                     # in order to avoid circular references
@@ -98,21 +111,15 @@ class ShowerEvent:
                         baseclass = ZhairesShower
             else:
                 loader = "_from_datafile"
-
         logger.info(f"Loading shower data from {filename}")
-        # print(f'Loading shower data from {filename}')
-        # print('loader', loader)
-
         try:
             load = getattr(baseclass, loader)
         except AttributeError as load_exit:
             raise NotImplementedError("Invalid data format") from load_exit
         else:
             self = load(source)
-
         if self.fields is not None:
             logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
-
         return self
 
     @classmethod

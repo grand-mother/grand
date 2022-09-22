@@ -13,48 +13,49 @@ from grand.geo.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
 )  # RK
-
-
 from grand.io import io_node as io  # , ECEF, LTP
-
+from grand.simu.antenna.tabulated import TabulatedAntennaModel
 
 logger = getLogger(__name__)
 
 
 @dataclass
 class ElectricField:
-    t: np.ndarray
-    E: CartesianRepresentation  # RK
-    r: Union[CartesianRepresentation, None] = None
+    a_time: np.ndarray
+    e_xyz: CartesianRepresentation  # RK
+    par_r: Union[CartesianRepresentation, None] = None
     frame: Union[LTP, GRANDCS, None] = None
+
+    def __post_init__(self):
+        assert self.a_time.shape[0] == self.e_xyz.shape[1]
 
     @classmethod
     def load(cls, node: io.DataNode):
         logger.debug(f"Loading E-field from {node.filename}:{node.path}")
 
-        t = node.read("t", dtype="f8")
-        E = node.read("E", dtype="f8")
+        a_time = node.read("t", dtype="f8")
+        e_xyz = node.read("E", dtype="f8")
 
         try:
-            r = node.read("r", dtype="f8")
+            par_r = node.read("r", dtype="f8")
         except KeyError:
-            r = None
+            par_r = None
 
         try:
             frame = node.read("frame")
         except KeyError:
             frame = None
 
-        return cls(t, E, r, frame)
+        return cls(a_time, e_xyz, par_r, frame)
 
     def dump(self, node: io.DataNode):
         logger.debug(f"Dumping E-field to {node.filename}:{node.path}")
 
-        node.write("t", self.t, dtype="f4")
-        node.write("E", self.E, dtype="f4")
+        node.write("t", self.a_time, dtype="f4")
+        node.write("E", self.e_xyz, dtype="f4")
 
-        if self.r is not None:
-            node.write("r", self.r, dtype="f4")
+        if self.par_r is not None:
+            node.write("r", self.par_r, dtype="f4")
 
         if self.frame is not None:
             node.write("frame", self.frame)
@@ -78,7 +79,6 @@ class Voltage:
         node.write("V", self.V, dtype="f4")
 
 
-
 class MissingFrameError(ValueError):
     pass
 
@@ -88,24 +88,36 @@ class Antenna:
     model: Any  # if class is used, circular import error occurs.
     frame: Union[LTP, GRANDCS]
 
+    def __post_init__(self):
+        assert isinstance(self.model, TabulatedAntennaModel)
+
     def effective_length(
         self,
         xmax: LTP,
         Efield: ElectricField,
         frame: Union[LTP, GRANDCS],
     ) -> CartesianRepresentation:
-        def fftfreq(n, t):
-            dt = t[1] - t[0]
-            return np.fft.fftfreq(n, dt)
+        def fftfreq(size, a_time):
+            delta = a_time[1] - a_time[0]
+            logger.debug(f"dt_ns = {delta*1e9:.2f}")
+            logger.debug(f"{size}")
+            return np.fft.fftfreq(size, delta)
 
-        def interp(v):
+        def interp(val):
             # fmt: off
-            fp =  rp0*rt0*v[:, ip0, it0] \
-                + rp1*rt0*v[:, ip1, it0] \
-                + rp0*rt1*v[:, ip0, it1] \
-                + rp1*rt1*v[:, ip1, it1]
+            val_ref =  rp0*rt0*val[:, ip0, it0] \
+                     + rp1*rt0*val[:, ip1, it0] \
+                     + rp0*rt1*val[:, ip0, it1] \
+                     + rp1*rt1*val[:, ip1, it1]
             # fmt: on
-            return np.interp(x, xp, fp, left=0, right=0)
+            half_idx = freq_interp_hz.shape[0] // 2
+            logger.debug(f"Ref freq: {freq_ref_hz[0]:.3e} {np.max(freq_ref_hz):.3e}")
+            logger.debug(f"Interp  : {freq_interp_hz[0]:.3e} {np.max(freq_interp_hz):.3e}")
+            val_interp = np.interp(freq_interp_hz, freq_ref_hz, val_ref, left=0, right=0)
+            logger.debug(f"val initia : {np.min(val):.3e} {np.max(val):.3e}")
+            logger.debug(f"Ref    val : {np.min(val_ref):.3e} {np.max(val_ref):.3e}")
+            logger.debug(f"Interp val : {np.min(val_interp):.3e} {np.max(val_interp):.3e}")
+            return val_interp
 
         # 'frame' is shower frame. 'self.frame' is antenna frame.
         if isinstance(xmax, LTP):
@@ -144,14 +156,14 @@ class Antenna:
         rp1 -= np.floor(rp1)
         rp0 = 1 - rp1
         # fft
-        E = Efield.E
+        logger.info(Efield.e_xyz.info())
+        E = Efield.e_xyz
         logger.debug(E.x.shape)
         Ex = np.fft.rfft(E.x)
         # frequency [Hz]
-        x = fftfreq(Ex.size, Efield.t)
-        logger.debug(x.shape)
+        freq_interp_hz = fftfreq(Ex.size, Efield.a_time)
         # frequency [Hz]
-        xp = table.frequency
+        freq_ref_hz = table.frequency
         ltr = interp(table.leff_theta)  # LWP. m
         lta = interp(np.deg2rad(table.phase_theta))  # LWP. rad
         lpr = interp(table.leff_phi)  # LWP. m
@@ -193,23 +205,20 @@ class Antenna:
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input Leff and field are in shower frame.
-        def rfft(q):
-            return np.fft.rfft(q)
-
-        def irfft(q):
-            return np.fft.irfft(q)
-
         Leff = self.effective_length(xmax, Efield, frame)
-        E = Efield.E  # E is CartesianRepresentation
-        Ex = rfft(E.x)
-        Ey = rfft(E.y)
-        Ez = rfft(E.z)
+        E = Efield.e_xyz  # E is CartesianRepresentation
+        Ex = np.fft.rfft(E.x)
+        Ey = np.fft.rfft(E.y)
+        Ez = np.fft.rfft(E.z)
+        logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
         # Here we have to do an ugly patch for Leff values to be correct
         # fmt: off
-        V = irfft( Ex*(Leff[0] - Leff[0,0]) 
-                 + Ey*(Leff[1] - Leff[1,0])
-                 + Ez*(Leff[2] - Leff[2,0]))
+        V = np.fft.irfft( 
+                Ex*(Leff[0] - Leff[0,0]) 
+              + Ey*(Leff[1] - Leff[1,0])
+              + Ez*(Leff[2] - Leff[2,0]))
         # fmt: on
-        t = Efield.t
+        t = Efield.a_time
         t = t[: V.size]
+        logger.debug(V[:10])
         return Voltage(t=t, V=V)
