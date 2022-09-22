@@ -15,7 +15,7 @@ from grand import grand_add_path_data, grand_get_path_root_pkg
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 logger.info(mlg.string_begin_script())
 
@@ -23,10 +23,16 @@ logger.info(mlg.string_begin_script())
 showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
 shower = ShowerEvent.load(showerdir)
 
+logger.info(shower.frame)
+logger.info(shower.maximum)
+
 if shower.frame is None:
     shower.localize(39.5, 90.5)  # Coreas showers have no
     # localization info. This must
     # be set manually
+
+logger.info(shower.frame)
+logger.info(shower.maximum)
 logger.info("---------------------------------")
 logger.info(f"Zenith (Zhaires?!) {shower.zenith}")
 logger.info(f"Azimuth (Zhaires?!) {shower.azimuth}")
@@ -63,7 +69,7 @@ for antenna_index, field in shower.fields.items():
     #
     # The antenna is placed within the shower frame. It is oriented along the
     # local magnetic North by using an ENU/LTP frame (x: East, y: North, z: Upward)
-    antpos_wrt_shower = field.electric.r
+    antpos_wrt_shower = field.electric.par_r
     # RK: if antenna location was saved in LTP frame in zhaires.py, next step would not required.
     antenna_location = LTP(
         x=antpos_wrt_shower.x,
@@ -71,6 +77,7 @@ for antenna_index, field in shower.fields.items():
         z=antpos_wrt_shower.z,
         frame=shower.frame,
     )
+    logger.info(shower.frame)
     antenna_frame = LTP(
         location=antenna_location,
         orientation="NWU",
@@ -93,19 +100,20 @@ for antenna_index, field in shower.fields.items():
     # shower axis at the depth of maximum development. Note that the direction
     # of observation and the electric field components are provided in the
     # shower frame. This is indicated by the `frame` named argument.
-    Exyz = field.electric.E
+    Exyz = field.electric.e_xyz
     logger.info(mlg.chrono_start())
     # Xmax, Efield, and input frame are all in shower frame.
     logger.debug("compute_voltage")
+    logger.info(shower.frame)
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
     logger.info(mlg.chrono_string_duration())
     logger.info(f"\nVpp= {max(field.voltage.V) - min(field.voltage.V)}")
     plt.figure()
     plt.subplot(211)
     plt.title("example/simulation/shower-event.py")
-    plt.plot(field.electric.t, Exyz.x, label="Ex")
-    plt.plot(field.electric.t, Exyz.y, label="Ey")
-    plt.plot(field.electric.t, Exyz.z, label="Ez")
+    plt.plot(field.electric.a_time, Exyz.x, label="Ex")
+    plt.plot(field.electric.a_time, Exyz.y, label="Ey")
+    plt.plot(field.electric.a_time, Exyz.z, label="Ez")
     plt.xlabel("Time (ns)")
     plt.ylabel(r"Efield ($\mu$V/m)")
     plt.grid()
