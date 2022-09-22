@@ -1,5 +1,5 @@
 from .coreas import CoreasShower
-from .generic import ShowerEvent
+from grand.simu.shower.gen_shower import ShowerEvent
 from .zhaires import ZhairesShower
 from .pdg import ParticleCode
 
