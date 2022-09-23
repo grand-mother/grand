@@ -14,15 +14,16 @@ def show_trace(idx):
     d_efield= FileSimuEfield(G_file_efield)
     t_trace=d_efield.get_time_trace_ns()
     plt.figure()
+    plt.plot(t_trace[idx], d_efield.traces[idx,0])
     plt.plot(t_trace[idx], d_efield.traces[idx,1])
-    
+    plt.plot(t_trace[idx], d_efield.traces[idx,2])
     
 def show_pos_det():
     d_efield= FileSimuEfield(G_file_efield)
     plt.figure()
-    for idx_du in range(d_efield.nb_du):
-        print(d_efield.pos_du[idx_du, 0], d_efield.pos_du[idx_du, 1])
-        plt.plot(d_efield.pos_du[idx_du, 0], d_efield.pos_du[idx_du, 1], "*")
+    for du_idx in range(d_efield.nb_du):
+        print(d_efield.du_pos[du_idx, 0], d_efield.du_pos[du_idx, 1])
+        plt.plot(d_efield.du_pos[du_idx, 0], d_efield.du_pos[du_idx, 1], "*")
 
 def show_time_det():
     d_efield= FileSimuEfield(G_file_efield)
@@ -40,9 +41,9 @@ def test_read_2_time():
     
 if __name__ == '__main__':
     test_read_2_time()
-    show_trace(0)
-    show_trace(1)
-    show_pos_det()
-    show_time_det()
+    show_trace(38)
+   # show_trace(1)
+    #show_pos_det()
+    #show_time_det()
     plt.show()
     pass

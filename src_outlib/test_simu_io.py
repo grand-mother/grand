@@ -42,7 +42,7 @@ if __name__ == '__main__':
     logger = mlg.get_logger_for_script(__file__)
     logger.info(mlg.string_begin_script())
     # ================
-    test_Voc(10)
+    test_Voc(26)
     # ================
     logger.info(mlg.string_end_script())
     plt.show()

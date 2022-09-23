@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
 
-import np as np
+import numpy as np
 
 from grand.simu.shower.pdg import ParticleCode
 from grand.simu import ElectricField, Voltage
