@@ -13,10 +13,18 @@ else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
 #from typing import List, Union
+from typing import TypeVar, Literal, Sequence
+
+from typen import enforce_type_hints
+
+# T = TypeVar(Literal[str])
+T = TypeVar("T")
 
 ## A list of generated Trees
 grand_tree_list = []
 """Internal list of generated Trees"""
+
+#_ups: StdVectorList["float"]() = field(default_factory=lambda: StdVectorList("float"))
 
 class StdVectorList(MutableSequence):
     """A python list interface to ROOT's std::vector"""
@@ -85,7 +93,6 @@ class StdString():
     def __repr__(self):
         return str(self.string)
 
-
 @dataclass
 class DataTree:
     """
@@ -94,7 +101,7 @@ class DataTree:
     # File handle
     _file: ROOT.TFile = None
     # File name
-    _file_name: str = None #: hjehe
+    _file_name: str = None
     # Tree object
     _tree: ROOT.TTree = None
     # Tree name
@@ -341,7 +348,8 @@ class DataTree:
                 self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name))
         # ROOT vectors as StdVectorList
         # elif "vector" in str(type(value.default)):
-        elif isinstance(value.type, StdVectorList):
+        # Not sure why type is not StdVectorList when using factory... thus not isinstance, but id comparison
+        elif id(value.type)==id(StdVectorList):
             # Create the branch
             if not set_branches:
                 self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
@@ -358,7 +366,7 @@ class DataTree:
             else:
                 self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
         else:
-            raise(f"Unsupported type {value.type}. Can't create a branch.")
+            raise ValueError(f"Unsupported type {value.type}. Can't create a branch.")
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
@@ -759,7 +767,7 @@ class RunTree(MotherRunTree):
     def data_source(self, value) -> None:
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._data_source.string.assign(value)
 
@@ -772,7 +780,7 @@ class RunTree(MotherRunTree):
     def data_generator(self, value) -> None:
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._data_generator.string.assign(value)
 
@@ -785,7 +793,7 @@ class RunTree(MotherRunTree):
     def data_generator_version(self, value) -> None:
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._data_generator_version.string.assign(value)
 
@@ -798,7 +806,7 @@ class RunTree(MotherRunTree):
     def site(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._site.string.assign(value)
 
@@ -860,101 +868,101 @@ class ADCEventTree(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
-    _event_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _event_id: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Detector unit (antenna) ID
-    _du_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Unix time of the trigger for this DU
-    _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _du_seconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Nanoseconds of the trigger for this DU
-    _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _du_nanoseconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
-    _trigger_position: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_position: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Same as event_type, but event_type could consist of different triggered DUs
-    _trigger_flag: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_flag: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Atmospheric temperature (read via I2C)
-    _atm_temperature: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _atm_temperature: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Atmospheric pressure
-    _atm_pressure: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _atm_pressure: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Atmospheric humidity
-    _atm_humidity: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _atm_humidity: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Acceleration of the antenna in X
-    _acceleration_x: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _acceleration_x: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Acceleration of the antenna in Y
-    _acceleration_y: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _acceleration_y: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Acceleration of the antenna in Z
-    _acceleration_z: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _acceleration_z: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Battery voltage
-    _battery_level: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _battery_level: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Firmware version
-    _firmware_version: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _firmware_version: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC sampling frequency in MHz
-    _adc_sampling_frequency: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_sampling_frequency: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC sampling resolution in bits
-    _adc_sampling_resolution: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_sampling_resolution: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
-    _adc_input_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_input_channels: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
-    _adc_enabled_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_enabled_channels: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in all channels
-    _adc_samples_count_total: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_total: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel 0
-    _adc_samples_count_channel0: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel0: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel 1
-    _adc_samples_count_channel1: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel1: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel 2
-    _adc_samples_count_channel2: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel2: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel 3
-    _adc_samples_count_channel3: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel3: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
-    _trigger_pattern: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_pattern: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Trigger rate - the number of triggers recorded in the second preceding the event
-    _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
-    _clock_tick: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _clock_tick: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock ticks per second
-    _clock_ticks_per_second: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _clock_ticks_per_second: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
-    _gps_offset: StdVectorList("float") = StdVectorList("float")
+    _gps_offset: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## GPS leap second
-    _gps_leap_second: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_leap_second: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS status
-    _gps_status: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_status: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS alarms
-    _gps_alarms: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_alarms: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS warnings
-    _gps_warnings: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_warnings: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS time
-    _gps_time: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _gps_time: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Longitude
-    _gps_long: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Latitude
-    _gps_lat: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Altitude
-    _gps_alt: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS temperature
-    _gps_temp: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
-    _digi_ctrl: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_ctrl: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_prepost_trig_windows: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties0: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties1: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties2: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties3: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings0: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings1: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings2: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings3: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## ?? What is it? Some kind of the adc trace offset?
-    _ioff: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _ioff: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     # _start_time: StdVectorList("double") = StdVectorList("double")
     # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
     # _det_time: StdVectorList("double") = StdVectorList("double")
@@ -962,13 +970,13 @@ class ADCEventTree(MotherEventTree):
     # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
     # _sampling_speed: StdVectorList("float") = StdVectorList("float")
     ## ADC trace 0
-    _trace_0: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
     ## ADC trace 1
-    _trace_1: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
     ## ADC trace 2
-    _trace_2: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
     ## ADC trace 3
-    _trace_3: StdVectorList("vector<short>") = StdVectorList("vector<short>")
+    _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1068,7 +1076,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._event_id._vector = value
         else:
-            raise(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def du_id(self):
@@ -1086,7 +1094,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._du_id._vector = value
         else:
-            raise(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def du_seconds(self):
@@ -1104,7 +1112,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_seconds._vector = value
         else:
-            raise(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def du_nanoseconds(self):
@@ -1122,7 +1130,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_nanoseconds._vector = value
         else:
-            raise(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def trigger_position(self):
@@ -1140,7 +1148,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_position._vector = value
         else:
-            raise(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_flag(self):
@@ -1158,7 +1166,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_flag._vector = value
         else:
-            raise(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def atm_temperature(self):
@@ -1176,7 +1184,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._atm_temperature._vector = value
         else:
-            raise(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def atm_pressure(self):
@@ -1194,7 +1202,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._atm_pressure._vector = value
         else:
-            raise(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def atm_humidity(self):
@@ -1212,7 +1220,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._atm_humidity._vector = value
         else:
-            raise(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def acceleration_x(self):
@@ -1230,7 +1238,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._acceleration_x._vector = value
         else:
-            raise(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def acceleration_y(self):
@@ -1248,7 +1256,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._acceleration_y._vector = value
         else:
-            raise(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def acceleration_z(self):
@@ -1266,7 +1274,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._acceleration_z._vector = value
         else:
-            raise(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def battery_level(self):
@@ -1284,7 +1292,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._battery_level._vector = value
         else:
-            raise(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def firmware_version(self):
@@ -1302,7 +1310,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._firmware_version._vector = value
         else:
-            raise(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
 
     @property
@@ -1321,7 +1329,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_sampling_frequency._vector = value
         else:
-            raise(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_sampling_resolution(self):
@@ -1339,7 +1347,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_sampling_resolution._vector = value
         else:
-            raise(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_input_channels(self):
@@ -1357,7 +1365,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_input_channels._vector = value
         else:
-            raise(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_enabled_channels(self):
@@ -1375,7 +1383,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_enabled_channels._vector = value
         else:
-            raise(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_total(self):
@@ -1393,7 +1401,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_total._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel0(self):
@@ -1411,7 +1419,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel0._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel0 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel0 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel1(self):
@@ -1429,7 +1437,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel1._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel1 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel1 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel2(self):
@@ -1447,7 +1455,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel2._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel2 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel2 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel3(self):
@@ -1465,7 +1473,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel3._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_pattern(self):
@@ -1483,7 +1491,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_pattern._vector = value
         else:
-            raise(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_rate(self):
@@ -1501,7 +1509,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_rate._vector = value
         else:
-            raise(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def clock_tick(self):
@@ -1519,7 +1527,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._clock_tick._vector = value
         else:
-            raise(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def clock_ticks_per_second(self):
@@ -1537,7 +1545,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._clock_ticks_per_second._vector = value
         else:
-            raise(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_offset(self):
@@ -1555,7 +1563,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_offset._vector = value
         else:
-            raise(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_leap_second(self):
@@ -1573,7 +1581,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_leap_second._vector = value
         else:
-            raise(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_status(self):
@@ -1591,7 +1599,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_status._vector = value
         else:
-            raise(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_alarms(self):
@@ -1609,7 +1617,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_alarms._vector = value
         else:
-            raise(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_warnings(self):
@@ -1627,7 +1635,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_warnings._vector = value
         else:
-            raise(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_time(self):
@@ -1645,7 +1653,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._gps_time._vector = value
         else:
-            raise(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def gps_long(self):
@@ -1663,7 +1671,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_long._vector = value
         else:
-            raise(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_lat(self):
@@ -1681,7 +1689,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_lat._vector = value
         else:
-            raise(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_alt(self):
@@ -1699,7 +1707,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_alt._vector = value
         else:
-            raise(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_temp(self):
@@ -1717,7 +1725,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_temp._vector = value
         else:
-            raise(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def digi_ctrl(self):
@@ -1735,7 +1743,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_ctrl._vector = value
         else:
-            raise(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def digi_prepost_trig_windows(self):
@@ -1753,7 +1761,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_prepost_trig_windows._vector = value
         else:
-            raise(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties0(self):
@@ -1771,7 +1779,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties0._vector = value
         else:
-            raise(f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties1(self):
@@ -1789,7 +1797,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties1._vector = value
         else:
-            raise(f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties2(self):
@@ -1807,7 +1815,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties2._vector = value
         else:
-            raise(f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties3(self):
@@ -1825,7 +1833,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties3._vector = value
         else:
-            raise(f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings0(self):
@@ -1843,7 +1851,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings0._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings1(self):
@@ -1861,7 +1869,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings1._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings2(self):
@@ -1879,7 +1887,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings2._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings3(self):
@@ -1897,7 +1905,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings3._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def ioff(self):
@@ -1915,7 +1923,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._ioff._vector._vector = value
         else:
-            raise(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trace_0(self):
@@ -1934,7 +1942,7 @@ class ADCEventTree(MotherEventTree):
             # With vectors, I think the address is assigned, so in principle the below is needed only on the first setting of the branch
             self._trace_0._vector = value
         else:
-            raise(f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+            raise ValueError(f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
     @property
     def trace_1(self):
@@ -1952,7 +1960,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<short>")):
             self._trace_1._vector = value
         else:
-            raise(f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
+            raise ValueError(f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
     @property
     def trace_2(self):
@@ -1970,7 +1978,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<short>")):
             self._trace_2._vector = value
         else:
-            raise(f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+            raise ValueError(f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
     @property
     def trace_3(self):
@@ -1988,7 +1996,7 @@ class ADCEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<short>")):
             self._trace_3._vector = value
         else:
-            raise(f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
+            raise ValueError(f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required.")
 
 
 @dataclass
@@ -2027,105 +2035,105 @@ class VoltageEventTree(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
-    _event_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _event_id: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Detector unit (antenna) ID
-    _du_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Unix time of the trigger for this DU
-    _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _du_seconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Nanoseconds of the trigger for this DU
-    _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _du_nanoseconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Unix time of the start of the trace for this DU
     # _du_t0_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Nanoseconds of the start of the trace for this DU
     # _du_t0_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
-    _trigger_position: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_position: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Same as event_type, but event_type could consist of different triggered DUs
-    _trigger_flag: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_flag: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Atmospheric temperature (read via I2C)
-    _atm_temperature: StdVectorList("float") = StdVectorList("float")
+    _atm_temperature: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Atmospheric pressure
-    _atm_pressure: StdVectorList("float") = StdVectorList("float")
+    _atm_pressure: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Atmospheric humidity
-    _atm_humidity: StdVectorList("float") = StdVectorList("float")
+    _atm_humidity: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Acceleration of the antenna in X
-    _acceleration_x: StdVectorList("float") = StdVectorList("float")
+    _acceleration_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Acceleration of the antenna in Y
-    _acceleration_y: StdVectorList("float") = StdVectorList("float")
+    _acceleration_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Acceleration of the antenna in Z
-    _acceleration_z: StdVectorList("float") = StdVectorList("float")
+    _acceleration_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Battery voltage
-    _battery_level: StdVectorList("float") = StdVectorList("float")
+    _battery_level: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Firmware version
-    _firmware_version: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _firmware_version: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC sampling frequency in MHz
-    _adc_sampling_frequency: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_sampling_frequency: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC sampling resolution in bits
-    _adc_sampling_resolution: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_sampling_resolution: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
-    _adc_input_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_input_channels: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
-    _adc_enabled_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_enabled_channels: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in all channels
-    _adc_samples_count_total: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_total: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel x
-    _adc_samples_count_channel_x: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel_x: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel y
-    _adc_samples_count_channel_y: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel_y: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## ADC samples callected in channel z
-    _adc_samples_count_channel_z: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _adc_samples_count_channel_z: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
-    _trigger_pattern: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_pattern: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Trigger rate - the number of triggers recorded in the second preceding the event
-    _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
-    _clock_tick: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _clock_tick: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock ticks per second
-    _clock_ticks_per_second: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _clock_ticks_per_second: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
-    _gps_offset: StdVectorList("float") = StdVectorList("float")
+    _gps_offset: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## GPS leap second
-    _gps_leap_second: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_leap_second: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS status
-    _gps_status: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_status: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS alarms
-    _gps_alarms: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_alarms: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS warnings
-    _gps_warnings: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _gps_warnings: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## GPS time
-    _gps_time: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _gps_time: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Longitude
-    _gps_long: StdVectorList("float") = StdVectorList("float")
+    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Latitude
-    _gps_lat: StdVectorList("float") = StdVectorList("float")
+    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Altitude
-    _gps_alt: StdVectorList("float") = StdVectorList("float")
+    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## GPS temperature
-    _gps_temp: StdVectorList("float") = StdVectorList("float")
+    _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## X position in site's referential
-    _pos_x: StdVectorList("float") = StdVectorList("float")
+    _pos_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Y position in site's referential
-    _pos_y: StdVectorList("float") = StdVectorList("float")
+    _pos_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Z position in site's referential
-    _pos_z: StdVectorList("float") = StdVectorList("float")
+    _pos_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
-    _digi_ctrl: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_ctrl: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_prepost_trig_windows: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties_x: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties_y: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties_z: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_properties_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings_x: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings_y: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings_z: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _channel_trig_settings_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
     ## ?? What is it? Some kind of the adc trace offset?
-    _ioff: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _ioff: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
 
     # _start_time: StdVectorList("double") = StdVectorList("double")
     # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
@@ -2135,11 +2143,11 @@ class VoltageEventTree(MotherEventTree):
     # _sampling_speed: StdVectorList("float") = StdVectorList("float")
 
     ## Voltage trace in X direction
-    _trace_x: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Voltage trace in Y direction
-    _trace_y: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Voltage trace in Z direction
-    _trace_z: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -2239,7 +2247,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._event_id._vector = value
         else:
-            raise(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for event_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def du_id(self):
@@ -2257,7 +2265,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._du_id._vector = value
         else:
-            raise(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def du_seconds(self):
@@ -2275,7 +2283,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_seconds._vector = value
         else:
-            raise(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def du_nanoseconds(self):
@@ -2293,7 +2301,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_nanoseconds._vector = value
         else:
-            raise(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     # @property
     # def du_t0_seconds(self):
@@ -2310,7 +2318,7 @@ class VoltageEventTree(MotherEventTree):
     #     elif isinstance(value, ROOT.vector("unsigned int")):
     #         self._du_t0_seconds._vector = value
     #     else:
-    #         raise(f"Incorrect type for du_t0_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+    #         raise ValueError(f"Incorrect type for du_t0_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
     #
     # @property
     # def du_t0_nanoseconds(self):
@@ -2327,7 +2335,7 @@ class VoltageEventTree(MotherEventTree):
     #     elif isinstance(value, ROOT.vector("unsigned int")):
     #         self._du_t0_nanoseconds._vector = value
     #     else:
-    #         raise(f"Incorrect type for du_t0_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+    #         raise ValueError(f"Incorrect type for du_t0_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def trigger_position(self):
@@ -2345,7 +2353,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_position._vector = value
         else:
-            raise(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_flag(self):
@@ -2363,7 +2371,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_flag._vector = value
         else:
-            raise(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def atm_temperature(self):
@@ -2381,7 +2389,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_temperature._vector = value
         else:
-            raise(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def atm_pressure(self):
@@ -2399,7 +2407,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_pressure._vector = value
         else:
-            raise(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def atm_humidity(self):
@@ -2417,7 +2425,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_humidity._vector = value
         else:
-            raise(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def acceleration_x(self):
@@ -2435,7 +2443,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._acceleration_x._vector = value
         else:
-            raise(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for acceleration_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def acceleration_y(self):
@@ -2453,7 +2461,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._acceleration_y._vector = value
         else:
-            raise(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for acceleration_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def acceleration_z(self):
@@ -2471,7 +2479,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._acceleration_z._vector = value
         else:
-            raise(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for acceleration_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def battery_level(self):
@@ -2489,7 +2497,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._battery_level._vector = value
         else:
-            raise(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for battery_level {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def firmware_version(self):
@@ -2507,7 +2515,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._firmware_version._vector = value
         else:
-            raise(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for firmware_version {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
 
     @property
@@ -2526,7 +2534,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_sampling_frequency._vector = value
         else:
-            raise(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_sampling_frequency {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_sampling_resolution(self):
@@ -2544,7 +2552,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_sampling_resolution._vector = value
         else:
-            raise(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_input_channels(self):
@@ -2562,7 +2570,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_input_channels._vector = value
         else:
-            raise(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_enabled_channels(self):
@@ -2580,7 +2588,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_enabled_channels._vector = value
         else:
-            raise(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_total(self):
@@ -2598,7 +2606,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_total._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_total {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel_x(self):
@@ -2616,7 +2624,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel_x._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel_x {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel_y(self):
@@ -2634,7 +2642,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel_y._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel_y {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def adc_samples_count_channel_z(self):
@@ -2652,7 +2660,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._adc_samples_count_channel_z._vector = value
         else:
-            raise(f"Incorrect type for adc_samples_count_channel_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for adc_samples_count_channel_z {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_pattern(self):
@@ -2670,7 +2678,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_pattern._vector = value
         else:
-            raise(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_rate(self):
@@ -2688,7 +2696,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_rate._vector = value
         else:
-            raise(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def clock_tick(self):
@@ -2706,7 +2714,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._clock_tick._vector = value
         else:
-            raise(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def clock_ticks_per_second(self):
@@ -2724,7 +2732,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._clock_ticks_per_second._vector = value
         else:
-            raise(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_offset(self):
@@ -2742,7 +2750,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_offset._vector = value
         else:
-            raise(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_offset {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_leap_second(self):
@@ -2760,7 +2768,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_leap_second._vector = value
         else:
-            raise(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_leap_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_status(self):
@@ -2778,7 +2786,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_status._vector = value
         else:
-            raise(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_status {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_alarms(self):
@@ -2796,7 +2804,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_alarms._vector = value
         else:
-            raise(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_alarms {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_warnings(self):
@@ -2814,7 +2822,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._gps_warnings._vector = value
         else:
-            raise(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for gps_warnings {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_time(self):
@@ -2832,7 +2840,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._gps_time._vector = value
         else:
-            raise(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for gps_time {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def gps_long(self):
@@ -2850,7 +2858,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_long._vector = value
         else:
-            raise(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_lat(self):
@@ -2868,7 +2876,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_lat._vector = value
         else:
-            raise(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_alt(self):
@@ -2886,7 +2894,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_alt._vector = value
         else:
-            raise(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_temp(self):
@@ -2904,7 +2912,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_temp._vector = value
         else:
-            raise(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def pos_x(self):
@@ -2922,7 +2930,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_x._vector = value
         else:
-            raise(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def pos_y(self):
@@ -2940,7 +2948,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_y._vector = value
         else:
-            raise(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def pos_z(self):
@@ -2958,7 +2966,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_z._vector = value
         else:
-            raise(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def digi_ctrl(self):
@@ -2976,7 +2984,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_ctrl._vector = value
         else:
-            raise(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def digi_prepost_trig_windows(self):
@@ -2994,7 +3002,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_prepost_trig_windows._vector = value
         else:
-            raise(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties_x(self):
@@ -3012,7 +3020,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties_x._vector = value
         else:
-            raise(f"Incorrect type for channel_properties_x {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties_x {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties_y(self):
@@ -3030,7 +3038,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties_y._vector = value
         else:
-            raise(f"Incorrect type for channel_properties_y {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties_y {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_properties_z(self):
@@ -3048,7 +3056,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_properties_z._vector = value
         else:
-            raise(f"Incorrect type for channel_properties_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_properties_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings_x(self):
@@ -3066,7 +3074,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings_x._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings_x {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings_x {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings_y(self):
@@ -3084,7 +3092,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings_y._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings_y {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings_y {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def channel_trig_settings_z(self):
@@ -3102,7 +3110,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._channel_trig_settings_z._vector = value
         else:
-            raise(f"Incorrect type for channel_trig_settings_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for channel_trig_settings_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def ioff(self):
@@ -3120,7 +3128,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._ioff._vector = value
         else:
-            raise(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
 
     @property
@@ -3139,7 +3147,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_x._vector = value
         else:
-            raise(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
+            raise ValueError(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
     @property
     def trace_y(self):
@@ -3157,7 +3165,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_y._vector = value
         else:
-            raise(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def trace_z(self):
@@ -3175,7 +3183,7 @@ class VoltageEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_z._vector = value
         else:
-            raise(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
 ## The class for storing Efield traces and associated values for each event
@@ -3205,62 +3213,62 @@ class EfieldEventTree(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    _du_id: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Unix time of the trigger for this DU
-    _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _du_seconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Nanoseconds of the trigger for this DU
-    _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
+    _du_nanoseconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Unix time of the start of the trace for this DU
     # _du_t0_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Nanoseconds of the start of the trace for this DU
     # _du_t0_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
     ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
-    _trigger_position: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_position: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Same as event_type, but event_type could consist of different triggered DUs
-    _trigger_flag: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_flag: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Atmospheric temperature (read via I2C)
-    _atm_temperature: StdVectorList("float") = StdVectorList("float")
+    _atm_temperature: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Atmospheric pressure
-    _atm_pressure: StdVectorList("float") = StdVectorList("float")
+    _atm_pressure: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Atmospheric humidity
-    _atm_humidity: StdVectorList("float") = StdVectorList("float")
+    _atm_humidity: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
-    _trigger_pattern: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_pattern: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Trigger rate - the number of triggers recorded in the second preceding the event
-    _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Longitude
-    _gps_long: StdVectorList("float") = StdVectorList("float")
+    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Latitude
-    _gps_lat: StdVectorList("float") = StdVectorList("float")
+    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Altitude
-    _gps_alt: StdVectorList("float") = StdVectorList("float")
+    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## X position in site's referential
-    _pos_x: StdVectorList("float") = StdVectorList("float")
+    _pos_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Y position in site's referential
-    _pos_y: StdVectorList("float") = StdVectorList("float")
+    _pos_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Z position in site's referential
-    _pos_z: StdVectorList("float") = StdVectorList("float")
+    _pos_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    _digi_prepost_trig_windows: StdVectorList("vector<unsigned short>") = StdVectorList("vector<unsigned short>")
+    _digi_prepost_trig_windows: StdVectorList = field(default_factory=lambda: StdVectorList("vector<unsigned short>"))
 
     ## Efield trace in X direction
-    _trace_x: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Efield trace in Y direction
-    _trace_y: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Efield trace in Z direction
-    _trace_z: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## FFT magnitude in X direction
-    _fft_mag_x: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _fft_mag_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## FFT magnitude in Y direction
-    _fft_mag_y: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _fft_mag_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## FFT magnitude in Z direction
-    _fft_mag_z: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _fft_mag_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## FFT phase in X direction
-    _fft_phase_x: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _fft_phase_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## FFT phase in Y direction
-    _fft_phase_y: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _fft_phase_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## FFT phase in Z direction
-    _fft_phase_z: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _fft_phase_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -3324,7 +3332,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._du_id._vector = value
         else:
-            raise(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def du_seconds(self):
@@ -3342,7 +3350,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_seconds._vector = value
         else:
-            raise(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for du_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def du_nanoseconds(self):
@@ -3360,7 +3368,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned int")):
             self._du_nanoseconds._vector = value
         else:
-            raise(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+            raise ValueError(f"Incorrect type for du_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     # @property
     # def du_t0_seconds(self):
@@ -3377,7 +3385,7 @@ class EfieldEventTree(MotherEventTree):
     #     elif isinstance(value, ROOT.vector("unsigned int")):
     #         self._du_t0_seconds._vector = value
     #     else:
-    #         raise(f"Incorrect type for du_t0_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+    #         raise ValueError(f"Incorrect type for du_t0_seconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
     #
     # @property
     # def du_t0_nanoseconds(self):
@@ -3394,7 +3402,7 @@ class EfieldEventTree(MotherEventTree):
     #     elif isinstance(value, ROOT.vector("unsigned int")):
     #         self._du_t0_nanoseconds._vector = value
     #     else:
-    #         raise(f"Incorrect type for du_t0_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
+    #         raise ValueError(f"Incorrect type for du_t0_nanoseconds {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required.")
 
     @property
     def trigger_position(self):
@@ -3412,7 +3420,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_position._vector = value
         else:
-            raise(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_position {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_flag(self):
@@ -3430,7 +3438,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_flag._vector = value
         else:
-            raise(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_flag {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def atm_temperature(self):
@@ -3448,7 +3456,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_temperature._vector = value
         else:
-            raise(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for atm_temperature {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def atm_pressure(self):
@@ -3466,7 +3474,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_pressure._vector = value
         else:
-            raise(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for atm_pressure {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def atm_humidity(self):
@@ -3484,7 +3492,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._atm_humidity._vector = value
         else:
-            raise(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for atm_humidity {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def trigger_pattern(self):
@@ -3502,7 +3510,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_pattern._vector = value
         else:
-            raise(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def trigger_rate(self):
@@ -3520,7 +3528,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("unsigned short")):
             self._trigger_rate._vector = value
         else:
-            raise(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def gps_long(self):
@@ -3538,7 +3546,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_long._vector = value
         else:
-            raise(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_lat(self):
@@ -3556,7 +3564,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_lat._vector = value
         else:
-            raise(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def gps_alt(self):
@@ -3574,7 +3582,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._gps_alt._vector = value
         else:
-            raise(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def pos_x(self):
@@ -3592,7 +3600,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_x._vector = value
         else:
-            raise(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for pos_x {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def pos_y(self):
@@ -3610,7 +3618,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_y._vector = value
         else:
-            raise(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for pos_y {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def pos_z(self):
@@ -3628,7 +3636,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._pos_z._vector = value
         else:
-            raise(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for pos_z {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
     @property
     def digi_prepost_trig_windows(self):
@@ -3646,7 +3654,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<unsigned short>")):
             self._digi_prepost_trig_windows._vector = value
         else:
-            raise(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
+            raise ValueError(f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required.")
 
     @property
     def trace_x(self):
@@ -3664,7 +3672,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_x._vector = value
         else:
-            raise(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
+            raise ValueError(f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required.")
 
     @property
     def trace_y(self):
@@ -3682,7 +3690,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_y._vector = value
         else:
-            raise(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def trace_z(self):
@@ -3700,7 +3708,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._trace_z._vector = value
         else:
-            raise(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def fft_mag_x(self):
@@ -3718,7 +3726,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_mag_x._vector = value
         else:
-            raise(f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def fft_mag_y(self):
@@ -3736,7 +3744,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_mag_y._vector = value
         else:
-            raise(f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def fft_mag_z(self):
@@ -3754,7 +3762,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_mag_z._vector = value
         else:
-            raise(f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def fft_phase_x(self):
@@ -3772,7 +3780,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_phase_x._vector = value
         else:
-            raise(f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def fft_phase_y(self):
@@ -3790,7 +3798,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_phase_y._vector = value
         else:
-            raise(f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def fft_phase_z(self):
@@ -3808,7 +3816,7 @@ class EfieldEventTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("vector<float>")):
             self._fft_phase_z._vector = value
         else:
-            raise(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
 ## The class for storing reconstructed shower data common for each event
@@ -3851,7 +3859,7 @@ class ShowerEventTree(MotherEventTree):
     def shower_type(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._shower_type.string.assign(value)
 
@@ -3901,7 +3909,7 @@ class ShowerEventTree(MotherEventTree):
     def atmos_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._atmos_model.string.assign(value)
 
@@ -3934,7 +3942,7 @@ class ShowerEventTree(MotherEventTree):
     def date(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._date.string.assign(value)
 
@@ -4021,7 +4029,7 @@ class VoltageRunSimdataTree(MotherRunTree):
     def signal_sim(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._signal_sim.string.assign(value)
 
@@ -4032,9 +4040,9 @@ class VoltageEventSimdataTree(MotherEventTree):
     """The class for storing voltage simulation-only data common for each event"""
     _tree_name: str = "teventvoltagesimdata"
 
-    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
-    _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
-    _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
+    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))  # Detector ID
+    _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
+    _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # peak 2 peak amplitudes (x,y,z,modulus)
 
     def __post_init__(self):
         super().__post_init__()
@@ -4063,7 +4071,7 @@ class VoltageEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("int")):
             self._du_id._vector = value
         else:
-            raise(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def t_0(self):
@@ -4082,7 +4090,7 @@ class VoltageEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._t_0._vector = value
         else:
-            raise(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def p2p(self):
@@ -4101,7 +4109,7 @@ class VoltageEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._p2p._vector = value
         else:
-            raise(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 
 @dataclass
@@ -4114,7 +4122,7 @@ class EfieldRunSimdataTree(MotherRunTree):
     # _field_sim: StdString = StdString("")
     ## Name of the atmospheric index of refraction model
     _refractivity_model: StdString = StdString("")
-    _refractivity_model_parameters: StdVectorList("double") = StdVectorList("double")
+    _refractivity_model_parameters: StdVectorList = field(default_factory=lambda: StdVectorList("double"))
     ## The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
     _t_pre: np.ndarray = np.zeros(1, np.float32)
     _t_post: np.ndarray = np.zeros(1, np.float32)
@@ -4138,7 +4146,7 @@ class EfieldRunSimdataTree(MotherRunTree):
     # def field_sim(self, value):
     #     # Not a string was given
     #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-    #         raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+    #         raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
     #
     #     self._field_sim.string.assign(value)
 
@@ -4151,7 +4159,7 @@ class EfieldRunSimdataTree(MotherRunTree):
     def refractivity_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._refractivity_model.string.assign(value)
 
@@ -4171,7 +4179,7 @@ class EfieldRunSimdataTree(MotherRunTree):
         elif isinstance(value, ROOT.vector("double")):
             self._refractivity_model_parameters._vector = value
         else:
-            raise(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
+            raise ValueError(f"Incorrect type for refractivity_model_parameters {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required.")
 
     @property
     def t_pre(self):
@@ -4207,9 +4215,9 @@ class EfieldEventSimdataTree(MotherEventTree):
     """The class for storing Efield simulation-only data common for each event"""
     _tree_name: str = "teventefieldsimdata"
 
-    _du_id: StdVectorList("int") = StdVectorList("int")  # Detector ID
-    _t_0: StdVectorList("float") = StdVectorList("float")  # Time window t0
-    _p2p: StdVectorList("float") = StdVectorList("float")  # peak 2 peak amplitudes (x,y,z,modulus)
+    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))  # Detector ID
+    _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
+    _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # peak 2 peak amplitudes (x,y,z,modulus)
 
     # _event_size: np.ndarray = np.zeros(1, np.uint32)
     # _start_time: StdVectorList("double") = StdVectorList("double")
@@ -4246,7 +4254,7 @@ class EfieldEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("int")):
             self._du_id._vector = value
         else:
-            raise(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def t_0(self):
@@ -4264,7 +4272,7 @@ class EfieldEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._t_0._vector = value
         else:
-            raise(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
     @property
     def p2p(self):
@@ -4282,7 +4290,7 @@ class EfieldEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._p2p._vector = value
         else:
-            raise(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
+            raise ValueError(f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required.")
 
 @dataclass
 ## The class for storing shower simulation-only data common for a whole run
@@ -4318,7 +4326,7 @@ class ShowerRunSimdataTree(MotherRunTree):
     def shower_sim(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._shower_sim.string.assign(value)
 
@@ -4402,23 +4410,23 @@ class ShowerEventSimdataTree(MotherEventTree):
     _energy_in_neutrinos: np.ndarray = np.zeros(1, np.float32)
     # _prim_energy: np.ndarray = np.zeros(1, np.float32)  # primary energy (GeV) TODO: Support multiple primaries. Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
     ## Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
-    _prim_energy: StdVectorList("float") = StdVectorList("float")
+    _prim_energy: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
     _shower_azimuth: np.ndarray = np.zeros(1, np.float32)
     ## Shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
     _shower_zenith: np.ndarray = np.zeros(1, np.float32)
     # _prim_type: StdVectorList("string") = StdVectorList("string")  # primary particle type TODO: Support multiple primaries. standarize (PDG?)
     ## Primary particle type TODO: standarize (PDG?)
-    _prim_type: StdVectorList("string") = StdVectorList("string")
+    _prim_type: StdVectorList = field(default_factory=lambda: StdVectorList("string"))
     # _prim_injpoint_shc: np.ndarray = np.zeros(4, np.float32)  # primary injection point in Shower coordinates TODO: Support multiple primaries
     ## Primary injection point in Shower coordinates
-    _prim_injpoint_shc: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _prim_injpoint_shc: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     # _prim_inj_alt_shc: np.ndarray = np.zeros(1, np.float32)  # primary injection altitude in Shower Coordinates TODO: Support multiple primaries
     ## Primary injection altitude in Shower Coordinates
-    _prim_inj_alt_shc: StdVectorList("float") = StdVectorList("float")
+    _prim_inj_alt_shc: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     # _prim_inj_dir_shc: np.ndarray = np.zeros(3, np.float32)  # primary injection direction in Shower Coordinates  TODO: Support multiple primaries
     ## primary injection direction in Shower Coordinates
-    _prim_inj_dir_shc: StdVectorList("vector<float>") = StdVectorList("vector<float>")
+    _prim_inj_dir_shc: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Atmospheric model name TODO:standarize
     _atmos_model: StdString = StdString("")
     # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
@@ -4456,7 +4464,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     def event_name(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for event_name {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._event_name.string.assign(value)
 
@@ -4469,7 +4477,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     def date(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for date {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._date.string.assign(value)
 
@@ -4507,7 +4515,7 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._prim_energy._vector = value
         else:
-            raise(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required.")
 
     @property
     def shower_azimuth(self):
@@ -4543,7 +4551,7 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("string")):
             self._prim_type._vector = value
         else:
-            raise(f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required.")
+            raise ValueError(f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required.")
 
     @property
     def prim_injpoint_shc(self):
@@ -4571,7 +4579,7 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, ROOT.vector("float")):
             self._prim_inj_alt_shc._vector = value
         else:
-            raise(f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
+            raise ValueError(f"Incorrect type for prim_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required.")
 
 
     @property
@@ -4593,7 +4601,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     def atmos_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._atmos_model.string.assign(value)
 
@@ -4663,7 +4671,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     def hadronic_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._hadronic_model.string.assign(value)
 
@@ -4676,7 +4684,7 @@ class ShowerEventSimdataTree(MotherEventTree):
     def low_energy_model(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._low_energy_model.string.assign(value)
 
@@ -4726,7 +4734,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def relative_thining(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._relative_thining.string.assign(value)
 
@@ -4748,7 +4756,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def gamma_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._gamma_energy_cut.string.assign(value)
 
@@ -4761,7 +4769,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def electron_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._electron_energy_cut.string.assign(value)
 
@@ -4774,7 +4782,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def muon_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._muon_energy_cut.string.assign(value)
 
@@ -4787,7 +4795,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def meson_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._meson_energy_cut.string.assign(value)
 
@@ -4800,7 +4808,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def nucleon_energy_cut(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._nucleon_energy_cut.string.assign(value)
 
@@ -4813,7 +4821,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     def other_parameters(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._other_parameters.string.assign(value)
 
@@ -4923,7 +4931,7 @@ class DetectorInfo(DataTree):
     def type(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for type {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._type.string.assign(value)
 
@@ -4936,7 +4944,7 @@ class DetectorInfo(DataTree):
     def description(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
+            raise ValueError(f"Incorrect type for description {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._description.string.assign(value)
 
