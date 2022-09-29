@@ -12,13 +12,6 @@ if sys.version_info.major>=3 and sys.version_info.minor<10:
 else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
-#from typing import List, Union
-from typing import TypeVar, Literal, Sequence
-
-from typen import enforce_type_hints
-
-# T = TypeVar(Literal[str])
-T = TypeVar("T")
 
 ## A list of generated Trees
 grand_tree_list = []
@@ -61,7 +54,7 @@ class StdVectorList(MutableSequence):
             else:
                 return self._vector[index]
         else:
-            return None
+            raise IndexError("list index out of range")
 
     def append(self, value):
         """Append the value to the list"""
@@ -378,7 +371,7 @@ class DataTree:
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
             u = getattr(self._tree, field[1:])
-            # print(field[1:], self.__dataclass_fields__[field].name, u, type(u))
+            # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
             # Assign the TTree branch value to the class field
             setattr(self, field[1:], u)
 
@@ -4560,8 +4553,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @prim_injpoint_shc.setter
     def prim_injpoint_shc(self, value):
-        self._prim_injpoint_shc = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("prim_injpoint_shc", self._prim_injpoint_shc)
+        set_vector_of_vectors(value, "vector<float>", self._prim_injpoint_shc, "prim_injpoint_shc")
 
     @property
     def prim_inj_alt_shc(self):
@@ -4589,8 +4581,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @prim_inj_dir_shc.setter
     def prim_inj_dir_shc(self, value):
-        self._prim_inj_dir_shc = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("prim_inj_dir_shc", self._prim_inj_dir_shc)
+        set_vector_of_vectors(value, "vector<float>", self._prim_inj_dir_shc, "prim_inj_dir_shc")
 
     @property
     def atmos_model(self):
@@ -4952,3 +4943,16 @@ class DetectorInfo(DataTree):
 class NotUniqueEvent(Exception):
     """Exception raised when an already existing event/run is added to a tree"""
     pass
+
+## General setter for vectors of vectors
+def set_vector_of_vectors(value, vec_type, variable, variable_name):
+    # A list was given
+    if isinstance(value, list) or isinstance(value, np.ndarray):
+        # Clear the vector before setting
+        variable.clear()
+        variable += value
+    # A vector of vectors was given
+    elif isinstance(value, ROOT.vector(vec_type)):
+        variable._vector = value
+    else:
+        raise ValueError(f"Incorrect type for {variable_name} {type(value)}. Either a list of lists, a list of arrays or a ROOT.vector of vectors required.")
