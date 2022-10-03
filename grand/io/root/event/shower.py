@@ -6,6 +6,7 @@ from grand.io.root.base import *
 from .mother_event import MotherEventTree
 import cppyy
 
+
 @dataclass
 ## The class for storing shower data common for each event
 class ShowerEventTree(MotherEventTree):
@@ -357,10 +358,9 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, cppyy.gbl.std.vector("float")):
             self._prim_energy._vector = value
         else:
-            raise(
+            raise (
                 f"Incorrect type for prim_energy {type(value)}. Either a list or a ROOT.vector of floats required."
             )
-
 
     @property
     def shower_azimuth(self):
@@ -396,7 +396,7 @@ class ShowerEventSimdataTree(MotherEventTree):
         elif isinstance(value, cppyy.gbl.std.vector("string")):
             self._prim_type._vector = value
         else:
-            raise(
+            raise (
                 f"Incorrect type for prim_type {type(value)}. Either a list or a ROOT.vector of strings required."
             )
 

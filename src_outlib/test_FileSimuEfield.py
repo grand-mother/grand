@@ -38,12 +38,17 @@ def test_read_2_time():
     d_efield= FileSimuEfield(G_file_efield)
     d_efield.load_event_idx(0)
     
+def test_histo_t_start():
+    d_efield= FileSimuEfield(G_file_efield)
+    o_trevt = d_efield.get_obj_handlingtracesofevent()
+    o_trevt.plot_histo_t_start()
     
 if __name__ == '__main__':
     test_read_2_time()
-    show_trace(38)
-   # show_trace(1)
+    #show_trace(38)
+    # show_trace(1)
     #show_pos_det()
     #show_time_det()
+    test_histo_t_start()
     plt.show()
     pass

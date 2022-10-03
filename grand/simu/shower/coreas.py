@@ -9,7 +9,7 @@ import numpy
 
 from grand import CartesianRepresentation, SphericalRepresentation
 from grand.simu.shower.gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
-from grand.simu.antenna import ElectricField
+from grand.basis.type_trace import ElectricField
 from grand.simu.shower.pdg import ParticleCode
 
 __all__ = ["CoreasShower"]

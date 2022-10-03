@@ -10,7 +10,7 @@ from datetime import datetime
 import numpy as np
 
 from grand.simu.shower.pdg import ParticleCode
-from grand.simu import ElectricField, Voltage
+from grand.basis.type_trace import ElectricField, Voltage
 from grand.io import io_node as io
 from grand.io.root.event.shower import ShowerEventSimdataTree
 from grand.geo.coordinates import (
@@ -75,16 +75,17 @@ class ShowerEvent:
     fields: Optional[FieldsCollection] = None
 
     def load_root(self, d_shower):
+        logger.debug("LOAD WITH ROOT")
         self.energy = d_shower.prim_energy
         self.zenith = d_shower.shower_zenith
         self.zenith = 0
         self.azimuth = d_shower.shower_azimuth
         self.azimuth = 0
         self.primary = d_shower.prim_type
-        #TODO: DC1 find information in file ROOT
+        # TODO: DC1 find information in file ROOT
         self.localize(39.5, 90.5)
         xmax = d_shower.xmax_pos_shc
-        xmax= np.array([150750.  ,    0.,  15560.], dtype=np.float32)
+        xmax = np.array([150750.0, 0.0, 15560.0], dtype=np.float32)
         logger.debug(xmax)
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 
@@ -104,8 +105,8 @@ class ShowerEvent:
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
                     # in order to avoid circular references
-                    from grand.simu import CoreasShower
-                    from grand.simu import ZhairesShower
+                    from grand.simu.shower.coreas import CoreasShower
+                    from grand.simu.shower.zhaires import ZhairesShower
 
                     if CoreasShower.check_dir(source):
                         baseclass = CoreasShower

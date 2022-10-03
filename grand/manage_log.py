@@ -100,10 +100,10 @@ Result log file
 11:28:09.622  INFO [grand.simu.shower.gen_shower 102] Loading shower data from ../../tests/simulation/data/zhaires:/
 11:28:09.625  INFO [grand.simu.shower.zhaires 104] ### zhaires.py: reading groundaltitude from. inp file.
 11:28:10.030  INFO [grand.simu.shower.gen_shower 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/
-11:28:10.030  INFO [grand.simu.antenna.tabulated 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
-11:28:10.077  INFO [grand.simu.antenna.tabulated 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
+11:28:10.030  INFO [grand.io.file_leff 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
+11:28:10.077  INFO [grand.io.file_leff 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
 11:28:10.183  INFO [grand.examples.simulation.shower-event 99] -----> Chrono start
-11:28:10.183 DEBUG [grand.simu.antenna.gen_antenna 180] call compute_voltage()
+11:28:10.183 DEBUG [grand.simu.du.process_ant 180] call compute_voltage()
 11:28:10.244  INFO [grand.examples.simulation.shower-event 103] -----> Chrono Duration (h:m:s): 0:00:00.060869
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 

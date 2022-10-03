@@ -1,9 +1,10 @@
 '''
-Unit tests for the grand.simu.antenna module
+Unit tests for the grand.simu.du module
 '''
 
 from pathlib import Path
 import unittest
+from tests import TestCase
 import os.path as osp
 
 
@@ -11,9 +12,9 @@ import numpy
 
 from grand import ECEF, CartesianRepresentation, LTP, GRAND_DATA_PATH
 
-from grand.simu import Antenna, ElectricField, MissingFrameError,        \
-                             TabulatedAntennaModel, Voltage
-from tests import TestCase
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.basis.type_trace import ElectricField,Voltage
+
 
 
 class AntennaTest(TestCase):
@@ -210,16 +211,16 @@ class AntennaTest(TestCase):
             self.assertGreater(Vpp, 6E-02 * Es)
 
         field   = ElectricField(t, E, frame=shower_frame)
-        antenna = Antenna(model=self.model, frame=antenna_frame)
+        antenna = AntennaProcessing(model=self.model, frame=antenna_frame)
         check(antenna.compute_voltage(xmax, field, shower_frame))
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)
 
-        antenna = Antenna(model=self.model, frame=None)
+        antenna = AntennaProcessing(model=self.model, frame=None)
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field, shower_frame)
 
-        antenna = Antenna(model=self.model, frame=antenna_frame)
+        antenna = AntennaProcessing(model=self.model, frame=antenna_frame)
         check(antenna.compute_voltage(xmax, field, shower_frame))
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)

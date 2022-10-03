@@ -8,9 +8,11 @@ import os.path as osp
 import numpy as np
 from matplotlib import pyplot as plt
 
-from grand import ECEF, Geodetic, LTP, GRANDCS
-from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
-from grand import grand_add_path_data, grand_get_path_root_pkg
+from grand import Geodetic, LTP, GRANDCS
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.simu.shower.gen_shower import ShowerEvent
+from grand.io.file_leff import TabulatedAntennaModel
+from grand import grand_add_path_data_model, grand_get_path_root_pkg
 import grand.manage_log as mlg
 
 # specific logger definition for script because __mane__ is "__main__" !
@@ -19,8 +21,8 @@ logger = mlg.get_logger_for_script(__file__)
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-G_path_ant_300 = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
-G_path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
+G_path_ant_300 = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
+G_path_ant = grand_add_path_data_model("detector/HorizonAntenna_EWarm_leff_loaded.npy")
 G_r_ant = TabulatedAntennaModel.load(G_path_ant_300)
 
 
@@ -75,7 +77,7 @@ def plot_kernel_resp_ant():
     shower = ShowerEvent.load(showerdir)
     # print(shower.fields.keys())
     field = shower.fields[0]
-    antpos_wrt_shower = field.electric.r
+    antpos_wrt_shower = field.electric.pos_xyz
     # RK: if antenna location was saved in LTP frame in zhaires.py, next step would not required.
     antenna_location = LTP(
         x=antpos_wrt_shower.x,
@@ -89,9 +91,9 @@ def plot_kernel_resp_ant():
         magnetic=True,
         obstime=shower.frame.obstime,
     )
-    antenna = Antenna(model=G_r_ant, frame=antenna_frame)
+    antenna = AntennaProcessing(G_r_ant, antenna_frame)
     
-    logger.info(f"Antenna pos in shower frame {antpos_wrt_shower.flatten()}")
+    logger.info(f"AntennaProcessing pos in shower frame {antpos_wrt_shower.flatten()}")
     logger.info(f"{vars(antenna_location)} {antenna_location.flatten()} \
                 antenna pos LTP in shower frame")
     logger.info("---------------------------------")
@@ -104,30 +106,29 @@ def plot_kernel_resp_ant():
     # shower axis at the depth of maximum development. Note that the direction
     # of observation and the electric field components are provided in the
     # shower frame. This is indicated by the `frame` named argument.
-    Exyz = field.electric.E
+    Exyz = field.electric.e_xyz
     logger.info(mlg.chrono_start())
     # Xmax, Efield, and input frame are all in shower frame.
     logger.debug("compute_voltage")
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
-    print(antenna.leff_frame_ant.x.dtype)
     plt.figure()
-    plt.plot(np.real(antenna.leff_frame_ant.x), label="x real")
-    plt.plot(np.real(antenna.lx), label="lx real")
+    plt.plot(np.real(antenna.leff_frame_ant[0]), label="x real")
+    #plt.plot(np.real(antenna.lx), label="lx real")
     plt.legend()
     plt.grid()
     plt.figure()
-    plt.plot(np.imag(antenna.leff_frame_ant.x), label="x im")
-    plt.plot(np.imag(antenna.lx), label="lx im")
+    plt.plot(np.imag(antenna.leff_frame_ant[0]), label="x im")
+    #plt.plot(np.imag(antenna.lx), label="lx im")
     plt.legend()
     plt.grid()
     plt.figure()
-    plt.plot(antenna.leff_frame_ant.y, label="y")
-    plt.plot(antenna.ly, label="ly")
+    plt.plot(np.real(antenna.leff_frame_ant[1]), label="y")
+    #plt.plot(antenna.ly, label="ly")
     plt.legend()
     plt.grid()
     plt.figure()
-    plt.plot(antenna.leff_frame_ant.z, label="z")
-    plt.plot(antenna.lz, label="lz")
+    plt.plot(np.real(antenna.leff_frame_ant[2]), label="z")
+    #plt.plot(antenna.lz, label="lz")
     plt.legend()
     plt.grid()
 

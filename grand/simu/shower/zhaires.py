@@ -14,7 +14,7 @@ import h5py
 import numpy
 
 from grand.simu.shower.gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
-from grand.simu.antenna import ElectricField
+from grand.basis.type_trace import ElectricField
 from grand.simu.shower.pdg import ParticleCode
 from grand.geo.coordinates import ECEF, LTP, Geodetic
 from grand.geo.coordinates import (

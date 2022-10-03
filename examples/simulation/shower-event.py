@@ -9,7 +9,7 @@ from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
 import grand.manage_log as mlg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 from grand import SphericalRepresentation
-from grand import grand_add_path_data, grand_get_path_root_pkg
+from grand import grand_add_path_data_model, grand_get_path_root_pkg
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -47,7 +47,7 @@ logger.info("---------------------------------")
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
 # path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
-path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
+path_ant = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
 antenna_model = TabulatedAntennaModel.load(path_ant)
 # logger.debug(antenna_model)
 

@@ -8,6 +8,7 @@ import numpy as np
 
 from grand.io.root.event.efield import EfieldEventTree
 from grand.io.root.event.shower import ShowerEventSimdataTree
+from grand.basis.traces_event import HandlingTracesOfEvent
 
 logger = getLogger(__name__)
 
@@ -42,14 +43,15 @@ class FileSimuEfield:
         # number detector in event
         self.idx_event = -1
         self.load_event_idx(0)
+        self.f_name = f_name
 
     def load_event_idx(self, idx):
         if self.idx_event == idx:
             return
         self.idx_event = idx
-        evt_nb = self.l_events[idx][0]
-        run_nb = self.l_events[idx][1]
-        self._load_event_identifier(evt_nb, run_nb)
+        self.evt_nb = self.l_events[idx][0]
+        self.run_nb = self.l_events[idx][1]
+        self._load_event_identifier(self.evt_nb, self.run_nb)
 
     def _load_event_identifier(self, evt_nb, run_nb):
         """
@@ -92,12 +94,15 @@ class FileSimuEfield:
         a_freq = (1e3 / delta_t_ns) * np.ones(self.get_nb_du(), dtype=np.float32)
         return a_freq
 
-    def get_time_trace_ns(self):
-        # TODO: check management of second , HYPOTHESIS second must bee all the same !!!!
-        a_delta_t_ns = 1e3 / self.get_sampling_freq_mhz()
-        nb_sample = self.traces.shape[2]
-        # to use numpy broadcast I need to transpose
-        t_trace = np.outer(np.arange(0, nb_sample, dtype=np.float64), a_delta_t_ns) + np.array(
-            self.tt_efield.du_nanoseconds
+    def get_obj_handlingtracesofevent(self):
+        o_tevent = HandlingTracesOfEvent(f"{self.f_name} evt={self.evt_nb} run={self.run_nb}")
+        # TODO: difference between du_id for all network and for specific event ?
+        du_id = np.array(self.tt_efield.du_id)
+        o_tevent.init_traces(
+            self.traces,
+            du_id,
+            np.array(self.tt_efield.du_nanoseconds),
+            self.get_sampling_freq_mhz(),
         )
-        return t_trace.transpose()
+        o_tevent.init_network(self.du_pos, du_id)
+        return o_tevent

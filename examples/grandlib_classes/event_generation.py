@@ -44,7 +44,7 @@ for event_number in range(event_count):
         event.voltages.append(v)
 
         # The antenna part
-        a = Antenna()
+        a = AntennaProcessing()
         a.atm_temperature = np.random.randint(-400, 401) / 100.0
         a.atm_pressure = np.random.randint(9000, 11000) / 10.0
         a.atm_humidity = np.random.rand() * 100
