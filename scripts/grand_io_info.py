@@ -2,7 +2,7 @@
 
 import argparse
 import matplotlib.pyplot as plt
-from grand.io.root.file.simu_efield_gerb import FileSimuEfield
+from grand.io.root_file import FileSimuEfield
 from grand.basis.traces_event import HandlingTracesOfEvent
 
 def main():
