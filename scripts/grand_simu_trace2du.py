@@ -19,12 +19,12 @@ from numpy.ma import log10, abs
 from scipy import interpolate
 import matplotlib.pyplot as plt
 
-from grand import grand_add_path_data
-from grand.io.root_trees import VoltageEventTree
 from grand.num.signal import fftget, ifftget
-from grand.simu.elec_du import LNA_get, filter_get
+from grand.simu.du.elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
-from grand.simu import AntennaProcessing, ShowerEvent, TabulatedAntennaModel
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.simu.shower.gen_shower import ShowerEvent
+from grand.io.file_leff import TabulatedAntennaModel
 from grand import grand_add_path_data, grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 import grand.manage_log as mlg
