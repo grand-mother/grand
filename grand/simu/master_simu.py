@@ -7,7 +7,7 @@ from logging import getLogger
 import grand.geo.coordinates as coord
 from grand.simu.du.process_ant import AntennaProcessing
 from grand.simu.shower.gen_shower import ShowerEvent
-from grand.io.root.file.simu_efield_gerb import FileSimuEfield
+from grand.io.root_file import FileSimuEfield
 from grand.simu.du.model_ant_du import AntennaModelGp300
 from grand.basis.type_trace import ElectricField
 from grand.basis.traces_event import HandlingTracesOfEvent

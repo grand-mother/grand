@@ -2,7 +2,7 @@
 prototype to store trace from io.root with numpy array
 """
 
-import grand.io.root.event.efield as ioree
+import grand.io.root_trees as ioree
 import numpy as np
 import os.path
 

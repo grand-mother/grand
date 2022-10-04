@@ -12,7 +12,7 @@ import numpy as np
 from grand.simu.shower.pdg import ParticleCode
 from grand.basis.type_trace import ElectricField, Voltage
 from grand.io import io_node as io
-from grand.io.root.event.shower import ShowerEventSimdataTree
+from grand.io.root_trees import ShowerEventSimdataTree
 from grand.geo.coordinates import (
     Geodetic,
     LTP,
