@@ -50,9 +50,9 @@ if __name__ == '__main__':
     logger = mlg.get_logger_for_script(__file__)
     logger.info(mlg.string_begin_script())
     # ================
-    test_Voc_du(26)
-    #test_Voc(1)
-    #test_Voc_event_many()
+    #test_Voc_du(26)
+    #test_Voc_event()
+    test_Voc_event_many()
     # ================
     logger.info(mlg.string_end_script())
     plt.show()

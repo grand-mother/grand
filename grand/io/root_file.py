@@ -6,8 +6,7 @@ from logging import getLogger
 
 import numpy as np
 
-from grand.io.root.event.efield import EfieldEventTree
-from grand.io.root.event.shower import ShowerEventSimdataTree
+from grand.io.root_trees import EfieldEventTree, ShowerEventSimdataTree
 from grand.basis.traces_event import HandlingTracesOfEvent
 
 logger = getLogger(__name__)
