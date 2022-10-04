@@ -35,7 +35,7 @@ class HandlingTracesOfEvent:
 
     def init_network(self, du_pos, du_id):
         self.network = DetectorUnitNetwork(self.name)
-        self.network.init_pos_id(du_pos, du_id)
+        self.network.init_pos_id(du_pos, du_id)        
 
     def set_unit(self, str_unit):
         assert isinstance(str_unit, str)
@@ -79,6 +79,9 @@ class HandlingTracesOfEvent:
 
     def get_min_max_t_start(self):
         return self.t_start_ns.min(), self.t_start_ns.max()
+
+    def get_nb_du(self):
+        return self.du_id.shape[0]
 
     ### PLOTS
 

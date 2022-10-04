@@ -1,8 +1,9 @@
 """
 
-
 """
 from logging import getLogger
+
+import numpy as np
 
 import grand.geo.coordinates as coord
 from grand.simu.du.process_ant import AntennaProcessing
@@ -11,6 +12,7 @@ from grand.io.root_file import FileSimuEfield
 from grand.simu.du.model_ant_du import AntennaModelGp300
 from grand.basis.type_trace import ElectricField
 from grand.basis.traces_event import HandlingTracesOfEvent
+from grand.io.root_trees import VoltageEventTree
 
 
 logger = getLogger(__name__)
@@ -18,14 +20,17 @@ logger = getLogger(__name__)
 
 class MasterSimuDetectorWithRootIo(object):
     def __init__(self, f_name_root):
+        self.f_name_root = f_name_root
         self.d_root = FileSimuEfield(f_name_root)
         self.simu_du = SimuDetectorUnitEffect()
+        self.tt_voltage = VoltageEventTree()
 
     def _load_data_to_process_event(self, idx):
-        logger.info("Compute du simulation for traces of event idx= {idx}")
+        logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
-        tr_evt = self.d_root.get_obj_handlingtracesofevent()
-        self.simu_du.set_data_efield(tr_evt)
+        self.tr_evt = self.d_root.get_obj_handlingtracesofevent(10)
+        assert isinstance(self.tr_evt, HandlingTracesOfEvent)
+        self.simu_du.set_data_efield(self.tr_evt)
         shower = ShowerEvent()
         shower.load_root(self.d_root.tt_shower)
         self.simu_du.set_data_shower(shower)
@@ -37,6 +42,21 @@ class MasterSimuDetectorWithRootIo(object):
     def compute_event_idx(self, idx):
         self._load_data_to_process_event(idx)
         return self.simu_du.compute_du_all()
+
+    def save_voltage(self, file_out=""):
+        freq_mhz = int(self.d_root.get_sampling_freq_mhz())
+        for idx in range(self.tr_evt.get_nb_du()):
+            self.tt_voltage.adc_sampling_frequency.append(freq_mhz)
+            self.tt_voltage.du_id.append(self.tr_evt.du_id[idx])
+            self.tt_voltage.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
+            self.tt_voltage.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
+            self.tt_voltage.trace_x.append(self.simu_du.voc[idx, 0].astype(np.float64))
+            self.tt_voltage.trace_y.append(self.simu_du.voc[idx, 1].astype(np.float64))
+            self.tt_voltage.trace_z.append(self.simu_du.voc[idx, 2].astype(np.float64))
+        self.tt_voltage.fill()
+        if file_out == "":
+            file_out = self.f_name_root
+        self.tt_voltage.write(file_out)
 
     def compute_event_all(self):
         nb_events = self.d_root.get_nb_events()
@@ -60,6 +80,7 @@ class SimuDetectorUnitEffect(object):
         self.show_flag = False
         self.noise_flag = False
         self.ant_model = AntennaModelGp300()
+        self.voc = None
 
     ### INTERNAL
     def _get_ant_leff(self, idx_du):
@@ -91,6 +112,7 @@ class SimuDetectorUnitEffect(object):
         self.du_efield = tr_evt.traces
         self.du_pos = tr_evt.network.du_pos
         self.du_id = tr_evt.du_id
+        self.voc = np.zeros_like(self.du_efield)
 
     def set_data_shower(self, shower):
         assert isinstance(shower, ShowerEvent)
@@ -113,12 +135,12 @@ class SimuDetectorUnitEffect(object):
             x=self.du_efield[idx_du, 0], y=self.du_efield[idx_du, 1], z=self.du_efield[idx_du, 2]
         )
         self.o_efield = ElectricField(self.du_time_efield[idx_du] * 1e-9, d_efield)
-        self.voc_sn = self.ant_leff_sn.compute_voltage(
+        self.voc[idx_du, 0,:998] = self.ant_leff_sn.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
-        )
-        self.voc_ew = self.ant_leff_ew.compute_voltage(
+        ).V
+        self.voc[idx_du, 1,:998] = self.ant_leff_ew.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
-        )
-        self.voc_z = self.ant_leff_z.compute_voltage(
+        ).V
+        self.voc[idx_du, 2,:998] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
-        )
+        ).V
