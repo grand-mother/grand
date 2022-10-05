@@ -4,7 +4,19 @@ import paramiko
 import json
 from configparser import ConfigParser
 
-
+## @brief Class for managing datas.
+# It will read an inifile where localdirs and different datasources are defined.
+# The first localdir will be used as an incoming directory (i.e. all files searched in distant location and found will
+# be copied in this incoming directory.
+# The inifile will have the following structure :
+# @verbatim
+# [directories]
+# localdir = ["./incoming/", "/some/directory/" , "/some/other/directory ]
+# [repositories]
+# Repo1 = ["protocol","server",port,"user","password","keyfile","keypasswd",["/directory1/", "/other/dir/"]]
+# @endverbatim
+#  @author Fleg
+#  @date Sept 2022
 class DataManager:
     _file: str
     _directories: list = []
@@ -16,10 +28,12 @@ class DataManager:
         self._file = file
         configur.read(file)
         self._directories = json.loads(configur.get('directories', 'localdir'))
+        # define incoming directory where files should be copied
         self._incoming = self._directories[0]
+        # localdir is inserted first... so search method will first look at local dirs before searching on remote locations
         self._repositories.append(Datasource("localdir", "local", "localhost", "", "", "", "", "", self._directories, self.incoming()))
 
-
+        # Add remote repositories
         for name in configur['repositories']:
             repo = json.loads(configur.get('repositories', name))
             self._repositories.append(
@@ -38,6 +52,7 @@ class DataManager:
     def repositories(self):
         return self._repositories
 
+    # Search a file in localdirs and then in remote repositories. First match is returned.
     def search(self, file):
         res = None
         for rep in self.repositories():
@@ -47,7 +62,9 @@ class DataManager:
                 break
         return res
 
-
+## @brief Class for storing credentials to access remote system.
+#  @author Fleg
+#  @date Sept 2022
 class Credentials:
     _user: str
     _password: str
@@ -73,7 +90,14 @@ class Credentials:
         return self._keypasswd
 
 
+## @brief Generic class defining a datasource.
+# A datasource is a location where files are availables.
+# This location can be reached using a protocol (local, ftp, ssh, ...) and eventually accessed with credentials.
+# Files are stored in some paths (list). "incoming" is the local path where files will be copied (when found on a remote system).
+#  @author Fleg
+#  @date Sept 2022
 class Datasource:
+
     # [protocol, server, port, user, password, keyfile, keypasswd, paths]
     _name: str = ""
     _protocol: str = ""
@@ -119,12 +143,20 @@ class Datasource:
     def incoming(self):
         return self._incoming
 
+    ## Generic search method.
+    # Actual method is implemented in subclasses.
+    # The path to the local copy of the file is returned for further access.
+    # If no file is found then None is returned.
     def search(self, file):
         print("protocol " + self.protocol() + " not implemented for repository " + self.name())
         return None
 
-
+## @brief Implementation of the search method for local files.
+# Files are searched in local directories. No credentials are used.
+# @author Fleg
+# @date Sept 2022
 class DatasourceLocal(Datasource):
+    ## Search for file in local directories and return the path to the first corresponding file found.
     def search(self, file):
         found_file = None
         for path in self.paths():
@@ -139,8 +171,14 @@ class DatasourceLocal(Datasource):
 
         return found_file
 
-
+## @brief Implementation of the search method for ssh access.
+# Files are searched on a remote system accessed by ssh.
+# @author Fleg
+# @date Sept 2022
 class DatasourceSsh(Datasource):
+    ## Search for files in remote location accessed though ssh.
+    # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
+    # If file is not found, then None is returned.
     def search(self, file):
         localfile = None
         client = paramiko.SSHClient()
@@ -171,7 +209,4 @@ class DatasourceSsh(Datasource):
         return localfile
 
 
-class Datafile:
-    _name: str
-    _path: str
-    _source: Datasource
+
