@@ -3,9 +3,13 @@ Read/Write python interface to GRAND data (real and simulated) stored in Cern RO
 
 This is the interface for accessing GRAND ROOT TTrees that do not require the user (reader/writer of the TTrees) to have any knowledge of ROOT. It also hides the internals from the data generator, so that the changes in the format are not concerning the user.
 """
+
+from logging import getLogger
+import sys
+
 import ROOT
 import numpy as np
-import sys
+
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -13,10 +17,9 @@ if sys.version_info.major >= 3 and sys.version_info.minor < 10:
 else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
-import grand.manage_log as mlg
 
-# Init the logger
-logger = mlg.get_logger_for_script(__file__)
+
+logger = getLogger(__name__)
 
 ## A list of generated Trees
 grand_tree_list = []
