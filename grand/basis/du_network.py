@@ -76,23 +76,22 @@ class DetectorUnitNetwork:
         fig.colorbar(scm)
         plt.ylabel("[m]")
         plt.xlabel("[m]")
-
+        
     def plot_trace_time(self, a_time, a_values, title="", size_circle=100):
         assert a_time.shape[0] == a_values.shape[1]
-        print("aaaa")
         # Create the figure and the line that we will manipulate
         fig, ax = plt.subplots()
-        idx_t = a_time.shape[0] // 2
-        print(idx_t)
-        print(a_time.shape[0])
-        print(a_values.min(), a_values.max())
-        col_log = colors.LogNorm(vmin=a_values.min(), vmax=a_values.max())
+        idx_mean = int(a_time.shape[0] // 2)
+        val_min = a_values.min()
+        if val_min <= 0:
+            val_min = 0.1
+        col_log = colors.LogNorm(vmin=val_min, vmax=a_values.max())
         scatterm = ax.scatter(
             self.du_pos[:, 0],
             self.du_pos[:, 1],
             norm=col_log,
             s=size_circle,
-            c=a_values[:, idx_t],
+            c=a_values[:, idx_mean],
             edgecolors="k",
             cmap="Reds",
         )
@@ -101,20 +100,19 @@ class DetectorUnitNetwork:
         plt.xlabel("[m]")
         fig.subplots_adjust(left=0.25, bottom=0.25)
         # Make a horizontal slider to control the frequency.
-        # axfreq = fig.add_axes([0.25, 0.1, 0.65, 0.03])
         axe_idx = fig.add_axes([0.2, 0.1, 0.65, 0.03])
         time_slider = Slider(
             ax=axe_idx,
             label="idx",
             valmin=0.1,
-            valmax=998.0,
-            valinit=123.0,
+            valmax=a_time.shape[0],
+            valinit=idx_mean,
         )
         # The function to be called anytime a slider's value changes
         def update_time(idx_t):
-            #global scatterm
-            print(f"update {idx_t}")            
-            #scatterm.clear()
+            # 1) Can't update partial of scatter, like set_offsets, set_color, ...
+            # so ... redraw all
+            # 2) Can't clear before with : scatterm.clear()
             scatterm = ax.scatter(
                 self.du_pos[:, 0],
                 self.du_pos[:, 1],
@@ -124,81 +122,9 @@ class DetectorUnitNetwork:
                 edgecolors="k",
                 cmap="Reds",
             )
-            # scm.set_offsets(np.stack(
-            #     self.du_pos[:, 0],
-            #     self.du_pos[:, 1]), axis=1
-            # )
-            # scm.set_norm(col_log)
-            # scm.set_sizes(size_circle)
-            # scm.set_color(c=a_values[:, int(time_slider.val)])
             fig.canvas.draw_idle()
-
-        time_slider.on_changed(update_time)
-        # def on_move(event):
-        #     if event.inaxes:
-        #         print(f'data coords {event.xdata} {event.ydata},',
-        #               f'pixel coords {event.x} {event.y}')
-        #
-        #
-        # def on_click(event):
-        #     if event.button is MouseButton.LEFT:
-        #         #print('disconnecting callback')
-        #         #plt.disconnect(binding_id)
-        #         print(f'data coords {event.xdata} {event.ydata},',
-        #               f'pixel coords {event.x} {event.y}')
-        #
-        # #binding_id = plt.connect('motion_notify_event', on_move)
-        # plt.connect('button_press_event', on_click)        
+        scatterm = time_slider.on_changed(update_time)
+        # WARNING: we must used plt.show() of this module not in another module 
+        #          else slider is blocked              
         plt.show()
         
-    def plot_trace_time_test(self, a,b,c):
-        # The parametrized function to be plotted
-        def f(t, amplitude, frequency):
-            return amplitude * np.sin(2 * np.pi * frequency * t)
-        
-        t = np.linspace(0, 1, 1000)
-        
-        # Define initial parameters
-        init_amplitude = 5
-        init_frequency = 3
-        
-        # Create the figure and the line that we will manipulate
-        fig, ax = plt.subplots()
-        line, = ax.plot(t, f(t, init_amplitude, init_frequency), lw=2)
-        ax.set_xlabel('Time [s]')
-        
-        # adjust the main plot to make room for the sliders
-        fig.subplots_adjust(left=0.25, bottom=0.25)
-        
-        # Make a horizontal slider to control the frequency.
-        axfreq = fig.add_axes([0.25, 0.1, 0.65, 0.03])
-        freq_slider = Slider(
-            ax=axfreq,
-            label='Frequency [Hz]',
-            valmin=0.1,
-            valmax=30,
-            valinit=init_frequency,
-        )
-        
-        # Make a vertically oriented slider to control the amplitude
-        # axamp = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
-        # amp_slider = Slider(
-        #     ax=axamp,
-        #     label="Amplitude",
-        #     valmin=0,
-        #     valmax=10,
-        #     valinit=init_amplitude,
-        #     orientation="vertical"
-        # )
-        
-        
-        # The function to be called anytime a slider's value changes
-        def update(val):
-            line.set_ydata(f(t, init_amplitude, freq_slider.val))
-            fig.canvas.draw_idle()
-        
-        
-        # register the update function with each slider
-        freq_slider.on_changed(update)
-        #amp_slider.on_changed(update)
-        plt.show()

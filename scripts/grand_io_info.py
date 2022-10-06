@@ -30,12 +30,14 @@ def main():
     if args.net:
         #o_tevent.network.plot_du_pos()
         #o_tevent.network.plot_value(o_tevent.get_max_abs(),"Max abs |Efield|")
-        #o_tevent.network.plot_value(o_tevent.get_max_norm(),"Max norm ||Efield||")        
-        #o_tevent.plot_histo_t_start()
-        o_tevent.define_t_samples()
-        a_time = o_tevent.t_samples[0]
-        a_values = o_tevent.get_norm()+1
-        o_tevent.network.plot_trace_time(a_time, a_values, "demo with but NOK!!")
+        o_tevent.network.plot_value(o_tevent.get_max_norm(),"Max norm ||Efield||")        
+        o_tevent.plot_histo_t_start()
+        if False:
+            # work in progress
+            o_tevent.define_t_samples()
+            a_time = o_tevent.t_samples[0]
+            a_values = o_tevent.get_norm()+1
+            o_tevent.network.plot_trace_time(a_time, a_values, "demo with but NOK!!")
     if args.trace != -100:
         if (0 > args.trace) or  (args.trace >= d_efield.get_nb_du()):
             print(f"ERROR: index of the trace must be >= 0 and <= {d_efield.get_nb_du()-1}")

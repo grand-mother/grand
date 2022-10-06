@@ -16,6 +16,25 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import matplotlib.colors as colors
 
+
+def other():
+    # def on_move(eve=nt):
+    #     if event.inaxes:
+    #         print(f'data coords {event.xdata} {event.ydata},',
+    #               f'pixel coords {event.x} {event.y}')
+    #
+    #
+    # def on_click(event):
+    #     if event.button is MouseButton.LEFT:
+    #         #print('disconnecting callback')
+    #         #plt.disconnect(binding_id)
+    #         print(f'data coords {event.xdata} {event.ydata},',
+    #               f'pixel coords {event.x} {event.y}')
+    #
+    # #binding_id = plt.connect('motion_notify_event', on_move)
+    # plt.connect('button_press_event', on_click)
+               
+        
 # The parametrized function to be plotted
 def f(t, amplitude, frequency):
     return amplitude * np.sin(2 * np.pi * frequency * t)
