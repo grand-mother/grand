@@ -35,18 +35,18 @@ from grand.io.root_trees import *
 SHOWER = None
 IDX_ANT = 0
 
-path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
+path_ant = grand_add_path_data("model/detector/GP300Antenna_EWarm_leff.npy")
 G_antenna_model_ew = TabulatedAntennaModel.load(path_ant)    
-path_ant = grand_add_path_data("detector/GP300Antenna_SNarm_leff.npy")
+path_ant = grand_add_path_data("model/detector/GP300Antenna_SNarm_leff.npy")
 G_antenna_model_sn = TabulatedAntennaModel.load(path_ant)    
-path_ant = grand_add_path_data("detector/GP300Antenna_Zarm_leff.npy")
+path_ant = grand_add_path_data("model/detector/GP300Antenna_Zarm_leff.npy")
 G_antenna_model_z = TabulatedAntennaModel.load(path_ant)    
 
 # specific logger definition for script because __mane__ is "__main__"
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("info", log_file="log.txt", log_stdout=True)
+mlg.create_output_for_logger("info", log_file=None, log_stdout=True)
 
 
 
@@ -239,7 +239,7 @@ def dummy_CEL(idx_ant, e_theta, e_phi, N, f0, unit, show_flag=False):
 
 
 def get_antenna(idx_ant):
-    pos_ant = SHOWER.fields[idx_ant].electric.r
+    pos_ant = SHOWER.fields[idx_ant].electric.pos_xyz
     antenna_location = LTP(
         x=pos_ant.x,
         y=pos_ant.y,
@@ -286,6 +286,7 @@ def main_xdu_rf(rootdir):
         # file_dir = os.path.join("..", "data", target[i])
         file_dir = target[i]
         logger.debug(file_dir)
+        logger.info(f'Read {file_dir}')
         SHOWER = ShowerEvent.load(file_dir)
         list1 = target[i].split("_")
         content = []
