@@ -392,6 +392,7 @@ def main_xdu_rf(rootdir):
         if savetxt == 1:
             tvoltage.du_count = nb_ant
             tvoltage.run_number = case
+            logger.info(f'ROOT IO: add run_number {tvoltage.run_number}')
         # ========================= Get first point and renormalisation of times =================================
         mintime = 1E100
         firstdet = 0
@@ -402,6 +403,7 @@ def main_xdu_rf(rootdir):
             if tmin <= mintime:
                 mintime = tmin
                 firstdet = num
+        logger.info(f"ROOT IO: add first_du")
         tvoltage.first_du = firstdet
         tvoltage.time_seconds = 0
         tvoltage.time_nanoseconds = 0
@@ -539,6 +541,7 @@ def main_xdu_rf(rootdir):
                 tvoltage.du_nanoseconds.append(round(trace_t[0]-mintime))
                 tvoltage.du_seconds.append(0)
                 # sampling in Mhz
+                logger.info(f"ROOT IO: add du_id, trace_x ")
                 sampling_ns = trace_t[1] - trace_t[0]
                 sampling_mhz = int(1000/sampling_ns)
                 tvoltage.adc_sampling_frequency.append(sampling_mhz)
@@ -554,8 +557,10 @@ def main_xdu_rf(rootdir):
         plt.show()
     # ======================Save root file======================
     if savetxt == 1:
-        tvoltage.fill()
-        tvoltage.write(path_root_vfilter)
+        ret = tvoltage.fill()
+        logger.info(ret)
+        ret = tvoltage.write(path_root_vfilter)
+        logger.info(ret)
         logger.info(f"Wrote tvoltage in: {path_root_vfilter}")
     logger.info(mlg.string_end_script())
 
