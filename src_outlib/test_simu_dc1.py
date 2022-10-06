@@ -10,7 +10,7 @@ import grand.manage_log as mlg
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("info", log_stdout=True, log_file="simu_with_rootio.txt")
+mlg.create_output_for_logger("debug", log_stdout=True, log_file="simu_with_rootio.txt")
 
 G_file_efield = "/home/dc1/Coarse1.root"
 
@@ -39,7 +39,7 @@ def test_Voc_du(idx):
 def test_Voc_event():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)
     m_ios.compute_event_idx(0)
-    m_ios.save_voltage("out.root")
+    m_ios.save_voltage("out2.root")
 
 def test_Voc_event_many():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)

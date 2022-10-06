@@ -1,6 +1,8 @@
 """
 
 """
+import os
+import os.path
 from logging import getLogger
 
 import numpy as np
@@ -45,20 +47,35 @@ class MasterSimuDetectorWithRootIo(object):
         self._load_data_to_process_event(idx)
         return self.simu_du.compute_du_all()
 
-    def save_voltage(self, file_out=""):
-        freq_mhz = int(self.d_root.get_sampling_freq_mhz())
-        for idx in range(self.tr_evt.get_nb_du()):
-            self.tt_voltage.adc_sampling_frequency.append(freq_mhz)
-            self.tt_voltage.du_id.append(self.tr_evt.du_id[idx])
-            self.tt_voltage.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
-            self.tt_voltage.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
-            self.tt_voltage.trace_x.append(self.simu_du.voc[idx, 0].astype(np.float64))
-            self.tt_voltage.trace_y.append(self.simu_du.voc[idx, 1].astype(np.float64))
-            self.tt_voltage.trace_z.append(self.simu_du.voc[idx, 2].astype(np.float64))
-        self.tt_voltage.fill()
+    def save_voltage(self, file_out="", append_file=False):
+        # delete file can be take time => start with this action
         if file_out == "":
             file_out = self.f_name_root
-        self.tt_voltage.write(file_out)
+        if not append_file and os.path.exists(file_out):
+            logger.info(f'save on new file option => remove file {file_out}')
+            os.remove(file_out)
+        # now fill Voltage object      
+        freq_mhz = int(self.d_root.get_sampling_freq_mhz())
+        self.tt_voltage.du_count = self.tr_evt.get_nb_du()
+        logger.debug(f'We will add {self.tt_voltage.du_count} DU')
+        self.tt_voltage.run_number = self.d_root.tt_efield.run_number
+        self.tt_voltage.event_number = self.d_root.tt_efield.event_number
+        self.tt_voltage.first_du = 0
+        self.tt_voltage.time_seconds = self.d_root.tt_efield.time_seconds
+        self.tt_voltage.time_nanoseconds = self.d_root.tt_efield.time_nanoseconds
+        for idx in range(self.tr_evt.get_nb_du()):
+            logger.debug(f'add DU {self.tr_evt.du_id[idx]} in ROOT file')
+            self.tt_voltage.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
+            self.tt_voltage.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
+            self.tt_voltage.adc_sampling_frequency.append(freq_mhz)
+            self.tt_voltage.du_id.append(self.tr_evt.du_id[idx])
+            self.tt_voltage.trace_x.append(self.simu_du.voc[idx, 0])
+            self.tt_voltage.trace_y.append(self.simu_du.voc[idx, 1])
+            self.tt_voltage.trace_z.append(self.simu_du.voc[idx, 2])
+        ret = self.tt_voltage.fill()
+        logger.debug(ret)
+        ret = self.tt_voltage.write(file_out)
+        logger.debug(ret)
 
     def compute_event_all(self):
         nb_events = self.d_root.get_nb_events()
