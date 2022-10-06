@@ -253,11 +253,11 @@ def get_antenna(idx_ant):
     )
     ant_3d = [1, 2, 3]
     # EW
-    ant_3d[0] = AntennaProcessing(model=G_antenna_model_ew, frame=antenna_frame)
+    ant_3d[0] = AntennaProcessing(G_antenna_model_ew, frame=antenna_frame)
     # SN
-    ant_3d[1] = AntennaProcessing(model=G_antenna_model_sn, frame=antenna_frame)
+    ant_3d[1] = AntennaProcessing(G_antenna_model_sn, frame=antenna_frame)
     # Z
-    ant_3d[2] = AntennaProcessing(model=G_antenna_model_z, frame=antenna_frame)
+    ant_3d[2] = AntennaProcessing(G_antenna_model_z, frame=antenna_frame)
     return ant_3d
 
 
