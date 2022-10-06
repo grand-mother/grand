@@ -28,7 +28,9 @@ class MasterSimuDetectorWithRootIo(object):
     def _load_data_to_process_event(self, idx):
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
-        self.tr_evt = self.d_root.get_obj_handlingtracesofevent(10)
+        self.tr_evt = self.d_root.get_obj_handlingtracesofevent()
+        # for debug
+        self.tr_evt.reduce_nb_du(10)
         assert isinstance(self.tr_evt, HandlingTracesOfEvent)
         self.simu_du.set_data_efield(self.tr_evt)
         shower = ShowerEvent()
@@ -107,8 +109,8 @@ class SimuDetectorUnitEffect(object):
     def set_data_efield(self, tr_evt):
         assert isinstance(tr_evt, HandlingTracesOfEvent)
         self.tr_evt = tr_evt
-        tr_evt.compute_time_samples()
-        self.du_time_efield = tr_evt.t_traces
+        tr_evt.define_t_samples()
+        self.du_time_efield = tr_evt.t_samples
         self.du_efield = tr_evt.traces
         self.du_pos = tr_evt.network.du_pos
         self.du_id = tr_evt.du_id
@@ -135,12 +137,12 @@ class SimuDetectorUnitEffect(object):
             x=self.du_efield[idx_du, 0], y=self.du_efield[idx_du, 1], z=self.du_efield[idx_du, 2]
         )
         self.o_efield = ElectricField(self.du_time_efield[idx_du] * 1e-9, d_efield)
-        self.voc[idx_du, 0,:998] = self.ant_leff_sn.compute_voltage(
+        self.voc[idx_du, 0, :998] = self.ant_leff_sn.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        self.voc[idx_du, 1,:998] = self.ant_leff_ew.compute_voltage(
+        self.voc[idx_du, 1, :998] = self.ant_leff_ew.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        self.voc[idx_du, 2,:998] = self.ant_leff_z.compute_voltage(
+        self.voc[idx_du, 2, :998] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V

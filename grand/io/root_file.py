@@ -74,11 +74,11 @@ class FileSimuEfield:
         self.du_pos[:, 0] = np.array(self.tt_efield.pos_x, dtype=np.float32)
         self.du_pos[:, 1] = np.array(self.tt_efield.pos_y, dtype=np.float32)
         self.du_pos[:, 2] = np.array(self.tt_efield.pos_z, dtype=np.float32)
-        # synchronize shower on same evt, run 
+        # synchronize shower on same evt, run
         logger.info(f"load tt_shower: {evt_nb} of run  {run_nb}")
         self.tt_shower.get_event(evt_nb, run_nb)
 
-    def get_nb_du(self): 
+    def get_nb_du(self):
         return self.tt_efield.du_count
 
     def get_nb_events(self):
@@ -90,24 +90,18 @@ class FileSimuEfield:
     def get_sampling_freq_mhz(self):
         # TODO: t_bin_size in EfieldRunSimdataTree class
         delta_t_ns = 0.5
-        a_freq = (1e3 / delta_t_ns)
+        a_freq = 1e3 / delta_t_ns
         return a_freq
 
-    def get_obj_handlingtracesofevent(self, use_limit=False):
+    def get_obj_handlingtracesofevent(self):
         o_tevent = HandlingTracesOfEvent(f"{self.f_name} evt={self.evt_nb} run={self.run_nb}")
         # TODO: difference between du_id for all network and for specific event ?
-        if use_limit:
-            assert use_limit>0
-            assert use_limit<= self.get_nb_du()
-            lim_du = use_limit
-        else:
-            lim_du = self.get_nb_du()
-        du_id = np.array(self.tt_efield.du_id)[:lim_du]     
+        du_id = np.array(self.tt_efield.du_id)
         o_tevent.init_traces(
-            self.traces[:lim_du,:,:],
-            du_id[:lim_du],
-            np.array(self.tt_efield.du_nanoseconds)[:lim_du],
+            self.traces,
+            du_id,
+            np.array(self.tt_efield.du_nanoseconds),
             self.get_sampling_freq_mhz(),
         )
-        o_tevent.init_network(self.du_pos[:lim_du,:], du_id[:lim_du])
+        o_tevent.init_network(self.du_pos, du_id)
         return o_tevent

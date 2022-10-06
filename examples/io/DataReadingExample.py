@@ -20,16 +20,20 @@ print("ADCCounts readout: tadccounts.event_number, tadccounts.time_seconds, tadc
 print(tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0])
 print(tadccounts.trace_0[0][0])
 
-if len(sys.argv)<2:
+if len(sys.argv) < 2:
     tefield = EfieldEventTree("stored_data.root")
 else:
     tefield = EfieldEventTree(sys.argv[1])
-#tvoltage = GRANDVoltageTree("stored_data.root")
+# tvoltage = GRANDVoltageTree("stored_data.root")
 
 list_of_events = tefield.get_list_of_events()
 tefield.get_event(*list_of_events[-1])
-print("\nEfield readout: tefield.event_number, tefield.det_time[0], tefield.trace_x[0][0], tadccounts.evt_id")
-print("The event_number of tadccounts changed to 4 when tefield event with event_number 4 was requested")
+print(
+    "\nEfield readout: tefield.event_number, tefield.det_time[0], tefield.trace_x[0][0], tadccounts.evt_id"
+)
+print(
+    "The event_number of tadccounts changed to 4 when tefield event with event_number 4 was requested"
+)
 print(tefield.event_number, tefield.du_seconds[0], tefield.trace_x[0][0], tadccounts.event_number)
 
 # Hard exit to avoid ROOT crash on defriending - not needed for ROOT 6.26.02 and above

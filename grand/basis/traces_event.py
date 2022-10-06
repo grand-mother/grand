@@ -9,19 +9,27 @@ logger = getLogger(__name__)
 
 
 class HandlingTracesOfEvent:
+    """
+    Handling a set of traces associated to one event observed on DetectorUnit network
+    """
+
     def __init__(self, name="NotDefined"):
         logger.info(f"Create HandlingTracesOfEvent with name {name}")
-        self.init = False
-        self.t_traces = None
-        self.unit_trace = "TBD"
         self.name = name
+        self.traces = None
+        self.du_id = None
+        self.t_start_ns = None
+        self.t_samples = None
+        self.f_samp_mhz = None
+        self.unit_trace = "TBD"
+        self.network = DetectorUnitNetwork(self.name)
 
     ### INTERNAL
 
     def _aa(self):
         pass
 
-    ### SETTER
+    ### INIT/SETTER
 
     def init_traces(self, traces, du_id, t_start_ns, f_samp_mhz):
         self.traces = traces
@@ -34,15 +42,16 @@ class HandlingTracesOfEvent:
         assert traces.shape[0] == du_id.shape[0] == t_start_ns.shape[0]
 
     def init_network(self, du_pos, du_id):
-        self.network = DetectorUnitNetwork(self.name)
-        self.network.init_pos_id(du_pos, du_id)        
+        self.network.init_pos_id(du_pos, du_id)
 
-    def set_unit(self, str_unit):
+    def set_unit_trace(self, str_unit):
         assert isinstance(str_unit, str)
         self.unit_trace = str_unit
 
-    def compute_time_samples(self):
-        if not self.t_traces:
+    ### OPERATIONS
+
+    def define_t_samples(self):
+        if not self.t_samples:
             delta_ns = 1e3 / self.f_samp_mhz
             nb_sample = self.traces.shape[2]
             # to use numpy broadcast I need to transpose
@@ -53,16 +62,42 @@ class HandlingTracesOfEvent:
                 )
                 + self.t_start_ns
             )
-            self.t_traces = t_trace.transpose()
+            self.t_samples = t_trace.transpose()
 
-    ### OPERATIONS
+    def reduce_nb_du(self, new_nb_du):
+        """
+        feature to reduce computation and debugging
+        :param new_nb_du:
+        """
+        assert new_nb_du > 0
+        assert new_nb_du <= self.get_nb_du()
+        self.du_id = self.du_id[:new_nb_du]
+        self.traces = self.traces[:new_nb_du, :, :]
+        self.t_start_ns = self.t_start_ns[:new_nb_du]
+        if self.t_samples is not None:
+            self.t_samples = self.t_samples[:new_nb_du, :, :]
+        self.network.reduce_nb_du(new_nb_du)
 
-    def get_vmax_abs(self):
+    ### GETTER :
+
+    def get_max_abs(self):
         """
         find absolute maximal value in trace for each detector
         :param self:
         """
         return np.max(np.abs(self.traces), axis=(1, 2))
+
+    def get_max_norm(self):
+        """
+        find norm maximal value in trace for each detector
+        :param self:
+        """
+        # norm on 3D composant => axis=1
+        # max on all norm => axis=1
+        return np.max(np.linalg.norm(self.traces, axis=1), axis=1)
+
+    def get_norm(self):
+        return np.linalg.norm(self.traces, axis=1)
 
     def get_tmax_vmax(self, method="efield"):
         """
@@ -83,18 +118,21 @@ class HandlingTracesOfEvent:
     def get_nb_du(self):
         return self.du_id.shape[0]
 
+    def get_size_trace(self):
+        return self.du_id.shape[2]
+
     ### PLOTS
 
     def plot_trace_idx(self, idx, to_draw="xyz"):
-        self.compute_time_samples()
+        self.define_t_samples()
         plt.figure()
         plt.title(f"{self.name}\nTrace of DU {self.du_id[idx]} (idx={idx}) ")
         if "x" in to_draw:
-            plt.plot(self.t_traces[idx], self.traces[idx, 0], label="x")
+            plt.plot(self.t_samples[idx], self.traces[idx, 0], label="x")
         if "y" in to_draw:
-            plt.plot(self.t_traces[idx], self.traces[idx, 1], label="y")
+            plt.plot(self.t_samples[idx], self.traces[idx, 1], label="y")
         if "z" in to_draw:
-            plt.plot(self.t_traces[idx], self.traces[idx, 2], label="z")
+            plt.plot(self.t_samples[idx], self.traces[idx, 2], label="z")
         plt.ylabel(f"[{self.unit_trace}]")
         plt.xlabel("[ns]")
         plt.grid()

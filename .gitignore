@@ -8,6 +8,12 @@ grand/version.py
 __pycache__
 *.pyc
 *.pyo
+*.root
+
+# jupyterlab checkpoints
+.ipynb_checkpoints
+
+
 
 
 # Ignore build and dist temporaries

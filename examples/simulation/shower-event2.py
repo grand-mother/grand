@@ -52,7 +52,7 @@ logger.info("---------------------------------")
 path_ant = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
 antenna_model = TabulatedAntennaModel.load(path_ant)
 # logger.debug(antenna_model)
-for i_ite in range(200):
+for i_ite in range(2000):
     logger.info(f"ite {i_ite}")
     counter = 0
     # Loop over electric fields and compute the corresponding voltages

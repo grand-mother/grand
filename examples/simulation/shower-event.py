@@ -4,8 +4,9 @@ import os.path as osp
 
 import numpy as np
 from matplotlib import pyplot as plt
-
-from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.simu.shower.gen_shower import ShowerEvent
+from grand.io.file_leff import TabulatedAntennaModel
 import grand.manage_log as mlg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 from grand import SphericalRepresentation
@@ -30,6 +31,7 @@ if shower.frame is None:
     shower.localize(39.5, 90.5)  # Coreas showers have no
     # localization info. This must
     # be set manually
+
 
 logger.info(shower.frame)
 logger.info(shower.maximum)
@@ -84,7 +86,7 @@ for antenna_index, field in shower.fields.items():
         magnetic=True,
         obstime=shower.frame.obstime,
     )
-    antenna = Antenna(model_leff=antenna_model, frame=antenna_frame)
+    antenna = AntennaProcessing(model_leff=antenna_model, frame=antenna_frame)
 
     logger.info(f"{antenna_index} Antenna pos in shower frame {antpos_wrt_shower.flatten()}")
     logger.info(
