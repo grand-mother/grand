@@ -28,7 +28,7 @@ from grand.io.file_leff import TabulatedAntennaModel
 from grand import grand_add_path_data, grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 import grand.manage_log as mlg
-from grand.io.root_trees import *
+import grand.io.root_trees as groot
 
 # showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
 # ShowerEvent.load(showerdir)
@@ -325,7 +325,7 @@ def main_xdu_rf(rootdir):
             os.makedirs(outfile_vcable, exist_ok=True)
             os.makedirs(outfile_vfilter, exist_ok=True)
 
-            tvoltage = VoltageEventTree() #Create tvoltage to be saved
+            tvoltage = groot.VoltageEventTree() #Create tvoltage to be saved
             path_root_vfilter = outfile_vfilter + "/" + "a.root"
 
         # ==== Write particle type, energy level, angle, and event number into parameter.txt========================
@@ -392,6 +392,7 @@ def main_xdu_rf(rootdir):
         if savetxt == 1:
             tvoltage.du_count = nb_ant
             tvoltage.run_number = case
+            logger.info(f'{type(tvoltage.du_count)} {type(tvoltage.run_number)}')
             logger.info(f'ROOT IO: add run_number {tvoltage.run_number}')
         # ========================= Get first point and renormalisation of times =================================
         mintime = 1E100
@@ -536,7 +537,7 @@ def main_xdu_rf(rootdir):
                 trace_x = list(V_output3[:, 1])
                 trace_y = list(V_output3[:, 2])
                 trace_z = list(V_output3[:, 3])
-
+                logger.info(f"type trace {V_output3[:, 3].dtype} {V_output3[:, 3].shape}")
                 # times in ns -> shifted to the first detection (as integer is needed we loose decimals !!!!)
                 tvoltage.du_nanoseconds.append(round(trace_t[0]-mintime))
                 tvoltage.du_seconds.append(0)
@@ -546,6 +547,7 @@ def main_xdu_rf(rootdir):
                 sampling_mhz = int(1000/sampling_ns)
                 tvoltage.adc_sampling_frequency.append(sampling_mhz)
                 tvoltage.du_id.append(num)
+                logger.info(f"type du_id {type(num)}")
 
                 tvoltage.trace_x.append(trace_x)
                 tvoltage.trace_y.append(trace_y)

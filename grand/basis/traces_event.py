@@ -19,7 +19,7 @@ class HandlingTracesOfEvent:
         self.traces = None
         self.du_id = None
         self.t_start_ns = None
-        self.t_samples = None
+        self.t_samples = False
         self.f_samp_mhz = None
         self.unit_trace = "TBD"
         self.network = DetectorUnitNetwork(self.name)
@@ -51,7 +51,7 @@ class HandlingTracesOfEvent:
     ### OPERATIONS
 
     def define_t_samples(self):
-        if not self.t_samples:
+        if not isinstance(self.t_samples, np.ndarray):
             delta_ns = 1e3 / self.f_samp_mhz
             nb_sample = self.traces.shape[2]
             # to use numpy broadcast I need to transpose
@@ -74,7 +74,7 @@ class HandlingTracesOfEvent:
         self.du_id = self.du_id[:new_nb_du]
         self.traces = self.traces[:new_nb_du, :, :]
         self.t_start_ns = self.t_start_ns[:new_nb_du]
-        if self.t_samples is not None:
+        if isinstance(self.t_samples, np.ndarray):
             self.t_samples = self.t_samples[:new_nb_du, :, :]
         self.network.reduce_nb_du(new_nb_du)
 

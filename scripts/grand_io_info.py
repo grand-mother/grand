@@ -1,4 +1,4 @@
-#####! /usr/bin/env python3
+#! /usr/bin/env python3
 
 import argparse
 import matplotlib.pyplot as plt
@@ -29,8 +29,8 @@ def main():
     assert isinstance(o_tevent, HandlingTracesOfEvent)
     if args.net:
         #o_tevent.network.plot_du_pos()
-        #o_tevent.network.plot_value(o_tevent.get_max_abs(),"Max abs |Efield|")
-        o_tevent.network.plot_value(o_tevent.get_max_norm(),"Max norm ||Efield||")        
+        #o_tevent.network.plot_value(o_tevent.get_max_abs(),"Max |Efield_i|")
+        o_tevent.network.plot_value(o_tevent.get_max_norm(),"Max ||Efield||")        
         o_tevent.plot_histo_t_start()
         if False:
             # work in progress

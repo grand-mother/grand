@@ -62,8 +62,9 @@ class DetectorUnitNetwork:
         plt.xlabel("[m]")
 
     def plot_value(self, values, title="", size_circle=100):
+        from matplotlib.offsetbox import AnchoredText
         fig, ax = plt.subplots(1, 1)
-        ax.set_title(f"{self.name}\nDU network\n{title}")
+        ax.set_title(f"{self.name}\nDU network : {title}")
         scm = ax.scatter(
             self.du_pos[:, 0],
             self.du_pos[:, 1],
@@ -76,6 +77,13 @@ class DetectorUnitNetwork:
         fig.colorbar(scm)
         plt.ylabel("[m]")
         plt.xlabel("[m]")
+        atl = AnchoredText("24", prop=dict(size=10), frameon=True, loc='upper left')
+        atl.patch.set_boxstyle("Circle, pad=0.3")
+        atr = AnchoredText("1.23e4", prop=dict(size=10), frameon=True, loc='upper right')
+        atr.patch.set_boxstyle("Square, pad=0.3")
+        ax.add_artist(atl)
+        ax.add_artist(atr)
+        
         
     def plot_trace_time(self, a_time, a_values, title="", size_circle=100):
         assert a_time.shape[0] == a_values.shape[1]
