@@ -2404,7 +2404,7 @@ class VoltageEventTree(MotherEventTree):
             self._tree.SetTitle(self._tree_name)
 
         self.create_branches()
-        logger.debug(f'Create VoltageEventTree object')
+        logger.debug(f"Create VoltageEventTree object")
 
     @property
     def event_size(self):

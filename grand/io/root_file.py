@@ -14,7 +14,7 @@ logger = getLogger(__name__)
 
 class FileSimuEfield:
     """
-    File simulation of gerb from ZHAireS is a root file with 5 TTree
+    File simulation of air shower with 5 TTree
       * teventefield
       * teventshowersimdata
       * teventshowerzhaires

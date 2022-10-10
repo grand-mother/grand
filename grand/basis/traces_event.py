@@ -80,6 +80,10 @@ class HandlingTracesOfEvent:
 
     ### GETTER :
 
+    def delta_t_ns(self):
+        ret = 1.0 / (self.f_samp_mhz / 1e3)
+        return ret
+
     def get_max_abs(self):
         """
         find absolute maximal value in trace for each detector
@@ -119,14 +123,42 @@ class HandlingTracesOfEvent:
         return self.du_id.shape[0]
 
     def get_size_trace(self):
-        return self.du_id.shape[2]
+        return self.traces.shape[2]
+
+    def get_common_time_trace(self):
+        size_tr = int(self.get_size_trace())
+        print(type(size_tr), size_tr)
+        t_min, t_max = self.get_min_max_t_start()
+        print(t_min, t_max)
+        delta = self.delta_t_ns()
+        nb_sample_mm = (t_max - t_min) / delta
+        nb_sample = int(np.rint(nb_sample_mm) + size_tr)
+        print(nb_sample)
+        new_traces = np.zeros((self.get_nb_du(), 3, nb_sample), dtype=self.traces.dtype)
+        # don't use np.uint64 => int+ int =float ??
+        i_beg = np.rint((self.t_start_ns - t_min) / delta).astype(np.uint32)
+        print(i_beg[:10], i_beg.dtype)
+        val_median = np.abs(np.median(self.traces))
+        for idx in range(self.get_nb_du()):
+            # print(type(size_tr), size_tr)
+            # print(idx, i_beg[idx], size_tr)
+            # print ( i_beg[idx] + size_tr)
+            # new_traces[idx, :, i_beg[idx]] = 1
+            # print(self.traces[idx].shape)
+            val_median = np.abs(np.median(self.traces[idx]))
+            # new_traces[idx, :, :i_beg[idx] ] = val_median
+            new_traces[idx, :, i_beg[idx] : i_beg[idx] + size_tr] = self.traces[idx]
+            # new_traces[idx, :, i_beg[idx] + size_tr:] = val_median
+        new_time = t_min + np.arange(nb_sample, dtype=np.float64) * delta
+        print(new_time[0], new_time[-size_tr])
+        return new_time, new_traces
 
     ### PLOTS
 
     def plot_trace_idx(self, idx, to_draw="xyz"):
         self.define_t_samples()
         plt.figure()
-        plt.title(f"{self.name}\nTrace of DU {self.du_id[idx]} (idx={idx}) ")
+        plt.title(f"Trace of DU {self.du_id[idx]} (idx={idx})")
         if "x" in to_draw:
             plt.plot(self.t_samples[idx], self.traces[idx, 0], label="x")
         if "y" in to_draw:
@@ -134,9 +166,23 @@ class HandlingTracesOfEvent:
         if "z" in to_draw:
             plt.plot(self.t_samples[idx], self.traces[idx, 2], label="z")
         plt.ylabel(f"[{self.unit_trace}]")
-        plt.xlabel("[ns]")
+        plt.xlabel(f"[ns]\nFile: {self.name}")
         plt.grid()
         plt.legend()
+
+    def plot_traces_norm(self):
+        import matplotlib.colors as colors
+
+        norm = self.get_norm()
+        fig = plt.figure()
+        # fig.canvas.manager.set_window_title(f"{self.name}")
+        plt.title(f"Norm of all traces in event")
+        col_log = colors.LogNorm(clip=False)
+        im_traces = plt.imshow(norm, cmap="Blues", norm=col_log)
+        # im_traces = plt.imshow(norm)
+        plt.colorbar(im_traces)
+        plt.xlabel(f"Index sample\nFile: {self.name}")
+        plt.ylabel("Index DU")
 
     def plot_histo_t_start(self):
         plt.figure()
