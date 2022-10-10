@@ -1,11 +1,15 @@
 #! /usr/bin/env python3
 
 import argparse
-import matplotlib.pyplot as plt
 from grand.io.root_file import FileSimuEfield
 from grand.basis.traces_event import HandlingTracesOfEvent
+import grand.manage_log as mlg
 
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__file__)
 
+# define a handler for logger : standard only
+mlg.create_output_for_logger("debug", log_stdout=False)
 
 
 def main():
@@ -24,7 +28,9 @@ def main():
     # retrieve argument
     args = parser.parse_args()
     # 
+    logger.info(mlg.chrono_start())
     d_efield = FileSimuEfield(args.file.name)
+    logger.info(mlg.chrono_string_duration())
     print(f"Nb events  : {d_efield.get_nb_events()}")
     print(f"Nb DU      : {d_efield.get_nb_du()}")
     print(f"Size trace : {d_efield.get_size_trace()}")
@@ -48,7 +54,10 @@ def main():
             return
         o_tevent.plot_trace_idx(args.trace)
     
-if __name__ == '__main__': 
+if __name__ == '__main__':
+    logger.info(mlg.string_begin_script())
+    #=============================================
     main()
-    plt.show()
+    #=============================================    
+    logger.info(mlg.string_end_script())
     

@@ -34,10 +34,10 @@ class FileSimuEfield:
         """
         if not os.path.exists(f_name):
             raise
+        logger.info(f"Events  in file {f_name}")
         self.tt_efield = EfieldEventTree(f_name)
         self.tt_shower = ShowerEventSimdataTree(f_name)
         self.l_events = self.tt_efield.get_list_of_events()
-        logger.info(f"Events  in file {f_name} :\n{self.l_events}")
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         # number detector in event
         self.idx_event = -1

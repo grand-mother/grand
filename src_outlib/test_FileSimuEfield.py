@@ -2,12 +2,17 @@
 
 '''
 
-from grand.io.root.file.simu_efield_gerb import FileSimuEfield
+from grand.io.root_file import FileSimuEfield
 import matplotlib.pyplot as plt
+import grand.manage_log as mlg
 
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__file__)
 
+# define a handler for logger : standard only
+mlg.create_output_for_logger("debug", log_stdout=True)
 
-G_file_efield = "/home/dc1/Coarse1.root"
+G_file_efield = "/home/dc1/Coarse6.root"
 
 
 def show_trace(idx):
@@ -33,7 +38,11 @@ def show_time_det():
     print(t_trace[1,:10])
     print(t_trace.dtype)
     print(t_trace.shape)
-    
+
+def test_read():
+    FileSimuEfield(G_file_efield)
+    logger.info("End of creating")
+     
 def test_read_2_time():
     d_efield= FileSimuEfield(G_file_efield)
     d_efield.load_event_idx(0)
@@ -44,11 +53,16 @@ def test_histo_t_start():
     o_trevt.plot_histo_t_start()
     
 if __name__ == '__main__':
-    test_read_2_time()
+    logger.info(mlg.string_begin_script())
+    #=============================================
+    test_read()
+    #test_read_2_time()
     #show_trace(38)
     # show_trace(1)
     #show_pos_det()
     #show_time_det()
-    test_histo_t_start()
+    #test_histo_t_start()
+    #=============================================    
+    logger.info(mlg.string_end_script())
+        
     plt.show()
-    pass
