@@ -22,17 +22,17 @@ logger = getLogger(__name__)
 
 class MasterSimuDetectorWithRootIo(object):
     def __init__(self, f_name_root):
-        # self.f_name_root = f_name_root
-        # self.d_root = FileSimuEfield(f_name_root)
-        # self.simu_du = SimuDetectorUnitEffect()
-        self.tt_voltage = VoltageEventTree()
+        self.f_name_root = f_name_root
+        self.d_root = FileSimuEfield(f_name_root)
+        self.simu_du = SimuDetectorUnitEffect()
+        
 
     def _load_data_to_process_event(self, idx):
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
         self.tr_evt = self.d_root.get_obj_handlingtracesofevent()
         # for debug
-        self.tr_evt.reduce_nb_du(10)
+        self.tr_evt.reduce_nb_du(12)
         assert isinstance(self.tr_evt, HandlingTracesOfEvent)
         self.simu_du.set_data_efield(self.tr_evt)
         shower = ShowerEvent()
@@ -170,16 +170,18 @@ class SimuDetectorUnitEffect(object):
         logger.info(f"==============>  Processing DU with id: {self.du_id[idx_du]}")
         self._get_ant_leff(idx_du)
         logger.debug(self.ant_leff_sn.model_leff)
+        # define E field at antenna position
         d_efield = coord.CartesianRepresentation(
             x=self.du_efield[idx_du, 0], y=self.du_efield[idx_du, 1], z=self.du_efield[idx_du, 2]
         )
         self.o_efield = ElectricField(self.du_time_efield[idx_du] * 1e-9, d_efield)
-        self.voc[idx_du, 0, :998] = self.ant_leff_sn.compute_voltage(
+        # compute 3 axis
+        self.voc[idx_du, 0] = self.ant_leff_sn.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        self.voc[idx_du, 1, :998] = self.ant_leff_ew.compute_voltage(
+        self.voc[idx_du, 1] = self.ant_leff_ew.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        self.voc[idx_du, 2, :998] = self.ant_leff_z.compute_voltage(
+        self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V

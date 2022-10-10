@@ -5,6 +5,7 @@ from logging import getLogger
 from typing import Union, Any
 
 import numpy as np
+import scipy.fft as sfft
 
 from grand.geo.coordinates import (
     ECEF,
@@ -50,7 +51,7 @@ class AntennaProcessing:
             delta = a_time[1] - a_time[0]
             logger.debug(f"dt_ns = {delta*1e9:.2f}")
             logger.debug(f"{size}")
-            return np.fft.fftfreq(size, delta)
+            return np.fft.rfftfreq(size, delta)
 
         def interp_sphere_freq(val):
             """Linear interpolation (see np.interp() doc) on the frequency axis
@@ -135,11 +136,13 @@ class AntennaProcessing:
         rp0 = 1 - rp1
         # fft
         # logger.info(Efield.e_xyz.info())
-        E = Efield.e_xyz
-        logger.debug(E.x.shape)
-        Ex = np.fft.rfft(E.x)
-        # frequency [Hz]
-        freq_interp_hz = fftfreq(Ex.size, Efield.a_time)
+        e_xyz = Efield.e_xyz
+        logger.debug(e_xyz.shape)
+        #Ex = np.fft.rfft(E.x)
+        # frequency [Hz] with padding
+        self.fft_size = sfft.next_fast_len(int(e_xyz.shape[1]*1.2))
+        freq_interp_hz = fftfreq(self.fft_size, Efield.a_time)
+        logger.info(f'fft_size={self.fft_size}')
         # frequency [Hz]
         freq_ref_hz = table.frequency
         ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
@@ -188,11 +191,13 @@ class AntennaProcessing:
         # Leff = np.ones((3,500), dtype=np.complex128)
         Leff = self.effective_length(xmax, Efield, frame)
         # logger.info(Leff.dtype)
-        # logger.info(Leff.shape)
+        logger.info(Leff.shape)
         E = Efield.e_xyz  # E is CartesianRepresentation
-        Ex = np.fft.rfft(E.x)
-        Ey = np.fft.rfft(E.y)
-        Ez = np.fft.rfft(E.z)
+        logger.info( Efield.e_xyz.shape)
+        Ex = np.fft.rfft(E.x, n=self.fft_size)
+        Ey = np.fft.rfft(E.y, n=self.fft_size)
+        Ez = np.fft.rfft(E.z, n=self.fft_size)
+        logger.info(Ex.shape)
         logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
         # Here we have to do an ugly patch for Leff values to be correct
         # fmt: off
@@ -201,10 +206,11 @@ class AntennaProcessing:
                +Ey*(Leff[1] - Leff[1, 0])
                +Ez*(Leff[2] - Leff[2, 0]))
         # fmt: on
-        t = Efield.a_time[: resp_volt.size]
+        logger.info(resp_volt.shape)
+        t = Efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
         logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
-        return Voltage(t=t, V=resp_volt)
+        return Voltage(t=t, V=resp_volt[:Efield.e_xyz.shape[1]])
 
     def compute_voltage_fake(
         self,

@@ -4,6 +4,9 @@ import argparse
 from grand.io.root_file import FileSimuEfield
 from grand.basis.traces_event import HandlingTracesOfEvent
 import grand.manage_log as mlg
+import matplotlib.pylab as plt
+
+#plt.ion()
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -41,7 +44,7 @@ def main():
     if args.net:
         #o_tevent.network.plot_du_pos()
         #o_tevent.network.plot_values(o_tevent.get_max_abs(),"Max |Efield_i|")
-        #o_tevent.network.plot_values(o_tevent.get_max_norm(),"Max ||Efield||")        
+        o_tevent.network.plot_values(o_tevent.get_max_norm(),"Max ||Efield||")        
         #o_tevent.plot_histo_t_start()
         if True:
             # work in progress
@@ -58,6 +61,7 @@ if __name__ == '__main__':
     logger.info(mlg.string_begin_script())
     #=============================================
     main()
+    plt.show()
     #=============================================    
     logger.info(mlg.string_end_script())
     

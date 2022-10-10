@@ -63,6 +63,7 @@ class HandlingTracesOfEvent:
                 + self.t_start_ns
             )
             self.t_samples = t_trace.transpose()
+            logger.info(f'shape t_samples =  {self.t_samples.shape}')
 
     def reduce_nb_du(self, new_nb_du):
         """

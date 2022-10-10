@@ -5,6 +5,7 @@
 from grand.io.root_file import FileSimuEfield
 import matplotlib.pyplot as plt
 import grand.manage_log as mlg
+from lib2to3.fixer_util import find_root
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -14,6 +15,9 @@ mlg.create_output_for_logger("debug", log_stdout=True)
 
 G_file_efield = "/home/dc1/Coarse6.root"
 
+
+def histo_size_trace():
+    d_root = FileSimuEfield(G_file_efield)
 
 def show_trace(idx):
     d_efield= FileSimuEfield(G_file_efield)
