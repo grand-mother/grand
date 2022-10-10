@@ -10,10 +10,14 @@ else:
     print(f"Reading file {sys.argv[1]}")
     tadccounts = ADCEventTree(sys.argv[1])
 
-# Print out the list of runs,events
-tadccounts.print_list_of_events()
 # Get the list of runs,events
 list_of_events = tadccounts.get_list_of_events()
+# If there are no events, exit
+if len(list_of_events) == 0:
+    raise Exception("No events in the tadcounts tree.")
+
+# Print out the list of runs,events
+tadccounts.print_list_of_events()
 # Read the first event from the list of events
 tadccounts.get_event(*list_of_events[0])
 print("ADCCounts readout: tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0]")
