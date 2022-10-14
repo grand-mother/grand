@@ -48,9 +48,9 @@ def test_Voc_du(idx):
     plt.figure()
     t_trace = m_ios.simu_du.du_time_efield[idx]
     plt.title("Voltage")
-    # plt.plot(t_trace[:-1], v_oc[0].V, label="V sn")
-    plt.plot(t_trace, v_oc_we, label="V we")
-    # plt.plot(t_trace[:-1], v_oc[2].V, label="V _z")
+    plt.plot(t_trace, m_ios.simu_du.voc[idx][0], label="V sn")
+    #plt.plot(t_trace, m_ios.simu_du.voc[idx][1], label="V we")
+    #plt.plot(t_trace, m_ios.simu_du.voc[idx][2], label="V _z")
     plt.grid()
     plt.legend()
     plt.figure()
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     logger.info(mlg.string_begin_script())
     # ================
     #test_VoltageTTree()
-    test_Voc_du(1)
+    test_Voc_du(26)
     #test_Voc_event()
     # test_Voc_event_many()
     # ================
