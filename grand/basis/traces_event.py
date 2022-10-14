@@ -16,11 +16,14 @@ class HandlingTracesOfEvent:
     def __init__(self, name="NotDefined"):
         logger.info(f"Create HandlingTracesOfEvent with name {name}")
         self.name = name
-        self.traces = None
-        self.du_id = None
-        self.t_start_ns = None
-        self.t_samples = False
-        self.f_samp_mhz = None
+        self.nb_du = 0
+        self.nb_dim = 0
+        self.nb_sample = 0
+        self.traces = np.zeros((self.nb_du, self.nb_dim, self.nb_sample))
+        self.du_id = np.arange(self.nb_du)
+        self.t_start_ns = np.zeros((self.nb_du), dtype=np.int64)
+        self.t_samples = np.zeros((self.nb_du), dtype=np.float64)
+        self.f_samp_mhz = 0
         self.unit_trace = "TBD"
         self.network = DetectorUnitNetwork(self.name)
 
@@ -51,7 +54,7 @@ class HandlingTracesOfEvent:
     ### OPERATIONS
 
     def define_t_samples(self):
-        if not isinstance(self.t_samples, np.ndarray):
+        if self.t_samples.size == 0:
             delta_ns = 1e3 / self.f_samp_mhz
             nb_sample = self.traces.shape[2]
             # to use numpy broadcast I need to transpose
@@ -63,12 +66,12 @@ class HandlingTracesOfEvent:
                 + self.t_start_ns
             )
             self.t_samples = t_trace.transpose()
-            logger.info(f'shape t_samples =  {self.t_samples.shape}')
+            logger.info(f"shape t_samples =  {self.t_samples.shape}")
 
     def reduce_nb_du(self, new_nb_du):
         """
         feature to reduce computation and debugging
-        :param new_nb_du:
+        @param new_nb_du:
         """
         assert new_nb_du > 0
         assert new_nb_du <= self.get_nb_du()
@@ -88,14 +91,14 @@ class HandlingTracesOfEvent:
     def get_max_abs(self):
         """
         find absolute maximal value in trace for each detector
-        :param self:
+        @param self:
         """
         return np.max(np.abs(self.traces), axis=(1, 2))
 
     def get_max_norm(self):
         """
         find norm maximal value in trace for each detector
-        :param self:
+        @param self:
         """
         # norm on 3D composant => axis=1
         # max on all norm => axis=1
@@ -128,33 +131,19 @@ class HandlingTracesOfEvent:
 
     def get_common_time_trace(self):
         size_tr = int(self.get_size_trace())
-        print(type(size_tr), size_tr)
         t_min, t_max = self.get_min_max_t_start()
-        print(t_min, t_max)
         delta = self.delta_t_ns()
         nb_sample_mm = (t_max - t_min) / delta
         nb_sample = int(np.rint(nb_sample_mm) + size_tr)
-        print(nb_sample)
         new_traces = np.zeros((self.get_nb_du(), 3, nb_sample), dtype=self.traces.dtype)
-        # don't use np.uint64 => int+ int =float ??
+        # don't use np.uint64 else int+ int =float ??
         i_beg = np.rint((self.t_start_ns - t_min) / delta).astype(np.uint32)
-        print(i_beg[:10], i_beg.dtype)
-        val_median = np.abs(np.median(self.traces))
         for idx in range(self.get_nb_du()):
-            # print(type(size_tr), size_tr)
-            # print(idx, i_beg[idx], size_tr)
-            # print ( i_beg[idx] + size_tr)
-            # new_traces[idx, :, i_beg[idx]] = 1
-            # print(self.traces[idx].shape)
-            val_median = np.abs(np.median(self.traces[idx]))
-            # new_traces[idx, :, :i_beg[idx] ] = val_median
             new_traces[idx, :, i_beg[idx] : i_beg[idx] + size_tr] = self.traces[idx]
-            # new_traces[idx, :, i_beg[idx] + size_tr:] = val_median
         new_time = t_min + np.arange(nb_sample, dtype=np.float64) * delta
-        print(new_time[0], new_time[-size_tr])
         return new_time, new_traces
 
-    ### PLOTS
+    ### PLOT
 
     def plot_trace_idx(self, idx, to_draw="xyz"):
         self.define_t_samples()
