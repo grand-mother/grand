@@ -1,10 +1,9 @@
 """!
 Simulation of the effects detector on the signal : like VSWR, LNA, cable, 
 
-Reference document : "RF Chain simulation for GP300" by Xidian University, Pengfei Zhang, Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu
-
-
-numpy shape convention (n,3) 
+Reference document : "RF Chain simulation for GP300" 
+                      by Xidian University, Pengfei Zhang and 
+                      Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu
 """
 
 import os.path
@@ -69,11 +68,11 @@ class GenericProcessingDU:
 
 class StandingWaveRatioGP300(GenericProcessingDU):
     """!
-    @authors PengFei and Xidian group, GRANDLIB adaption Colley jm
+    @authors PengFei Zhang and Xidian group, GRANDLIB adaption Colley jm
 
     Class goals:
       * define VSWR value as s11 parameter
-      * read only one time data files
+      * read only once data files
       * pre_compute interpolation
     """
 
@@ -148,11 +147,11 @@ class StandingWaveRatioGP300(GenericProcessingDU):
 
 class LowNoiseAmplificatorGP300(GenericProcessingDU):
     """!
-    @authors PengFei and Xidian group, GRANDLIB adaption Colley jm
+    @authors PengFei Zhang and Xidian group, GRANDLIB adaption Colley jm
 
     Class goals:
       * Perform the LNA filter on signal for each antenna of GP300
-      * read only one time LNA data files
+      * read only once LNA data files
       * pre_compute interpolation
     """
 
@@ -274,8 +273,17 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         self.rho3 = self.lna_s21 / (1 + self.lna_gama)
         self.z_ant = z_ant
         self.z_in_lna = z_in_lna
+        self.antenna_gama = antenna_gama
 
     ### PLOT
+
+    def plot_gama(self):
+        plt.figure()
+        plt.title("")
+        plt.plot(self.f_expan, np.abs(self.antenna_gama[:, 0]), label=r"")
+        # plt.plot(self.f_expan, np.abs(self.z_in_lna[:, 0]), label=r"$\mathregular{Z^{in}_{LNA}}$")
+        plt.grid()
+        plt.legend()
 
     def plot_z(self):
         plt.figure()

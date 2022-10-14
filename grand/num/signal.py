@@ -172,29 +172,39 @@ def add_noise(trace, vrms):
 
 def complex_expansion(size_out, f_step, f_start, f_cut, data):
     """!
-    This procedure is used as a subroutine to complete the expansion
-    of the spectrum
+    Perform complex expansion of <data> on <size_out> samples and set to zero outside the
+    band defined by [<f_start>, <f_cut>]. Output and <data> samples has same frequency step <f_step>.
 
-    @authors PengFei and Xidian group
+    @authors PengFei Zhang and Xidian group
+
+    The program only considers that the length of the expanded data is less than
+    floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5;
+    size_out = 9, the length of the expanded data <= 4
 
     @param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
-    @param f_step (float): is the frequency step, MHz
-    @param f_start (float): is the starting frequency of the spectrum to be expanded, f_cut is the cutoff frequency of the spectrum to be expanded
-    @param f_cut (float): The program only considers that the length of the expanded data is less than floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5; size_out = 9, the length of the expanded data <= 4
+    @param f_step (float): [MHz] frequency step
+    @param f_start (float): [MHz] the starting frequency of the spectrum to be expanded,
+    @param f_cut (float): [MHz] the cutoff frequency of the spectrum to be expanded
 
-    @return (array, array): freq, data_expan
+    @return (size_out), (size_out): 2 array 1D freq, data_expan
     """
     # Frequency sequence
+    logger.debug(f'{(data.size-1)*f_step + f_start}')
+    logger.debug(f'{size_out} {f_step} {f_start} {f_cut}')
+    logger.debug(f'{data.size} {data[:10]} ')
+    assert ((data.size-1)*f_step + f_start) <= f_cut
     freq = np.arange(0, size_out) * f_step
     effective = len(data)
     delta_start = abs(freq - f_start)
     delta_end = abs(freq - f_cut)
     # The row with the smallest difference
-    f_hang_start = np.where(delta_start == min(delta_start))
+    f_hang_start = np.where(delta_start == delta_start.min())
+    logger.debug(f"{f_hang_start}")
     f_hang_start = f_hang_start[0][0]
     f_hang_end = np.where(delta_end == min(delta_end))
     f_hang_end = f_hang_end[0][0]
-    data_expan = np.zeros((size_out), dtype=complex)
+    logger.debug(f'f_hang_bef=gin/end: {f_hang_start} {f_hang_end}')
+    data_expan = np.zeros((size_out), dtype=data.dtype)
     if f_hang_start == 0:
         data_expan[0] = data[0]
         add = np.arange(f_hang_end + 1, size_out - effective + 1, 1)
@@ -210,7 +220,7 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
         add = np.array(add)
         duichen = np.arange(size_out - f_hang_start, size_out - f_hang_start - effective, -1)
         data_expan[add] = 0
-        data_expan[f_hang_start : f_hang_end + 1] = data[:]
+        data_expan[f_hang_start : f_hang_end + 1] = data
         data_expan[duichen] = data.conjugate()
     return freq, data_expan
 

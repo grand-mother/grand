@@ -27,13 +27,14 @@ def LowNoiseAmplificatorGP300_show_s21():
     o_lna = edu.LowNoiseAmplificatorGP300(2048)
     o_lna.update_with_s11(o_s11.s11)
     o_lna.plot_z()
+    o_lna.plot_gama()
     o_lna.plot_lna()
 
 
 if __name__ == "__main__":
     logger.info(mlg.string_begin_script())
     # =============================================
-    # StandingWaveRatioGP300_show_s11()
+    StandingWaveRatioGP300_show_s11()
     LowNoiseAmplificatorGP300_show_s21()
     # =============================================
     logger.info(mlg.string_end_script())
