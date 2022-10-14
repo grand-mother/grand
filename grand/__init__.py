@@ -23,7 +23,7 @@ from grand.geo.coordinates import (
     HorizontalRepresentation,
     Rotation,
 )
-from . import store
+import grand.io.protocol as store
 
 
 def grand_get_path_root_pkg():

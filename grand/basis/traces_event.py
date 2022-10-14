@@ -160,7 +160,7 @@ class HandlingTracesOfEvent:
         plt.grid()
         plt.legend()
 
-    def plot_traces_norm(self):
+    def plot_traces_norm(self): # pragma: no cover
         import matplotlib.colors as colors
 
         norm = self.get_norm()
@@ -174,7 +174,7 @@ class HandlingTracesOfEvent:
         plt.xlabel(f"Index sample\nFile: {self.name}")
         plt.ylabel("Index DU")
 
-    def plot_histo_t_start(self):
+    def plot_histo_t_start(self): # pragma: no cover
         plt.figure()
         plt.title(f"{self.name}\nTime start histogram")
         plt.hist(self.t_start_ns)

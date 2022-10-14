@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import grand.manage_log as mlg
 
-import grand.simu.du.elec_du as edu
+import grand.simu.du.rf_chain as edu
 
 
 # specific logger definition for script because __mane__ is "__main__" !

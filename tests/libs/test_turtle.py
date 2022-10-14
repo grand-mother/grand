@@ -8,7 +8,7 @@ import unittest
 
 import numpy
 
-import grand.store as store
+import grand.io.protocol as store
 from grand.libs import turtle
 from tests import TestCase
 

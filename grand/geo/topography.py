@@ -20,7 +20,7 @@ from grand.geo.coordinates import (
     CartesianRepresentation,
 )
 from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
-from .. import store
+import grand.io.protocol as store
 from .._core import ffi, lib
 
 __all__ = [

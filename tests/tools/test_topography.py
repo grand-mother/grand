@@ -9,7 +9,7 @@ import numpy
 
 # import astropy.units as u
 
-import grand.store as store
+import grand.io.protocol as store
 import grand.geo as tools
 
 # from grand.geo.coordinates import ECEF, GeodeticRepresentation, LTP
