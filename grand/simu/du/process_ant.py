@@ -138,11 +138,11 @@ class AntennaProcessing:
         # logger.info(Efield.e_xyz.info())
         e_xyz = Efield.e_xyz
         logger.debug(e_xyz.shape)
-        #Ex = np.fft.rfft(E.x)
+        # Ex = np.fft.rfft(E.x)
         # frequency [Hz] with padding
-        self.fft_size = sfft.next_fast_len(int(e_xyz.shape[1]*1.2))
+        self.fft_size = sfft.next_fast_len(int(2 * e_xyz.shape[1]))
         freq_interp_hz = fftfreq(self.fft_size, Efield.a_time)
-        logger.info(f'fft_size={self.fft_size}')
+        logger.info(f"fft_size={self.fft_size}")
         # frequency [Hz]
         freq_ref_hz = table.frequency
         ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
@@ -193,7 +193,7 @@ class AntennaProcessing:
         # logger.info(Leff.dtype)
         logger.info(Leff.shape)
         E = Efield.e_xyz  # E is CartesianRepresentation
-        logger.info( Efield.e_xyz.shape)
+        logger.info(Efield.e_xyz.shape)
         Ex = np.fft.rfft(E.x, n=self.fft_size)
         Ey = np.fft.rfft(E.y, n=self.fft_size)
         Ez = np.fft.rfft(E.z, n=self.fft_size)
@@ -210,7 +210,7 @@ class AntennaProcessing:
         t = Efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
         logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
-        return Voltage(t=t, V=resp_volt[:Efield.e_xyz.shape[1]])
+        return Voltage(t=t, V=resp_volt[: Efield.e_xyz.shape[1]])
 
     def compute_voltage_fake(
         self,
