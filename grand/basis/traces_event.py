@@ -16,13 +16,13 @@ class HandlingTracesOfEvent:
     def __init__(self, name="NotDefined"):
         logger.info(f"Create HandlingTracesOfEvent with name {name}")
         self.name = name
-        self.nb_du = 0
-        self.nb_dim = 0
-        self.nb_sample = 0
-        self.traces = np.zeros((self.nb_du, self.nb_dim, self.nb_sample))
-        self.du_id = np.arange(self.nb_du)
-        self.t_start_ns = np.zeros((self.nb_du), dtype=np.int64)
-        self.t_samples = np.zeros((self.nb_du), dtype=np.float64)
+        nb_du = 0
+        nb_dim = 0
+        nb_sample = 0
+        self.traces = np.zeros((nb_du, nb_dim, nb_sample))
+        self.du_id = np.arange(nb_du)
+        self.t_start_ns = np.zeros((nb_du), dtype=np.int64)
+        self.t_samples = np.zeros((nb_du), dtype=np.float64)
         self.f_samp_mhz = 0
         self.unit_trace = "TBD"
         self.network = DetectorUnitNetwork(self.name)
