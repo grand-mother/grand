@@ -54,6 +54,8 @@ class DetectorUnitNetwork:
     def get_max_dist_du(self, l_id):
         pass
 
+    ### PLOT
+
     def plot_du_pos(self):
         plt.figure()
         plt.title(f"{self.name}\nDU network")
@@ -199,7 +201,7 @@ class DetectorUnitNetwork:
             #     cmap="Blues",
             # )
             frame_number = int((t_slider - a_time[0]) / delta_t)
-            print(t_slider, frame_number)
+            # print(t_slider, frame_number)
             # new_col = cmap_b(col_log(a_norm_val[:,frame_number ]))
             # print(a_norm_val[:10,frame_number])
             # print(new_col[:10])
@@ -220,60 +222,4 @@ class DetectorUnitNetwork:
         # plt.connect("button_press_event", on_click)
         # WARNING: we must used plt.show() of this module not in another module
         #          else slider is blocked
-        plt.show()
-
-    def plot_trace_animate(self, a_time, a3_values, title="", size_circle=200):
-        from matplotlib.animation import FuncAnimation
-        import matplotlib
-
-        # same number of sample
-        assert a_time.shape[0] == a3_values.shape[2]
-        # we plot norm of 3D vector
-        a_norm_val = np.linalg.norm(a3_values, axis=1)
-        col_log = colors.LogNorm(clip=True)
-        cmap = matplotlib.cm.get_cmap("Blues")
-        fig = plt.figure()
-        ax = fig.add_axes([0.2, 0.2, 0.7, 0.7])
-        scat = ax.scatter(
-            self.du_pos[:, 0],
-            self.du_pos[:, 1],
-            norm=col_log,
-            s=size_circle,
-            c=a_norm_val[:, 0],
-            edgecolors="k",
-            cmap="Blues",
-        )
-        fig.colorbar(scat)
-
-        def update_time(frame_number):
-            # 1) Can't update partial of scatter, like set_offsets, set_color, ...
-            # so ... redraw all
-            # 2) Can't clear before with : scatterm.clear()
-            # idx_t = int((t_slider - a_time[0]) / delta_t)
-            idx_t = frame_number
-            print(idx_t)
-            # new_col = cmap(col_log(a_norm_val[:,frame_number ]))
-            # print(a_norm_val[:10,frame_number])
-            # print(new_col[:10])
-            scat.set_array(a_norm_val[:, frame_number])
-            return scat
-            # scat.set_color(new_col)
-            # scat.set_edgecolors("k")
-            # scat.set_offsets(self.du_pos)
-            # fig.canvas.draw_idle()
-            # print(t_slider, idx_t)
-
-        #     scat = ax.scatter(
-        #     self.du_pos[:, 0],
-        #     self.du_pos[:, 1],
-        #     #norm=col_log,
-        #     s=size_circle,
-        #     c=a_norm_val[:, idx_t],
-        #     edgecolors="k",
-        #     cmap="Blues",
-        # )
-
-        animation = FuncAnimation(
-            fig, update_time, frames=range(0, a_time.shape[0], 80), interval=100
-        )
         plt.show()
