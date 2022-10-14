@@ -25,14 +25,13 @@ class MasterSimuDetectorWithRootIo(object):
         self.f_name_root = f_name_root
         self.d_root = FileSimuEfield(f_name_root)
         self.simu_du = SimuDetectorUnitEffect()
-        
 
     def _load_data_to_process_event(self, idx):
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
         self.tr_evt = self.d_root.get_obj_handlingtracesofevent()
         # for debug
-        self.tr_evt.reduce_nb_du(12)
+        # self.tr_evt.reduce_nb_du(12)
         assert isinstance(self.tr_evt, HandlingTracesOfEvent)
         self.simu_du.set_data_efield(self.tr_evt)
         shower = ShowerEvent()
@@ -110,6 +109,11 @@ class SimuDetectorUnitEffect(object):
 
     Adaption of RF simulation chain for grandlib from
       * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
+
+    Hypothesis:
+      * Antenna of DU has a specific responses model
+      * All antenna have a perfect positioning
+      * All acquisition channels have the same model
     """
 
     def __init__(self):
@@ -160,13 +164,23 @@ class SimuDetectorUnitEffect(object):
     ### GETTER / COMPUTER
 
     def compute_du_all(self):
+        """Simulate all DU"""
         nb_du = self.du_efield.shape[0]
         for idx in range(nb_du):
             self.compute_du_idx(idx)
             # store result
 
     def compute_du_idx(self, idx_du):
-        """ """
+        """Simulate one DU
+        Simulation DU effect computing for DU at idx
+
+        Processing order:
+        0) add noise
+        1) antenna responses
+        2) LNA filter
+
+        @param idx_du (int): index of DU in array traces
+        """
         logger.info(f"==============>  Processing DU with id: {self.du_id[idx_du]}")
         self._get_ant_leff(idx_du)
         logger.debug(self.ant_leff_sn.model_leff)
@@ -175,7 +189,9 @@ class SimuDetectorUnitEffect(object):
             x=self.du_efield[idx_du, 0], y=self.du_efield[idx_du, 1], z=self.du_efield[idx_du, 2]
         )
         self.o_efield = ElectricField(self.du_time_efield[idx_du] * 1e-9, d_efield)
-        # compute 3 axis
+        ########################
+        # 1) antenna responses
+        ########################
         self.voc[idx_du, 0] = self.ant_leff_sn.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
@@ -185,3 +201,6 @@ class SimuDetectorUnitEffect(object):
         self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
+        ########################
+        # 2) LNA filter
+        ########################
