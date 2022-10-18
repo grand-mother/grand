@@ -17,7 +17,7 @@ class HandlingTracesOfEvent:
         logger.info(f"Create HandlingTracesOfEvent with name {name}")
         self.name = name
         nb_du = 0
-        nb_dim = 0
+        nb_dim = 3
         nb_sample = 0
         self.traces = np.zeros((nb_du, nb_dim, nb_sample))
         self.du_id = np.arange(nb_du)
@@ -28,9 +28,6 @@ class HandlingTracesOfEvent:
         self.network = DetectorUnitNetwork(self.name)
 
     ### INTERNAL
-
-    def _aa(self):
-        pass
 
     ### INIT/SETTER
 
@@ -70,7 +67,7 @@ class HandlingTracesOfEvent:
 
     def reduce_nb_du(self, new_nb_du):
         """
-        feature to reduce computation and debugging
+        feature to reduce computation, for debugging
         @param new_nb_du:
         """
         assert new_nb_du > 0
@@ -160,8 +157,9 @@ class HandlingTracesOfEvent:
         plt.grid()
         plt.legend()
 
-    def plot_traces_norm(self): # pragma: no cover
+    def plot_all_traces_as_image(self):  # pragma: no cover
         import matplotlib.colors as colors
+        from matplotlib.backend_bases import MouseButton
 
         norm = self.get_norm()
         fig = plt.figure()
@@ -169,12 +167,23 @@ class HandlingTracesOfEvent:
         plt.title(f"Norm of all traces in event")
         col_log = colors.LogNorm(clip=False)
         im_traces = plt.imshow(norm, cmap="Blues", norm=col_log)
-        # im_traces = plt.imshow(norm)
         plt.colorbar(im_traces)
         plt.xlabel(f"Index sample\nFile: {self.name}")
         plt.ylabel("Index DU")
 
-    def plot_histo_t_start(self): # pragma: no cover
+        def on_click(event):
+            print(type(event))
+            print(event.__dict__)
+            if event.button is MouseButton.LEFT and event.dblclick:
+                print(
+                    f"data coords {event.xdata} {event.ydata},", f"pixel coords {event.x} {event.y}"
+                )
+                self.plot_trace_idx(int(event.ydata))
+                plt.show()
+
+        plt.connect("button_press_event", on_click)
+
+    def plot_histo_t_start(self):  # pragma: no cover
         plt.figure()
         plt.title(f"{self.name}\nTime start histogram")
         plt.hist(self.t_start_ns)

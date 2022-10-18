@@ -65,7 +65,9 @@ class DetectorUnitNetwork:
         plt.ylabel("[m]")
         plt.xlabel("[m]")
 
-    def plot_values(self, a_values, title="", size_circle=200):  # pragma: no cover
+    def plot_footprint_max(
+        self, a_values, title="", traces=None, size_circle=200
+    ):  # pragma: no cover
         from matplotlib.offsetbox import AnchoredText
         from matplotlib.backend_bases import MouseButton
 
@@ -75,7 +77,7 @@ class DetectorUnitNetwork:
             return np.argmin(dist_2)
 
         def on_click(event):
-            if event.button is MouseButton.LEFT:
+            if event.button is MouseButton.LEFT and event.dblclick:
                 # print(f'data coords {event.xdata} {event.ydata},',f'pixel coords {event.x} {event.y}')
                 idx = closest_node(np.array([event.xdata, event.ydata]), self.du_pos[:, :2])
                 atl = AnchoredText(
@@ -88,6 +90,9 @@ class DetectorUnitNetwork:
                 atr.patch.set_boxstyle("Square, pad=0.3")
                 ax.add_artist(atl)
                 ax.add_artist(atr)
+                if traces:
+                    traces.plot_trace_idx(idx)
+                    plt.show()
                 plt.draw()
 
         vmin = a_values.min()
@@ -114,7 +119,7 @@ class DetectorUnitNetwork:
         ax.add_artist(atr)
         plt.connect("button_press_event", on_click)
 
-    def plot_trace_time(self, a_time, a3_values, title="", size_circle=200):  # pragma: no cover
+    def plot_footprint_time(self, a_time, a3_values, title="", size_circle=200):  # pragma: no cover
         from matplotlib.offsetbox import AnchoredText
         from matplotlib.backend_bases import MouseButton
         import matplotlib

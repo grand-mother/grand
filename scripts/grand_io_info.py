@@ -41,17 +41,17 @@ def main():
     o_tevent = d_efield.get_obj_handlingtracesofevent()
     assert isinstance(o_tevent, HandlingTracesOfEvent)
     if args.trace_norm:
-        o_tevent.plot_traces_norm()
+        o_tevent.plot_all_traces_as_image()
     if args.net:
         #o_tevent.network.plot_du_pos()
         o_tevent.define_t_samples()
         #o_tevent.network.plot_values(o_tevent.get_max_abs(),"Max |Efield_i|")
-        o_tevent.network.plot_values(o_tevent.get_max_norm(),"Max ||Efield||")        
+        o_tevent.network.plot_footprint_max(o_tevent.get_max_norm(),"Max ||Efield||", o_tevent)        
         o_tevent.plot_histo_t_start()
         if True:
             # work in progress
             a_time, a_values = o_tevent.get_common_time_trace()
-            o_tevent.network.plot_trace_time(a_time, a_values, "test")
+            o_tevent.network.plot_footprint_time(a_time, a_values, "test")
     if args.trace != -100:
         if (0 > args.trace) or  (args.trace >= d_efield.get_nb_du()):
             print(f"ERROR: index of the trace must be >= 0 and <= {d_efield.get_nb_du()-1}")
