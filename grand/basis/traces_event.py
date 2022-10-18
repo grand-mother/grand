@@ -178,7 +178,7 @@ class HandlingTracesOfEvent:
                 print(
                     f"data coords {event.xdata} {event.ydata},", f"pixel coords {event.x} {event.y}"
                 )
-                self.plot_trace_idx(int(event.ydata))
+                self.plot_trace_idx(int(event.ydata+0.5))
                 plt.show()
 
         plt.connect("button_press_event", on_click)
