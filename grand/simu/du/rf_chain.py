@@ -1,9 +1,13 @@
 """!
-Simulation of the effects detector on the signal : like VSWR, LNA, cable, 
+Simulation of the effects detector on the signal : VSWR, LNA, cable, 
 
-Reference document : "RF Chain simulation for GP300" 
-                      by Xidian University, Pengfei Zhang and 
-                      Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu
+Reference document : 
+  * "RF Chain simulation for GP300" by Xidian University, 
+    Pengfei Zhang and 
+    Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu
+
+Reference code: 
+  * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
 """
 
 import os.path
@@ -15,13 +19,19 @@ from scipy import interpolate
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grand.num.signal import complex_expansion
+from grand.num.signal import halfcplx_fullcplx_padding
 from grand import grand_add_path_data_model
 
 logger = getLogger(__name__)
 
 
-def plot_csv_file(f_name, col_x, col_y, x_label="MHz", y_label="TBD"):
+def plot_csv_file(
+    f_name,
+    col_x,
+    col_y,
+    x_label="MHz",
+    y_label="TBD",
+):  # pragma: no cover
     plt.figure()
     plt.title(f"{f_name}, x:{col_x}, y:{col_y}")
     data = np.loadtxt(f_name)
@@ -31,7 +41,14 @@ def plot_csv_file(f_name, col_x, col_y, x_label="MHz", y_label="TBD"):
     plt.grid()
 
 
-def plot_csv_file_abs(f_name, col_x, col_y1, col_y2, x_label="MHz", y_label="TBD"):
+def plot_csv_file_abs(
+    f_name,
+    col_x,
+    col_y1,
+    col_y2,
+    x_label="MHz",
+    y_label="TBD",
+):  # pragma: no cover
     plt.figure()
     plt.title(f"{f_name}, x:{col_x}, ")
     data = np.loadtxt(f_name)
@@ -53,7 +70,6 @@ class GenericProcessingDU:
 
     def set_frequency_band(self, f_start, f_end, nb_band):
         """!
-
         @param f_start (float): [MHz]
         @param f_end (float): [MHz]
         @param nb_band (integer):
@@ -63,7 +79,7 @@ class GenericProcessingDU:
         self.f_start = f_start
         self.f_end = f_end
         self.f_step = (f_end - f_start) / (1.0 * nb_band)
-        self.f_nb = nb_band + 1
+        self.f_nb = int(nb_band + 1)
 
 
 class StandingWaveRatioGP300(GenericProcessingDU):
@@ -121,10 +137,9 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         self.s11 = s11
         self.f_name = filename
         self.db_s11 = db_s11
-        print(db_s11.shape, freq.shape)
         self.f_db_s11 = freq
 
-    def plot_vswr(self): # pragma: no cover
+    def plot_vswr(self):  # pragma: no cover
         fig, (ax1, ax2) = plt.subplots(1, 2)
         fig.suptitle(f"VSWR, s11 parameter")
         ax1.set_title("db")
@@ -209,19 +224,18 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
                 res11 = mags11 * np.cos(np.deg2rad(degs11))
                 ims11 = mags11 * np.sin(np.deg2rad(degs11))
                 dbs21 = self.data_lna[axis][:, 3]
-                print(dbs21.shape)
                 degs21 = self.data_lna[axis][:, 4]
                 mags21 = 10 ** (dbs21 / 20)
                 res21 = mags21 * np.cos(np.deg2rad(degs21))
                 ims21 = mags21 * np.sin(np.deg2rad(degs21))
             dbs21_a[axis] = dbs21
-            freqnew = np.arange(30, 251, 1)
+            freqnew = np.linspace(self.f_start, self.f_end, self.f_nb)
             f_res11 = interpolate.interp1d(freq, res11, kind="cubic")
             res11new = f_res11(freqnew)
             f_ims11 = interpolate.interp1d(freq, ims11, kind="cubic")
             ims11new = f_ims11(freqnew)
             s11 = res11new + 1j * ims11new
-            [f_expan, lna_gama[:, axis]] = complex_expansion(
+            [f_expan, lna_gama[:, axis]] = halfcplx_fullcplx_padding(
                 self.size_sig,
                 self.f_step,
                 self.f_start,
@@ -233,7 +247,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
             f_ims21 = interpolate.interp1d(freq, ims21, kind="cubic")
             ims21new = f_ims21(freqnew)
             s21 = res21new + 1j * ims21new
-            [f_expan, lna_s21[:, axis]] = complex_expansion(
+            [f_expan, lna_s21[:, axis]] = halfcplx_fullcplx_padding(
                 self.size_sig,
                 self.f_step,
                 self.f_start,
@@ -259,7 +273,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         z_0 = 50
         antenna_gama = np.zeros((self.size_sig, 3), dtype=np.complex64)
         for axis in range(3):
-            [_, antenna_gama[:, axis]] = complex_expansion(
+            [_, antenna_gama[:, axis]] = halfcplx_fullcplx_padding(
                 self.size_sig,
                 self.f_step,
                 self.f_start,
@@ -271,13 +285,14 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         self.rho1 = z_in_lna / (z_ant + z_in_lna)
         self.rho2 = (1 + self.lna_gama) / (1 - antenna_gama * self.lna_gama)
         self.rho3 = self.lna_s21 / (1 + self.lna_gama)
+        self.rho123 = self.rho1*self.rho2*self.rho3
         self.z_ant = z_ant
         self.z_in_lna = z_in_lna
         self.antenna_gama = antenna_gama
 
     ### PLOT
 
-    def plot_gama(self): # pragma: no cover
+    def plot_gama(self):  # pragma: no cover
         plt.figure()
         plt.title("")
         plt.plot(self.f_expan, np.abs(self.antenna_gama[:, 0]), label=r"")
@@ -285,7 +300,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         plt.grid()
         plt.legend()
 
-    def plot_z(self): # pragma: no cover 
+    def plot_z(self):  # pragma: no cover
         plt.figure()
         plt.title("")
         plt.plot(self.f_expan, np.abs(self.z_ant[:, 0]), label=r"$\mathregular{Z_{A}}$")

@@ -169,8 +169,35 @@ def add_noise(trace, vrms):
     noisy_traces = np.add(trace, noise)
     return noisy_traces
 
+def halfcplx_fullcplx(v_half, even=True):
+    """!
+    Return fft with full complex format where vector has half complex format,
+    ie v_half=rfft(signal).
+    
+    halfcplx: for N=4 =>  N//2 + 1=3
+      f*0, f*1/N, f*2/N 
+      - f*2/N is Nyquist frequency
+      - for real signal, f*0 and f*2/N mode are real in Fourier space 
+            => same number of value in direct space and Fourier space to define signal
+    
+    fullcplx: for N=4
+      f*0, f*1/N, -f*2/N, -f*1/N
+      - Nyquist frequency is negative
+    
+    @note:
+      Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html
 
-def complex_expansion(size_out, f_step, f_start, f_cut, data):
+    @param v_half (array 1D complex): complex vector in half complex format, ie from rfft(signal)
+    @param even (bool): True if size of signal is even
+
+    @return (array 1D complex) : fft(signal) in full complex format
+    """
+    if even:
+        return np.concatenate((v_half, np.flip(np.conj(v_half[1:-1]))))
+    return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
+
+
+def halfcplx_fullcplx_padding(size_out, f_step, f_start, f_cut, data):
     """!
     Perform complex expansion of <data> on <size_out> samples and set to zero outside the
     band defined by [<f_start>, <f_cut>]. Output and <data> samples has same frequency step <f_step>.
@@ -189,10 +216,10 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
     @return (size_out), (size_out): 2 array 1D freq, data_expan
     """
     # Frequency sequence
-    logger.debug(f'{(data.size-1)*f_step + f_start}')
-    logger.debug(f'{size_out} {f_step} {f_start} {f_cut}')
-    logger.debug(f'{data.size} {data[:10]} ')
-    assert ((data.size-1)*f_step + f_start) <= f_cut
+    logger.debug(f"{(data.size-1)*f_step + f_start}")
+    logger.debug(f"{size_out} {f_step} {f_start} {f_cut}")
+    logger.debug(f"{data.size} {data[:10]} ")
+    assert ((data.size - 1) * f_step + f_start) <= f_cut
     freq = np.arange(0, size_out) * f_step
     effective = len(data)
     delta_start = abs(freq - f_start)
@@ -203,7 +230,7 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
     f_hang_start = f_hang_start[0][0]
     f_hang_end = np.where(delta_end == min(delta_end))
     f_hang_end = f_hang_end[0][0]
-    logger.debug(f'f_hang_bef=gin/end: {f_hang_start} {f_hang_end}')
+    logger.debug(f"f_hang_bef=gin/end: {f_hang_start} {f_hang_end}")
     data_expan = np.zeros((size_out), dtype=data.dtype)
     if f_hang_start == 0:
         data_expan[0] = data[0]
@@ -322,19 +349,3 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
 
 
-def halfcplx_fullcplx(v_half, even=True):
-    """!
-    Return fft with full complex format where vector has half complex format,
-    ie v_half=rfft(signal).
-
-    @note:
-      Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html
-
-    @param v_half (array 1D complex): complex vector in half complex format, ie from rfft(signal)
-    @param even (bool): True if size of signal is even
-
-    @return (array 1D complex) : fft(signal) in full complex format
-    """
-    if even:
-        return np.concatenate((v_half, np.flip(np.conj(v_half[1:-1]))))
-    return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
