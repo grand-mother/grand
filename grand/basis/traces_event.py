@@ -172,8 +172,6 @@ class HandlingTracesOfEvent:
         plt.ylabel("Index DU")
 
         def on_click(event):
-            print(type(event))
-            print(event.__dict__)
             if event.button is MouseButton.LEFT and event.dblclick:
                 print(
                     f"data coords {event.xdata} {event.ydata},", f"pixel coords {event.x} {event.y}"
