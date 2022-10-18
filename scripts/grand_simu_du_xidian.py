@@ -7,20 +7,18 @@ Adaption of RF simulation chain for grandlib from
 """
 
 import os
-import os.path as osp
 import shutil
 import math
 import random
 import argparse
 
-import numpy
 import numpy as np
 from numpy.ma import log10, abs
 from scipy import interpolate
 import matplotlib.pyplot as plt
 
-from grand.num.signal import fftget, ifftget
-from grand.simu.du.elec_du import LNA_get, filter_get
+from grand.num.signal import fftget, ifftget, halfcplx_fullcplx
+from .elec_du import LNA_get, filter_get
 from grand.simu.galaxy import galaxy_radio_signal
 from grand.simu.du.process_ant import AntennaProcessing
 from grand.simu.shower.gen_shower import ShowerEvent
@@ -29,6 +27,7 @@ from grand import grand_add_path_data, grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 import grand.manage_log as mlg
 import grand.io.root_trees as groot
+
 
 # showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
 # ShowerEvent.load(showerdir)
@@ -50,22 +49,6 @@ mlg.create_output_for_logger("info", log_file=None, log_stdout=True)
 
 
 
-def halfcplx_fullcplx(v_half, even=True):
-    '''!
-    Return fft with full complex format where vector has half complex format,
-    ie v_half=rfft(signal).
-    
-    @note:
-      Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html 
-    
-    @param v_half (array 1D complex): complex vector in half complex format, ie from rfft(signal)
-    @param even (bool): True if size of signal is even
-    
-    @return (array 1D complex) : fft(signal) in full complex format
-    '''
-    if even:
-        return np.concatenate((v_half, np.flip(np.conj(v_half[1:-1]))))
-    return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
 
 # ==============================time domain shower Edata get===============================
 def time_data_get(filename, Ts, show_flag):
