@@ -65,7 +65,7 @@ class DetectorUnitNetwork:
         plt.ylabel("[m]")
         plt.xlabel("[m]")
 
-    def plot_values(self, a_values, title="", size_circle=200): # pragma: no cover
+    def plot_values(self, a_values, title="", size_circle=200):  # pragma: no cover
         from matplotlib.offsetbox import AnchoredText
         from matplotlib.backend_bases import MouseButton
 
@@ -114,7 +114,7 @@ class DetectorUnitNetwork:
         ax.add_artist(atr)
         plt.connect("button_press_event", on_click)
 
-    def plot_trace_time(self, a_time, a3_values, title="", size_circle=200): # pragma: no cover
+    def plot_trace_time(self, a_time, a3_values, title="", size_circle=200):  # pragma: no cover
         from matplotlib.offsetbox import AnchoredText
         from matplotlib.backend_bases import MouseButton
         import matplotlib
