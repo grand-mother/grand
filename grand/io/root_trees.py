@@ -5132,7 +5132,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @xmax_pos_shc.setter
     def xmax_pos_shc(self, value):
-        self._xmax_pos_shc = np.array(value).astype(np.float32)
+        self._xmax_pos_shc = np.array(value).astype(np.float64)
         self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
 
     @property
