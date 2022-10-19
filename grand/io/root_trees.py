@@ -215,20 +215,23 @@ class DataTree:
         creating_file = False
         if len(args) > 0 and ".root" in args[0][-5:]:
             self._file_name = args[0]
+            # The TFile object is already in memory, just use it
             if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
-            # Overwrite requested
-            # ToDo: this does not really seem to work now
-            elif "overwrite" in kwargs:
-                self._file = ROOT.TFile(args[0], "recreate")
+            # Create a new TFile object
             else:
-                # By default append
-                self._file = ROOT.TFile(args[0], "update")
+                creating_file = True
+                # Overwrite requested
+                # ToDo: this does not really seem to work now
+                if "overwrite" in kwargs:
+                    self._file = ROOT.TFile(args[0], "recreate")
+                else:
+                    # By default append
+                    self._file = ROOT.TFile(args[0], "update")
             # Make the tree save itself in this file
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
             args = args[1:]
-            creating_file = True
 
         # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
 
