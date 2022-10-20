@@ -6,6 +6,7 @@ import os.path
 from logging import getLogger
 import time
 import numpy as np
+import scipy.fft as sf
 
 import grand.geo.coordinates as coord
 from grand.simu.du.process_ant import AntennaProcessing
@@ -15,7 +16,7 @@ from grand.simu.du.model_ant_du import AntennaModelGp300
 from grand.basis.type_trace import ElectricField
 from grand.basis.traces_event import HandlingTracesOfEvent
 from grand.io.root_trees import VoltageEventTree
-
+import grand.simu.du.rf_chain as rfc
 
 logger = getLogger(__name__)
 
@@ -107,13 +108,9 @@ class SimuDetectorUnitEffect(object):
     """
     Simulate detector effect only on one event, IO data file free
 
-    Adaption of RF simulation chain for grandlib from
-      * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
-
     Hypothesis:
       * Antenna of DU has a specific responses model
       * All antenna have a perfect positioning
-      * All acquisition channels have the same model
     """
 
     def __init__(self):
@@ -152,10 +149,12 @@ class SimuDetectorUnitEffect(object):
         self.tr_evt = tr_evt
         tr_evt.define_t_samples()
         self.du_time_efield = tr_evt.t_samples
+        self.f_samp_mhz = tr_evt.f_samp_mhz
         self.du_efield = tr_evt.traces
         self.du_pos = tr_evt.network.du_pos
         self.du_id = tr_evt.du_id
         self.voc = np.zeros_like(self.du_efield)
+        self.v_out = np.zeros_like(self.du_efield)
 
     def set_data_shower(self, shower):
         assert isinstance(shower, ShowerEvent)
@@ -204,3 +203,13 @@ class SimuDetectorUnitEffect(object):
         ########################
         # 2) LNA filter
         ########################
+        o_s11 = rfc.StandingWaveRatioGP300()
+        o_s11.set_frequency_band(30, 250, self.f_samp_mhz)
+        o_s11.compute_s11()
+        o_lna = rfc.LowNoiseAmplificatorGP300(2048)
+        o_lna.set_frequency_band(30, 250, self.f_samp_mhz)
+        o_lna.update_with_s11(o_s11.s11)
+        dft_voc = sf.fft(self.voc[idx_du])
+        # TODO: same order ?
+        dft_vlna = dft_voc * o_lna.rho123
+        self.v_out[idx_du] = sf.ifft(dft_vlna)

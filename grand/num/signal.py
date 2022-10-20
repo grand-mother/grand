@@ -169,21 +169,22 @@ def add_noise(trace, vrms):
     noisy_traces = np.add(trace, noise)
     return noisy_traces
 
+
 def halfcplx_fullcplx(v_half, even=True):
     """!
     Return fft with full complex format where vector has half complex format,
     ie v_half=rfft(signal).
-    
+
     halfcplx: for N=4 =>  N//2 + 1=3
-      f*0, f*1/N, f*2/N 
+      f*0, f*1/N, f*2/N
       - f*2/N is Nyquist frequency
-      - for real signal, f*0 and f*2/N mode are real in Fourier space 
+      - for real signal, f*0 and f*2/N mode are real in Fourier space
             => same number of value in direct space and Fourier space to define signal
-    
+
     fullcplx: for N=4
       f*0, f*1/N, -f*2/N, -f*1/N
       - Nyquist frequency is negative
-    
+
     @note:
       Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html
 
@@ -347,5 +348,3 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
     for l_i in range(lienum):
         data_ifft[:, l_i] = ifft(data_ori[:, l_i]).real
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
-
-

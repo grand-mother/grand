@@ -285,7 +285,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         self.rho1 = z_in_lna / (z_ant + z_in_lna)
         self.rho2 = (1 + self.lna_gama) / (1 - antenna_gama * self.lna_gama)
         self.rho3 = self.lna_s21 / (1 + self.lna_gama)
-        self.rho123 = self.rho1*self.rho2*self.rho3
+        self.rho123 = self.rho1 * self.rho2 * self.rho3
         self.z_ant = z_ant
         self.z_in_lna = z_in_lna
         self.antenna_gama = antenna_gama
@@ -346,3 +346,12 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+
+class MasterRfChain():
+    """
+    Facade for all detector effect
+    """
+    
+    def __init__(self):
+        pass
+    

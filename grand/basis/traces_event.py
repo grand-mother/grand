@@ -160,7 +160,7 @@ class HandlingTracesOfEvent:
     def plot_all_traces_as_image(self):  # pragma: no cover
         import matplotlib.colors as colors
         from matplotlib.backend_bases import MouseButton
-
+        #
         norm = self.get_norm()
         fig = plt.figure()
         # fig.canvas.manager.set_window_title(f"{self.name}")
@@ -169,17 +169,13 @@ class HandlingTracesOfEvent:
         im_traces = plt.imshow(norm, cmap="Blues", norm=col_log)
         plt.colorbar(im_traces)
         plt.xlabel(f"Index sample\nFile: {self.name}")
-        plt.ylabel("Index DU")
-
+        plt.ylabel("Index DU")        
         def on_click(event):
             if event.button is MouseButton.LEFT and event.dblclick:
-                print(
-                    f"data coords {event.xdata} {event.ydata},", f"pixel coords {event.x} {event.y}"
-                )
                 self.plot_trace_idx(int(event.ydata+0.5))
                 plt.show()
-
         plt.connect("button_press_event", on_click)
+
 
     def plot_histo_t_start(self):  # pragma: no cover
         plt.figure()
