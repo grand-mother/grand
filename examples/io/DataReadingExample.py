@@ -20,9 +20,14 @@ if len(list_of_events) == 0:
 tadccounts.print_list_of_events()
 # Read the first event from the list of events
 tadccounts.get_event(*list_of_events[0])
-print("ADCCounts readout: tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0]")
+print("ADCCounts first event readout: tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0]")
 print(tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0])
 print(tadccounts.trace_0[0][0])
+
+print("Iterate through ADCCounts")
+print("Entry #, Event #, Run #")
+for i,en in enumerate(tadccounts):
+    print(i, en.event_number, en.run_number)
 
 if len(sys.argv) < 2:
     tefield = EfieldEventTree("stored_data.root")
