@@ -151,6 +151,27 @@ class DataTree:
         else:
             self._create_tree()
 
+    ## Return self as iterator - these classes are iterators, not iterables: only one iteration per instance allowed
+    def __iter__(self):
+        # Return to the first entry, if it is not the current one
+        if self._tree.GetReadEntry()!=0:
+            self._tree.GetEntry(0)
+
+        return self
+
+    ## The next() method for iteration
+    def __next__(self):
+        current_entry = self._tree.GetReadEntry()
+        # If reading an entry after the last, raise an exception
+        if current_entry == self._tree.GetEntries() - 1:
+            raise StopIteration
+
+        # Read the next entry
+        self._tree.GetEntry(current_entry + 1)
+
+        # Return self, as all values are accessed through self
+        return self
+
     ## Set the tree's file
     def _set_file(self, f):
         # If the ROOT TFile is given, just use it
