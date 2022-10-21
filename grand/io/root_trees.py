@@ -6,6 +6,7 @@ This is the interface for accessing GRAND ROOT TTrees that do not require the us
 
 from logging import getLogger
 import sys
+import datetime
 
 import ROOT
 import numpy as np
@@ -115,6 +116,10 @@ class DataTree:
     _tree_name: str = ""
     # A list of run_numbers or (run_number, event_number) pairs in the Tree
     _entry_list: list = field(default_factory=list)
+    # Comment - if needed, added by user
+    _comment: str = ""
+    # TTree generation date/time in UTC - a naive time, without timezone set
+    _generation_datetime: datetime.datetime = datetime.datetime.utcnow()
 
     @property
     def tree(self):
@@ -129,6 +134,31 @@ class DataTree:
     @file.setter
     def file(self, val: ROOT.TFile) -> None:
         self._set_file(val)
+
+    @property
+    def comment(self):
+        """Comment - if needed, added by user"""
+        return str(self._tree.GetUserInfo().At(0))
+
+    @comment.setter
+    def comment(self, val: str) -> None:
+        # Remove the existing comment
+        self._tree.GetUserInfo().RemoveAt(0)
+        # Add the provided comment
+        self._tree.GetUserInfo().AddAt(ROOT.TObjString(val), 0)
+
+    @property
+    def generation_datetime(self):
+        """TTree generation date/time in UTC - a naive time, without timezone set"""
+        # Convert from ROOT's TDatime into Python's datetime object
+        return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(1).GetVal())
+
+    @generation_datetime.setter
+    def generation_datetime(self, val: datetime.datetime) -> None:
+        # Remove the existing datetime
+        self._tree.GetUserInfo().RemoveAt(1)
+        # Add the provided datetime
+        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("datetime", int(val.timestamp())), 1)
 
     @classmethod
     def _type(cls):
@@ -150,6 +180,11 @@ class DataTree:
         # or create the tree
         else:
             self._create_tree()
+
+        # Add the metadata to the tree
+        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        self.comment = ""
+        self.generation_datetime = datetime.datetime.utcnow()
 
     ## Return self as iterator - these classes are iterators, not iterables: only one iteration per instance allowed
     def __iter__(self):
@@ -338,6 +373,10 @@ class DataTree:
                 or field == "_tree_name"
                 or field == "_cur_du_id"
                 or field == "_entry_list"
+                or field == "_comment"
+                or field == "_generation_datetime"
+                or field == "_modification_software"
+                or field == "_modification_software_version"
             ):
                 continue
             # Create a branch for the field
@@ -424,6 +463,10 @@ class DataTree:
                 or field == "_tree_name"
                 or field == "_cur_du_id"
                 or field == "_entry_list"
+                or field == "_comment"
+                or field == "_generation_datetime"
+                or field == "_modification_software"
+                or field == "_modification_software_version"
             ):
                 continue
             # print(field, self.__dataclass_fields__[field])
@@ -548,6 +591,11 @@ class MotherEventTree(DataTree):
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     _event_number: np.ndarray = np.zeros(1, np.uint32)
 
+    # The tool used to generate this tree's values from another tree
+    _modification_software: str = ""
+    # The version of the tool used to generate this tree's values from another tree
+    _modification_software_version: str = ""
+
     @property
     def run_number(self):
         """The run number of the current event"""
@@ -565,6 +613,45 @@ class MotherEventTree(DataTree):
     @event_number.setter
     def event_number(self, val: np.uint32) -> None:
         self._event_number[0] = val
+
+    @property
+    def modification_software(self):
+        """The tool used to generate this tree's values from another tree"""
+        return str(self._tree.GetUserInfo().At(2))
+
+    @modification_software.setter
+    def modification_software(self, val: str) -> None:
+        # Remove the existing modification software
+        self._tree.GetUserInfo().RemoveAt(2)
+        # Add the provided modification software
+        self._tree.GetUserInfo().AddAt(ROOT.TObjString(val), 2)
+
+    @property
+    def modification_version(self):
+        """The tool used to generate this tree's values from another tree"""
+        return str(self._tree.GetUserInfo().At(3))
+
+    @modification_version.setter
+    def modification_version(self, val: str) -> None:
+        # Remove the existing modification software version
+        self._tree.GetUserInfo().RemoveAt(3)
+        # Add the provided modification software version
+        self._tree.GetUserInfo().AddAt(ROOT.TObjString(val), 3)
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
+        # Add the metadata to the tree
+        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        self.modification_software = ""
+        self.modification_software_version = ""
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
@@ -1107,15 +1194,15 @@ class ADCEventTree(MotherEventTree):
     ## ADC trace 3
     _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def event_size(self):
@@ -2419,16 +2506,16 @@ class VoltageEventTree(MotherEventTree):
     ## Voltage trace in Z direction
     _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-        logger.debug(f'Create VoltageEventTree object')
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
+    #     logger.debug(f'Create VoltageEventTree object')
 
     @property
     def event_size(self):
@@ -3646,15 +3733,15 @@ class EfieldEventTree(MotherEventTree):
     ## FFT phase in Z direction
     _fft_phase_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def time_seconds(self):
@@ -4296,15 +4383,15 @@ class ShowerEventTree(MotherEventTree):
         1, np.float64
     )  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def shower_type(self):
@@ -4513,15 +4600,15 @@ class VoltageEventSimdataTree(MotherEventTree):
         default_factory=lambda: StdVectorList("float")
     )  # peak 2 peak amplitudes (x,y,z,modulus)
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def du_id(self):
@@ -4712,15 +4799,15 @@ class EfieldEventSimdataTree(MotherEventTree):
     # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
     # _sampling_speed: StdVectorList("float") = StdVectorList("float")
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def du_id(self):
@@ -4951,15 +5038,15 @@ class ShowerEventSimdataTree(MotherEventTree):
         1, np.float32
     )  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def event_name(self):
@@ -5236,15 +5323,15 @@ class ShowerEventZHAireSTree(MotherEventTree):
     _nucleon_energy_cut: StdString = StdString("")
     _other_parameters: StdString = StdString("")
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
+    # def __post_init__(self):
+    #     super().__post_init__()
+    #
+    #     if self._tree.GetName() == "":
+    #         self._tree.SetName(self._tree_name)
+    #     if self._tree.GetTitle() == "":
+    #         self._tree.SetTitle(self._tree_name)
+    #
+    #     self.create_branches()
 
     @property
     def relative_thining(self):
