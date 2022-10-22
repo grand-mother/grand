@@ -118,8 +118,8 @@ class DataTree:
     _entry_list: list = field(default_factory=list)
     # Comment - if needed, added by user
     _comment: str = ""
-    # TTree generation date/time in UTC - a naive time, without timezone set
-    _generation_datetime: datetime.datetime = datetime.datetime.utcnow()
+    # TTree creation date/time in UTC - a naive time, without timezone set
+    _creation_datetime: datetime.datetime = datetime.datetime.utcnow()
 
     @property
     def tree(self):
@@ -145,20 +145,20 @@ class DataTree:
         # Remove the existing comment
         self._tree.GetUserInfo().RemoveAt(0)
         # Add the provided comment
-        self._tree.GetUserInfo().AddAt(ROOT.TObjString(val), 0)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("comment", val), 0)
 
     @property
-    def generation_datetime(self):
-        """TTree generation date/time in UTC - a naive time, without timezone set"""
+    def creation_datetime(self):
+        """TTree creation date/time in UTC - a naive time, without timezone set"""
         # Convert from ROOT's TDatime into Python's datetime object
         return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(1).GetVal())
 
-    @generation_datetime.setter
-    def generation_datetime(self, val: datetime.datetime) -> None:
+    @creation_datetime.setter
+    def creation_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
         self._tree.GetUserInfo().RemoveAt(1)
         # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("datetime", int(val.timestamp())), 1)
+        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 1)
 
     @classmethod
     def _type(cls):
@@ -184,7 +184,7 @@ class DataTree:
         # Add the metadata to the tree
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
         self.comment = ""
-        self.generation_datetime = datetime.datetime.utcnow()
+        self.creation_datetime = datetime.datetime.utcnow()
 
     ## Return self as iterator - these classes are iterators, not iterables: only one iteration per instance allowed
     def __iter__(self):
@@ -374,9 +374,11 @@ class DataTree:
                 or field == "_cur_du_id"
                 or field == "_entry_list"
                 or field == "_comment"
-                or field == "_generation_datetime"
+                or field == "_creation_datetime"
                 or field == "_modification_software"
                 or field == "_modification_software_version"
+                or field == "_source_datetime"
+                or field == "_analysis_level"
             ):
                 continue
             # Create a branch for the field
@@ -464,9 +466,11 @@ class DataTree:
                 or field == "_cur_du_id"
                 or field == "_entry_list"
                 or field == "_comment"
-                or field == "_generation_datetime"
+                or field == "_creation_datetime"
                 or field == "_modification_software"
                 or field == "_modification_software_version"
+                or field == "_source_datetime"
+                or field == "_analysis_level"
             ):
                 continue
             # print(field, self.__dataclass_fields__[field])
@@ -591,10 +595,14 @@ class MotherEventTree(DataTree):
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     _event_number: np.ndarray = np.zeros(1, np.uint32)
 
+    # Unix creation datetime of the source tree; 0 s means no source
+    _source_datetime: datetime.datetime = datetime.datetime.fromtimestamp(0)
     # The tool used to generate this tree's values from another tree
     _modification_software: str = ""
     # The version of the tool used to generate this tree's values from another tree
     _modification_software_version: str = ""
+    # The analysis level of this tree
+    _analysis_level: int = 0
 
     @property
     def run_number(self):
@@ -615,6 +623,19 @@ class MotherEventTree(DataTree):
         self._event_number[0] = val
 
     @property
+    def source_datetime(self):
+        """Unix creation datetime of the source tree; 0 s means no source"""
+        # Convert from ROOT's TDatime into Python's datetime object
+        return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(2).GetVal())
+
+    @source_datetime.setter
+    def source_datetime(self, val: datetime.datetime) -> None:
+        # Remove the existing datetime
+        self._tree.GetUserInfo().RemoveAt(2)
+        # Add the provided datetime
+        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 2)
+
+    @property
     def modification_software(self):
         """The tool used to generate this tree's values from another tree"""
         return str(self._tree.GetUserInfo().At(2))
@@ -624,19 +645,31 @@ class MotherEventTree(DataTree):
         # Remove the existing modification software
         self._tree.GetUserInfo().RemoveAt(2)
         # Add the provided modification software
-        self._tree.GetUserInfo().AddAt(ROOT.TObjString(val), 2)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 2)
 
     @property
-    def modification_version(self):
+    def modification_software_version(self):
         """The tool used to generate this tree's values from another tree"""
         return str(self._tree.GetUserInfo().At(3))
 
-    @modification_version.setter
-    def modification_version(self, val: str) -> None:
+    @modification_software_version.setter
+    def modification_software_version(self, val: str) -> None:
         # Remove the existing modification software version
         self._tree.GetUserInfo().RemoveAt(3)
         # Add the provided modification software version
-        self._tree.GetUserInfo().AddAt(ROOT.TObjString(val), 3)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 3)
+
+    @property
+    def analysis_level(self):
+        """The analysis level of this tree"""
+        return int(self._tree.GetUserInfo().At(4))
+
+    @analysis_level.setter
+    def analysis_level(self, val: int) -> None:
+        # Remove the existing analysis level
+        self._tree.GetUserInfo().RemoveAt(4)
+        # Add the provided analysis level
+        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 4)
 
     def __post_init__(self):
         super().__post_init__()
@@ -650,8 +683,10 @@ class MotherEventTree(DataTree):
 
         # Add the metadata to the tree
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        self.source_datetime = datetime.datetime.fromtimestamp(0)
         self.modification_software = ""
         self.modification_software_version = ""
+        self.analysis_level = 0
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
