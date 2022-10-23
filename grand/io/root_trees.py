@@ -498,6 +498,18 @@ class DataTree:
         """Print out the tree scheme"""
         return self._tree.Print()
 
+    ## Print the meta information
+    def print_meta(self):
+        """Print the meta information"""
+        for el in self._tree.GetUserInfo():
+            try:
+                val = el.GetVal()
+            except:
+                print("except for", el.GetName(), el.GetTitle(), el, self._tree)
+                val = el.GetTitle()
+            print(el.GetName(), val)
+        self._tree.GetUserInfo().Print()
+
 
 ## A mother class for classes with Run values
 @dataclass
@@ -638,38 +650,38 @@ class MotherEventTree(DataTree):
     @property
     def modification_software(self):
         """The tool used to generate this tree's values from another tree"""
-        return str(self._tree.GetUserInfo().At(2))
+        return str(self._tree.GetUserInfo().At(3))
 
     @modification_software.setter
     def modification_software(self, val: str) -> None:
         # Remove the existing modification software
-        self._tree.GetUserInfo().RemoveAt(2)
+        self._tree.GetUserInfo().RemoveAt(3)
         # Add the provided modification software
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 2)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 3)
 
     @property
     def modification_software_version(self):
         """The tool used to generate this tree's values from another tree"""
-        return str(self._tree.GetUserInfo().At(3))
+        return str(self._tree.GetUserInfo().At(4))
 
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
         # Remove the existing modification software version
-        self._tree.GetUserInfo().RemoveAt(3)
+        self._tree.GetUserInfo().RemoveAt(4)
         # Add the provided modification software version
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 3)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 4)
 
     @property
     def analysis_level(self):
         """The analysis level of this tree"""
-        return int(self._tree.GetUserInfo().At(4))
+        return int(self._tree.GetUserInfo().At(5))
 
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
         # Remove the existing analysis level
-        self._tree.GetUserInfo().RemoveAt(4)
+        self._tree.GetUserInfo().RemoveAt(5)
         # Add the provided analysis level
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 4)
+        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 5)
 
     def __post_init__(self):
         super().__post_init__()
