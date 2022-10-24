@@ -140,6 +140,18 @@ class DataTree:
         self._set_file(val)
 
     @property
+    def tree_name(self):
+        """The name of the TTree"""
+        return self._tree_name
+
+    @tree_name.setter
+    def tree_name(self, val):
+        """Set the tree name"""
+        self._tree_name = val
+        self._tree.SetName(val)
+        self._tree.SetTitle(val)
+
+    @property
     def comment(self):
         """Comment - if needed, added by user"""
         return str(self._tree.GetUserInfo().At(0))
