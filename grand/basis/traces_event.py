@@ -1,7 +1,9 @@
 from logging import getLogger
 
 import numpy as np
+import scipy.signal as ssig
 import matplotlib.pyplot as plt
+
 from grand.basis.du_network import DetectorUnitNetwork
 
 
@@ -157,9 +159,30 @@ class HandlingTracesOfEvent:
         plt.grid()
         plt.legend()
 
+    def plot_psd_trace_idx(self, idx, to_draw="xyz"):
+        self.define_t_samples()
+        plt.figure()
+        noverlap = 10
+        plt.title(f"PSD trace of DU {self.du_id[idx]} (idx={idx})")
+        if "x" in to_draw:
+            f, Pxx_den = ssig.welch(self.traces[idx, 0], self.f_samp_mhz * 1e6, noverlap=noverlap)
+            plt.plot(f * 1e-6, Pxx_den, label="x")
+        if "y" in to_draw:
+            f, Pxx_den = ssig.welch(self.traces[idx, 1], self.f_samp_mhz * 1e6, noverlap=noverlap)
+            plt.plot(f * 1e-6, Pxx_den, label="y")
+        if "z" in to_draw:
+            f, Pxx_den = ssig.welch(self.traces[idx, 2], self.f_samp_mhz * 1e6, noverlap=noverlap)
+            plt.plot(f * 1e-6, Pxx_den, label="z")
+        plt.ylabel(f"[??]")
+        plt.xlabel(f"[MHz]\nFile: {self.name}")
+        plt.xlim([0, 300])
+        plt.grid()
+        plt.legend()
+
     def plot_all_traces_as_image(self):  # pragma: no cover
         import matplotlib.colors as colors
         from matplotlib.backend_bases import MouseButton
+
         #
         norm = self.get_norm()
         fig = plt.figure()
@@ -169,13 +192,14 @@ class HandlingTracesOfEvent:
         im_traces = plt.imshow(norm, cmap="Blues", norm=col_log)
         plt.colorbar(im_traces)
         plt.xlabel(f"Index sample\nFile: {self.name}")
-        plt.ylabel("Index DU")        
+        plt.ylabel("Index DU")
+
         def on_click(event):
             if event.button is MouseButton.LEFT and event.dblclick:
-                self.plot_trace_idx(int(event.ydata+0.5))
+                self.plot_trace_idx(int(event.ydata + 0.5))
                 plt.show()
-        plt.connect("button_press_event", on_click)
 
+        plt.connect("button_press_event", on_click)
 
     def plot_histo_t_start(self):  # pragma: no cover
         plt.figure()
