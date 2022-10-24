@@ -7,6 +7,7 @@ This is the interface for accessing GRAND ROOT TTrees that do not require the us
 from logging import getLogger
 import sys
 import datetime
+import os
 
 import ROOT
 import numpy as np
@@ -220,8 +221,12 @@ class DataTree:
                 self._file = f
             # If not opened, open
             else:
-                # Update mode both for adding entries and reading
-                self._file = ROOT.TFile(self._file_name, "update")
+                # If file exists, initially open in the read-only mode (changed during write())
+                if os.path.isfile(self._file_name):
+                    self._file = ROOT.TFile(self._file_name, "read")
+                # If the file does not exist, create it
+                else:
+                    self._file = ROOT.TFile(self._file_name, "create")
 
     ## Init/readout the tree from a file
     def _set_tree(self, t):
@@ -274,6 +279,8 @@ class DataTree:
             # The TFile object is already in memory, just use it
             if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
+                # Reopen the file in the update mode in case it was read only
+                self._file.ReOpen("update")
             # Create a new TFile object
             else:
                 creating_file = True
