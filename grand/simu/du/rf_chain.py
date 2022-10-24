@@ -341,11 +341,12 @@ class LowNoiseAmplificator(GenericProcessingDU):
         print(kernel_rho.shape)
         # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
         v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
-        dt_ns = 1e9 / (self.freqs_out[1] * 1e6)
+        dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
         v_time_ns = dt_ns * v_time
         plt.plot(v_time_ns, kernel_rho[0], label="0")
         plt.plot(v_time_ns, kernel_rho[1], label="1")
         plt.plot(v_time_ns, kernel_rho[2], label="2")
+        plt.xlabel("ns")
         plt.grid()
         plt.legend()
 

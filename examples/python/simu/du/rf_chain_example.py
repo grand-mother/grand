@@ -73,7 +73,8 @@ def LowNoiseAmplificatorGP300_show_s21():
 
 
 def plot_rho_kernel():
-    out_f = sf.rfftfreq(2048, 0.5e-9) / 1e6
+    out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
+    print(out_f)
     o_lna = edu.LowNoiseAmplificatorGP300()
     o_lna.compute_at_freqs(out_f)
     o_lna.plot_rho_kernel()
