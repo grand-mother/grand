@@ -166,13 +166,8 @@ class SimuDetectorUnitEffect(object):
             self.f_samp_mhz,
             2,
         )
-        o_s11 = grfc.StandingWaveRatioGP300()
-        o_s11.set_out_freq_mhz(self.freqs_mhz)
-        o_s11.compute_s11()
-        o_lna = grfc.LowNoiseAmplificatorGP300()
-        o_lna.set_out_freq_mhz(self.freqs_mhz)
-        o_lna.update_with_s11(o_s11.s11)
-        self.lna = o_lna
+        self.lna = grfc.LowNoiseAmplificatorGP300()
+        self.lna.compute_at_freqs(self.freqs_mhz)
 
     def set_data_shower(self, shower):
         assert isinstance(shower, ShowerEvent)

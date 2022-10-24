@@ -4,6 +4,8 @@
 
 import matplotlib.pyplot as plt
 import scipy.fft as sf
+import numpy as np
+
 import grand.manage_log as mlg
 import grand.simu.du.rf_chain as edu
 
@@ -64,17 +66,25 @@ def LowNoiseAmplificatorGP300_show_s21():
     o_s11.compute_s11()
     o_lna = edu.LowNoiseAmplificatorGP300()
     o_lna.set_out_freq_mhz(out_f)
-    o_lna.update_with_s11(o_s11.s11)
+    o_lna._compute(o_s11.s11)
     o_lna.plot_z()
     o_lna.plot_gama()
     o_lna.plot_lna()
 
 
+def plot_rho_kernel():
+    out_f = sf.rfftfreq(2048, 0.5e-9) / 1e6
+    o_lna = edu.LowNoiseAmplificatorGP300()
+    o_lna.compute_at_freqs(out_f)
+    o_lna.plot_rho_kernel()
+
+
 if __name__ == "__main__":
     logger.info(mlg.string_begin_script())
     # =============================================
-    StandingWaveRatioGP300_show_s11()
-    LowNoiseAmplificatorGP300_show_s21()
+    # StandingWaveRatioGP300_show_s11()
+    # LowNoiseAmplificatorGP300_show_s21()
+    plot_rho_kernel()
     # =============================================
     logger.info(mlg.string_end_script())
     plt.show()

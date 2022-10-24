@@ -142,7 +142,7 @@ class HandlingTracesOfEvent:
         new_time = t_min + np.arange(nb_sample, dtype=np.float64) * delta
         return new_time, new_traces
 
-    ### PLOT
+    ### PLOTS
 
     def plot_trace_idx(self, idx, to_draw="xyz"):
         self.define_t_samples()

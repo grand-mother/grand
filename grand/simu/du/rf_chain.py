@@ -18,6 +18,7 @@ from logging import getLogger
 
 from numpy.ma import log10, abs
 from scipy import interpolate
+import scipy.fft as sf
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -60,6 +61,7 @@ class GenericProcessingDU:
         assert a_freq[0] == 0
         self.freqs_out = a_freq
         self.size_out = a_freq.shape[0]
+        self.size_sig = (self.size_out - 1) * 2
 
 
 class StandingWaveRatio(GenericProcessingDU):
@@ -176,6 +178,14 @@ class LowNoiseAmplificator(GenericProcessingDU):
 
     ### INTERNAL
 
+    def set_vswr_model(self, o_vswr):
+        """Set VSWR model and upadte value if transfert function Rho
+
+        @param o_vswr (StandingWaveRatio):
+        """
+        assert isinstance(o_vswr, StandingWaveRatio)
+        self._vswr = o_vswr
+
     def _pre_compute(self, unit=1):
         """!
         compute what is possible without know response antenna
@@ -226,12 +236,8 @@ class LowNoiseAmplificator(GenericProcessingDU):
         self.lna_s21 = lna_s21
         self._dbs21_a = dbs21_a
 
-    ### OPERATION
-
-    def update_with_s11(self, antenna_gama):
-        """!
-        @note:
-          lll
+    def _compute(self, antenna_gama):
+        """!update_with_s11
 
         @param antenna_gama (N,3):
         """
@@ -250,6 +256,21 @@ class LowNoiseAmplificator(GenericProcessingDU):
         self.z_ant = z_ant
         self.z_in_lna = z_in_lna
         self.antenna_gama = antenna_gama
+
+    ### OPERATION
+
+    def compute_at_freqs(self, a_freq_mhz):
+        """!compute Rho transfert function for frequency  a_freq
+
+        @param a_freq: vector of frequency
+        """
+        super().set_out_freq_mhz(a_freq_mhz)
+        self._vswr.set_out_freq_mhz(a_freq_mhz)
+        self._vswr.compute_s11()
+        # update rho
+        self._compute(self._vswr.s11)
+
+    ### GETTER
 
     def get_rho(self):
         return self.rho123.T
@@ -313,6 +334,21 @@ class LowNoiseAmplificator(GenericProcessingDU):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
+    def plot_rho_kernel(self):
+        plt.figure()
+        plt.title("Rho kernel")
+        kernel_rho = sf.ifftshift(sf.irfft(self.get_rho()))
+        print(kernel_rho.shape)
+        # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
+        v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
+        dt_ns = 1e9 / (self.freqs_out[1] * 1e6)
+        v_time_ns = dt_ns * v_time
+        plt.plot(v_time_ns, kernel_rho[0], label="0")
+        plt.plot(v_time_ns, kernel_rho[1], label="1")
+        plt.plot(v_time_ns, kernel_rho[2], label="2")
+        plt.grid()
+        plt.legend()
+
 
 class LowNoiseAmplificatorGP300(LowNoiseAmplificator):
     """!
@@ -324,6 +360,7 @@ class LowNoiseAmplificatorGP300(LowNoiseAmplificator):
 
     def __init__(self):
         super().__init__()
+        self._vswr = StandingWaveRatioGP300()
 
     ### INTERNAL
 
