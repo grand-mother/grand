@@ -181,11 +181,6 @@ class DataTree:
         else:
             self._create_tree()
 
-        # Add the metadata to the tree
-        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
-        self.comment = ""
-        self.creation_datetime = datetime.datetime.utcnow()
-
     ## Return self as iterator - these classes are iterators, not iterables: only one iteration per instance allowed
     def __iter__(self):
         # Return to the first entry, if it is not the current one
@@ -256,6 +251,8 @@ class DataTree:
         if tree_name != "":
             self._tree_name = tree_name
         self._tree = ROOT.TTree(self._tree_name, self._tree_name)
+
+        self.create_metadata()
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
@@ -480,6 +477,25 @@ class DataTree:
             # Assign the TTree branch value to the class field
             setattr(self, field[1:], u)
 
+    ## Create metadata for the tree
+    def create_metadata(self):
+        """Create metadata for the tree"""
+        # Add the metadata to the tree
+        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        self.comment = ""
+        self.creation_datetime = datetime.datetime.utcnow()
+
+    ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree
+    def assign_metadata(self):
+        """Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree"""
+        for i,el in enumerate(self._tree.GetUserInfo()):
+            # meta as TParameter
+            try:
+                setattr(self, "_" + el.GetName(), el.GetVal())
+            # meta as TNamed
+            except:
+                setattr(self, "_" + el.GetName(), el.GetTitle())
+
     ## Get entry with indices
     def get_entry_with_index(self, run_no=0, evt_no=0):
         """Get the event with run_no and evt_no"""
@@ -499,16 +515,17 @@ class DataTree:
         return self._tree.Print()
 
     ## Print the meta information
-    def print_meta(self):
+    def print_metadata(self):
         """Print the meta information"""
         for el in self._tree.GetUserInfo():
             try:
                 val = el.GetVal()
             except:
-                print("except for", el.GetName(), el.GetTitle(), el, self._tree)
                 val = el.GetTitle()
-            print(el.GetName(), val)
-        self._tree.GetUserInfo().Print()
+                # Add "" to the string to show it is a string
+                val = f'"{val}"'
+            print(f"{el.GetName():40} {val}")
+        # self._tree.GetUserInfo().Print()
 
 
 ## A mother class for classes with Run values
@@ -693,7 +710,11 @@ class MotherEventTree(DataTree):
 
         self.create_branches()
 
-        # Add the metadata to the tree
+    ## Create metadata for the tree
+    def create_metadata(self):
+        """Create metadata for the tree"""
+        # First add the medatata of the mother class
+        super().create_metadata()
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
         self.source_datetime = datetime.datetime.fromtimestamp(0)
         self.modification_software = ""
