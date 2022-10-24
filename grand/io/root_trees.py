@@ -151,6 +151,27 @@ class DataTree:
         else:
             self._create_tree()
 
+    ## Return self as iterator - these classes are iterators, not iterables: only one iteration per instance allowed
+    def __iter__(self):
+        # Return to the first entry, if it is not the current one
+        if self._tree.GetReadEntry()!=0:
+            self._tree.GetEntry(0)
+
+        return self
+
+    ## The next() method for iteration
+    def __next__(self):
+        current_entry = self._tree.GetReadEntry()
+        # If reading an entry after the last, raise an exception
+        if current_entry == self._tree.GetEntries() - 1:
+            raise StopIteration
+
+        # Read the next entry
+        self._tree.GetEntry(current_entry + 1)
+
+        # Return self, as all values are accessed through self
+        return self
+
     ## Set the tree's file
     def _set_file(self, f):
         # If the ROOT TFile is given, just use it
@@ -215,20 +236,23 @@ class DataTree:
         creating_file = False
         if len(args) > 0 and ".root" in args[0][-5:]:
             self._file_name = args[0]
+            # The TFile object is already in memory, just use it
             if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
-            # Overwrite requested
-            # ToDo: this does not really seem to work now
-            elif "overwrite" in kwargs:
-                self._file = ROOT.TFile(args[0], "recreate")
+            # Create a new TFile object
             else:
-                # By default append
-                self._file = ROOT.TFile(args[0], "update")
+                creating_file = True
+                # Overwrite requested
+                # ToDo: this does not really seem to work now
+                if "overwrite" in kwargs:
+                    self._file = ROOT.TFile(args[0], "recreate")
+                else:
+                    # By default append
+                    self._file = ROOT.TFile(args[0], "update")
             # Make the tree save itself in this file
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
             args = args[1:]
-            creating_file = True
 
         # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
 
@@ -5132,7 +5156,7 @@ class ShowerEventSimdataTree(MotherEventTree):
 
     @xmax_pos_shc.setter
     def xmax_pos_shc(self, value):
-        self._xmax_pos_shc = np.array(value).astype(np.float32)
+        self._xmax_pos_shc = np.array(value).astype(np.float64)
         self._tree.SetBranchAddress("xmax_pos_shc", self._xmax_pos_shc)
 
     @property
