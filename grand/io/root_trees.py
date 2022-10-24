@@ -154,7 +154,7 @@ class DataTree:
     ## Return self as iterator - these classes are iterators, not iterables: only one iteration per instance allowed
     def __iter__(self):
         # Return to the first entry, if it is not the current one
-        if self._tree.GetReadEntry()!=0:
+        if self._tree.GetReadEntry() != 0:
             self._tree.GetEntry(0)
 
         return self
