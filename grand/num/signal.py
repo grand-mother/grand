@@ -13,6 +13,7 @@ from logging import getLogger
 import numpy as np
 from scipy.signal import hilbert, resample, decimate, butter, lfilter
 from scipy.fftpack import fft, ifft
+import scipy.fft as sf
 import matplotlib.pyplot as plt
 
 logger = getLogger(__name__)
@@ -173,9 +174,14 @@ def add_noise(trace, vrms):
 def halfcplx_fullcplx(v_half, even=True):
     """!
     Return fft with full complex format where vector has half complex format,
-    ie v_half=rfft(signal).
+    ie v_half=rfft(signal) in numpy/scipy convention
 
-    halfcplx: for N=4 =>  N//2 + 1=3
+    For N size of signal and f frequency sampling
+
+    numpy and scipy.fft convention:
+    ===============================
+
+    halfcplx: for N=4 =>  size of format halfcplx is N//2 + 1=3
       f*0, f*1/N, f*2/N
       - f*2/N is Nyquist frequency
       - for real signal, f*0 and f*2/N mode are real in Fourier space
@@ -198,59 +204,61 @@ def halfcplx_fullcplx(v_half, even=True):
     return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
 
 
-def halfcplx_fullcplx_padding(size_out, f_step, f_start, f_cut, data):
-    """!
-    Perform complex expansion of <data> on <size_out> samples and set to zero outside the
-    band defined by [<f_start>, <f_cut>]. Output and <data> samples has same frequency step <f_step>.
-
-    @authors PengFei Zhang and Xidian group
-
-    The program only considers that the length of the expanded data is less than
-    floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5;
-    size_out = 9, the length of the expanded data <= 4
-
-    @param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
-    @param f_step (float): [MHz] frequency step
-    @param f_start (float): [MHz] the starting frequency of the spectrum to be expanded,
-    @param f_cut (float): [MHz] the cutoff frequency of the spectrum to be expanded
-
-    @return (size_out), (size_out): 2 array 1D freq, data_expan
-    """
-    # Frequency sequence
-    logger.debug(f"{(data.size-1)*f_step + f_start}")
-    logger.debug(f"{size_out} {f_step} {f_start} {f_cut}")
-    logger.debug(f"{data.size} {data[:10]} ")
-    assert ((data.size - 1) * f_step + f_start) <= f_cut
-    freq = np.arange(0, size_out) * f_step
-    effective = len(data)
-    delta_start = abs(freq - f_start)
-    delta_end = abs(freq - f_cut)
-    # The row with the smallest difference
-    f_hang_start = np.where(delta_start == delta_start.min())
-    logger.debug(f"{f_hang_start}")
-    f_hang_start = f_hang_start[0][0]
-    f_hang_end = np.where(delta_end == min(delta_end))
-    f_hang_end = f_hang_end[0][0]
-    logger.debug(f"f_hang_bef=gin/end: {f_hang_start} {f_hang_end}")
-    data_expan = np.zeros((size_out), dtype=data.dtype)
-    if f_hang_start == 0:
-        data_expan[0] = data[0]
-        add = np.arange(f_hang_end + 1, size_out - effective + 1, 1)
-        duichen = np.arange(size_out - 1, size_out - effective + 1 - 1, -1)
-        data_expan[add] = 0
-        data_expan[f_hang_start : f_hang_end + 1] = data
-        data_expan[duichen] = data[1:].conjugate()
-    else:
-        a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
-        a2 = np.arange(f_hang_end + 1, size_out - f_hang_start - effective + 1, 1).tolist()
-        a3 = np.arange(size_out - f_hang_start + 1, size_out, 1).tolist()  # Need to make up 0;
-        add = a1 + a2 + a3
-        add = np.array(add)
-        duichen = np.arange(size_out - f_hang_start, size_out - f_hang_start - effective, -1)
-        data_expan[add] = 0
-        data_expan[f_hang_start : f_hang_end + 1] = data
-        data_expan[duichen] = data.conjugate()
-    return freq, data_expan
+# replace by interpolation with zero for extrapolation
+#
+# def halfcplx_fullcplx_padding(size_out, f_step, f_start, f_cut, data):
+#     """!
+#     Perform complex expansion of <data> on <size_out> samples and set to zero outside the
+#     band defined by [<f_start>, <f_cut>]. Output and <data> samples has same frequency step <f_step>.
+#
+#     @authors PengFei Zhang and Xidian group
+#
+#     The program only considers that the length of the expanded data is less than
+#     floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5;
+#     size_out = 9, the length of the expanded data <= 4
+#
+#     @param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
+#     @param f_step (float): [MHz] frequency step
+#     @param f_start (float): [MHz] the starting frequency of the spectrum to be expanded,
+#     @param f_cut (float): [MHz] the cutoff frequency of the spectrum to be expanded
+#
+#     @return (size_out), (size_out): 2 array 1D freq, data_expan
+#     """
+#     # Frequency sequence
+#     logger.debug(f"{(data.size-1)*f_step + f_start}")
+#     logger.debug(f"{size_out} {f_step} {f_start} {f_cut}")
+#     logger.debug(f"{data.size} {data[:10]} ")
+#     assert ((data.size - 1) * f_step + f_start) <= f_cut
+#     freq = np.arange(0, size_out) * f_step
+#     effective = len(data)
+#     delta_start = abs(freq - f_start)
+#     delta_end = abs(freq - f_cut)
+#     # The row with the smallest difference
+#     f_hang_start = np.where(delta_start == delta_start.min())
+#     logger.debug(f"{f_hang_start}")
+#     f_hang_start = f_hang_start[0][0]
+#     f_hang_end = np.where(delta_end == min(delta_end))
+#     f_hang_end = f_hang_end[0][0]
+#     logger.debug(f"f_hang_bef=gin/end: {f_hang_start} {f_hang_end}")
+#     data_expan = np.zeros((size_out), dtype=data.dtype)
+#     if f_hang_start == 0:
+#         data_expan[0] = data[0]
+#         add = np.arange(f_hang_end + 1, size_out - effective + 1, 1)
+#         duichen = np.arange(size_out - 1, size_out - effective + 1 - 1, -1)
+#         data_expan[add] = 0
+#         data_expan[f_hang_start : f_hang_end + 1] = data
+#         data_expan[duichen] = data[1:].conjugate()
+#     else:
+#         a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
+#         a2 = np.arange(f_hang_end + 1, size_out - f_hang_start - effective + 1, 1).tolist()
+#         a3 = np.arange(size_out - f_hang_start + 1, size_out, 1).tolist()  # Need to make up 0;
+#         add = a1 + a2 + a3
+#         add = np.array(add)
+#         duichen = np.arange(size_out - f_hang_start, size_out - f_hang_start - effective, -1)
+#         data_expan[add] = 0
+#         data_expan[f_hang_start : f_hang_end + 1] = data
+#         data_expan[duichen] = data.conjugate()
+#     return freq, data_expan
 
 
 def fftget(data_ori, size_fft, freq_uni, show_flag=False):
@@ -348,3 +356,19 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
     for l_i in range(lienum):
         data_ifft[:, l_i] = ifft(data_ori[:, l_i]).real
     return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
+
+
+def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
+    """
+
+    @param sig_size:
+    @param f_samp_mhz:
+    @param padding_fact:
+
+    @return: size_fft (int,0), array freq (float,1) in MHz for rfft()
+    """
+    assert padding_fact >= 1
+    dt_s = 1e-6 / f_samp_mhz
+    fastest_size_fft = sf.next_fast_len(int(padding_fact * sig_size + 0.5))
+    freqs_mhz = sf.rfftfreq(fastest_size_fft, dt_s) * 1e-6
+    return fastest_size_fft, freqs_mhz
