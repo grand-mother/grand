@@ -16,7 +16,8 @@ from grand.simu.du.model_ant_du import AntennaModelGp300
 from grand.basis.type_trace import ElectricField
 from grand.basis.traces_event import HandlingTracesOfEvent
 from grand.io.root_trees import VoltageEventTree
-import grand.simu.du.rf_chain as rfc
+import grand.simu.du.rf_chain as grfc
+import grand.num.signal as gsig
 
 logger = getLogger(__name__)
 
@@ -122,6 +123,7 @@ class SimuDetectorUnitEffect(object):
         self.noise_flag = False
         self.ant_model = AntennaModelGp300()
         self.voc = None
+        self.fft_size = 0
 
     ### INTERNAL
     def _get_ant_leff(self, idx_du):
@@ -139,8 +141,11 @@ class SimuDetectorUnitEffect(object):
         logger.debug(antenna_location)
         antenna_frame = coord.LTP(location=antenna_location, orientation="NWU", magnetic=True)
         self.ant_leff_sn = AntennaProcessing(model_leff=self.ant_model.leff_sn, frame=antenna_frame)
+        self.ant_leff_sn.set_out_freq_mhz(self.freqs_mhz)
         self.ant_leff_ew = AntennaProcessing(model_leff=self.ant_model.leff_ew, frame=antenna_frame)
+        self.ant_leff_ew.set_out_freq_mhz(self.freqs_mhz)
         self.ant_leff_z = AntennaProcessing(model_leff=self.ant_model.leff_z, frame=antenna_frame)
+        self.ant_leff_z.set_out_freq_mhz(self.freqs_mhz)
 
     ### SETTER
 
@@ -155,6 +160,19 @@ class SimuDetectorUnitEffect(object):
         self.du_id = tr_evt.du_id
         self.voc = np.zeros_like(self.du_efield)
         self.v_out = np.zeros_like(self.du_efield)
+        self.sig_size = self.du_efield.shape[2]
+        self.fft_size, self.freqs_mhz = gsig.get_fastest_size_fft(
+            self.sig_size,
+            self.f_samp_mhz,
+            2,
+        )
+        o_s11 = grfc.StandingWaveRatioGP300()
+        o_s11.set_out_freq_mhz(self.freqs_mhz)
+        o_s11.compute_s11()
+        o_lna = grfc.LowNoiseAmplificatorGP300()
+        o_lna.set_out_freq_mhz(self.freqs_mhz)
+        o_lna.update_with_s11(o_s11.s11)
+        self.lna = o_lna
 
     def set_data_shower(self, shower):
         assert isinstance(shower, ShowerEvent)
@@ -203,13 +221,14 @@ class SimuDetectorUnitEffect(object):
         ########################
         # 2) LNA filter
         ########################
-        o_s11 = rfc.StandingWaveRatioGP300()
-        o_s11.set_frequency_band(30, 250, self.f_samp_mhz)
-        o_s11.compute_s11()
-        o_lna = rfc.LowNoiseAmplificatorGP300(2048)
-        o_lna.set_frequency_band(30, 250, self.f_samp_mhz)
-        o_lna.update_with_s11(o_s11.s11)
-        dft_voc = sf.fft(self.voc[idx_du])
+        fft_voc = np.array(
+            [
+                self.ant_leff_sn.fft_resp_volt,
+                self.ant_leff_ew.fft_resp_volt,
+                self.ant_leff_z.fft_resp_volt,
+            ]
+        )
+        # fft_voc = sf.rfft(self.voc[idx_du], self.fft_size)
         # TODO: same order ?
-        dft_vlna = dft_voc * o_lna.rho123
-        self.v_out[idx_du] = sf.ifft(dft_vlna)
+        fft_vlna = fft_voc * self.lna.get_rho()
+        self.v_out[idx_du] = sf.irfft(fft_vlna, self.sig_size)
