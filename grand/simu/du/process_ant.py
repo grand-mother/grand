@@ -5,7 +5,7 @@ from logging import getLogger
 from typing import Union, Any
 
 import numpy as np
-import scipy.fft as sfft
+import scipy.fft as sf
 
 from grand.geo.coordinates import (
     ECEF,
@@ -31,6 +31,19 @@ class AntennaProcessing:
 
     def __post_init__(self):
         assert isinstance(self.model_leff, TabulatedAntennaModel)
+        self.size_fft = 0
+
+    def set_out_freq_mhz(self, a_freq):
+        """!
+        typically the return of scipy.fft.rfftfreq/1e6
+        """
+        assert isinstance(a_freq, np.ndarray)
+        assert a_freq[0] == 0
+        self.freqs_out_hz = a_freq * 1e6
+        # we used rfreqfft
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftfreq.html
+        self.size_fft = 2 * (a_freq.shape[0] - 1)
+        logger.debug(f"size_fft: {self.size_fft}")
 
     def effective_length(
         self,
@@ -82,11 +95,11 @@ class AntennaProcessing:
             # With [1] and [2]
             # we have: rp0*rt0 + rp1*rt0+ rp0*rt1 + rp1*rt1 = 1
             # so sum of weight is 1, it's also a linear interpolation by angle on sphere
-            half_idx = freq_interp_hz.shape[0] // 2
+            half_idx = self.freqs_out_hz.shape[0] // 2
             logger.debug(f"Ref freq: {freq_ref_hz[0]:.3e} {np.max(freq_ref_hz):.3e}")
-            logger.debug(f"Interp  : {freq_interp_hz[0]:.3e} {np.max(freq_interp_hz):.3e}")
+            logger.debug(f"Interp  : {self.freqs_out_hz[0]:.3e} {np.max(self.freqs_out_hz):.3e}")
             val_interp = np.interp(
-                freq_interp_hz, freq_ref_hz, val_sphere_interpol, left=0, right=0
+                self.freqs_out_hz, freq_ref_hz, val_sphere_interpol, left=0, right=0
             )
             logger.debug(f"val initia : {np.min(val):.3e} {np.max(val):.3e}")
             logger.debug(
@@ -140,9 +153,10 @@ class AntennaProcessing:
         logger.debug(e_xyz.shape)
         # Ex = np.fft.rfft(E.x)
         # frequency [Hz] with padding
-        self.fft_size = sfft.next_fast_len(int(2 * e_xyz.shape[1]))
-        freq_interp_hz = fftfreq(self.fft_size, Efield.a_time)
-        logger.info(f"fft_size={self.fft_size}")
+        if self.size_fft == 0:
+            self.size_fft = sf.next_fast_len(e_xyz.shape[1])
+            self.freqs_out_hz = fftfreq(self.size_fft, Efield.a_time)
+        logger.info(f"size_fft={self.size_fft}")
         # frequency [Hz]
         freq_ref_hz = table.frequency
         ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
@@ -172,7 +186,7 @@ class AntennaProcessing:
         # vector wrt shower frame. ECEF --> Shower
         Leff = np.matmul(frame.basis, Leff)
         # store effective length
-        self.dft_effv_len = Leff
+        self.fft_leff = Leff
         return Leff
 
     def compute_voltage(
@@ -194,23 +208,28 @@ class AntennaProcessing:
         logger.info(Leff.shape)
         E = Efield.e_xyz  # E is CartesianRepresentation
         logger.info(Efield.e_xyz.shape)
-        Ex = np.fft.rfft(E.x, n=self.fft_size)
-        Ey = np.fft.rfft(E.y, n=self.fft_size)
-        Ez = np.fft.rfft(E.z, n=self.fft_size)
+
+        Ex = sf.rfft(E.x, n=self.size_fft)
+        Ey = sf.rfft(E.y, n=self.size_fft)
+        Ez = sf.rfft(E.z, n=self.size_fft)
         logger.info(Ex.shape)
+        logger.info(f"size_fft={self.size_fft}")
         logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
         # Here we have to do an ugly patch for Leff values to be correct
         # fmt: off
-        resp_volt = np.fft.irfft(
-                Ex*(Leff[0] - Leff[0, 0]) 
-               +Ey*(Leff[1] - Leff[1, 0])
-               +Ez*(Leff[2] - Leff[2, 0]))
+        if True:
+            self.fft_resp_volt = (Ex*(Leff[0] - Leff[0, 0])
+                                + Ey*(Leff[1] - Leff[1, 0])
+                                + Ez*(Leff[2] - Leff[2, 0]))
+        else:
+            logger.debug(f'without offset')
+            self.fft_resp_volt = Ex*Leff[0] + Ey*Leff[1] + Ez*Leff[2]
         # fmt: on
-        logger.info(resp_volt.shape)
+        resp_volt = sf.irfft(self.fft_resp_volt, Efield.e_xyz.shape[1])
         t = Efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
         logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
-        return Voltage(t=t, V=resp_volt[: Efield.e_xyz.shape[1]])
+        return Voltage(t=t, V=resp_volt)
 
     def compute_voltage_fake(
         self,
