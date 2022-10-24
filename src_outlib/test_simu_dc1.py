@@ -17,7 +17,7 @@ logger = mlg.get_logger_for_script(__file__)
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_stdout=True, log_file=None)
 
-G_file_efield = "/home/dc1/Coarse1.root"
+G_file_efield = "/home/dc1/Coarse2.root"
 
 
 def test_VoltageTTree():
@@ -48,9 +48,16 @@ def test_Voc_du(idx):
     plt.figure()
     t_trace = m_ios.simu_du.du_time_efield[idx]
     plt.title("Voltage")
-    plt.plot(t_trace, m_ios.simu_du.voc[idx][0], label="V sn")
-    #plt.plot(t_trace, m_ios.simu_du.voc[idx][1], label="V we")
+    #plt.plot(t_trace, m_ios.simu_du.voc[idx][0], label="V sn")
+    plt.plot(t_trace, m_ios.simu_du.voc[idx][1], label="V we")
     #plt.plot(t_trace, m_ios.simu_du.voc[idx][2], label="V _z")
+    plt.grid()
+    plt.legend()
+    plt.figure()
+    plt.title("LNA")
+    #plt.plot(t_trace, m_ios.simu_du.v_out[idx][0], label="V sn")
+    plt.plot(t_trace, m_ios.simu_du.v_out[idx][1], label="V we")
+    #plt.plot(t_trace, m_ios.simu_du.v_out[idx][2], label="V _z")
     plt.grid()
     plt.legend()
     plt.figure()
@@ -65,7 +72,7 @@ def test_Voc_du(idx):
 
 def test_Voc_event():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)
-    #m_ios.compute_event_idx(0)
+    m_ios.compute_event_idx(0)
     m_ios.save_voltage("out5.root", append_file=False)
 
 
@@ -81,7 +88,7 @@ if __name__ == '__main__':
     logger.info(mlg.string_begin_script())
     # ================
     #test_VoltageTTree()
-    test_Voc_du(26)
+    test_Voc_du(47)
     #test_Voc_event()
     # test_Voc_event_many()
     # ================
