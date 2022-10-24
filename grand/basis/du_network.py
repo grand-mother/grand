@@ -121,6 +121,7 @@ class DetectorUnitNetwork:
 
     def plot_footprint_time(self, a_time, a3_values, title="", size_circle=200):  # pragma: no cover
         import matplotlib
+
         # same number of sample
         assert a_time.shape[0] == a3_values.shape[2]
         # we plot norm of 3D vector
@@ -162,6 +163,7 @@ class DetectorUnitNetwork:
             frame_number = int((t_slider - a_time[0]) / delta_t)
             scat.set_array(a_norm_val[:, frame_number])
             return scat
+
         time_slider.on_changed(update_time)
         # plt.connect("button_press_event", on_click)
         # WARNING: we must used plt.show() of this module not in another module
