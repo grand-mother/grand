@@ -164,10 +164,10 @@ class SimuDetectorUnitEffect(object):
         self.fft_size, self.freqs_mhz = gsig.get_fastest_size_fft(
             self.sig_size,
             self.f_samp_mhz,
-            2,
+            1,
         )
         self.lna = grfc.LowNoiseAmplificatorGP300()
-        self.lna.compute_at_freqs(self.freqs_mhz)
+        self.lna.compute_rho_for_freqs(self.freqs_mhz)
 
     def set_data_shower(self, shower):
         assert isinstance(shower, ShowerEvent)
@@ -225,5 +225,7 @@ class SimuDetectorUnitEffect(object):
         )
         # fft_voc = sf.rfft(self.voc[idx_du], self.fft_size)
         # TODO: same order ?
-        fft_vlna = fft_voc * self.lna.get_rho()
-        self.v_out[idx_du] = sf.irfft(fft_vlna, self.sig_size)
+        fft_vlna = fft_voc * self.lna.get_fft_rho()
+        # inverse FFT and remove zero-padding
+        # WARNING not not used : sf.irfft(fft_vlna, self.sig_size)
+        self.v_out[idx_du] = sf.irfft(fft_vlna)[:,:self.sig_size]

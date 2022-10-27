@@ -225,7 +225,9 @@ class AntennaProcessing:
             logger.debug(f'without offset')
             self.fft_resp_volt = Ex*Leff[0] + Ey*Leff[1] + Ez*Leff[2]
         # fmt: on
-        resp_volt = sf.irfft(self.fft_resp_volt, Efield.e_xyz.shape[1])
+        # inverse FFT and remove zero-padding
+        # WARNING not not used : sf.irfft(fft_vlna, self.sig_size)
+        resp_volt = sf.irfft(self.fft_resp_volt)[:Efield.e_xyz.shape[1]]
         t = Efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
         logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
