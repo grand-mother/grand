@@ -64,7 +64,7 @@ class GenericProcessingDU:
         self.size_sig = (self.size_out - 1) * 2
 
 
-class StandingWaveRatio(GenericProcessingDU):
+class StandingWaveRatioGP300(GenericProcessingDU):
     """!
     @authors PengFei Zhang and Xidian group, GRANDLIB adaption Colley jm
 
@@ -77,6 +77,15 @@ class StandingWaveRatio(GenericProcessingDU):
     def __init__(self):
         super().__init__()
         self.s11 = np.zeros((0, 3), dtype=np.complex64)
+
+    def _set_name_data_file(self, axis):
+        """!
+
+        @param axis:
+        """
+        lna_address = os.path.join("detector", "antennaVSWR", f"{axis+1}.s1p")
+        return grand_add_path_data_model(lna_address)
+
 
     def compute_s11(self, unit=1):
         """!
@@ -132,32 +141,14 @@ class StandingWaveRatio(GenericProcessingDU):
         ax2.legend()
 
 
-class StandingWaveRatioGP300(StandingWaveRatio):
-    """!
-    @authors PengFei Zhang and Xidian group, GRANDLIB adaptation Colley jm
 
-    Class goals:
-      * define data model used for GP300
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def _set_name_data_file(self, axis):
-        """!
-
-        @param axis:
-        """
-        lna_address = os.path.join("detector", "antennaVSWR", f"{axis+1}.s1p")
-        return grand_add_path_data_model(lna_address)
-
-
-class LowNoiseAmplificator(GenericProcessingDU):
+class LowNoiseAmplificatorGP300(GenericProcessingDU):
     """!
     @authors PengFei Zhang and Xidian group, GRANDLIB adaption Colley jm
 
     Class goals:
-      * Perform the LNA filter on signal for each antenna of GP300
+      * Perform the LNA filter on signal for each antenna
+      * manage VSWR model
       * read only once LNA data files
       * pre_compute interpolation
     """
@@ -175,16 +166,17 @@ class LowNoiseAmplificator(GenericProcessingDU):
             lna[0] /= 1e6
             self.data_lna.append(lna)
         self.f_lna = lna[:, 0]
+        self._vswr = StandingWaveRatioGP300()
 
     ### INTERNAL
 
-    def set_vswr_model(self, o_vswr):
-        """Set VSWR model and upadte value if transfert function Rho
+    def _set_name_data_file(self, axis):
+        """!
 
-        @param o_vswr (StandingWaveRatio):
+        @param axis:
         """
-        assert isinstance(o_vswr, StandingWaveRatio)
-        self._vswr = o_vswr
+        lna_address = os.path.join("detector", "LNASparameter", f"{axis+1}.s2p")
+        return grand_add_path_data_model(lna_address)
 
     def _pre_compute(self, unit=1):
         """!
@@ -259,7 +251,7 @@ class LowNoiseAmplificator(GenericProcessingDU):
 
     ### OPERATION
 
-    def compute_at_freqs(self, a_freq_mhz):
+    def compute_rho_for_freqs(self, a_freq_mhz):
         """!compute Rho transfert function for frequency  a_freq
 
         @param a_freq: vector of frequency
@@ -272,7 +264,7 @@ class LowNoiseAmplificator(GenericProcessingDU):
 
     ### GETTER
 
-    def get_rho(self):
+    def get_fft_rho(self):
         return self.rho123.T
 
     ### PLOT
@@ -337,47 +329,18 @@ class LowNoiseAmplificator(GenericProcessingDU):
     def plot_rho_kernel(self):
         plt.figure()
         plt.title("Rho kernel")
-        kernel_rho = sf.ifftshift(sf.irfft(self.get_rho()))
+        kernel_rho = sf.fftshift(sf.irfft(self.get_fft_rho()))
+        #kernel_rho = sf.irfft(self.get_fft_rho())
         print(kernel_rho.shape)
         # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
         v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
         dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
+        dt_ns = 1
         v_time_ns = dt_ns * v_time
-        plt.plot(v_time_ns, kernel_rho[0], label="0")
+        plt.plot(v_time_ns, kernel_rho[0],"*", label="0")
         plt.plot(v_time_ns, kernel_rho[1], label="1")
         plt.plot(v_time_ns, kernel_rho[2], label="2")
         plt.xlabel("ns")
         plt.grid()
         plt.legend()
 
-
-class LowNoiseAmplificatorGP300(LowNoiseAmplificator):
-    """!
-    @authors PengFei Zhang and Xidian group, GRANDLIB adaption Colley jm
-
-    Class goals:
-      * define data model used for GP300
-    """
-
-    def __init__(self):
-        super().__init__()
-        self._vswr = StandingWaveRatioGP300()
-
-    ### INTERNAL
-
-    def _set_name_data_file(self, axis):
-        """!
-
-        @param axis:
-        """
-        lna_address = os.path.join("detector", "LNASparameter", f"{axis+1}.s2p")
-        return grand_add_path_data_model(lna_address)
-
-
-class MasterRfChain:
-    """
-    Facade for all detector effect
-    """
-
-    def __init__(self):
-        pass
