@@ -92,6 +92,7 @@ class DetectorUnitNetwork:
                 ax.add_artist(atr)
                 if traces:
                     traces.plot_trace_idx(idx)
+                    traces.plot_psd_trace_idx(idx)
                     plt.show()
                 plt.draw()
 
