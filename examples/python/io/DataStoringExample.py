@@ -3,7 +3,6 @@
 import numpy as np
 import time
 import sys
-from datetime import datetime
 from grand.io.root_trees import *
 
 # Check if a filename was provided on the command line
@@ -334,7 +333,7 @@ for i in range(tefield.get_entries()):
     tshower.atmos_model = "dense air dummy"
     tshower.atmos_model_param = np.random.random(3)
     tshower.magnetic_field = np.random.random(3)
-    tshower.date = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+    tshower.date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
     tshower.ground_alt = 3000.0 + np.random.randint(0, 1000)
     tshower.xmax_grams = np.random.random(1) * 500
     tshower.xmax_pos_shc = np.random.random(3)
