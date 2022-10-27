@@ -162,17 +162,17 @@ class HandlingTracesOfEvent:
     def plot_psd_trace_idx(self, idx, to_draw="xyz"):
         self.define_t_samples()
         plt.figure()
-        noverlap = 10
+        noverlap = 5
         plt.title(f"PSD trace of DU {self.du_id[idx]} (idx={idx})")
         if "x" in to_draw:
-            f, Pxx_den = ssig.welch(self.traces[idx, 0], self.f_samp_mhz * 1e6, noverlap=noverlap)
-            plt.plot(f * 1e-6, Pxx_den, label="x")
+            freq, Pxx_den = ssig.welch(self.traces[idx, 0], self.f_samp_mhz * 1e6, noverlap=noverlap)
+            plt.plot(freq * 1e-6, Pxx_den, label="x")
         if "y" in to_draw:
-            f, Pxx_den = ssig.welch(self.traces[idx, 1], self.f_samp_mhz * 1e6, noverlap=noverlap)
-            plt.plot(f * 1e-6, Pxx_den, label="y")
+            freq, Pxx_den = ssig.welch(self.traces[idx, 1], self.f_samp_mhz * 1e6, noverlap=noverlap)
+            plt.plot(freq * 1e-6, Pxx_den, label="y")
         if "z" in to_draw:
-            f, Pxx_den = ssig.welch(self.traces[idx, 2], self.f_samp_mhz * 1e6, noverlap=noverlap)
-            plt.plot(f * 1e-6, Pxx_den, label="z")
+            freq, Pxx_den = ssig.welch(self.traces[idx, 2], self.f_samp_mhz * 1e6, noverlap=noverlap)
+            plt.plot(freq * 1e-6, Pxx_den, label="z")
         plt.ylabel(f"[??]")
         plt.xlabel(f"[MHz]\nFile: {self.name}")
         plt.xlim([0, 300])
