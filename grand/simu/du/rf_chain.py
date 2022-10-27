@@ -86,7 +86,6 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         lna_address = os.path.join("detector", "antennaVSWR", f"{axis+1}.s1p")
         return grand_add_path_data_model(lna_address)
 
-
     def compute_s11(self, unit=1):
         """!
 
@@ -139,7 +138,6 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         ax2.set_xlabel(f"[MHz]")
         ax2.grid()
         ax2.legend()
-
 
 
 class LowNoiseAmplificatorGP300(GenericProcessingDU):
@@ -330,17 +328,16 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         plt.figure()
         plt.title("Rho kernel")
         kernel_rho = sf.fftshift(sf.irfft(self.get_fft_rho()))
-        #kernel_rho = sf.irfft(self.get_fft_rho())
+        # kernel_rho = sf.irfft(self.get_fft_rho())
         print(kernel_rho.shape)
         # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
         v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
         dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
         dt_ns = 1
         v_time_ns = dt_ns * v_time
-        plt.plot(v_time_ns, kernel_rho[0],"*", label="0")
+        plt.plot(v_time_ns, kernel_rho[0], "*", label="0")
         plt.plot(v_time_ns, kernel_rho[1], label="1")
         plt.plot(v_time_ns, kernel_rho[2], label="2")
         plt.xlabel("ns")
         plt.grid()
         plt.legend()
-

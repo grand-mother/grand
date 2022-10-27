@@ -214,7 +214,7 @@ class SimuDetectorUnitEffect(object):
         self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        
+
         ########################
         # 2) LNA filter
         ########################
@@ -230,4 +230,4 @@ class SimuDetectorUnitEffect(object):
         fft_vlna = fft_voc * self.lna.get_fft_rho()
         # inverse FFT and remove zero-padding
         # WARNING: do not used : sf.irfft(fft_vlna, self.sig_size)
-        self.v_out[idx_du] = sf.irfft(fft_vlna)[:,:self.sig_size]
+        self.v_out[idx_du] = sf.irfft(fft_vlna)[:, : self.sig_size]
