@@ -124,6 +124,7 @@ class SimuDetectorUnitEffect(object):
         self.ant_model = AntennaModelGp300()
         self.voc = None
         self.fft_size = 0
+        self.fact_padding = 2
 
     ### INTERNAL
     def _get_ant_leff(self, idx_du):
@@ -164,7 +165,7 @@ class SimuDetectorUnitEffect(object):
         self.fft_size, self.freqs_mhz = gsig.get_fastest_size_fft(
             self.sig_size,
             self.f_samp_mhz,
-            1,
+            self.fact_padding,
         )
         self.lna = grfc.LowNoiseAmplificatorGP300()
         self.lna.compute_rho_for_freqs(self.freqs_mhz)
@@ -213,6 +214,7 @@ class SimuDetectorUnitEffect(object):
         self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
+        
         ########################
         # 2) LNA filter
         ########################
@@ -227,5 +229,5 @@ class SimuDetectorUnitEffect(object):
         # TODO: same order ?
         fft_vlna = fft_voc * self.lna.get_fft_rho()
         # inverse FFT and remove zero-padding
-        # WARNING not not used : sf.irfft(fft_vlna, self.sig_size)
+        # WARNING: do not used : sf.irfft(fft_vlna, self.sig_size)
         self.v_out[idx_du] = sf.irfft(fft_vlna)[:,:self.sig_size]
