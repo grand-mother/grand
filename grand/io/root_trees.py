@@ -2566,7 +2566,6 @@ class VoltageEventTree(MotherEventTree):
     ## Voltage trace in Z direction
     _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
-
     # def __post_init__(self):
     #     super().__post_init__()
     #
