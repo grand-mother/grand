@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
-from grand.io.root_file import FileSimuEfield
+from grand.io.root_file import FileSimuEfield, FileVoltageEvent
 from grand.basis.traces_event import HandlingTracesOfEvent
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
@@ -22,6 +22,7 @@ def main():
     parser.add_argument('file',
                         help='path and name of ROOT file GRAND',
                         type=argparse.FileType('r'))
+    parser.add_argument('--ttree', choices=['efield','voltage'],default='efield')
     parser.add_argument('-n', '--net',
                         help='plot detector unit network', action="store_true", required=False)
     parser.add_argument('-t', '--trace', type=int,
@@ -33,12 +34,15 @@ def main():
     args = parser.parse_args()
     # 
     logger.info(mlg.chrono_start())
-    d_efield = FileSimuEfield(args.file.name)
+    if args.ttree == 'efield':
+        d_event = FileSimuEfield(args.file.name)
+    elif args.ttree == 'voltage':
+        d_event = FileVoltageEvent(args.file.name)
     logger.info(mlg.chrono_string_duration())
-    print(f"Nb events  : {d_efield.get_nb_events()}")
-    print(f"Nb DU      : {d_efield.get_nb_du()}")
-    print(f"Size trace : {d_efield.get_size_trace()}")
-    o_tevent = d_efield.get_obj_handlingtracesofevent()
+    print(f"Nb events  : {d_event.get_nb_events()}")
+    print(f"Nb DU      : {d_event.get_nb_du()}")
+    print(f"Size trace : {d_event.get_size_trace()}")
+    o_tevent = d_event.get_obj_handlingtracesofevent()
     assert isinstance(o_tevent, HandlingTracesOfEvent)
     if args.trace_norm:
         o_tevent.plot_all_traces_as_image()
@@ -53,8 +57,8 @@ def main():
             a_time, a_values = o_tevent.get_common_time_trace()
             o_tevent.network.plot_footprint_time(a_time, a_values, "test")
     if args.trace != -100:
-        if (0 > args.trace) or  (args.trace >= d_efield.get_nb_du()):
-            print(f"ERROR: index of the trace must be >= 0 and <= {d_efield.get_nb_du()-1}")
+        if (0 > args.trace) or  (args.trace >= d_event.get_nb_du()):
+            print(f"ERROR: index of the trace must be >= 0 and <= {d_event.get_nb_du()-1}")
             return
         o_tevent.plot_trace_idx(args.trace)
     
