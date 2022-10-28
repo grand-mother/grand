@@ -15,7 +15,7 @@ from black import format_ipynb_string
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("debug", log_stdout=True, log_file=None)
+mlg.create_output_for_logger("info", log_stdout=True, log_file=None)
 
 G_file_efield = "/home/dc1/Coarse1.root"
 
