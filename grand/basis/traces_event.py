@@ -24,7 +24,7 @@ class HandlingTracesOfEvent:
         self.traces = np.zeros((nb_du, nb_dim, nb_sample))
         self.du_id = np.arange(nb_du)
         self.t_start_ns = np.zeros((nb_du), dtype=np.int64)
-        self.t_samples = np.zeros((nb_du), dtype=np.float64)
+        self.t_samples = np.zeros((nb_du, nb_dim, nb_sample), dtype=np.float64)
         self.f_samp_mhz = 0
         self.unit_trace = "TBD"
         self.network = DetectorUnitNetwork(self.name)
@@ -77,7 +77,7 @@ class HandlingTracesOfEvent:
         self.du_id = self.du_id[:new_nb_du]
         self.traces = self.traces[:new_nb_du, :, :]
         self.t_start_ns = self.t_start_ns[:new_nb_du]
-        if isinstance(self.t_samples, np.ndarray):
+        if self.t_samples.shape[0]>0:
             self.t_samples = self.t_samples[:new_nb_du, :, :]
         self.network.reduce_nb_du(new_nb_du)
 

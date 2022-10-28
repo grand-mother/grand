@@ -33,7 +33,7 @@ class MasterSimuDetectorWithRootIo(object):
         self.d_root.load_event_idx(idx)
         self.tr_evt = self.d_root.get_obj_handlingtracesofevent()
         # for debug
-        # self.tr_evt.reduce_nb_du(12)
+        #self.tr_evt.reduce_nb_du(12)
         assert isinstance(self.tr_evt, HandlingTracesOfEvent)
         self.simu_du.set_data_efield(self.tr_evt)
         shower = ShowerEvent()
@@ -48,8 +48,7 @@ class MasterSimuDetectorWithRootIo(object):
         self._load_data_to_process_event(idx)
         return self.simu_du.compute_du_all()
 
-    def save_voltage(self, file_out="", append_file=True):
-        self.tt_voltage = VoltageEventTree()
+    def save_voltage(self, file_out="", append_file=True):        
         # delete file can be take time => start with this action
         if file_out == "":
             file_out = self.f_name_root
@@ -57,46 +56,47 @@ class MasterSimuDetectorWithRootIo(object):
             logger.info(f"save on new file option => remove file {file_out}")
             os.remove(file_out)
             time.sleep(1)
+        self.tt_voltage = VoltageEventTree(file_out)
         # now fill Voltage object
-        # freq_mhz = int(self.d_root.get_sampling_freq_mhz())
-        # self.tt_voltage.du_count = self.tr_evt.get_nb_du()
+        freq_mhz = int(self.d_root.get_sampling_freq_mhz())
+        self.tt_voltage.du_count = self.tr_evt.get_nb_du()
         logger.debug(f"We will add {self.tt_voltage.du_count} DU")
         logger.debug(f"We will add {self.tt_voltage.du_count} DU")
-        self.tt_voltage.run_number = 0  # self.d_root.tt_efield.run_number
-        self.tt_voltage.event_number = 0  # self.d_root.tt_efield.event_number
+        self.tt_voltage.run_number = self.d_root.tt_efield.run_number
+        self.tt_voltage.event_number = self.d_root.tt_efield.event_number
         logger.info(f"{type(self.tt_voltage.run_number)} {type(self.tt_voltage.event_number)}")
         logger.info(f"{self.tt_voltage.run_number} {self.tt_voltage.event_number}")
-        # self.tt_voltage.first_du = self.tr_evt.du_id[0]
-        # self.tt_voltage.time_seconds = 0 #self.d_root.tt_efield.time_seconds
-        # self.tt_voltage.time_nanoseconds = 0 #self.d_root.tt_efield.time_nanoseconds
-        # self.tr_evt.traces = self.simu_du.voc
-        # self.tr_evt.define_t_samples()
-        self.tt_voltage.event_size = 1999
-        for idx in range(10):
-            trace = np.arange(self.tt_voltage.event_size, dtype=np.float64)
+        self.tt_voltage.first_du = self.tr_evt.du_id[0]
+        self.tt_voltage.time_seconds = self.d_root.tt_efield.time_seconds
+        self.tt_voltage.time_nanoseconds = self.d_root.tt_efield.time_nanoseconds
+        self.tr_evt.traces = self.simu_du.voc
+        self.tr_evt.define_t_samples()
+        #self.tt_voltage.event_size = 1999
+        for idx in range(self.simu_du.tr_evt.get_nb_du()):
+            #trace = np.arange(self.tt_voltage.event_size, dtype=np.float64)
             # self.tr_evt.plot_trace_idx(idx)
-            # logger.info(f'add DU {self.tr_evt.du_id[idx]} in ROOT file')
-            # logger.info(f'shape: {self.simu_du.voc[idx, 0].shape}')
-            # self.tt_voltage.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
-            # self.tt_voltage.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
-            # self.tt_voltage.adc_sampling_frequency.append(freq_mhz)
-            # self.tt_voltage.du_id.append(int(self.tr_evt.du_id[idx]))
-            # logger.info(f'du_id {type(self.tr_evt.du_id[idx])}')
-            # self.tt_voltage.trace_x.append(self.simu_du.voc[idx, 0].astype(np.float64).tolist())
+            logger.info(f'add DU {self.tr_evt.du_id[idx]} in ROOT file')
+            logger.info(f'shape: {self.simu_du.voc[idx, 0].shape}')
+            self.tt_voltage.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
+            self.tt_voltage.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
+            self.tt_voltage.adc_sampling_frequency.append(freq_mhz)
+            self.tt_voltage.du_id.append(int(self.tr_evt.du_id[idx]))
+            logger.info(f'du_id {type(self.tr_evt.du_id[idx])}')
+            self.tt_voltage.trace_x.append(self.simu_du.voc[idx, 0].astype(np.float64).tolist())
             # logger.info(f'Trace {trace.shape} {trace.dtype}')
             # trace = self.simu_du.voc[idx, 0].astype(np.float64)
             # logger.info(f'Trace {trace.shape} {trace.dtype}')
-            self.tt_voltage.trace_x.append(trace.tolist())
-            self.tt_voltage.trace_z.append(trace.tolist())
-            self.tt_voltage.trace_z.append(trace.tolist())
+            # self.tt_voltage.trace_x.append(trace.tolist())
+            # self.tt_voltage.trace_z.append(trace.tolist())
+            # self.tt_voltage.trace_z.append(trace.tolist())
             # logger.info(f'{self.simu_du.voc[idx, 0][:10]}')
             # logger.info(f'{self.tt_voltage.trace_x[-1][:10]}')
-            # self.tt_voltage.trace_y.append(self.simu_du.voc[idx, 1].astype(np.float64).tolist())
-            # self.tt_voltage.trace_z.append(self.simu_du.voc[idx, 2].astype(np.float64).tolist())
+            self.tt_voltage.trace_y.append(self.simu_du.voc[idx, 1].astype(np.float64).tolist())
+            self.tt_voltage.trace_z.append(self.simu_du.voc[idx, 2].astype(np.float64).tolist())
         # logger.info(f'{self.tt_voltage.du_id}')
         ret = self.tt_voltage.fill()
         # logger.debug(ret)
-        ret = self.tt_voltage.write(file_out)
+        ret = self.tt_voltage.write()
         # logger.debug(self.tt_voltage)
 
     def compute_event_all(self):

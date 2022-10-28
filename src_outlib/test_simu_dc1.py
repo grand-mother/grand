@@ -73,7 +73,7 @@ def test_Voc_du(idx):
 def test_Voc_event():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)
     m_ios.compute_event_idx(0)
-    m_ios.save_voltage("out5.root", append_file=False)
+    m_ios.save_voltage("out6.root", append_file=False)
 
 
 def test_Voc_event_many():
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     logger.info(mlg.string_begin_script())
     # ================
     #test_VoltageTTree()
-    test_Voc_du(26)
-    #test_Voc_event()
+    #test_Voc_du(26)
+    test_Voc_event()
     # test_Voc_event_many()
     # ================
     logger.info(mlg.string_end_script())
