@@ -156,7 +156,7 @@ class AntennaProcessing:
         if self.size_fft == 0:
             self.size_fft = sf.next_fast_len(e_xyz.shape[1])
             self.freqs_out_hz = fftfreq(self.size_fft, Efield.a_time)
-        logger.info(f"size_fft={self.size_fft}")
+        logger.debug(f"size_fft={self.size_fft}")
         # frequency [Hz]
         freq_ref_hz = table.frequency
         ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
@@ -205,15 +205,15 @@ class AntennaProcessing:
         # Leff = np.ones((3,500), dtype=np.complex128)
         Leff = self.effective_length(xmax, Efield, frame)
         # logger.info(Leff.dtype)
-        logger.info(Leff.shape)
+        logger.debug(Leff.shape)
         E = Efield.e_xyz  # E is CartesianRepresentation
-        logger.info(Efield.e_xyz.shape)
+        logger.debug(Efield.e_xyz.shape)
 
         Ex = sf.rfft(E.x, n=self.size_fft)
         Ey = sf.rfft(E.y, n=self.size_fft)
         Ez = sf.rfft(E.z, n=self.size_fft)
-        logger.info(Ex.shape)
-        logger.info(f"size_fft={self.size_fft}")
+        logger.debug(Ex.shape)
+        logger.debug(f"size_fft={self.size_fft}")
         logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
         # Here we have to do an ugly patch for Leff values to be correct
         # fmt: off
@@ -222,7 +222,7 @@ class AntennaProcessing:
                                 + Ey*(Leff[1] - Leff[1, 0])
                                 + Ez*(Leff[2] - Leff[2, 0]))
         else:
-            logger.debug(f'without offset')
+            logger.info(f'fft_resp_volt without offset')
             self.fft_resp_volt = Ex*Leff[0] + Ey*Leff[1] + Ez*Leff[2]
         # fmt: on
         # inverse FFT and remove zero-padding
