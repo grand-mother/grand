@@ -217,13 +217,8 @@ class AntennaProcessing:
         logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
         # Here we have to do an ugly patch for Leff values to be correct
         # fmt: off
-        if True:
-            self.fft_resp_volt = (Ex*(Leff[0] - Leff[0, 0])
-                                + Ey*(Leff[1] - Leff[1, 0])
-                                + Ez*(Leff[2] - Leff[2, 0]))
-        else:
-            logger.info(f'fft_resp_volt without offset')
-            self.fft_resp_volt = Ex*Leff[0] + Ey*Leff[1] + Ez*Leff[2]
+        logger.info(f'fft_resp_volt without offset')
+        self.fft_resp_volt = Ex*Leff[0] + Ey*Leff[1] + Ez*Leff[2]
         # fmt: on
         # inverse FFT and remove zero-padding
         # WARNING do not used : sf.irfft(self.fft_resp_volt, Efield.e_xyz.shape[1])
