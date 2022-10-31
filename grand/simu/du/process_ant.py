@@ -202,37 +202,23 @@ class AntennaProcessing:
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input Leff and field are in shower frame.
-        # Leff = np.ones((3,500), dtype=np.complex128)
         Leff = self.effective_length(xmax, Efield, frame)
-        # logger.info(Leff.dtype)
         logger.debug(Leff.shape)
-        E = Efield.e_xyz  # E is CartesianRepresentation
+        # E is CartesianRepresentation
+        E = Efield.e_xyz
         logger.debug(Efield.e_xyz.shape)
-
         Ex = sf.rfft(E.x, n=self.size_fft)
         Ey = sf.rfft(E.y, n=self.size_fft)
         Ez = sf.rfft(E.z, n=self.size_fft)
         logger.debug(Ex.shape)
         logger.debug(f"size_fft={self.size_fft}")
         logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
-        # Here we have to do an ugly patch for Leff values to be correct
-        # fmt: off
-        logger.info(f'fft_resp_volt without offset')
-        self.fft_resp_volt = Ex*Leff[0] + Ey*Leff[1] + Ez*Leff[2]
-        # fmt: on
+        # convol E field by Leff in Fourier space
+        self.fft_resp_volt = Ex * Leff[0] + Ey * Leff[1] + Ez * Leff[2]
         # inverse FFT and remove zero-padding
-        # WARNING do not used : sf.irfft(self.fft_resp_volt, Efield.e_xyz.shape[1])
         resp_volt = sf.irfft(self.fft_resp_volt)[: Efield.e_xyz.shape[1]]
+        # WARNING do not used : sf.irfft(self.fft_resp_volt, Efield.e_xyz.shape[1])
         t = Efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
         logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
         return Voltage(t=t, V=resp_volt)
-
-    def compute_voltage_fake(
-        self,
-        xmax: LTP,
-        Efield: ElectricField,
-        frame: Union[LTP, GRANDCS, None] = None,
-    ) -> Voltage:
-        fake = np.ones((998,), dtype=np.float64)
-        return Voltage(t=fake, V=fake)
