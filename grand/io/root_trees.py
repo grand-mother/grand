@@ -123,7 +123,21 @@ class DataTree:
     _creation_datetime: datetime.datetime = datetime.datetime.utcnow()
 
     # Fields that are not branches
-    _nonbranch_fields = ["_nonbranch_fields", "_tree", "_file", "_file_name", "_tree_name", "_cur_du_id", "_entry_list", "_comment", "_creation_datetime", "_modification_software", "_modification_software_version", "_source_datetime", "_analysis_level"]
+    _nonbranch_fields = [
+        "_nonbranch_fields",
+        "_tree",
+        "_file",
+        "_file_name",
+        "_tree_name",
+        "_cur_du_id",
+        "_entry_list",
+        "_comment",
+        "_creation_datetime",
+        "_modification_software",
+        "_modification_software_version",
+        "_source_datetime",
+        "_analysis_level",
+    ]
 
     @property
     def tree(self):
@@ -174,7 +188,9 @@ class DataTree:
         # Remove the existing datetime
         self._tree.GetUserInfo().RemoveAt(1)
         # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 1)
+        self._tree.GetUserInfo().AddAt(
+            ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 1
+        )
 
     @classmethod
     def _type(cls):
@@ -473,7 +489,7 @@ class DataTree:
     ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree
     def assign_metadata(self):
         """Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree"""
-        for i,el in enumerate(self._tree.GetUserInfo()):
+        for i, el in enumerate(self._tree.GetUserInfo()):
             # meta as TParameter
             try:
                 setattr(self, "_" + el.GetName(), el.GetVal())
@@ -516,7 +532,8 @@ class DataTree:
         """Copy contents of another dataclass instance of the same type to this instance"""
         # ToDo: Shallow copy with assigning branches would be probably faster, but it would be... shallow ;)
         for k in source.__dict__.keys():
-            if k in self._nonbranch_fields: continue
+            if k in self._nonbranch_fields:
+                continue
             setattr(self, k[1:], getattr(source, k[1:]))
 
 
@@ -654,7 +671,9 @@ class MotherEventTree(DataTree):
         # Remove the existing datetime
         self._tree.GetUserInfo().RemoveAt(2)
         # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 2)
+        self._tree.GetUserInfo().AddAt(
+            ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 2
+        )
 
     @property
     def modification_software(self):
@@ -1344,7 +1363,11 @@ class ADCEventTree(MotherEventTree):
     @event_id.setter
     def event_id(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._event_id.clear()
             self._event_id += value
@@ -1364,7 +1387,11 @@ class ADCEventTree(MotherEventTree):
     @du_id.setter
     def du_id(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_id.clear()
             self._du_id += value
@@ -1384,7 +1411,11 @@ class ADCEventTree(MotherEventTree):
     @du_seconds.setter
     def du_seconds(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_seconds.clear()
             self._du_seconds += value
@@ -1404,7 +1435,11 @@ class ADCEventTree(MotherEventTree):
     @du_nanoseconds.setter
     def du_nanoseconds(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_nanoseconds.clear()
             self._du_nanoseconds += value
@@ -1424,7 +1459,11 @@ class ADCEventTree(MotherEventTree):
     @trigger_position.setter
     def trigger_position(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_position.clear()
             self._trigger_position += value
@@ -1444,7 +1483,11 @@ class ADCEventTree(MotherEventTree):
     @trigger_flag.setter
     def trigger_flag(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_flag.clear()
             self._trigger_flag += value
@@ -1464,7 +1507,11 @@ class ADCEventTree(MotherEventTree):
     @atm_temperature.setter
     def atm_temperature(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_temperature.clear()
             self._atm_temperature += value
@@ -1484,7 +1531,11 @@ class ADCEventTree(MotherEventTree):
     @atm_pressure.setter
     def atm_pressure(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_pressure.clear()
             self._atm_pressure += value
@@ -1504,7 +1555,11 @@ class ADCEventTree(MotherEventTree):
     @atm_humidity.setter
     def atm_humidity(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_humidity.clear()
             self._atm_humidity += value
@@ -1524,7 +1579,11 @@ class ADCEventTree(MotherEventTree):
     @acceleration_x.setter
     def acceleration_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._acceleration_x.clear()
             self._acceleration_x += value
@@ -1544,7 +1603,11 @@ class ADCEventTree(MotherEventTree):
     @acceleration_y.setter
     def acceleration_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._acceleration_y.clear()
             self._acceleration_y += value
@@ -1564,7 +1627,11 @@ class ADCEventTree(MotherEventTree):
     @acceleration_z.setter
     def acceleration_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._acceleration_z.clear()
             self._acceleration_z += value
@@ -1584,7 +1651,11 @@ class ADCEventTree(MotherEventTree):
     @battery_level.setter
     def battery_level(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._battery_level.clear()
             self._battery_level += value
@@ -1604,7 +1675,11 @@ class ADCEventTree(MotherEventTree):
     @firmware_version.setter
     def firmware_version(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._firmware_version.clear()
             self._firmware_version += value
@@ -1624,7 +1699,11 @@ class ADCEventTree(MotherEventTree):
     @adc_sampling_frequency.setter
     def adc_sampling_frequency(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_sampling_frequency.clear()
             self._adc_sampling_frequency += value
@@ -1644,7 +1723,11 @@ class ADCEventTree(MotherEventTree):
     @adc_sampling_resolution.setter
     def adc_sampling_resolution(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_sampling_resolution.clear()
             self._adc_sampling_resolution += value
@@ -1664,7 +1747,11 @@ class ADCEventTree(MotherEventTree):
     @adc_input_channels.setter
     def adc_input_channels(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_input_channels.clear()
             self._adc_input_channels += value
@@ -1684,7 +1771,11 @@ class ADCEventTree(MotherEventTree):
     @adc_enabled_channels.setter
     def adc_enabled_channels(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_enabled_channels.clear()
             self._adc_enabled_channels += value
@@ -1704,7 +1795,11 @@ class ADCEventTree(MotherEventTree):
     @adc_samples_count_total.setter
     def adc_samples_count_total(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_total.clear()
             self._adc_samples_count_total += value
@@ -1724,7 +1819,11 @@ class ADCEventTree(MotherEventTree):
     @adc_samples_count_channel0.setter
     def adc_samples_count_channel0(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel0.clear()
             self._adc_samples_count_channel0 += value
@@ -1744,7 +1843,11 @@ class ADCEventTree(MotherEventTree):
     @adc_samples_count_channel1.setter
     def adc_samples_count_channel1(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel1.clear()
             self._adc_samples_count_channel1 += value
@@ -1764,7 +1867,11 @@ class ADCEventTree(MotherEventTree):
     @adc_samples_count_channel2.setter
     def adc_samples_count_channel2(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel2.clear()
             self._adc_samples_count_channel2 += value
@@ -1784,7 +1891,11 @@ class ADCEventTree(MotherEventTree):
     @adc_samples_count_channel3.setter
     def adc_samples_count_channel3(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel3.clear()
             self._adc_samples_count_channel3 += value
@@ -1804,7 +1915,11 @@ class ADCEventTree(MotherEventTree):
     @trigger_pattern.setter
     def trigger_pattern(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_pattern.clear()
             self._trigger_pattern += value
@@ -1824,7 +1939,11 @@ class ADCEventTree(MotherEventTree):
     @trigger_rate.setter
     def trigger_rate(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_rate.clear()
             self._trigger_rate += value
@@ -1844,7 +1963,11 @@ class ADCEventTree(MotherEventTree):
     @clock_tick.setter
     def clock_tick(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._clock_tick.clear()
             self._clock_tick += value
@@ -1864,7 +1987,11 @@ class ADCEventTree(MotherEventTree):
     @clock_ticks_per_second.setter
     def clock_ticks_per_second(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._clock_ticks_per_second.clear()
             self._clock_ticks_per_second += value
@@ -1884,7 +2011,11 @@ class ADCEventTree(MotherEventTree):
     @gps_offset.setter
     def gps_offset(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_offset.clear()
             self._gps_offset += value
@@ -1904,7 +2035,11 @@ class ADCEventTree(MotherEventTree):
     @gps_leap_second.setter
     def gps_leap_second(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_leap_second.clear()
             self._gps_leap_second += value
@@ -1924,7 +2059,11 @@ class ADCEventTree(MotherEventTree):
     @gps_status.setter
     def gps_status(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_status.clear()
             self._gps_status += value
@@ -1944,7 +2083,11 @@ class ADCEventTree(MotherEventTree):
     @gps_alarms.setter
     def gps_alarms(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_alarms.clear()
             self._gps_alarms += value
@@ -1964,7 +2107,11 @@ class ADCEventTree(MotherEventTree):
     @gps_warnings.setter
     def gps_warnings(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_warnings.clear()
             self._gps_warnings += value
@@ -1984,7 +2131,11 @@ class ADCEventTree(MotherEventTree):
     @gps_time.setter
     def gps_time(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_time.clear()
             self._gps_time += value
@@ -2004,7 +2155,11 @@ class ADCEventTree(MotherEventTree):
     @gps_long.setter
     def gps_long(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_long.clear()
             self._gps_long += value
@@ -2024,7 +2179,11 @@ class ADCEventTree(MotherEventTree):
     @gps_lat.setter
     def gps_lat(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_lat.clear()
             self._gps_lat += value
@@ -2044,7 +2203,11 @@ class ADCEventTree(MotherEventTree):
     @gps_alt.setter
     def gps_alt(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_alt.clear()
             self._gps_alt += value
@@ -2064,7 +2227,11 @@ class ADCEventTree(MotherEventTree):
     @gps_temp.setter
     def gps_temp(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_temp.clear()
             self._gps_temp += value
@@ -2084,7 +2251,11 @@ class ADCEventTree(MotherEventTree):
     @digi_ctrl.setter
     def digi_ctrl(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._digi_ctrl.clear()
             self._digi_ctrl += value
@@ -2104,7 +2275,11 @@ class ADCEventTree(MotherEventTree):
     @digi_prepost_trig_windows.setter
     def digi_prepost_trig_windows(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._digi_prepost_trig_windows.clear()
             self._digi_prepost_trig_windows += value
@@ -2124,7 +2299,11 @@ class ADCEventTree(MotherEventTree):
     @channel_properties0.setter
     def channel_properties0(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties0.clear()
             self._channel_properties0 += value
@@ -2144,7 +2323,11 @@ class ADCEventTree(MotherEventTree):
     @channel_properties1.setter
     def channel_properties1(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties1.clear()
             self._channel_properties1 += value
@@ -2164,7 +2347,11 @@ class ADCEventTree(MotherEventTree):
     @channel_properties2.setter
     def channel_properties2(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties2.clear()
             self._channel_properties2 += value
@@ -2184,7 +2371,11 @@ class ADCEventTree(MotherEventTree):
     @channel_properties3.setter
     def channel_properties3(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties3.clear()
             self._channel_properties3 += value
@@ -2204,7 +2395,11 @@ class ADCEventTree(MotherEventTree):
     @channel_trig_settings0.setter
     def channel_trig_settings0(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings0.clear()
             self._channel_trig_settings0 += value
@@ -2224,7 +2419,11 @@ class ADCEventTree(MotherEventTree):
     @channel_trig_settings1.setter
     def channel_trig_settings1(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings1.clear()
             self._channel_trig_settings1 += value
@@ -2244,7 +2443,11 @@ class ADCEventTree(MotherEventTree):
     @channel_trig_settings2.setter
     def channel_trig_settings2(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings2.clear()
             self._channel_trig_settings2 += value
@@ -2264,7 +2467,11 @@ class ADCEventTree(MotherEventTree):
     @channel_trig_settings3.setter
     def channel_trig_settings3(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings3.clear()
             self._channel_trig_settings3 += value
@@ -2284,7 +2491,11 @@ class ADCEventTree(MotherEventTree):
     @ioff.setter
     def ioff(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._ioff.clear()
             self._ioff += value
@@ -2304,7 +2515,11 @@ class ADCEventTree(MotherEventTree):
     @trace_0.setter
     def trace_0(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_0.clear()
             self._trace_0 += value
@@ -2325,7 +2540,11 @@ class ADCEventTree(MotherEventTree):
     @trace_1.setter
     def trace_1(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_1.clear()
             self._trace_1 += value
@@ -2345,7 +2564,11 @@ class ADCEventTree(MotherEventTree):
     @trace_2.setter
     def trace_2(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_2.clear()
             self._trace_2 += value
@@ -2365,7 +2588,11 @@ class ADCEventTree(MotherEventTree):
     @trace_3.setter
     def trace_3(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_3.clear()
             self._trace_3 += value
@@ -2657,7 +2884,11 @@ class VoltageEventTree(MotherEventTree):
     @event_id.setter
     def event_id(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._event_id.clear()
             self._event_id += value
@@ -2677,7 +2908,11 @@ class VoltageEventTree(MotherEventTree):
     @du_id.setter
     def du_id(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_id.clear()
             self._du_id += value
@@ -2697,7 +2932,11 @@ class VoltageEventTree(MotherEventTree):
     @du_seconds.setter
     def du_seconds(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_seconds.clear()
             self._du_seconds += value
@@ -2717,7 +2956,11 @@ class VoltageEventTree(MotherEventTree):
     @du_nanoseconds.setter
     def du_nanoseconds(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_nanoseconds.clear()
             self._du_nanoseconds += value
@@ -2771,7 +3014,11 @@ class VoltageEventTree(MotherEventTree):
     @trigger_position.setter
     def trigger_position(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_position.clear()
             self._trigger_position += value
@@ -2791,7 +3038,11 @@ class VoltageEventTree(MotherEventTree):
     @trigger_flag.setter
     def trigger_flag(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_flag.clear()
             self._trigger_flag += value
@@ -2811,7 +3062,11 @@ class VoltageEventTree(MotherEventTree):
     @atm_temperature.setter
     def atm_temperature(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_temperature.clear()
             self._atm_temperature += value
@@ -2831,7 +3086,11 @@ class VoltageEventTree(MotherEventTree):
     @atm_pressure.setter
     def atm_pressure(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_pressure.clear()
             self._atm_pressure += value
@@ -2851,7 +3110,11 @@ class VoltageEventTree(MotherEventTree):
     @atm_humidity.setter
     def atm_humidity(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_humidity.clear()
             self._atm_humidity += value
@@ -2871,7 +3134,11 @@ class VoltageEventTree(MotherEventTree):
     @acceleration_x.setter
     def acceleration_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._acceleration_x.clear()
             self._acceleration_x += value
@@ -2891,7 +3158,11 @@ class VoltageEventTree(MotherEventTree):
     @acceleration_y.setter
     def acceleration_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._acceleration_y.clear()
             self._acceleration_y += value
@@ -2911,7 +3182,11 @@ class VoltageEventTree(MotherEventTree):
     @acceleration_z.setter
     def acceleration_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._acceleration_z.clear()
             self._acceleration_z += value
@@ -2931,7 +3206,11 @@ class VoltageEventTree(MotherEventTree):
     @battery_level.setter
     def battery_level(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._battery_level.clear()
             self._battery_level += value
@@ -2951,7 +3230,11 @@ class VoltageEventTree(MotherEventTree):
     @firmware_version.setter
     def firmware_version(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._firmware_version.clear()
             self._firmware_version += value
@@ -2971,7 +3254,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_sampling_frequency.setter
     def adc_sampling_frequency(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_sampling_frequency.clear()
             self._adc_sampling_frequency += value
@@ -2991,7 +3278,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_sampling_resolution.setter
     def adc_sampling_resolution(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_sampling_resolution.clear()
             self._adc_sampling_resolution += value
@@ -3011,7 +3302,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_input_channels.setter
     def adc_input_channels(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_input_channels.clear()
             self._adc_input_channels += value
@@ -3031,7 +3326,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_enabled_channels.setter
     def adc_enabled_channels(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_enabled_channels.clear()
             self._adc_enabled_channels += value
@@ -3051,7 +3350,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_samples_count_total.setter
     def adc_samples_count_total(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_total.clear()
             self._adc_samples_count_total += value
@@ -3071,7 +3374,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_samples_count_channel_x.setter
     def adc_samples_count_channel_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel_x.clear()
             self._adc_samples_count_channel_x += value
@@ -3091,7 +3398,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_samples_count_channel_y.setter
     def adc_samples_count_channel_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel_y.clear()
             self._adc_samples_count_channel_y += value
@@ -3111,7 +3422,11 @@ class VoltageEventTree(MotherEventTree):
     @adc_samples_count_channel_z.setter
     def adc_samples_count_channel_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._adc_samples_count_channel_z.clear()
             self._adc_samples_count_channel_z += value
@@ -3131,7 +3446,11 @@ class VoltageEventTree(MotherEventTree):
     @trigger_pattern.setter
     def trigger_pattern(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_pattern.clear()
             self._trigger_pattern += value
@@ -3151,7 +3470,11 @@ class VoltageEventTree(MotherEventTree):
     @trigger_rate.setter
     def trigger_rate(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_rate.clear()
             self._trigger_rate += value
@@ -3171,7 +3494,11 @@ class VoltageEventTree(MotherEventTree):
     @clock_tick.setter
     def clock_tick(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._clock_tick.clear()
             self._clock_tick += value
@@ -3191,7 +3518,11 @@ class VoltageEventTree(MotherEventTree):
     @clock_ticks_per_second.setter
     def clock_ticks_per_second(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._clock_ticks_per_second.clear()
             self._clock_ticks_per_second += value
@@ -3211,7 +3542,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_offset.setter
     def gps_offset(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_offset.clear()
             self._gps_offset += value
@@ -3231,7 +3566,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_leap_second.setter
     def gps_leap_second(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_leap_second.clear()
             self._gps_leap_second += value
@@ -3251,7 +3590,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_status.setter
     def gps_status(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_status.clear()
             self._gps_status += value
@@ -3271,7 +3614,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_alarms.setter
     def gps_alarms(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_alarms.clear()
             self._gps_alarms += value
@@ -3291,7 +3638,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_warnings.setter
     def gps_warnings(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_warnings.clear()
             self._gps_warnings += value
@@ -3311,7 +3662,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_time.setter
     def gps_time(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_time.clear()
             self._gps_time += value
@@ -3331,7 +3686,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_long.setter
     def gps_long(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_long.clear()
             self._gps_long += value
@@ -3351,7 +3710,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_lat.setter
     def gps_lat(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_lat.clear()
             self._gps_lat += value
@@ -3371,7 +3734,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_alt.setter
     def gps_alt(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_alt.clear()
             self._gps_alt += value
@@ -3391,7 +3758,11 @@ class VoltageEventTree(MotherEventTree):
     @gps_temp.setter
     def gps_temp(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_temp.clear()
             self._gps_temp += value
@@ -3411,7 +3782,11 @@ class VoltageEventTree(MotherEventTree):
     @pos_x.setter
     def pos_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._pos_x.clear()
             self._pos_x += value
@@ -3431,7 +3806,11 @@ class VoltageEventTree(MotherEventTree):
     @pos_y.setter
     def pos_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._pos_y.clear()
             self._pos_y += value
@@ -3451,7 +3830,11 @@ class VoltageEventTree(MotherEventTree):
     @pos_z.setter
     def pos_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._pos_z.clear()
             self._pos_z += value
@@ -3471,7 +3854,11 @@ class VoltageEventTree(MotherEventTree):
     @digi_ctrl.setter
     def digi_ctrl(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._digi_ctrl.clear()
             self._digi_ctrl += value
@@ -3491,7 +3878,11 @@ class VoltageEventTree(MotherEventTree):
     @digi_prepost_trig_windows.setter
     def digi_prepost_trig_windows(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._digi_prepost_trig_windows.clear()
             self._digi_prepost_trig_windows += value
@@ -3511,7 +3902,11 @@ class VoltageEventTree(MotherEventTree):
     @channel_properties_x.setter
     def channel_properties_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties_x.clear()
             self._channel_properties_x += value
@@ -3531,7 +3926,11 @@ class VoltageEventTree(MotherEventTree):
     @channel_properties_y.setter
     def channel_properties_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties_y.clear()
             self._channel_properties_y += value
@@ -3551,7 +3950,11 @@ class VoltageEventTree(MotherEventTree):
     @channel_properties_z.setter
     def channel_properties_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_properties_z.clear()
             self._channel_properties_z += value
@@ -3571,7 +3974,11 @@ class VoltageEventTree(MotherEventTree):
     @channel_trig_settings_x.setter
     def channel_trig_settings_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings_x.clear()
             self._channel_trig_settings_x += value
@@ -3591,7 +3998,11 @@ class VoltageEventTree(MotherEventTree):
     @channel_trig_settings_y.setter
     def channel_trig_settings_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings_y.clear()
             self._channel_trig_settings_y += value
@@ -3611,7 +4022,11 @@ class VoltageEventTree(MotherEventTree):
     @channel_trig_settings_z.setter
     def channel_trig_settings_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._channel_trig_settings_z.clear()
             self._channel_trig_settings_z += value
@@ -3631,7 +4046,11 @@ class VoltageEventTree(MotherEventTree):
     @ioff.setter
     def ioff(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._ioff.clear()
             self._ioff += value
@@ -3651,7 +4070,11 @@ class VoltageEventTree(MotherEventTree):
     @trace_x.setter
     def trace_x(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_x.clear()
             self._trace_x += value
@@ -3671,7 +4094,11 @@ class VoltageEventTree(MotherEventTree):
     @trace_y.setter
     def trace_y(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_y.clear()
             self._trace_y += value
@@ -3691,7 +4118,11 @@ class VoltageEventTree(MotherEventTree):
     @trace_z.setter
     def trace_z(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_z.clear()
             self._trace_z += value
@@ -3847,7 +4278,11 @@ class EfieldEventTree(MotherEventTree):
     @du_id.setter
     def du_id(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_id.clear()
             self._du_id += value
@@ -3867,7 +4302,11 @@ class EfieldEventTree(MotherEventTree):
     @du_seconds.setter
     def du_seconds(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_seconds.clear()
             self._du_seconds += value
@@ -3887,7 +4326,11 @@ class EfieldEventTree(MotherEventTree):
     @du_nanoseconds.setter
     def du_nanoseconds(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_nanoseconds.clear()
             self._du_nanoseconds += value
@@ -3941,7 +4384,11 @@ class EfieldEventTree(MotherEventTree):
     @trigger_position.setter
     def trigger_position(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_position.clear()
             self._trigger_position += value
@@ -3961,7 +4408,11 @@ class EfieldEventTree(MotherEventTree):
     @trigger_flag.setter
     def trigger_flag(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_flag.clear()
             self._trigger_flag += value
@@ -3981,7 +4432,11 @@ class EfieldEventTree(MotherEventTree):
     @atm_temperature.setter
     def atm_temperature(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_temperature.clear()
             self._atm_temperature += value
@@ -4001,7 +4456,11 @@ class EfieldEventTree(MotherEventTree):
     @atm_pressure.setter
     def atm_pressure(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_pressure.clear()
             self._atm_pressure += value
@@ -4021,7 +4480,11 @@ class EfieldEventTree(MotherEventTree):
     @atm_humidity.setter
     def atm_humidity(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._atm_humidity.clear()
             self._atm_humidity += value
@@ -4041,7 +4504,11 @@ class EfieldEventTree(MotherEventTree):
     @trigger_pattern.setter
     def trigger_pattern(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_pattern.clear()
             self._trigger_pattern += value
@@ -4061,7 +4528,11 @@ class EfieldEventTree(MotherEventTree):
     @trigger_rate.setter
     def trigger_rate(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trigger_rate.clear()
             self._trigger_rate += value
@@ -4081,7 +4552,11 @@ class EfieldEventTree(MotherEventTree):
     @gps_long.setter
     def gps_long(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_long.clear()
             self._gps_long += value
@@ -4101,7 +4576,11 @@ class EfieldEventTree(MotherEventTree):
     @gps_lat.setter
     def gps_lat(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_lat.clear()
             self._gps_lat += value
@@ -4121,7 +4600,11 @@ class EfieldEventTree(MotherEventTree):
     @gps_alt.setter
     def gps_alt(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._gps_alt.clear()
             self._gps_alt += value
@@ -4141,7 +4624,11 @@ class EfieldEventTree(MotherEventTree):
     @pos_x.setter
     def pos_x(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._pos_x.clear()
             self._pos_x += value
@@ -4161,7 +4648,11 @@ class EfieldEventTree(MotherEventTree):
     @pos_y.setter
     def pos_y(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._pos_y.clear()
             self._pos_y += value
@@ -4181,7 +4672,11 @@ class EfieldEventTree(MotherEventTree):
     @pos_z.setter
     def pos_z(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._pos_z.clear()
             self._pos_z += value
@@ -4201,7 +4696,11 @@ class EfieldEventTree(MotherEventTree):
     @digi_prepost_trig_windows.setter
     def digi_prepost_trig_windows(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._digi_prepost_trig_windows.clear()
             self._digi_prepost_trig_windows += value
@@ -4221,7 +4720,11 @@ class EfieldEventTree(MotherEventTree):
     @trace_x.setter
     def trace_x(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_x.clear()
             self._trace_x += value
@@ -4241,7 +4744,11 @@ class EfieldEventTree(MotherEventTree):
     @trace_y.setter
     def trace_y(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_y.clear()
             self._trace_y += value
@@ -4261,7 +4768,11 @@ class EfieldEventTree(MotherEventTree):
     @trace_z.setter
     def trace_z(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._trace_z.clear()
             self._trace_z += value
@@ -4281,7 +4792,11 @@ class EfieldEventTree(MotherEventTree):
     @fft_mag_x.setter
     def fft_mag_x(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._fft_mag_x.clear()
             self._fft_mag_x += value
@@ -4301,7 +4816,11 @@ class EfieldEventTree(MotherEventTree):
     @fft_mag_y.setter
     def fft_mag_y(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._fft_mag_y.clear()
             self._fft_mag_y += value
@@ -4321,7 +4840,11 @@ class EfieldEventTree(MotherEventTree):
     @fft_mag_z.setter
     def fft_mag_z(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._fft_mag_z.clear()
             self._fft_mag_z += value
@@ -4341,7 +4864,11 @@ class EfieldEventTree(MotherEventTree):
     @fft_phase_x.setter
     def fft_phase_x(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._fft_phase_x.clear()
             self._fft_phase_x += value
@@ -4361,7 +4888,11 @@ class EfieldEventTree(MotherEventTree):
     @fft_phase_y.setter
     def fft_phase_y(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._fft_phase_y.clear()
             self._fft_phase_y += value
@@ -4381,7 +4912,11 @@ class EfieldEventTree(MotherEventTree):
     @fft_phase_z.setter
     def fft_phase_z(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._fft_phase_z.clear()
             self._fft_phase_z += value
@@ -4679,7 +5214,11 @@ class VoltageEventSimdataTree(MotherEventTree):
     def du_id(self, value):
 
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_id.clear()
             self._du_id += value
@@ -4700,7 +5239,11 @@ class VoltageEventSimdataTree(MotherEventTree):
     def t_0(self, value):
 
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._t_0.clear()
             self._t_0 += value
@@ -4721,7 +5264,11 @@ class VoltageEventSimdataTree(MotherEventTree):
     def p2p(self, value):
 
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._p2p.clear()
             self._p2p += value
@@ -4798,7 +5345,11 @@ class EfieldRunSimdataTree(MotherRunTree):
     @refractivity_model_parameters.setter
     def refractivity_model_parameters(self, value) -> None:
         # A list of strings was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._refractivity_model_parameters.clear()
             self._refractivity_model_parameters += value
@@ -4877,7 +5428,11 @@ class EfieldEventSimdataTree(MotherEventTree):
     @du_id.setter
     def du_id(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._du_id.clear()
             self._du_id += value
@@ -4897,7 +5452,11 @@ class EfieldEventSimdataTree(MotherEventTree):
     @t_0.setter
     def t_0(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._t_0.clear()
             self._t_0 += value
@@ -4917,7 +5476,11 @@ class EfieldEventSimdataTree(MotherEventTree):
     @p2p.setter
     def p2p(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._p2p.clear()
             self._p2p += value
@@ -5231,7 +5794,11 @@ class ShowerEventSimdataTree(MotherEventTree):
     @prim_inj_alt_shc.setter
     def prim_inj_alt_shc(self, value):
         # A list was given
-        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
             # Clear the vector before setting
             self._prim_inj_alt_shc.clear()
             self._prim_inj_alt_shc += value
