@@ -132,6 +132,11 @@ class FileSimuEfield(FileEvent):
         logger.info(f"load tt_shower: {evt_nb} of run  {run_nb}")
         self.tt_shower.get_event(evt_nb, run_nb)
 
+    def get_obj_handlingtracesofevent(self):
+        o_tevent = super().get_obj_handlingtracesofevent()
+        o_tevent.set_unit_axis("$\mu$V/m", "cart")
+        return o_tevent
+
 
 class FileVoltageEvent(FileEvent):
     def __init__(self, f_name):
@@ -145,3 +150,8 @@ class FileVoltageEvent(FileEvent):
         super().__init__(event)
         self.load_event_idx(0)
         self.f_name = f_name
+
+    def get_obj_handlingtracesofevent(self):
+        o_tevent = super().get_obj_handlingtracesofevent()
+        o_tevent.set_unit_axis("$\mu$V", "dir")
+        return o_tevent

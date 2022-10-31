@@ -25,8 +25,15 @@ class Handling3dTracesOfEvent:
         self.du_id = np.arange(nb_du)
         self.t_start_ns = np.zeros((nb_du), dtype=np.int64)
         self.t_samples = np.zeros((nb_du, nb_dim, nb_sample), dtype=np.float64)
-        self.f_samp_mhz = 0
+        self.f_samp_mhz = 0.0
         self.unit_trace = "TBD"
+        self._d_axis_val = {
+            "idx": ["0", "1", "2"],
+            "cart": ["X", "Y", "Z"],
+            "dir": ["SN", "EW", "Z"],
+        }
+        self._color = ["k", "y", "b"]
+        self._axis_name = self._d_axis_val["idx"]
         self.network = DetectorUnitNetwork(self.name)
 
     ### INTERNAL
@@ -46,9 +53,10 @@ class Handling3dTracesOfEvent:
     def init_network(self, du_pos, du_id):
         self.network.init_pos_id(du_pos, du_id)
 
-    def set_unit_trace(self, str_unit):
+    def set_unit_axis(self, str_unit="TBD", axis_name="idx"):
         assert isinstance(str_unit, str)
         self.unit_trace = str_unit
+        self._axis_name = self._d_axis_val[axis_name]
 
     ### OPERATIONS
 
@@ -148,39 +156,35 @@ class Handling3dTracesOfEvent:
         self.define_t_samples()
         plt.figure()
         plt.title(f"Trace of DU {self.du_id[idx]} (idx={idx})")
-        if "0" in to_draw:
-            plt.plot(self.t_samples[idx], self.traces[idx, 0], "k", label="0")
-        if "1" in to_draw:
-            plt.plot(self.t_samples[idx], self.traces[idx, 1], "y", label="1")
-        if "2" in to_draw:
-            plt.plot(self.t_samples[idx], self.traces[idx, 2], "b", label="2")
-        plt.ylabel(f"[{self.unit_trace}]")
-        plt.xlabel(f"[ns]\nFile: {self.name}")
+        for idx_axis, axis in enumerate(self._axis_name):
+            if str(idx_axis) in to_draw:
+                plt.plot(
+                    self.t_samples[idx],
+                    self.traces[idx, idx_axis],
+                    self._color[idx_axis],
+                    label=axis,
+                )
+        plt.ylabel(f"{self.unit_trace}")
+        plt.xlabel(f"ns\nFile: {self.name}")
         plt.grid()
         plt.legend()
 
     def plot_psd_trace_idx(self, idx, to_draw="012"):
         self.define_t_samples()
         plt.figure()
-        noverlap = 1
-        plt.title(f"PSD trace of DU {self.du_id[idx]} (idx={idx})")
-        if "0" in to_draw:
-            freq, Pxx_den = ssig.welch(
-                self.traces[idx, 0], self.f_samp_mhz * 1e6, noverlap=noverlap
-            )
-            plt.semilogy(freq * 1e-6, Pxx_den, "k", label="0")
-        if "1" in to_draw:
-            freq, Pxx_den = ssig.welch(
-                self.traces[idx, 1], self.f_samp_mhz * 1e6, noverlap=noverlap
-            )
-            plt.semilogy(freq * 1e-6, Pxx_den, "y", label="1")
-        if "2" in to_draw:
-            freq, Pxx_den = ssig.welch(
-                self.traces[idx, 2], self.f_samp_mhz * 1e6, noverlap=noverlap
-            )
-            plt.semilogy(freq * 1e-6, Pxx_den, "b", label="2")
-        plt.ylabel(f"[??]")
-        plt.xlabel(f"[MHz]\nFile: {self.name}")
+        noverlap = 2
+        plt.title(f"Power spectrum of DU {self.du_id[idx]} (idx={idx})")
+        for idx_axis, axis in enumerate(self._axis_name):
+            if str(idx_axis) in to_draw:
+                freq, Pxx_den = ssig.welch(
+                    self.traces[idx, idx_axis],
+                    self.f_samp_mhz * 1e6,
+                    noverlap=noverlap,
+                    scaling="spectrum",
+                )
+                plt.semilogy(freq * 1e-6, Pxx_den, self._color[idx_axis], label=axis)
+        plt.ylabel(f"({self.unit_trace})^2")
+        plt.xlabel(f"MHz\nFile: {self.name}")
         plt.xlim([0, 300])
         plt.grid()
         plt.legend()
@@ -211,5 +215,5 @@ class Handling3dTracesOfEvent:
         plt.figure()
         plt.title(f"{self.name}\nTime start histogram")
         plt.hist(self.t_start_ns)
-        plt.xlabel("[ns]")
+        plt.xlabel("ns")
         plt.grid()

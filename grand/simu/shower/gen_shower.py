@@ -84,11 +84,11 @@ class ShowerEvent:
         self.azimuth = d_shower.shower_azimuth
         self.azimuth = 0
         self.primary = d_shower.prim_type
-        # TODO: DC1 find information in file ROOT
-        self.localize(39.5, 90.5)
+        # TODO: site lat, lon in Ttree trun : site_long, site_lat
+        self.localize(41.3, longitude=96.5)
         xmax = d_shower.xmax_pos_shc
-        xmax = np.array([150750.0, 0.0, 15560.0], dtype=np.float32)
-        logger.debug(xmax)
+        # xmax = np.array([150750.0, 0.0, 15560.0], dtype=np.float32)
+        logger.info(f"xmax={xmax}")
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 
     @classmethod

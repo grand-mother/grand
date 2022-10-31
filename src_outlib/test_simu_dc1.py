@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import grand.manage_log as mlg
 from grand.io.root_trees import VoltageEventTree
 import numpy as np 
-from black import format_ipynb_string
+
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -18,7 +18,7 @@ logger = mlg.get_logger_for_script(__file__)
 mlg.create_output_for_logger("info", log_stdout=True, log_file=None)
 
 G_file_efield = "/home/dc1/Coarse1.root"
-
+G_file_efield = "/home/dc1/Coarse2_xmax_add.root"
 
 def test_VoltageTTree():
     f_root = 'test_volt.root'
@@ -73,7 +73,7 @@ def test_Voc_du(idx):
 def test_Voc_event():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)
     m_ios.compute_event_idx(0)
-    m_ios.save_voltage("out6.root", append_file=False)
+    m_ios.save_voltage("temp.root", append_file=False)
 
 
 def test_Voc_event_many():
