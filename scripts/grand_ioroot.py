@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
 import argparse
-from grand.io.root_file import FileSimuEfield, FileVoltageEvent
-from grand.basis.traces_event import HandlingTracesOfEvent
+from grand.io.root_files import FileSimuEfield, FileVoltageEvent
+from grand.basis.traces_event import Handling3dTracesOfEvent
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
 
@@ -43,7 +43,7 @@ def main():
     print(f"Nb DU      : {d_event.get_nb_du()}")
     print(f"Size trace : {d_event.get_size_trace()}")
     o_tevent = d_event.get_obj_handlingtracesofevent()
-    assert isinstance(o_tevent, HandlingTracesOfEvent)
+    assert isinstance(o_tevent, Handling3dTracesOfEvent)
     if args.trace_norm:
         o_tevent.plot_all_traces_as_image()
     if args.net:
