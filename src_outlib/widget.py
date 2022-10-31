@@ -10,7 +10,7 @@ Created on 5 oct. 2022
 '''
 import argparse
 from grand.io.root_file import FileSimuEfield
-from grand.basis.traces_event import HandlingTracesOfEvent
+from grand.basis.traces_event import Handling3dTracesOfEvent
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button

@@ -10,13 +10,13 @@ from grand.basis.du_network import DetectorUnitNetwork
 logger = getLogger(__name__)
 
 
-class HandlingTracesOfEvent:
+class Handling3dTracesOfEvent:
     """
     Handling a set of traces associated to one event observed on DetectorUnit network
     """
 
     def __init__(self, name="NotDefined"):
-        logger.info(f"Create HandlingTracesOfEvent with name {name}")
+        logger.info(f"Create Handling3dTracesOfEvent with name {name}")
         self.name = name
         nb_du = 0
         nb_dim = 3
@@ -77,7 +77,7 @@ class HandlingTracesOfEvent:
         self.du_id = self.du_id[:new_nb_du]
         self.traces = self.traces[:new_nb_du, :, :]
         self.t_start_ns = self.t_start_ns[:new_nb_du]
-        if self.t_samples.shape[0]>0:
+        if self.t_samples.shape[0] > 0:
             self.t_samples = self.t_samples[:new_nb_du, :, :]
         self.network.reduce_nb_du(new_nb_du)
 
@@ -144,41 +144,41 @@ class HandlingTracesOfEvent:
 
     ### PLOTS
 
-    def plot_trace_idx(self, idx, to_draw="xyz"):
+    def plot_trace_idx(self, idx, to_draw="012"):
         self.define_t_samples()
         plt.figure()
         plt.title(f"Trace of DU {self.du_id[idx]} (idx={idx})")
-        if "x" in to_draw:
-            plt.plot(self.t_samples[idx], self.traces[idx, 0], label="x")
-        if "y" in to_draw:
-            plt.plot(self.t_samples[idx], self.traces[idx, 1], label="y")
-        if "z" in to_draw:
-            plt.plot(self.t_samples[idx], self.traces[idx, 2], label="z")
+        if "0" in to_draw:
+            plt.plot(self.t_samples[idx], self.traces[idx, 0], "k", label="0")
+        if "1" in to_draw:
+            plt.plot(self.t_samples[idx], self.traces[idx, 1], "y", label="1")
+        if "2" in to_draw:
+            plt.plot(self.t_samples[idx], self.traces[idx, 2], "b", label="2")
         plt.ylabel(f"[{self.unit_trace}]")
         plt.xlabel(f"[ns]\nFile: {self.name}")
         plt.grid()
         plt.legend()
 
-    def plot_psd_trace_idx(self, idx, to_draw="xyz"):
+    def plot_psd_trace_idx(self, idx, to_draw="012"):
         self.define_t_samples()
         plt.figure()
-        noverlap = 5
+        noverlap = 1
         plt.title(f"PSD trace of DU {self.du_id[idx]} (idx={idx})")
-        if "x" in to_draw:
+        if "0" in to_draw:
             freq, Pxx_den = ssig.welch(
                 self.traces[idx, 0], self.f_samp_mhz * 1e6, noverlap=noverlap
             )
-            plt.plot(freq * 1e-6, Pxx_den, label="x")
-        if "y" in to_draw:
+            plt.semilogy(freq * 1e-6, Pxx_den, "k", label="0")
+        if "1" in to_draw:
             freq, Pxx_den = ssig.welch(
                 self.traces[idx, 1], self.f_samp_mhz * 1e6, noverlap=noverlap
             )
-            plt.plot(freq * 1e-6, Pxx_den, label="y")
-        if "z" in to_draw:
+            plt.semilogy(freq * 1e-6, Pxx_den, "y", label="1")
+        if "2" in to_draw:
             freq, Pxx_den = ssig.welch(
                 self.traces[idx, 2], self.f_samp_mhz * 1e6, noverlap=noverlap
             )
-            plt.plot(freq * 1e-6, Pxx_den, label="z")
+            plt.semilogy(freq * 1e-6, Pxx_den, "b", label="2")
         plt.ylabel(f"[??]")
         plt.xlabel(f"[MHz]\nFile: {self.name}")
         plt.xlim([0, 300])
