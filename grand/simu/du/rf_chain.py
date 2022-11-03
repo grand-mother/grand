@@ -383,7 +383,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
     def get_fft_vfb_3axis(self):
         """
 
-        @return fft TF (port, TF): transfer function of filter, 
+        @return fft TF (port, TF): transfer function of filter,
                                    VGA and balum, same value on each axis
         """
 

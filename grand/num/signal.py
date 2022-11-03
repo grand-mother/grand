@@ -203,8 +203,6 @@ def halfcplx_fullcplx(v_half, even=True):
     return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
 
 
-
-
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     """
 
