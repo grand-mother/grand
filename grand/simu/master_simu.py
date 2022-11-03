@@ -18,6 +18,7 @@ from grand.basis.traces_event import Handling3dTracesOfEvent
 from grand.io.root_trees import VoltageEventTree
 import grand.simu.du.rf_chain as grfc
 import grand.num.signal as gsig
+from grand.simu.galaxy import galaxy_radio_signal
 
 logger = getLogger(__name__)
 
@@ -117,7 +118,7 @@ class SimuDetectorUnitEffect(object):
         self.ant_model = AntennaModelGp300()
         self.voc = None
         self.fft_size = 0
-        self.fact_padding = 2
+        self.fact_padding = 1.2
 
     ### INTERNAL
     def _get_ant_leff(self, idx_du):
@@ -154,14 +155,18 @@ class SimuDetectorUnitEffect(object):
         self.du_id = tr_evt.du_id
         self.voc = np.zeros_like(self.du_efield)
         self.v_out = np.zeros_like(self.du_efield)
+        self.v_out_rf = np.zeros_like(self.du_efield)
         self.sig_size = self.du_efield.shape[2]
         self.fft_size, self.freqs_mhz = gsig.get_fastest_size_fft(
             self.sig_size,
             self.f_samp_mhz,
             self.fact_padding,
         )
-        self.lna = grfc.LowNoiseAmplificatorGP300()
-        self.lna.compute_for_freqs(self.freqs_mhz)
+        self.rfchain = grfc.RfChainGP300()
+        self.rfchain.compute_for_freqs(self.freqs_mhz)
+        self.v_galactic = galaxy_radio_signal(
+            18, self.fft_size, self.freqs_mhz, tr_evt.get_nb_du(), 0
+        )
 
     def set_data_shower(self, shower):
         assert isinstance(shower, ShowerEvent)
@@ -207,21 +212,6 @@ class SimuDetectorUnitEffect(object):
         self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        
-
-        ########################
-        # 2) Galatic noise
-        ########################
-        
-        lst=18
-        v_galactic = galaxy_radio_signal(lst, self.fft_size, self.freqs_mhz, 1, 0)  
-        self.v_out[idx_du,0] = self.voc[idx_du,0] + sf.irfft(v_galactic[0,:,0])[:self.sig_size]
-        self.v_out[idx_du,1] = self.voc[idx_du,1] + sf.irfft(v_galactic[0,:,1])[:self.sig_size]
-        self.v_out[idx_du,2] = self.voc[idx_du,2] + sf.irfft(v_galactic[0,:,2])[:self.sig_size]
-
-        ########################
-        # 3) LNA filter
-        ########################
         fft_voc = np.array(
             [
                 self.ant_leff_sn.fft_resp_volt,
@@ -229,9 +219,18 @@ class SimuDetectorUnitEffect(object):
                 self.ant_leff_z.fft_resp_volt,
             ]
         )
-        # fft_voc = sf.rfft(self.voc[idx_du], self.fft_size)
+        ########################
+        # 2) Add galatic noise
+        ########################
+        noise_gal = sf.irfft(self.v_galactic[idx_du])[:, : self.sig_size]
+        logger.debug(np.std(noise_gal, axis=1))
+        self.voc[idx_du] += noise_gal
+        fft_voc += self.v_galactic[idx_du]
+        ########################
+        # 3) RF chain
+        ########################
         # TODO: same order ?
-        fft_vlna = fft_voc * self.lna.get_fft_rho_3axis()
+        fft_all = fft_voc * self.rfchain.get_tf_3axis()
         # inverse FFT and remove zero-padding
         # WARNING: do not used : sf.irfft(fft_vlna, self.sig_size)
-        self.v_out[idx_du] = sf.irfft(fft_vlna)[:, : self.sig_size]
+        self.v_out[idx_du] = sf.irfft(fft_all)[:, : self.sig_size]
