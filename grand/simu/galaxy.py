@@ -87,8 +87,6 @@ def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
     v_amplitude[:,0] = func_interpol(gala_freq[:,0], v_amplitude_infile[:,0])(freqs_mhz)
     v_amplitude[:,1] = func_interpol(gala_freq[:,0], v_amplitude_infile[:,1])(freqs_mhz)
     v_amplitude[:,2] = func_interpol(gala_freq[:,0], v_amplitude_infile[:,2])(freqs_mhz)
-    plt.plot(v_amplitude)
-    plt.show()
 
     a_nor = np.zeros((nb_ant, nb_freq, 3), dtype=float)
     phase = np.zeros((nb_ant, nb_freq, 3), dtype=float)
