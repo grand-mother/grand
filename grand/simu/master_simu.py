@@ -207,9 +207,20 @@ class SimuDetectorUnitEffect(object):
         self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
+        
 
         ########################
-        # 2) LNA filter
+        # 2) Galatic noise
+        ########################
+        
+        lst=18
+        v_galactic = galaxy_radio_signal(lst, self.fft_size, self.freqs_mhz, 1, 0)  
+        self.v_out[idx_du,0] = self.voc[idx_du,0] + sf.irfft(v_galactic[0,:,0])[:self.sig_size]
+        self.v_out[idx_du,1] = self.voc[idx_du,1] + sf.irfft(v_galactic[0,:,1])[:self.sig_size]
+        self.v_out[idx_du,2] = self.voc[idx_du,2] + sf.irfft(v_galactic[0,:,2])[:self.sig_size]
+
+        ########################
+        # 3) LNA filter
         ########################
         fft_voc = np.array(
             [

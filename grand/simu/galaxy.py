@@ -8,11 +8,13 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grand.num.signal import complex_expansion, ifftget
+#from grand.num.signal import complex_expansion, ifftget
+from grand.num.signal import ifftget
+from grand.simu.du.rf_chain import func_interpol
 from grand import grand_add_path_data
 
-
-def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=False):
+def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
+#def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=False):
     """!
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
@@ -42,7 +44,7 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
         plt.title("Galactic Noise PSD", fontsize=15)
         plt.subplot(1, 3, 2)
         for l_g in range(3):
-            plt.plot(gala_freq, gala_power_dbm[:, l_g, lst])
+            plt.plot(gala_freq, 1e6*np.sqrt(2*100*pow(10,gala_power_dbm[:, l_g, lst]/10)*1e-3)) #SL
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Power(dBm)", fontsize=15)
@@ -56,26 +58,38 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
         plt.title("Galactic Noise Voltage", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        
 
     gala_file = grand_add_path_data("sky/30_250galactic.mat")
     gala_show = h5py.File(gala_file, "r")
     gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
-    gala_power_dbm = np.transpose(gala_show["p_narrow_huatu"])
-    gala_voltage = np.transpose(gala_show["v_amplitude"])
+    gala_power_dbm = np.transpose(gala_show["p_narrow_huatu"]) #SL, dbm per MHz, P=mean(V*V)/imp with imp=100 ohms
+    gala_voltage = np.transpose(gala_show["v_amplitude"]) #SL, microV per MHz, seems to be Vmax=sqrt(2*mean(V*V)), not std(V)=sqrt(mean(V*V))
     # gala_power_mag = np.transpose(gala_show["p_narrow"])
     gala_freq = gala_show["freq_all"]
     if show_flag:
         plot()
-    #
-    f_start = 30
+        plt.show()
+    
+    '''f_start = 30
     f_end = 250
     # TODO: 221 is the number of frequency ? why ? and comment to explain
     nb_freq = 221
     v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
     galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
     galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
-    galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
-    v_amplitude = gala_voltage[:, :, lst - 1]
+    galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)'''
+    v_amplitude_infile = gala_voltage[:, :, lst - 1]
+    
+    #SL
+    nb_freq=len(freqs_mhz)
+    v_amplitude=np.zeros((nb_freq,3))
+    v_amplitude[:,0] = func_interpol(gala_freq[:,0], v_amplitude_infile[:,0])(freqs_mhz)
+    v_amplitude[:,1] = func_interpol(gala_freq[:,0], v_amplitude_infile[:,1])(freqs_mhz)
+    v_amplitude[:,2] = func_interpol(gala_freq[:,0], v_amplitude_infile[:,2])(freqs_mhz)
+    plt.plot(v_amplitude)
+    plt.show()
+
     a_nor = np.zeros((nb_ant, nb_freq, 3), dtype=float)
     phase = np.zeros((nb_ant, nb_freq, 3), dtype=float)
     v_complex = np.zeros((nb_ant, nb_freq, 3), dtype=complex)
@@ -89,11 +103,17 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
                 )
                 # phase of random Gauss noise
                 phase[l_ant, l_fq, l_axis] = 2 * np.pi * random.random()
-                v_complex[l_ant, l_fq, l_axis] = abs(a_nor[l_ant, l_fq, l_axis] * size_out / 2)
+                #SL *size_out is because default scipy fft is normalised backward, *1/2 is because mean(cos(x)*cos(x)))
+                v_complex[l_ant, l_fq, l_axis] = abs(a_nor[l_ant, l_fq, l_axis] * size_out / 2) 
                 v_complex[l_ant, l_fq, l_axis] *= np.exp(1j * phase[l_ant, l_fq, l_axis])
-    #
-    for l_ant in range(nb_ant):
+                
+    return v_complex
+    
+    
+    
+    '''for l_ant in range(nb_ant):
         for l_axis in range(3):
+            print(size_out,freq_samp,f_start,f_end,)
             [_, v_complex_double[l_ant, :, l_axis]] = complex_expansion(
                 size_out,
                 freq_samp,
@@ -107,4 +127,4 @@ def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=Fals
             freq_1,
             2,
         )
-    return v_complex_double, galactic_v_time
+    return v_complex_double, galactic_v_time'''
