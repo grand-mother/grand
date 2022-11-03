@@ -1,3 +1,7 @@
+"""
+Processing effective length of antenna
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,7 +12,6 @@ import numpy as np
 import scipy.fft as sf
 
 from grand.geo.coordinates import (
-    ECEF,
     LTP,
     GRANDCS,
     CartesianRepresentation,
@@ -21,17 +24,22 @@ logger = getLogger(__name__)
 
 
 class MissingFrameError(ValueError):
-    pass
+    """Error class"""
 
 
 @dataclass
 class AntennaProcessing:
+    """
+    Processing effective length of antenna
+    """
+
     model_leff: Any
     frame: Union[LTP, GRANDCS]
 
     def __post_init__(self):
         assert isinstance(self.model_leff, TabulatedAntennaModel)
         self.size_fft = 0
+        self.freqs_out_hz = 0
 
     def set_out_freq_mhz(self, a_freq):
         """!
@@ -48,15 +56,18 @@ class AntennaProcessing:
     def effective_length(
         self,
         xmax: LTP,
-        Efield: ElectricField,
+        efield: ElectricField,
         frame: Union[LTP, GRANDCS],
     ) -> CartesianRepresentation:
         """
-        Interpolate effective length in Fourier space by tripler (theta, phi, frequency) linear interpolation
-        in direction of the Efield source at antenna position
+        Calculation of FFT length effective of antenna for a given Xmax position.
+
+        Linear interpolation of template of effective length in Fourier space
+        by tripler (theta, phi, frequency)
+        in direction of the efield source at antenna position
 
         :param xmax:
-        :param Efield:
+        :param efield:
         :param frame:
         """
 
@@ -78,8 +89,8 @@ class AntennaProcessing:
               * argument theta
 
             The function to be interpolated is itself interpolated by weighting 4 functions
-            Interpolation on a sphere => 2 dimension (theta, phi) so 4 positions/values to define interpolation
-            positions defined  by index:
+            Interpolation on a sphere => 2 dimension (theta, phi) so 4 positions/values to
+            define interpolation positions defined  by index:
               * ip0, ip1 for phi axis
               * it0, it1 for theta axis
             weight used:
@@ -95,7 +106,6 @@ class AntennaProcessing:
             # With [1] and [2]
             # we have: rp0*rt0 + rp1*rt0+ rp0*rt1 + rp1*rt1 = 1
             # so sum of weight is 1, it's also a linear interpolation by angle on sphere
-            half_idx = self.freqs_out_hz.shape[0] // 2
             logger.debug(f"Ref freq: {freq_ref_hz[0]:.3e} {np.max(freq_ref_hz):.3e}")
             logger.debug(f"Interp  : {self.freqs_out_hz[0]:.3e} {np.max(self.freqs_out_hz):.3e}")
             val_interp = np.interp(
@@ -113,14 +123,15 @@ class AntennaProcessing:
             # shower frame --> antenna frame
             direction = xmax.ltp_to_ltp(self.frame)
         else:
-            raise TypeError("Provide Xmax in LTP frame instead of %s" % type(xmax))
-        # compute Efield direction in spherical coordinate in antenna frame
+            raise TypeError(f"Provide Xmax in LTP frame instead of {type(xmax)}")
+        # compute efield direction in spherical coordinate in antenna frame
         direction_cart = CartesianRepresentation(direction)
         direction_sphr = SphericalRepresentation(direction_cart)
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
         logger.debug(
-            f"Source direction (degree): North_gap={float(phi_efield):.1f}, Zenith_dist={float(theta_efield):.1f}"
+            f"Source direction (degree): North_gap={float(phi_efield):.1f},\
+             Zenith_dist={float(theta_efield):.1f}"
         )
         # logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)
@@ -138,7 +149,7 @@ class AntennaProcessing:
         else:
             rt1 -= np.floor(rt1)
         rt0 = 1 - rt1
-        # phi_Efield between index ip0 and ip1 in phi antenna response representation
+        # phi_efield between index ip0 and ip1 in phi antenna response representation
         dphi = table.phi[1] - table.phi[0]  # deg
         rp1 = (phi_efield - table.phi[0]) / dphi
         ip0 = int(np.floor(rp1) % table.phi.size)
@@ -148,14 +159,14 @@ class AntennaProcessing:
         rp1 -= np.floor(rp1)
         rp0 = 1 - rp1
         # fft
-        # logger.info(Efield.e_xyz.info())
-        e_xyz = Efield.e_xyz
+        # logger.info(efield.e_xyz.info())
+        e_xyz = efield.e_xyz
         logger.debug(e_xyz.shape)
-        # Ex = np.fft.rfft(E.x)
+        # fft_ex = np.fft.rfft(E.x)
         # frequency [Hz] with padding
         if self.size_fft == 0:
             self.size_fft = sf.next_fast_len(e_xyz.shape[1])
-            self.freqs_out_hz = fftfreq(self.size_fft, Efield.a_time)
+            self.freqs_out_hz = fftfreq(self.size_fft, efield.a_time)
         logger.debug(f"size_fft={self.size_fft}")
         # frequency [Hz]
         freq_ref_hz = table.frequency
@@ -165,34 +176,32 @@ class AntennaProcessing:
         lpa = interp_sphere_freq(np.deg2rad(table.phase_phi))  # LWP. rad
         # Pack the result as a Cartesian vector with complex values
         # fmt: off
-        lt = ltr*np.exp(1j * lta)
-        lp = lpr*np.exp(1j * lpa)
+        l_t = ltr*np.exp(1j * lta)
+        l_p = lpr*np.exp(1j * lpa)
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
-        ct, st = np.cos(t_rad), np.sin(t_rad)
-        cp, sp = np.cos(p_rad), np.sin(p_rad)
-        self.lx = lt*ct*cp - sp*lp
-        self.ly = lt*ct*sp + cp*lp
-        self.lz = -st*lt
-        del lt, lp, ct, st , cp, sp
+        c_t, s_t = np.cos(t_rad), np.sin(t_rad)
+        c_p, s_p = np.cos(p_rad), np.sin(p_rad)
+        self.l_x = l_t*c_t*c_p - s_p*l_p
+        self.l_y = l_t*c_t*s_p + c_p*l_p
+        self.l_z = -s_t*l_t
+        del l_t, l_p, c_t, s_t , c_p, s_p
         # fmt: on
         # Treating Leff as a vector (no change in magnitude) and transforming
         # it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame
         # TODO: there might be an easier way to do this.
         # vector wrt ECEF frame. AntennaProcessing --> ECEF
-        a_leff_frame_ant = np.array([self.lx, self.ly, self.lz])
-        Leff = np.matmul(self.frame.basis.T, a_leff_frame_ant)
-        self.leff_frame_ant = a_leff_frame_ant
+        fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
+        fft_leff = np.matmul(self.frame.basis.T, fft_leff_frame_ant)
+        self.leff_frame_ant = fft_leff_frame_ant
         # vector wrt shower frame. ECEF --> Shower
-        Leff = np.matmul(frame.basis, Leff)
-        # store effective length
-        self.fft_leff = Leff
-        return Leff
+        self.fft_leff_frame_shower = np.matmul(frame.basis, fft_leff)
+        return self.fft_leff_frame_shower
 
     def compute_voltage(
         self,
         xmax: LTP,
-        Efield: ElectricField,
+        efield: ElectricField,
         frame: Union[LTP, GRANDCS, None] = None,
     ) -> Voltage:
 
@@ -201,24 +210,23 @@ class AntennaProcessing:
         if (self.frame is None) or (frame is None):
             raise MissingFrameError("missing antenna or shower frame")
 
-        # Compute the voltage. input Leff and field are in shower frame.
-        Leff = self.effective_length(xmax, Efield, frame)
-        logger.debug(Leff.shape)
+        # Compute the voltage. input fft_leff and field are in shower frame.
+        fft_leff = self.effective_length(xmax, efield, frame)
+        logger.debug(fft_leff.shape)
         # E is CartesianRepresentation
-        E = Efield.e_xyz
-        logger.debug(Efield.e_xyz.shape)
-        Ex = sf.rfft(E.x, n=self.size_fft)
-        Ey = sf.rfft(E.y, n=self.size_fft)
-        Ez = sf.rfft(E.z, n=self.size_fft)
-        logger.debug(Ex.shape)
+        e_xyz = efield.e_xyz
+        logger.debug(efield.e_xyz.shape)
+        fft_ex = sf.rfft(e_xyz.x, n=self.size_fft)
+        fft_ey = sf.rfft(e_xyz.y, n=self.size_fft)
+        fft_ez = sf.rfft(e_xyz.z, n=self.size_fft)
         logger.debug(f"size_fft={self.size_fft}")
-        logger.debug(f"{np.max(E.x)}, {np.max(E.y)}, {np.max(E.z)}")
-        # convol E field by Leff in Fourier space
-        self.fft_resp_volt = Ex * Leff[0] + Ey * Leff[1] + Ez * Leff[2]
+        logger.debug(f"{np.max(e_xyz.x)}, {np.max(e_xyz.y)}, {np.max(e_xyz.z)}")
+        # convol e_xyz field by Leff in Fourier space
+        self.fft_resp_volt = fft_ex * fft_leff[0] + fft_ey * fft_leff[1] + fft_ez * fft_leff[2]
         # inverse FFT and remove zero-padding
-        resp_volt = sf.irfft(self.fft_resp_volt)[: Efield.e_xyz.shape[1]]
-        # WARNING do not used : sf.irfft(self.fft_resp_volt, Efield.e_xyz.shape[1])
-        t = Efield.a_time
+        resp_volt = sf.irfft(self.fft_resp_volt)[: efield.e_xyz.shape[1]]
+        # WARNING do not used : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])
+        t = efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
         logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
         return Voltage(t=t, V=resp_volt)

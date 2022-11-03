@@ -7,6 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.widgets import Slider
+from matplotlib.offsetbox import AnchoredText
+from matplotlib.backend_bases import MouseButton
+
 
 # from matplotlib.backend_bases import MouseButton
 
@@ -25,6 +28,11 @@ class DetectorUnitNetwork:
         self.name = name
 
     def init_pos_id(self, du_pos, du_id):
+        """
+
+        @param du_pos:
+        @param du_id:
+        """
         self.du_pos = du_pos
         self.du_id = du_id
         assert isinstance(self.du_pos, np.ndarray)
@@ -68,9 +76,6 @@ class DetectorUnitNetwork:
     def plot_footprint_max(
         self, a_values, title="", traces=None, size_circle=200
     ):  # pragma: no cover
-        from matplotlib.offsetbox import AnchoredText
-        from matplotlib.backend_bases import MouseButton
-
         def closest_node(node, nodes):
             nodes = np.asarray(nodes)
             dist_2 = np.sum((nodes - node) ** 2, axis=1)

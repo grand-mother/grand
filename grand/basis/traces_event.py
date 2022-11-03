@@ -3,6 +3,9 @@ from logging import getLogger
 import numpy as np
 import scipy.signal as ssig
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+from matplotlib.backend_bases import MouseButton
+
 
 from grand.basis.du_network import DetectorUnitNetwork
 
@@ -190,8 +193,6 @@ class Handling3dTracesOfEvent:
         plt.legend()
 
     def plot_all_traces_as_image(self):  # pragma: no cover
-        import matplotlib.colors as colors
-        from matplotlib.backend_bases import MouseButton
 
         #
         norm = self.get_norm()
