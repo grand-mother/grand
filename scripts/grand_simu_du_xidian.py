@@ -17,8 +17,8 @@ from numpy.ma import log10, abs
 from scipy import interpolate
 import matplotlib.pyplot as plt
 
-from grand.num.signal import fftget, ifftget, halfcplx_fullcplx
-from .elec_du import LNA_get, filter_get
+from grand.num.signal import halfcplx_fullcplx
+from scripts.lib_xidian import LNA_get, filter_get, fftget, ifftget, complex_expansion
 from grand.simu.galaxy import galaxy_radio_signal
 from grand.simu.du.process_ant import AntennaProcessing
 from grand.simu.shower.gen_shower import ShowerEvent
@@ -183,7 +183,7 @@ def dummy_CEL(idx_ant, e_theta, e_phi, N, f0, unit, show_flag=False):
     for idx_ant in range(3):
         ants[idx_ant].effective_length(SHOWER.maximum, SHOWER.fields[idx_ant].electric, SHOWER.frame)
         for idx_axis in range(3):
-            Lce_complex_expansion[:, idx_axis, idx_ant] = halfcplx_fullcplx(ants[idx_ant].fft_leff[idx_axis], (N%2)==0)
+            Lce_complex_expansion[:, idx_axis, idx_ant] = complex_expansion(ants[idx_ant].fft_leff[idx_axis], (N%2)==0)
     
     # Interpolation: 30-250mhz interval 1mhz
     f_start = 30
@@ -542,10 +542,8 @@ def main_xdu_rf(rootdir):
         plt.show()
     # ======================Save root file======================
     if savetxt == 1:
-        ret = tvoltage.fill()
-        logger.info(ret)
-        ret = tvoltage.write(path_root_vfilter)
-        logger.info(ret)
+        tvoltage.fill()
+        tvoltage.write(path_root_vfilter)
         logger.info(f"Wrote tvoltage in: {path_root_vfilter}")
     logger.info(mlg.string_end_script())
 

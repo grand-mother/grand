@@ -29,14 +29,14 @@ logger = getLogger(__name__)
 
 def interpol_at_new_x(a_x, a_y, new_x):
     """!
-    Interpolation of discreet function F defined by a set of point F(a_x)=a_y for new_x value
+    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
     and set to zero outside interval definition a_x
 
     @param a_x (float, (N)): F(a_x) = a_y, N size of a_x
     @param a_y (float, (N)): F(a_x) = a_y
     @param new_x (float, (M)): new value of x
 
-    @return F(new_x) (float, (M)): interpolation if F at new_x
+    @return F(new_x) (float, (M)): interpolation of F at new_x
     """
     assert a_x.shape[0] > 0
     func_interpol = interpolate.interp1d(
@@ -341,7 +341,6 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
         v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
         dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
-        dt_ns = 1
         v_time_ns = dt_ns * v_time
         plt.plot(v_time_ns, kernel_rho[0], "k", label="0")
         plt.plot(v_time_ns, kernel_rho[1], "y", label="1")
@@ -384,7 +383,8 @@ class VgaFilterBalunGP300(GenericProcessingDU):
     def get_fft_vfb_3axis(self):
         """
 
-        @return fft TF (port, TF): transfer function of filter, VGA and balum, same value on each axis
+        @return fft TF (port, TF): transfer function of filter, 
+                                   VGA and balum, same value on each axis
         """
 
         return np.array([self.fft_vgafilbal, self.fft_vgafilbal, self.fft_vgafilbal])
