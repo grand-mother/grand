@@ -248,7 +248,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
 
     ### GETTER
 
-    def get_fft_rho_3axis(self):
+    def get_fft_rho_3d(self):
         """
         Get FFT of transfer function (TF) rho of LNA for 3 axis (port, TF)
 
@@ -335,8 +335,8 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         """
         plt.figure()
         plt.title("Rho kernel")
-        kernel_rho = sf.fftshift(sf.irfft(self.get_fft_rho_3axis()), axes=1)
-        # kernel_rho = sf.irfft(self.get_fft_rho_3axis())
+        kernel_rho = sf.fftshift(sf.irfft(self.get_fft_rho_3d()), axes=1)
+        # kernel_rho = sf.irfft(self.get_fft_rho_3d())
         print(kernel_rho.shape)
         # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
         v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
@@ -380,7 +380,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
 
     ### GETTER
 
-    def get_fft_vfb_3axis(self):
+    def get_fft_vfb_3d(self):
         """
 
         @return fft TF (port, TF): transfer function of filter,
@@ -491,7 +491,7 @@ class CableGP300(GenericProcessingDU):
 
     ### GETTER
 
-    def get_fft_cable_3axis(self):
+    def get_fft_cable_3d(self):
         """
 
         @return fft TF (port, TF): transfer function of cable, same value on each axis
@@ -574,12 +574,12 @@ class RfChainGP300:
         self.vfb.compute_for_freqs(a_freq_mhz)
         self.cable.compute_for_freqs(a_freq_mhz)
         self._total_tf = (
-            self.lna.get_fft_rho_3axis()
-            * self.vfb.get_fft_vfb_3axis()
-            * self.cable.get_fft_cable_3axis()
+            self.lna.get_fft_rho_3d()
+            * self.vfb.get_fft_vfb_3d()
+            * self.cable.get_fft_cable_3d()
         )
 
-    def get_tf_3axis(self):
+    def get_tf_3d(self):
         """Return transfer function for all elements in RF chain
         @return total TF (complex, (3,N)):
         """
@@ -588,10 +588,10 @@ class RfChainGP300:
     def plot_kernel(self):  # pragma: no cover
         plt.figure()
         plt.title("Kernels associated to total transfer function of RF chain")
-        kernel_0 = sf.fftshift(sf.irfft(self.get_tf_3axis()[0, :]))
-        kernel_1 = sf.fftshift(sf.irfft(self.get_tf_3axis()[1, :]))
-        kernel_2 = sf.fftshift(sf.irfft(self.get_tf_3axis()[2, :]))
-        # kernel = sf.irfft(self.get_fft_rho_3axis())
+        kernel_0 = sf.fftshift(sf.irfft(self.get_tf_3d()[0, :]))
+        kernel_1 = sf.fftshift(sf.irfft(self.get_tf_3d()[1, :]))
+        kernel_2 = sf.fftshift(sf.irfft(self.get_tf_3d()[2, :]))
+        # kernel = sf.irfft(self.get_fft_rho_3d())
         # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
         v_time = np.arange(self.lna.size_sig, dtype=np.float64) - self.lna.size_sig // 2
         dt_ns = 1e9 / (self.lna.freqs_out[1] * self.lna.size_sig * 1e6)

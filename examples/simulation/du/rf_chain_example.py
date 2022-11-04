@@ -90,7 +90,7 @@ def plot_rho_kernel():
     print(out_f)
     o_lna = edu.LowNoiseAmplificatorGP300()
     o_lna.compute_for_freqs(out_f)
-    o_lna.get_fft_rho_3axis()
+    o_lna.get_fft_rho_3d()
     o_lna.plot_rho_kernel()
 
 
@@ -106,12 +106,12 @@ def plot_total_kernel():
 if __name__ == "__main__":
     logger.info(mlg.string_begin_script())
     # =============================================
-    # StandingWaveRatioGP300_show_s11()
-    # LowNoiseAmplificatorGP300_show_s21()
+    StandingWaveRatioGP300_show_s11()
+    LowNoiseAmplificatorGP300_show_s21()
     plot_rho_kernel()
-    # CableGP300_plot()
-    # FilterGP300_plot()
-    # plot_total_kernel()
+    CableGP300_plot()
+    FilterGP300_plot()
+    plot_total_kernel()
     # =============================================
     logger.info(mlg.string_end_script())
     plt.show()

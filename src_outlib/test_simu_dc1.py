@@ -15,7 +15,7 @@ import numpy as np
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("info", log_stdout=True, log_file=None)
+mlg.create_output_for_logger("debug", log_stdout=True, log_file=None)
 
 G_file_efield = "/home/dc1/Coarse1.root"
 G_file_efield = "/home/dc1/Coarse2_xmax_add.root"
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     logger.info(mlg.string_begin_script())
     # ================
     #test_VoltageTTree()
-    #test_Voc_du(26)
-    test_Voc_event()
+    test_Voc_du(26)
+    #test_Voc_event()
     # test_Voc_event_many()
     # ================
     logger.info(mlg.string_end_script())

@@ -29,9 +29,9 @@ class MasterSimuDetectorWithRootIo:
       * Call simulator of detector units with ROOT data
       * Save output in ROOT format
     """
-    
-    ### INTERNAL 
-    
+
+    ### INTERNAL
+
     def __init__(self, f_name_root):
         self.f_name_root = f_name_root
         self.d_root = FileSimuEfield(f_name_root)
@@ -40,8 +40,8 @@ class MasterSimuDetectorWithRootIo:
 
     def _load_data_to_process_event(self, idx):
         """
-        Extract from ROOT file, data to process all Efield for event idx  
-        
+        Extract from ROOT file, data to process all Efield for event idx
+
         @param idx: index of detector in array data
         """
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
@@ -54,13 +54,13 @@ class MasterSimuDetectorWithRootIo:
         shower = ShowerEvent()
         shower.load_root(self.d_root.tt_shower)
         self.simu_du.set_data_shower(shower)
-    
+
     ### OPERATION
 
     def compute_event_du_idx(self, idx_evt, idx_du):
         """
         Compute/simulate only one DU for index idx_du of event with index idx_evt
-        
+
         @param idx_evt:
         @param idx_du:
         """
@@ -70,7 +70,7 @@ class MasterSimuDetectorWithRootIo:
     def compute_event_idx(self, idx):
         """
         Compute/simulate all DU in event with index idx
-        
+
         @param idx:
         """
         self._load_data_to_process_event(idx)
@@ -85,10 +85,9 @@ class MasterSimuDetectorWithRootIo:
         for idx in range(nb_events):
             self.compute_event_idx(idx)
 
-
     def save_voltage(self, file_out="", append_file=True):
         """
-        
+
         @param file_out:
         @param append_file:
         """
@@ -136,7 +135,6 @@ class MasterSimuDetectorWithRootIo:
         self.tt_volt.write()
 
 
-
 class SimuDetectorUnitEffect:
     """
     Simulate detector effect only on one event, IO data file free
@@ -157,9 +155,11 @@ class SimuDetectorUnitEffect:
         self.voc = None
         self.fft_size = 0
         self.fact_padding = 1.2
+        self.tr_evt = Handling3dTracesOfEvent()
+        self.rf_chain = grfc.RfChainGP300()
 
     ### INTERNAL
-    
+
     def _get_ant_leff(self, idx_du):
         """
         Define for each antenna in DU idx_du an object AntennaProcessing according its position
@@ -185,7 +185,7 @@ class SimuDetectorUnitEffect:
 
     def set_data_efield(self, tr_evt):
         """
-        
+
         @param tr_evt:
         """
         assert isinstance(tr_evt, Handling3dTracesOfEvent)
@@ -198,22 +198,26 @@ class SimuDetectorUnitEffect:
         self.du_id = tr_evt.du_id
         self.voc = np.zeros_like(self.du_efield)
         self.v_out = np.zeros_like(self.du_efield)
-        self.v_out_rf = np.zeros_like(self.du_efield)
         self.sig_size = self.du_efield.shape[2]
         self.fft_size, self.freqs_mhz = gsig.get_fastest_size_fft(
             self.sig_size,
             self.f_samp_mhz,
             self.fact_padding,
         )
-        self.rfchain = grfc.RfChainGP300()
-        self.rfchain.compute_for_freqs(self.freqs_mhz)
-        self.v_galactic = galaxy_radio_signal(
-            18, self.fft_size, self.freqs_mhz, tr_evt.get_nb_du(), 0
+        # compute total transfer function of RF chain
+        self.rf_chain.compute_for_freqs(self.freqs_mhz)
+        # lst: local sideral time, galactic noise max at 18h
+        lst = 18
+        self.fft_noise_gal_3d = galaxy_radio_signal(
+            lst,
+            self.fft_size,
+            self.freqs_mhz,
+            tr_evt.get_nb_du(),
         )
 
     def set_data_shower(self, shower):
         """
-        
+
         @param shower:
         """
         assert isinstance(shower, ShowerEvent)
@@ -228,7 +232,6 @@ class SimuDetectorUnitEffect:
         nb_du = self.du_efield.shape[0]
         for idx in range(nb_du):
             self.compute_du_idx(idx)
-            # store result
 
     def compute_du_idx(self, idx_du):
         """Simulate one DU
@@ -261,7 +264,7 @@ class SimuDetectorUnitEffect:
         self.voc[idx_du, 2] = self.ant_leff_z.compute_voltage(
             self.o_shower.maximum, self.o_efield, self.o_shower.frame
         ).V
-        fft_voc = np.array(
+        fft_voc_3d = np.array(
             [
                 self.ant_leff_sn.fft_resp_volt,
                 self.ant_leff_ew.fft_resp_volt,
@@ -271,15 +274,15 @@ class SimuDetectorUnitEffect:
         ########################
         # 2) Add galatic noise
         ########################
-        noise_gal = sf.irfft(self.v_galactic[idx_du])[:, : self.sig_size]
+        noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
         logger.debug(np.std(noise_gal, axis=1))
         self.voc[idx_du] += noise_gal
-        fft_voc += self.v_galactic[idx_du]
+        fft_voc_3d += self.fft_noise_gal_3d[idx_du]
         ########################
         # 3) RF chain
         ########################
         # TODO: same order ?
-        fft_all = fft_voc * self.rfchain.get_tf_3axis()
+        fft_all_effect_3d = fft_voc_3d * self.rf_chain.get_tf_3d()
         # inverse FFT and remove zero-padding
-        # WARNING: do not used : sf.irfft(fft_vlna, self.sig_size)
-        self.v_out[idx_du] = sf.irfft(fft_all)[:, : self.sig_size]
+        # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        self.v_out[idx_du] = sf.irfft(fft_all_effect_3d)[:, : self.sig_size]
