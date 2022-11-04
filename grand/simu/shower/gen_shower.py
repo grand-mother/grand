@@ -77,17 +77,14 @@ class ShowerEvent:
     fields: Optional[FieldsCollection] = None
 
     def load_root(self, d_shower):
-        logger.debug("LOAD WITH ROOT")
         self.energy = d_shower.prim_energy
         self.zenith = d_shower.shower_zenith
-        self.zenith = 0
         self.azimuth = d_shower.shower_azimuth
-        self.azimuth = 0
         self.primary = d_shower.prim_type
-        # TODO: site lat, lon in Ttree trun : site_long, site_lat
-        self.localize(41.3, longitude=96.5)
+        s_pos = d_shower.site_long_lat
+        logger.info(f"Site position long lat: {s_pos}")
+        self.localize(s_pos[1], longitude=s_pos[0])
         xmax = d_shower.xmax_pos_shc
-        # xmax = np.array([150750.0, 0.0, 15560.0], dtype=np.float32)
         logger.info(f"xmax={xmax}")
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 
