@@ -574,9 +574,7 @@ class RfChainGP300:
         self.vfb.compute_for_freqs(a_freq_mhz)
         self.cable.compute_for_freqs(a_freq_mhz)
         self._total_tf = (
-            self.lna.get_fft_rho_3d()
-            * self.vfb.get_fft_vfb_3d()
-            * self.cable.get_fft_cable_3d()
+            self.lna.get_fft_rho_3d() * self.vfb.get_fft_vfb_3d() * self.cable.get_fft_cable_3d()
         )
 
     def get_tf_3d(self):
