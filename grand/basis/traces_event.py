@@ -32,6 +32,7 @@ class Handling3dTracesOfEvent:
         self.unit_trace = "TBD"
         self._d_axis_val = {
             "idx": ["0", "1", "2"],
+            "port" : ["1", "2","3"],
             "cart": ["X", "Y", "Z"],
             "dir": ["SN", "EW", "Z"],
         }
