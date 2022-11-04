@@ -124,9 +124,9 @@ class MasterSimuDetectorWithRootIo:
             self.tt_volt.adc_sampling_frequency.append(freq_mhz)
             self.tt_volt.du_id.append(int(self.tr_evt.du_id[idx]))
             # logger.info(f"du_id {type(self.tr_evt.du_id[idx])}")
-            self.tt_volt.trace_x.append(self.simu_du.voc[idx, 0].astype(np.float64).tolist())
-            self.tt_volt.trace_y.append(self.simu_du.voc[idx, 1].astype(np.float64).tolist())
-            self.tt_volt.trace_z.append(self.simu_du.voc[idx, 2].astype(np.float64).tolist())
+            self.tt_volt.trace_x.append(self.simu_du.v_out[idx, 0].astype(np.float64).tolist())
+            self.tt_volt.trace_y.append(self.simu_du.v_out[idx, 1].astype(np.float64).tolist())
+            self.tt_volt.trace_z.append(self.simu_du.v_out[idx, 2].astype(np.float64).tolist())
             # position
             self.tt_volt.pos_x.append(self.d_root.tt_efield.pos_x[idx])
             self.tt_volt.pos_y.append(self.d_root.tt_efield.pos_y[idx])
@@ -157,6 +157,7 @@ class SimuDetectorUnitEffect:
         self.fact_padding = 1.2
         self.tr_evt = Handling3dTracesOfEvent()
         self.rf_chain = grfc.RfChainGP300()
+        self.flag_add_noise = False
 
     ### INTERNAL
 
@@ -182,6 +183,12 @@ class SimuDetectorUnitEffect:
         self.ant_leff_z.set_out_freq_mhz(self.freqs_mhz)
 
     ### SETTER
+
+    def set_flag_add_noise(self, flag=True):
+        """
+        @param flag (bool): True to add noise to antenna response
+        """
+        self.flag_add_noise = flag
 
     def set_data_efield(self, tr_evt):
         """
@@ -274,10 +281,11 @@ class SimuDetectorUnitEffect:
         ########################
         # 2) Add galatic noise
         ########################
-        noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
-        logger.debug(np.std(noise_gal, axis=1))
-        self.voc[idx_du] += noise_gal
-        fft_voc_3d += self.fft_noise_gal_3d[idx_du]
+        if self.flag_add_noise:
+            noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
+            logger.debug(np.std(noise_gal, axis=1))
+            self.voc[idx_du] += noise_gal
+            fft_voc_3d += self.fft_noise_gal_3d[idx_du]
         ########################
         # 3) RF chain
         ########################
