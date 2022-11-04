@@ -23,13 +23,27 @@ from grand.simu.galaxy import galaxy_radio_signal
 logger = getLogger(__name__)
 
 
-class MasterSimuDetectorWithRootIo(object):
+class MasterSimuDetectorWithRootIo:
+    """
+    Goals:
+      * Call simulator of detector units with ROOT data
+      * Save output in ROOT format
+    """
+    
+    ### INTERNAL 
+    
     def __init__(self, f_name_root):
         self.f_name_root = f_name_root
         self.d_root = FileSimuEfield(f_name_root)
         self.simu_du = SimuDetectorUnitEffect()
+        self.tr_evt = Handling3dTracesOfEvent()
 
     def _load_data_to_process_event(self, idx):
+        """
+        Extract from ROOT file, data to process all Efield for event idx  
+        
+        @param idx: index of detector in array data
+        """
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
         self.tr_evt = self.d_root.get_obj_handlingtracesofevent()
@@ -40,16 +54,44 @@ class MasterSimuDetectorWithRootIo(object):
         shower = ShowerEvent()
         shower.load_root(self.d_root.tt_shower)
         self.simu_du.set_data_shower(shower)
+    
+    ### OPERATION
 
     def compute_event_du_idx(self, idx_evt, idx_du):
+        """
+        Compute/simulate only one DU for index idx_du of event with index idx_evt
+        
+        @param idx_evt:
+        @param idx_du:
+        """
         self._load_data_to_process_event(idx_evt)
         return self.simu_du.compute_du_idx(idx_du)
 
     def compute_event_idx(self, idx):
+        """
+        Compute/simulate all DU in event with index idx
+        
+        @param idx:
+        """
         self._load_data_to_process_event(idx)
         return self.simu_du.compute_du_all()
 
+    def compute_event_all(self):
+        """
+        Compute/simulate all DU for all event in data file input
+        @param self:
+        """
+        nb_events = self.d_root.get_nb_events()
+        for idx in range(nb_events):
+            self.compute_event_idx(idx)
+
+
     def save_voltage(self, file_out="", append_file=True):
+        """
+        
+        @param file_out:
+        @param append_file:
+        """
         # delete file can be take time => start with this action
         if file_out == "":
             file_out = self.f_name_root
@@ -93,13 +135,9 @@ class MasterSimuDetectorWithRootIo(object):
         self.tt_volt.fill()
         self.tt_volt.write()
 
-    def compute_event_all(self):
-        nb_events = self.d_root.get_nb_events()
-        for idx in range(nb_events):
-            self.compute_event(idx)
 
 
-class SimuDetectorUnitEffect(object):
+class SimuDetectorUnitEffect:
     """
     Simulate detector effect only on one event, IO data file free
 
@@ -121,6 +159,7 @@ class SimuDetectorUnitEffect(object):
         self.fact_padding = 1.2
 
     ### INTERNAL
+    
     def _get_ant_leff(self, idx_du):
         """
         Define for each antenna in DU idx_du an object AntennaProcessing according its position
@@ -145,6 +184,10 @@ class SimuDetectorUnitEffect(object):
     ### SETTER
 
     def set_data_efield(self, tr_evt):
+        """
+        
+        @param tr_evt:
+        """
         assert isinstance(tr_evt, Handling3dTracesOfEvent)
         self.tr_evt = tr_evt
         tr_evt.define_t_samples()
@@ -169,13 +212,19 @@ class SimuDetectorUnitEffect(object):
         )
 
     def set_data_shower(self, shower):
+        """
+        
+        @param shower:
+        """
         assert isinstance(shower, ShowerEvent)
         self.o_shower = shower
 
     ### GETTER / COMPUTER
 
     def compute_du_all(self):
-        """Simulate all DU"""
+        """
+        Simulate all DU
+        """
         nb_du = self.du_efield.shape[0]
         for idx in range(nb_du):
             self.compute_du_idx(idx)
@@ -186,9 +235,9 @@ class SimuDetectorUnitEffect(object):
         Simulation DU effect computing for DU at idx
 
         Processing order:
-        0) add noise
         1) antenna responses
-        2) LNA filter
+        2) add galactic noise
+        3) RF chain effect
 
         @param idx_du (int): index of DU in array traces
         """
