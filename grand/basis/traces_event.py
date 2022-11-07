@@ -129,7 +129,7 @@ class Handling3dTracesOfEvent:
         """
         Return sampling rate in ns
         """
-        ret = 1e3 * self.f_samp_mhz
+        ret = 1e3 / self.f_samp_mhz
         return ret
 
     def get_max_abs(self):
