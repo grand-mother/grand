@@ -23,7 +23,6 @@ class DetectorUnitNetwork:
     def __init__(self, name="NotDefined"):
         self.name = name
         nb_du = 0
-        nb_dim = 3
         self.du_pos = np.zeros((nb_du, 3))
         self.du_id = np.arange(nb_du)
 

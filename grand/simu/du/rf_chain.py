@@ -64,7 +64,6 @@ class GenericProcessingDU:
         :type a_freq: float (nb_freqs)
         """
         assert isinstance(a_freq, np.ndarray)
-        assert a_freq[0] == 0
         self.freqs_out = a_freq
         self.nb_freqs = a_freq.shape[0]
         self.size_sig = (self.nb_freqs - 1) * 2
@@ -413,6 +412,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
         self.dbs21_add_vga = dbs21_add_vga
         # s11_complex
         s11_real = interpol_at_new_x(freqs_in, res11, self.freqs_out)
+        self._s11_real = s11_real
         s11_complex = s11_real + 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_out)
         # s21_complex
         s21_real = interpol_at_new_x(freqs_in, res21, self.freqs_out)

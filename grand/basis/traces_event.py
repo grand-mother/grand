@@ -166,7 +166,8 @@ class Handling3dTracesOfEvent:
            * to deal with oscillation take the hilbert's envelope of the norm
            * find max value and time associated, may be with interpolation with law sampling
         """
-        pass
+        logger.info(f'method: {method}')
+        return 0.0, 0.0
 
     def get_min_max_t_start(self):
         """
@@ -248,13 +249,13 @@ class Handling3dTracesOfEvent:
         plt.title(f"Power spectrum of DU {self.du_id[idx]} (idx={idx})")
         for idx_axis, axis in enumerate(self._axis_name):
             if str(idx_axis) in to_draw:
-                freq, Pxx_den = ssig.welch(
+                freq, pxx_den = ssig.welch(
                     self.traces[idx, idx_axis],
                     self.f_samp_mhz * 1e6,
                     noverlap=noverlap,
                     scaling="spectrum",
                 )
-                plt.semilogy(freq * 1e-6, Pxx_den, self._color[idx_axis], label=axis)
+                plt.semilogy(freq * 1e-6, pxx_den, self._color[idx_axis], label=axis)
         plt.ylabel(f"({self.unit_trace})^2")
         plt.xlabel(f"MHz\nFile: {self.name}")
         plt.xlim([0, 300])
