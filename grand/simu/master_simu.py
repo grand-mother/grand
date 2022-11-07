@@ -42,6 +42,7 @@ class MasterSimuDetectorWithRootIo:
         self.simu_du = SimuDetectorUnitEffect()
         self.tr_evt = Handling3dTracesOfEvent()
         self.tt_volt = None
+        self.file_out = ""
 
     def _load_data_to_process_event(self, idx):
         """
@@ -88,6 +89,15 @@ class MasterSimuDetectorWithRootIo:
         nb_events = self.d_root.get_nb_events()
         for idx in range(nb_events):
             self.compute_event_idx(idx)
+            self.save_voltage()
+
+    def set_output_file(self, file_out):
+        """
+
+        :param file_out:
+        :type file_out: string
+        """
+        self.file_out = file_out
 
     def save_voltage(self, file_out="", append_file=True):
         """
@@ -97,21 +107,25 @@ class MasterSimuDetectorWithRootIo:
         """
         # delete file can be take time => start with this action
         if file_out == "":
-            file_out = self.f_name_root
+            if self.file_out != "":
+                file_out = self.file_out
+            else:
+                logger.error("No output file defined !")
+                raise AssertionError
         if not append_file and os.path.exists(file_out):
             logger.info(f"save on new file option => remove file {file_out}")
             os.remove(file_out)
             time.sleep(1)
+        logger.info(f"save result in {file_out}")
         self.tt_volt = VoltageEventTree(file_out)
         # now fill Voltage object
         freq_mhz = int(self.d_root.get_sampling_freq_mhz())
         self.tt_volt.du_count = self.tr_evt.get_nb_du()
         logger.debug(f"We will add {self.tt_volt.du_count} DU")
-        logger.debug(f"We will add {self.tt_volt.du_count} DU")
         self.tt_volt.run_number = self.d_root.tt_efield.run_number
         self.tt_volt.event_number = self.d_root.tt_efield.event_number
-        logger.info(f"{type(self.tt_volt.run_number)} {type(self.tt_volt.event_number)}")
-        logger.info(f"{self.tt_volt.run_number} {self.tt_volt.event_number}")
+        logger.debug(f"{type(self.tt_volt.run_number)} {type(self.tt_volt.event_number)}")
+        logger.debug(f"{self.tt_volt.run_number} {self.tt_volt.event_number}")
         self.tt_volt.first_du = self.tr_evt.du_id[0]
         self.tt_volt.time_seconds = self.d_root.tt_efield.time_seconds
         self.tt_volt.time_nanoseconds = self.d_root.tt_efield.time_nanoseconds

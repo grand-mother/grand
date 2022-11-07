@@ -74,7 +74,7 @@ def test_Voc_du(idx):
 def test_V_out_event():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)
     m_ios.compute_event_idx(0)
-    m_ios.save_voltage("volt_c2.root", append_file=False)
+    m_ios.save_voltage("volt_c2.root")
 
 
 def test_Voc_event_many():
