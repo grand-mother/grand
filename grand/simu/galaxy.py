@@ -85,6 +85,8 @@ def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
 
     # SL
     nb_freq = len(freqs_mhz)
+    freq_res = freqs_mhz[1]-freqs_mhz[0]
+    #v_amplitude_infile = v_amplitude_infile*freq_res
     v_amplitude = np.zeros((nb_freq, 3))
     v_amplitude[:, 0] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 0], freqs_mhz)
     v_amplitude[:, 1] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 1], freqs_mhz)
@@ -108,3 +110,7 @@ def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
                 v_complex[l_ant, l_axis, l_fq] *= np.exp(1j * phase[l_ant, l_fq, l_axis])
 
     return v_complex
+    
+    
+    
+    
