@@ -42,8 +42,12 @@ class AntennaProcessing:
         self.freqs_out_hz = 0
 
     def set_out_freq_mhz(self, a_freq):
-        """!
+        """
+        !
         typically the return of scipy.fft.rfftfreq/1e6
+
+        :param a_freq:
+        :type a_freq:
         """
         assert isinstance(a_freq, np.ndarray)
         assert a_freq[0] == 0
@@ -204,6 +208,15 @@ class AntennaProcessing:
         efield: ElectricField,
         frame: Union[LTP, GRANDCS, None] = None,
     ) -> Voltage:
+        """
+
+        :param xmax:
+        :type xmax:
+        :param efield:
+        :type efield:
+        :param frame:
+        :type frame:
+        """
 
         logger.debug("call compute_voltage()")
         # frame is shower frame. self.frame is antenna frame.

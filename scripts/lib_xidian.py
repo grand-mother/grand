@@ -27,10 +27,10 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
     floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5;
     size_out = 9, the length of the expanded data <= 4
 
-    @param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
-    @param f_step (float): [MHz] frequency step
-    @param f_start (float): [MHz] the starting frequency of the spectrum to be expanded,
-    @param f_cut (float): [MHz] the cutoff frequency of the spectrum to be expanded
+    :param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
+    :param f_step (float): [MHz] frequency step
+    :param f_start (float): [MHz] the starting frequency of the spectrum to be expanded,
+    :param f_cut (float): [MHz] the cutoff frequency of the spectrum to be expanded
 
     @return (size_out), (size_out): 2 array 1D freq, data_expan
     """
@@ -78,10 +78,10 @@ def fftget(data_ori, size_fft, freq_uni, show_flag=False):
 
     @authors PengFei and Xidian group
 
-    @param data_ori (array): time domain data, matrix form
-    @param size_fft (int): number of FFT points
-    @param freq_uni (float): Unilateral frequency
-    @param show_flag (bool): flag of showing picture
+    :param data_ori (array): time domain data, matrix form
+    :param size_fft (int): number of FFT points
+    :param freq_uni (float): Unilateral frequency
+    :param show_flag (bool): flag of showing picture
 
     @return data_fft:Frequency domain complex data
     @return data_fft_m_single:Frequency domain amplitude unilateral spectrum
@@ -134,10 +134,10 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
 
     @authors PengFei and Xidian group
 
-    @param data_ori:Frequency domain data, complex numbers
-    @param b_complex : True  indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. False indicates that the complex number is obtained after Fourier transform;
-    @param size_fft:number of FFT points
-    @param a_time:time sequence
+    :param data_ori:Frequency domain data, complex numbers
+    :param b_complex : True  indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. False indicates that the complex number is obtained after Fourier transform;
+    :param size_fft:number of FFT points
+    :param a_time:time sequence
 
     @return data_ifft :time domain data,
     """
@@ -174,11 +174,11 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
 
     @authors PengFei and Xidian group
 
-    @param antennas11_complex_short
-    @param N:
-    @param f0:
-    @param unit
-    @param show_flag:
+    :param antennas11_complex_short
+    :param N:
+    :param f0:
+    :param unit
+    :param show_flag:
     """
     # = == == == == This program is used as a subroutine to complete the calculation and expansion of the LNA partial pressure coefficient == == == == =
     #  ----------------------input - ---------------------------------- %
@@ -300,10 +300,10 @@ def filter_get(N, f0, unit, show_flag=False):
 
     @authors PengFei and Xidian group
 
-    @param N:
-    @param f0:
-    @param unit:
-    @param show_flag:
+    :param N:
+    :param f0:
+    :param unit:
+    :param show_flag:
     """
 
     # = == == == == This program is used as a subroutine to complete the calculation and expansion of the S parameters of the cable and filter == == == == =

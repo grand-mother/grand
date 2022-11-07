@@ -246,7 +246,7 @@ def get_antenna(idx_ant):
 
 def main_xdu_rf(rootdir):
     """
-    @param rootdir (path): directory with ZHAires simulation named Stshpxxxx
+    :param rootdir (path): directory with ZHAires simulation named Stshpxxxx
     """
     #TODO: this function is too long, split it     
     global SHOWER

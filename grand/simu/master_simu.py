@@ -1,4 +1,8 @@
-"""
+"""Module DU simulator
+
+SimuDetectorUnitEffect: Simulator of antenna response and detector effect, no IO, only memory processing
+
+MasterSimuDetectorWithRootIo : adapter for SimuDetectorUnitEffect with IO GRANDROOT
 
 """
 import os
@@ -37,12 +41,13 @@ class MasterSimuDetectorWithRootIo:
         self.d_root = FileSimuEfield(f_name_root)
         self.simu_du = SimuDetectorUnitEffect()
         self.tr_evt = Handling3dTracesOfEvent()
+        self.tt_volt = None
 
     def _load_data_to_process_event(self, idx):
         """
         Extract from ROOT file, data to process all Efield for event idx
 
-        @param idx: index of detector in array data
+        :param idx: index of detector in array data
         """
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
@@ -61,8 +66,8 @@ class MasterSimuDetectorWithRootIo:
         """
         Compute/simulate only one DU for index idx_du of event with index idx_evt
 
-        @param idx_evt:
-        @param idx_du:
+        :param idx_evt:
+        :param idx_du:
         """
         self._load_data_to_process_event(idx_evt)
         return self.simu_du.compute_du_idx(idx_du)
@@ -71,7 +76,7 @@ class MasterSimuDetectorWithRootIo:
         """
         Compute/simulate all DU in event with index idx
 
-        @param idx:
+        :param idx:
         """
         self._load_data_to_process_event(idx)
         return self.simu_du.compute_du_all()
@@ -79,7 +84,6 @@ class MasterSimuDetectorWithRootIo:
     def compute_event_all(self):
         """
         Compute/simulate all DU for all event in data file input
-        @param self:
         """
         nb_events = self.d_root.get_nb_events()
         for idx in range(nb_events):
@@ -88,8 +92,8 @@ class MasterSimuDetectorWithRootIo:
     def save_voltage(self, file_out="", append_file=True):
         """
 
-        @param file_out:
-        @param append_file:
+        :param file_out:
+        :param append_file:
         """
         # delete file can be take time => start with this action
         if file_out == "":
@@ -138,10 +142,6 @@ class MasterSimuDetectorWithRootIo:
 class SimuDetectorUnitEffect:
     """
     Simulate detector effect only on one event, IO data file free
-
-    Hypothesis:
-      * Antenna of DU has a specific responses model
-      * All antenna have a perfect positioning
     """
 
     def __init__(self):
@@ -186,14 +186,14 @@ class SimuDetectorUnitEffect:
 
     def set_flag_add_noise(self, flag=True):
         """
-        @param flag (bool): True to add noise to antenna response
+        :param flag (bool): True to add noise to antenna response
         """
         self.flag_add_noise = flag
 
     def set_data_efield(self, tr_evt):
         """
 
-        @param tr_evt:
+        :param tr_evt:
         """
         assert isinstance(tr_evt, Handling3dTracesOfEvent)
         self.tr_evt = tr_evt
@@ -225,7 +225,7 @@ class SimuDetectorUnitEffect:
     def set_data_shower(self, shower):
         """
 
-        @param shower:
+        :param shower:
         """
         assert isinstance(shower, ShowerEvent)
         self.o_shower = shower
@@ -249,7 +249,7 @@ class SimuDetectorUnitEffect:
         2) add galactic noise
         3) RF chain effect
 
-        @param idx_du (int): index of DU in array traces
+        :param idx_du (int): index of DU in array traces
         """
         logger.info(f"==============>  Processing DU with id: {self.du_id[idx_du]}")
         self._get_ant_leff(idx_du)
@@ -279,7 +279,7 @@ class SimuDetectorUnitEffect:
             ]
         )
         ########################
-        # 2) Add galatic noise
+        # 2) Add galactic noise
         ########################
         if self.flag_add_noise:
             noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
@@ -289,7 +289,6 @@ class SimuDetectorUnitEffect:
         ########################
         # 3) RF chain
         ########################
-        # TODO: same order ?
         fft_all_effect_3d = fft_voc_3d * self.rf_chain.get_tf_3d()
         # inverse FFT and remove zero-padding
         # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding

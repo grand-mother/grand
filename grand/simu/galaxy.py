@@ -7,29 +7,24 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from grand.num.signal import complex_expansion, ifftget
-# from grand.num.signal import ifftget
-from grand.simu.du.rf_chain import interpol_at_new_x
+from grand.num.signal import interpol_at_new_x
 from grand import grand_add_path_data
-
-np.random.seed(11)
 
 
 def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
-    # def galaxy_radio_signal(lst, size_out, freq_samp, freq_1, nb_ant, show_flag=False):
     """!
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
 
     @authors PengFei and Xidian group
 
-    @param lst：Select the galactic noise LST at the LST moment
-    @param size_out (int): is the extended length
-    @param freq_samp (float): is the frequency resolution,
+    :param lst：Select the galactic noise LST at the LST moment
+    :param size_out (int): is the extended length
+    :param freq_samp (float): is the frequency resolution,
     #TODO: freq_1 description not clear
-    @param freq_1 (float): is the frequency point of the unilateral spectrum
-    @param nb_ant (int): number of antennas
-    @param show_flag (bool): print figure
+    :param freq_1 (float): is the frequency point of the unilateral spectrum
+    :param nb_ant (int): number of antennas
+    :param show_flag (bool): print figure
 
     @return : v_complex_double, galactic_v_time
     """
@@ -113,21 +108,3 @@ def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
                 v_complex[l_ant, l_axis, l_fq] *= np.exp(1j * phase[l_ant, l_fq, l_axis])
 
     return v_complex
-
-    """for l_ant in range(nb_ant):
-        for l_axis in range(3):
-            print(size_out,freq_samp,f_start,f_end,)
-            [_, v_complex_double[l_ant, :, l_axis]] = complex_expansion(
-                size_out,
-                freq_samp,
-                f_start,
-                f_end,
-                v_complex[l_ant, :, l_axis],
-            )
-        [galactic_v_time[l_ant], galactic_v_m_single[l_ant], galactic_v_p_single[l_ant]] = ifftget(
-            v_complex_double[l_ant],
-            size_out,
-            freq_1,
-            2,
-        )
-    return v_complex_double, galactic_v_time"""

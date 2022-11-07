@@ -1,11 +1,13 @@
+"""
+Handling a set of 3D traces
+"""
 from logging import getLogger
 
 import numpy as np
 import scipy.signal as ssig
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
+from matplotlib import colors
 from matplotlib.backend_bases import MouseButton
-
 
 from grand.basis.du_network import DetectorUnitNetwork
 
@@ -45,6 +47,17 @@ class Handling3dTracesOfEvent:
     ### INIT/SETTER
 
     def init_traces(self, traces, du_id, t_start_ns, f_samp_mhz):
+        """
+
+        :param traces:
+        :type traces:
+        :param du_id:
+        :type du_id:
+        :param t_start_ns:
+        :type t_start_ns:
+        :param f_samp_mhz:
+        :type f_samp_mhz:
+        """
         self.traces = traces
         self.du_id = du_id
         self.t_start_ns = t_start_ns
@@ -55,9 +68,23 @@ class Handling3dTracesOfEvent:
         assert traces.shape[0] == du_id.shape[0] == t_start_ns.shape[0]
 
     def init_network(self, du_pos, du_id):
+        """
+
+        :param du_pos:
+        :type du_pos:
+        :param du_id:
+        :type du_id:
+        """
         self.network.init_pos_id(du_pos, du_id)
 
     def set_unit_axis(self, str_unit="TBD", axis_name="idx"):
+        """
+
+        :param str_unit:
+        :type str_unit:
+        :param axis_name:
+        :type axis_name:
+        """
         assert isinstance(str_unit, str)
         self.unit_trace = str_unit
         self._axis_name = self._d_axis_val[axis_name]
@@ -65,6 +92,9 @@ class Handling3dTracesOfEvent:
     ### OPERATIONS
 
     def define_t_samples(self):
+        """
+        Define time sample for the duration of the trace
+        """
         if self.t_samples.size == 0:
             delta_ns = 1e3 / self.f_samp_mhz
             nb_sample = self.traces.shape[2]
@@ -82,7 +112,7 @@ class Handling3dTracesOfEvent:
     def reduce_nb_du(self, new_nb_du):
         """
         feature to reduce computation, for debugging
-        @param new_nb_du:
+        :param new_nb_du:
         """
         assert new_nb_du > 0
         assert new_nb_du <= self.get_nb_du()
@@ -96,26 +126,33 @@ class Handling3dTracesOfEvent:
     ### GETTER :
 
     def delta_t_ns(self):
-        ret = 1.0 / (self.f_samp_mhz / 1e3)
+        """
+        Return sampling rate in ns
+        """
+        ret = 1e3 * self.f_samp_mhz
         return ret
 
     def get_max_abs(self):
         """
         find absolute maximal value in trace for each detector
-        @param self:
+        :param self:
         """
         return np.max(np.abs(self.traces), axis=(1, 2))
 
     def get_max_norm(self):
         """
         find norm maximal value in trace for each detector
-        @param self:
+        :param self:
         """
         # norm on 3D composant => axis=1
         # max on all norm => axis=1
         return np.max(np.linalg.norm(self.traces, axis=1), axis=1)
 
     def get_norm(self):
+        """
+        :return:  norm of traces
+        :rtype: float (nb DU)
+        """
         return np.linalg.norm(self.traces, axis=1)
 
     def get_tmax_vmax(self, method="efield"):
@@ -132,31 +169,55 @@ class Handling3dTracesOfEvent:
         pass
 
     def get_min_max_t_start(self):
+        """
+        :return: first and last time start
+        :rtype: float, float
+        """
         return self.t_start_ns.min(), self.t_start_ns.max()
 
     def get_nb_du(self):
+        """
+        :return: number of DU
+        :rtype: integer
+        """
         return self.du_id.shape[0]
 
     def get_size_trace(self):
+        """
+        :return: number of sample in trace
+        :rtype: integer
+        """
         return self.traces.shape[2]
 
-    def get_common_time_trace(self):
+    def get_extended_traces(self):
+        """
+        compute and return traces extended to the entire duration of the event with common time
+        :return: common time, extended traces
+        :rtype: float (nb extended sample), float (nb DU, 3, nb extended sample)
+        """
         size_tr = int(self.get_size_trace())
         t_min, t_max = self.get_min_max_t_start()
         delta = self.delta_t_ns()
         nb_sample_mm = (t_max - t_min) / delta
         nb_sample = int(np.rint(nb_sample_mm) + size_tr)
-        new_traces = np.zeros((self.get_nb_du(), 3, nb_sample), dtype=self.traces.dtype)
+        extended_traces = np.zeros((self.get_nb_du(), 3, nb_sample), dtype=self.traces.dtype)
         # don't use np.uint64 else int+ int =float ??
         i_beg = np.rint((self.t_start_ns - t_min) / delta).astype(np.uint32)
         for idx in range(self.get_nb_du()):
-            new_traces[idx, :, i_beg[idx] : i_beg[idx] + size_tr] = self.traces[idx]
-        new_time = t_min + np.arange(nb_sample, dtype=np.float64) * delta
-        return new_time, new_traces
+            extended_traces[idx, :, i_beg[idx] : i_beg[idx] + size_tr] = self.traces[idx]
+        common_time = t_min + np.arange(nb_sample, dtype=np.float64) * delta
+        return common_time, extended_traces
 
     ### PLOTS
 
-    def plot_trace_idx(self, idx, to_draw="012"):
+    def plot_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
+        """
+        Draw 3 traces associated to DU with index idx
+        :param idx: index of DU to draw
+        :type idx: integer
+        :param to_draw: select components
+        :type to_draw: string
+        """
         self.define_t_samples()
         plt.figure()
         plt.title(f"Trace of DU {self.du_id[idx]} (idx={idx})")
@@ -173,7 +234,14 @@ class Handling3dTracesOfEvent:
         plt.grid()
         plt.legend()
 
-    def plot_psd_trace_idx(self, idx, to_draw="012"):
+    def plot_ps_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
+        """
+        Draw power spectrum for 3 traces associated to DU with index idx
+        :param idx:
+        :type idx:
+        :param to_draw:
+        :type to_draw:
+        """
         self.define_t_samples()
         plt.figure()
         noverlap = 2
@@ -194,10 +262,11 @@ class Handling3dTracesOfEvent:
         plt.legend()
 
     def plot_all_traces_as_image(self):  # pragma: no cover
-
-        #
+        """
+        Interactive image double click open traces associated
+        """
         norm = self.get_norm()
-        fig = plt.figure()
+        _ = plt.figure()
         # fig.canvas.manager.set_window_title(f"{self.name}")
         plt.title(f"Norm of all traces in event")
         col_log = colors.LogNorm(clip=False)
@@ -214,6 +283,9 @@ class Handling3dTracesOfEvent:
         plt.connect("button_press_event", on_click)
 
     def plot_histo_t_start(self):  # pragma: no cover
+        """
+        Histogram of time start
+        """
         plt.figure()
         plt.title(f"{self.name}\nTime start histogram")
         plt.hist(self.t_start_ns)

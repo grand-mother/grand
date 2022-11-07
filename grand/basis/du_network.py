@@ -1,37 +1,36 @@
 """
-
+Handling DU network, place for footprint plot
 """
 from logging import getLogger
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
+from matplotlib import colors
 from matplotlib.widgets import Slider
 from matplotlib.offsetbox import AnchoredText
 from matplotlib.backend_bases import MouseButton
 
-
-# from matplotlib.backend_bases import MouseButton
 
 logger = getLogger(__name__)
 
 
 class DetectorUnitNetwork:
     """
-    classdocs
+    Handling a DU network
     """
 
     def __init__(self, name="NotDefined"):
-        """
-        Constructor
-        """
         self.name = name
+        nb_du = 0
+        nb_dim = 3
+        self.du_pos = np.zeros((nb_du, 3))
+        self.du_id = np.arange(nb_du)
 
     def init_pos_id(self, du_pos, du_id):
         """
-
-        @param du_pos:
-        @param du_id:
+        du_pos: float (N,3) position of DU
+        du_id: float (N) identifier of DU
         """
         self.du_pos = du_pos
         self.du_id = du_id
@@ -42,29 +41,51 @@ class DetectorUnitNetwork:
 
     def reduce_nb_du(self, new_nb_du):
         """
-        feature to reduce computation and debugging
-        :param new_nb_du:
+        Fature to reduce computation and debugging
+        new_nb_du: integer
         """
         self.du_id = self.du_id[:new_nb_du]
         self.du_pos = self.du_pos[:new_nb_du, :]
 
     def get_sub_network(self, l_id):
+        """
+
+        :param l_id:
+        """
         sub_net = DetectorUnitNetwork("sub-network of " + self.name)
         sub_net.init_pos_id(self.du_pos[l_id], self.du_id[l_id])
         return sub_net
 
     def get_pos_id(self, l_id):
+        """
+        :param l_id:
+        :type l_id:
+        """
+        # TODO:
         pass
 
     def get_surface(self):
-        pass
+        """
+        Return suface in km2
+        """
+        # TODO:
+        return 0
 
     def get_max_dist_du(self, l_id):
+        """
+
+        :param l_id:
+        :type l_id:
+        """
+        # TODO:
         pass
 
     ### PLOT
 
-    def plot_du_pos(self):
+    def plot_du_pos(self):  # pragma: no cover
+        """
+        Figure with DU position
+        """
         plt.figure()
         plt.title(f"{self.name}\nDU network")
         for du_idx in range(self.du_pos.shape[0]):
@@ -73,9 +94,20 @@ class DetectorUnitNetwork:
         plt.ylabel("[m]")
         plt.xlabel("[m]")
 
-    def plot_footprint_max(
-        self, a_values, title="", traces=None, size_circle=200
-    ):  # pragma: no cover
+    def plot_footprint_1d(self, a_values, title="", traces=None):  # pragma: no cover
+        """
+        Interactive footprint double click on DU draw trace associated and power spectrum
+
+        Footprint of ma
+        :param a_values: intensity associated to DU
+        :type a_values: float (nb DU)
+        :param title: title of figure
+        :type title: string
+        :param traces: object traces
+        :type traces: Handling3dTracesOfEvent
+        """
+        size_circle = 200
+
         def closest_node(node, nodes):
             nodes = np.asarray(nodes)
             dist_2 = np.sum((nodes - node) ** 2, axis=1)
@@ -83,7 +115,6 @@ class DetectorUnitNetwork:
 
         def on_click(event):
             if event.button is MouseButton.LEFT and event.dblclick:
-                # print(f'data coords {event.xdata} {event.ydata},',f'pixel coords {event.x} {event.y}')
                 idx = closest_node(np.array([event.xdata, event.ydata]), self.du_pos[:, :2])
                 atl = AnchoredText(
                     f"{self.du_id[idx]}", prop=dict(size=10), frameon=True, loc="upper left"
@@ -97,7 +128,7 @@ class DetectorUnitNetwork:
                 ax.add_artist(atr)
                 if traces:
                     traces.plot_trace_idx(idx)
-                    traces.plot_psd_trace_idx(idx)
+                    traces.plot_ps_trace_idx(idx)
                     plt.show()
                 plt.draw()
 
@@ -125,9 +156,8 @@ class DetectorUnitNetwork:
         ax.add_artist(atr)
         plt.connect("button_press_event", on_click)
 
-    def plot_footprint_time(self, a_time, a3_values, title="", size_circle=200):  # pragma: no cover
-        import matplotlib
-
+    def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover
+        size_circle = 200
         # same number of sample
         assert a_time.shape[0] == a3_values.shape[2]
         # we plot norm of 3D vector
@@ -139,7 +169,6 @@ class DetectorUnitNetwork:
         # col_log = colors.LogNorm(clip=True)
         cmap_b = matplotlib.cm.get_cmap("Blues")
         delta_t = a_time[1] - a_time[0]
-        idx_mean = int(a_time.shape[0] // 2)
         # Create the figure and the line that we will manipulate
         fig, ax = plt.subplots()
         scat = ax.scatter(

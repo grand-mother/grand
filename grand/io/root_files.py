@@ -35,7 +35,7 @@ class FileEvent:
         """
         Load event/run with index idx in list return by get_list_of_events()
 
-        @param idx:
+        :param idx:
         """
         if self.idx_event == idx:
             return

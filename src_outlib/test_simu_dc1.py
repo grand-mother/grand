@@ -10,6 +10,7 @@ import grand.manage_log as mlg
 from grand.io.root_trees import VoltageEventTree
 import numpy as np 
 
+np.random.seed(11)
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)

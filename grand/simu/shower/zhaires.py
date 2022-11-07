@@ -53,8 +53,8 @@ class ZhairesShower(ShowerEvent):
               - 'W' is 90 deg west from 'N',
               - 'U' is upward towards zenith.
 
-        @param cls: class dict
-        @param path (TBD): path of simulation
+        :param cls: class dict
+        :param path (TBD): path of simulation
         """
 
         def parse_primary(string: str) -> ParticleCode:

@@ -150,10 +150,10 @@ def create_output_for_logger(
 ):
     """!Create a logger with handler for grand
 
-    @param log_level: standard python logger level define in DICT_LOG_LEVELS
-    @param log_file: create a log file with path and name log_file
-    @param log_stdout: enable standard output
-    @param log_root: define a log_root logger str or list of str
+    :param log_level: standard python logger level define in DICT_LOG_LEVELS
+    :param log_file: create a log file with path and name log_file
+    :param log_stdout: enable standard output
+    :param log_root: define a log_root logger str or list of str
     """
     if isinstance(log_root, str):
         l_log_root = [log_root]
@@ -205,7 +205,7 @@ def get_logger_for_script(pfile):
     @note
       Must be call before create_output_for_logger()
 
-    @param pfile: path of the file, so always call with __file__ value
+    :param pfile: path of the file, so always call with __file__ value
     """
     global SCRIPT_ROOT_LOGGER  # pylint: disable=global-statement
     str_logger = _get_logger_path(pfile)
@@ -277,7 +277,7 @@ def _get_string_now():
 
 def _get_logger_path(pfile):
     """!
-    @param pfile: give __file__ where this is function is call
+    :param pfile: give __file__ where this is function is call
     @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
     """
     l_sep = osp.sep
@@ -308,8 +308,8 @@ class _MyFormatter(logging.Formatter):
         @note
           This method is not used directly by the user.
 
-        @param record: internal param
-        @param datefmt: internal param
+        :param record: internal param
+        :param datefmt: internal param
         """
         my_convert = self.converter(record.created)
         if datefmt:
@@ -326,7 +326,7 @@ class _MyFormatter(logging.Formatter):
         @note
           This method is not used directly by the user.
 
-        @param record: internal param
+        :param record: internal param
         """
         msg = logging.Formatter.format(self, record)
 

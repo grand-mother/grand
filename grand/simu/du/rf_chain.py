@@ -12,41 +12,34 @@ Reference document :
 
 Reference code: 
   * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
+  
+  
+Convention Port/direction:
+ * 0 for X / North, South
+ * 1 for Y / East/West
+ * 2 for Z / Up
+ 
+https://github.com/grand-mother/grand/blob/master/docs/GRANDreferential.pdf
 """
 
 import os.path
 from logging import getLogger
 
-from scipy import interpolate
 import scipy.fft as sf
 import numpy as np
 import matplotlib.pyplot as plt
 
 from grand import grand_add_path_data_model
+from grand.num.signal import interpol_at_new_x
+
 
 logger = getLogger(__name__)
 
 
-def interpol_at_new_x(a_x, a_y, new_x):
-    """!
-    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
-    and set to zero outside interval definition a_x
-
-    @param a_x (float, (N)): F(a_x) = a_y, N size of a_x
-    @param a_y (float, (N)): F(a_x) = a_y
-    @param new_x (float, (M)): new value of x
-
-    @return F(new_x) (float, (M)): interpolation of F at new_x
-    """
-    assert a_x.shape[0] > 0
-    func_interpol = interpolate.interp1d(
-        a_x, a_y, "cubic", bounds_error=False, fill_value=(0.0, 0.0)
-    )
-    return func_interpol(new_x)
-
-
 class GenericProcessingDU:
-    """ """
+    """
+    Define common attribut for frequencies for all DU effects processing
+    """
 
     def __init__(self):
         """ """
@@ -57,7 +50,7 @@ class GenericProcessingDU:
     def _set_name_data_file(self, axis):
         """!
 
-        @param axis:
+        :param axis:
         """
         # fix a file version for processing by heritage
         pass
@@ -67,7 +60,8 @@ class GenericProcessingDU:
     def set_out_freq_mhz(self, a_freq):
         """Define frequencies
 
-        @param a_freq (float, (N)):[MHz] given by scipy.fft.rfftfreq/1e6
+        :param a_freq: [MHz] given by scipy.fft.rfftfreq/1e6
+        :type a_freq: float (nb_freqs)
         """
         assert isinstance(a_freq, np.ndarray)
         assert a_freq[0] == 0
@@ -93,15 +87,15 @@ class StandingWaveRatioGP300(GenericProcessingDU):
     def _set_name_data_file(self, axis):
         """!
 
-        @param axis:
+        :param axis:
         """
         file_address = os.path.join("detector", "antennaVSWR", f"{axis+1}.s1p")
         return grand_add_path_data_model(file_address)
 
-    def compute_s11(self, unit=1):
+    def compute_s11(self):
         """!
 
-        @param unit:
+        :param unit:
         """
         s11 = np.zeros((self.nb_freqs, 3), dtype=np.complex64)
         for axis in range(3):
@@ -123,6 +117,9 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         self._f_db_s11 = freq
 
     def plot_vswr(self):  # pragma: no cover
+        """
+        plot VSWR value
+        """
         fig, (ax1, ax2) = plt.subplots(1, 2)
         fig.suptitle(f"VSWR, s11 parameter")
         ax1.set_title("db")
@@ -156,7 +153,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
     def __init__(self):
         """
 
-        @param size_sig: size of the trace after
+        :param size_sig: size of the trace after
         """
         super().__init__()
         self.data_lna = []
@@ -174,7 +171,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
     def _set_name_data_file(self, axis):
         """!
 
-        @param axis:
+        :param axis:
         """
         lna_address = os.path.join("detector", "LNASparameter", f"{axis+1}.s2p")
         return grand_add_path_data_model(lna_address)
@@ -183,7 +180,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         """!
         compute what is possible without know response antenna
 
-        @param unit: select LNA type stockage 0: [re, im],  1: [amp, arg]
+        :param unit: select LNA type stockage 0: [re, im],  1: [amp, arg]
         """
         lna_gama = np.zeros((self.nb_freqs, 3), dtype=np.complex64)
         lna_s21 = np.zeros((self.nb_freqs, 3), dtype=np.complex64)
@@ -217,7 +214,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
     def _compute(self, antenna_gama):
         """!update_with_s11
 
-        @param antenna_gama (N,3):
+        :param antenna_gama (N,3):
         """
         assert antenna_gama.shape[0] > 0
         assert antenna_gama.shape[1] == 3
@@ -238,7 +235,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
     def compute_for_freqs(self, a_freq_mhz):
         """!Compute transfer function for frequency a_freq_mhz
 
-        @param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+        :param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
         """
         super().set_out_freq_mhz(a_freq_mhz)
         self._vswr.set_out_freq_mhz(a_freq_mhz)
@@ -267,7 +264,6 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         plt.plot(self.freqs_out, np.abs(self.antenna_gama[:, 0]), "k", label=r"0")
         plt.plot(self.freqs_out, np.abs(self.antenna_gama[:, 1]), "y", label=r"1")
         plt.plot(self.freqs_out, np.abs(self.antenna_gama[:, 2]), "b", label=r"2")
-        # plt.plot(self.freqs_out, np.abs(self.z_in_lna[:, 0]), label=r"$\mathregular{Z^{in}_{LNA}}$")
         plt.grid()
         plt.legend()
 
@@ -329,7 +325,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
-    def plot_rho_kernel(self):
+    def plot_rho_kernel(self):  # pragma: no cover
         """
         plot of LNA transfer function in time space
         """
@@ -373,7 +369,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
     def _set_name_data_file(self, axis=0):
         """!
 
-        @param axis:
+        :param axis:
         """
         file_address = os.path.join("detector", "filterparameter", "1.s2p")
         return grand_add_path_data_model(file_address)
@@ -394,7 +390,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
     def compute_for_freqs(self, a_freq_mhz):
         """Compute transfer function for frequency a_freq_mhz
 
-        @param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+        :param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
         """
         self.set_out_freq_mhz(a_freq_mhz)
         # dB
@@ -484,7 +480,7 @@ class CableGP300(GenericProcessingDU):
     def _set_name_data_file(self, axis=0):
         """!
 
-        @param axis:
+        :param axis:
         """
         file_address = os.path.join("detector", "cableparameter", "cable.s2p")
         return grand_add_path_data_model(file_address)
@@ -502,7 +498,7 @@ class CableGP300(GenericProcessingDU):
 
     def compute_for_freqs(self, a_freq_mhz):
         """Compute transfer function for frequency a_freq_mhz
-        @param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+        :param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
         """
         self.set_out_freq_mhz(a_freq_mhz)
         freqs_in = self.freqs_in
@@ -568,7 +564,7 @@ class RfChainGP300:
     def compute_for_freqs(self, a_freq_mhz):
         """Compute transfer function for frequency a_freq_mhz
 
-        @param a_freq_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+        :param a_freq_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
         """
         self.lna.compute_for_freqs(a_freq_mhz)
         self.vfb.compute_for_freqs(a_freq_mhz)
