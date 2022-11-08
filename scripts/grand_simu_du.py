@@ -30,7 +30,8 @@ def manage_args():
         "--out_file",
         help="output file in GRANDROOT format. If the file exists it is overwritten.",
         required=True,
-        type=argparse.FileType("w"),
+        # PB with option ???
+        #type=argparse.FileType("w"),
     )
     parser.add_argument(
         "--verbose",
@@ -51,6 +52,6 @@ if __name__ == "__main__":
     master = MasterSimuDetectorWithRootIo(args.file.name)
     master.simu_du.set_flag_add_noise(args.no_noise)
     master.compute_event_idx(0)
-    master.save_voltage(args.out_file.name, append_file=False)
+    master.save_voltage(args.out_file, append_file=False)
     # =============================================
     logger.info(mlg.string_end_script())
