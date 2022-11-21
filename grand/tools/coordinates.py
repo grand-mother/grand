@@ -22,7 +22,6 @@ units:
 
 """
 
-
 from __future__ import annotations
 from typing import Optional, Tuple, Union, Any
 from datetime import datetime
@@ -31,6 +30,8 @@ import enum
 import os
 from numbers import Number
 from logging import getLogger
+import warnings
+
 
 import numpy as np
 
@@ -43,6 +44,8 @@ from ..libs import turtle
 from . import DATADIR
 
 logger = getLogger(__name__)
+# add protection against casting complex to real
+warnings.filterwarnings(action="error", category=np.ComplexWarning)
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
 grd_origin_lat = 38.88849  # degree
@@ -114,11 +117,11 @@ def _cartesian_to_spherical(
     z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform Cartesian coordinates to spherical"""
-    rho2 = x**2 + y**2
+    rho2 = x ** 2 + y ** 2
     rho = np.sqrt(rho2)
     theta = np.rad2deg(np.arctan2(rho, z))
     phi = np.rad2deg(np.arctan2(y, x))
-    r = np.sqrt(rho2 + z**2)
+    r = np.sqrt(rho2 + z ** 2)
 
     return theta, phi, r
 
@@ -259,6 +262,10 @@ class CartesianRepresentation(Coordinates):
         obj[2] = z
         return obj
 
+    def info(self):
+        ret = f"CartesianRepresentation: shape {self.shape}, min:{np.min(self)} max:{np.max(self)}"
+        return ret
+
     @property
     def x(self):
         return self[0]
@@ -358,6 +365,10 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def theta(self):
+        logger.debug(f"{type(self)} {type(self[0])}")
+        # TODO: self[0] and self have same type !!!!!
+        # use float(self[0]) instead self[0] ?
+        # return float(self[0])
         return self[0]
 
     @theta.setter
@@ -366,6 +377,7 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def phi(self):
+        # return float(self[1])
         return self[1]
 
     @phi.setter
@@ -862,6 +874,7 @@ grandcs_origin = Geodetic(
     reference="GEOID",
 )
 
+
 # RK: Merged into Horizontal. Delete this class.
 class HorizontalVector(HorizontalRepresentation):
     """
@@ -1050,7 +1063,7 @@ class LTP(CartesianRepresentation):
         frame: Any = None,
         rotation=None,
     ):
-
+        logger.info('LTP start __init__')
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRANDCS cs. OR latitude=deg, longitude=deg, height=meter.
         if frame is not None:
@@ -1080,7 +1093,6 @@ class LTP(CartesianRepresentation):
 							Location can also be given as latitude=deg, longitude=deg, height=meter."
                 % type(location)
             )
-
         # Make sure orientation is given as string.
         if isinstance(orientation, str):
             pass
@@ -1094,7 +1106,7 @@ class LTP(CartesianRepresentation):
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude
         height = geodetic_loc.height
-
+        logger.info('    test orientation')
         # Calculate magnetic field declination if magnetic=True. Used to define GRANDCS coordinate system.
         if magnetic and declination is None:
             from .geomagnet import Geomagnet
@@ -1123,13 +1135,11 @@ class LTP(CartesianRepresentation):
 
             else:
                 raise ValueError(f"Invalid frame orientation `{name}`")
-
         # unit vectors (basis) in ECEF frame of reference.
         # These are the basis of the GRANDCS coordinate system if orientation='NWU' and magnetic=True.
         ux = vector(orientation[0])
         uy = vector(orientation[1])
         uz = vector(orientation[2])
-
         # These objects share the same memory with arg and is overwritten if kept inside __new__.
         # Problem is solved if __new__ is redefined and __init__ is added with below attributes
         # in __init__ rather than in __new__.
@@ -1168,11 +1178,12 @@ class LTP(CartesianRepresentation):
             self.x = x
             self.y = y
             self.z = z
+        logger.info('LTP end __init__')
 
     def ltp_to_ltp(self, ltp):
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.
         ecef = ECEF(self)
-        pos_v = np.vstack(
+        pos_v = np.array(
             (ecef.x - ltp.location.x, ecef.y - ltp.location.y, ecef.z - ltp.location.z)
         )
         ltp_cord = np.matmul(ltp.basis, pos_v)

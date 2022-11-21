@@ -5,11 +5,11 @@ import os
 import os.path as osp
 from pathlib import Path
 
-from .tools import geomagnet, topography
-from .tools.topography import geoid_undulation, Reference, Topography
-from .tools.geomagnet import Geomagnet
-from .tools import coordinates
-from .tools.coordinates import (
+from grand.geo import geomagnet, topography
+from grand.geo.topography import geoid_undulation, Reference, Topography
+from grand.geo import coordinates
+from grand.geo.geomagnet import Geomagnet
+from grand.geo.coordinates import (
     Coordinates,
     CartesianRepresentation,
     SphericalRepresentation,
@@ -23,7 +23,7 @@ from .tools.coordinates import (
     HorizontalRepresentation,
     Rotation,
 )
-from . import store
+import grand.io.protocol as store
 
 
 def grand_get_path_root_pkg():
@@ -52,6 +52,10 @@ GRAND_DATA_PATH = osp.join(grand_get_path_root_pkg(), "data")
 
 def grand_add_path_data(s_file):
     return os.path.join(GRAND_DATA_PATH, s_file)
+
+
+def grand_add_path_data_model(s_file):
+    return os.path.join(GRAND_DATA_PATH, "model", s_file)
 
 
 __all__ = [

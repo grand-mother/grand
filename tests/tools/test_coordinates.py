@@ -51,9 +51,7 @@ class CoordinatesTest(TestCase):
         super().__init__(*args)
 
         self.obstime = "2020-01-01"
-        self.location = Geodetic(
-            latitude=0.0, longitude=0.0, height=0.0, reference="ELLIPSOID"
-        )
+        self.location = Geodetic(latitude=0.0, longitude=0.0, height=0.0, reference="ELLIPSOID")
 
     # RK
     def test_coordinates(self):
@@ -484,9 +482,7 @@ class CoordinatesTest(TestCase):
         self.assertEqual(ltp0.obstime, ltp1.obstime)
 
         # Test an LTP permutation
-        ltp0 = LTP(
-            x=1, y=2, z=3, location=self.location, orientation="ENU", magnetic=False
-        )  # RK
+        ltp0 = LTP(x=1, y=2, z=3, location=self.location, orientation="ENU", magnetic=False)  # RK
         frame1 = LTP(location=self.location, orientation="NED", magnetic=False)
         ltp1 = ltp0.ltp_to_ltp(frame1)  # RK
         self.assertQuantity(ltp0.x, ltp1.y, 6)

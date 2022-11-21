@@ -4,14 +4,169 @@ Simulation of the effects on the signal of the electronics of the detector
 
 import os.path
 import math
+from logging import getLogger
 
 from numpy.ma import log10, abs
 from scipy import interpolate
 import numpy as np
+from scipy.fftpack import fft, ifft
 import matplotlib.pyplot as plt
 
-from grand.num.signal import complex_expansion
 from grand import grand_add_path_data
+
+logger = getLogger(__name__)
+
+def complex_expansion(size_out, f_step, f_start, f_cut, data):
+    """!
+    Perform complex expansion of <data> on <size_out> samples and set to zero outside the
+    band defined by [<f_start>, <f_cut>]. Output and <data> samples has same frequency step <f_step>.
+
+    @authors PengFei Zhang and Xidian group
+
+    The program only considers that the length of the expanded data is less than
+    floor(size_out / 2), such as size_out = 10, the length of the expanded data <= 5;
+    size_out = 9, the length of the expanded data <= 4
+
+    :param size_out (int): is the number of frequency points, that is, the spectrum that needs to be expanded
+    :param f_step (float): [MHz] frequency step
+    :param f_start (float): [MHz] the starting frequency of the spectrum to be expanded,
+    :param f_cut (float): [MHz] the cutoff frequency of the spectrum to be expanded
+
+    @return (size_out), (size_out): 2 array 1D freq, data_expan
+    """
+    # Frequency sequence
+    logger.debug(f"{(data.size-1)*f_step + f_start}")
+    logger.debug(f"{size_out} {f_step} {f_start} {f_cut}")
+    logger.debug(f"{data.size} {data[:10]} ")
+    assert ((data.size - 1) * f_step + f_start) <= f_cut
+    freq = np.arange(0, size_out) * f_step
+    effective = len(data)
+    delta_start = abs(freq - f_start)
+    delta_end = abs(freq - f_cut)
+    # The row with the smallest difference
+    f_hang_start = np.where(delta_start == delta_start.min())
+    logger.debug(f"{f_hang_start}")
+    f_hang_start = f_hang_start[0][0]
+    f_hang_end = np.where(delta_end == min(delta_end))
+    f_hang_end = f_hang_end[0][0]
+    logger.debug(f"f_hang_bef=gin/end: {f_hang_start} {f_hang_end}")
+    data_expan = np.zeros((size_out), dtype=data.dtype)
+    if f_hang_start == 0:
+        data_expan[0] = data[0]
+        add = np.arange(f_hang_end + 1, size_out - effective + 1, 1)
+        duichen = np.arange(size_out - 1, size_out - effective + 1 - 1, -1)
+        data_expan[add] = 0
+        data_expan[f_hang_start : f_hang_end + 1] = data
+        data_expan[duichen] = data[1:].conjugate()
+    else:
+        a1 = np.arange(0, f_hang_start - 1 + 1, 1).tolist()
+        a2 = np.arange(f_hang_end + 1, size_out - f_hang_start - effective + 1, 1).tolist()
+        a3 = np.arange(size_out - f_hang_start + 1, size_out, 1).tolist()  # Need to make up 0;
+        add = a1 + a2 + a3
+        add = np.array(add)
+        duichen = np.arange(size_out - f_hang_start, size_out - f_hang_start - effective, -1)
+        data_expan[add] = 0
+        data_expan[f_hang_start : f_hang_end + 1] = data
+        data_expan[duichen] = data.conjugate()
+    return freq, data_expan
+
+
+def fftget(data_ori, size_fft, freq_uni, show_flag=False):
+    """!
+    This program is used as a subroutine to complete the FFT
+    of data and generate parameters according to requirements
+
+    @authors PengFei and Xidian group
+
+    :param data_ori (array): time domain data, matrix form
+    :param size_fft (int): number of FFT points
+    :param freq_uni (float): Unilateral frequency
+    :param show_flag (bool): flag of showing picture
+
+    @return data_fft:Frequency domain complex data
+    @return data_fft_m_single:Frequency domain amplitude unilateral spectrum
+    @return data_fft:Frequency domain phase
+    """
+    lienum = data_ori.shape[1]
+    data_fft = np.zeros((size_fft, lienum), dtype=complex)
+    data_fft_m = np.zeros((int(size_fft), lienum))
+    for l_i in range(lienum):
+        data_fft[:, l_i] = fft(data_ori[:, l_i])
+        # Amplitude
+        data_fft_m[:, l_i] = abs(data_fft[:, l_i]) * 2 / size_fft
+        data_fft_m[0] = data_fft_m[0] / 2
+        # unilateral
+        data_fft_m_single = data_fft_m[0 : len(freq_uni)]
+        # phase
+        data_fft_p = np.angle(data_fft, deg=True)
+        data_fft_p = np.mod(data_fft_p, 360)
+        # data_fft_p_deg = np.rad2deg(data_fft_p)
+        data_fft_p_single = data_fft_p[0 : len(freq_uni)]
+    if show_flag:
+        s_xyz = np.array(["x", "y", "z"])
+        plt.figure(figsize=(9, 3))
+        for l_j in range(lienum):
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
+            plt.subplot(1, 3, l_j + 1)
+            plt.plot(freq_uni, data_fft_m_single[:, l_j])
+            plt.xlabel("Frequency(MHz)", fontsize=15)
+            plt.ylabel("E" + s_xyz[l_j] + "(uv/m)", fontsize=15)
+            plt.suptitle("Electric Field Spectrum", fontsize=15)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)  # The smaller the value, the farther away
+        plt.figure(figsize=(9, 3))
+        for l_j in range(lienum):
+            plt.rcParams["font.sans-serif"] = ["Times New Roman"]
+            plt.subplot(1, 3, l_j + 1)
+            plt.plot(freq_uni, data_fft_p_single[:, l_j])
+            plt.xlabel("Frequency(MHz)", fontsize=15)
+            plt.ylabel("E" + s_xyz[l_j] + "(deg)", fontsize=15)
+            plt.suptitle("Electric Field Phase", fontsize=15)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+    return np.array(data_fft), np.array(data_fft_m_single), np.array(data_fft_p_single)
+
+
+def ifftget(data_ori, size_fft, a_time, b_complex):
+    """!
+    This program is used as a subroutine to complete the Fourier change of data
+    and generate parameters according to requirements
+
+    @authors PengFei and Xidian group
+
+    :param data_ori:Frequency domain data, complex numbers
+    :param b_complex : True  indicates that the complex number is synthesized, that is, the amplitude is the real amplitude. False indicates that the complex number is obtained after Fourier transform;
+    :param size_fft:number of FFT points
+    :param a_time:time sequence
+
+    @return data_ifft :time domain data,
+    """
+    lienum = data_ori.shape[1]
+    s_array = len(a_time)
+    #  First draw the spectrum phase == == == == == ==
+    data_ori_m = np.zeros((int(size_fft), lienum))
+    data_ori_p = np.zeros((int(size_fft), lienum))
+    if b_complex:
+        for l_i in range(lienum):
+            data_ori_m[:, l_i] = abs(data_ori[:, l_i])  # Amplitude
+            data_ori_m_single = data_ori_m[0:s_array]  # unilateral
+            data_ori_p[:, l_i] = np.angle(data_ori[:, l_i], deg=True)  # phase
+            data_ori_p[:, l_i] = np.mod(data_ori_p[:, l_i], 360)
+            data_ori_p_single = data_ori_p[0:s_array]
+    else:
+        for l_i in range(lienum):
+            data_ori_m[:, l_i] = abs(data_ori[:, l_i]) * 2 / size_fft
+            data_ori_m[0] = data_ori_m[0] / 2
+            data_ori_m_single = data_ori_m[0:s_array]
+            data_ori_p = np.angle(data_ori, deg=True)
+            data_ori_p = np.mod(data_ori_p, 2 * 180)
+            data_ori_p_single = data_ori_p[0:s_array]
+    #
+    data_ifft = np.zeros((size_fft, lienum))
+    for l_i in range(lienum):
+        data_ifft[:, l_i] = ifft(data_ori[:, l_i]).real
+    return np.array(data_ifft), np.array(data_ori_m_single), np.array(data_ori_p_single)
+
 
 
 def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
@@ -19,11 +174,11 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
 
     @authors PengFei and Xidian group
 
-    @param antennas11_complex_short:
-    @param N:
-    @param f0:
-    @param unit:
-    @param show_flag:
+    :param antennas11_complex_short
+    :param N:
+    :param f0:
+    :param unit
+    :param show_flag:
     """
     # = == == == == This program is used as a subroutine to complete the calculation and expansion of the LNA partial pressure coefficient == == == == =
     #  ----------------------input - ---------------------------------- %
@@ -116,7 +271,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
         if p == 0:
             dbs21_a = np.zeros((3, len(freq)))
         dbs21_a[p] = dbs21
-        # 插值为30-250mhz间隔1mhz一个数据
+        # 30-250mh 1mhz
         freqnew = np.arange(30, 251, 1)
         f_res11 = interpolate.interp1d(freq, res11, kind="cubic")
         res11new = f_res11(freqnew)
@@ -145,10 +300,10 @@ def filter_get(N, f0, unit, show_flag=False):
 
     @authors PengFei and Xidian group
 
-    @param N:
-    @param f0:
-    @param unit:
-    @param show_flag:
+    :param N:
+    :param f0:
+    :param unit:
+    :param show_flag:
     """
 
     # = == == == == This program is used as a subroutine to complete the calculation and expansion of the S parameters of the cable and filter == == == == =

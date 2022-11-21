@@ -14,8 +14,9 @@ logging.basicConfig(level=logging.DEBUG)
 #I use this environment variable to let python know where to find it, but alternatively you just copy the AiresInfoFunctions.py file on the same dir you are using this.
 #ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
 #sys.path.append(ZHAIRESPYTHON)
-import AiresInfoFunctionsGRANDROOT as AiresInfo
-from grand.io.root_trees import *
+import src_outlib.AiresInfoFunctionsGRANDROOT as AiresInfo
+from grand.io.root.run import RunTree
+from grand.io.root.event.shower import *
 from copy import deepcopy
 logging.basicConfig(level=logging.INFO)	
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

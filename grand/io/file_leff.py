@@ -9,8 +9,7 @@ import os.path as osp
 
 import numpy
 
-from .generic import AntennaModel
-from grand.io import io
+from grand.io import io_node as io
 
 __all__ = ["DataTable", "TabulatedAntennaModel"]
 
@@ -29,6 +28,11 @@ class DataTable:
     phase_theta: Union[Number, numpy.ndarray]
     leff_phi: Union[Number, numpy.ndarray]
     phase_phi: Union[Number, numpy.ndarray]
+    
+    def __post_init__(self):
+        logger.info(f'size phase {self.phase_theta.shape}')
+        self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
+        self.phase_phi_rad = numpy.deg2rad(self.phase_phi)
 
     def dump(self, node: io.DataNode) -> None:
         for field in fields(self):
@@ -43,9 +47,14 @@ class DataTable:
 
 
 @dataclass
-class TabulatedAntennaModel(AntennaModel):
+class TabulatedAntennaModel(object):
     table: DataTable
     n_file: ... = "TBD"
+
+    def __str__(self):
+        ret = f"TabulatedAntennaModel, shape freq {self.table.frequency.shape}"
+        ret += f"\nleff_theta: {self.table.leff_theta.shape} {self.table.leff_theta.dtype}"
+        return ret
 
     def dump(self, destination: Union[str, Path, io.DataNode]) -> None:
         if type(destination) == io.DataNode:

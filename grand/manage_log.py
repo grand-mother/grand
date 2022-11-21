@@ -97,13 +97,13 @@ Result log file
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] ===========> begin at 2022-01-17T11:28:09Z <===========
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
-11:28:09.622  INFO [grand.simu.shower.generic 102] Loading shower data from ../../tests/simulation/data/zhaires:/
+11:28:09.622  INFO [grand.simu.shower.gen_shower 102] Loading shower data from ../../tests/simulation/data/zhaires:/
 11:28:09.625  INFO [grand.simu.shower.zhaires 104] ### zhaires.py: reading groundaltitude from. inp file.
-11:28:10.030  INFO [grand.simu.shower.generic 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/
-11:28:10.030  INFO [grand.simu.antenna.tabulated 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
-11:28:10.077  INFO [grand.simu.antenna.tabulated 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
+11:28:10.030  INFO [grand.simu.shower.gen_shower 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/
+11:28:10.030  INFO [grand.io.file_leff 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
+11:28:10.077  INFO [grand.io.file_leff 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/
 11:28:10.183  INFO [grand.examples.simulation.shower-event 99] -----> Chrono start
-11:28:10.183 DEBUG [grand.simu.antenna.generic 180] call compute_voltage()
+11:28:10.183 DEBUG [grand.simu.du.process_ant 180] call compute_voltage()
 11:28:10.244  INFO [grand.examples.simulation.shower-event 103] -----> Chrono Duration (h:m:s): 0:00:00.060869
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
@@ -150,10 +150,10 @@ def create_output_for_logger(
 ):
     """!Create a logger with handler for grand
 
-    @param log_level: standard python logger level define in DICT_LOG_LEVELS
-    @param log_file: create a log file with path and name log_file
-    @param log_stdout: enable standard output
-    @param log_root: define a log_root logger str or list of str
+    :param log_level: standard python logger level define in DICT_LOG_LEVELS
+    :param log_file: create a log file with path and name log_file
+    :param log_stdout: enable standard output
+    :param log_root: define a log_root logger str or list of str
     """
     if isinstance(log_root, str):
         l_log_root = [log_root]
@@ -205,7 +205,7 @@ def get_logger_for_script(pfile):
     @note
       Must be call before create_output_for_logger()
 
-    @param pfile: path of the file, so always call with __file__ value
+    :param pfile: path of the file, so always call with __file__ value
     """
     global SCRIPT_ROOT_LOGGER  # pylint: disable=global-statement
     str_logger = _get_logger_path(pfile)
@@ -277,7 +277,7 @@ def _get_string_now():
 
 def _get_logger_path(pfile):
     """!
-    @param pfile: give __file__ where this is function is call
+    :param pfile: give __file__ where this is function is call
     @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
     """
     l_sep = osp.sep
@@ -290,7 +290,7 @@ def _get_logger_path(pfile):
         # out package git
         # -3 for size of ".py"
         logger.debug("out package git")
-        if pfile[0] == l_sep:            
+        if pfile[0] == l_sep:
             g_str = pfile[1:-3].replace(l_sep, ".")
         else:
             g_str = pfile[0:-3].replace(l_sep, ".")
@@ -308,8 +308,8 @@ class _MyFormatter(logging.Formatter):
         @note
           This method is not used directly by the user.
 
-        @param record: internal param
-        @param datefmt: internal param
+        :param record: internal param
+        :param datefmt: internal param
         """
         my_convert = self.converter(record.created)
         if datefmt:
@@ -326,7 +326,7 @@ class _MyFormatter(logging.Formatter):
         @note
           This method is not used directly by the user.
 
-        @param record: internal param
+        :param record: internal param
         """
         msg = logging.Formatter.format(self, record)
 
