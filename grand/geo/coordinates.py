@@ -1063,7 +1063,7 @@ class LTP(CartesianRepresentation):
         frame: Any = None,
         rotation=None,
     ):
-
+        logger.info('LTP start __init__')
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRANDCS cs. OR latitude=deg, longitude=deg, height=meter.
         if frame is not None:
@@ -1093,7 +1093,6 @@ class LTP(CartesianRepresentation):
 							Location can also be given as latitude=deg, longitude=deg, height=meter."
                 % type(location)
             )
-
         # Make sure orientation is given as string.
         if isinstance(orientation, str):
             pass
@@ -1107,7 +1106,7 @@ class LTP(CartesianRepresentation):
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude
         height = geodetic_loc.height
-
+        logger.info('    test orientation')
         # Calculate magnetic field declination if magnetic=True. Used to define GRANDCS coordinate system.
         if magnetic and declination is None:
             from .geomagnet import Geomagnet
@@ -1136,13 +1135,11 @@ class LTP(CartesianRepresentation):
 
             else:
                 raise ValueError(f"Invalid frame orientation `{name}`")
-
         # unit vectors (basis) in ECEF frame of reference.
         # These are the basis of the GRANDCS coordinate system if orientation='NWU' and magnetic=True.
         ux = vector(orientation[0])
         uy = vector(orientation[1])
         uz = vector(orientation[2])
-
         # These objects share the same memory with arg and is overwritten if kept inside __new__.
         # Problem is solved if __new__ is redefined and __init__ is added with below attributes
         # in __init__ rather than in __new__.
@@ -1181,11 +1178,12 @@ class LTP(CartesianRepresentation):
             self.x = x
             self.y = y
             self.z = z
+        logger.info('LTP end __init__')
 
     def ltp_to_ltp(self, ltp):
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.
         ecef = ECEF(self)
-        pos_v = np.vstack(
+        pos_v = np.array(
             (ecef.x - ltp.location.x, ecef.y - ltp.location.y, ecef.z - ltp.location.z)
         )
         ltp_cord = np.matmul(ltp.basis, pos_v)

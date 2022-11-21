@@ -86,7 +86,7 @@ for antenna_index, field in shower.fields.items():
         magnetic=True,
         obstime=shower.frame.obstime,
     )
-    antenna = AntennaProcessing(model_leff=antenna_model, frame=antenna_frame)
+    antenna = AntennaProcessing(model_leff=antenna_model, pos=antenna_frame)
 
     logger.info(f"{antenna_index} Antenna pos in shower frame {antpos_wrt_shower.flatten()}")
     logger.info(

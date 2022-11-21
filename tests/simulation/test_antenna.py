@@ -212,16 +212,16 @@ class AntennaTest(TestCase):
             self.assertGreater(Vpp, 6E-02 * Es)
 
         field   = ElectricField(t, E, frame=shower_frame)
-        antenna = AntennaProcessing(model_leff=self.model, frame=antenna_frame)
+        antenna = AntennaProcessing(model_leff=self.model, pos=antenna_frame)
         check(antenna.compute_voltage(xmax, field, shower_frame))
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)
 
-        antenna = AntennaProcessing(model_leff=self.model, frame=None)
+        antenna = AntennaProcessing(model_leff=self.model, pos=None)
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field, shower_frame)
 
-        antenna = AntennaProcessing(model_leff=self.model, frame=antenna_frame)
+        antenna = AntennaProcessing(model_leff=self.model, pos=antenna_frame)
         check(antenna.compute_voltage(xmax, field, shower_frame))
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)

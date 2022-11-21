@@ -40,7 +40,7 @@ class MasterSimuDetectorWithRootIo:
         self.f_name_root = f_name_root
         self.d_root = FileSimuEfield(f_name_root)
         self.simu_du = SimuDetectorUnitEffect()
-        self.tr_evt = Handling3dTracesOfEvent()
+        self.o_traces = Handling3dTracesOfEvent()
         self.tt_volt = None
         self.file_out = ""
 
@@ -52,11 +52,11 @@ class MasterSimuDetectorWithRootIo:
         """
         logger.info(f"Compute du simulation for traces of event idx= {idx}")
         self.d_root.load_event_idx(idx)
-        self.tr_evt = self.d_root.get_obj_handlingtracesofevent()
+        self.o_traces = self.d_root.get_obj_handlingtracesofevent()
         # for debug
-        # self.tr_evt.reduce_nb_du(12)
-        assert isinstance(self.tr_evt, Handling3dTracesOfEvent)
-        self.simu_du.set_data_efield(self.tr_evt)
+        #self.o_traces.reduce_nb_du(5)
+        assert isinstance(self.o_traces, Handling3dTracesOfEvent)
+        self.simu_du.set_data_efield(self.o_traces)
         shower = ShowerEvent()
         shower.load_root(self.d_root.tt_shower)
         self.simu_du.set_data_shower(shower)
@@ -120,28 +120,28 @@ class MasterSimuDetectorWithRootIo:
         self.tt_volt = VoltageEventTree(file_out)
         # now fill Voltage object
         freq_mhz = int(self.d_root.get_sampling_freq_mhz())
-        self.tt_volt.du_count = self.tr_evt.get_nb_du()
+        self.tt_volt.du_count = self.o_traces.get_nb_du()
         logger.debug(f"We will add {self.tt_volt.du_count} DU")
         self.tt_volt.run_number = self.d_root.tt_efield.run_number
         self.tt_volt.event_number = self.d_root.tt_efield.event_number
         logger.debug(f"{type(self.tt_volt.run_number)} {type(self.tt_volt.event_number)}")
         logger.debug(f"{self.tt_volt.run_number} {self.tt_volt.event_number}")
-        self.tt_volt.first_du = self.tr_evt.du_id[0]
+        self.tt_volt.first_du = self.o_traces.du_id[0]
         self.tt_volt.time_seconds = self.d_root.tt_efield.time_seconds
         self.tt_volt.time_nanoseconds = self.d_root.tt_efield.time_nanoseconds
-        self.tr_evt.traces = self.simu_du.voc
-        self.tr_evt.define_t_samples()
+        self.o_traces.traces = self.simu_du.voc
+        self.o_traces.define_t_samples()
         # self.tt_volt.event_size = 1999
-        for idx in range(self.simu_du.tr_evt.get_nb_du()):
+        for idx in range(self.simu_du.o_traces.get_nb_du()):
             # trace = np.arange(self.tt_volt.event_size, dtype=np.float64)
-            # self.tr_evt.plot_trace_idx(idx)
-            logger.info(f"add DU {self.tr_evt.du_id[idx]} in ROOT file")
+            # self.o_traces.plot_trace_idx(idx)
+            logger.info(f"add DU {self.o_traces.du_id[idx]} in ROOT file")
             # logger.info(f"shape: {self.simu_du.voc[idx, 0].shape}")
             self.tt_volt.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
             self.tt_volt.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
             self.tt_volt.adc_sampling_frequency.append(freq_mhz)
-            self.tt_volt.du_id.append(int(self.tr_evt.du_id[idx]))
-            # logger.info(f"du_id {type(self.tr_evt.du_id[idx])}")
+            self.tt_volt.du_id.append(int(self.o_traces.du_id[idx]))
+            # logger.info(f"du_id {type(self.o_traces.du_id[idx])}")
             self.tt_volt.trace_x.append(self.simu_du.v_out[idx, 0].astype(np.float64).tolist())
             self.tt_volt.trace_y.append(self.simu_du.v_out[idx, 1].astype(np.float64).tolist())
             self.tt_volt.trace_z.append(self.simu_du.v_out[idx, 2].astype(np.float64).tolist())
@@ -162,14 +162,11 @@ class SimuDetectorUnitEffect:
         """
         Constructor
         """
-        self.t_samp = 0.5  # Manually enter the same time interval as the .trace file
-        self.show_flag = False
-        self.noise_flag = False
         self.ant_model = AntennaModelGp300()
         self.voc = None
         self.fft_size = 0
         self.fact_padding = 1.2
-        self.tr_evt = Handling3dTracesOfEvent()
+        self.o_traces = Handling3dTracesOfEvent()
         self.rf_chain = grfc.RfChainGP300()
         self.flag_add_noise = False
 
@@ -181,6 +178,7 @@ class SimuDetectorUnitEffect:
 
         :param idx_du:
         """
+        # TODO : problem with LPT takes 35 ms
         antenna_location = coord.LTP(
             x=self.du_pos[idx_du, 0],
             y=self.du_pos[idx_du, 1],
@@ -189,11 +187,11 @@ class SimuDetectorUnitEffect:
         )
         logger.debug(antenna_location)
         antenna_frame = coord.LTP(location=antenna_location, orientation="NWU", magnetic=True)
-        self.ant_leff_sn = AntennaProcessing(model_leff=self.ant_model.leff_sn, frame=antenna_frame)
+        self.ant_leff_sn = AntennaProcessing(model_leff=self.ant_model.leff_sn, pos=antenna_frame)
         self.ant_leff_sn.set_out_freq_mhz(self.freqs_mhz)
-        self.ant_leff_ew = AntennaProcessing(model_leff=self.ant_model.leff_ew, frame=antenna_frame)
+        self.ant_leff_ew = AntennaProcessing(model_leff=self.ant_model.leff_ew, pos=antenna_frame)
         self.ant_leff_ew.set_out_freq_mhz(self.freqs_mhz)
-        self.ant_leff_z = AntennaProcessing(model_leff=self.ant_model.leff_z, frame=antenna_frame)
+        self.ant_leff_z = AntennaProcessing(model_leff=self.ant_model.leff_z, pos=antenna_frame)
         self.ant_leff_z.set_out_freq_mhz(self.freqs_mhz)
 
     ### SETTER
@@ -210,7 +208,7 @@ class SimuDetectorUnitEffect:
         :param tr_evt:
         """
         assert isinstance(tr_evt, Handling3dTracesOfEvent)
-        self.tr_evt = tr_evt
+        self.o_traces = tr_evt
         tr_evt.define_t_samples()
         self.du_time_efield = tr_evt.t_samples
         self.f_samp_mhz = tr_evt.f_samp_mhz
@@ -233,7 +231,7 @@ class SimuDetectorUnitEffect:
             lst,
             self.fft_size,
             self.freqs_mhz,
-            tr_evt.get_nb_du(),
+            self.o_traces.get_nb_du(),
         )
 
     def set_data_shower(self, shower):
