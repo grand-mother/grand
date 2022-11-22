@@ -13,7 +13,7 @@ import matplotlib.pylab as plt
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("debug", log_stdout=False)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 
 def main():
@@ -51,12 +51,13 @@ def main():
         o_tevent.network.plot_footprint_1d(o_tevent.get_max_norm(),"Max ||Efield||", o_tevent)        
         #o_tevent.plot_histo_t_start()
         a_time, a_values = o_tevent.get_extended_traces()
-        o_tevent.network.plot_footprint_time(a_time, a_values, "test")
+        #o_tevent.network.plot_footprint_time(a_time, a_values, "test")
     if args.trace != -100:
         if (0 > args.trace) or  (args.trace >= d_event.get_nb_du()):
             print(f"ERROR: index of the trace must be >= 0 and <= {d_event.get_nb_du()-1}")
             return
         o_tevent.plot_trace_idx(args.trace)
+        o_tevent.plot_ps_trace_idx(args.trace)
     
 if __name__ == '__main__':
     logger.info(mlg.string_begin_script())

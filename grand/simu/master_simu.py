@@ -54,7 +54,7 @@ class MasterSimuDetectorWithRootIo:
         self.d_root.load_event_idx(idx)
         self.o_traces = self.d_root.get_obj_handlingtracesofevent()
         # for debug
-        #self.o_traces.reduce_nb_du(5)
+        # self.o_traces.reduce_nb_du(5)
         assert isinstance(self.o_traces, Handling3dTracesOfEvent)
         self.simu_du.set_data_efield(self.o_traces)
         shower = ShowerEvent()

@@ -113,7 +113,9 @@ class DetectorUnitNetwork:
             return np.argmin(dist_2)
 
         def on_click(event):
+            print("ee")
             if event.button is MouseButton.LEFT and event.dblclick:
+                logger.info(f"on_click {event.xdata}, {event.ydata}")
                 idx = closest_node(np.array([event.xdata, event.ydata]), self.du_pos[:, :2])
                 atl = AnchoredText(
                     f"{self.du_id[idx]}", prop=dict(size=10), frameon=True, loc="upper left"
@@ -131,6 +133,7 @@ class DetectorUnitNetwork:
                     plt.show()
                 plt.draw()
 
+        plt.connect("button_press_event", on_click)
         vmin = a_values.min()
         vmax = a_values.max()
         fig, ax = plt.subplots(1, 1)
@@ -153,7 +156,6 @@ class DetectorUnitNetwork:
         atr.patch.set_boxstyle("Square, pad=0.3")
         ax.add_artist(atl)
         ax.add_artist(atr)
-        plt.connect("button_press_event", on_click)
 
     def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover
         size_circle = 200

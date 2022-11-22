@@ -166,7 +166,7 @@ class Handling3dTracesOfEvent:
            * to deal with oscillation take the hilbert's envelope of the norm
            * find max value and time associated, may be with interpolation with law sampling
         """
-        logger.info(f'method: {method}')
+        logger.info(f"method: {method}")
         return 0.0, 0.0
 
     def get_min_max_t_start(self):
