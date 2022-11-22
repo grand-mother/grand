@@ -1,5 +1,4 @@
-"""
-Earth-related classes: positioning, topography, geodesy, magnetism
+"""Tools for the GRAND package
 """
 
 from typing_extensions import Final

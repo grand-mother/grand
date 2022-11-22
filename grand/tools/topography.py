@@ -10,8 +10,9 @@ from typing import Optional, Union, Any
 from typing_extensions import Final
 
 import numpy as np
+
 from . import DATADIR
-from grand.geo.coordinates import (
+from .coordinates import (
     ECEF,
     Geodetic,
     GeodeticRepresentation,
@@ -20,7 +21,7 @@ from grand.geo.coordinates import (
     CartesianRepresentation,
 )
 from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
-import grand.io.protocol as store
+from .. import store
 from .._core import ffi, lib
 
 __all__ = [

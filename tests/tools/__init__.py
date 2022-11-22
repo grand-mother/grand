@@ -1,3 +1,3 @@
 """
-Unit tests for the grand.geo package
+Unit tests for the grand.tools package
 """
