@@ -89,7 +89,7 @@ def test_Voc_event_many():
     logger.debug(f'mem free {mem.available/1024**2}MB')
     m_ios.compute_event_idx(0)
     m_ios.compute_event_idx(0)
-    #m_ios.compute_event_idx(0)
+    m_ios.compute_event_idx(0)
     mem = psutil.virtual_memory()
     logger.debug(f'mem free {mem.available/1024**2}MB')
     snapshot = tracemalloc.take_snapshot()
