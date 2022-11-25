@@ -1,6 +1,9 @@
 '''
 
 '''
+import tracemalloc
+import psutil
+
 import os 
 import time
 
@@ -12,11 +15,13 @@ import numpy as np
 
 np.random.seed(11)
 
+tracemalloc.start()
+
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("info", log_stdout=True, log_file=None)
+mlg.create_output_for_logger("debug", log_stdout=True, log_file='memory.txt')
 
 G_file_efield = "/home/dc1/Coarse1.root"
 G_file_efield = "/home/dc1/Coarse2_xmax_add.root"
@@ -80,9 +85,19 @@ def test_V_out_event():
 
 def test_Voc_event_many():
     m_ios = MasterSimuDetectorWithRootIo(G_file_efield)
+    mem = psutil.virtual_memory()
+    logger.debug(f'mem free {mem.available/1024**2}MB')
     m_ios.compute_event_idx(0)
     m_ios.compute_event_idx(0)
-    m_ios.compute_event_idx(0)
+    #m_ios.compute_event_idx(0)
+    mem = psutil.virtual_memory()
+    logger.debug(f'mem free {mem.available/1024**2}MB')
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+    logger.debug("[ Top 10 ]")
+    for stat in top_stats[:10]:
+        logger.debug(stat)
+    
 
 
 if __name__ == '__main__':
@@ -90,9 +105,9 @@ if __name__ == '__main__':
     logger.info(mlg.string_begin_script())
     # ================
     #test_VoltageTTree()
-    test_Voc_du(26)
+    #test_Voc_du(26)
     #test_V_out_event()
-    # test_Voc_event_many()
+    test_Voc_event_many()
     # ================
     logger.info(mlg.string_end_script())
     plt.show()
