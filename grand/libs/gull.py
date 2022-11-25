@@ -1,15 +1,18 @@
 """Wrapper for the GULL C library
 """
 
+from logging import getLogger
+import datetime
+
+import numpy
+
 from . import DATADIR
 from .._core import ffi, lib
-
-import datetime
-import numpy
 
 
 __all__ = ["LibraryError", "Snapshot"]
 
+logger = getLogger(__name__)
 
 class LibraryError(RuntimeError):
     """A GULL library error"""
@@ -77,6 +80,7 @@ class Snapshot:
         self._altitude = tuple(map(float, (altitude_min[0], altitude_max[0])))
 
     def __del__(self):
+        logger.debug(f'__del__ Snapshot ')
         try:
             if self._snapshot is None:
                 return
