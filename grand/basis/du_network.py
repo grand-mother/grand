@@ -155,7 +155,7 @@ class DetectorUnitNetwork:
         ax.add_artist(atl)
         ax.add_artist(atr)
         plt.connect("button_press_event", on_click)
-        
+
     def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover
         size_circle = 200
         # same number of sample

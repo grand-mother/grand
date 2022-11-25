@@ -14,6 +14,7 @@ __all__ = ["LibraryError", "Snapshot"]
 
 logger = getLogger(__name__)
 
+
 class LibraryError(RuntimeError):
     """A GULL library error"""
 
@@ -80,7 +81,7 @@ class Snapshot:
         self._altitude = tuple(map(float, (altitude_min[0], altitude_max[0])))
 
     def __del__(self):
-        logger.debug(f'__del__ Snapshot ')
+        logger.debug(f"__del__ Snapshot ")
         try:
             if self._snapshot is None:
                 return
