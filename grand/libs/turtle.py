@@ -12,7 +12,6 @@ import numpy
 from .._core import ffi, lib
 
 
-
 __all__ = [
     "LibraryError",
     "Map",
@@ -25,6 +24,7 @@ __all__ = [
 ]
 
 logger = getLogger(__name__)
+
 
 class LibraryError(RuntimeError):
     """A TURTLE library error"""
@@ -173,24 +173,25 @@ def ecef_to_horizontal(latitude, longitude, direction):
 
 class Map(object):
     """Proxy for a TURTLE map object"""
+
     # TODO: reduce number of map in cache
     cache = {}
-    
+
     def __new__(cls, path: Union[Path, str]):
         """
         Manage cache instance of map
-        
+
         :param cls:
         :type cls:
         :param path: path/file map
         :type path: string
         """
-        
+
         if path in Map.cache.keys():
             return cls.cache[path]
         else:
             return object.__new__(cls)
-    
+
     def __init__(self, path: Union[Path, str]):
         """Initialise a map object from a data file
 
@@ -205,9 +206,9 @@ class Map(object):
             A TURTLE library error occured, e.g. if the data could not be loaded
         """
         if hasattr(self, "_map"):
-            logger.debug(f'Map {path} already in cache')
-            return 
-        # Create the map object 
+            logger.debug(f"Map {path} already in cache")
+            return
+        # Create the map object
         map_ = ffi.new("struct turtle_map **")
         path_ = ffi.new("char []", str(path).encode())
         r = lib.turtle_map_load(map_, path_)
@@ -218,16 +219,15 @@ class Map(object):
             self._map = map_
             self._path = path
         # add object in cache
-        logger.info(f'Map constructor add map {path} in cache memory ')
+        logger.info(f"Map constructor add map {path} in cache memory ")
         Map.cache[path] = self
-    
+
     def __del__(self):
         if self in Map.cache:
-            logger.debug(f'Map : remove {self._path} from the cache')            
+            logger.debug(f"Map : remove {self._path} from the cache")
             del Map.cache[self._path]
             # free C memory allocation
             lib.turtle_map_destroy(self._map)
-            
 
     def elevation(self, x, y):
         """Get the elevation at the given map coordinates"""
@@ -289,7 +289,7 @@ class Stack:
         self._stack_size = stack_size
 
     def __del__(self):
-        logger.debug('destroy  in Stack class')
+        logger.debug("destroy  in Stack class")
         lib.turtle_stack_destroy(self._stack)
         self._stack = None
 
@@ -339,10 +339,9 @@ class Stepper:
         self._data = set([])
 
     def __del__(self):
-        logger.debug('destroy  in Stepper class')
+        logger.debug("destroy  in Stepper class")
         lib.turtle_stepper_destroy(self._stepper)
         self._stepper = None
-
 
     def add(self, data: Union[Map, Stack, None] = None, offset: float = 0):
         if data is not None:
