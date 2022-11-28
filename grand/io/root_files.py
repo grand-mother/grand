@@ -5,12 +5,28 @@ import os.path
 from logging import getLogger
 
 import numpy as np
+import ROOT
 
 import grand.io.root_trees as groot
 from grand.basis.traces_event import Handling3dTracesOfEvent
 
 logger = getLogger(__name__)
 
+
+def check_ttree_in_file(f_root, ttree_name):
+    """
+    Return True if f_root contents ttree_name
+    
+    :param f_root:
+    :type f_root:
+    :param ttree_name:
+    :type ttree_name:
+    """
+    tfile = ROOT.TFile.Open(f_root)
+    l_ttree = tfile.GetListOfKeys()
+    l_name_ttree = [ttree.GetName() for ttree in l_ttree]
+    return ttree_name in l_name_ttree
+    
 
 class FileEvent:
     """
@@ -127,8 +143,13 @@ class FileSimuEfield(FileEvent):
         """
         Constructor
         """
+        name_ttree = "teventefield"
         if not os.path.exists(f_name):
-            raise
+            logger.error(f"File {f_name} doesn't exist.")
+            raise FileNotFoundError
+        if not check_ttree_in_file(f_name, name_ttree):
+            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+            raise AssertionError
         logger.info(f"Events  in file {f_name}")
         event = groot.EfieldEventTree(f_name)
         super().__init__(event)
@@ -177,10 +198,15 @@ class FileVoltageEvent(FileEvent):
 
     def __init__(self, f_name):
         """
-        Constructoreg
+        Constructor
         """
+        name_ttree = "teventvoltage"
         if not os.path.exists(f_name):
-            raise
+            logger.error(f"File {f_name} doesn't exist.")
+            raise FileNotFoundError
+        if not check_ttree_in_file(f_name, name_ttree):
+            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+            raise AssertionError
         logger.info(f"Events  in file {f_name}")
         event = groot.VoltageEventTree(f_name)
         super().__init__(event)
