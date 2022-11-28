@@ -1063,7 +1063,6 @@ class LTP(CartesianRepresentation):
         frame: Any = None,
         rotation=None,
     ):
-        logger.info("LTP start __init__")
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRANDCS cs. OR latitude=deg, longitude=deg, height=meter.
         if frame is not None:
@@ -1106,7 +1105,6 @@ class LTP(CartesianRepresentation):
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude
         height = geodetic_loc.height
-        logger.info("    test orientation")
         # Calculate magnetic field declination if magnetic=True. Used to define GRANDCS coordinate system.
         if magnetic and declination is None:
             from .geomagnet import Geomagnet
