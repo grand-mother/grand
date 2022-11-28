@@ -16,7 +16,7 @@ logger = getLogger(__name__)
 def check_ttree_in_file(f_root, ttree_name):
     """
     Return True if f_root contents ttree_name
-    
+
     :param f_root:
     :type f_root:
     :param ttree_name:
@@ -26,7 +26,7 @@ def check_ttree_in_file(f_root, ttree_name):
     l_ttree = tfile.GetListOfKeys()
     l_name_ttree = [ttree.GetName() for ttree in l_ttree]
     return ttree_name in l_name_ttree
-    
+
 
 class FileEvent:
     """
