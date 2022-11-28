@@ -169,6 +169,7 @@ class SimuDetectorUnitEffect:
         self.o_traces = Handling3dTracesOfEvent()
         self.rf_chain = grfc.RfChainGP300()
         self.flag_add_noise = False
+        self.lst = 18.0
 
     ### INTERNAL
 
@@ -202,6 +203,15 @@ class SimuDetectorUnitEffect:
         """
         self.flag_add_noise = flag
 
+    def set_local_sideral_time(self, f_hour):
+        """
+
+        :param file_out: between 0h and 24h
+        :type file_out: float
+        """
+        logger.debug(f"{f_hour}")
+        self.lst = f_hour
+
     def set_data_efield(self, tr_evt):
         """
 
@@ -226,9 +236,8 @@ class SimuDetectorUnitEffect:
         # compute total transfer function of RF chain
         self.rf_chain.compute_for_freqs(self.freqs_mhz)
         # lst: local sideral time, galactic noise max at 18h
-        lst = 18
         self.fft_noise_gal_3d = galaxy_radio_signal(
-            lst,
+            self.lst,
             self.fft_size,
             self.freqs_mhz,
             self.o_traces.get_nb_du(),

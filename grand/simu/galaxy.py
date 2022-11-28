@@ -11,7 +11,7 @@ from grand.num.signal import interpol_at_new_x
 from grand import grand_add_path_data
 
 
-def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
+def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
     """!
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
@@ -28,6 +28,8 @@ def galaxy_radio_signal(lst, size_out, freqs_mhz, nb_ant, show_flag=False):
 
     @return : v_complex_double, galactic_v_time
     """
+    # TODO: why lst is an integer ?
+    lst = int(f_lst)
 
     def plot():  # pragma: no cover
         plt.figure(figsize=(9, 3))
