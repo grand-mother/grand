@@ -2,7 +2,7 @@
 
 import argparse
 
-import numpy as np 
+import numpy as np
 
 import grand.manage_log as mlg
 from grand.simu.master_simu import MasterSimuDetectorWithRootIo
@@ -11,11 +11,13 @@ from grand.simu.master_simu import MasterSimuDetectorWithRootIo
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
 
+
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
-    if f_hour <0 or f_hour > 24:
+    if f_hour < 0 or f_hour > 24:
         raise argparse.ArgumentTypeError(f"lts must be > 0h and < 24h.")
     return f_hour
+
 
 def manage_args():
     parser = argparse.ArgumentParser(
@@ -38,7 +40,7 @@ def manage_args():
         help="output file in GRANDROOT format. If the file exists it is overwritten.",
         required=True,
         # PB with option ???
-        #type=argparse.FileType("w"),
+        # type=argparse.FileType("w"),
     )
     parser.add_argument(
         "--verbose",
@@ -51,13 +53,13 @@ def manage_args():
         type=int,
         default="-1",
         help="Fix the random seed to reproduce same noise, must be positive integer",
-    )    
+    )
     parser.add_argument(
         "--lst",
         type=check_float_day_hour,
         default=18.0,
         help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h.",
-    )        
+    )
     # retrieve argument
     return parser.parse_args()
 
