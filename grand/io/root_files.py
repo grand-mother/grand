@@ -13,6 +13,12 @@ from grand.basis.traces_event import Handling3dTracesOfEvent
 logger = getLogger(__name__)
 
 
+def get_ttree_in_file(f_root):
+    tfile = ROOT.TFile.Open(f_root)
+    l_ttree = tfile.GetListOfKeys()
+    l_name_ttree = [ttree.GetName() for ttree in l_ttree]
+    return l_name_ttree
+
 def check_ttree_in_file(f_root, ttree_name):
     """
     Return True if f_root contents ttree_name
@@ -22,10 +28,7 @@ def check_ttree_in_file(f_root, ttree_name):
     :param ttree_name:
     :type ttree_name:
     """
-    tfile = ROOT.TFile.Open(f_root)
-    l_ttree = tfile.GetListOfKeys()
-    l_name_ttree = [ttree.GetName() for ttree in l_ttree]
-    return ttree_name in l_name_ttree
+    return ttree_name in get_ttree_in_file(f_root) 
 
 
 class FileEvent:

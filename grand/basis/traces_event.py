@@ -38,6 +38,11 @@ class Handling3dTracesOfEvent:
             "cart": ["X", "Y", "Z"],
             "dir": ["SN", "EW", "Z"],
         }
+        # blue for UP because the sky is blue
+        # yellow for EW because sun is yellow 
+        #  and it rises in the west and sets in the east
+        # k for black because the poles are white 
+        #  and the reverse of white  (not visible on plot) is black
         self._color = ["k", "y", "b"]
         self._axis_name = self._d_axis_val["idx"]
         self.network = DetectorUnitNetwork(self.name)
@@ -49,23 +54,27 @@ class Handling3dTracesOfEvent:
     def init_traces(self, traces, du_id, t_start_ns, f_samp_mhz):
         """
 
-        :param traces:
-        :type traces:
-        :param du_id:
-        :type du_id:
-        :param t_start_ns:
-        :type t_start_ns:
-        :param f_samp_mhz:
-        :type f_samp_mhz:
+        :param traces: array traces 3D
+        :type traces: float (nb DU, 3, nb sample)
+        :param du_id: array identifier of DU
+        :type du_id: int (nb DU,)
+        :param t_start_ns: array time start of trace
+        :type t_start_ns: int (nb DU,)
+        :param f_samp_mhz: franquency sampling in MHz
+        :type f_samp_mhz: float 
         """
         self.traces = traces
         self.du_id = du_id
+        self.d_idxdu ={}
+        for idx, ident in enumerate(self.du_id):
+            self.d_idxdu[ident] = idx
         self.t_start_ns = t_start_ns
         self.f_samp_mhz = f_samp_mhz
         assert isinstance(self.traces, np.ndarray)
         assert isinstance(self.t_start_ns, np.ndarray)
         assert traces.shape[1] == 3
-        assert traces.shape[0] == du_id.shape[0] == t_start_ns.shape[0]
+        assert traces.shape[0] == du_id.shape[0]
+        assert du_id.shape[0] == t_start_ns.shape[0]
 
     def init_network(self, du_pos, du_id):
         """
@@ -141,8 +150,9 @@ class Handling3dTracesOfEvent:
 
     def get_max_norm(self):
         """
-        find norm maximal value in trace for each detector
-        :param self:
+        Return array of maximal of 3D norm in trace for each detector
+        :return: array norm of traces 
+        :rtype: float (nb DU,)
         """
         # norm on 3D composant => axis=1
         # max on all norm => axis=1
@@ -150,8 +160,9 @@ class Handling3dTracesOfEvent:
 
     def get_norm(self):
         """
-        :return:  norm of traces
-        :rtype: float (nb DU)
+        Return norm of traces for each time sample
+        :return:  norm of traces for each time sample
+        :rtype: float (nb DU, nb sample)
         """
         return np.linalg.norm(self.traces, axis=1)
 
@@ -234,10 +245,20 @@ class Handling3dTracesOfEvent:
         plt.xlabel(f"ns\nFile: {self.name}")
         plt.grid()
         plt.legend()
+        
+    def plot_trace_du(self, du_id ,to_draw="012"):  # pragma: no cover
+        """
+        Draw 3 traces associated to DU du_id
+        :param idx: index of DU to draw
+        :type idx: integer
+        :param to_draw: select components
+        :type to_draw: string
+        """        
+        self.plot_trace_idx(self.d_idxdu[du_id], to_draw)
 
     def plot_ps_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
         """
-        Draw power spectrum for 3 traces associated to DU with index idx
+        Draw power spectrum for 3 traces associated to DU at index idx
         :param idx:
         :type idx:
         :param to_draw:
@@ -261,6 +282,16 @@ class Handling3dTracesOfEvent:
         plt.xlim([0, 300])
         plt.grid()
         plt.legend()
+
+    def plot_ps_trace_du(self, du_id ,to_draw="012"):  # pragma: no cover
+        """
+        Draw power spectrum for 3 traces associated to DU du_id
+        :param du_id: DU identifier 
+        :type du_id: int 
+        :param to_draw:
+        :type to_draw:
+        """
+        self.plot_ps_trace_idx(self.d_idxdu[du_id], to_draw)
 
     def plot_all_traces_as_image(self):  # pragma: no cover
         """
