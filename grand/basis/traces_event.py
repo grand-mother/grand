@@ -39,9 +39,9 @@ class Handling3dTracesOfEvent:
             "dir": ["SN", "EW", "Z"],
         }
         # blue for UP because the sky is blue
-        # yellow for EW because sun is yellow 
+        # yellow for EW because sun is yellow
         #  and it rises in the west and sets in the east
-        # k for black because the poles are white 
+        # k for black because the poles are white
         #  and the reverse of white  (not visible on plot) is black
         self._color = ["k", "y", "b"]
         self._axis_name = self._d_axis_val["idx"]
@@ -61,11 +61,11 @@ class Handling3dTracesOfEvent:
         :param t_start_ns: array time start of trace
         :type t_start_ns: int (nb DU,)
         :param f_samp_mhz: franquency sampling in MHz
-        :type f_samp_mhz: float 
+        :type f_samp_mhz: float
         """
         self.traces = traces
         self.du_id = du_id
-        self.d_idxdu ={}
+        self.d_idxdu = {}
         for idx, ident in enumerate(self.du_id):
             self.d_idxdu[ident] = idx
         self.t_start_ns = t_start_ns
@@ -151,7 +151,7 @@ class Handling3dTracesOfEvent:
     def get_max_norm(self):
         """
         Return array of maximal of 3D norm in trace for each detector
-        :return: array norm of traces 
+        :return: array norm of traces
         :rtype: float (nb DU,)
         """
         # norm on 3D composant => axis=1
@@ -245,15 +245,15 @@ class Handling3dTracesOfEvent:
         plt.xlabel(f"ns\nFile: {self.name}")
         plt.grid()
         plt.legend()
-        
-    def plot_trace_du(self, du_id ,to_draw="012"):  # pragma: no cover
+
+    def plot_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
         """
         Draw 3 traces associated to DU du_id
         :param idx: index of DU to draw
         :type idx: integer
         :param to_draw: select components
         :type to_draw: string
-        """        
+        """
         self.plot_trace_idx(self.d_idxdu[du_id], to_draw)
 
     def plot_ps_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
@@ -283,11 +283,11 @@ class Handling3dTracesOfEvent:
         plt.grid()
         plt.legend()
 
-    def plot_ps_trace_du(self, du_id ,to_draw="012"):  # pragma: no cover
+    def plot_ps_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
         """
         Draw power spectrum for 3 traces associated to DU du_id
-        :param du_id: DU identifier 
-        :type du_id: int 
+        :param du_id: DU identifier
+        :type du_id: int
         :param to_draw:
         :type to_draw:
         """
