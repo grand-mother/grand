@@ -62,7 +62,18 @@ class FileEvent:
         self.idx_event = idx
         self.evt_nb = self.l_events[idx][0]
         self.run_nb = self.l_events[idx][1]
-        self._load_event_identifier(self.evt_nb, self.run_nb)
+        return self._load_event_identifier(self.evt_nb, self.run_nb)
+        
+    def load_next_event(self):
+        """
+       
+        """
+        idx = self.idx_event +1
+        if idx >= self.get_nb_events():
+            logger.warning(f'No more event')
+            return False
+        return self.load_event_idx(idx)
+        
 
     def _load_event_identifier(self, evt_nb, run_nb):
         """
@@ -224,3 +235,89 @@ class FileVoltageEvent(FileEvent):
         o_tevent = super().get_obj_handlingtracesofevent()
         o_tevent.set_unit_axis("$\mu$V", "dir")
         return o_tevent
+
+
+class FileADCevent(FileEvent):
+    """
+    Goals of the class:
+      * add access to event by index not by identifier (event, run)
+      * initialize instance to the first event
+      * conversion io.root array to numpy if necessary
+
+    """
+
+    def __init__(self, f_name):
+        """
+        Constructor
+        """
+        self.warning = True
+        name_ttree = "teventadc"
+        if not os.path.exists(f_name):
+            logger.error(f"File {f_name} doesn't exist.")
+            raise FileNotFoundError
+        if not check_ttree_in_file(f_name, name_ttree):
+            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+            raise AssertionError
+        logger.info(f"Events  in file {f_name}")
+        event = groot.ADCEventTree(f_name)
+        super().__init__(event)
+        self.load_event_idx(0)
+        self.f_name = f_name
+        
+
+    def get_obj_handlingtracesofevent_all(self):
+        """
+        Return a traces container IO independent
+        """
+        self._load_all_events()
+        o_tevent = Handling3dTracesOfEvent(f"{self.f_name} all events")
+        # TODO: difference between du_id for all network and for specific event ?
+        du_id = self.tt_event.du_id*np.ones(self.get_nb_events())
+        o_tevent.init_traces(
+            self.all_traces,
+            du_id,
+            np.zeros(self.get_nb_events()),
+            self.get_sampling_freq_mhz(),
+        )
+        return o_tevent
+        o_tevent.set_unit_axis("ADU", "idx")
+        return o_tevent
+    
+    
+    def _load_all_events(self):
+        self.all_traces = np.zeros((self.get_nb_events(), 3, self.get_size_trace()), dtype=np.float32)
+        for idx in range(self.get_nb_events()):
+            self.load_event_idx(idx)
+            self.all_traces[idx] = self.traces[0]
+            
+    
+    def _load_event_identifier(self, evt_nb, run_nb):
+        """
+        Load traces/pos of event/run evt_nb/run_nb
+        :param evt_nb:
+        :param run_nb:
+        """
+        logger.info(f"load event: {evt_nb} of run  {run_nb}")
+        # efield
+        self.tt_event.get_event(evt_nb, run_nb)
+        self.nb_du = self.tt_event.du_count
+        trace_size = len(self.tt_event.trace_0[0])
+        if trace_size != self.traces.shape[2]:
+            self.traces = np.zeros((self.nb_du, 3, trace_size), dtype=np.float32)
+            logger.info(f"resize numpy array trace to {self.traces.shape}")
+        self.traces[:, 0, :] = np.array(self.tt_event.trace_0, dtype=np.float32)
+        try:
+            self.traces[:, 1, :] = np.array(self.tt_event.trace_1, dtype=np.float32)
+        except:
+            if self.warning:
+                logger.warning(f"trace_1 isn't filled")
+        try:
+            self.traces[:, 2, :] = np.array(self.tt_event.trace_2, dtype=np.float32)
+        except:
+            if self.warning:
+                logger.warning(f"trace_2 isn't filled")
+        self.warning = False
+        self.du_pos = np.empty((self.nb_du, 3), dtype=np.float32)
+        self.du_pos[:, 0] = np.array(self.tt_event.gps_long, dtype=np.float32)
+        self.du_pos[:, 1] = np.array(self.tt_event.gps_lat, dtype=np.float32)
+        self.du_pos[:, 2] = np.array(self.tt_event.gps_alt, dtype=np.float32)
