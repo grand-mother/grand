@@ -11,9 +11,8 @@ in Grandlib format/ read from hdf5 files
 from logging import getLogger
 
 import numpy as np
-from scipy.signal import hilbert, resample, decimate, butter, lfilter
+from scipy.signal import hilbert, butter, lfilter
 import scipy.fft as sf
-import matplotlib.pyplot as plt
 from scipy import interpolate
 
 logger = getLogger(__name__)

@@ -10,7 +10,6 @@ from typing import Union, Any
 
 import numpy as np
 import scipy.fft as sf
-import scipy.interpolate as sipl
 
 from grand.geo.coordinates import (
     LTP,

@@ -1177,8 +1177,7 @@ class LTP(CartesianRepresentation):
             self.x = x
             self.y = y
             self.z = z
-        logger.info("LTP end __init__")
-
+      
     def ltp_to_ltp(self, ltp):
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.
         ecef = ECEF(self)
