@@ -1,3 +1,3 @@
 """
-Unit tests for the grand.store package
+Unit tests for the src_outlib.store.store package
 """

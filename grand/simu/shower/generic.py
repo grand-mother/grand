@@ -7,17 +7,21 @@ from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
 
-import numpy
+import numpy as np
 
 from grand.simu.shower.pdg import ParticleCode
-from grand.simu import ElectricField, Voltage
-from grand.io import io
-from grand.tools.coordinates import (
+from grand.basis.type_trace import ElectricField, Voltage
+from grand.io import io_node as io
+
+# TODO: when the unused import grand.io.root_trees is defined test coverage indicate test on it
+# from grand.io.root_trees import ShowerEventSimdataTree
+from grand.geo.coordinates import (
     Geodetic,
     LTP,
     GRANDCS,
     CartesianRepresentation,
 )  # RK
+from fontTools.ttLib.tables import D_S_I_G_
 
 __all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
 
@@ -72,6 +76,18 @@ class ShowerEvent:
     ground_alt: float = 0.0
     fields: Optional[FieldsCollection] = None
 
+    def load_root(self, d_shower):
+        self.energy = d_shower.prim_energy
+        self.zenith = d_shower.shower_zenith
+        self.azimuth = d_shower.shower_azimuth
+        self.primary = d_shower.prim_type
+        s_pos = d_shower.site_long_lat
+        logger.info(f"Site position long lat: {s_pos}")
+        self.localize(s_pos[1], longitude=s_pos[0])
+        xmax = d_shower.xmax_pos_shc
+        logger.info(f"xmax={xmax}")
+        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
+
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         baseclass = cls
@@ -85,12 +101,11 @@ class ShowerEvent:
             source = Path(source)
             if source.is_dir():
                 loader = "_from_dir"
-
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
                     # in order to avoid circular references
-                    from grand.simu import CoreasShower
-                    from grand.simu import ZhairesShower
+                    from grand.simu.shower.coreas import CoreasShower
+                    from grand.simu.shower.zhaires import ZhairesShower
 
                     if CoreasShower.check_dir(source):
                         baseclass = CoreasShower
@@ -98,21 +113,15 @@ class ShowerEvent:
                         baseclass = ZhairesShower
             else:
                 loader = "_from_datafile"
-
         logger.info(f"Loading shower data from {filename}")
-        # print(f'Loading shower data from {filename}')
-        # print('loader', loader)
-
         try:
             load = getattr(baseclass, loader)
         except AttributeError as load_exit:
             raise NotImplementedError("Invalid data format") from load_exit
         else:
             self = load(source)
-
         if self.fields is not None:
             logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
-
         return self
 
     @classmethod
@@ -187,18 +196,18 @@ class ShowerEvent:
     def shower_frame(self):
         # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
         ev = self.core - self.maximum
-        ev /= numpy.linalg.norm(ev)
+        ev /= np.linalg.norm(ev)
         ev = ev.T[0]  # [[x], [y], [z]] --> [x, y, z]
-        evB = numpy.cross(ev, self.geomagnet.T[0])
-        evB /= numpy.linalg.norm(evB)
-        evvB = numpy.cross(ev, evB)
+        evB = np.cross(ev, self.geomagnet.T[0])
+        evB /= np.linalg.norm(evB)
+        evvB = np.cross(ev, evB)
 
         # change these unit vector from 'NWU' LTP frame to ECEF frame.
         # RK TODO: Going back to ECEF frame is a common process for vectors.
         #          Develop a function to do this.
-        ev = numpy.matmul(self.frame.basis.T, ev)
-        evB = numpy.matmul(self.frame.basis.T, evB)
-        evvB = numpy.matmul(self.frame.basis.T, evvB)
-        self.frame.basis = numpy.vstack((evB, evvB, ev))
+        ev = np.matmul(self.frame.basis.T, ev)
+        evB = np.matmul(self.frame.basis.T, evB)
+        evvB = np.matmul(self.frame.basis.T, evvB)
+        self.frame.basis = np.vstack((evB, evvB, ev))
 
         return self.frame

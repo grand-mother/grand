@@ -7,65 +7,48 @@ Adaption of RF simulation chain for grandlib from
 """
 
 import os
-import os.path as osp
 import shutil
 import math
 import random
 import argparse
 
-import numpy
 import numpy as np
 from numpy.ma import log10, abs
 from scipy import interpolate
 import matplotlib.pyplot as plt
 
-from grand import grand_add_path_data
-from grand.io.root_trees import VoltageEventTree
-from grand.num.signal import fftget, ifftget
-from grand.simu.elec_du import LNA_get, filter_get
+from grand.num.signal import halfcplx_fullcplx
+from scripts.lib_xidian import LNA_get, filter_get, fftget, ifftget, complex_expansion
 from grand.simu.galaxy import galaxy_radio_signal
-from grand.simu import Antenna, ShowerEvent, TabulatedAntennaModel
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.simu.shower.gen_shower import ShowerEvent
+from grand.io.file_leff import TabulatedAntennaModel
 from grand import grand_add_path_data, grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 import grand.manage_log as mlg
-from grand.io.root_trees import *
+import grand.io.root_trees as groot
+
 
 # showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
 # ShowerEvent.load(showerdir)
 SHOWER = None
 IDX_ANT = 0
 
-path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
+path_ant = grand_add_path_data("model/detector/GP300Antenna_EWarm_leff.npy")
 G_antenna_model_ew = TabulatedAntennaModel.load(path_ant)    
-path_ant = grand_add_path_data("detector/GP300Antenna_SNarm_leff.npy")
+path_ant = grand_add_path_data("model/detector/GP300Antenna_SNarm_leff.npy")
 G_antenna_model_sn = TabulatedAntennaModel.load(path_ant)    
-path_ant = grand_add_path_data("detector/GP300Antenna_Zarm_leff.npy")
+path_ant = grand_add_path_data("model/detector/GP300Antenna_Zarm_leff.npy")
 G_antenna_model_z = TabulatedAntennaModel.load(path_ant)    
 
 # specific logger definition for script because __mane__ is "__main__"
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standart output and file log.txt
-mlg.create_output_for_logger("info", log_file="log.txt", log_stdout=True)
+mlg.create_output_for_logger("info", log_file=None, log_stdout=True)
 
 
 
-def halfcplx_fullcplx(v_half, even=True):
-    '''!
-    Return fft with full complex format where vector has half complex format,
-    ie v_half=rfft(signal).
-    
-    @note:
-      Numpy reference : https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html 
-    
-    @param v_half (array 1D complex): complex vector in half complex format, ie from rfft(signal)
-    @param even (bool): True if size of signal is even
-    
-    @return (array 1D complex) : fft(signal) in full complex format
-    '''
-    if even:
-        return np.concatenate((v_half, np.flip(np.conj(v_half[1:-1]))))
-    return np.concatenate((v_half, np.flip(np.conj(v_half[1:]))))
 
 # ==============================time domain shower Edata get===============================
 def time_data_get(filename, Ts, show_flag):
@@ -200,7 +183,7 @@ def dummy_CEL(idx_ant, e_theta, e_phi, N, f0, unit, show_flag=False):
     for idx_ant in range(3):
         ants[idx_ant].effective_length(SHOWER.maximum, SHOWER.fields[idx_ant].electric, SHOWER.frame)
         for idx_axis in range(3):
-            Lce_complex_expansion[:, idx_axis, idx_ant] = halfcplx_fullcplx(ants[idx_ant].dft_effv_len[idx_axis], (N%2)==0)
+            Lce_complex_expansion[:, idx_axis, idx_ant] = complex_expansion(ants[idx_ant].fft_leff[idx_axis], (N%2)==0)
     
     # Interpolation: 30-250mhz interval 1mhz
     f_start = 30
@@ -239,7 +222,7 @@ def dummy_CEL(idx_ant, e_theta, e_phi, N, f0, unit, show_flag=False):
 
 
 def get_antenna(idx_ant):
-    pos_ant = SHOWER.fields[idx_ant].electric.r
+    pos_ant = SHOWER.fields[idx_ant].electric.pos_xyz
     antenna_location = LTP(
         x=pos_ant.x,
         y=pos_ant.y,
@@ -253,17 +236,17 @@ def get_antenna(idx_ant):
     )
     ant_3d = [1, 2, 3]
     # EW
-    ant_3d[0] = Antenna(model=G_antenna_model_ew, frame=antenna_frame)
+    ant_3d[0] = AntennaProcessing(G_antenna_model_ew, pos=antenna_frame)
     # SN
-    ant_3d[1] = Antenna(model=G_antenna_model_sn, frame=antenna_frame)
+    ant_3d[1] = AntennaProcessing(G_antenna_model_sn, pos=antenna_frame)
     # Z
-    ant_3d[2] = Antenna(model=G_antenna_model_z, frame=antenna_frame)
+    ant_3d[2] = AntennaProcessing(G_antenna_model_z, pos=antenna_frame)
     return ant_3d
 
 
 def main_xdu_rf(rootdir):
     """
-    @param rootdir (path): directory with ZHAires simulation named Stshpxxxx
+    :param rootdir (path): directory with ZHAires simulation named Stshpxxxx
     """
     #TODO: this function is too long, split it     
     global SHOWER
@@ -286,6 +269,7 @@ def main_xdu_rf(rootdir):
         # file_dir = os.path.join("..", "data", target[i])
         file_dir = target[i]
         logger.debug(file_dir)
+        logger.info(f'Read {file_dir}')
         SHOWER = ShowerEvent.load(file_dir)
         list1 = target[i].split("_")
         content = []
@@ -324,7 +308,7 @@ def main_xdu_rf(rootdir):
             os.makedirs(outfile_vcable, exist_ok=True)
             os.makedirs(outfile_vfilter, exist_ok=True)
 
-            tvoltage = VoltageEventTree() #Create tvoltage to be saved
+            tvoltage = groot.VoltageEventTree() #Create tvoltage to be saved
             path_root_vfilter = outfile_vfilter + "/" + "a.root"
 
         # ==== Write particle type, energy level, angle, and event number into parameter.txt========================
@@ -391,6 +375,8 @@ def main_xdu_rf(rootdir):
         if savetxt == 1:
             tvoltage.du_count = nb_ant
             tvoltage.run_number = case
+            logger.info(f'{type(tvoltage.du_count)} {type(tvoltage.run_number)}')
+            logger.info(f'ROOT IO: add run_number {tvoltage.run_number}')
         # ========================= Get first point and renormalisation of times =================================
         mintime = 1E100
         firstdet = 0
@@ -401,6 +387,7 @@ def main_xdu_rf(rootdir):
             if tmin <= mintime:
                 mintime = tmin
                 firstdet = num
+        logger.info(f"ROOT IO: add first_du")
         tvoltage.first_du = firstdet
         tvoltage.time_seconds = 0
         tvoltage.time_nanoseconds = 0
@@ -533,15 +520,17 @@ def main_xdu_rf(rootdir):
                 trace_x = list(V_output3[:, 1])
                 trace_y = list(V_output3[:, 2])
                 trace_z = list(V_output3[:, 3])
-
+                logger.info(f"type trace {V_output3[:, 3].dtype} {V_output3[:, 3].shape}")
                 # times in ns -> shifted to the first detection (as integer is needed we loose decimals !!!!)
                 tvoltage.du_nanoseconds.append(round(trace_t[0]-mintime))
                 tvoltage.du_seconds.append(0)
                 # sampling in Mhz
+                logger.info(f"ROOT IO: add du_id, trace_x ")
                 sampling_ns = trace_t[1] - trace_t[0]
                 sampling_mhz = int(1000/sampling_ns)
                 tvoltage.adc_sampling_frequency.append(sampling_mhz)
                 tvoltage.du_id.append(num)
+                logger.info(f"type du_id {type(num)}")
 
                 tvoltage.trace_x.append(trace_x)
                 tvoltage.trace_y.append(trace_y)

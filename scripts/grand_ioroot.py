@@ -1,0 +1,68 @@
+#! /usr/bin/env python3
+
+import argparse
+from grand.io.root_files import FileSimuEfield, FileVoltageEvent
+from grand.basis.traces_event import Handling3dTracesOfEvent
+import grand.manage_log as mlg
+import matplotlib.pylab as plt
+
+
+#plt.ion()
+
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__file__)
+
+# define a handler for logger : standard only
+mlg.create_output_for_logger("debug", log_stdout=False)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Information and plot from ROOT file for GRAND ')
+    parser.add_argument('file',
+                        help='path and name of ROOT file GRAND',
+                        type=argparse.FileType('r'))
+    parser.add_argument('--ttree', choices=['efield','voltage'],default='efield')
+    parser.add_argument('-n', '--net',
+                        help='Interactive (double click) plot detector unit network', action="store_true", required=False)
+    parser.add_argument('-t', '--trace', type=int,
+                        help='plot trace x,y,z of detector unit (DU) at index TRACE (0<= TRACE < Nb DU)',
+                        default=-100)
+    parser.add_argument('--trace_norm', action="store_true", required=False,
+                        help='plot norm of all traces as image ')
+    # retrieve argument
+    args = parser.parse_args()
+    # 
+    logger.info(mlg.chrono_start())
+    if args.ttree == 'efield':
+        d_event = FileSimuEfield(args.file.name)
+    elif args.ttree == 'voltage':
+        d_event = FileVoltageEvent(args.file.name)
+    logger.info(mlg.chrono_string_duration())
+    print(f"Nb events  : {d_event.get_nb_events()}")
+    print(f"Nb DU      : {d_event.get_nb_du()}")
+    print(f"Size trace : {d_event.get_size_trace()}")
+    o_tevent = d_event.get_obj_handlingtracesofevent()
+    assert isinstance(o_tevent, Handling3dTracesOfEvent)
+    if args.trace_norm:
+        o_tevent.plot_all_traces_as_image()
+    if args.net:
+        o_tevent.define_t_samples()
+        o_tevent.network.plot_footprint_1d(o_tevent.get_max_norm(),"Max ||Efield||", o_tevent)        
+        #o_tevent.plot_histo_t_start()
+        a_time, a_values = o_tevent.get_extended_traces()
+        o_tevent.network.plot_footprint_time(a_time, a_values, "test")
+    if args.trace != -100:
+        if (0 > args.trace) or  (args.trace >= d_event.get_nb_du()):
+            print(f"ERROR: index of the trace must be >= 0 and <= {d_event.get_nb_du()-1}")
+            return
+        o_tevent.plot_trace_idx(args.trace)
+    
+if __name__ == '__main__':
+    logger.info(mlg.string_begin_script())
+    #=============================================
+    main()    
+    #=============================================
+    plt.show()   
+    logger.info(mlg.string_end_script())
+    

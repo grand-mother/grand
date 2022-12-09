@@ -1,10 +1,10 @@
 """
-Unit tests for the grand.store.protocol module
+Unit tests for the grand.io.protocol module
 """
 
 import unittest
 
-from grand.store.protocol import InvalidBLOB, get
+from grand.io.protocol import InvalidBLOB, get
 from tests import TestCase
 
 
