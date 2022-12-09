@@ -18,6 +18,13 @@ logger = getLogger(__name__)
 class DetectorUnitNetwork:
     """
     Handling a DU network
+
+    Public attributs:
+        * name str: name of the set of trace
+        * du_pos float(nb_du, 3): position of DU
+        * du_id int(nb_du): array of identifier of DU
+        * t_start_ns float(nb_du): time of first sample of trace
+
     """
 
     def __init__(self, name="NotDefined"):
@@ -61,14 +68,14 @@ class DetectorUnitNetwork:
         :type l_id:
         """
         # TODO:
-        pass
+        raise NotImplementedError
 
     def get_surface(self):
         """
         Return suface in km2
         """
         # TODO:
-        return 0
+        raise NotImplementedError
 
     def get_max_dist_du(self, l_id):
         """
@@ -77,7 +84,7 @@ class DetectorUnitNetwork:
         :type l_id:
         """
         # TODO:
-        pass
+        raise NotImplementedError
 
     ### PLOT
 
@@ -124,8 +131,8 @@ class DetectorUnitNetwork:
                     f"{a_values[idx]:.2e}", prop=dict(size=10), frameon=True, loc="upper right"
                 )
                 atr.patch.set_boxstyle("Square, pad=0.3")
-                ax.add_artist(atl)
-                ax.add_artist(atr)
+                ax1.add_artist(atl)
+                ax1.add_artist(atr)
                 if traces:
                     traces.plot_trace_idx(idx)
                     traces.plot_ps_trace_idx(idx)
@@ -134,9 +141,9 @@ class DetectorUnitNetwork:
 
         vmin = a_values.min()
         vmax = a_values.max()
-        fig, ax = plt.subplots(1, 1)
-        ax.set_title(f"{self.name}\nDU network : {title}")
-        scm = ax.scatter(
+        fig, ax1 = plt.subplots(1, 1)
+        ax1.set_title(f"{self.name}\nDU network : {title}")
+        scm = ax1.scatter(
             self.du_pos[:, 0],
             self.du_pos[:, 1],
             norm=colors.LogNorm(vmin=vmin, vmax=vmax),
@@ -152,12 +159,20 @@ class DetectorUnitNetwork:
         atl.patch.set_boxstyle("Circle, pad=0.3")
         atr = AnchoredText("value DU", prop=dict(size=10), frameon=True, loc="upper right")
         atr.patch.set_boxstyle("Square, pad=0.3")
-        ax.add_artist(atl)
-        ax.add_artist(atr)
+        ax1.add_artist(atl)
+        ax1.add_artist(atr)
         plt.connect("button_press_event", on_click)
 
     def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover
-        size_circle = 200
+        """
+
+        :param a_time:
+        :type a_time:
+        :param a3_values:
+        :type a3_values:
+        :param title:
+        :type title:
+        """
         # same number of sample
         assert a_time.shape[0] == a3_values.shape[2]
         # we plot norm of 3D vector
@@ -170,12 +185,13 @@ class DetectorUnitNetwork:
         cmap_b = matplotlib.cm.get_cmap("Blues")
         delta_t = a_time[1] - a_time[0]
         # Create the figure and the line that we will manipulate
-        fig, ax = plt.subplots()
-        scat = ax.scatter(
+        fig, ax1 = plt.subplots()
+        ax1.set_title(title)
+        scat = ax1.scatter(
             self.du_pos[:, 0],
             self.du_pos[:, 1],
             norm=col_log,
-            s=size_circle,
+            s=200,
             c=a_norm_val[:, 0],
             edgecolors="k",
             cmap=cmap_b,

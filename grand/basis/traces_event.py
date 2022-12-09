@@ -10,6 +10,7 @@ from matplotlib import colors
 from matplotlib.backend_bases import MouseButton
 
 from grand.basis.du_network import DetectorUnitNetwork
+import grand.num.signal as gsig
 
 
 logger = getLogger(__name__)
@@ -17,20 +18,38 @@ logger = getLogger(__name__)
 
 class Handling3dTracesOfEvent:
     """
-    Handling a set of traces associated to one event observed on DetectorUnit network
+    Handling a set of traces associated to one event observed on Detector Unit network
+
+    Features:
+        * some plots : trace , power spectrum, footprint, ...
+        * compute time where the trace is maximun
+        * compute time for each sample of trace
+        * compute a common time for trace
+
+
+    Public attributs:
+        * name str: name of the set of trace
+        * traces float(nb_du, 3, nb_sample): trace 3D
+        * du_id int(nb_du): array of identifier of DU
+        * t_start_ns float(nb_du): time of first sample of trace
+        * t_samples float(nb_du, nb_dim, nb_sample):
+        * f_samp_mhz float: [MHz] frequency sampling
+        * d_idxdu dict: for each identifier return the index in array
+        * unit_trace str: string unit of trace
+        * network object: content position network
     """
 
     def __init__(self, name="NotDefined"):
         logger.info(f"Create Handling3dTracesOfEvent with name {name}")
         self.name = name
         nb_du = 0
-        nb_dim = 3
         nb_sample = 0
-        self.traces = np.zeros((nb_du, nb_dim, nb_sample))
+        self.traces = np.zeros((nb_du, 3, nb_sample))
         self.du_id = np.arange(nb_du)
         self.t_start_ns = np.zeros((nb_du), dtype=np.int64)
-        self.t_samples = np.zeros((nb_du, nb_dim, nb_sample), dtype=np.float64)
+        self.t_samples = np.zeros((nb_du, nb_sample), dtype=np.float64)
         self.f_samp_mhz = 0.0
+        self.d_idxdu = {}
         self.unit_trace = "TBD"
         self._d_axis_val = {
             "idx": ["0", "1", "2"],
@@ -42,7 +61,7 @@ class Handling3dTracesOfEvent:
         # yellow for EW because sun is yellow
         #  and it rises in the west and sets in the east
         # k for black because the poles are white
-        #  and the reverse of white  (not visible on plot) is black
+        #  and the reverse of white (not visible on plot) is black
         self._color = ["k", "y", "b"]
         self._axis_name = self._d_axis_val["idx"]
         self.network = DetectorUnitNetwork(self.name)
@@ -65,7 +84,6 @@ class Handling3dTracesOfEvent:
         """
         self.traces = traces
         self.du_id = du_id
-        self.d_idxdu = {}
         for idx, ident in enumerate(self.du_id):
             self.d_idxdu[ident] = idx
         self.t_start_ns = t_start_ns
@@ -75,6 +93,7 @@ class Handling3dTracesOfEvent:
         assert traces.shape[1] == 3
         assert traces.shape[0] == du_id.shape[0]
         assert du_id.shape[0] == t_start_ns.shape[0]
+        self._define_t_samples()
 
     def init_network(self, du_pos, du_id):
         """
@@ -100,7 +119,7 @@ class Handling3dTracesOfEvent:
 
     ### OPERATIONS
 
-    def define_t_samples(self):
+    def _define_t_samples(self):
         """
         Define time sample for the duration of the trace
         """
@@ -166,19 +185,12 @@ class Handling3dTracesOfEvent:
         """
         return np.linalg.norm(self.traces, axis=1)
 
-    def get_tmax_vmax(self, method="efield"):
+    def get_tmax_vmax(self):
         """
-        tmax vmax are input data for reconstruction
-
-        method="efield"
-           * compute norm of Efield and find max value and time associated
-
-        method="du" (volt/adc)
-           * to deal with oscillation take the hilbert's envelope of the norm
-           * find max value and time associated, may be with interpolation with law sampling
+        Return time where norm of the amplitude of the Hilbert tranform  is max
         """
-        logger.info(f"method: {method}")
-        return 0.0, 0.0
+        tmax, vmax, _, _ = gsig.get_peakamptime_norm_hilbert(self.t_samples, self.traces)
+        return tmax, vmax
 
     def get_min_max_t_start(self):
         """
@@ -230,7 +242,7 @@ class Handling3dTracesOfEvent:
         :param to_draw: select components
         :type to_draw: string
         """
-        self.define_t_samples()
+        self._define_t_samples()
         plt.figure()
         plt.title(f"Trace of DU {self.du_id[idx]} (idx={idx})")
         for idx_axis, axis in enumerate(self._axis_name):
@@ -264,15 +276,17 @@ class Handling3dTracesOfEvent:
         :param to_draw:
         :type to_draw:
         """
-        self.define_t_samples()
+        self._define_t_samples()
         plt.figure()
-        noverlap = 2
+        noverlap = 0
+
         plt.title(f"Power spectrum of DU {self.du_id[idx]} (idx={idx})")
         for idx_axis, axis in enumerate(self._axis_name):
             if str(idx_axis) in to_draw:
                 freq, pxx_den = ssig.welch(
                     self.traces[idx, idx_axis],
                     self.f_samp_mhz * 1e6,
+                    window="taylor",
                     noverlap=noverlap,
                     scaling="spectrum",
                 )

@@ -130,7 +130,6 @@ class MasterSimuDetectorWithRootIo:
         self.tt_volt.time_seconds = self.d_root.tt_efield.time_seconds
         self.tt_volt.time_nanoseconds = self.d_root.tt_efield.time_nanoseconds
         self.o_traces.traces = self.simu_du.voc
-        self.o_traces.define_t_samples()
         # self.tt_volt.event_size = 1999
         for idx in range(self.simu_du.o_traces.get_nb_du()):
             # trace = np.arange(self.tt_volt.event_size, dtype=np.float64)
@@ -219,7 +218,6 @@ class SimuDetectorUnitEffect:
         """
         assert isinstance(tr_evt, Handling3dTracesOfEvent)
         self.o_traces = tr_evt
-        tr_evt.define_t_samples()
         self.du_time_efield = tr_evt.t_samples
         self.f_samp_mhz = tr_evt.f_samp_mhz
         self.du_efield = tr_evt.traces
