@@ -134,7 +134,7 @@ class MasterSimuDetectorWithRootIo:
         for idx in range(self.simu_du.o_traces.get_nb_du()):
             # trace = np.arange(self.tt_volt.event_size, dtype=np.float64)
             # self.o_traces.plot_trace_idx(idx)
-            logger.info(f"add DU {self.o_traces.du_id[idx]} in ROOT file")
+            logger.debug(f"add DU {self.o_traces.du_id[idx]} in ROOT file")
             # logger.info(f"shape: {self.simu_du.voc[idx, 0].shape}")
             self.tt_volt.du_nanoseconds.append(self.d_root.tt_efield.du_nanoseconds[idx])
             self.tt_volt.du_seconds.append(self.d_root.tt_efield.du_seconds[idx])
