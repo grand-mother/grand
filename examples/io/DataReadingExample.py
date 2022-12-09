@@ -19,7 +19,7 @@ if len(list_of_events) == 0:
 # Print out the list of runs,events
 tadccounts.print_list_of_events()
 # Read the first event from the list of events
-tadccounts.get_event(*list_of_events[0])
+tadccounts.get_event(*list_of_events[1])
 print("ADCCounts first event readout: tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0]")
 print(tadccounts.event_number, tadccounts.time_seconds, tadccounts.trace_0[0])
 print(tadccounts.trace_0[0][0])
@@ -44,6 +44,8 @@ print(
     "The event_number of tadccounts changed to 4 when tefield event with event_number 4 was requested"
 )
 print(tefield.event_number, tefield.du_seconds[0], tefield.trace_x[0][0], tadccounts.event_number)
+
+tefield.print_metadata()
 
 # Hard exit to avoid ROOT crash on defriending - not needed for ROOT 6.26.02 and above
 if ROOT.gROOT.GetVersionInt() < 62602:
