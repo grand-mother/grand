@@ -43,5 +43,6 @@ toml==0.10.2
 tomli==1.2.3
 traitlets==5.1.1
 typing-extensions==3.10.0.2
+uproot
 wcwidth==0.2.5
 numba
