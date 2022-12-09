@@ -1,5 +1,4 @@
-"""! Signal processing
-
+"""!
 - This module contains several signal processing
 functionalities to be applied to simulation/data
 - operations are meant to be on the signal traces 
@@ -44,33 +43,28 @@ def get_filter(time, trace, fr_min, fr_max):
     return filtered
 
 
-def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
+def get_peakamptime_norm_hilbert(a2_time, a3_trace):
     """!
-    Get Peak and time of EField trace, either filtered or unfiltered
+    Get peak Hilbert amplitude norm of trace (v_max) and its time t_max without interpolation
 
-    :param time (array): time
-    :param trace (array): ElectricField (muV/m) vectors to be filtered- expected
-      size (3,dlength), dlength= size of the signal trace
-    :param f_min (float): [Hz] The minimal frequency of the bandpass filter
-    :param f_max (float): [Hz] The maximal frequency of the bandpass filter
-    :param filtered (bool): if true filtering is applied else raw input trace is used
+    :param time (D,S): time, with D number of vector of trace, S number of sample
+    :param traces (D,3,S): trace
 
-    @return TBD
+    @return t_max float(D,) v_max float(D,), norm_hilbert_amp float(D,S),
+            idx_max int, norm_hilbert_amp float(D,S)
     """
-    if filtered:
-        logger.debug("filtering the signal .....")
-        filt = get_filter(time, trace, f_min, f_max)
-    else:
-        logger.debug("continuing with raw signal ...")
-        filt = trace
-    hilbert_amp = np.abs(hilbert(filt, axis=-1))
-    peakamp = max([max(hilbert_amp[0]), max(hilbert_amp[1]), max(hilbert_amp[2])])
-    peaktime = time[np.argwhere(hilbert_amp == peakamp)[0][1]]
-    return peaktime, peakamp
+    hilbert_amp = np.abs(hilbert(a3_trace, axis=-1))
+    norm_hilbert_amp = np.linalg.norm(hilbert_amp, axis=1)
+    # add dimension for np.take_along_axis()
+    idx_max = np.argmax(norm_hilbert_amp, axis=1)[:, np.newaxis]
+    t_max = np.take_along_axis(a2_time, idx_max, axis=1)
+    v_max = np.take_along_axis(norm_hilbert_amp, idx_max, axis=1)
+    # remove dimension (np.squeeze) to have ~vector ie shape is (n,) instead (n,1)
+    return np.squeeze(t_max), np.squeeze(v_max), idx_max, norm_hilbert_amp
 
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
-    """
+    """!
 
     :param sig_size:
     :param f_samp_mhz:
