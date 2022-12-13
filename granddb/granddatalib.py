@@ -9,10 +9,13 @@ import psycopg2
 import psycopg2.extras
 import ast
 from sshtunnel import SSHTunnelForwarder
+import timeit
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
+from sqlalchemy import func
+
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects import postgresql
@@ -72,10 +75,14 @@ class DataManager:
             dbrepos = dbase.get_repos()
             if not (dbrepos is None):
                 for repo in dbrepos:
-                    print(repo["name"] + repo["protocol"] + repo["server"] + str(repo["port"]) + str(repo["path"]))
-                    # self._repositories.append(
-                    #    Datasource(repo["name"], repo["protocol"], repo["server"], repo["port"],
-                    #               ast.literal_eval(repo["path"]), self.incoming()))
+                    #print(repo["name"] + repo["protocol"] + repo["server"] + str(repo["port"]) + str(repo["path"]))
+                    #print(repo["path"].strip("{}").split(","))
+                    ds = Datasource(repo["name"], repo["protocol"], repo["server"], repo["port"],
+                               repo["path"].strip("{}").split(","), self.incoming())
+                    if ds.name() in self._credentials.keys():
+                        ds.set_credentials(self._credentials[ds.name()])
+                    print(ds)
+                    self._repositories.append(ds)
 
         # Add remote repositories
         for name in configur['repositories']:
@@ -210,8 +217,6 @@ class Database:
             self._sshport = sshport
         self._cred = cred
 
-        print(self._sshserv + str(self._sshport) + self._cred.name() + self._cred.user())
-
         if self._sshserv != "" and self._cred is not None:
             self.server = SSHTunnelForwarder(
                 (self._sshserv, self._sshport),
@@ -223,27 +228,35 @@ class Database:
             local_port = str(self.server.local_bind_port)
             self._host = "127.0.0.1"
             self._port = local_port
-            #self.connect()
 
-            engine = create_engine(
-                'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + self.port() + '/' + self.database())
-            Base = automap_base()
-            Base.prepare(engine, reflect=True)
-            self.session = Session(engine)
-            for table in engine.table_names():
-                self._tables[table] = getattr(Base.classes, table)
+        self.connect()
+
+        engine = create_engine(
+            'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + self.port() + '/' + self.database())
+        Base = automap_base()
+
+        Base.prepare(engine, reflect=True)
+        self.session = Session(engine)
+        for table in engine.table_names():
+            self._tables[table] = getattr(Base.classes, table)
+
     def __del__(self):
         self.session.close()
-        self.server.stop()
-        #self.dbconnection.close()
+        self.session.flush()
+        self.dbconnection.close()
+        #self.server.stop(force=True)
+
+
+
 
     def connect(self):
         self.dbconnection = psycopg2.connect(
-                host=self.host(),
-                database=self.database(),
-                port=self.port(),
-                user=self.user(),
-                password=self.passwd())
+            host=self.host(),
+            database=self.database(),
+            port=self.port(),
+            user=self.user(),
+            password=self.passwd())
+
     def disconnect(self):
         self.dbconnection.close()
 
@@ -271,31 +284,38 @@ class Database:
     def cred(self):
         return self._cred
 
-    def get_repos(self):
+    def execute(self, query):
         record = None
         try:
-            #cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            #cursor.execute(
-            #     "SELECT repository.name as name, repository_access.path as path, repository_access.server_name as server, repository_access.port as port, protocol.name as protocol from repository, protocol, repository_access where repository_access.id_protocol=protocol.id_protocol and repository.id_repository=repository_access.id_repository")
-            #record = cursor.fetchall()
-            #cursor.close()
-
-            query = self.session.query(self._tables['repository'].name.label("name"),
-                                    self._tables['repository_access'].path.label("path"),
-                                    self._tables['repository_access'].server_name.label("server"),
-                                    self._tables['repository_access'].port.label("port"),
-                                    self._tables['protocol'].name.label("protocol"),
-                                    self._tables['repository'],
-                                    self._tables['protocol'])\
-                .join(self._tables['repository'])\
-                .join(self._tables['protocol'])
-            #record = query.all()
-            #for resu in query:
-            #    print(resu._asdict())
-
-            print(query.all())
+            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute(query)
+            record = cursor.fetchall()
+            cursor.close()
         except psycopg2.DatabaseError as e:
             print(f'Error {e}')
+        return record
+
+    def get_repos(self):
+        record = None
+        # Intergogation using simple psycopg2 query
+        query = "select * from get_repos()"
+        record = self.execute(str(query))
+
+        # interrogation using sqlalchemy -> shitty because returns list and not dict
+        # long way (sqlalchemy construction)
+        # query = self.session.query(self._tables['repository'].name.label("name"),
+        #                        self._tables['repository_access'].path.label("path"),
+        #                        self._tables['repository_access'].server_name.label("server"),
+        #                        self._tables['repository_access'].port.label("port"),
+        #                        self._tables['protocol'].name.label("protocol"),
+        #                        self._tables['repository'],
+        #                        self._tables['protocol'])\
+        #    .join(self._tables['repository'])\
+        #    .join(self._tables['protocol'])
+        # short way using stored function
+        #query = self.session.query(func.get_repos())
+
+        #record = query.all()
 
         return record
 
@@ -488,21 +508,26 @@ class DatasourceSsh(Datasource):
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
     # If file is not found, then None is returned.
     def get(self, file, path=None):
+        import getpass
         localfile = None
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            if self.credentials().keyfile() != "" and self.credentials().keypasswd() == "":
+                self.credentials()._keypasswd = getpass.getpass(prompt='Password for ssh key @ ' + self.name() + ":")
             client.connect(hostname=self.server(),
                            port=self.port() if self.port() != "" else None,
                            username=self.credentials().user() if self.credentials().user() != "" else None,
                            key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
                            passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
+
+
             if not (path is None):
-                print("search " + path + file)
+                print("search " + path + file + "@" + self.name())
                 localfile = self.get_file(client, path, file)
             else:
                 for path in self.paths():
-                    print("search " + path + file)
+                    print("search " + path + file + " @ " + self.name())
                     localfile = self.get_file(client, path, file)
                     if not (localfile is None):
                         break
