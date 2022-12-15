@@ -42,14 +42,14 @@ def check_ttree_in_file(f_root, ttree_name):
 class FileEvent:
     """
     Goals of the class:
-    
+
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
 
 
     Public attributes:
-    
+
         * tt_event object: object ROOT_tree of type TTree Event
         * f_name str: path/name to ROOT file
         * l_events list : list of tuple (event, run)
@@ -167,7 +167,7 @@ class FileEvent:
 class FileSimuEfield(FileEvent):
     """
     File simulation of air shower with 5 TTree
-    
+
       * teventefield
       * teventshowersimdata
       * teventshowerzhaires
@@ -175,14 +175,14 @@ class FileSimuEfield(FileEvent):
       * trunefieldsimdata
 
     Goals of the class:
-    
+
       * synchronize each TTree on same event/run
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
 
     Public attributes:
-    
+
       * same as FileEvent class
       * tt_efield object EfieldEventTree
       * tt_shower object ShowerEventSimdataTree
@@ -242,13 +242,13 @@ class FileSimuEfield(FileEvent):
 class FileVoltageEvent(FileEvent):
     """
     Goals of the class:
-    
+
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
 
     Public attributs:
-    
+
       * same as FileEvent class
     """
 
@@ -285,13 +285,13 @@ class FileADCeventProto(FileEvent):
 
 
     Goals of the class:
-    
+
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
 
     Public attributes:
-    
+
       * same as FileEvent class
       * all_traces array(nb_all_event_in_file, nb_sample)
     """
@@ -351,7 +351,7 @@ class FileADCeventProto(FileEvent):
     def _load_event_identifier(self, evt_nb, run_nb):
         """
         Load traces/pos of event/run evt_nb/run_nb
-        
+
         :param evt_nb:
         :param run_nb:
         """

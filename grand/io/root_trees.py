@@ -296,8 +296,6 @@ class DataTree:
             # The TFile object is already in memory, just use it
             if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
-                # Reopen the file in the update mode in case it was read only
-                self._file.ReOpen("update")
             # Create a new TFile object
             else:
                 creating_file = True
@@ -312,6 +310,9 @@ class DataTree:
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
             args = args[1:]
+        # File exists, so reopen the file in the update mode in case it was read only
+        else:
+            self._file.ReOpen("update")
 
         # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
 
