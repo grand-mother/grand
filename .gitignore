@@ -8,6 +8,12 @@ grand/version.py
 __pycache__
 *.pyc
 *.pyo
+*.root
+
+# jupyterlab checkpoints
+.ipynb_checkpoints
+
+
 
 
 # Ignore build and dist temporaries
@@ -51,4 +57,10 @@ quality/html_*
 docs/apidoc-only/doxygen-rtd/build
 docs/apidoc-only/doxygen-rtd/html
 docs/apidoc-only/doxygen-rtd/xml
-/log.txt
+docs/apidoc-only/sphinx/build
+docs/apidoc-only/sphinx/source/grand.*
+
+/examples/io/stored_data.root
+
+/stored_data.root
+/ecl.txt

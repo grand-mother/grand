@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.simulation.shower module
+Unit tests for the grand.simu.shower module
 """
 
 from collections import OrderedDict
@@ -9,11 +9,17 @@ import unittest
 
 import numpy
 
-from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
-from grand.simulation import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
-from grand.simulation.pdg import ParticleCode
-from grand.simulation.shower.generic import CollectionEntry
+from grand import store, LTP, CartesianRepresentation, SphericalRepresentation
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.basis.type_trace import ElectricField, Voltage
+from grand.simu.shower.gen_shower import ShowerEvent
+from grand.simu.shower.coreas import CoreasShower
+from grand.simu.shower.zhaires import ZhairesShower
+
+from grand.simu.shower.pdg import ParticleCode
+from grand.simu.shower.gen_shower import CollectionEntry
 from tests import TestCase
+from grand.io import io_node as io
 
 
 class ShowerTest(TestCase):
@@ -46,9 +52,9 @@ class ShowerTest(TestCase):
         self.assertEqual(a.voltage, None)
         self.assertEqual(b.voltage, None)
         a, b = a.electric, b.electric
-        self.assertCartesian(a.r, b.r, 4)
-        self.assertQuantity(a.t, b.t, 7)
-        self.assertCartesian(a.E, b.E, 5)
+        self.assertCartesian(a.pos_xyz, b.pos_xyz, 4)
+        self.assertQuantity(a.a_time, b.a_time, 7)
+        self.assertCartesian(a.e_xyz, b.e_xyz, 5)
 
     def test_generic(self):
         settings = {
