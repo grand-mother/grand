@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-"""!
+"""
 Adaption of RF simulation chain for grandlib from
   * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
 

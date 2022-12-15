@@ -1,4 +1,4 @@
-"""!
+"""
 @section How to test
 -----------
 

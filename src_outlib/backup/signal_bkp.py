@@ -1,4 +1,4 @@
-"""! Signal processing
+""" Signal processing
 
 - This module contains several signal processing
 functionalities to be applied to simulation/data
@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 
 
 def get_filter(time, trace, fr_min, fr_max):
-    """!
+    """
     Filter signal  in given bandwidth
 
     @note
@@ -45,7 +45,7 @@ def get_filter(time, trace, fr_min, fr_max):
 
 
 def get_fft(time, trace, specialwindow=False):
-    """!
+    """
     Compute the one-dimensional discrete Fourier Transform for real input
 
     @note
@@ -78,7 +78,7 @@ def get_fft(time, trace, specialwindow=False):
 
 
 def get_inverse_fft(trace):
-    """!Computes the inverse of rfft
+    """Computes the inverse of rfft
 
     :param trace (array): signal trace same as in get_fft
 
@@ -89,7 +89,7 @@ def get_inverse_fft(trace):
 
 
 def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
-    """!
+    """
     Get Peak and time of EField trace, either filtered or unfiltered
 
     :param time (array): time
@@ -115,7 +115,7 @@ def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
 
 def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
 
-    """!
+    """
     Performs digitization/resampling of signal trace for a given sampling rate
 
     @note
@@ -154,7 +154,7 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
 
 
 def add_noise(trace, vrms):
-    """!
+    """
     Add normal random noise on traces
 
     @todo
@@ -171,7 +171,7 @@ def add_noise(trace, vrms):
 
 
 def halfcplx_fullcplx(v_half, even=True):
-    """!
+    """
     Return fft with full complex format where vector has half complex format,
     ie v_half=rfft(signal) in numpy/scipy convention
 

@@ -1,4 +1,4 @@
-"""!
+"""
 Simulation of the effects on the signal of the electronics of the detector
 """
 
@@ -17,7 +17,7 @@ from grand import grand_add_path_data
 logger = getLogger(__name__)
 
 def complex_expansion(size_out, f_step, f_start, f_cut, data):
-    """!
+    """
     Perform complex expansion of <data> on <size_out> samples and set to zero outside the
     band defined by [<f_start>, <f_cut>]. Output and <data> samples has same frequency step <f_step>.
 
@@ -72,7 +72,7 @@ def complex_expansion(size_out, f_step, f_start, f_cut, data):
 
 
 def fftget(data_ori, size_fft, freq_uni, show_flag=False):
-    """!
+    """
     This program is used as a subroutine to complete the FFT
     of data and generate parameters according to requirements
 
@@ -128,7 +128,7 @@ def fftget(data_ori, size_fft, freq_uni, show_flag=False):
 
 
 def ifftget(data_ori, size_fft, a_time, b_complex):
-    """!
+    """
     This program is used as a subroutine to complete the Fourier change of data
     and generate parameters according to requirements
 
@@ -170,7 +170,7 @@ def ifftget(data_ori, size_fft, a_time, b_complex):
 
 
 def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
-    """!
+    """
 
     @authors PengFei and Xidian group
 
@@ -296,7 +296,7 @@ def LNA_get(antennas11_complex_short, N, f0, unit, show_flag=False):
 
 
 def filter_get(N, f0, unit, show_flag=False):
-    """!
+    """
 
     @authors PengFei and Xidian group
 

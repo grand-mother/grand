@@ -1,4 +1,4 @@
-"""!
+"""
 Simulation of galaxy emission in radio frequency
 """
 
@@ -12,21 +12,25 @@ from grand import grand_add_path_data
 
 
 def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
-    """!
+    """
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
 
-    @authors PengFei and Xidian group
+    ..Authors:
+      PengFei and Xidian group
 
-    :param lst：Select the galactic noise LST at the LST moment
-    :param size_out (int): is the extended length
-    :param freq_samp (float): is the frequency resolution,
-    #TODO: freq_1 description not clear
-    :param freq_1 (float): is the frequency point of the unilateral spectrum
-    :param nb_ant (int): number of antennas
-    :param show_flag (bool): print figure
-
-    @return : v_complex_double, galactic_v_time
+    :param f_lst: select the galactic noise LST at the LST moment
+    :type f_lst: float
+    :param size_out: is the extended length
+    :type size_out: int
+    :param freqs_mhz: array of output frequencies
+    :type freqs_mhz: float (nb freq,)
+    :param nb_ant: number of antennas
+    :type nb_ant: int
+    :param show_flag: print figure
+    :type show_flag: boll
+    :return: FFT of galactic noise for all DU and components
+    :rtype: float(nb du, 3, nb freq)
     """
     # TODO: why lst is an integer ?
     lst = int(f_lst)

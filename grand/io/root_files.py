@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 def get_ttree_in_file(f_root):
     """
     Return all TTree name in ROOT file
-    
+
     :param f_root:
     :type f_root:
     """
@@ -42,12 +42,14 @@ def check_ttree_in_file(f_root, ttree_name):
 class FileEvent:
     """
     Goals of the class:
+    
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
 
 
-    Public attributs:
+    Public attributes:
+    
         * tt_event object: object ROOT_tree of type TTree Event
         * f_name str: path/name to ROOT file
         * l_events list : list of tuple (event, run)
@@ -145,9 +147,9 @@ class FileEvent:
         """
         return 1e3 / self.delta_t_ns
 
-    def get_obj_handlingtracesofevent(self):
+    def get_obj_handling3dtraces(self):
         """
-        Return a traces container IO independent
+        Return a traces container IO independent Handling3dTracesOfEvent
         """
         o_tevent = Handling3dTracesOfEvent(f"{self.f_name} evt={self.evt_nb} run={self.run_nb}")
         # TODO: difference between du_id for all network and for specific event ?
@@ -165,6 +167,7 @@ class FileEvent:
 class FileSimuEfield(FileEvent):
     """
     File simulation of air shower with 5 TTree
+    
       * teventefield
       * teventshowersimdata
       * teventshowerzhaires
@@ -172,12 +175,14 @@ class FileSimuEfield(FileEvent):
       * trunefieldsimdata
 
     Goals of the class:
+    
       * synchronize each TTree on same event/run
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
-      
-    Public attributs:
+
+    Public attributes:
+    
       * same as FileEvent class
       * tt_efield object EfieldEventTree
       * tt_shower object ShowerEventSimdataTree
@@ -225,11 +230,11 @@ class FileSimuEfield(FileEvent):
         self.tt_run_sim.get_run(run_nb)
         self.delta_t_ns = self.tt_run_sim.t_bin_size
 
-    def get_obj_handlingtracesofevent(self):
+    def get_obj_handling3dtraces(self):
         """
         Return a traces container IO independent
         """
-        o_tevent = super().get_obj_handlingtracesofevent()
+        o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis("$\mu$V/m", "cart")
         return o_tevent
 
@@ -237,13 +242,15 @@ class FileSimuEfield(FileEvent):
 class FileVoltageEvent(FileEvent):
     """
     Goals of the class:
+    
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
-    
+
     Public attributs:
+    
       * same as FileEvent class
-    """   
+    """
 
     def __init__(self, f_name):
         """
@@ -262,27 +269,29 @@ class FileVoltageEvent(FileEvent):
         self.load_event_idx(0)
         self.f_name = f_name
 
-    def get_obj_handlingtracesofevent(self):
+    def get_obj_handling3dtraces(self):
         """
         Return a traces container IO independent
         """
-        o_tevent = super().get_obj_handlingtracesofevent()
+        o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis("$\mu$V", "dir")
         return o_tevent
 
 
 class FileADCeventProto(FileEvent):
     """
-    ===================================================
-    WARNING : Prototype for ADC event, work in procress
-    ===================================================
-    
+
+    .. warning: Prototype for ADC event, work in progress
+
+
     Goals of the class:
+    
       * add access to event by index not by identifier (event, run)
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
-      
-    Public attribute:
+
+    Public attributes:
+    
       * same as FileEvent class
       * all_traces array(nb_all_event_in_file, nb_sample)
     """
@@ -327,8 +336,8 @@ class FileADCeventProto(FileEvent):
 
     def _load_all_events(self):
         """
-        Internal method to read first trace for all event 
-        
+        Internal method to read first trace for all event
+
         :param self:
         :type self:
         """
@@ -342,6 +351,7 @@ class FileADCeventProto(FileEvent):
     def _load_event_identifier(self, evt_nb, run_nb):
         """
         Load traces/pos of event/run evt_nb/run_nb
+        
         :param evt_nb:
         :param run_nb:
         """

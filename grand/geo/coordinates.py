@@ -1,25 +1,16 @@
 """
-Fundamental Coordinate Data Structure:
-	np.array([[x1, x2, ..], 
-			  [y1, y2, ..], 
-			  [z1, z2, ..]]
-	np.array([[x1], 
-			  [y1], 
-			  [z1]]
-
 units: 
-	energy: GeV
-	time  : nanosecond
-	length: m
-	voltage: microVolt
-	Efield: microVolt/m
-	Bfield: nanoTesla
-	angles: degree
-	grammage: g/cm2
-	Density: g/cm3 
-	frequency: Hz
-	resistance: Ohm
-
+ *	energy: GeV
+ * time  : nanosecond
+ *	length: m
+ *	voltage: microVolt
+ * 	Efield: microVolt/m
+ *	Bfield: nanoTesla
+ *	angles: degree
+ *	grammage: g/cm2
+ *	Density: g/cm3 
+ *	frequency: Hz
+ *	resistance: Ohm
 """
 
 from __future__ import annotations
@@ -750,17 +741,17 @@ class ECEF(CartesianRepresentation):
     Earth’s center. This coordinate frame is fixed with respect to the Earth
     (i.e., rotates along with the Earth). Units are in meters. The three axis are
     defined as follows:
-    x:	Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).
-    y:	Passes through the equator 90 degrees east of the Prime Meridian
-            (latitude = 0, longitude = 90 degrees).
-    z:	Passes through the North Pole (latitude = 90 degrees, longitude = any value).
+        * x :	Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).
+        * y :	Passes through the equator 90 degrees east of the Prime Meridian (latitude = 0, longitude = 90 degrees).
+        * z :	Passes through the North Pole (latitude = 90 degrees, longitude = any value).
 
-    Note:
-            Reason to have __new__ and __init__ is to store obstime as instance attribute.
-            obstime will be saved as class attribute if only __new__ is used. This means
-            if obstime is modified for one case anywhere during calculation, obstime for
-            all cases will be modified.
-            Todo: find an elegant way to do this.
+    :Note:
+        Reason to have __new__ and __init__ is to store obstime as instance attribute.
+        obstime will be saved as class attribute if only __new__ is used. This means
+        if obstime is modified for one case anywhere during calculation, obstime for
+        all cases will be modified.
+
+    :Todo: find an elegant way to do this.
     """
 
     def __new__(

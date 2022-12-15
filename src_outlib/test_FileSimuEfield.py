@@ -52,7 +52,7 @@ def test_read_2_time():
     
 def test_histo_t_start():
     d_efield= FileSimuEfield(G_file_efield)
-    o_trevt = d_efield.get_obj_handlingtracesofevent()
+    o_trevt = d_efield.get_obj_handling3dtraces()
     o_trevt.plot_histo_t_start()
     idx = 46
     o_trevt.plot_trace_idx(idx)
