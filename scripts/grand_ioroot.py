@@ -90,7 +90,7 @@ def main():
         d_event = FileSimuEfield(args.file.name)
     elif args.ttree == "voltage":
         d_event = FileVoltageEvent(args.file.name)
-    o_tevent = d_event.get_obj_handlingtracesofevent()
+    o_tevent = d_event.get_obj_handling3dtraces()
     if args.info:
         print(f"Nb events     : {d_event.get_nb_events()}")
         print(f"Nb DU         : {d_event.get_nb_du()}")
@@ -104,6 +104,7 @@ def main():
         o_tevent.network.plot_footprint_1d(o_tevent.get_max_norm(), "Max ||Efield||", o_tevent)
         a_time, a_values = o_tevent.get_extended_traces()
     if args.time_val:
+        o_tevent.plot_footprint_time_max()
         a_time, a_values = o_tevent.get_extended_traces()
         o_tevent.network.plot_footprint_time(a_time, a_values, "test")
     if args.trace != -100:
