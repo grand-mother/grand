@@ -1,4 +1,4 @@
-"""!
+"""
 Extract informations from ZHAires simulation
 """
 
@@ -13,11 +13,11 @@ from typing import Any, Dict, Optional
 import h5py
 import numpy
 
-from grand.simu.shower.generic import CollectionEntry, FieldsCollection, ShowerEvent
-from grand.simu.antenna import ElectricField
+from grand.simu.shower.gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
+from grand.basis.type_trace import ElectricField
 from grand.simu.shower.pdg import ParticleCode
-from ...tools.coordinates import ECEF, LTP, Geodetic
-from ...tools.coordinates import (
+from grand.geo.coordinates import ECEF, LTP, Geodetic
+from grand.geo.coordinates import (
     CartesianRepresentation,
     SphericalRepresentation,
 )
@@ -43,7 +43,7 @@ class ZhairesShower(ShowerEvent):
 
     @classmethod
     def _from_dir(cls, path: Path) -> ZhairesShower:
-        """!
+        """
         Extract informations about ZHAires simulation from xxx.sry file
 
         @note:
@@ -53,8 +53,8 @@ class ZhairesShower(ShowerEvent):
               - 'W' is 90 deg west from 'N',
               - 'U' is upward towards zenith.
 
-        @param cls: class dict
-        @param path (TBD): path of simulation
+        :param cls: class dict
+        :param path (TBD): path of simulation
         """
 
         def parse_primary(string: str) -> ParticleCode:
@@ -97,11 +97,11 @@ class ZhairesShower(ShowerEvent):
             return CartesianRepresentation(spherical)
 
         def parse_maximum(string: str) -> CartesianRepresentation:
-            """!
+            """
             @note:
                 Xmax is given as CartesianRepresentation defined in the shower frame.
                 Later (below) Xmax is saved wrt LTP frame making it independent of shower info.
-                "Previously: Dirty hack by OMH for now" -> not necessary now. RK.            
+                "Previously: Dirty hack by OMH for now" -> not necessary now. RK.
             """
             _, _, *xyz = string.split()
             x, y, z = map(float, xyz)

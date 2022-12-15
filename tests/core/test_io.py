@@ -1,16 +1,16 @@
 """
-Unit tests for the grand.io module
+Unit tests for the grand.hdf5 module
 """
 
 from pathlib import Path
 import unittest
 
 # from astropy.coordinates import Angle, CartesianRepresentation,                \
-#                                UnitSphericalRepresentation
+#                                UnitSphericalRep.resentation
 # import astropy.units as u
 import numpy
 
-import grand.io as io
+import grand.io.hdf5 as io
 from grand import (
     Geodetic,
     ECEF,
@@ -23,7 +23,7 @@ from tests import TestCase
 
 
 class IoTest(TestCase):
-    """Unit tests for grand.io class"""
+    """Unit tests for grand.hdf5 class"""
 
     path = Path("io.hdf5")
 

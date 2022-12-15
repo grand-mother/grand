@@ -1,19 +1,21 @@
 '''
-Unit tests for the grand.simu.antenna module
+Unit tests for the grand.simu.du module
 '''
 
 from pathlib import Path
 import unittest
+from tests import TestCase
 import os.path as osp
 
 
 import numpy
 
-from grand import ECEF, CartesianRepresentation, LTP, Geodetic, GRAND_DATA_PATH
-
-from grand.simu import Antenna, ElectricField, MissingFrameError,        \
-                             TabulatedAntennaModel, Voltage
-from tests import TestCase
+from grand import ECEF, CartesianRepresentation, LTP
+from grand.simu.du.process_ant import AntennaProcessing
+from grand.basis.type_trace import ElectricField,Voltage
+from grand import grand_add_path_data_model
+from grand.io.file_leff import TabulatedAntennaModel
+from grand.simu.du.process_ant import MissingFrameError
 
 
 class AntennaTest(TestCase):
@@ -33,7 +35,7 @@ class AntennaTest(TestCase):
         except AttributeError:
             pass
 
-        path_ant = osp.join(GRAND_DATA_PATH,'HorizonAntenna_EWarm_leff_loaded.npy')
+        path_ant = grand_add_path_data_model('detector/HorizonAntenna_EWarm_leff_loaded.npy')
         if osp.exists(path_ant):
             self._model = TabulatedAntennaModel.load(path_ant)
             return self._model
@@ -210,16 +212,16 @@ class AntennaTest(TestCase):
             self.assertGreater(Vpp, 6E-02 * Es)
 
         field   = ElectricField(t, E, frame=shower_frame)
-        antenna = Antenna(model=self.model, frame=antenna_frame)
+        antenna = AntennaProcessing(model_leff=self.model, pos=antenna_frame)
         check(antenna.compute_voltage(xmax, field, shower_frame))
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)
 
-        antenna = Antenna(model=self.model, frame=None)
+        antenna = AntennaProcessing(model_leff=self.model, pos=None)
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field, shower_frame)
 
-        antenna = Antenna(model=self.model, frame=antenna_frame)
+        antenna = AntennaProcessing(model_leff=self.model, pos=antenna_frame)
         check(antenna.compute_voltage(xmax, field, shower_frame))
         with self.assertRaises(MissingFrameError) as context:
             antenna.compute_voltage(xmax, field)
@@ -229,7 +231,7 @@ class AntennaTest(TestCase):
         self.assertIsInstance(voltage, Voltage)
         self.assertIsInstance(field, ElectricField)
         effective_length = antenna.effective_length(xmax, field, shower_frame)
-        self.assertIsInstance(effective_length, CartesianRepresentation)
+        self.assertIsInstance(effective_length, numpy.ndarray)
 
 
 if __name__ == '__main__':

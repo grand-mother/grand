@@ -53,15 +53,9 @@ def main():
     """Run a local test suite"""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-v", "--verbosity", help="set output verbosity", type=int, default=2
-    )
-    parser.add_argument(
-        "--doc", help="run only doc tests", action="store_true", default=False
-    )
-    parser.add_argument(
-        "--unit", help="run only unit tests", action="store_true", default=False
-    )
+    parser.add_argument("-v", "--verbosity", help="set output verbosity", type=int, default=2)
+    parser.add_argument("--doc", help="run only doc tests", action="store_true", default=False)
+    parser.add_argument("--unit", help="run only unit tests", action="store_true", default=False)
     options = parser.parse_args()
 
     dirname = Path(__file__).parent
@@ -98,7 +92,7 @@ def main():
             HorizontalRepresentation,
             LTP,
         )
-        import grand.io as io
+        import grand.hdf5 as io
 
         globs = {
             "geomagnet": geomagnet,
@@ -120,9 +114,7 @@ def main():
                 if filename[-4:] != ".rst":
                     continue
                 path = os.path.join(root, filename)
-                test_suite.addTest(
-                    doctest.DocFileSuite(path, module_relative=False, globs=globs)
-                )
+                test_suite.addTest(doctest.DocFileSuite(path, module_relative=False, globs=globs))
 
         # Run the doc tests
         if test_suite.countTestCases():

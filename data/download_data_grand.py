@@ -14,7 +14,7 @@ from urllib import request
 #TODO: add progressbar to grand lib
 #import progressbar
 
-from grand import GRAND_DATA_PATH, grand_add_path_data
+from grand import GRAND_DATA_PATH, grand_add_path_data, grand_add_path_data_model
 
 LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
 FILE_MODEL = "grand_model_2207.tar.gz"
@@ -39,7 +39,7 @@ FILE_MODEL = "grand_model_2207.tar.gz"
 
 
 # 1- test if download is necessary
-if os.path.exists(grand_add_path_data('detector')):
+if os.path.exists(grand_add_path_data_model('detector')):
     print("==============================")
     print('Skip download data model')
     sys.exit(0)
@@ -61,10 +61,10 @@ print("==============================")
 print('Extract tar file')
 try:
     my_tar = tarfile.open(tar_file)
-    my_tar.extractall(GRAND_DATA_PATH) 
+    my_tar.extractall(grand_add_path_data_model('')) 
     my_tar.close()
 except:
     print(f"Extract failed '{tar_file}'")
     sys.exit(1)
-print("data model available in grand/data directory !")
+print("data model available in grand/data/model directory !")
 sys.exit(0) 
