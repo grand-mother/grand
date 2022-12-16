@@ -11,8 +11,10 @@ import time
 file = 'prolongation_login.pdf'
 #file = 'xrx7830.ppd'
 
+print("\nStart")
 
 dm = granddatalib.DataManager('config.ini')
+
 
 file = 'toto'
 print("\nGet")
