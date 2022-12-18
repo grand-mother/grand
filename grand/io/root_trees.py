@@ -562,10 +562,12 @@ class DataTree:
 
     ## Copy contents of another dataclass instance of the same type to this instance
     def copy_contents(self, source):
-        """Copy contents of another dataclass instance of the same type to this instance"""
+        """Copy contents of another dataclass instance of similar type to this instance
+        The source has to have some field the same as this tree. For example EventEfieldTree and EventVoltageTree"""
         # ToDo: Shallow copy with assigning branches would be probably faster, but it would be... shallow ;)
         for k in source.__dict__.keys():
-            if k in self._nonbranch_fields:
+            # Skip the nonbranch fields and fields not belonging to this tree type
+            if k in self._nonbranch_fields or k not in self.__dict__.keys():
                 continue
             setattr(self, k[1:], getattr(source, k[1:]))
 
