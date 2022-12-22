@@ -182,6 +182,11 @@ class DataTree:
         self._tree.SetTitle(val)
 
     @property
+    def file_name(self):
+        """The file in which the TTree is stored"""
+        return self._file_name
+
+    @property
     def comment(self):
         """Comment - if needed, added by user"""
         return str(self._tree.GetUserInfo().At(1).GetTitle())
@@ -381,9 +386,11 @@ class DataTree:
         """Return the number of events in the tree"""
         return self.get_number_of_entries()
 
-    def add_friend(self, value):
+    def add_friend(self, value, filename=""):
+        # ToDo: Due to a bug discovered during DC1, disable adding of the friends for now
+        return 0
         """Add a friend to the tree"""
-        self._tree.AddFriend(value)
+        self._tree.AddFriend(value, filename)
 
     def remove_friend(self, value):
         """Remove a friend from the tree"""
@@ -569,7 +576,10 @@ class DataTree:
             # Skip the nonbranch fields and fields not belonging to this tree type
             if k in self._nonbranch_fields or k not in self.__dict__.keys():
                 continue
-            setattr(self, k[1:], getattr(source, k[1:]))
+            try:
+                setattr(self, k[1:], getattr(source, k[1:]))
+            except TypeError:
+                logger.warning(f"The type of {k} in {source.tree_name} and {self._tree_name} differs. Not copying.")
 
 
 ## A mother class for classes with Run values
@@ -803,7 +813,7 @@ class MotherEventTree(DataTree):
             run_tree = run_trees[-1]
 
             # Add the Run TTree as a friend
-            self.add_friend(run_tree.tree)
+            self.add_friend(run_tree.tree, run_tree.file)
 
         # Do not add ADCEventTree as a friend to itself
         if not isinstance(self, ADCEventTree):
@@ -823,7 +833,7 @@ class MotherEventTree(DataTree):
                 adc_tree = adc_trees[-1]
 
                 # Add the ADC TTree as a friend
-                self.add_friend(adc_tree.tree)
+                self.add_friend(adc_tree.tree, adc_tree.file)
 
         # Do not add VoltageEventTree as a friend to itself
         if not isinstance(self, VoltageEventTree):
@@ -843,7 +853,7 @@ class MotherEventTree(DataTree):
                 voltage_tree = voltage_trees[-1]
 
                 # Add the Voltage TTree as a friend
-                self.add_friend(voltage_tree.tree)
+                self.add_friend(voltage_tree.tree, voltage_tree.file)
 
         # Do not add EfieldEventTree as a friend to itself
         if not isinstance(self, EfieldEventTree):
@@ -863,7 +873,7 @@ class MotherEventTree(DataTree):
                 efield_tree = efield_trees[-1]
 
                 # Add the Efield TTree as a friend
-                self.add_friend(efield_tree.tree)
+                self.add_friend(efield_tree.tree, efield_tree.file)
 
         # Do not add ShowerEventTree as a friend to itself
         if not isinstance(self, ShowerEventTree):
@@ -883,7 +893,7 @@ class MotherEventTree(DataTree):
                 shower_tree = shower_trees[-1]
 
                 # Add the Shower TTree as a friend
-                self.add_friend(shower_tree.tree)
+                self.add_friend(shower_tree.tree, shower_tree.file)
 
     ## List events in the tree together with runs
     def print_list_of_events(self):
