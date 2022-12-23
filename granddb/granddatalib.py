@@ -4,8 +4,12 @@ import paramiko
 import json
 from configparser import ConfigParser
 import urllib.request
-# import urllib.error
+import os
+import shutil
+import uuid
+import time
 from granddblib import Database
+
 
 ## @brief Class for managing datas.
 # It will read an inifile where localdirs and different datasources are defined.
@@ -27,12 +31,13 @@ from granddblib import Database
 class DataManager:
     _file: str
     _directories: list = []
-    _repositories: list = []
+    _repositories: dict = {}
     _incoming: str
     _credentials: dict = {}
-#    _database
+    _referer = None
+    _database = None
 
-    def __init__(self, file = "config.ini"):
+    def __init__(self, file="config.ini"):
         configur = ConfigParser()
         # by default configparser convert all keys to lowercase... but we don't want !
         configur.optionxform = lambda option: option
@@ -40,53 +45,79 @@ class DataManager:
         configur.read(file)
 
         # Get credentials
-        for name in configur['credentials']:
-            cred = json.loads(configur.get('credentials', name))
-            self._credentials[name] = Credentials(name, cred[0], cred[1], cred[2], cred[3])
+        if configur.has_section('credentials'):
+            for name in configur['credentials']:
+                cred = json.loads(configur.get('credentials', name))
+                self._credentials[name] = Credentials(name, cred[0], cred[1], cred[2], cred[3])
 
-        # Get localdirs (the first in the list is the incoming)
-        dirlist = json.loads(configur.get('directories', 'localdir'))
-        self._incoming = dirlist[0]
-        self._directories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
-        # We also append localdirs to repositories... so search method will first look at local dirs before searching on remote locations
-        self._repositories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
+        if configur.has_section('directories'):
+            # Get localdirs (the first in the list is the incoming)
+            dirlist = json.loads(configur.get('directories', 'localdir'))
+            if not dirlist[0].startswith('/'):
+                print("Incoming directory (in " + self._file + " ) must be an absolute path.")
+                exit(1)
+            # Add trailing slash if needed
+            dirlist = [os.path.join(path, "") for path in dirlist]
+            self._incoming = dirlist[0]
+            self._directories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
+            # We also append localdirs to repositories... so search method will first look at local dirs before searching on remote locations
+            # self._repositories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
+            self._repositories["localdir"] = Datasource("localdir", "local", "localhost", "", dirlist, self.incoming())
+        else:
+            print("Section directories is mandatory in config file " + file)
+            exit(1)
 
         # Get DB infos
-        for database in configur['database']:
-            db = json.loads(configur.get('database', database))
-            cred = None
-            if db[7] in self._credentials.keys():
-                cred = self._credentials[db[7]]
-            self._database  = Database(db[0], db[1], db[2], db[3], db[4], db[5], db[6], cred)
-            dbrepos = self._database.get_repos()
-            if not (dbrepos is None):
-                for repo in dbrepos:
-                    #print(repo["name"] + repo["protocol"] + repo["server"] + str(repo["port"]) + str(repo["path"]))
-                    #print(repo["path"].strip("{}").split(","))
-                    ds = Datasource(repo["name"], repo["protocol"], repo["server"], repo["port"],
-                               repo["path"].strip("{}").split(","), self.incoming())
-                    if ds.name() in self._credentials.keys():
-                        ds.set_credentials(self._credentials[ds.name()])
-                    print(ds)
-                    self._repositories.append(ds)
+        if configur.has_section('database'):
+            for database in configur['database']:
+                db = json.loads(configur.get('database', database))
+                cred = None
+                if db[7] in self._credentials.keys():
+                    cred = self._credentials[db[7]]
+                self._database = Database(db[0], db[1], db[2], db[3], db[4], db[5], db[6], cred)
+                dbrepos = self._database.get_repos()
+                if not (dbrepos is None):
+                    for repo in dbrepos:
+                        dbpaths = repo["path"].strip("{}").split(",")
+                        paths = dbpaths
+                        # Add already existing dirs defined in conf
+                        if repo["repository"] in self._repositories.keys():
+                            paths = list(set(self._repositories[repo["repository"]].paths() + dbpaths))
+                            # paths = self._repositories[repo["repository"]].paths() + [element for element in dbpaths if element not in self._repositories[repo["repository"]].paths()]
+                        ds = Datasource(repo["repository"], repo["protocol"], repo["server"], repo["port"],
+                                        paths, self.incoming(), repo["id_repository"])
+                        if ds.name() in self._credentials.keys():
+                            ds.set_credentials(self._credentials[ds.name()])
+                        self._repositories[repo["repository"]] = ds
 
         # Add remote repositories
-        for name in configur['repositories']:
-            repo = json.loads(configur.get('repositories', name))
-            ds = Datasource(name, repo[0], repo[1], repo[2], repo[3],
-                            self.incoming())
-            if ds.name() in self._credentials.keys():
-                ds.set_credentials(self._credentials[name])
-            self._repositories.append(ds)
+        if configur.has_section('repositories'):
+            for name in configur['repositories']:
+                repo = json.loads(configur.get('repositories', name))
+                ds = Datasource(name, repo[0], repo[1], repo[2], repo[3],
+                                self.incoming())
+                if ds.name() in self._credentials.keys():
+                    ds.set_credentials(self._credentials[name])
+                self._repositories[name] = ds
 
-        # association of credentials to repositories
-        # for repo in self._repositories:
-        #    if repo.name() in self._credentials.keys():
-        #        repo.set_credentials(self._credentials(repo.name()))
+        # Define referer
+        if configur.has_section('registerer'):
+            for name in configur['registerer']:
+                ref = json.loads(configur.get('registerer', name))
+                self._referer = self._repositories[name]
+                self._referer._incoming = os.path.join(ref, "")
+                self._referer.paths().append(self._referer._incoming)
+        else:
+            self._referer = self._repositories['localdir']
 
-        # if repo.name() == name:
-        #    credential = Credentials(name, cred[0], cred[1], cred[2], cred[3])
-        #    repo.set_credentials(credential)
+        # Need to ensure that referer repository is registred in the DB
+        if self._database is not None:
+            self._referer.id_repository = self.database().register_repository(self._referer.name(),
+                                                                              self._referer.protocol(),
+                                                                              self._referer.port(),
+                                                                              self._referer.server(),
+                                                                              self._referer.paths(), "")
+
 
     def file(self):
         return self._file
@@ -102,6 +133,9 @@ class DataManager:
 
     def database(self):
         return self._database
+
+    def referer(self):
+        return self._referer
 
     # Search and get a file by its name.
     # Look first in localdirs and then in remote repositories. First match is returned.
@@ -133,7 +167,8 @@ class DataManager:
                     res = rep.get(file, path)
             # if no repo specified, we search everywhere (skip localdir because already done before)
             else:
-                for rep in self.repositories():
+                # for rep in self.repositories():
+                for name, rep in self.repositories().items():
                     if not (rep.protocol() == "local"):
                         print("SEARCH in " + rep.name())
                         res = rep.get(file)
@@ -141,10 +176,19 @@ class DataManager:
                             break
         return res
 
+    def copy_to_incoming(self, pathfile):
+        newname = self.incoming() + uniquename(pathfile)
+        if os.path.join(os.path.dirname(pathfile), "") == self.incoming():
+            os.rename(pathfile, newname)
+        else:
+            shutil.copy2(pathfile, newname)
+        return newname
+
     ##Get Datasource object from repository by its name
     def getrepo(self, repo):
         res = None
-        for rep in self.repositories():
+        # for rep in self.repositories():
+        for name, rep in self.repositories().items():
             if rep.name() == repo:
                 res = rep
                 break
@@ -176,8 +220,6 @@ class DataManager:
 #                if not (res is None):
 #                    break
 #        return res
-
-
 
 
 ## @brief Class for storing credentials to access remote system.
@@ -228,8 +270,9 @@ class Datasource:
     _paths: list
     _credentials: Credentials
     _incoming: str
+    id_repository: int
 
-    def __init__(self, name, protocol, server, port, paths, incoming):
+    def __init__(self, name, protocol, server, port, paths, incoming, id_repo=None):
         self._name = name
         self._protocol = protocol
         self._server = server
@@ -238,6 +281,7 @@ class Datasource:
         # By default no credentials
         self._credentials = Credentials(name, "", "", "", "")
         self._incoming = incoming
+        self.id_repository = id_repo
         if protocol == 'ssh':
             self.__class__ = DatasourceSsh
         elif protocol == 'local':
@@ -262,6 +306,8 @@ class Datasource:
         return self._server
 
     def port(self):
+        if self._port == '':
+            self._port = None
         return self._port
 
     def paths(self):
@@ -283,6 +329,10 @@ class Datasource:
     # If no file is found then None is returned.
     def get(self, file, path=None):
         print("get method for protocol " + self.protocol() + " not implemented for repository " + self.name())
+        return None
+
+    def copy(self, pathfile):
+        print("copy method for protocol " + self.protocol() + " not implemented for repository " + self.name())
         return None
 
 
@@ -313,21 +363,30 @@ class DatasourceLocal(Datasource):
             my_file = Path(path + file)
             if my_file.is_file():
                 found_file = path + file
-            else:
-                print("file " + file + " not found in localdir " + path)
+            #else:
+            #    print("file " + file + " not found in localdir " + path)
         else:
             for path in self.paths():
-                print("search in localdir " + path + file)
+                #print("search in localdir " + path + file)
                 my_file = Path(path + file)
                 if my_file.is_file():
                     found_file = path + file
                     break
-                else:
-                    print("file " + file + " not found in localdir " + path)
+                #else:
+                #    print("file " + file + " not found in localdir " + path)
 
-        if not found_file is None:
-            print("found in localdir " + path + file)
+        #if not found_file is None:
+            #print("found in localdir " + path + file)
+
         return found_file
+
+    def copy(self, pathfile):
+        newname = self.incoming() + uniquename(pathfile)
+        if os.path.join(os.path.dirname(pathfile), "") == self.incoming():
+            os.rename(pathfile, newname)
+        else:
+            shutil.copy2(pathfile, newname)
+        return newname
 
 
 ## @brief Implementation of the get method for ssh access.
@@ -367,46 +426,60 @@ class DatasourceSsh(Datasource):
     ## Search for files in remote location accessed through ssh.
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
     # If file is not found, then None is returned.
+    def set_client(self):
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=self.server(),
+                       port=self.port() if self.port() != "" else None,
+                       username=self.credentials().user() if self.credentials().user() != "" else None,
+                       key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
+                       passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
+        return client
+
     def get(self, file, path=None):
         import getpass
         localfile = None
-        try:
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            #if self.credentials().keyfile() != "" and self.credentials().keypasswd() == "":
-            #    self.credentials()._keypasswd = getpass.getpass(prompt='Password for ssh key @ ' + self.name() + ":")
-            client.connect(hostname=self.server(),
-                           port=self.port() if self.port() != "" else None,
-                           username=self.credentials().user() if self.credentials().user() != "" else None,
-                           key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
-                           passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
-
-
-            if not (path is None):
-                print("search " + path + file + "@" + self.name())
+        client = self.set_client()
+        if not (path is None):
+            #print("search " + path + file + "@" + self.name())
+            localfile = self.get_file(client, path, file)
+        else:
+            for path in self.paths():
+                #print("search " + path + file + " @ " + self.name())
                 localfile = self.get_file(client, path, file)
-            else:
-                for path in self.paths():
-                    print("search " + path + file + " @ " + self.name())
-                    localfile = self.get_file(client, path, file)
-                    if not (localfile is None):
-                        break
-        except paramiko.SSHException as e:
-            print(f'Error {e}')
-
-        return localfile
+                if not (localfile is None):
+                    break
 
     def get_file(self, client, path, file):
         localfile = None
         stdin, stdout, stderr = client.exec_command('ls ' + path + file)
         lines = list(map(lambda s: s.strip(), stdout.readlines()))
         if len(lines) == 1:
-            print("file found in repository " + self.name() + " at " + lines[0].strip('\n'))
-            print("copy to " + self.incoming() + file)
+            #print("file found in repository " + self.name() + " at " + lines[0].strip('\n'))
+            #print("copy to " + self.incoming() + file)
             scpp = scp.SCPClient(client.get_transport())
             scpp.get(lines[0].strip('\n'), self.incoming() + file)
             localfile = self.incoming() + file
         return localfile
+
+    def copy(self, pathfile):
+        newname = self.incoming() + uniquename(pathfile)
+        client = self.set_client()
+        # search if original file exists remotely
+        stdin, stdout, stderr = client.exec_command('ls ' + self.incoming() + os.path.basename(pathfile))
+        lines = list(map(lambda s: s.strip(), stdout.readlines()))
+        if len(lines) == 1:
+            # original file exists... we rename it.
+            client.exec_command('mv ' + self.incoming() + os.path.basename(pathfile) + ' ' + newname)
+        else:
+            # search if dest files already there
+            stdin, stdout, stderr = client.exec_command('ls ' + newname)
+            lines = list(map(lambda s: s.strip(), stdout.readlines()))
+            if len(lines) != 1:
+                # if newfile is not there we copy it
+                scpp = scp.SCPClient(client.get_transport())
+                scpp.put(pathfile, newname)
+        return newname
 
 
 ## @brief Implementation of the get method for http access.
@@ -459,7 +532,7 @@ class DatasourceHttp(Datasource):
         localfile = None
         try:
             urllib.request.urlretrieve(url, self.incoming() + file)
-            print("file found in repository " + url)
+            #print("file found in repository " + url)
             localfile = self.incoming() + file
 
         except urllib.error.HTTPError as e:
@@ -467,8 +540,8 @@ class DatasourceHttp(Datasource):
             # print(e.__dict__)
         except urllib.error.URLError as e:
             print("error searching repository " + url + " : " + str(e.reason))
-        except:
-            print("file not found in repository " + url)
+        #       except:
+        #           print("file not found in repository " + url)
         return localfile
 
 
@@ -481,3 +554,20 @@ class DatasourceHttps(DatasourceHttp):
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
     # If file is not found, then None is returned.
     prot: str = "https"
+
+
+def uniquename(filename):
+    return hashfile(filename) + ".root"
+
+## @brief Function which return the hash of a file.
+# This hash will be used as unique name for the file.
+def hashfile(filename):
+    import hashlib
+    BLOCK_SIZE = 262144
+    file_hash = hashlib.sha256()
+    with open(filename, 'rb') as f:
+        fb = f.read(BLOCK_SIZE)
+        while len(fb) > 0:
+            file_hash.update(fb)
+            fb = f.read(BLOCK_SIZE)
+    return file_hash.hexdigest()
