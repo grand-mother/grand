@@ -412,80 +412,90 @@ class DataTree:
             set_branches = True
 
         # Loop through the class fields
-        for field in self.__dataclass_fields__:
+        # for field in self.__dataclass_fields__:
+        for field in self.__dict__:
             # Skip fields that are not the part of the stored data
             if field in self._nonbranch_fields:
                 continue
             # Create a branch for the field
             # print(self.__dataclass_fields__[field])
-            self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
+            # self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
+            self.create_branch_from_field(self.__dict__[field], set_branches, field)
 
     ## Create a specific branch of a TTree computing its type from the corresponding class field
-    def create_branch_from_field(self, value, set_branches=False):
+    def create_branch_from_field(self, value, set_branches=False, value_name=""):
         """Create a specific branch of a TTree computing its type from the corresponding class field"""
         # Handle numpy arrays
-        if isinstance(value.default, np.ndarray):
+        # for key in dir(value):
+        #     print(getattr(value, key))
+        if isinstance(value, np.ndarray):
             # Generate ROOT TTree data type string
 
             # If the value is a (1D) numpy array with more than 1 value, make it an (1D) array in ROOT
-            if value.default.size > 1:
-                val_type = f"[{value.default.size}]"
+            if value.size > 1:
+                val_type = f"[{value.size}]"
             else:
                 val_type = ""
 
             # Data type
-            if value.default.dtype == np.int8:
+            if value.dtype == np.int8:
                 val_type += "/B"
-            elif value.default.dtype == np.uint8:
+            elif value.dtype == np.uint8:
                 val_type += "/b"
-            elif value.default.dtype == np.int16:
+            elif value.dtype == np.int16:
                 val_type += "/S"
-            elif value.default.dtype == np.uint16:
+            elif value.dtype == np.uint16:
                 val_type += "/s"
-            elif value.default.dtype == np.int32:
+            elif value.dtype == np.int32:
                 val_type += "/I"
-            elif value.default.dtype == np.uint32:
+            elif value.dtype == np.uint32:
                 val_type += "/i"
-            elif value.default.dtype == np.int64:
+            elif value.dtype == np.int64:
                 val_type += "/L"
-            elif value.default.dtype == np.uint64:
+            elif value.dtype == np.uint64:
                 val_type += "/l"
-            elif value.default.dtype == np.float32:
+            elif value.dtype == np.float32:
                 val_type += "/F"
-            elif value.default.dtype == np.float64:
+            elif value.dtype == np.float64:
                 val_type += "/D"
-            elif value.default.dtype == np.bool_:
+            elif value.dtype == np.bool_:
                 val_type += "/O"
 
             # Create the branch
             if not set_branches:
                 self._tree.Branch(
-                    value.name[1:], getattr(self, value.name), value.name[1:] + val_type
+                    value_name[1:], getattr(self, value_name), value_name[1:] + val_type
                 )
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name))
+                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name))
         # ROOT vectors as StdVectorList
         # elif "vector" in str(type(value.default)):
         # Not sure why type is not StdVectorList when using factory... thus not isinstance, but id comparison
-        elif id(value.type) == id(StdVectorList):
+        # elif id(value.type) == id(StdVectorList):
+        elif type(value) == StdVectorList:
             # Create the branch
             if not set_branches:
-                self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
+                # self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
+                self._tree.Branch(value_name[1:], getattr(self, value_name)._vector)
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
+                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
+                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
-        elif id(value.type) == id(StdString):
+        # elif id(value.type) == id(StdString):
+        elif type(value) == StdString:
             # Create the branch
             if not set_branches:
-                self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+                # self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+                self._tree.Branch(value_name[1:], getattr(self, value_name).string)
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
+                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
+                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name).string)
         else:
-            raise ValueError(f"Unsupported type {value.type}. Can't create a branch.")
+            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
@@ -587,7 +597,7 @@ class DataTree:
 class MotherRunTree(DataTree):
     """A mother class for classes with Run values"""
 
-    _run_number: np.ndarray = np.zeros(1, np.uint32)
+    _run_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     @property
     def run_number(self):
@@ -674,9 +684,9 @@ class MotherRunTree(DataTree):
 class MotherEventTree(DataTree):
     """A mother class for classes with Event values"""
 
-    _run_number: np.ndarray = np.zeros(1, np.uint32)
+    _run_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
-    _event_number: np.ndarray = np.zeros(1, np.uint32)
+    _event_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     # Unix creation datetime of the source tree; 0 s means no source
     _source_datetime: datetime.datetime = datetime.datetime.fromtimestamp(0)
@@ -966,15 +976,15 @@ class RunTree(MotherRunTree):
     _tree_name: str = "trun"
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
-    _run_mode: np.ndarray = np.zeros(1, np.uint32)
+    _run_mode: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Run's first event
-    _first_event: np.ndarray = np.zeros(1, np.uint32)
+    _first_event: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First event time
-    _first_event_time: np.ndarray = np.zeros(1, np.uint32)
+    _first_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Run's last event
-    _last_event: np.ndarray = np.zeros(1, np.uint32)
+    _last_event: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Last event time
-    _last_event_time: np.ndarray = np.zeros(1, np.uint32)
+    _last_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     # These are not from the hardware
     ## Data source: detector, simulation, other
@@ -987,11 +997,11 @@ class RunTree(MotherRunTree):
     # _site: StdVectorList("string") = StdVectorList("string")
     _site: StdString = StdString("")
     ## Site longitude
-    _site_long: np.ndarray = np.zeros(1, np.float32)
+    _site_long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Site latitude
-    _site_lat: np.ndarray = np.zeros(1, np.float32)
+    _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Origin of the coordinate system used for the array
-    _origin_geoid: np.ndarray = np.zeros(3, np.float32)
+    _origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1150,21 +1160,21 @@ class ADCEventTree(MotherEventTree):
 
     ## Common for the whole event
     ## Event size
-    _event_size: np.ndarray = np.zeros(1, np.uint32)
+    _event_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event in the run number
-    _t3_number: np.ndarray = np.zeros(1, np.uint32)
+    _t3_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First detector unit that triggered in the event
-    _first_du: np.ndarray = np.zeros(1, np.uint32)
+    _first_du: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Unix time corresponding to the GPS seconds of the first triggered station
-    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
-    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event format version of the DAQ
-    _event_version: np.ndarray = np.zeros(1, np.uint32)
+    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
-    _du_count: np.ndarray = np.zeros(1, np.uint32)
+    _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
@@ -2674,21 +2684,21 @@ class VoltageEventTree(MotherEventTree):
 
     ## Common for the whole event
     ## Event size
-    _event_size: np.ndarray = np.zeros(1, np.uint32)
+    _event_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event in the run number
-    _t3_number: np.ndarray = np.zeros(1, np.uint32)
+    _t3_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First detector unit that triggered in the event
-    _first_du: np.ndarray = np.zeros(1, np.uint32)
+    _first_du: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Unix time corresponding to the GPS seconds of the trigger
-    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
-    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event format version of the DAQ
-    _event_version: np.ndarray = np.zeros(1, np.uint32)
+    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
-    _du_count: np.ndarray = np.zeros(1, np.uint32)
+    _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
@@ -4206,13 +4216,13 @@ class EfieldEventTree(MotherEventTree):
 
     ## Common for the whole event
     ## Unix time corresponding to the GPS seconds of the trigger
-    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
-    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
-    _du_count: np.ndarray = np.zeros(1, np.uint32)
+    _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
@@ -4991,47 +5001,34 @@ class ShowerEventTree(MotherEventTree):
 
     _tree_name: str = "teventshower"
 
-    _shower_type: StdString = StdString(
-        ""
-    )  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
-    _shower_energy: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower energy (GeV)  Check unit conventions.
-    _shower_azimuth: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_zenith: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_core_pos: np.ndarray = np.zeros(
-        4, np.float32
-    )  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
-    _atmos_model: StdString = StdString("")  # Atmospheric model name TODO:standarize
-    _atmos_model_param: np.ndarray = np.zeros(
-        3, np.float32
-    )  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _magnetic_field: np.ndarray = np.zeros(
-        3, np.float32
-    )  # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _date: StdString = StdString(
-        ""
-    )  # Event Date and time. TODO:standarize (date format, time format)
-    _ground_alt: np.ndarray = np.zeros(1, np.float32)  # Ground Altitude (m)
-    _xmax_grams: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_pos_shc: np.ndarray = np.zeros(
-        3, np.float64
-    )  # shower Xmax position in shower coordinates
-    _xmax_alt: np.ndarray = np.zeros(
-        1, np.float64
-    )  # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _gh_fit_param: np.ndarray = np.zeros(
-        3, np.float32
-    )  # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
-    _core_time: np.ndarray = np.zeros(
-        1, np.float64
-    )  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
+    # Standarize shower primary type: If single particle, particle type. If not...tau decay,etc. TODO:
+    _shower_type: StdString = StdString("")
+    # shower energy (GeV)  Check unit conventions.
+    _shower_energy: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
+    _shower_azimuth: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    _shower_zenith: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
+    _shower_core_pos: np.ndarray = field(default_factory=lambda: np.zeros(4, np.float32))  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
+    # Atmospheric model name TODO:standarize
+    _atmos_model: StdString = StdString("")
+    # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
+    _atmos_model_param: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
+    _magnetic_field: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # Event Date and time. TODO:standarize (date format, time format)
+    _date: StdString = StdString("")
+    # Ground Altitude (m)
+    _ground_alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # shower Xmax depth  (g/cm2 along the shower axis)
+    _xmax_grams: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # shower Xmax position in shower coordinates
+    _xmax_pos_shc: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float64))
+    # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
+    _xmax_alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
+    # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
+    _gh_fit_param: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
+    _core_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
 
     # def __post_init__(self):
     #     super().__post_init__()
@@ -5357,9 +5354,9 @@ class EfieldRunSimdataTree(MotherRunTree):
         default_factory=lambda: StdVectorList("double")
     )
     ## The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
-    _t_pre: np.ndarray = np.zeros(1, np.float32)
-    _t_post: np.ndarray = np.zeros(1, np.float32)
-    _t_bin_size: np.ndarray = np.zeros(1, np.float32)
+    _t_pre: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    _t_post: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    _t_bin_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     def __post_init__(self):
         super().__post_init__()
@@ -5565,16 +5562,22 @@ class ShowerRunSimdataTree(MotherRunTree):
 
     _tree_name: str = "trunsimdata"
 
-    _shower_sim: StdString = StdString(
-        ""
-    )  # simulation program (and version) used to simulate the shower
-    _rel_thin: np.ndarray = np.zeros(1, np.float32)  # relative thinning energy
-    _weight_factor: np.ndarray = np.zeros(1, np.float32)  # weight factor
-    _lowe_cut_e: np.ndarray = np.zeros(1, np.float32)  # low energy cut for electrons(GeV)
-    _lowe_cut_gamma: np.ndarray = np.zeros(1, np.float32)  # low energy cut for gammas(GeV)
-    _lowe_cut_mu: np.ndarray = np.zeros(1, np.float32)  # low energy cut for muons(GeV)
-    _lowe_cut_meson: np.ndarray = np.zeros(1, np.float32)  # low energy cut for mesons(GeV)
-    _lowe_cut_nucleon: np.ndarray = np.zeros(1, np.float32)  # low energy cut for nuceleons(GeV)
+    # simulation program (and version) used to simulate the shower
+    _shower_sim: StdString = StdString("")
+    # relative thinning energy
+    _rel_thin: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # weight factor
+    _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for electrons(GeV)
+    _lowe_cut_e: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for gammas(GeV)
+    _lowe_cut_gamma: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for muons(GeV)
+    _lowe_cut_mu: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for mesons(GeV)
+    _lowe_cut_meson: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for nuceleons(GeV)
+    _lowe_cut_nucleon: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     def __post_init__(self):
         super().__post_init__()
@@ -5680,24 +5683,22 @@ class ShowerEventSimdataTree(MotherEventTree):
     ## Event Date and time. TODO:standarize (date format, time format)
     _date: StdString = StdString("")
     ## Random seed
-    _rnd_seed: np.ndarray = np.zeros(1, np.float64)
+    _rnd_seed: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     ## Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy
-    _energy_in_neutrinos: np.ndarray = np.zeros(1, np.float32)
+    _energy_in_neutrinos: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     # _prim_energy: np.ndarray = np.zeros(1, np.float32)  # primary energy (GeV) TODO: Support multiple primaries. Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
     ## Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
     _prim_energy: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)
+    _shower_azimuth: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_zenith: np.ndarray = np.zeros(1, np.float32)
+    _shower_zenith: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     # _prim_type: StdVectorList("string") = StdVectorList("string")  # primary particle type TODO: Support multiple primaries. standarize (PDG?)
     ## Primary particle type TODO: standarize (PDG?)
     _prim_type: StdVectorList = field(default_factory=lambda: StdVectorList("string"))
     # _prim_injpoint_shc: np.ndarray = np.zeros(4, np.float32)  # primary injection point in Shower coordinates TODO: Support multiple primaries
     ## Primary injection point in Shower coordinates
-    _prim_injpoint_shc: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<float>")
-    )
+    _prim_injpoint_shc: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     # _prim_inj_alt_shc: np.ndarray = np.zeros(1, np.float32)  # primary injection altitude in Shower Coordinates TODO: Support multiple primaries
     ## Primary injection altitude in Shower Coordinates
     _prim_inj_alt_shc: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
@@ -5707,26 +5708,23 @@ class ShowerEventSimdataTree(MotherEventTree):
     ## Atmospheric model name TODO:standarize
     _atmos_model: StdString = StdString("")
     # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)
+    _atmos_model_param: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _magnetic_field: np.ndarray = np.zeros(3, np.float32)
+    _magnetic_field: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_grams: np.ndarray = np.zeros(1, np.float32)
+    _xmax_grams: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Shower Xmax position in shower coordinates
-    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)
+    _xmax_pos_shc: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float64))
     ## Distance of Xmax  [m]
-    _xmax_distance: np.ndarray = np.zeros(1, np.float64)
+    _xmax_distance: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     ## Altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _xmax_alt: np.ndarray = np.zeros(1, np.float64)
-    _hadronic_model: StdString = StdString(
-        ""
-    )  # high energy hadronic model (and version) used TODO: standarize
-    _low_energy_model: StdString = StdString(
-        ""
-    )  # high energy model (and version) used TODO: standarize
-    _cpu_time: np.ndarray = np.zeros(
-        1, np.float32
-    )  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    _xmax_alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
+    # high energy hadronic model (and version) used TODO: standarize
+    _hadronic_model: StdString = StdString("")
+    # high energy model (and version) used TODO: standarize
+    _low_energy_model: StdString = StdString("")
+    # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    _cpu_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     # def __post_init__(self):
     #     super().__post_init__()
@@ -6011,7 +6009,7 @@ class ShowerEventZHAireSTree(MotherEventTree):
     # ToDo: we need explanations of these parameters
 
     _relative_thining: StdString = StdString("")
-    _weight_factor: np.ndarray = np.zeros(1, np.float64)
+    _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     _gamma_energy_cut: StdString = StdString("")
     _electron_energy_cut: StdString = StdString("")
     _muon_energy_cut: StdString = StdString("")
@@ -6152,15 +6150,15 @@ class DetectorInfo(DataTree):
     _tree_name: str = "tdetectorinfo"
 
     ## Detector Unit id
-    _du_id: np.ndarray = np.zeros(1, np.float32)
+    _du_id: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Currently read out unit. Not publicly visible
     _cur_du_id: int = -1
     ## Detector longitude
-    _long: np.ndarray = np.zeros(1, np.float32)
+    _long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Detector latitude
-    _lat: np.ndarray = np.zeros(1, np.float32)
+    _lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Detector altitude
-    _alt: np.ndarray = np.zeros(1, np.float32)
+    _alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Detector type
     _type: StdString = StdString("antenna")
     ## Detector description
