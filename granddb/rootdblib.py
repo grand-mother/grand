@@ -24,9 +24,9 @@ class RootFile:
         'event_number': 'event_number',
         'time_seconds': 'efield_time_seconds',
         'time_nanoseconds': 'efield_time_nanoseconds',
-        'event_type': 'efield_event_type',
+        'event_type': 'efield_id_event_type',
         'du_count': 'efield_du_count',
-        'du_id': 'efield_du_id'
+        'du_id': 'du_id'
     }
     teventshowersimdataToDB = {
         'table': 'event',
@@ -50,7 +50,7 @@ class RootFile:
         'xmax_alt': 'sim_xmax_alt',
         'hadronic_model': 'sim_id_hadronic_model',
         'low_energy_model': 'sim_id_low_energy_model',
-        'cpu_time': 'sim_cpu_time'
+#        'cpu_time': 'sim_cpu_time'
     }
     teventshowerzhairesToDB = {
         'table': 'event',
@@ -75,9 +75,9 @@ class RootFile:
         'table': 'run',
         'run_number': 'run_number',
         'run_mode': 'id_run_mode',
-        'first_event': 'id_first_event',
+        'first_event': 'first_event',
         'first_event_time': 'first_event_time',
-        'last_event': 'id_last_event',
+        'last_event': 'last_event',
         'last_event_time': 'last_event_time',
         'data_source': 'id_data_source',
         'data_generator': 'id_data_generator',
@@ -96,7 +96,8 @@ class RootFile:
         'time_nanoseconds': 'voltage_time_nanoseconds',
         'event_type': 'voltage_id_event_type',
         'event_version': 'voltage_event_version',
-        'du_count': 'voltage_du_count'
+        'du_count': 'voltage_du_count',
+        'du_id': 'du_id'
     }
     teventshowerToDB = {
         'table': 'event',
