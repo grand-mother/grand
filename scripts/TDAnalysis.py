@@ -104,7 +104,10 @@ for i in range(nevents):
 sig = np.array(sig)
 tev = np.array(tev)
 tev = (tev-tev[0])/60
-mfft = mfft/nevents
+mfft = mfft/nevents  # mean fft
+mfft = mfft*1.9/16384 # Now to volts
+mfft = mfft*mfft/ib0*ib0  # Now normalized to
+
 #Summary stats
 #ntrigs = len(dttrigall)
 dur_ev = ib0/fsamp
@@ -161,6 +164,9 @@ tit = runpath + "- DU" + str(uid)
 plt.subplot(311)
 plt.title(tit)
 
+print(fsamp,ib0)
+u = "(V$^2$/" + f'{fsamp/1e6/ib0:4.2f}' + "MHz)"
+print(u)
 lab = ["X channel","Y channel","Z channel"]
 plt.figure()
 for i in range(3):
@@ -168,7 +174,7 @@ for i in range(3):
     #plt.subplot(311+i)
     plt.plot(freqx,mfft[i],label=lab[i])
     plt.xlim(0,max(freqx))
-    plt.ylabel('FFT')
+    plt.ylabel('FFT' + u)
 plt.xlabel('Frequency (MHz)')
 plt.legend(loc="best")
 plt.title(tit)
@@ -177,9 +183,9 @@ plt.figure()
 for i in range(3):
     mfft[i,0:10] = mfft[i,10]
     #plt.subplot(311+i)
-    plt.semilogy(freqx,mfft[i])
+    plt.semilogy(freqx,mfft[i],label=lab[i])
     plt.xlim(0,max(freqx))
-    plt.ylabel('FFT')
+    plt.ylabel('FFT' + u)
 plt.xlabel('Frequency (MHz)')
 plt.legend(loc="best")
 plt.title(tit)
