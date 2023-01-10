@@ -164,9 +164,7 @@ tit = runpath + "- DU" + str(uid)
 plt.subplot(311)
 plt.title(tit)
 
-print(fsamp,ib0)
 u = "(V$^2$/" + f'{fsamp/1e6/ib0:4.2f}' + "MHz)"
-print(u)
 lab = ["X channel","Y channel","Z channel"]
 plt.figure()
 for i in range(3):
