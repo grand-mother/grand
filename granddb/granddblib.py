@@ -12,6 +12,12 @@ from sqlalchemy import func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects import postgresql
+import grand.manage_log as mlg
+
+logger = mlg.get_logger_for_script(__name__)
+mlg.create_output_for_logger("debug", log_stdout=True)
+
+
 
 
 def casttodb(value):
@@ -67,7 +73,7 @@ class Database:
 
         if self._sshserv != "" and self._cred is not None:
             self.server = SSHTunnelForwarder(
-                (self._sshserv, self._sshport),
+                (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),
                 ssh_pkey=self._cred.keyfile(),
                 remote_bind_address=(self._host, self._port)
@@ -140,7 +146,7 @@ class Database:
             record = cursor.fetchall()
             cursor.close()
         except psycopg2.DatabaseError as e:
-            print(f'Error {e}')
+            logger.error(f"Error {e}")
         return record
 
 #    def insert(self, query):
@@ -183,6 +189,31 @@ class Database:
         query = "select * from get_repos()"
         record = self.select(str(query))
         return record
+
+    ## Search a file in DB.
+    # Search first file with provided filename. If not found, search file with original_name = filename
+    # returns the filename and the different locations for it
+    def SearchFile(self, filename):
+        result = []
+        file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'], self.tables()['repository'])\
+            .join(self.tables()['file_location'], self.tables()['file_location'].id_file==self.tables()['file'].id_file) \
+            .join(self.tables()['repository'],self.tables()['repository'].id_repository==self.tables()['file_location'].id_repository) \
+            .filter(self.tables()['file'].filename == filename)\
+            .order_by(self.tables()['repository'].id_repository)\
+            .all()
+
+        if len(file) == 0:
+            file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'], self.tables()['repository'])\
+                .join(self.tables()['file_location'], self.tables()['file_location'].id_file==self.tables()['file'].id_file) \
+                .join(self.tables()['repository'],self.tables()['repository'].id_repository==self.tables()['file_location'].id_repository) \
+                .filter(self.tables()['file'].original_name == filename)\
+                .order_by(self.tables()['repository'].id_repository)\
+                .all()
+
+        for record in file:
+            logger.debug(f"file {record.file.filename} found in repository {record.repository.repository}")
+            result.append([record.file.filename, record.repository.repository])
+        return result
 
     ## @brief For parameter <param> of value <value> in table <table> this function will check if the param is a foreign key and if yes it will
     # search de corresponding id in the foreign table. If found, it will return it, if not, it will add the parameter in the foreign table

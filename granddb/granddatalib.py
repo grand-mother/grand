@@ -1,4 +1,4 @@
-import logging
+#import logging
 from pathlib import Path
 import scp
 import paramiko
@@ -8,9 +8,18 @@ import urllib.request
 import os
 import shutil
 from granddblib import Database
-from logging import getLogger
+import socket
+import grand.manage_log as mlg
+import copy
 
-logger = getLogger(__name__)
+
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__name__)
+
+# define a handler for logger : standard only
+mlg.create_output_for_logger("debug", log_stdout=True)
+
+#logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
 #ch = logging.StreamHandler()
 #ch.setLevel(logging.DEBUG)
@@ -59,6 +68,8 @@ class DataManager:
                 ref = json.loads(configur.get('general', name))
                 if name == "provider":
                     self._provider = ref
+                if name == "socket_timeout":
+                    socket.setdefaulttimeout(int(ref))
 
         if self._provider == None:
             logger.error(f"Config file ({self._file}) must have a [general] section with a provider value")
@@ -124,7 +135,7 @@ class DataManager:
         if configur.has_section('registerer'):
             for name in configur['registerer']:
                 ref = json.loads(configur.get('registerer', name))
-                self._referer = self._repositories[name]
+                self._referer = copy.deepcopy(self._repositories[name])
                 self._referer._incoming = os.path.join(ref, "")
                 self._referer.paths().append(self._referer._incoming)
         else:
@@ -158,6 +169,11 @@ class DataManager:
     def referer(self):
         return self._referer
 
+    ## Search a file in DB.
+    # Search first file with provided filename. If not found, search file with original_name = filename
+    def SearchFileInDB(self, filename):
+        return self.database().SearchFile(filename)
+
     ## Get a file from the repositories.
     # If repo or path given, then directly search there.
     # If not, search first in localdirs and then in remote repositories. First match is returned.
@@ -174,6 +190,7 @@ class DataManager:
             if not (repository is None):
                 rep = self.getrepo(repository)
                 if not (rep is None):
+                    logger.debug(f"search in repository {rep.name()}")
                     res = rep.get(file, path)
             # if no repo specified, we search everywhere (skip localdir because already done before)
             else:
@@ -207,9 +224,11 @@ class DataManager:
 
     ##Function to register a file into the database. Returns the path to the file in the repository where the file was registered.
     def register_file(self,filename):
+        newfilename = None
         file = self.get(filename)
-        newfilename = self.referer().copy(file)
-        self.database().register_file(file, newfilename, self.referer().id_repository, self.provider())
+        if file is not None:
+            newfilename = self.referer().copy(file)
+            self.database().register_file(file, newfilename, self.referer().id_repository, self.provider())
         return newfilename
 
 
@@ -284,6 +303,8 @@ class Datasource:
             self.__class__ = DatasourceHttp
         elif protocol == 'https':
             self.__class__ = DatasourceHttps
+
+
 
     def set_credentials(self, credentials):
         self._credentials = credentials
@@ -396,6 +417,7 @@ class DatasourceSsh(Datasource):
                 localfile = self.get_file(client, path, file)
                 if not (localfile is None):
                     break
+        return localfile
 
     ## Search for files in remote location accessed through ssh.
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
@@ -445,10 +467,10 @@ class DatasourceHttp(Datasource):
     def get(self, file, path=None):
         localfile = None
         if not (path is None):
-            url = self.prot + '://' + self.server() + '/' + path + '/' + file
+            url = self._protocol + '://' + self.server() + '/' + path + '/' + file
 
         for path in self.paths():
-            url = self.prot + '://' + self.server() + '/' + path + '/' + file
+            url = self._protocol + '://' + self.server() + '/' + path + '/' + file
             localfile = self.get_file(url, file)
             if not (localfile is None):
                 break
@@ -456,18 +478,23 @@ class DatasourceHttp(Datasource):
         return localfile
 
     def get_file(self, url, file):
+        #import socket
         localfile = None
         try:
+            #socket.setdefaulttimeout(10)
             urllib.request.urlretrieve(url, self.incoming() + file)
             logger.debug(f"file found in repository {url}")
             localfile = self.incoming() + file
 
         except urllib.error.HTTPError as e:
-            logger.error(f"error searching repository {url} : {str(e.code)}  {e.msg}")
+            if e.code == 404:
+                logger.debug(f"file not found in repository {url}")
+            else:
+                logger.error(f"http error searching repository {url} : {str(e.code)}  {e.msg}")
         except urllib.error.URLError as e:
-            logger.error(f"error searching repository {url} :  {str(e.reason)}")
-        #       except:
-        #           print("file not found in repository " + url)
+            logger.error(f"url error searching repository {url} :  {str(e.reason)}")
+        #except:
+        #    print("file not found in repository " + url)
         return localfile
 
 
@@ -478,7 +505,7 @@ class DatasourceHttp(Datasource):
 class DatasourceHttps(DatasourceHttp):
     ## Search for files in remote location accessed through https.
     # Same process as http but https instead !
-    prot: str = "https"
+    _protocol = "https"
 
 
 def uniquename(filename):
