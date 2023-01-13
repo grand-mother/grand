@@ -85,7 +85,7 @@ def FilterGP300_plot():
     o_cbl.plot_filter()
 
 
-def plot_rho_kernel():
+def plot_lna_kernel():
     out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
     print(out_f)
     o_lna = edu.LowNoiseAmplificatorGP300()
@@ -93,6 +93,21 @@ def plot_rho_kernel():
     o_lna.get_fft_rho_3d()
     o_lna.plot_rho_kernel()
 
+def plot_vfb_kernel():
+    out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
+    print(out_f)
+    o_lna = edu.VgaFilterBalunGP300()
+    o_lna.compute_for_freqs(out_f)
+    o_lna.get_fft_vfb_3d()
+    o_lna.plot_kernel()
+    
+def plot_cable_kernel():
+    out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
+    print(out_f)
+    o_lna = edu.CableGP300()
+    o_lna.compute_for_freqs(out_f)
+    o_lna.get_fft_cable_3d()
+    o_lna.plot_kernel()
 
 def plot_total_kernel():
     out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
@@ -108,7 +123,9 @@ if __name__ == "__main__":
     # =============================================
     StandingWaveRatioGP300_show_s11()
     LowNoiseAmplificatorGP300_show_s21()
-    plot_rho_kernel()
+    plot_lna_kernel()
+    plot_vfb_kernel()
+    plot_cable_kernel()
     CableGP300_plot()
     FilterGP300_plot()
     plot_total_kernel()

@@ -333,7 +333,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         plot of LNA transfer function in time space
         """
         plt.figure()
-        plt.title("Rho kernel")
+        plt.title("LNA kernel")
         kernel_rho = sf.fftshift(sf.irfft(self.get_fft_rho_3d()), axes=1)
         # kernel_rho = sf.irfft(self.get_fft_rho_3d())
         print(kernel_rho.shape)
@@ -460,6 +460,27 @@ class VgaFilterBalunGP300(GenericProcessingDU):
         plt.plot(self.freqs_out, np.abs(self.fft_vgafilbal))
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.grid()
+        
+        
+    def plot_kernel(self):  # pragma: no cover
+        """
+        plot impulsionnel response
+        """
+        plt.figure()
+        plt.title(" Vga Filter Balun  kernel")
+        kernel_rho = sf.fftshift(sf.irfft(self.get_fft_vfb_3d()), axes=1)
+        # kernel_rho = sf.irfft(self.get_fft_rho_3d())
+        print(kernel_rho.shape)
+        # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
+        v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
+        dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
+        v_time_ns = dt_ns * v_time
+        plt.plot(v_time_ns, kernel_rho[0], "k", label="0")
+        plt.plot(v_time_ns, kernel_rho[1], "y", label="1")
+        plt.plot(v_time_ns, kernel_rho[2], "b", label="2")
+        plt.xlabel("ns")
+        plt.grid()
+        plt.legend()
 
 
 class CableGP300(GenericProcessingDU):
@@ -552,6 +573,24 @@ class CableGP300(GenericProcessingDU):
         plt.title("FFT cable")
         plt.plot(self.freqs_out, np.abs(self.fft_cable))
         plt.xlabel("Frequency(MHz)", fontsize=15)
+        
+    def plot_kernel(self):  # pragma: no cover
+        """
+        plot impulsionnel response
+        """
+        plt.figure()
+        plt.title(" Cable  kernel")
+        kernel_rho = sf.fftshift(sf.irfft(self.get_fft_cable_3d()[0]))
+        # kernel_rho = sf.irfft(self.get_fft_rho_3d())
+      
+        # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
+        v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
+        dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
+        v_time_ns = dt_ns * v_time
+        plt.plot(v_time_ns, kernel_rho, "k")
+        plt.xlabel("ns")
+        plt.grid()
+        plt.legend()
 
 
 class RfChainGP300:
