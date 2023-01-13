@@ -219,6 +219,11 @@ class DataTree:
     # def _type(cls):
     #     return cls
 
+    @classmethod
+    def get_default_tree_name(cls):
+        """Gets the default name of the tree of the class"""
+        return cls._tree_name
+
     def __post_init__(self):
         self._type = type(self).__name__
 
@@ -6407,27 +6412,16 @@ class DataFile():
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
-            print("tree info", tree_info)
 
             # Add the tree to a dict for this tree class
-            # First check if the type was in the metadata (newer trees)
-            if "type" in tree_info:
-                self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
-            else:
-                # Assumes that all tree names are of format t(type)_(something)
-                # ToDo: shouldn't it be append as above?
-                # self.tree_types[tree_info["name"][1:].split("_")[0]][tree_info["name"]] = tree_info
-                print(type(self.tree_types))
-                # print(tree_info["name"][1:].split("_")[0]][tree_info["name"])
-                self.tree_types[tree_info["name"][1:].split("_")[0]][tree_info["name"]] = tree_info
-                # self.tree_types[tree_info["name"][1:].split("_")[0]].append(tree_info)
+            self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
 
             self.dict_of_trees[tree_info["name"]] = t
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
         for key in self.tree_types:
-            print(self.tree_types[key])
+            print(key, self.tree_types[key])
             if key=="run":
                 setattr(self, "trun", self.dict_of_trees["trun"])
             else:
@@ -6440,13 +6434,18 @@ class DataFile():
                         if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
                             max_analysis_level = el["analysis_level"]
                             max_anal_tree_name = el["name"]
-                        setattr(self, key+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
+                            max_anal_tree_type = el["type"]
+                        tree_class = getattr(thismodule, el["type"])
+                        setattr(self, tree_class.get_default_tree_name()+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
+                        # setattr(self, key+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
                     # In case there is no analysis level info in the tree (old trees), just take the last one
                     elif max_analysis_level==-1:
                         max_anal_tree_name = el["name"]
+                        max_anal_tree_type = el["type"]
 
                 # setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
-                setattr(self, "t"+key, getattr(thismodule, self.dict_of_trees[max_anal_tree_name]))
+                tree_class = getattr(thismodule, max_anal_tree_type)
+                setattr(self, tree_class.get_default_tree_name(), tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name]))
                 self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def print(self):
@@ -6467,7 +6466,13 @@ class DataFile():
 
         tree_info = {"evt_cnt": tree.GetEntries(), "name": tree.GetName()}
 
-        tree_info.update(DataTree.get_metadata_as_dict(tree))
+        meta_dict = DataTree.get_metadata_as_dict(tree)
+
+        # Deduce the tree type if not in the metadata
+        if "type" not in meta_dict.keys():
+            tree_info["type"] = self.guess_tree_type(tree)
+
+        tree_info.update(meta_dict)
 
         return tree_info
 
@@ -6475,6 +6480,41 @@ class DataFile():
     def print_tree_info(self, tree):
         """Prints the information about the tree"""
         pass
+
+    def guess_tree_type(self, tree):
+        """Guesses the tree type from its name. Needed for old trees with missing metadata"""
+        name = tree.GetName()
+
+        # Simdata trees
+        if "simdata" in name:
+            if "runvoltage" in name:
+                return "VoltageRunSimdataTree"
+            elif "eventvoltage" in name:
+                return "VoltageEventSimdataTree"
+            elif "runefield" in name:
+                return "EfieldRunSimdataTree"
+            elif "eventefield" in name:
+                return "EfieldEventSimdataTree"
+            elif "runshower" in name:
+                return "ShowerRunSimdataTree"
+            elif "eventshower" in name:
+                return "ShowerEventSimdataTree"
+        # Zhaires tree
+        elif "eventshowerzhaires" in name:
+            return "ShowerEventZHAireSTree"
+        # Other trees
+        else:
+            if "run" in name:
+                return "RunTree"
+            elif "eventadc" in name:
+                return "ADCEventTree"
+            elif "eventvoltage" in name:
+                return "VoltageEventTree"
+            elif "eventefield" in name:
+                return "EfieldEventTree"
+            elif "eventshower" in name:
+                return "ShowerEventTree"
+
 
     def _load_trees(self):
         # Loop through the keys
