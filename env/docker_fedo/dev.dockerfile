@@ -17,7 +17,7 @@ RUN python3 -m pip install --no-cache-dir -r /opt/grandlib/requirements_docs.txt
 
 # other tools for dev
 RUN python3 -m pip install --no-cache-dir ipython\
-&& python3 -m pip install --no-cache-dir jupyterlab\
+&& python3 -m pip install --no-cache-dir jupyterlab ipympl\
 && python3 -m pip install --no-cache-dir ipynb\
 && echo 'alias grand_jupyter="jupyter-lab --allow-root --ip 0.0.0.0 --no-browser"' >> ~/.bashrc
 EXPOSE 8888

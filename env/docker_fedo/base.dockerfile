@@ -11,13 +11,15 @@ RUN mkdir -p /opt/grandlib
 
 # Add package for C compilation 
 #RUN yum -y update\
-RUN yum install -y root \
-&& yum install -y python3-root\
-&& yum install -y git\
+RUN yum install -y git\
 && yum install -y make\
 && yum install -y libpng-devel\
+&& yum install -y graphviz\
 && yum install -y python3-devel\
-&& yum install -y pip
+&& yum install -y pip\
+&& yum install -y root \
+&& yum install -y python3-root\
+&& yum install -y python3-jupyroot
 
 
 # install python lib for grand lib
