@@ -6403,6 +6403,11 @@ class DataFile():
         if type(filename) is str:
             f = ROOT.TFile(filename)
             self.f = f
+        elif type(filename) is ROOT.TFile:
+            self.f = filename
+        else:
+            raise TypeError(f"Unsupported type {type(filename)} as a filename")
+
         # Loop through the keys
         for key in f.GetListOfKeys():
             t = f.Get(key.GetName())
@@ -6421,7 +6426,6 @@ class DataFile():
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
         for key in self.tree_types:
-            print(key, self.tree_types[key])
             if key=="run":
                 setattr(self, "trun", self.dict_of_trees["trun"])
             else:
@@ -6437,7 +6441,6 @@ class DataFile():
                             max_anal_tree_type = el["type"]
                         tree_class = getattr(thismodule, el["type"])
                         setattr(self, tree_class.get_default_tree_name()+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
-                        # setattr(self, key+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
                     # In case there is no analysis level info in the tree (old trees), just take the last one
                     elif max_analysis_level==-1:
                         max_anal_tree_name = el["name"]
@@ -6464,13 +6467,20 @@ class DataFile():
     def get_tree_info(self, tree):
         """Gets the information about the tree"""
 
+        # If tree is a string, turn it into a TTree
+        if type(tree)==str:
+            tree = getattr(self, tree)
+        # If tree is a GRAND tree class
+        if issubclass(tree.__class__, DataTree):
+            tree = tree._tree
+
         tree_info = {"evt_cnt": tree.GetEntries(), "name": tree.GetName()}
 
         meta_dict = DataTree.get_metadata_as_dict(tree)
 
         # Deduce the tree type if not in the metadata
         if "type" not in meta_dict.keys():
-            tree_info["type"] = self.guess_tree_type(tree)
+            tree_info["type"] = self._guess_tree_type(tree)
 
         tree_info.update(meta_dict)
 
@@ -6481,7 +6491,7 @@ class DataFile():
         """Prints the information about the tree"""
         pass
 
-    def guess_tree_type(self, tree):
+    def _guess_tree_type(self, tree):
         """Guesses the tree type from its name. Needed for old trees with missing metadata"""
         name = tree.GetName()
 
