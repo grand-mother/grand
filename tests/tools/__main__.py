@@ -1,5 +1,5 @@
 """
-Run all unit tests for the grand.tools package
+Run all unit tests for the grand.geo package
 """
 
 from .. import main

@@ -1,14 +1,17 @@
-"""!
-Simulation of the effects detector on the signal : VSWR, LNA, cable, VGA ,Balun, filter
+"""
+Simulation of the effects detector on the signal: 
+ * VSWR
+ * LNA
+ * cable
+ * VGA
+ * Balun
+ * filter
 
-@authors PengFei Zhang and Xidian group, GRANDLIB adaptation Colley JM
+:Authors: PengFei Zhang and Xidian group, GRANDLIB adaptation Colley JM
 
-Reference document : 
-  * "RF Chain simulation for GP300" by Xidian University, 
-    Pengfei Zhang and 
-    Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu
+Reference document: 
+  * "RF Chain simulation for GP300" by Xidian University, :Authors:  Pengfei Zhang and Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu
     
-  * Article 
 
 Reference code: 
   * https://github.com/JuliusErv1ng/XDU-RF-chain-simulation/blob/main/XDU%20RF%20chain%20code.py
@@ -48,7 +51,7 @@ class GenericProcessingDU:
         self.size_sig = 0
 
     def _set_name_data_file(self, axis):
-        """!
+        """
 
         :param axis:
         """
@@ -70,8 +73,8 @@ class GenericProcessingDU:
 
 
 class StandingWaveRatioGP300(GenericProcessingDU):
-    """!
-    @authors PengFei Zhang and Xidian group
+    """
+    :Authors: PengFei Zhang and Xidian group
 
     Class goals:
       * define VSWR value as s11 parameter
@@ -84,7 +87,7 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         self.s11 = np.zeros((0, 3), dtype=np.complex64)
 
     def _set_name_data_file(self, axis):
-        """!
+        """
 
         :param axis:
         """
@@ -92,7 +95,7 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         return grand_add_path_data_model(file_address)
 
     def compute_s11(self):
-        """!
+        """
 
         :param unit:
         """
@@ -140,8 +143,9 @@ class StandingWaveRatioGP300(GenericProcessingDU):
 
 
 class LowNoiseAmplificatorGP300(GenericProcessingDU):
-    """!
-    @authors PengFei Zhang and Xidian group
+    """
+    :Authors: PengFei Zhang and Xidian group
+
     Class goals:
       * Perform the LNA filter on signal for each antenna
       * manage VSWR model
@@ -168,7 +172,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
     ### INTERNAL
 
     def _set_name_data_file(self, axis):
-        """!
+        """
 
         :param axis:
         """
@@ -176,7 +180,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         return grand_add_path_data_model(lna_address)
 
     def _pre_compute(self):
-        """!
+        """
         compute what is possible without know response antenna
 
         :param unit: select LNA type stockage 0: [re, im],  1: [amp, arg]
@@ -211,7 +215,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         self._dbs21_a = dbs21_a
 
     def _compute(self, antenna_gama):
-        """!update_with_s11
+        """update_with_s11
 
         :param antenna_gama (N,3):
         """
@@ -232,7 +236,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
     ### OPERATION
 
     def compute_for_freqs(self, a_freq_mhz):
-        """!Compute transfer function for frequency a_freq_mhz
+        """Compute transfer function for frequency a_freq_mhz
 
         :param a_freq_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
         """
@@ -346,7 +350,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
 
 
 class VgaFilterBalunGP300(GenericProcessingDU):
-    """!
+    """
     @authors PengFei Zhang and Xidian group
 
     Class goals:
@@ -366,7 +370,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
     ### INTERNAL
 
     def _set_name_data_file(self, axis=0):
-        """!
+        """
 
         :param axis:
         """
@@ -459,7 +463,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
 
 
 class CableGP300(GenericProcessingDU):
-    """!
+    """
     @authors PengFei Zhang and Xidian group
 
     Class goals:
@@ -478,7 +482,7 @@ class CableGP300(GenericProcessingDU):
     ### INTERNAL
 
     def _set_name_data_file(self, axis=0):
-        """!
+        """
 
         :param axis:
         """

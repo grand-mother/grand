@@ -1,4 +1,4 @@
-"""!
+"""
 Extract informations from ZHAires simulation
 """
 
@@ -43,7 +43,7 @@ class ZhairesShower(ShowerEvent):
 
     @classmethod
     def _from_dir(cls, path: Path) -> ZhairesShower:
-        """!
+        """
         Extract informations about ZHAires simulation from xxx.sry file
 
         @note:
@@ -97,7 +97,7 @@ class ZhairesShower(ShowerEvent):
             return CartesianRepresentation(spherical)
 
         def parse_maximum(string: str) -> CartesianRepresentation:
-            """!
+            """
             @note:
                 Xmax is given as CartesianRepresentation defined in the shower frame.
                 Later (below) Xmax is saved wrt LTP frame making it independent of shower info.

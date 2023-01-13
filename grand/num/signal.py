@@ -1,26 +1,22 @@
-"""! Signal processing
-
-- This module contains several signal processing
-functionalities to be applied to simulation/data
-- operations are meant to be on the signal traces 
-for individual antennas, suitable to be used both
-in Grandlib format/ read from hdf5 files
-- expects signal traces to be of the size (3,lengthoftrace)
+"""
+* This module contains several signal processing functionalities to be applied to simulation/data
+* operations are meant to be on the signal traces for individual antennas, suitable to be used both
+  in Grandlib format/ read from hdf5 files 
+* expects signal traces to be of the size (3,lengthoftrace)
 """
 
 from logging import getLogger
 
 import numpy as np
-from scipy.signal import hilbert, resample, decimate, butter, lfilter
+from scipy.signal import hilbert, butter, lfilter
 import scipy.fft as sf
-import matplotlib.pyplot as plt
 from scipy import interpolate
 
 logger = getLogger(__name__)
 
 
 def get_filter(time, trace, fr_min, fr_max):
-    """!
+    """
     Filter signal  in given bandwidth
 
     @note
@@ -32,7 +28,7 @@ def get_filter(time, trace, fr_min, fr_max):
     :param fr_min (float): [Hz] The minimal frequency of the bandpass filter
     :param fr_max (float): [Hz] The maximal frequency of the bandpass filter
 
-    @returns: filtered trace in time domain
+    :return: filtered trace in time domain
     """
     tstep = (time[1] - time[0]) * 1e-09  # s
     rate = 1 / tstep
@@ -45,29 +41,24 @@ def get_filter(time, trace, fr_min, fr_max):
     return filtered
 
 
-def get_peakamptime_hilbert(time, trace, f_min, f_max, filtered=False):
-    """!
-    Get Peak and time of EField trace, either filtered or unfiltered
-
-    :param time (array): time
-    :param trace (array): ElectricField (muV/m) vectors to be filtered- expected
-      size (3,dlength), dlength= size of the signal trace
-    :param f_min (float): [Hz] The minimal frequency of the bandpass filter
-    :param f_max (float): [Hz] The maximal frequency of the bandpass filter
-    :param filtered (bool): if true filtering is applied else raw input trace is used
-
-    @return TBD
+def get_peakamptime_norm_hilbert(a2_time, a3_trace):
     """
-    if filtered:
-        logger.debug("filtering the signal .....")
-        filt = get_filter(time, trace, f_min, f_max)
-    else:
-        logger.debug("continuing with raw signal ...")
-        filt = trace
-    hilbert_amp = np.abs(hilbert(filt, axis=-1))
-    peakamp = max([max(hilbert_amp[0]), max(hilbert_amp[1]), max(hilbert_amp[2])])
-    peaktime = time[np.argwhere(hilbert_amp == peakamp)[0][1]]
-    return peaktime, peakamp
+    Get peak Hilbert amplitude norm of trace (v_max) and its time t_max without interpolation
+
+    :param time (D,S): time, with D number of vector of trace, S number of sample
+    :param traces (D,3,S): trace
+
+    :return: t_max float(D,) v_max float(D,), norm_hilbert_amp float(D,S),
+            idx_max int, norm_hilbert_amp float(D,S)
+    """
+    hilbert_amp = np.abs(hilbert(a3_trace, axis=-1))
+    norm_hilbert_amp = np.linalg.norm(hilbert_amp, axis=1)
+    # add dimension for np.take_along_axis()
+    idx_max = np.argmax(norm_hilbert_amp, axis=1)[:, np.newaxis]
+    t_max = np.take_along_axis(a2_time, idx_max, axis=1)
+    v_max = np.take_along_axis(norm_hilbert_amp, idx_max, axis=1)
+    # remove dimension (np.squeeze) to have ~vector ie shape is (n,) instead (n,1)
+    return np.squeeze(t_max), np.squeeze(v_max), idx_max, norm_hilbert_amp
 
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
@@ -77,7 +68,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     :param f_samp_mhz:
     :param padding_fact:
 
-    @return: size_fft (int,0), array freq (float,1) in MHz for rfft()
+    :return: size_fft (int,0), array freq (float,1) in MHz for rfft()
     """
     assert padding_fact >= 1
     dt_s = 1e-6 / f_samp_mhz
@@ -87,7 +78,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
 
 
 def interpol_at_new_x(a_x, a_y, new_x):
-    """!
+    """
     Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
     and set to zero outside interval definition a_x
 
@@ -95,7 +86,7 @@ def interpol_at_new_x(a_x, a_y, new_x):
     :param a_y (float, (N)): F(a_x) = a_y
     :param new_x (float, (M)): new value of x
 
-    @return F(new_x) (float, (M)): interpolation of F at new_x
+    :return: F(new_x) (float, (M)): interpolation of F at new_x
     """
     assert a_x.shape[0] > 0
     func_interpol = interpolate.interp1d(
