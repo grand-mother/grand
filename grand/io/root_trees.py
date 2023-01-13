@@ -22,6 +22,7 @@ else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
 
+thismodule = sys.modules[__name__]
 
 logger = getLogger(__name__)
 
@@ -219,6 +220,8 @@ class DataTree:
     #     return cls
 
     def __post_init__(self):
+        self._type = type(self).__name__
+
         # Append the instance to the list of generated trees - needed later for adding friends
         grand_tree_list.append(self)
         # Init _file from TFile object
@@ -6390,7 +6393,6 @@ class DataFile():
     tree_types = defaultdict(dict)
 
     def __init__(self, filename):
-        print(type(self.tree_types))
         """filename can be either a string or a ROOT.TFile"""
         # If a string given, open the file
         if type(filename) is str:
@@ -6398,13 +6400,14 @@ class DataFile():
             self.f = f
         # Loop through the keys
         for key in f.GetListOfKeys():
-            print(filename, key)
             t = f.Get(key.GetName())
             # Process only TTrees
-            if type(t) != ROOT.TTree: continue
+            if type(t) != ROOT.TTree:
+                continue
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
+            print("tree info", tree_info)
 
             # Add the tree to a dict for this tree class
             # First check if the type was in the metadata (newer trees)
@@ -6424,6 +6427,7 @@ class DataFile():
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
         for key in self.tree_types:
+            print(self.tree_types[key])
             if key=="run":
                 setattr(self, "trun", self.dict_of_trees["trun"])
             else:
@@ -6441,7 +6445,8 @@ class DataFile():
                     elif max_analysis_level==-1:
                         max_anal_tree_name = el["name"]
 
-                setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
+                # setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
+                setattr(self, "t"+key, getattr(thismodule, self.dict_of_trees[max_anal_tree_name]))
                 self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def print(self):
