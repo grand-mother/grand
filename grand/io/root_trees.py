@@ -6297,8 +6297,74 @@ def set_vector_of_vectors(value, vec_type, variable, variable_name):
 class DataDirectory():
     """Class holding the information about GRAND data in a directory"""
 
-    def __init__(self):
-        pass
+    def __init__(self, dir_name: str, recursive: bool = False):
+        """
+        @param dir_name: the name of the directory to be scanned
+        @param recursive: if to scan the directory recursively
+        """
+
+        # Make the path absolute
+        self.dir_name = os.path.abspath(dir_name)
+
+        # Get the file list
+        self.file_list = self.get_list_of_files(recursive)
+
+        # Get the file handle list
+        self.file_handle_list = self.get_list_of_files_handles()
+
+        # Create chains and set them as attributes
+        self.create_chains()
+
+    def get_list_of_files(self, recursive: bool = False):
+        """Gets list of files in the directory"""
+        return sorted(glob.glob(os.path.join(self.dir_name, "*.root"), recursive=recursive))
+
+    def get_list_of_files_handles(self):
+        """Go through the list of files in the directory and open all of them"""
+        file_handle_list = []
+
+        for filename in self.file_list:
+            file_handle_list.append(DataFile(filename))
+
+        return file_handle_list
+
+    def create_chains(self):
+        chains_dict = {}
+        tree_types = set()
+        # Loop through the list of file handles
+        for i,f in enumerate(self.file_handle_list):
+            # Collect the tree types
+            tree_types.update(*f.tree_types.keys())
+
+            # Select the highest analysis level trees for each class and store these trees as main attributes
+            for key in f.tree_types:
+                if key=="run":
+                    setattr(self, "trun", f.dict_of_trees["trun"])
+                else:
+                    max_analysis_level=-1
+                    for key1 in f.tree_types[key].keys():
+                        el = f.tree_types[key][key1]
+                        chain_name = el["name"]
+                        if "analysis_level" in el:
+                            if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
+                                max_analysis_level = el["analysis_level"]
+                                max_anal_chain_name = chain_name
+
+                                setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
+
+
+                        if chain_name not in chains_dict:
+                            chains_dict[chain_name] = ROOT.TChain(chain_name)
+                        chains_dict[chain_name].Add(self.file_list[i])
+
+
+                        # In case there is no analysis level info in the tree (old trees), just take the last one
+                        if max_analysis_level==-1:
+                            max_anal_chain_name = el["name"]
+
+                    setattr(self, "t"+key, chains_dict[max_anal_chain_name])
+
+
 
     def print(self, recursive=True):
         """Prints all the information about all the data"""
@@ -6315,10 +6381,15 @@ class DataDirectory():
 class DataFile():
     """Class holding the information about GRAND TTrees in the specified file"""
 
+    # Holds all the trees in the file, by tree name
     dict_of_trees = {}
+    # Holds the list of trees in the file, but just with maximal level
+    list_of_trees = []
+    # Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
     tree_types = defaultdict(dict)
 
     def __init__(self, filename):
+        print(type(self.tree_types))
         """filename can be either a string or a ROOT.TFile"""
         # If a string given, open the file
         if type(filename) is str:
@@ -6326,6 +6397,7 @@ class DataFile():
             self.f = f
         # Loop through the keys
         for key in f.GetListOfKeys():
+            print(filename, key)
             t = f.Get(key.GetName())
             # Process only TTrees
             if type(t) != ROOT.TTree: continue
@@ -6336,27 +6408,40 @@ class DataFile():
             # Add the tree to a dict for this tree class
             # First check if the type was in the metadata (newer trees)
             if "type" in tree_info:
-                self.tree_types[tree_info["type"]].append(tree_info)
+                self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
             else:
                 # Assumes that all tree names are of format t(type)_(something)
+                # ToDo: shouldn't it be append as above?
+                # self.tree_types[tree_info["name"][1:].split("_")[0]][tree_info["name"]] = tree_info
+                print(type(self.tree_types))
+                # print(tree_info["name"][1:].split("_")[0]][tree_info["name"])
                 self.tree_types[tree_info["name"][1:].split("_")[0]][tree_info["name"]] = tree_info
+                # self.tree_types[tree_info["name"][1:].split("_")[0]].append(tree_info)
 
             self.dict_of_trees[tree_info["name"]] = t
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
+        # Loop through tree types
         for key in self.tree_types:
             if key=="run":
                 setattr(self, "trun", self.dict_of_trees["trun"])
             else:
-                max_analysis_level=0
+                max_analysis_level=-1
+                # Loop through trees in the current tree type
                 for key1 in self.tree_types[key].keys():
                     el = self.tree_types[key][key1]
-                    if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
-                        max_analysis_level = el["analysis_level"]
+                    # If there is analysis level info in the tree, attribute each level and max level
+                    if "analysis_level" in el:
+                        if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
+                            max_analysis_level = el["analysis_level"]
+                            max_anal_tree_name = el["name"]
+                        setattr(self, key+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
+                    # In case there is no analysis level info in the tree (old trees), just take the last one
+                    elif max_analysis_level==-1:
                         max_anal_tree_name = el["name"]
-                    setattr(self, key+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
-                setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
 
+                setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
+                self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def print(self):
         """Prints the information about the TTrees in the file"""
@@ -6374,7 +6459,7 @@ class DataFile():
     def get_tree_info(self, tree):
         """Gets the information about the tree"""
 
-        tree_info = {"evt_cnt": tree.GetEntries(), "name":tree.GetName()}
+        tree_info = {"evt_cnt": tree.GetEntries(), "name": tree.GetName()}
 
         tree_info.update(DataTree.get_metadata_as_dict(tree))
 
