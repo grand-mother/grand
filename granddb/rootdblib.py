@@ -1,4 +1,5 @@
-import uproot
+#import uproot
+import ROOT
 import grand.io.root_trees as groot
 
 
@@ -124,11 +125,19 @@ class RootFile:
 
     ## We retreive the list of Ttrees in the file  and store them as the corresponding class from root_files.py in the dict TreeList
     def __init__(self, f_name):
-        myfile = uproot.open(f_name)
-        for key in myfile.keys(cycle=False):
+        myfile = ROOT.TFile(f_name)
+        for keyo in myfile.GetListOfKeys():
+            key = keyo.GetName()
             if key in self.TreeToClass:
                 self.TreeList[key] = self.TreeToClass[key](f_name)
             else:
                 print(key + " is unknown")
 
-
+    ## OLD VERSION WITH UPROOT
+#    def __init__(self, f_name):
+#        myfile = uproot.open(f_name)
+#        for key in myfile.keys(cycle=False):
+#            if key in self.TreeToClass:
+#                self.TreeList[key] = self.TreeToClass[key](f_name)
+#            else:
+#                print(key + " is unknown")
