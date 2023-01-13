@@ -1,4 +1,4 @@
-FROM grandlib_base
+FROM grandlib/dev
 
 WORKDIR /opt/grandlib
 

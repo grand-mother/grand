@@ -28,6 +28,11 @@ class DataTable:
     phase_theta: Union[Number, numpy.ndarray]
     leff_phi: Union[Number, numpy.ndarray]
     phase_phi: Union[Number, numpy.ndarray]
+    
+    def __post_init__(self):
+        logger.info(f'size phase {self.phase_theta.shape}')
+        self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
+        self.phase_phi_rad = numpy.deg2rad(self.phase_phi)
 
     def __post_init__(self):
         logger.info(f"size phase {self.phase_theta.shape}")
