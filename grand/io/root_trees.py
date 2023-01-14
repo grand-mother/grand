@@ -6527,9 +6527,6 @@ class DataFile():
 
                     el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
-
-
-                # setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
                 tree_class = getattr(thismodule, max_anal_tree_type)
                 tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
                 setattr(self, tree_class.get_default_tree_name(), tree_instance)
@@ -6538,14 +6535,18 @@ class DataFile():
     def print(self):
         """Prints the information about the TTrees in the file"""
 
-        print(f"Tree classes found in the file: {[el for el in self.tree_types.keys()]}")
+        print(f"File size: {self.f.GetSize():40}")
+        print(f"Tree classes found in the file: {str([el for el in self.tree_types.keys()]):40}")
 
         for key in self.tree_types:
-            print(f"Trees of type {key}: {[el for el in self.tree_types[key].keys()]}")
+            print(f"Trees of type {key:<40}: {str([el for el in self.tree_types[key].keys()]):<40}")
 
         for key in self.tree_types:
             for key1 in self.tree_types[key].keys():
-                print(f"{key1}: {self.tree_types[key][key1]}")
+                # print(f"{key1}: {self.tree_types[key][key1]}")
+                print(key1)
+                for key2 in self.tree_types[key][key1]:
+                    print(f"  {key2:<20}: {self.tree_types[key][key1][key2]}")
 
 
     def get_tree_info(self, tree):
@@ -6584,7 +6585,6 @@ class DataFile():
             # Check if traces have constant length
             if np.unique(np.array(traces_lengths).ravel()).size!=1:
                 logger.warning(f"Traces lengths vary through events or axes for {tree.tree_name}! {traces_lengths}")
-                # print("Traces lengths vary through events or axes! ", traces_lengths)
                 return traces_lengths
             else:
                 return traces_lengths[0][0]
