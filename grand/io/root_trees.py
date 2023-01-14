@@ -996,7 +996,42 @@ class MotherEventTree(DataTree):
 
         return traces_lengths
 
+    def get_list_of_dus(self):
+        """Gets the list of all detector units used for each event"""
 
+        # If there are no detector unit ids in the tree, return None
+        if self._tree.GetListOfLeaves().FindObject("du_id") == None:
+            return None
+
+        # Try to store the currently read entry
+        try:
+            current_entry = self._tree.GetReadEntry()
+        # if failed, store None
+        except:
+            current_entry = None
+
+        # Get the detector units branch
+        du_br = self._tree.GetBranch("du_id")
+
+        detector_units = []
+        # Loop through all entries
+        for i in range(du_br.GetEntries()):
+            du_br.GetEntry(i)
+            detector_units.append(self.du_id)
+
+        # If there was an entry read before this action, come back to this entry
+        if current_entry is not None:
+            du_br.GetEntry(current_entry)
+
+        return detector_units
+
+    def get_list_of_all_used_dus(self):
+        """Compiles the list of all detector units used in the events of the tree"""
+        dus = self.get_list_of_dus()
+        if dus is not None:
+            return np.unique(np.array(dus).flatten()).tolist()
+        else:
+            return None
 
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass
@@ -6471,8 +6506,11 @@ class DataFile():
                         max_anal_tree_type = el["type"]
 
                     traces_lenghts = self._get_traces_lengths(tree_instance)
+                    dus = self._get_list_of_all_used_dus(tree_instance)
                     if traces_lenghts is not None:
                         el["traces_lengths"] = traces_lenghts
+                    if dus is not None:
+                        el["dus"] = dus
 
                 # setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
                 tree_class = getattr(thismodule, max_anal_tree_type)
@@ -6534,7 +6572,12 @@ class DataFile():
             else:
                 return traces_lengths[0][0]
 
-
+    def _get_list_of_all_used_dus(self, tree):
+        """Get list of all data units used in the tree"""
+        if issubclass(tree.__class__, MotherEventTree):
+            return tree.get_list_of_all_used_dus()
+        else:
+            return None
 
     def print_tree_info(self, tree):
         """Prints the information about the tree"""
