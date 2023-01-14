@@ -974,6 +974,29 @@ class MotherEventTree(DataTree):
 
         return True
 
+    def get_traces_lengths(self):
+        """Gets the traces lengths for each event"""
+
+        # If there are no traces in the tree, return None
+        if self._tree.GetListOfLeaves().FindObject("trace_x")==None and self._tree.GetListOfLeaves().FindObject("trace_0")==None:
+            return None
+
+        traces_lengths = []
+        # For ADC traces - 4 traces, different names
+        if "ADC" in self.__class__.__name__:
+            traces_suffixes = [0, 1, 2, 3]
+        # Other traces
+        else:
+            traces_suffixes = ["x", "y", "z"]
+
+        # Get sizes of each traces
+        for i in traces_suffixes:
+                cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
+                traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
+
+        return traces_lengths
+
+
 
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass
@@ -6433,22 +6456,28 @@ class DataFile():
                 # Loop through trees in the current tree type
                 for key1 in self.tree_types[key].keys():
                     el = self.tree_types[key][key1]
+                    tree_class = getattr(thismodule, el["type"])
+                    tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
                     # If there is analysis level info in the tree, attribute each level and max level
                     if "analysis_level" in el:
                         if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
                             max_analysis_level = el["analysis_level"]
                             max_anal_tree_name = el["name"]
                             max_anal_tree_type = el["type"]
-                        tree_class = getattr(thismodule, el["type"])
-                        setattr(self, tree_class.get_default_tree_name()+"_"+str(el["analysis_level"]), self.dict_of_trees[el["name"]])
+                        setattr(self, tree_class.get_default_tree_name()+"_"+str(el["analysis_level"]), tree_instance)
                     # In case there is no analysis level info in the tree (old trees), just take the last one
                     elif max_analysis_level==-1:
                         max_anal_tree_name = el["name"]
                         max_anal_tree_type = el["type"]
 
+                    traces_lenghts = self._get_traces_lengths(tree_instance)
+                    if traces_lenghts is not None:
+                        el["traces_lengths"] = traces_lenghts
+
                 # setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
                 tree_class = getattr(thismodule, max_anal_tree_type)
-                setattr(self, tree_class.get_default_tree_name(), tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name]))
+                tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+                setattr(self, tree_class.get_default_tree_name(), tree_instance)
                 self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def print(self):
@@ -6485,6 +6514,26 @@ class DataFile():
         tree_info.update(meta_dict)
 
         return tree_info
+
+
+    def _get_traces_lengths(self, tree):
+        """Adds traces info to event trees"""
+        # If tree is not of Event class (contains traces), do nothing
+        if not issubclass(tree.__class__, MotherEventTree) or "simdata" in tree.tree_name or "zhaires" in tree.tree_name:
+            return None
+        else:
+            traces_lengths = tree.get_traces_lengths()
+            if traces_lengths is None:
+                return None
+
+            # Check if traces have constant length
+            if np.unique(np.array(traces_lengths).ravel()).size!=1:
+                logger.warning(f"Traces lengths vary through events or axes for {tree.tree_name}! {traces_lengths}")
+                # print("Traces lengths vary through events or axes! ", traces_lengths)
+                return traces_lengths
+            else:
+                return traces_lengths[0][0]
+
 
 
     def print_tree_info(self, tree):
