@@ -600,6 +600,18 @@ class DataTree:
             except TypeError:
                 logger.warning(f"The type of {k} in {source.tree_name} and {self._tree_name} differs. Not copying.")
 
+    def get_tree_size(self):
+        """Get the tree size in memory and on disk, similar to what comes from the Print()"""
+        mem_size = self._tree.GetDirectory().GetKey(self._tree_name).GetKeylen()
+        mem_size += self._tree.GetTotBytes()
+        b = ROOT.TBufferFile(ROOT.TBuffer.kWrite, 10000)
+        self._tree.IsA().WriteBuffer(b, self._tree)
+        mem_size += b.Length()
+
+        disk_size = self._tree.GetZipBytes()
+        disk_size += self._tree.GetDirectory().GetKey(self._tree_name).GetNbytes()
+
+        return mem_size, disk_size
 
 ## A mother class for classes with Run values
 @dataclass
@@ -6506,11 +6518,16 @@ class DataFile():
                         max_anal_tree_type = el["type"]
 
                     traces_lenghts = self._get_traces_lengths(tree_instance)
-                    dus = self._get_list_of_all_used_dus(tree_instance)
                     if traces_lenghts is not None:
                         el["traces_lengths"] = traces_lenghts
+
+                    dus = self._get_list_of_all_used_dus(tree_instance)
                     if dus is not None:
                         el["dus"] = dus
+
+                    el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
+
+
 
                 # setattr(self, "t"+key, self.dict_of_trees[max_anal_tree_name])
                 tree_class = getattr(thismodule, max_anal_tree_type)
