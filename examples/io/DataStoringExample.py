@@ -42,6 +42,7 @@ for ev in range(event_count):
 # ********** Generarte Run Tree ****************
 # It needs to be first, so that the Event trees can find it. However, it need some informations from them, so will be filled at the end
 trun = RunTree()
+trun.comment = "Generated DataStoringExample.py"
 trun.run_number = 0
 trun.site = "dummy site"
 trun.first_event = 0
@@ -54,6 +55,7 @@ print("Wrote trun")
 
 # Create the ADC counts tree
 tadccounts = ADCEventTree()
+tadccounts.comment = "Generated DataStoringExample.py"
 
 # fill the tree with the generated events
 for ev in range(event_count):
@@ -138,6 +140,7 @@ adc2v = 0.9 / 8192
 
 # Create the ADC counts tree
 tvoltage = VoltageEventTree()
+tvoltage.comment = "Generated DataStoringExample.py"
 
 # fill the tree with the generated events
 for ev in range(event_count):
@@ -221,6 +224,7 @@ v2ef = 1.17
 
 # Create the ADC counts tree
 tefield = EfieldEventTree()
+tefield.comment = "Generated DataStoringExample.py"
 
 # fill the tree with every second of generated events - dumb selection
 for ev in range(0, event_count, 2):
@@ -317,6 +321,7 @@ print("Wrote tefield")
 
 # Generation of shower data for each event - this should be reonstruction, but here just dumb values
 tshower = ShowerEventTree()
+tshower.comment = "Generated DataStoringExample.py"
 # Loop through all Efield entries
 for i in range(tefield.get_entries()):
     # Get the Efield event
