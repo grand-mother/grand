@@ -11,11 +11,11 @@ import ROOT
 @dataclass
 class Antenna():
     ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
-    position: np.ndarray = np.zeros(3, np.float32)
+    position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Antenna tilt
-    tilt: np.ndarray = np.zeros(3, np.float32)
+    tilt: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Antenna acceleration - this comes from hardware. ToDo: perhaps recalculate to tilt or remove tilt?
-    acceleration: np.ndarray = np.zeros(3, np.float32)
+    acceleration: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
 
     ## The antenna model
     model: Any = 0
@@ -86,24 +86,24 @@ class Timetrace3D():
     ## [ns] n_points x step = total timetrace length
     time_step: float = 0
     ## Start time as unix time with nanoseconds
-    t0: np.datetime64 = np.datetime64(0, 'ns')
+    t0: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
     ## Trigger time as unix time with nanoseconds
-    trigger_time: np.datetime64 = np.datetime64(0, 'ns')
+    trigger_time: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
 
     ## Trace vector in X
-    trace_x: np.ndarray = np.zeros(1, np.float)
+    trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     ## Trace vector in Y
-    trace_y: np.ndarray = np.zeros(1, np.float)
+    trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     ## Trace vector in Z
-    trace_z: np.ndarray = np.zeros(1, np.float)
+    trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
     ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
     ## Hilbert envelope vector in X
-    hilbert_trace_x: np.ndarray = np.zeros(1, np.float)
+    hilbert_trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     ## Hilbert envelope vector in X
-    hilbert_trace_y: np.ndarray = np.zeros(1, np.float)
+    hilbert_trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     ## Hilbert envelope vector in X
-    hilbert_trace_z: np.ndarray = np.zeros(1, np.float)
+    hilbert_trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
     ## ToDo: add additional quantities from the doc?
 
@@ -133,11 +133,11 @@ class Shower():
     ## Shower Xmax [g/cm2]
     Xmax: float = 0
     ## Shower position in the site's reference frame
-    Xmaxpos: np.ndarray = np.zeros(3, dtype=np.float32)
+    Xmaxpos: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-    origin_geoid: np.ndarray = np.zeros(3, dtype=np.float32)
+    origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     ## Poistion of the core on the ground in the site's reference frame
-    core_ground_pos: np.ndarray = np.zeros(3, dtype=np.float32)
+    core_ground_pos: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
 
 ## A class for holding an event
 @dataclass
@@ -166,13 +166,13 @@ class Event():
     ## Is this event associated to a single wave based on reconstruction
     is_wave: bool = False
     ## Vector of origin of plane wave fit
-    origin_planewave: np.ndarray = np.zeros(3, np.float32)
+    origin_planewave: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Chi2 of plane wave fit
-    chi2_planewave: np.ndarray = np.zeros(3, np.float32)
+    chi2_planewave: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Position of the source according to spherical fit
-    origin_sphere: np.ndarray = np.zeros(3, np.float32)
+    origin_sphere: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Chi2 of spherical fit
-    chi2_sphere: np.ndarray = np.zeros(3, np.float32)
+    chi2_sphere: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
 
     ## Is this an EAS?
     is_eas: bool = False
@@ -209,7 +209,7 @@ class Event():
     ## Site latitude
     site_lat: np.float32 = 0
     ## Origin of the coordinate system used for the array
-    origin_geoid: np.ndarray = np.zeros(3, np.float32)
+    origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
 
     # Internal trees
     trun: ROOT.TTree = None
@@ -362,7 +362,7 @@ class Event():
         ## Shower position in the site's reference frame
         self.shower.Xmaxpos = self.teventshower.xmax_pos_shc
         ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-        self.shower.origin_geoid = np.zeros(3)
+        self.shower.origin_geoid = field(default_factory=lambda: np.zeros(3))
         ## Poistion of the core on the ground in the site's reference frame
         self.shower.core_ground_pos = self.teventshower.shower_core_pos
 
