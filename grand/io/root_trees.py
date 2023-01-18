@@ -125,7 +125,7 @@ class DataTree:
     # Comment - if needed, added by user
     _comment: str = ""
     # TTree creation date/time in UTC - a naive time, without timezone set
-    _creation_datetime: datetime.datetime = datetime.datetime.utcnow()
+    _creation_datetime: datetime.datetime = None
 
     # Fields that are not branches
     _nonbranch_fields = [
@@ -153,7 +153,7 @@ class DataTree:
     @property
     def type(self):
         """The type of the tree"""
-        return str(self._tree.GetUserInfo().At(0).GetTitle())
+        return self._type
 
     @type.setter
     def type(self, val: str) -> None:
@@ -161,6 +161,8 @@ class DataTree:
         self._tree.GetUserInfo().RemoveAt(0)
         # Add the provided type
         self._tree.GetUserInfo().AddAt(ROOT.TNamed("type", val), 0)
+        # Update the property
+        self._type = val
 
     @property
     def file(self):
@@ -191,7 +193,7 @@ class DataTree:
     @property
     def comment(self):
         """Comment - if needed, added by user"""
-        return str(self._tree.GetUserInfo().At(1).GetTitle())
+        return self._comment
 
     @comment.setter
     def comment(self, val: str) -> None:
@@ -199,25 +201,28 @@ class DataTree:
         self._tree.GetUserInfo().RemoveAt(1)
         # Add the provided comment
         self._tree.GetUserInfo().AddAt(ROOT.TNamed("comment", val), 1)
+        # Update the property
+        self._comment = val
 
     @property
     def creation_datetime(self):
-        """TTree creation date/time in UTC - a naive time, without timezone set"""
-        # Convert from ROOT's TDatime into Python's datetime object
-        return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(2).GetVal())
+        return self._creation_datetime
 
     @creation_datetime.setter
     def creation_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
         self._tree.GetUserInfo().RemoveAt(2)
-        # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(
-            ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 2
-        )
-
-    # @classmethod
-    # def _type(cls):
-    #     return cls
+        # Add the provided time
+        # If datetime was given
+        if type(val)==datetime.datetime:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 2)
+            self._creation_datetime = val
+        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        elif type(val)==int:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", val), 2)
+            self._creation_datetime = datetime.datetime.fromtimestamp(val)
+        else:
+            raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
 
     @classmethod
     def get_default_tree_name(cls):
@@ -297,6 +302,8 @@ class DataTree:
             else:
                 logger.info(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
+
+        self.assign_metadata()
 
         # Fill the runs/events numbers from the tree (important if it already existed)
         self.fill_entry_list()
@@ -533,12 +540,13 @@ class DataTree:
     def assign_metadata(self):
         """Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree"""
         for i, el in enumerate(self._tree.GetUserInfo()):
-            # meta as TParameter
-            try:
-                setattr(self, "_" + el.GetName(), el.GetVal())
             # meta as TNamed
-            except:
-                setattr(self, "_" + el.GetName(), el.GetTitle())
+            if type(el)==ROOT.TNamed:
+                # setattr(self, "_" + el.GetName(), el.GetTitle())
+                setattr(self, el.GetName(), el.GetTitle())
+            # meta as TParameter
+            else:
+                setattr(self, el.GetName(), el.GetVal())
 
     ## Get entry with indices
     def get_entry_with_index(self, run_no=0, evt_no=0):
@@ -710,7 +718,7 @@ class MotherEventTree(DataTree):
     _event_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     # Unix creation datetime of the source tree; 0 s means no source
-    _source_datetime: datetime.datetime = datetime.datetime.fromtimestamp(0)
+    _source_datetime: datetime.datetime = None
     # The tool used to generate this tree's values from another tree
     _modification_software: str = ""
     # The version of the tool used to generate this tree's values from another tree
@@ -740,21 +748,29 @@ class MotherEventTree(DataTree):
     def source_datetime(self):
         """Unix creation datetime of the source tree; 0 s means no source"""
         # Convert from ROOT's TDatime into Python's datetime object
-        return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
+        # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
+        return self._source_datetime
 
     @source_datetime.setter
     def source_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
         self._tree.GetUserInfo().RemoveAt(3)
-        # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(
-            ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 3
-        )
+
+        # If datetime was given
+        if type(val)==datetime.datetime:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 3)
+            self._source_datetime = val
+        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        elif type(val)==int:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", val), 3)
+            self._source_datetime = datetime.datetime.fromtimestamp(val)
+        else:
+            raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
 
     @property
     def modification_software(self):
         """The tool used to generate this tree's values from another tree"""
-        return str(self._tree.GetUserInfo().At(4).GetTitle())
+        return self._modification_software
 
     @modification_software.setter
     def modification_software(self, val: str) -> None:
@@ -762,11 +778,12 @@ class MotherEventTree(DataTree):
         self._tree.GetUserInfo().RemoveAt(4)
         # Add the provided modification software
         self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 4)
+        self._modification_software = val
 
     @property
     def modification_software_version(self):
         """The tool used to generate this tree's values from another tree"""
-        return str(self._tree.GetUserInfo().At(5).GetTitle())
+        return self._modification_software_version
 
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
@@ -774,11 +791,12 @@ class MotherEventTree(DataTree):
         self._tree.GetUserInfo().RemoveAt(5)
         # Add the provided modification software version
         self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 5)
+        self._modification_software_version = val
 
     @property
     def analysis_level(self):
         """The analysis level of this tree"""
-        return int(self._tree.GetUserInfo().At(6).GetVal())
+        return self._analysis_level
 
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
@@ -786,6 +804,7 @@ class MotherEventTree(DataTree):
         self._tree.GetUserInfo().RemoveAt(6)
         # Add the provided analysis level
         self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 6)
+        self._analysis_level = val
 
     def __post_init__(self):
         super().__post_init__()
