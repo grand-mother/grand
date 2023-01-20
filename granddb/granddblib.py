@@ -4,7 +4,7 @@ from sshtunnel import SSHTunnelForwarder
 import numpy
 import grand.io.root_trees
 import re
-
+import rootdblib as rdb
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
@@ -12,6 +12,12 @@ from sqlalchemy import func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects import postgresql
+import grand.manage_log as mlg
+
+logger = mlg.get_logger_for_script(__name__)
+mlg.create_output_for_logger("debug", log_stdout=True)
+
+
 
 
 def casttodb(value):
@@ -67,7 +73,7 @@ class Database:
 
         if self._sshserv != "" and self._cred is not None:
             self.server = SSHTunnelForwarder(
-                (self._sshserv, self._sshport),
+                (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),
                 ssh_pkey=self._cred.keyfile(),
                 remote_bind_address=(self._host, self._port)
@@ -80,7 +86,7 @@ class Database:
         #self.connect()
 
         engine = create_engine(
-            'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + self.port() + '/' + self._dbname)
+            'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + str(self.port()) + '/' + self._dbname)
         Base = automap_base()
 
         Base.prepare(engine, reflect=True)
@@ -140,7 +146,7 @@ class Database:
             record = cursor.fetchall()
             cursor.close()
         except psycopg2.DatabaseError as e:
-            print(f'Error {e}')
+            logger.error(f"Error {e}")
         return record
 
 #    def insert(self, query):
@@ -183,6 +189,31 @@ class Database:
         query = "select * from get_repos()"
         record = self.select(str(query))
         return record
+
+    ## Search a file in DB.
+    # Search first file with provided filename. If not found, search file with original_name = filename
+    # returns the filename and the different locations for it
+    def SearchFile(self, filename):
+        result = []
+        file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'], self.tables()['repository'])\
+            .join(self.tables()['file_location'], self.tables()['file_location'].id_file==self.tables()['file'].id_file) \
+            .join(self.tables()['repository'],self.tables()['repository'].id_repository==self.tables()['file_location'].id_repository) \
+            .filter(self.tables()['file'].filename == filename)\
+            .order_by(self.tables()['repository'].id_repository)\
+            .all()
+
+        if len(file) == 0:
+            file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'], self.tables()['repository'])\
+                .join(self.tables()['file_location'], self.tables()['file_location'].id_file==self.tables()['file'].id_file) \
+                .join(self.tables()['repository'],self.tables()['repository'].id_repository==self.tables()['file_location'].id_repository) \
+                .filter(self.tables()['file'].original_name == filename)\
+                .order_by(self.tables()['repository'].id_repository)\
+                .all()
+
+        for record in file:
+            logger.debug(f"file {record.file.filename} found in repository {record.repository.repository}")
+            result.append([record.file.filename, record.repository.repository])
+        return result
 
     ## @brief For parameter <param> of value <value> in table <table> this function will check if the param is a foreign key and if yes it will
     # search de corresponding id in the foreign table. If found, it will return it, if not, it will add the parameter in the foreign table
@@ -247,12 +278,12 @@ class Database:
         savepoint.commit()
         return id_repository
 
-    ## @brief Function to register (if necessary) a file into the database.
+    ## @brief Function to register (if necessary) a filename into the database.
     # It will first search if the file is already known in the DB and check the repository.
     # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e it's a new file)
     # and false if the file was already registered. This is usefull to know if the metadata of the file needs to be read
     # or not
-    def register_file(self, filename, newfilename, id_repository, provider):
+    def register_filename(self, filename, newfilename, id_repository, provider):
         import os
         register_file = False
         isnewfile = False
@@ -287,3 +318,87 @@ class Database:
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
         return idfile, isnewfile
+
+    ## @brief Function to register (if necessary) the content of a file into the database.
+    # It will first read the file and walk along datas to determine what has to be registered
+    def register_filecontent(self, file, idfile):
+        tables = {}
+        rfile = rdb.RootFile(file)
+
+        for treename in rfile.TreeList:
+            table = getattr(rfile, treename + "ToDB")['table']
+            if table not in tables:
+                tables[table] = {}
+            # For events we iterates over event_number and run_number
+            if treename in ["teventefield", "teventshowersimdata", "teventshowerzhaires", 'teventshower',
+                            'teventvoltage']:
+                for event, run in rfile.TreeList[treename].get_list_of_events():
+                    if not (run, event) in tables[table]:
+                        tables[table][(run, event)] = {}
+                    rfile.TreeList[treename].get_event(event, run)
+                    for param, field in getattr(rfile, treename + "ToDB").items():
+                        if param != "table":
+                            value = casttodb(getattr(rfile.TreeList[treename], param))
+                            if field.find('id_') >= 0:
+                                value = self.get_or_create_fk('event', field, value)
+                            tables[table][(run, event)][field] = value
+
+            # For runs we iterates over run_number
+            elif treename in ["trun", "trunefieldsimdata"]:
+                for run in rfile.TreeList[treename].get_list_of_runs():
+                    if run not in tables[table]:
+                        tables[table][run] = {}
+                    rfile.TreeList[treename].get_run(run)
+                    for param, field in getattr(rfile, treename + "ToDB").items():
+                        if param != "table":
+                            value = casttodb(getattr(rfile.TreeList[treename], param))
+                            if field.find('id_') >= 0:
+                                value = self.get_or_create_fk('run', field, value)
+                            tables[table][run][field] = value
+
+        # insert runs first, get id_run and update events before inserting event !
+        for r in tables['run']:
+            container = self.tables()['run'](**tables['run'][r])
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+            # update id_run in events
+            novalidevents = []
+            for e in tables['event']:
+                if e[0] == int(container.run_number):
+                    tables['event'][e]['id_run'] = container.id_run
+                else:
+                    # event has no run associated !
+                    # We will not register the event and have to remove this event from the list
+                    novalidevents.append(e)
+            # We will not register the events with no run and have to remove them from the list !
+            # But maybe better to let the program crash (thus comment the next two lines) !!!
+            # for e in novalidevents:
+            #    del tables['event'][e]
+
+        for e in tables['event']:
+            container = self.tables()['event'](**tables['event'][e])
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+            tables['event'][e]['id_event'] = container.id_event
+
+        ## Add file contains
+        for e in tables['event']:
+            container = self.tables()['file_contains'](id_file=idfile, id_run=tables['event'][e]['id_run'],
+                                                                id_event=tables['event'][e]['id_event'])
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+
+        # What if runs without events ? Maybe we should add it to file_contains ? But id_event is primary_key !
+        # So the next lines cannot work !
+        # eventsruns = list(set(tup[0] for tup in [*tables['event']]))
+        # for r in tables['run']:
+        #    if tables['run'][r]['id_run'] not in eventsruns:
+        #        container = dm.database().tables()['file_contains'](id_file=idfile, id_run=tables['run'][r]['id_run'], id_event=None)
+        #        dm.database().sqlalchemysession.add(container)
+        #        dm.database().sqlalchemysession.flush()
+
+    def register_file(self, orgfilename, newfilename, id_repository, provider):
+        idfile, read_file = self.register_filename(orgfilename, newfilename, id_repository, provider)
+        if read_file:
+            self.register_filecontent(newfilename,idfile)
+        self.sqlalchemysession.commit()

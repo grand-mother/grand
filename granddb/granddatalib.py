@@ -1,3 +1,4 @@
+#import logging
 from pathlib import Path
 import scp
 import paramiko
@@ -6,10 +7,23 @@ from configparser import ConfigParser
 import urllib.request
 import os
 import shutil
-import uuid
-import time
 from granddblib import Database
+import socket
+import grand.manage_log as mlg
+import copy
 
+
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__name__)
+
+# define a handler for logger : standard only
+mlg.create_output_for_logger("debug", log_stdout=True)
+
+#logger = log.getLogger(__name__)
+#logger.setLevel(logging.DEBUG)
+#ch = logging.StreamHandler()
+#ch.setLevel(logging.DEBUG)
+#logger.addHandler(ch)
 
 ## @brief Class for managing datas.
 # It will read an inifile where localdirs and different datasources are defined.
@@ -17,6 +31,8 @@ from granddblib import Database
 # be copied in this incoming directory.
 # The inifile will have the following structure :
 # @verbatim
+# [general]
+# provider = "Your name"
 # [directories]
 # localdir = ["./incoming/", "/some/directory/" , "/some/other/directory ]
 # [repositories]
@@ -25,6 +41,8 @@ from granddblib import Database
 # Repo1 = ["user","password","keyfile","keypasswd"]
 # [database]
 # localdb = ["host", port, "dbname", "user", "password", "sshtunnel_server", sshtunnel_port, "sshtunnel_credentials" ]]
+# [registerer]
+# repo2 = "/path/to/repo"
 # @endverbatim
 #  @author Fleg
 #  @date Sept 2022
@@ -36,6 +54,7 @@ class DataManager:
     _credentials: dict = {}
     _referer = None
     _database = None
+    _provider = None
 
     def __init__(self, file="config.ini"):
         configur = ConfigParser()
@@ -43,6 +62,18 @@ class DataManager:
         configur.optionxform = lambda option: option
         self._file = file
         configur.read(file)
+
+        if configur.has_section('general'):
+            for name in configur['general']:
+                ref = json.loads(configur.get('general', name))
+                if name == "provider":
+                    self._provider = ref
+                if name == "socket_timeout":
+                    socket.setdefaulttimeout(int(ref))
+
+        if self._provider == None:
+            logger.error(f"Config file ({self._file}) must have a [general] section with a provider value")
+            exit(1)
 
         # Get credentials
         if configur.has_section('credentials'):
@@ -54,7 +85,7 @@ class DataManager:
             # Get localdirs (the first in the list is the incoming)
             dirlist = json.loads(configur.get('directories', 'localdir'))
             if not dirlist[0].startswith('/'):
-                print("Incoming directory (in " + self._file + " ) must be an absolute path.")
+                logger.error(f"Incoming directory (in {self._file}) must be an absolute path.")
                 exit(1)
             # Add trailing slash if needed
             dirlist = [os.path.join(path, "") for path in dirlist]
@@ -64,7 +95,7 @@ class DataManager:
             # self._repositories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
             self._repositories["localdir"] = Datasource("localdir", "local", "localhost", "", dirlist, self.incoming())
         else:
-            print("Section directories is mandatory in config file " + file)
+            logger.error(f"Section directories is mandatory in config file {file}")
             exit(1)
 
         # Get DB infos
@@ -104,7 +135,7 @@ class DataManager:
         if configur.has_section('registerer'):
             for name in configur['registerer']:
                 ref = json.loads(configur.get('registerer', name))
-                self._referer = self._repositories[name]
+                self._referer = copy.deepcopy(self._repositories[name])
                 self._referer._incoming = os.path.join(ref, "")
                 self._referer.paths().append(self._referer._incoming)
         else:
@@ -118,7 +149,8 @@ class DataManager:
                                                                               self._referer.server(),
                                                                               self._referer.paths(), "")
 
-
+    def provider(self):
+        return self._provider
     def file(self):
         return self._file
 
@@ -137,16 +169,10 @@ class DataManager:
     def referer(self):
         return self._referer
 
-    # Search and get a file by its name.
-    # Look first in localdirs and then in remote repositories. First match is returned.
-    #    def search(self, file):
-    #        res = None
-    #        for rep in self.repositories():
-    #            print("SEARCHING in " + rep.name())
-    #            res = rep.get(file)
-    #            if not (res is None):
-    #                break
-    #        return res
+    ## Search a file in DB.
+    # Search first file with provided filename. If not found, search file with original_name = filename
+    def SearchFileInDB(self, filename):
+        return self.database().SearchFile(filename)
 
     ## Get a file from the repositories.
     # If repo or path given, then directly search there.
@@ -164,13 +190,14 @@ class DataManager:
             if not (repository is None):
                 rep = self.getrepo(repository)
                 if not (rep is None):
+                    logger.debug(f"search in repository {rep.name()}")
                     res = rep.get(file, path)
             # if no repo specified, we search everywhere (skip localdir because already done before)
             else:
                 # for rep in self.repositories():
                 for name, rep in self.repositories().items():
                     if not (rep.protocol() == "local"):
-                        print("SEARCH in " + rep.name())
+                        logger.debug(f"search in repository {rep.name()}")
                         res = rep.get(file)
                         if not (res is None):
                             break
@@ -194,32 +221,16 @@ class DataManager:
                 break
         return res
 
-    # Get file from repository. First search in localdirs if file is present.
 
+    ##Function to register a file into the database. Returns the path to the file in the repository where the file was registered.
+    def register_file(self,filename):
+        newfilename = None
+        file = self.get(filename)
+        if file is not None:
+            newfilename = self.referer().copy(file)
+            self.database().register_file(file, newfilename, self.referer().id_repository, self.provider())
+        return newfilename
 
-#   def getfile(self, file, reponame):
-#       res = None
-#       for dire in self.directories():
-#           res = dire.search(file)
-#           if not (res is None):
-#               print(str(res))
-#               break
-#       if (res is None):
-#           repo = self.getrepo(reponame)
-#           if not (repo is None):
-#               res = repo.search(file)
-#           else:
-#               print("Repository not found !")
-#       return res
-
-# Get file from repository. First search in localdirs if file is present.
-#    def getfile2(self, file, reponame):
-#        for rep in self.repositories():
-#            if ((rep.protocol() == "local") or (rep.name() == reponame)):
-#                res = rep.search(file)
-#                if not (res is None):
-#                    break
-#        return res
 
 
 ## @brief Class for storing credentials to access remote system.
@@ -293,6 +304,8 @@ class Datasource:
         elif protocol == 'https':
             self.__class__ = DatasourceHttps
 
+
+
     def set_credentials(self, credentials):
         self._credentials = credentials
 
@@ -328,11 +341,11 @@ class Datasource:
     # The path to the local copy of the file is returned for further access.
     # If no file is found then None is returned.
     def get(self, file, path=None):
-        print("get method for protocol " + self.protocol() + " not implemented for repository " + self.name())
+        logger.warning(f"get method for protocol {self.protocol()} not implemented for repository {self.name()}")
         return None
 
     def copy(self, pathfile):
-        print("copy method for protocol " + self.protocol() + " not implemented for repository " + self.name())
+        logger.warning(f"copy method for protocol {self.protocol()}  not implemented for repository {self.name()}")
         return None
 
 
@@ -341,20 +354,6 @@ class Datasource:
 # @author Fleg
 # @date Sept 2022
 class DatasourceLocal(Datasource):
-    # Search for file in local directories and return the path to the first corresponding file found.
-    #    def search(self, file):
-    #        found_file = None
-    #        for path in self.paths():
-    #            print("search in localdir " + path + file)
-    #            my_file = Path(path + file)
-    #            if my_file.is_file():
-    #                print("found in localdir " + path + file)
-    #                found_file = path + file
-    #                break
-    #            else:
-    #                print("file " + file + " not found in localdir " + path)
-    #        return found_file
-
     ## Search for file in local directories and return the path to the first corresponding file found.
     def get(self, file, path=None):
         # TODO : Check that path is in self.paths(), if not then copy in incoming ?
@@ -363,20 +362,20 @@ class DatasourceLocal(Datasource):
             my_file = Path(path + file)
             if my_file.is_file():
                 found_file = path + file
-            #else:
-            #    print("file " + file + " not found in localdir " + path)
+            else:
+                logger.debug(f"file {file}  not found in localdir {path}")
         else:
             for path in self.paths():
-                #print("search in localdir " + path + file)
+                logger.debug(f"search in localdir {path}{file}")
                 my_file = Path(path + file)
                 if my_file.is_file():
                     found_file = path + file
                     break
-                #else:
-                #    print("file " + file + " not found in localdir " + path)
+                else:
+                    logger.debug(f"file {file} not found in localdir {path}")
 
-        #if not found_file is None:
-            #print("found in localdir " + path + file)
+        if not found_file is None:
+            logger.debug(f"file found in localdir {path}{file}")
 
         return found_file
 
@@ -394,38 +393,7 @@ class DatasourceLocal(Datasource):
 # @author Fleg
 # @date Sept 2022
 class DatasourceSsh(Datasource):
-    # Search for files in remote location accessed through ssh.
-    # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
-    # If file is not found, then None is returned.
-    #    def search(self, file):
-    #        localfile = None
-    #        client = paramiko.SSHClient()
-    #        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    #        client.connect(hostname=self.server(),
-    #                       port=self.port() if self.port() != "" else None,
-    #                       username=self.credentials().user() if self.credentials().user() != "" else None,
-    #                       key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
-    #                       passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
-    #
-    #        for path in self.paths():
-    #            stdin, stdout, stderr = client.exec_command('ls ' + path + file)
-    #            lines = list(map(lambda s: s.strip(), stdout.readlines()))
-    #
-    #            if len(lines) == 1:
-    #                print("file found in repository " + self.name() + " at " + lines[0].strip('\n'))
-    #                print("copy to " + self.incoming() + file)
-    #                scpp = scp.SCPClient(client.get_transport())
-    #                scpp.get(lines[0].strip('\n'), self.incoming() + file)
-    #                localfile = self.incoming() + file
-    #                break
-    #            else:
-    #                print("file not found in repository " + self.name() + path)
-    #
-    #        return localfile
 
-    ## Search for files in remote location accessed through ssh.
-    # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
-    # If file is not found, then None is returned.
     def set_client(self):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -441,22 +409,27 @@ class DatasourceSsh(Datasource):
         localfile = None
         client = self.set_client()
         if not (path is None):
-            #print("search " + path + file + "@" + self.name())
+            logger.debug(f"search {path}{file} @ {self.name()}")
             localfile = self.get_file(client, path, file)
         else:
             for path in self.paths():
-                #print("search " + path + file + " @ " + self.name())
+                logger.debug(f"search {path}{file} @ {self.name()}")
                 localfile = self.get_file(client, path, file)
                 if not (localfile is None):
                     break
+        return localfile
+
+    ## Search for files in remote location accessed through ssh.
+    # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
+    # If file is not found, then None is returned.
 
     def get_file(self, client, path, file):
         localfile = None
         stdin, stdout, stderr = client.exec_command('ls ' + path + file)
         lines = list(map(lambda s: s.strip(), stdout.readlines()))
         if len(lines) == 1:
-            #print("file found in repository " + self.name() + " at " + lines[0].strip('\n'))
-            #print("copy to " + self.incoming() + file)
+            logger.debug(f"file found in repository {self.name()}  @ " + lines[0].strip('\n'))
+            logger.debug(f"copy to {self.incoming()}{file}")
             scpp = scp.SCPClient(client.get_transport())
             scpp.get(lines[0].strip('\n'), self.incoming() + file)
             localfile = self.incoming() + file
@@ -487,30 +460,6 @@ class DatasourceSsh(Datasource):
 # @author Fleg
 # @date Sept 2022
 class DatasourceHttp(Datasource):
-    # Search for files in remote location accessed through http.
-    # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
-    # If file is not found, then None is returned.
-    # TODO: implement authentification
-    #    prot: str = "http"
-    #    def search(self, file):
-    #        localfile = None
-    #        for path in self.paths():
-    #            url = self.prot + '://' + self.server() + '/' + path + '/' + file
-    #            try:
-    #                urllib.request.urlretrieve(url, self.incoming() + file)
-    #                print("file found in repository " + url)
-    #                localfile = self.incoming() + file
-    #                break
-    #
-    #            except urllib.error.HTTPError as e:
-    #                print("error searching repository "  + url + " : "+ str(e.code) + " " + e.msg)
-    #                #print(e.__dict__)
-    #            except urllib.error.URLError as e:
-    #                print("error searching repository "  + url + " : "+ str(e.reason))
-    #            except:
-    #                print("file not found in repository " + url)
-    #        return localfile
-
     ## Search for files in remote location accessed through http.
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
     # If file is not found, then None is returned.
@@ -518,10 +467,10 @@ class DatasourceHttp(Datasource):
     def get(self, file, path=None):
         localfile = None
         if not (path is None):
-            url = self.prot + '://' + self.server() + '/' + path + '/' + file
+            url = self._protocol + '://' + self.server() + '/' + path + '/' + file
 
         for path in self.paths():
-            url = self.prot + '://' + self.server() + '/' + path + '/' + file
+            url = self._protocol + '://' + self.server() + '/' + path + '/' + file
             localfile = self.get_file(url, file)
             if not (localfile is None):
                 break
@@ -529,19 +478,23 @@ class DatasourceHttp(Datasource):
         return localfile
 
     def get_file(self, url, file):
+        #import socket
         localfile = None
         try:
+            #socket.setdefaulttimeout(10)
             urllib.request.urlretrieve(url, self.incoming() + file)
-            #print("file found in repository " + url)
+            logger.debug(f"file found in repository {url}")
             localfile = self.incoming() + file
 
         except urllib.error.HTTPError as e:
-            print("error searching repository " + url + " : " + str(e.code) + " " + e.msg)
-            # print(e.__dict__)
+            if e.code == 404:
+                logger.debug(f"file not found in repository {url}")
+            else:
+                logger.error(f"http error searching repository {url} : {str(e.code)}  {e.msg}")
         except urllib.error.URLError as e:
-            print("error searching repository " + url + " : " + str(e.reason))
-        #       except:
-        #           print("file not found in repository " + url)
+            logger.error(f"url error searching repository {url} :  {str(e.reason)}")
+        #except:
+        #    print("file not found in repository " + url)
         return localfile
 
 
@@ -551,9 +504,8 @@ class DatasourceHttp(Datasource):
 # @date Sept 2022
 class DatasourceHttps(DatasourceHttp):
     ## Search for files in remote location accessed through https.
-    # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
-    # If file is not found, then None is returned.
-    prot: str = "https"
+    # Same process as http but https instead !
+    _protocol = "https"
 
 
 def uniquename(filename):
