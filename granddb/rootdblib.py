@@ -133,6 +133,14 @@ class RootFile:
             else:
                 print(key + " is unknown")
 
+    def copy_content_to(self, file):
+        for treename in self.TreeList:
+            print(treename)
+            tree = self.TreeToClass[treename](file)
+            tree.copy_contents(self.TreeList[treename])
+            tree.write()
+
+
     ## OLD VERSION WITH UPROOT
 #    def __init__(self, f_name):
 #        myfile = uproot.open(f_name)
