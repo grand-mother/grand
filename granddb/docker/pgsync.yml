@@ -1,0 +1,43 @@
+# source database URL
+# database URLs take the format of:
+#   postgres://user:password@host:port/dbname
+#
+# we recommend a command which outputs a database URL
+# so sensitive information is not included in this file
+#
+# we *highly recommend* you use sslmode=verify-full when possible
+# see https://ankane.org/postgres-sslmode-explained for more info
+#from: $(some_command)?sslmode=require
+#from: postgres://postgres:password@localhost:5432/grand
+from: postgres://postgres:password@lpndocker01.in2p3.fr:5432/granddb
+
+# destination database URL
+to: postgres://postgres:password@localhost:5432/granddb
+
+# exclude tables
+# exclude:
+#   - table1
+#   - table2
+
+#define groups
+groups:
+  grand:
+     protocol: "where id_protocol <= 100000"
+
+# define groups
+# groups:
+#   group1:
+#     - table1
+#     - table2
+
+# sync specific schemas
+# schemas:
+#   - public
+
+# protect sensitive information
+#data_rules:
+#  email: unique_email
+#  phone: unique_phone
+#  last_name: random_letter
+#  birthday: random_date
+#  encrypted_*: null
