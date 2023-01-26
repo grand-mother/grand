@@ -41,7 +41,7 @@ if [ $dbexists -ne 0 ]; then
   PGPASSWORD=$POSTGRES_PASSWORD psql  -h localhost postgres postgres -c "CREATE DATABASE granddb WITH OWNER = grandadmin ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf8' LC_CTYPE = 'en_US.utf8' TABLESPACE = pg_default CONNECTION LIMIT = -1 IS_TEMPLATE = False;"
 
   echo "Get main DB infos"
-  PGPASSWORD=xHuR7s26F3ebNjm2 pg_dump -h ccpgsqlexpe.in2p3.fr -p 6550 -s -Fc -U grandreplicator  -d granddb >granddbdump.sql
+  PGPASSWORD=xxxxxxxxxxxxx pg_dump -h ccpgsqlexpe.in2p3.fr -p 6550 -s -Fc -U grandreplicator  -d granddb >granddbdump.sql
   echo "Set up database"
 
   PGPASSWORD=$GRANDADMIN_PASSWORD pg_restore -h localhost -U grandadmin  -d granddb granddbdump.sql
