@@ -1,22 +1,22 @@
 #! pylint: disable=line-too-long
-"""!
-@brief
+"""
+brief:
   Define output logger (file/stdout) for given level of message and some tools to use 
   logger in script.
 
-@note
+note:
   This module can be copied and used in other projects by modifying the following 2 variables:
        - NAME_PKG_GIT
        - NAME_ROOT_LIB
 
-@section log_mod How used python logger in library module
+Log_mod How used python logger in library module:
 
 The best practice is indicated in
 <a href="https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial">
 python documentation</a> 
 In particular this note:
 
-@note
+note:
   It is strongly advised that you do not add any handlers other than NullHandler to 
   your library’s loggers. This is because the configuration of handlers is the 
   prerogative of the application developer who uses your library. The application 
@@ -27,11 +27,11 @@ In particular this note:
   
 and this one
 
-@note
+note:
   A good convention to use when naming loggers is to use a module-level logger, 
   in each module which uses logging, named as follows:
  
- @code{.py}
+ 
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -40,15 +40,15 @@ def foo(var):
   logger.debug('call foo()')
   logger.info(f"var={var}")
   ...
- @endcode
+ 
 
-@warning
+:warning:
   Use always f-string to include current value of variables in message, or create a 
   string message with ".format" before and give it to logger.
 
 and that's all. Nothing in "__init__.py". Now in a script
 
-@section log_script How to define logger in a script and outputs
+Log_script How to define logger in a script and outputs:
 
 So the job of script is to define handler for logger, but script can also write log ans 
 the value of "__name__" is "__main__" so a specific logger definition is 
@@ -65,7 +65,7 @@ A couple of function  can be useful to:
 
 Example:
 
- @code{.py}
+
 import grand.manage_log as mlg
 
 # specific logger definition for script because __mane__ is "__main__"
@@ -88,11 +88,10 @@ logger.info(mlg.chrono_string_duration())
 
 logger.info(mlg.string_end_script())
 plt.show()
- @endcode
+
 
 Result log file
 
- @code{.txt}
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] ===========> begin at 2022-01-17T11:28:09Z <===========
 11:28:09.621  INFO [grand.examples.simulation.shower-event 27] 
@@ -109,7 +108,6 @@ Result log file
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] 
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] ===========> End at 2022-01-17T11:28:10Z <===========
 11:28:10.396  INFO [grand.examples.simulation.shower-event 121] Duration (h:m:s): 0:00:00.775352
- @endcode
 """
 # pylint: enable=line-too-long
 
@@ -148,7 +146,7 @@ logger = logging.getLogger(__name__)
 def create_output_for_logger(
     log_level="info", log_file=None, log_stdout=True, log_root=NAME_ROOT_LIB
 ):
-    """!Create a logger with handler for grand
+    """Create a logger with handler for grand
 
     :param log_level: standard python logger level define in DICT_LOG_LEVELS
     :param log_file: create a log file with path and name log_file
@@ -190,7 +188,7 @@ def create_output_for_logger(
 
 
 def close_output_for_logger(log_root=NAME_ROOT_LIB):
-    """! close handler for test"""
+    """close handler for test"""
     my_logger = logging.getLogger(log_root)
     handlers = my_logger.handlers[:]
     for handler in handlers:
@@ -199,7 +197,7 @@ def close_output_for_logger(log_root=NAME_ROOT_LIB):
 
 
 def get_logger_for_script(pfile):
-    """!
+    """
     Return a logger with root logger is defined by the path of the file.
 
     @note
@@ -216,7 +214,7 @@ def get_logger_for_script(pfile):
 
 
 def string_begin_script():
-    """!
+    """
     Return string start message with date, time
     """
     global START_BEGIN  # pylint: disable=global-statement
@@ -226,7 +224,7 @@ def string_begin_script():
 
 
 def string_end_script():
-    """!
+    """
     Return string end message with date, time and duration
     """
     ret = f"\n\n===========> End at {_get_string_now()} <===========\n"
@@ -235,7 +233,7 @@ def string_end_script():
 
 
 def chrono_start():
-    """!
+    """
     Start chonometer
     """
     global START_CHRONO  # pylint: disable=global-statement
@@ -244,7 +242,7 @@ def chrono_start():
 
 
 def chrono_string_duration():
-    """!
+    """
     Return string with duration between call chrono_start()
     """
     return f"-----> Chrono duration (h:m:s): {datetime.now()-START_CHRONO}"
@@ -256,7 +254,7 @@ def chrono_string_duration():
 
 
 def _check_logger_level(str_level):
-    """!Check the validity of the logger level specified"""
+    """Check the validity of the logger level specified"""
     try:
         return DICT_LOG_LEVELS[str_level]
     except KeyError:
@@ -269,14 +267,14 @@ def _check_logger_level(str_level):
 
 
 def _get_string_now():
-    """!
+    """
     Returns string with current date, time
     """
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _get_logger_path(pfile):
-    """!
+    """
     :param pfile: give __file__ where this is function is call
     @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
     """
@@ -298,12 +296,12 @@ def _get_logger_path(pfile):
 
 
 class _MyFormatter(logging.Formatter):
-    """!Formatter without date and with millisecond by default"""
+    """Formatter without date and with millisecond by default"""
 
     converter = datetime.fromtimestamp  # type: ignore
 
     def formatTime(self, record, datefmt=None):
-        """!Define my specific time format for GRAND logger.
+        """Define my specific time format for GRAND logger.
 
         @note
           This method is not used directly by the user.
@@ -320,7 +318,7 @@ class _MyFormatter(logging.Formatter):
         return str_date
 
     def format(self, record):
-        """!
+        """
         Override format function to manage multiline with \n
 
         @note

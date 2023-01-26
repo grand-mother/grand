@@ -1,25 +1,16 @@
 """
-Fundamental Coordinate Data Structure:
-	np.array([[x1, x2, ..], 
-			  [y1, y2, ..], 
-			  [z1, z2, ..]]
-	np.array([[x1], 
-			  [y1], 
-			  [z1]]
-
 units: 
-	energy: GeV
-	time  : nanosecond
-	length: m
-	voltage: microVolt
-	Efield: microVolt/m
-	Bfield: nanoTesla
-	angles: degree
-	grammage: g/cm2
-	Density: g/cm3 
-	frequency: Hz
-	resistance: Ohm
-
+ *	energy: GeV
+ * time  : nanosecond
+ *	length: m
+ *	voltage: microVolt
+ * 	Efield: microVolt/m
+ *	Bfield: nanoTesla
+ *	angles: degree
+ *	grammage: g/cm2
+ *	Density: g/cm3 
+ *	frequency: Hz
+ *	resistance: Ohm
 """
 
 from __future__ import annotations
@@ -105,6 +96,7 @@ def geoid_undulation(latitude=None, longitude=None):
     """
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
+    logger.info(f"geoid_undulation for {latitude} {longitude}")
     return geoid.elevation(longitude, latitude)
 
 
@@ -750,17 +742,17 @@ class ECEF(CartesianRepresentation):
     Earth’s center. This coordinate frame is fixed with respect to the Earth
     (i.e., rotates along with the Earth). Units are in meters. The three axis are
     defined as follows:
-    x:	Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).
-    y:	Passes through the equator 90 degrees east of the Prime Meridian
-            (latitude = 0, longitude = 90 degrees).
-    z:	Passes through the North Pole (latitude = 90 degrees, longitude = any value).
+        * x :	Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).
+        * y :	Passes through the equator 90 degrees east of the Prime Meridian (latitude = 0, longitude = 90 degrees).
+        * z :	Passes through the North Pole (latitude = 90 degrees, longitude = any value).
 
-    Note:
-            Reason to have __new__ and __init__ is to store obstime as instance attribute.
-            obstime will be saved as class attribute if only __new__ is used. This means
-            if obstime is modified for one case anywhere during calculation, obstime for
-            all cases will be modified.
-            Todo: find an elegant way to do this.
+    :Note:
+        Reason to have __new__ and __init__ is to store obstime as instance attribute.
+        obstime will be saved as class attribute if only __new__ is used. This means
+        if obstime is modified for one case anywhere during calculation, obstime for
+        all cases will be modified.
+
+    :Todo: find an elegant way to do this.
     """
 
     def __new__(
@@ -1063,7 +1055,6 @@ class LTP(CartesianRepresentation):
         frame: Any = None,
         rotation=None,
     ):
-        logger.info('LTP start __init__')
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRANDCS cs. OR latitude=deg, longitude=deg, height=meter.
         if frame is not None:
@@ -1106,7 +1097,6 @@ class LTP(CartesianRepresentation):
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude
         height = geodetic_loc.height
-        logger.info('    test orientation')
         # Calculate magnetic field declination if magnetic=True. Used to define GRANDCS coordinate system.
         if magnetic and declination is None:
             from .geomagnet import Geomagnet
@@ -1135,6 +1125,7 @@ class LTP(CartesianRepresentation):
 
             else:
                 raise ValueError(f"Invalid frame orientation `{name}`")
+
         # unit vectors (basis) in ECEF frame of reference.
         # These are the basis of the GRANDCS coordinate system if orientation='NWU' and magnetic=True.
         ux = vector(orientation[0])
@@ -1178,7 +1169,6 @@ class LTP(CartesianRepresentation):
             self.x = x
             self.y = y
             self.z = z
-        logger.info('LTP end __init__')
 
     def ltp_to_ltp(self, ltp):
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.

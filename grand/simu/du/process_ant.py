@@ -10,7 +10,6 @@ from typing import Union, Any
 
 import numpy as np
 import scipy.fft as sf
-import scipy.interpolate as sipl
 
 from grand.geo.coordinates import (
     LTP,
@@ -126,7 +125,7 @@ class AntennaProcessing:
             #     fill_value=(0.0, 0.0),
             #     assume_sorted=True,
             # )(self.freqs_out_hz)
-            
+
             logger.debug(f"val initia : {np.min(val):.3e} {np.max(val):.3e}")
             logger.debug(
                 f"Ref    val : {np.min(val_sphere_interpol):.3e} {np.max(val_sphere_interpol):.3e}"

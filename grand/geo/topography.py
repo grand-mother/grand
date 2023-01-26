@@ -131,8 +131,8 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
 
 
 def update_data(coordinates=None, clear: bool = False, radius: float = None):
-
-    """Update the cache of topography data.
+    """
+    Update the cache of topography data.
     Data are stored in https://github.com/grand-mother/store/releases.
     Locally saved as .../grand/grand/tools/data/topography/*.SRTMGL1.hgt
     """

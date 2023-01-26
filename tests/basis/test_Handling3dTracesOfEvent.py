@@ -39,11 +39,10 @@ def test_define_t_samples():
     t_start_ns = np.arange(3, dtype=np.float32) * 10 + 100
     f_samp_mhz = 2000
     tr3d.init_traces(traces, du_id, t_start_ns, f_samp_mhz)
-    tr3d.define_t_samples()
     assert np.allclose(tr3d.t_samples[0], np.array([100.0, 100.5, 101.0, 101.5]))
     tr3d.f_samp_mhz = 1000
     tr3d.t_samples = np.zeros(0)
-    tr3d.define_t_samples()
+    tr3d._define_t_samples()
     assert np.allclose(tr3d.t_samples[-1], np.array([120.0, 121, 122.0, 123]))
     
 

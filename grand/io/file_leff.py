@@ -34,6 +34,11 @@ class DataTable:
         self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
         self.phase_phi_rad = numpy.deg2rad(self.phase_phi)
 
+    def __post_init__(self):
+        logger.info(f"size phase {self.phase_theta.shape}")
+        self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
+        self.phase_phi_rad = numpy.deg2rad(self.phase_phi)
+
     def dump(self, node: io.DataNode) -> None:
         for field in fields(self):
             node.write(field.name, getattr(self, field.name), dtype="f4")

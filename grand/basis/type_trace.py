@@ -26,21 +26,20 @@ class ElectricField:
     frame: Union[LTP, GRANDCS, None] = None
 
     def __post_init__(self):
-        self.fft_e_3d = np.zeros((3,0))
+        self.fft_e_3d = np.zeros((3, 0))
         assert self.a_time.shape[0] == self.e_xyz.shape[1]
-        
+
     def get_fft(self, size_sig_pad):
         """
-        
+
         :param size_sig_pad:
         :type size_sig_pad:
         """
-        if self.fft_e_3d.size > 0:        
+        if self.fft_e_3d.size > 0:
             return self.fft_e_3d
         else:
             self.fft_e_3d = sf.rfft(self.e_xyz, n=size_sig_pad)
             return self.fft_e_3d
-        
 
     @classmethod
     def load(cls, node: io.DataNode):
