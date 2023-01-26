@@ -3,8 +3,6 @@ FROM postgres:15.1-bullseye
 RUN apt-get update
 RUN apt-get -y install ruby ruby-dev libpq-dev build-essential wget curl
 RUN gem install pgsync
-#RUN curl https://www.pgadmin.org/static/packages_pgadmin_org.pub | apt-key add
-#RUN sh -c 'echo "deb https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list'
 RUN apt-get update
 RUN mkdir /app
 WORKDIR /app
