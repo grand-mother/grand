@@ -9,7 +9,7 @@
 # see https://ankane.org/postgres-sslmode-explained for more info
 #from: $(some_command)?sslmode=require
 #from: postgres://postgres:password@localhost:5432/grand
-from: postgres://grandreplicator:xxxxxx@dbserver.in2p3.fr:6550/granddb
+from: postgres://MASTER_USER:MASTER_PASSWORD@MASTER_SERVER:MASTER_PORT/MASTER_DB
 
 # destination database URL
 to: postgres://grandadmin:GRANDADMIN_PASSWORD@localhost:5432/granddb
