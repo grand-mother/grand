@@ -17,13 +17,13 @@ docker run --name granddb \
   -e MASTER_PASSWORD=$MASTER_PASSWORD \
 	-p $WEB_PORT:8081 \
 	-p $DB_PORT:5432 \
-	-v /home/fleg/DB-postgres:/var/lib/postgresql/data \
+	-v $DB_PATH:/var/lib/postgresql/data \
 	-v /etc/passwd:/etc/passwd:ro \
 	-u `id -u`:`id -g` \
 	--rm \
 	-d granddb:latest
 
 docker container exec -u root -it granddb /app/create-db.bash
-if [ $WEB_PORT != "" ]; then
+if [ "$WEB_PORT" != "" ]; then
   docker container exec -u root -d granddb /app/start-web.bash
 fi
