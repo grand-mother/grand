@@ -30,7 +30,7 @@ echo "localhost:5432:*:postgres:$POSTGRES_PASSWORD" >> /root/.pgpass
 chmod 600 /root/.pgpass
 
 # Wait for DB to be up
-looper=2
+looper=1
 until psql -h localhost postgres postgres -tc "select 1 FROM pg_user" -d postgres &> /dev/null
 do
   echo "waiting for database server to be ready...$looper"
@@ -56,18 +56,20 @@ if [ $dbexists -ne 0 ]; then
   echo "Set up database"
 
   pg_restore -h localhost -U grandadmin  -d granddb granddbdump.sql
-  rm granddbdump.sql
+  #rm granddbdump.sql
 fi
 
 echo "Run pgsync"
-pgsync  --defer-constraints --preserve
+#pgsync  --defer-constraints --preserve
+pgsync  --defer-constraints grand
 
 seq=$(psql -h localhost -d granddb grandadmin -tc "select sequence_name from information_schema.sequences where sequence_catalog='granddb' ORDER BY sequence_name ;")
 
 for i in $seq
 do
         cur=$(psql -h localhost -d granddb grandadmin -tc "select last_value from $i ;")
-        if [ $cur -lt 4500000000000000000 ]; then
-                psql -h localhost -d granddb grandadmin -tc "SELECT setval('$i', 4500000000000000000, true);" &> /dev/null
+        half=$(psql -h localhost -d granddb grandadmin -tc "select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='$i' ;")
+        if [ $cur -lt $half ]; then
+                psql -h localhost -d granddb grandadmin -tc "SELECT setval('$i', $half, true);" &> /dev/null
         fi
 done
