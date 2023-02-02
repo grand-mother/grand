@@ -1,25 +1,10 @@
 # source database URL
-# database URLs take the format of:
-#   postgres://user:password@host:port/dbname
-#
-# we recommend a command which outputs a database URL
-# so sensitive information is not included in this file
-#
-# we *highly recommend* you use sslmode=verify-full when possible
-# see https://ankane.org/postgres-sslmode-explained for more info
-#from: $(some_command)?sslmode=require
-#from: postgres://postgres:password@localhost:5432/grand
 from: postgres://MASTER_USER:MASTER_PASSWORD@MASTER_SERVER:MASTER_PORT/MASTER_DB
 
 # destination database URL
 to: postgres://grandadmin:GRANDADMIN_PASSWORD@localhost:5432/granddb
 
-# exclude tables
-# exclude:
-#   - table1
-#   - table2
 
-#define groups
 groups:
   grand:
     protocol: "where id_protocol < (select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='protocol_id_protocol_seq')"
@@ -49,20 +34,3 @@ groups:
     file_contains: "where id_file < (select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='file_id_file_seq') and id_run < (select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='run_id_run_seq') and id_event < (select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='event_id_event_seq')"
 
 
-# define groups
-# groups:
-#   group1:
-#     - table1
-#     - table2
-
-# sync specific schemas
-# schemas:
-#   - public
-
-# protect sensitive information
-#data_rules:
-#  email: unique_email
-#  phone: unique_phone
-#  last_name: random_letter
-#  birthday: random_date
-#  encrypted_*: null

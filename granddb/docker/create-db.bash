@@ -56,7 +56,7 @@ if [ $dbexists -ne 0 ]; then
   echo "Set up database"
 
   pg_restore -h localhost -U grandadmin  -d granddb granddbdump.sql
-  #rm granddbdump.sql
+  rm granddbdump.sql
 fi
 
 echo "Run pgsync"

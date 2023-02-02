@@ -4,7 +4,6 @@ if [ $(stat -c %a db.conf) != 600 ]; then
   exit 1
 fi
 source db.conf
-#----- Configuration -------#
 
 docker run --name granddb \
 	-e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \

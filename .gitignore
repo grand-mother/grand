@@ -64,3 +64,4 @@ docs/apidoc-only/sphinx/source/grand.*
 
 /stored_data.root
 /ecl.txt
+granddb/docker/db.conf
