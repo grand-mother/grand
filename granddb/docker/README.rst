@@ -16,7 +16,7 @@ Install
 ------
 To set up a local DB follow these steps :
 
-* Configure the db.conf file. To get the master DB password please send a signed email to fleg@lpnhe.in2p3.fr. Also provide the IP adress from which you will run the docker (because there is an access list for the master DB and we need to authorize your machine to access the master DB).
+* Rename the db.conf.sample into db.conf and edit the file to set up your configuration. To get the master DB password please send a signed email to fleg@lpnhe.in2p3.fr. Also provide the IP adress from which you will run the docker (because there is an access list for the master DB and we need to authorize your machine to access the master DB).
 * Build the docker with the command
 .. code:: bash
 
