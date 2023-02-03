@@ -496,17 +496,19 @@ class Event():
         self.teventvoltage.run_number = self.run_number
         self.teventvoltage.event_number = self.event_number
 
-        # Loop through voltages and antennas and copy the contents into the tree
-        for v,a in zip(self.voltages, self.antennas):
-            self.teventvoltage.trace_x.append(np.array(v.trace_x).astype(np.float32))
-            self.teventvoltage.trace_y.append(np.array(v.trace_y).astype(np.float32))
-            self.teventvoltage.trace_z.append(np.array(v.trace_z).astype(np.float32))
+        # Copy the contents of voltages to the tree
+        # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
+        self.teventvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
+        self.teventvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
+        self.teventvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
 
-            self.teventvoltage.atm_temperature.append(a.atm_temperature)
-            self.teventvoltage.atm_pressure.append(a.atm_pressure)
-            self.teventvoltage.atm_humidity.append(a.atm_humidity)
-            self.teventvoltage.battery_level.append(a.battery_level)
-            self.teventvoltage.firmware_version.append(a.firmware_version)
+        # Copy the contents of antennas to the tree
+        # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
+        self.teventvoltage.atm_temperature = np.array([np.array(a.atm_temperature) for a in self.antennas])
+        self.teventvoltage.atm_pressure = np.array([np.array(a.atm_pressure) for a in self.antennas])
+        self.teventvoltage.atm_humidity = np.array([np.array(a.atm_humidity) for a in self.antennas])
+        self.teventvoltage.battery_level = np.array([np.array(a.battery_level) for a in self.antennas])
+        self.teventvoltage.firmware_version = np.array([np.array(a.firmware_version) for a in self.antennas])
 
         self.teventvoltage.fill()
 
@@ -530,11 +532,11 @@ class Event():
         self.teventefield.run_number = self.run_number
         self.teventefield.event_number = self.event_number
 
-        # Loop through efields and copy the contents into the tree
-        for v in self.efields:
-            self.teventefield.trace_x.append(np.array(v.trace_x).astype(np.float32))
-            self.teventefield.trace_y.append(np.array(v.trace_y).astype(np.float32))
-            self.teventefield.trace_z.append(np.array(v.trace_z).astype(np.float32))
+        # Copy the contents of efields to the tree
+        # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
+        self.teventefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
+        self.teventefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
+        self.teventefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
 
         self.teventefield.fill()
 
