@@ -28,11 +28,6 @@ class DataTable:
     phase_theta: Union[Number, numpy.ndarray]
     leff_phi: Union[Number, numpy.ndarray]
     phase_phi: Union[Number, numpy.ndarray]
-    
-    def __post_init__(self):
-        logger.info(f'size phase {self.phase_theta.shape}')
-        self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
-        self.phase_phi_rad = numpy.deg2rad(self.phase_phi)
 
     def __post_init__(self):
         logger.info(f"size phase {self.phase_theta.shape}")
@@ -50,6 +45,20 @@ class DataTable:
             data[field.name] = node.read(field.name)
         return DataTable(**data)
 
+    def compute_leff_cartesian(self):
+        """
+        Swith Leff modulus, argument representation to cartesian (real and imaginary component)
+        :param self:
+        """
+        self.leff_phi_cart = self.leff_phi * numpy.exp(1j * self.phase_phi_rad)
+        delattr(self, "leff_phi")
+        delattr(self, "phase_phi")
+        delattr(self, "phase_phi_rad")
+        self.leff_theta_cart = self.leff_theta * numpy.exp(1j * self.phase_theta_rad)
+        delattr(self, "leff_theta")
+        delattr(self, "phase_theta")
+        delattr(self, "phase_theta_rad")
+        logger.debug(f"self.leff_phi_cart: {self.leff_phi_cart.shape}")
 
 @dataclass
 class TabulatedAntennaModel(object):
@@ -109,8 +118,15 @@ class TabulatedAntennaModel(object):
         n_theta = len(numpy.unique(theta[0, :]))
         n_phi = int(R.shape[1] / n_theta)
         shape = (n_f, n_phi, n_theta)
-        # logger.debug(shape)
-        # logger.debug(lefft.shape)
+        logger.debug(f"shape freq, phi, theta: {f.shape} {phi.shape} {theta.shape}")
+        logger.debug(f"shape R, X: {R.shape} {X.shape} {R.dtype} {X.dtype}")
+        logger.debug(f"shape module tetha : {lefft.shape}")
+        logger.debug(f"shape arg tetha : {phaset.shape}")
+        logger.debug(f"type leff  : {lefft.dtype}")
+        logger.debug(f"type f  : {f.dtype}")
+        logger.debug(f"type phi  : {phi.dtype}")
+        logger.debug(f"min max resistance  : {R.min()} {R.max()}")
+        logger.debug(f"min max reactance  : {X.min()} {X.max()}")
         dtype = "f4"
         f = f[:, 0].astype(dtype) * 1.0e6  # MHz --> Hz
         theta = theta[0, :n_theta].astype(dtype)  # deg
