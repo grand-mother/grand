@@ -38,3 +38,16 @@ Synchronization is automatically done when starting the docker with startdbgrand
    docker container exec  -it -u root granddb /app/update-db.bash
    
 
+Technical details
+-----------------
+
+Database is postgresql (version 15.1.).
+
+Separation between "official" datas (in the master DB) and user datas (in the local DB) uses sequences indexes of tables. Basically, tables have primary index to identify each record. Depending on the tables, these indexes are smallint (1-32,767), integer (1-2,147,483,647) or bigint (1-9,223,372,036,854,775,807). The choice of type depends on the number of row we can expect in the table. For example, the number of protocol to access datas will be a few at max... thus we will use smallint; on the other side, the number of events will be huge... thus for events we use bigint.
+On the master DB, indexes starts at 1. On the replicated local DB indexes starts at halh of the maximal possible value for the key (i.e. 16383 for smallint, 1073741823 for integer and 4,611686018×10¹⁸ for bigint). Thus datas from the master DB and local user datas are clearly separated.  
+
+Sync with master DB is performed using pgsync (https://github.com/ankane/pgsync). This solution allows to synchronize only a part of the datas. Basically, it's configured to synchronize datas from the master DB (i.e. with indexes between 1 and halfmax) and leave users data (with indexes between halfmax and max) unchanged.
+
+Web browser is pgweb (https://github.com/sosedoff/pgweb/).
+
+
