@@ -22,7 +22,7 @@ logger = mlg.get_logger_for_script(__file__)
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
 G_path_ant_300 = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
-G_path_ant = grand_add_path_data_model("detector/HorizonAntenna_EWarm_leff_loaded.npy")
+# G_path_ant = grand_add_path_data_model("detector/HorizonAntenna_EWarm_leff_loaded.npy")
 G_r_ant = TabulatedAntennaModel.load(G_path_ant_300)
 
 
@@ -64,13 +64,29 @@ def plot_resp_antenna_fix_theta(theta_deg=0, nb_phi=10):
     a_idx_phi = np.searchsorted(G_r_ant.table.phi, a_phi)
     idx_theta = np.searchsorted(G_r_ant.table.theta, theta_deg)
     plt.figure()
+    li_st = ['-', '--', '-.', ':']
     plt.title(f"module response antenna theta={theta_deg}deg")
-    for idx_phi in a_idx_phi:
-        plt.plot(G_r_ant.table.frequency / 1e6, G_r_ant.table.leff_phi[:, idx_phi, idx_theta], label=f"phi={G_r_ant.table.phi[idx_phi]}")
+    for idx, idx_phi in enumerate(a_idx_phi):
+        plt.plot(G_r_ant.table.frequency / 1e6, G_r_ant.table.leff_phi[:, idx_phi, idx_theta], linestyle=li_st[idx] , label=f"phi={G_r_ant.table.phi[idx_phi]}")
     plt.legend()
     plt.grid()
 
 
+def info_leff():
+    print('\nFreq')
+    print("nb freq sample : ", G_r_ant.table.frequency.shape)
+    print("min max freq [MHz]:\n", G_r_ant.table.frequency[0] / 1e6, G_r_ant.table.frequency[-1] / 1e6)
+    print('\nTheta (~longitude)')
+    print("nb sample : ", G_r_ant.table.theta.shape)
+    print("min max :\n", G_r_ant.table.theta[0], G_r_ant.table.theta[-1])
+    print('\nPhi (~lattitude)')
+    print("nb sample : ", G_r_ant.table.phi.shape)
+    print("min max :\n", G_r_ant.table.phi[0], G_r_ant.table.phi[-1])
+    print('\nleff_theta')
+    print("shape module : ", G_r_ant.table.leff_theta.shape)
+    print("shape arg : ", G_r_ant.table.phase_theta.shape)
+    print("type : ", G_r_ant.table.phase_theta.dtype)
+    
 def plot_kernel_resp_ant(): 
     # Load the radio shower simulation data
     showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
@@ -113,25 +129,24 @@ def plot_kernel_resp_ant():
     field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)
     plt.figure()
     plt.plot(np.real(antenna.leff_frame_ant[0]), label="x real")
-    #plt.plot(np.real(antenna.lx), label="lx real")
+    # plt.plot(np.real(antenna.lx), label="lx real")
     plt.legend()
     plt.grid()
     plt.figure()
     plt.plot(np.imag(antenna.leff_frame_ant[0]), label="x im")
-    #plt.plot(np.imag(antenna.lx), label="lx im")
+    # plt.plot(np.imag(antenna.lx), label="lx im")
     plt.legend()
     plt.grid()
     plt.figure()
     plt.plot(np.real(antenna.leff_frame_ant[1]), label="y")
-    #plt.plot(antenna.ly, label="ly")
+    # plt.plot(antenna.ly, label="ly")
     plt.legend()
     plt.grid()
     plt.figure()
     plt.plot(np.real(antenna.leff_frame_ant[2]), label="z")
-    #plt.plot(antenna.lz, label="lz")
+    # plt.plot(antenna.lz, label="lz")
     plt.legend()
     plt.grid()
-
 
 
 if __name__ == '__main__':
@@ -139,13 +154,13 @@ if __name__ == '__main__':
     logger = mlg.get_logger_for_script(__file__)
     logger.info(mlg.string_begin_script())
     
-    plot_kernel_resp_ant()
+    # plot_kernel_resp_ant()
     
     # study_file_resp_antenna()
     # plot_resp_antenna(90, 80)
     # plot_resp_antenna_fix_theta(80, 4)
     # plot_resp_antenna_fix_theta(88, 4)
-    
+    info_leff()
     #########
     logger.info(mlg.string_end_script())
     plt.show()
