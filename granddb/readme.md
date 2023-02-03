@@ -1,1 +1,64 @@
-Datamanager
+This section regroups the different libraries to interact with datas in Grand.
+
+# DataManager
+
+Datamanager object is the main object to access datas. It first get it's configuration from an inifile (config.ini by default).
+
+## Inifile
+
+Inifile is organized in sections. The 6 sections are [general][directories][repositories][credentials][database][registerer]
+
+    [general]
+    provider = "Your name"
+    socket_timeout = 5
+  
+    [directories]
+    localdir = ["/path/to/incoming/dir", "/another/local/directory"]
+    
+    [repositories]
+    ; Name = [protocol,server, port, [paths]]
+    CC = ["ssh","cca.in2p3.fr",22,["/path/to/datas/","/another/path/"]]
+    WEB = [ "https", "github.com" , 443, ["/grand-mother/data_challenge1/raw/main/coarse_subei_traces_root/"]]
+  
+    [credentials]
+    ; Name =  [user, password, keyfile, keypasswd]
+    CC = ["login","","",""]
+    CCIN2P3 = ["login","","",""]
+    SSHTUNNEL = ["ssh_login","","",""]
+  
+    [database]
+    ; Name = [server, port, database, login, passwd, sshtunnel_server, sshtunnel_port, sshtunnel_credentials ]
+    database = ["dbserver.in2p3.fr", "" ,"dbname", "dbuser", "dbpass","ssh_tunnel.in2p3.fr", 22, "SSHTUNNEL"]
+
+    [registerer]
+    CCIN2P3 = "/sps/trend/fleg/INCOMING"
+  
+
+Directories are **local** directories where data should be. The first path in localdir will be used as an incoming folder (see below).
+Repositories are **distant** places where data should be. Repositories are accessed using a protocol. The following protocols are supported : ssh, http, https, local.
+
+
+## Datamanager
+When instantiate, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
+
+The get(filename) function fill perform the following actions :
+- Search if a file called < filename > exists in localdirs. 
+  - If yes, returns the path to the file.
+  - If no, search for the file in the various repositories.
+    - If found in a repository, then get the file (using protocol for the repository) and copy it in the incoming local directory and return the path to the newly copied file.
+    - If not, return None.
+ 
+  
+  
+### Usage
+    import granddatalib
+    dm = granddatalib.DataManager('config.ini')
+    file="Coarse3.root"
+    print(dm.get(file))
+
+Search can be restricted/forced on only one repository by specifiying the repository name as second argument to the get function:
+
+    print(dm.get(file, "CCIN2P3"))
+
+The search function will return the list of repositories/directories where a file can be found.
+
