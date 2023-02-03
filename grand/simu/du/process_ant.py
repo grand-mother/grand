@@ -57,6 +57,14 @@ class AntennaProcessing:
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftfreq.html
         self.size_fft = 2 * (a_freq.shape[0] - 1)
         logger.debug(f"size_fft: {self.size_fft}")
+        # define idx of frequence where Leff isn't null
+        step_freq = self.freqs_out_hz[1]
+        self.idx_freq_min = int(self.model_leff.table.frequency[0] / step_freq)
+        self.idx_freq_max = int(self.model_leff.table.frequency[-1] / step_freq) + 1
+        logger.debug(f"idx freq min/max : {self.idx_freq_min} {self.idx_freq_max}")
+        logger.debug(
+            f"freq min/max : {self.freqs_out_hz[self.idx_freq_min]} {self.freqs_out_hz[self.idx_freq_max]}"
+        )
 
     def effective_length(
         self,
@@ -102,6 +110,8 @@ class AntennaProcessing:
               * rp0, rp1 for phi axis, with rp0 + rp1 = 1 [1]
               * rt0, rt1 for theta axis, with rt0 + rt1 = 1 [2]
             """
+            logger.debug(f"val shape: {val.shape}")
+            logger.debug(f"rp0 , rt0 : {rp0} {rt0}")
             # fmt: off
             val_sphere_interpol = rp0 * rt0 * val[:, ip0, it0] \
                      +rp1 * rt0 * val[:, ip1, it0] \
@@ -113,19 +123,21 @@ class AntennaProcessing:
             # so sum of weight is 1, it's also a linear interpolation by angle on sphere
             logger.debug(f"Ref freq: {freq_ref_hz[0]:.3e} {np.max(freq_ref_hz):.3e}")
             logger.debug(f"Interp  : {self.freqs_out_hz[0]:.3e} {np.max(self.freqs_out_hz):.3e}")
-            val_interp = np.interp(
-                self.freqs_out_hz, freq_ref_hz, val_sphere_interpol, left=0, right=0
-            )
+            if False:
+                val_interp = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+                val_interp_band = np.interp(
+                    self.freqs_out_hz[self.idx_freq_min : self.idx_freq_max + 1],
+                    freq_ref_hz,
+                    val_sphere_interpol,
+                    left=0,
+                    right=0,
+                )
+                val_interp[self.idx_freq_min : self.idx_freq_max + 1] = val_interp_band
+            else:
+                val_interp = np.interp(
+                    self.freqs_out_hz, freq_ref_hz, val_sphere_interpol, left=0, right=0
+                )
             # NOTE: scipy interp1d isn'r better than numpy interp
-            # val_interp = sipl.interp1d(
-            #     freq_ref_hz,
-            #     val_sphere_interpol,
-            #     copy=False,
-            #     bounds_error=False,
-            #     fill_value=(0.0, 0.0),
-            #     assume_sorted=True,
-            # )(self.freqs_out_hz)
-
             logger.debug(f"val initia : {np.min(val):.3e} {np.max(val):.3e}")
             logger.debug(
                 f"Ref    val : {np.min(val_sphere_interpol):.3e} {np.max(val_sphere_interpol):.3e}"
@@ -193,16 +205,13 @@ class AntennaProcessing:
             self.size_fft = sf.next_fast_len(e_xyz.shape[1])
             self.freqs_out_hz = fftfreq(self.size_fft, efield.a_time)
         logger.debug(f"size_fft={self.size_fft}")
-        # frequency [Hz]
+        # Leff ref frequency  [Hz]
         freq_ref_hz = table.frequency
-        ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
-        lpr = interp_sphere_freq(table.leff_phi)  # LWP. m
-        lta = interp_sphere_freq(table.phase_theta_rad)
-        lpa = interp_sphere_freq(table.phase_phi_rad)
-        # Pack the result as a Cartesian vector with complex values
+        # interpolation Leff theta and phi
+        logger.debug(f"leff_phi_cart: {table.leff_phi_cart.shape}")
+        l_t = interp_sphere_freq(table.leff_theta_cart)
+        l_p = interp_sphere_freq(table.leff_phi_cart)
         # fmt: off
-        l_t = ltr*np.exp(1j * lta)
-        l_p = lpr*np.exp(1j * lpa)
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
         c_p, s_p = np.cos(p_rad), np.sin(p_rad)
@@ -247,7 +256,8 @@ class AntennaProcessing:
         logger.debug(fft_leff.shape)
         # E is CartesianRepresentation
         fft_e = efield.get_fft(self.size_fft)
-        logger.debug(f"size_fft={self.size_fft}")
+        logger.debug(f"size_fft leff={fft_leff.shape}")
+        logger.debug(f"size_fft efield={fft_e.shape}")
         # convol e_xyz field by Leff in Fourier space
         self.fft_resp_volt = (
             fft_e[0] * fft_leff[0] + fft_e[1] * fft_leff[1] + fft_e[2] * fft_leff[2]

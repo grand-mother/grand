@@ -93,6 +93,7 @@ def plot_lna_kernel():
     o_lna.get_fft_rho_3d()
     o_lna.plot_rho_kernel()
 
+
 def plot_vfb_kernel():
     out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
     print(out_f)
@@ -100,7 +101,8 @@ def plot_vfb_kernel():
     o_lna.compute_for_freqs(out_f)
     o_lna.get_fft_vfb_3d()
     o_lna.plot_kernel()
-    
+
+
 def plot_cable_kernel():
     out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6
     print(out_f)
@@ -108,6 +110,7 @@ def plot_cable_kernel():
     o_lna.compute_for_freqs(out_f)
     o_lna.get_fft_cable_3d()
     o_lna.plot_kernel()
+
 
 def plot_total_kernel():
     out_f = sf.rfftfreq(1000, 0.5e-9) / 1e6

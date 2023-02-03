@@ -27,6 +27,10 @@ class AntennaModelGp300(AntennaModelGeneric):
         self.leff_sn = TabulatedAntennaModel.load(path_ant)
         path_ant = grand_add_path_data_model("detector/GP300Antenna_Zarm_leff.npy")
         self.leff_z = TabulatedAntennaModel.load(path_ant)
+        # convert Leff in cartesian
+        self.leff_sn.table.compute_leff_cartesian()
+        self.leff_ew.table.compute_leff_cartesian()
+        self.leff_z.table.compute_leff_cartesian()
         self.d_leff = {"sn": self.leff_sn, "ew": self.leff_ew, "z": self.leff_z}
 
     def plot_effective_length(self):

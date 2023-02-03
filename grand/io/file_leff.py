@@ -60,6 +60,7 @@ class DataTable:
         delattr(self, "phase_theta_rad")
         logger.debug(f"self.leff_phi_cart: {self.leff_phi_cart.shape}")
 
+
 @dataclass
 class TabulatedAntennaModel(object):
     table: DataTable

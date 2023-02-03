@@ -33,7 +33,6 @@ def plot_value(freq, value, s_tle=""):
     plt.grid()
 
 
-
 if __name__ == "__main__":
     logger.info(mlg.string_begin_script())
     # =============================================

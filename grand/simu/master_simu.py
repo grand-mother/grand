@@ -326,7 +326,7 @@ class SimuDetectorUnitEffect:
         """
         logger.info(f"==============>  Processing DU with id: {self.o_efield.du_id[idx_du]}")
         self._get_ant_leff(idx_du)
-        logger.debug(self.ant_leff_sn.model_leff)
+        # logger.debug(self.ant_leff_sn.model_leff)
         # define E field at antenna position
         e_trace = coord.CartesianRepresentation(
             x=self.o_efield.traces[idx_du, 0],
