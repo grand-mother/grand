@@ -1,8 +1,6 @@
 asttokens
 attrs
 backcall
-black
-black[jupyter]
 cffi
 click
 cycler
@@ -51,3 +49,6 @@ urllib3
 astropy
 awkward
 uproot
+jsonschema
+psycopg2
+lmfit
