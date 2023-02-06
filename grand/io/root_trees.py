@@ -320,7 +320,7 @@ class DataTree:
         """Adds the current variable values as a new event to the tree"""
         pass
 
-    def write(self, *args, close_file=True, **kwargs):
+    def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
         """Write the tree to the file"""
         # Add the tree friends to this tree
         self.add_proper_friends()
@@ -333,12 +333,14 @@ class DataTree:
             # The TFile object is already in memory, just use it
             if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
                 self._file = f
+                # File exists, but reopen the file in the update mode in case it was read only
+                self._file.ReOpen("update")
             # Create a new TFile object
             else:
                 creating_file = True
                 # Overwrite requested
                 # ToDo: this does not really seem to work now
-                if "overwrite" in kwargs:
+                if overwrite:
                     self._file = ROOT.TFile(args[0], "recreate")
                 else:
                     # By default append
@@ -359,7 +361,7 @@ class DataTree:
         self._tree.Write(*args)
 
         # If TFile was created here, close it
-        if creating_file and close_file:
+        if (creating_file and close_file) or force_close_file:
             # Need to set 0 directory so that closing of the file does not delete the internal TTree
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
@@ -645,6 +647,11 @@ class MotherRunTree(DataTree):
                 f"A run with run_number={self.run_number} already exists in the TTree."
             )
 
+        # Repoen the file in write mode, if it exists
+        # Reopening in case of different mode takes here ~0.06 s, in case of the same mode, 0.0005 s, so negligible
+        if self._file is not None:
+            self._file.ReOpen("update")
+
         # Fill the tree
         self._tree.Fill()
 
@@ -834,6 +841,11 @@ class MotherEventTree(DataTree):
             raise NotUniqueEvent(
                 f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree {self._tree.GetName()}."
             )
+
+        # Repoen the file in write mode, if it exists
+        # Reopening in case of different mode takes here ~0.06 s, in case of the same mode, 0.0005 s, so negligible
+        if self._file is not None:
+            self._file.ReOpen("update")
 
         # Fill the tree
         self._tree.Fill()
