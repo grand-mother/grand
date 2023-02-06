@@ -623,6 +623,10 @@ class DataTree:
 
         return mem_size, disk_size
 
+    def close_file(self):
+        """Close the file associated to the tree"""
+        self._file.Close()
+
 ## A mother class for classes with Run values
 @dataclass
 class MotherRunTree(DataTree):
