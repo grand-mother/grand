@@ -217,6 +217,10 @@ class Event():
     teventefield: ROOT.TTree = None
     teventshower: ROOT.TTree = None
 
+    # Options
+
+    # Close files automatically after event write? - slower writing but less maitanance by the user
+    auto_file_close: bool = True
 
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
@@ -226,7 +230,6 @@ class Event():
 
     ## Fill this event from trees
     def fill_event_from_trees(self):
-        print(self.file)
         # Check if the file exist
         if not self.file:
             print("No file provided to init from. Aborting.")
@@ -422,29 +425,32 @@ class Event():
     ## Write the run to a file
     def write_run(self, filename, overwrite=False):
         self.fill_run_tree(filename=filename)
-        self.trun.write(filename, overwrite=overwrite)
+        if self.auto_file_close:
+            self.trun.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the voltages to a file
     def write_voltages(self, filename, overwrite=False):
         self.fill_voltage_tree(filename=filename)
-        self.teventvoltage.write(filename, overwrite=overwrite)
+        if self.auto_file_close:
+            self.teventvoltage.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the efields to a file
     def write_efields(self, filename, overwrite=False):
         self.fill_efield_tree(filename=filename)
-        self.teventefield.write(filename, overwrite=overwrite)
+        if self.auto_file_close:
+            self.teventefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the shower to a file
     def write_shower(self, filename, overwrite=False):
         self.fill_shower_tree(filename=filename)
-        self.teventshower.write(filename, overwrite=overwrite)
+        if self.auto_file_close:
+            self.teventshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
 
     ## Fill the run tree from this Event
     def fill_run_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
         if self.trun is not None and not overwrite:
-            print(self.trun)
             raise TreeExists("The trun TTree already exists!")
 
         # Look for the RunTree with the same file and name in the memory
@@ -480,7 +486,6 @@ class Event():
     def fill_voltage_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
         if self.teventvoltage is not None and not overwrite:
-            print(self.teventvoltage)
             raise TreeExists("The teventvoltage TTree already exists!")
 
         # Look for the VoltageEventTree with the same file and name in the memory
@@ -516,7 +521,6 @@ class Event():
     def fill_efield_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
         if self.teventefield is not None and not overwrite:
-            print(self.teventefield)
             raise TreeExists("The teventefield TTree already exists!")
 
         # Look for the EfieldEventTree with the same file and name in the memory
@@ -544,7 +548,6 @@ class Event():
     def fill_shower_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
         if self.teventshower is not None and not overwrite:
-            print(self.teventshower)
             raise TreeExists("The teventshower TTree already exists!")
 
         # Look for the ShowerEventTree with the same file and name in the memory
@@ -572,6 +575,17 @@ class Event():
         self.teventshower.shower_core_pos = self.shower.core_ground_pos
 
         self.teventshower.fill()
+
+    def close_files(self):
+        """Close all files of the all trees - needed when auto_file_close is False"""
+        self.teventshower.write()
+        self.teventefield.write()
+        self.teventvoltage.write()
+        self.trun.write()
+        self.teventshower.close_file()
+        self.teventefield.close_file()
+        self.teventvoltage.close_file()
+        self.trun.close_file()
 
 
 
