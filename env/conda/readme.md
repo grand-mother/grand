@@ -33,10 +33,23 @@ conda env create -n grandlib --file grandlib_env.yml
 conda activate grandlib
 ```
 
-add path to include directory of grandlib conda env 
+Add path to include directory of grandlib conda env 
 
 ```
 export C_INCLUDE_PATH=/home/<?????>/miniconda3/envs/grandlib/include
+```
+
+Initialize GRANDLIB package and GULL/TURTLE compilation, in 
+the root package, do 
+
+```
+source env/setup.sh
+```
+
+Finally launch tests suite package to
+
+```
+grand_quality_test_cov.bash
 ```
 
 ## First install GRANDLIB
