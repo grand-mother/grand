@@ -209,16 +209,23 @@ class AntennaProcessing:
         freq_ref_hz = table.frequency
         # interpolation Leff theta and phi
         logger.debug(f"leff_phi_cart: {table.leff_phi_cart.shape}")
-        l_t = interp_sphere_freq(table.leff_theta_cart)
-        l_p = interp_sphere_freq(table.leff_phi_cart)
+        # l_t = interp_sphere_freq(table.leff_theta_cart)
+        # l_p = interp_sphere_freq(table.leff_phi_cart)
+        ltr = interp_sphere_freq(table.leff_theta_cart.real)
+        lpr = interp_sphere_freq(table.leff_phi_cart.real)
+        lti = interp_sphere_freq(table.leff_theta_cart.imag)
+        lpi = interp_sphere_freq(table.leff_phi_cart.imag)
+        # Pack the result as a Cartesian vector with complex values
+        l_t = ltr + 1j * lti
+        l_p = lpr + 1j * lpi
         # fmt: off
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
         c_p, s_p = np.cos(p_rad), np.sin(p_rad)
-        self.l_x = l_t*c_t*c_p - s_p*l_p
-        self.l_y = l_t*c_t*s_p + c_p*l_p
-        self.l_z = -s_t*l_t
-        del l_t, l_p, c_t, s_t , c_p, s_p
+        self.l_x = l_t * c_t * c_p - s_p * l_p
+        self.l_y = l_t * c_t * s_p + c_p * l_p
+        self.l_z = -s_t * l_t
+        # del l_t, l_p, c_t, s_t , c_p, s_p
         # fmt: on
         # Treating Leff as a vector (no change in magnitude) and transforming
         # it to the shower frame from antenna frame.
