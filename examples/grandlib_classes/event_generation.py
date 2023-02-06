@@ -16,7 +16,8 @@ event_count = 10
 # Loop through events
 for event_number in range(event_count):
     print("Event ", event_number)
-    event = Event()
+    # auto_file_close=False prevents opening/writing to HDD/closing separately for each event - a speed up, but a close call has to be called manually after the loop
+    event = Event(auto_file_close=False)
 
     # Fill in the Run part
 
@@ -73,7 +74,8 @@ for event_number in range(event_count):
     ## Poistion of the core on the ground in the site's reference frame
     event.shower.core_ground_pos = np.random.rand(4)*1000
 
-
-
     event.write(filename)
     print(f"Wrote event {event_number}")
+
+# Close all the files opened by the event with auto_file_close=False
+event.close_files()
