@@ -37,6 +37,7 @@ Add path to include directory of grandlib conda env
 
 ```
 export C_INCLUDE_PATH=/home/<?????>/miniconda3/envs/grandlib/include
+export LIBRARY_PATH=/home/<?????>/miniconda3/envs/grandlib/lib
 ```
 
 Initialize GRANDLIB package and GULL/TURTLE compilation, in 
@@ -71,4 +72,5 @@ pip install -r quality/requirements.txt
 
 ```
 export C_INCLUDE_PATH=/home/jcolley/miniconda3/envs/grandlib-root/include
+export LIBRARY_PATH=/home/<?????>/miniconda3/envs/grandlib/lib
 ```
