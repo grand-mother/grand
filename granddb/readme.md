@@ -49,8 +49,8 @@ The get(filename) function fill perform the following actions :
     - If found in a repository, then get the file (using protocol for the repository) and copy it in the incoming local directory and return the path to the newly copied file.
     - If not, return None.
  
-  
-  
+Usage example:
+
     import granddatalib
     dm = granddatalib.DataManager('config.ini')
     file="Coarse3.root"
