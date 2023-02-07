@@ -41,6 +41,13 @@ The following protocols are supported : ssh, http, https, local.
 
 Sections [database] and [registerer] are optional (these sections can be commented or removed if you don't want to use the database).
 
+For security reasons it is highly recommended NOT to provide any sensitive information as password keyfile or keypasswd
+in this file. For example, if protocol is ssh, it's better to use an ssh-agent
+To run an ssh-agent just do : `eval $(ssh-agent)` and `ssh-add .ssh/id_rsa`
+
+To export your ssh agent from host to docker simply add an environment variable SSH_AUTH_SOCK=/ssh-agent to your docker
+and mount the volume with `-v ${SSH_AUTH_SOCK}:/ssh-agent`
+
 ## Datamanager
 When instantiate, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
 

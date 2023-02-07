@@ -193,39 +193,7 @@ class DataManager:
                 if not (res is None):
                     break
 
-
         return res
-
-
-    ## Get a file from the repositories.
-    # If repo or path given, then directly search there.
-    # If not, search first in localdirs and then in remote repositories. First match is returned.
-#    def get(self, file, repository=None, path=None):
-#        res = None
-#        # First we check that file is not in localdirs
-#        for directory in self.directories():
-#            res = directory.get(file)
-#            if not (res is None):
-#                break
-#        # If file is not in localdir then get it from specified repository
-#        if res is None:
-#            # if repository is given we get file directly from this repo
-#            if not (repository is None):
-#                rep = self.getrepo(repository)
-#                if not (rep is None):
-#                    logger.debug(f"search in repository {rep.name()}")
-#                    res = rep.get(file, path)
-#            # if no repo specified, we search everywhere (skip localdir because already done before)
-#            else:
-#                # for rep in self.repositories():
-#                for name, rep in self.repositories().items():
-#                    if not (rep.protocol() == "local"):
-#                        logger.debug(f"search in repository {rep.name()}")
-#                        res = rep.get(file)
-#                        if not (res is None):
-#                            break
-#        return res
-
 
 
     def copy_to_incoming(self, pathfile):
