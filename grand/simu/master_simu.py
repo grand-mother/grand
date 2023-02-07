@@ -282,6 +282,8 @@ class SimuDetectorUnitEffect:
             self.o_efield.f_samp_mhz,
             self.fact_padding,
         )
+        # precompute interpolation for all antennas with classmethod
+        AntennaProcessing.init_interpolation(self.freqs_mhz, self.ant_model.leff_sn.table.frequency/1e6)
         # compute total transfer function of RF chain
         self.rf_chain.compute_for_freqs(self.freqs_mhz)
         if self.params["flag_add_noise"]:

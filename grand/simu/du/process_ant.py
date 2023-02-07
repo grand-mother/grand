@@ -5,6 +5,7 @@ Processing effective length of antenna
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 from logging import getLogger
 from typing import Union, Any
 
@@ -27,6 +28,20 @@ logger = getLogger(__name__)
 class MissingFrameError(ValueError):
     """Error class"""
 
+@dataclass
+class PreComputeInterp:
+    # index first in band 30-250MHz
+    idx_first : Any=None
+    # index last plus one in band 30-250MHz
+    idx_lastp1 : Any=None
+    # array of index where f_out are in f_sampling
+    idx_itp : Any=None
+    # array of coefficient inf
+    c_inf : Any=None
+    # array of coefficient sup
+    # c_inf + c_sup = 1
+    c_sup : Any=None
+
 
 @dataclass
 class AntennaProcessing:
@@ -36,12 +51,31 @@ class AntennaProcessing:
 
     model_leff: Any
     pos: Union[LTP, GRANDCS]
+    pre_cpt: ClassVar[PreComputeInterp]
 
     def __post_init__(self):
         assert isinstance(self.model_leff, TabulatedAntennaModel)
         self.size_fft = 0
         self.freqs_out_hz = 0
 
+    @classmethod
+    def init_interpolation(cls, freq_out_mhz, freq_sampling_mhz):
+        pre = PreComputeInterp()
+        d_freq_out = freq_out_mhz[1]
+        # + 1 to have first in band
+        idx_first = int(freq_sampling_mhz[0] / d_freq_out) + 1
+        # + 1 to have first out band => the last plus one 
+        idx_lastp1 = int(freq_sampling_mhz[-1] / d_freq_out) + 1
+        pre.idx_first = idx_first
+        pre.idx_lastp1 = idx_lastp1
+        d_freq = freq_sampling_mhz[1] - freq_sampling_mhz[0]
+        freq_in_band = freq_out_mhz[idx_first:idx_lastp1]
+        pre.idx_itp = np.trunc((freq_in_band - freq_sampling_mhz[0])/d_freq).astype(int)
+        pre.c_sup = (freq_in_band - freq_sampling_mhz[pre.idx_itp])/d_freq
+        pre.c_inf = 1 - pre.c_sup
+        cls.pre_cpt = pre
+        logger.info(pre)
+        
     def set_out_freq_mhz(self, a_freq):
         """
         !
@@ -57,16 +91,9 @@ class AntennaProcessing:
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftfreq.html
         self.size_fft = 2 * (a_freq.shape[0] - 1)
         logger.debug(f"size_fft: {self.size_fft}")
-        # define idx of frequence where Leff isn't null
-        step_freq = self.freqs_out_hz[1]
-        self.idx_freq_min = int(self.model_leff.table.frequency[0] / step_freq)
-        self.idx_freq_max = int(self.model_leff.table.frequency[-1] / step_freq) + 1
-        logger.debug(f"idx freq min/max : {self.idx_freq_min} {self.idx_freq_max}")
-        logger.debug(
-            f"freq min/max : {self.freqs_out_hz[self.idx_freq_min]} {self.freqs_out_hz[self.idx_freq_max]}"
-        )
+        
 
-    def effective_length(
+    def effective_length_slow(
         self,
         xmax: LTP,
         efield: ElectricField,
@@ -89,7 +116,7 @@ class AntennaProcessing:
             logger.debug(f"dt_ns = {delta*1e9:.2f}")
             logger.debug(f"{size}")
             return np.fft.rfftfreq(size, delta)
-
+        
         def interp_sphere_freq(val):
             """Linear interpolation (see np.interp() doc) on the frequency axis
 
@@ -227,6 +254,132 @@ class AntennaProcessing:
         self.l_z = -s_t * l_t
         # del l_t, l_p, c_t, s_t , c_p, s_p
         # fmt: on
+        # Treating Leff as a vector (no change in magnitude) and transforming
+        # it to the shower frame from antenna frame.
+        # antenna frame --> ECEF frame --> shower frame
+        # TODO: there might be an easier way to do this.
+        # vector wrt ECEF frame. AntennaProcessing --> ECEF
+        fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
+        fft_leff = np.matmul(self.pos.basis.T, fft_leff_frame_ant)
+        self.leff_frame_ant = fft_leff_frame_ant
+        # vector wrt shower frame. ECEF --> Shower
+        self.fft_leff_frame_shower = np.matmul(frame.basis, fft_leff)
+        return self.fft_leff_frame_shower
+    
+    
+    def effective_length(
+        self,
+        xmax: LTP,
+        efield: ElectricField,
+        frame: Union[LTP, GRANDCS],
+    ) -> CartesianRepresentation:
+        """
+        Calculation of FFT length effective of antenna for a given Xmax position.
+
+        Linear interpolation of template of effective length in Fourier space
+        by tripler (theta, phi, frequency)
+        in direction of the efield source at antenna position
+
+        :param xmax:
+        :param efield:
+        :param frame:
+        """
+        # 'frame' is shower frame. 'self.frame' is antenna frame.
+        if isinstance(xmax, LTP):
+            # shower frame --> antenna frame
+            # TODO: why next takes time ? => LPT init 35 ms ????
+            # direction = xmax.ltp_to_ltp(self.pos)
+            ecef = ECEF(xmax)
+            pos_v = np.array(
+                (
+                    ecef.x - self.pos.location.x,
+                    ecef.y - self.pos.location.y,
+                    ecef.z - self.pos.location.z,
+                )
+            )
+            direction = np.matmul(self.pos.basis, pos_v)
+        else:
+            raise TypeError(f"Provide Xmax in LTP frame instead of {type(xmax)}")
+        # compute efield direction in spherical coordinate in antenna frame
+        direction_cart = CartesianRepresentation(x=direction[0], y=direction[1], z=direction[2])
+        direction_sphr = SphericalRepresentation(direction_cart)
+        theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
+        logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
+        logger.info(
+            f"Source direction (degree): North_gap={float(phi_efield):.1f},\
+             Zenith_dist={float(theta_efield):.1f}"
+        )
+        # logger.debug(f"{theta_efield.r}")
+        # Interpolate using a tri-linear interpolation in (f, phi, theta)
+        # table store antenna response
+        table = self.model_leff.table
+        # delta theta in degree
+        dtheta = table.theta[1] - table.theta[0]
+        # theta_efield between index it0 and it1 in theta antenna response representation
+        rt1 = (theta_efield - table.theta[0]) / dtheta
+        # prevent > 360 deg or >180 deg ?
+        it0 = int(np.floor(rt1) % table.theta.size)
+        it1 = it0 + 1
+        if it1 == table.theta.size:  # Prevent overflow
+            it1, rt1 = it0, 0
+        else:
+            rt1 -= np.floor(rt1)
+        rt0 = 1 - rt1
+        # phi_efield between index ip0 and ip1 in phi antenna response representation
+        dphi = table.phi[1] - table.phi[0]  # deg
+        rp1 = (phi_efield - table.phi[0]) / dphi
+        ip0 = int(np.floor(rp1) % table.phi.size)
+        ip1 = ip0 + 1
+        if ip1 == table.phi.size:  # Results are periodic along phi
+            ip1 = 0
+        rp1 -= np.floor(rp1)
+        rp0 = 1 - rp1
+        # fft
+        # logger.info(efield.e_xyz.info())
+        e_xyz = efield.e_xyz
+        logger.debug(e_xyz.shape)
+        # fft_ex = np.fft.rfft(E.x)
+        # frequency [Hz] with padding
+        if self.size_fft == 0:
+            # must be fix to use precompute interpolation
+            raise
+        logger.debug(f"size_fft={self.size_fft}")
+        # Leff ref frequency  [Hz]
+        freq_ref_hz = table.frequency
+        # interpolation Leff theta and phi on sphere
+        logger.debug(f"leff_phi_cart: {table.leff_phi_cart.shape}")
+        leff = table.leff_theta_cart
+        leff_itp_t = rp0 * rt0 * leff[ ip0, it0, :] \
+            +rp1 * rt0 * leff[ip1, it0, :] \
+            +rp0 * rt1 * leff[ip0, it1, :] \
+            +rp1 * rt1 * leff[ip1, it1, :]
+        leff = table.leff_phi_cart
+        leff_itp_p = rp0 * rt0 * leff[ ip0, it0, :] \
+            +rp1 * rt0 * leff[ip1, it0, :] \
+            +rp0 * rt1 * leff[ip0, it1, :] \
+            +rp1 * rt1 * leff[ip1, it1, :]
+        leff_itp_sph = np.array([leff_itp_t, leff_itp_p])
+        logger.info(leff_itp_sph.shape)
+        # interpolation Leff theta and phi on frequency
+        pre = AntennaProcessing.pre_cpt
+        logger.info(pre.c_inf.shape)
+        logger.info(pre.idx_itp.shape)
+        logger.info(leff_itp_sph[:,pre.idx_itp].shape)
+        leff_itp  = pre.c_inf*leff_itp_sph[:,pre.idx_itp] + pre.c_sup*leff_itp_sph[:,pre.idx_itp + 1]
+        # now add zeros outside leff frequency band and unpack leff theta , phi 
+        l_t = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+        l_t[pre.idx_first:pre.idx_lastp1] = leff_itp[0]
+        l_p = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+        l_p[pre.idx_first:pre.idx_lastp1] = leff_itp[1]
+        # fmt: off
+        t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
+        c_t, s_t = np.cos(t_rad), np.sin(t_rad)
+        c_p, s_p = np.cos(p_rad), np.sin(p_rad)
+        self.l_x = l_t * c_t * c_p - s_p * l_p
+        self.l_y = l_t * c_t * s_p + c_p * l_p
+        self.l_z = -s_t * l_t
+        # fmt: on
+        #del l_t, l_p, c_t, s_t , c_p, s_p
         # Treating Leff as a vector (no change in magnitude) and transforming
         # it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame

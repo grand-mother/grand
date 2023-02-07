@@ -50,11 +50,13 @@ class DataTable:
         Swith Leff modulus, argument representation to cartesian (real and imaginary component)
         :param self:
         """
-        self.leff_phi_cart = self.leff_phi * numpy.exp(1j * self.phase_phi_rad)
+        leff_phi_cart = self.leff_phi * numpy.exp(1j * self.phase_phi_rad)
+        self.leff_phi_cart = numpy.moveaxis(leff_phi_cart, 0, -1)
         delattr(self, "leff_phi")
         delattr(self, "phase_phi")
         delattr(self, "phase_phi_rad")
-        self.leff_theta_cart = self.leff_theta * numpy.exp(1j * self.phase_theta_rad)
+        leff_theta_cart = self.leff_theta * numpy.exp(1j * self.phase_theta_rad)
+        self.leff_theta_cart = numpy.moveaxis(leff_theta_cart, 0, -1)
         delattr(self, "leff_theta")
         delattr(self, "phase_theta")
         delattr(self, "phase_theta_rad")
