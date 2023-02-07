@@ -35,8 +35,11 @@ Inifile is organized in sections. The 6 sections are [general][directories][repo
   
 
 Directories are **local** directories where data should be. The first path in localdir will be used as an incoming folder (see below).
-Repositories are **distant** places where data should be. Repositories are accessed using a protocol. The following protocols are supported : ssh, http, https, local.
+Repositories are **distant** places where data should be. Repositories are accessed using a protocol. 
 
+The following protocols are supported : ssh, http, https, local.
+
+Sections [database] and [registerer] are optional (these sections can be commented or removed if you don't want to use the database).
 
 ## Datamanager
 When instantiate, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
