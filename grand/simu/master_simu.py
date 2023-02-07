@@ -359,9 +359,9 @@ class SimuDetectorUnitEffect:
         # 2) Add galactic noise
         ########################
         if self.params["flag_add_noise"]:
-            noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
-            logger.debug(np.std(noise_gal, axis=1))
-            self.voc[idx_du] += noise_gal
+            #noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
+            #logger.debug(np.std(noise_gal, axis=1))
+            #self.voc[idx_du] += noise_gal
             fft_voc_3d += self.fft_noise_gal_3d[idx_du]
         ########################
         # 3) RF chain
