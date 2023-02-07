@@ -41,6 +41,7 @@ Repositories are **distant** places where data should be. Repositories are acces
 ## Datamanager
 When instantiate, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
 
+### The get function
 The get(filename) function fill perform the following actions :
 - Search if a file called < filename > exists in localdirs. 
   - If yes, returns the path to the file.
@@ -50,7 +51,6 @@ The get(filename) function fill perform the following actions :
  
   
   
-### Usage
     import granddatalib
     dm = granddatalib.DataManager('config.ini')
     file="Coarse3.root"
@@ -60,5 +60,19 @@ Search can be restricted/forced on only one repository by specifiying the reposi
 
     print(dm.get(file, "CCIN2P3"))
 
-The search function will return the list of repositories/directories where a file can be found.
+In this case, only the specified repository is searched, and if the file is found it's copied into the incoming directory. If the file was already present in the incoming directory, it will be overwritten.
 
+Search can also be restricted to a directory in a specified repository (use the desired directory path as third argument). In that case, the path has not to be declared in the config.ini file. This allows you to retreive a "one time shot" file from a specific location.
+
+    dm.get(file, "CC", "/sps/trend/fleg/")
+
+This is also works with localdir (but in that case the file is not copied into the incoming directory, the path to the file is simply returned)
+
+    file = 'main.py'
+    dm.get(file, "localdir")
+    dm.get(file, "localdir","../venv/lib/python3.8/site-packages/pip/_internal/cli/")
+
+### The search function
+
+The search function (not yet properly implemented) will return the list of repositories/directories where a file can be found.
+It will perform a search in the database.
