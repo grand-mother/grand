@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from logging import getLogger
 from pathlib import Path
-from typing import Union, cast
+from typing import Union, cast, Any
 from numbers import Number
 import os.path as osp
 
@@ -28,9 +28,10 @@ class DataTable:
     phase_theta: Union[Number, numpy.ndarray]
     leff_phi: Union[Number, numpy.ndarray]
     phase_phi: Union[Number, numpy.ndarray]
+    leff_phi_cart : Any=None
+    leff_theta_cart : Any=None
 
     def __post_init__(self):
-        logger.info(f"size phase {self.phase_theta.shape}")
         self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
         self.phase_phi_rad = numpy.deg2rad(self.phase_phi)
 
@@ -94,6 +95,8 @@ class TabulatedAntennaModel(object):
             source = Path(source)
             if source.suffix == ".npy":
                 loader = "_load_from_numpy"
+            elif source.suffix == ".npz":
+                loader = "_load_from_numpy_savez"
             else:
                 loader = "_load_from_datafile"
         logger.info(f"Loading tabulated antenna model from {filename}")
@@ -153,3 +156,24 @@ class TabulatedAntennaModel(object):
             phase_phi=phasep,
         )
         return cls(table=t)
+    
+    @classmethod
+    def _load_from_numpy_savez(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
+        f_leff = numpy.load(path)
+        if f_leff["version"][0] == "1.0":
+            t_file = DataTable(
+                frequency=f_leff["freq_mhz"]*1e6,
+                theta=numpy.arange(91).astype(float),
+                phi=numpy.arange(361).astype(float),
+                resistance=0,
+                reactance=0,
+                leff_theta=0,
+                phase_theta=0,
+                leff_phi=0,
+                phase_phi=0,
+                leff_phi_cart = f_leff["leff_phi"],
+                leff_theta_cart = f_leff["leff_theta"]
+            )
+        else:
+            raise
+        return cls(table=t_file)

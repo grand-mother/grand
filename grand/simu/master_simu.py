@@ -121,7 +121,7 @@ class MasterSimuDetectorWithRootIo:
         if not append_file and os.path.exists(file_out):
             logger.info(f"save on new file option => remove file {file_out}")
             os.remove(file_out)
-            time.sleep(1)
+            #time.sleep(1)
         logger.info(f"save result in {file_out}")
         self.tt_volt = VoltageEventTree(file_out)
         # now fill Voltage object
@@ -198,6 +198,7 @@ class SimuDetectorUnitEffect:
         self.du_pos = None
         self.rf_chain = grfc.RfChainGP300()
         self.ant_model = AntennaModelGp300()
+        self.ant_model.set_antenna_model("Light_GP300Antenna")
         # object of class ShowerEvent
         self.o_shower = None
         # object AntennaProcessing for SN arm
@@ -207,7 +208,7 @@ class SimuDetectorUnitEffect:
         # object AntennaProcessing for Z arm
         self.ant_leff_z = None
         self.du_pos = None
-        self.params = {"flag_add_noise": False, "lst": 18.0}
+        self.params = {"flag_add_noise": False,"flag_add_rf": False, "lst": 18.0}
         # FFT info
         self.sig_size = 0
         self.fact_padding = 1.2
@@ -263,6 +264,15 @@ class SimuDetectorUnitEffect:
         """
         logger.debug(f"{f_hour}")
         self.params["lst"] = f_hour
+        
+    def set_flag_rf_chain(self, flag=True):
+        """
+        add RF chain
+
+        :param flag: True to add noise to antenna response
+        :type flag: bool
+        """
+        self.params["flag_add_rf"] = flag
 
     def set_data_efield(self, tr_evt):
         """
@@ -366,7 +376,10 @@ class SimuDetectorUnitEffect:
         ########################
         # 3) RF chain
         ########################
-        fft_all_effect_3d = fft_voc_3d * self.rf_chain.get_tf_3d()
+        if self.params["flag_add_rf"]:
+            fft_all_effect_3d = fft_voc_3d * self.rf_chain.get_tf_3d()
+        else:
+            fft_all_effect_3d = fft_voc_3d
         # inverse FFT and remove zero-padding
         # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
         self.v_out[idx_du] = sf.irfft(fft_all_effect_3d)[:, : self.sig_size]

@@ -35,6 +35,12 @@ def manage_args():
         help="don't add galactic noise.",
     )
     parser.add_argument(
+        "--no_rf",
+        action="store_false",
+        default=True,
+        help="don't add the RF chain (electronic effet), only antenna response.",
+    )
+    parser.add_argument(
         "-o",
         "--out_file",
         help="output file in GRANDROOT format. If the file exists it is overwritten.",
@@ -76,6 +82,7 @@ if __name__ == "__main__":
     master = MasterSimuDetectorWithRootIo(args.file.name)
     master.simu_du.set_flag_add_noise(args.no_noise)
     master.simu_du.set_local_sideral_time(args.lst)
+    master.simu_du.set_flag_rf_chain(args.no_rf)
     master.compute_event_idx(0)
     master.save_voltage(args.out_file, append_file=False)
     # =============================================
