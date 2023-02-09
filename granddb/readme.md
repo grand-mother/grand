@@ -97,17 +97,15 @@ To test, you can do the following :
 * Run the docker
 
 
-    docker run -it -v /path/to/grand/lib:/home -v ${SSH_AUTH_SOCK}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent --rm grandlib/dev:1.2
+        docker run -it -v /path/to/grand/lib:/home -v ${SSH_AUTH_SOCK}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent --rm grandlib/dev:1.2
 
 * Inside the docker do : 
 
-
-    source env/setup.sh
-    cd examples/datalib/
-    python datamanager_example.py
+        source env/setup.sh
+        cd examples/datalib/
+        python datamanager_example.py
     
 
 * Check that the Coarse3.root has been retreived in /home/examples/datalib/incoming
 
-
-    ls /home/examples/datalib/incoming/Coarse3.root
+        ls /home/examples/datalib/incoming/Coarse3.root
