@@ -3,6 +3,7 @@ This section regroups the different libraries to interact with datas in Grand.
 # DataManager
 
 Datamanager object is the main object to access datas. It first get it's configuration from an inifile (config.ini by default).
+To run into docker, you need to use the grandlib/dev:1.2 version to have all the requested libraries.
 
 ## Inifile
 
