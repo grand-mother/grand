@@ -4,7 +4,7 @@ from sshtunnel import SSHTunnelForwarder
 import numpy
 import grand.io.root_trees
 import re
-import rootdblib as rdb
+import granddb.rootdblib as rdb
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 import grand.manage_log as mlg
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("debug", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=False)
 
 
 

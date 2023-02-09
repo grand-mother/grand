@@ -7,7 +7,7 @@ from configparser import ConfigParser
 import urllib.request
 import os
 import shutil
-from granddblib import Database
+from granddb.granddblib import Database
 import socket
 import grand.manage_log as mlg
 import copy
@@ -413,6 +413,8 @@ class DatasourceSsh(Datasource):
                 localfile = self.get_file(client, path, file)
                 if not (localfile is None):
                     break
+                else:
+                    logger.debug(f"file not found in {path}{file} @ {self.name()}")
         return localfile
 
     ## Search for files in remote location accessed through ssh.
@@ -464,12 +466,16 @@ class DatasourceHttp(Datasource):
         localfile = None
         if not (path is None):
             url = self._protocol + '://' + self.server() + '/' + path + '/' + file
-
-        for path in self.paths():
-            url = self._protocol + '://' + self.server() + '/' + path + '/' + file
             localfile = self.get_file(url, file)
-            if not (localfile is None):
-                break
+
+
+        else:
+            for path in self.paths():
+                url = self._protocol + '://' + self.server() + '/' + path + '/' + file
+                localfile = self.get_file(url, file)
+                if not (localfile is None):
+                    break
+
 
         return localfile
 

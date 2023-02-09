@@ -62,7 +62,7 @@ The get(filename) function fill perform the following actions :
  
 Usage example:
 
-    import granddatalib
+    import granddb.granddatalib as granddatalib
     dm = granddatalib.DataManager('config.ini')
     file="Coarse3.root"
     print(dm.get(file))
@@ -83,7 +83,31 @@ This is also works with localdir (but in that case the file is not copied into t
     dm.get(file, "localdir")
     dm.get(file, "localdir","../venv/lib/python3.8/site-packages/pip/_internal/cli/")
 
+
 ### The search function
 
 The search function (not yet properly implemented) will return the list of repositories/directories where a file can be found.
 It will perform a search in the database.
+
+### Test example
+
+To test, you can do the following : 
+
+* Edit and configure the examples/datalib/config.ini
+* Run the docker
+
+
+    docker run -it -v /path/to/grand/lib:/home -v ${SSH_AUTH_SOCK}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent --rm grandlib/dev:1.2
+
+* Inside the docker do : 
+
+
+    source env/setup.sh
+    cd examples/datalib/
+    python datamanager_example.py
+    
+
+* Check that the Coarse3.root has been retreived in /home/examples/datalib/incoming
+
+
+    ls /home/examples/datalib/incoming/Coarse3.root
