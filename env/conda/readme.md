@@ -43,7 +43,7 @@ conda deactivate
 
 ## Import GRANDLIB environnement for amd64 processor architecture
 
-Start by update your conda and create the GRANDLIB environnement with file conf defined in grand/env/conda 
+Start by update your conda installation and create the GRANDLIB environnement with file conf defined in grand/env/conda 
 
 ```
 conda env create -n grandlib --file grandlib_amd64.yml
