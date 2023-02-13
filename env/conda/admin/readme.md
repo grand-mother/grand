@@ -21,3 +21,9 @@ CONDA_PREFIX=/home/jcolley/miniconda3/envs/grandlib-root
 export C_INCLUDE_PATH=/home/jcolley/miniconda3/envs/grandlib-root/include
 export LIBRARY_PATH=/home/<?????>/miniconda3/envs/grandlib/lib
 ```
+
+## export conda env
+
+```
+  conda env export > my_env.yml
+  ```
