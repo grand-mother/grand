@@ -90,6 +90,7 @@ The search function (not yet properly implemented) will return the list of repos
 It will perform a search in the database.
 
 ### Test example
+#### For linux users
 
 To test, you can do the following : 
 
@@ -105,6 +106,27 @@ To test, you can do the following :
         cd examples/datalib/
         python datamanager_example.py
     
+
+* Check that the Coarse3.root has been retreived in /home/examples/datalib/incoming
+
+        ls /home/examples/datalib/incoming/Coarse3.root
+
+#### For mac users
+Mac does'nt allow to forward agent into docker... thus you will have to start an agent directly inside your docker :
+* Edit and configure the examples/datalib/config.ini
+* Run the docker
+
+        docker run -it -v /path/to/grand/lib:/home -v /path/to/.ssh:/home/.ssh --rm grandlib/dev:1.2
+
+
+* Inside the docker do : 
+
+
+        eval $(ssh-agent)
+        ssh-add .ssh/id_rsa
+        source env/setup.sh
+        cd examples/datalib/
+        python datamanager_example.py
 
 * Check that the Coarse3.root has been retreived in /home/examples/datalib/incoming
 
