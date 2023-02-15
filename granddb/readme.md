@@ -22,10 +22,10 @@ Inifile is organized in sections. The 6 sections are [general][directories][repo
     WEB = [ "https", "github.com" , 443, ["/grand-mother/data_challenge1/raw/main/coarse_subei_traces_root/"]]
   
     [credentials]
-    ; Name =  [user, password, keyfile, keypasswd]
-    CC = ["login","","",""]
-    CCIN2P3 = ["login","","",""]
-    SSHTUNNEL = ["ssh_login","","",""]
+    ; Name =  [user, keyfile]
+    CC = ["login",""]
+    CCIN2P3 = ["login",""]
+    SSHTUNNEL = ["ssh_login",""]
   
     [database]
     ; Name = [server, port, database, login, passwd, sshtunnel_server, sshtunnel_port, sshtunnel_credentials ]
@@ -42,22 +42,23 @@ The following protocols are supported : ssh, http, https, local.
 
 Sections [database] and [registerer] are optional (these sections can be commented or removed if you don't want to use the database).
 
-For security reasons it is highly recommended NOT to provide any sensitive information as password keyfile or keypasswd
-in this file. For example, if protocol is ssh, it's better to use an ssh-agent
+[credentials] section allows you to specify your login and optionally a key file to access repositories or connect database though an ssh tunnel etc...
+For security reasons you will not be allowed to provide sensitive information as password in this file. If password is required (e.g. to decrypt the key file) it will be asked interactively.
+For ssh protocol, it's highly encouraged to use an ssh-agent (to avoid to have to provide passwd interactively at each run)
 To run an ssh-agent just do : `eval $(ssh-agent)` and `ssh-add .ssh/id_rsa`
 
 To export your ssh agent from host to docker simply add an environment variable SSH_AUTH_SOCK=/ssh-agent to your docker
 and mount the volume with `-v ${SSH_AUTH_SOCK}:/ssh-agent`
 
 ## Datamanager
-When instantiate, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
+When instantiated, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
 
 ### The get function
 The get(filename) function fill perform the following actions :
-- Search if a file called < filename > exists in localdirs. 
-  - If yes, returns the path to the file.
-  - If no, search for the file in the various repositories.
-    - If found in a repository, then get the file (using protocol for the repository) and copy it in the incoming local directory and return the path to the newly copied file.
+- Search if a file called < filename > exists in localdirs (and subdirs). 
+  - If yes, returns the path to the first file found.
+  - If no, recursively search for the file in the various repositories.
+    - If found in a repository, then get the first file found (using protocol for the repository) and copy it in the incoming local directory and return the path to the newly copied file.
     - If not, return None.
  
 Usage example:
