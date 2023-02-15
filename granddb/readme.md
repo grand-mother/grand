@@ -35,7 +35,7 @@ Inifile is organized in sections. The 6 sections are [general][directories][repo
     CCIN2P3 = "/sps/trend/fleg/INCOMING"
   
 
-Directories are **local** directories where data should be. The first path in localdir will be used as an incoming folder (see below).
+Directories are **local** directories where data should be. The first path in localdir will be used as an incoming folder (also see below). The incoming folder is the local folder where the files found remotely will be copied. This directory must exists and be writable. 
 Repositories are **distant** places where data should be. Repositories are accessed using a protocol. 
 
 The following protocols are supported : ssh, http, https, local.
