@@ -49,7 +49,7 @@ logger.info("---------------------------------")
 # A tabulated model of the Butterfly antenna is used. Note that a single EW
 # arm is assumed here for the sake of simplicity
 # path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
-path_ant = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
+path_ant = grand_add_path_data_model("detector/Light_GP300Antenna_EWarm_leff.npz")
 antenna_model = TabulatedAntennaModel.load(path_ant)
 # logger.debug(antenna_model)
 

@@ -38,8 +38,8 @@ class Handling3dTracesOfEvent:
         * name str: name of the set of trace
         * traces float(nb_du, 3, nb_sample): trace 3D
         * du_id int(nb_du): array of identifier of DU
-        * t_start_ns float(nb_du): time of first sample of trace
-        * t_samples float(nb_du, nb_dim, nb_sample):
+        * t_start_ns float(nb_du): [ns] time of first sample of trace
+        * t_samples float(nb_du, nb_dim, nb_sample): [ns]
         * f_samp_mhz float: [MHz] frequency sampling
         * d_idxdu dict: for each identifier return the index in array
         * unit_trace str: string unit of trace
