@@ -17,7 +17,8 @@ from urllib import request
 from grand import GRAND_DATA_PATH, grand_add_path_data, grand_add_path_data_model
 
 LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
-FILE_MODEL = "grand_model_2207.tar.gz"
+#FILE_MODEL = "grand_model_2207.tar.gz"
+FILE_MODEL = "grand_model_2302.tar.gz"
 
 
 
@@ -41,14 +42,14 @@ FILE_MODEL = "grand_model_2207.tar.gz"
 # 1- test if download is necessary
 if os.path.exists(grand_add_path_data_model('detector')):
     print("==============================")
-    print('Skip download data model')
+    print('Skip download data model, to load new model remove directory grand/data/model/detector')
     sys.exit(0)
 
 tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
 
 # 2- download
 print("==============================")
-print("Download data model (~ 1GB) for GRAND, please wait ...")
+print("Download data model (~ 300MB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")
