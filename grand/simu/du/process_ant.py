@@ -194,11 +194,13 @@ class AntennaProcessing:
         # frequency [Hz] with padding
         if self.size_fft == 0:
             # case without init before call effective_length
-            logger.warning('Defined output frequency before call effective_length, init with default value')
-            freq_out = sf.rfftfreq(efield.get_nb_sample(), efield.get_delta_time_s())*1e-6
+            logger.warning(
+                "Defined output frequency before call effective_length, init with default value"
+            )
+            freq_out = sf.rfftfreq(efield.get_nb_sample(), efield.get_delta_time_s()) * 1e-6
             self.set_out_freq_mhz(freq_out)
             # frequency in MHz
-            AntennaProcessing.init_interpolation(freq_ref_hz/1e6, freq_out)
+            AntennaProcessing.init_interpolation(freq_ref_hz * 1e-6, freq_out)
         logger.debug(f"size_fft={self.size_fft}")
         # interpolation Leff theta and phi on sphere
         logger.debug(f"leff_phi_cart: {table.leff_phi_cart.shape}")

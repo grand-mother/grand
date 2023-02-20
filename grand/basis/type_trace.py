@@ -20,7 +20,7 @@ logger = getLogger(__name__)
 
 @dataclass
 class ElectricField:
-    a_time: np.ndarray # second
+    a_time: np.ndarray  # second
     e_xyz: CartesianRepresentation  # RK
     pos_xyz: Union[CartesianRepresentation, None] = None
     frame: Union[LTP, GRANDCS, None] = None
@@ -40,9 +40,9 @@ class ElectricField:
         else:
             self.fft_e_3d = sf.rfft(self.e_xyz, n=size_sig_pad)
             return self.fft_e_3d
-    
+
     def get_delta_time_s(self):
-        return (self.a_time[1]-self.a_time[0])
+        return self.a_time[1] - self.a_time[0]
 
     def get_nb_sample(self):
         return self.e_xyz.shape[1]
