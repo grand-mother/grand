@@ -28,8 +28,8 @@ class DataTable:
     phase_theta: Union[Number, numpy.ndarray]
     leff_phi: Union[Number, numpy.ndarray]
     phase_phi: Union[Number, numpy.ndarray]
-    leff_phi_cart : Any=None
-    leff_theta_cart : Any=None
+    leff_phi_cart: Any = None
+    leff_theta_cart: Any = None
 
     def __post_init__(self):
         self.phase_theta_rad = numpy.deg2rad(self.phase_theta)
@@ -156,13 +156,13 @@ class TabulatedAntennaModel(object):
             phase_phi=phasep,
         )
         return cls(table=t)
-    
+
     @classmethod
     def _load_from_numpy_savez(cls, path: Union[Path, str]) -> TabulatedAntennaModel:
         f_leff = numpy.load(path)
         if f_leff["version"][0] == "1.0":
             t_file = DataTable(
-                frequency=f_leff["freq_mhz"]*1e6,
+                frequency=f_leff["freq_mhz"] * 1e6,
                 theta=numpy.arange(91).astype(float),
                 phi=numpy.arange(361).astype(float),
                 resistance=0,
@@ -171,8 +171,8 @@ class TabulatedAntennaModel(object):
                 phase_theta=0,
                 leff_phi=0,
                 phase_phi=0,
-                leff_phi_cart = f_leff["leff_phi"],
-                leff_theta_cart = f_leff["leff_theta"]
+                leff_phi_cart=f_leff["leff_phi"],
+                leff_theta_cart=f_leff["leff_theta"],
             )
         else:
             raise
