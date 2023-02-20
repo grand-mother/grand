@@ -96,7 +96,7 @@ def geoid_undulation(latitude=None, longitude=None):
     """
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
-    logger.info(f"geoid_undulation for {latitude} {longitude}")
+    logger.debug(f"geoid_undulation for {latitude} {longitude}")
     return geoid.elevation(longitude, latitude)
 
 
