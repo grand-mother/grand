@@ -39,7 +39,7 @@ def check_ttree_in_file(f_root, ttree_name):
     return ttree_name in get_ttree_in_file(f_root)
 
 
-class FileEvent:
+class _FileEventBase:
     """
     Goals of the class:
 
@@ -164,7 +164,7 @@ class FileEvent:
         return o_tevent
 
 
-class FileSimuEfield(FileEvent):
+class FileSimuEfield(_FileEventBase):
     """
     File simulation of air shower with 5 TTree
 
@@ -183,7 +183,7 @@ class FileSimuEfield(FileEvent):
 
     Public attributes:
 
-      * same as FileEvent class
+      * same as _FileEventBase class
       * tt_efield object EfieldEventTree
       * tt_shower object ShowerEventSimdataTree
       * tt_run object RunTree
@@ -191,17 +191,18 @@ class FileSimuEfield(FileEvent):
 
     """
 
-    def __init__(self, f_name):
+    def __init__(self, f_name, check=True):
         """
         Constructor
         """
         name_ttree = "teventefield"
-        if not os.path.exists(f_name):
-            logger.error(f"File {f_name} doesn't exist.")
-            raise FileNotFoundError
-        if not check_ttree_in_file(f_name, name_ttree):
-            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
-            raise AssertionError
+        if check:
+            if not os.path.exists(f_name):
+                logger.error(f"File {f_name} doesn't exist.")
+                raise FileNotFoundError
+            if not check_ttree_in_file(f_name, name_ttree):
+                logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+                raise AssertionError
         logger.info(f"Events  in file {f_name}")
         event = groot.EfieldEventTree(f_name)
         super().__init__(event)
@@ -239,7 +240,7 @@ class FileSimuEfield(FileEvent):
         return o_tevent
 
 
-class FileVoltageEvent(FileEvent):
+class FileVoltageEvent(_FileEventBase):
     """
     Goals of the class:
 
@@ -249,20 +250,21 @@ class FileVoltageEvent(FileEvent):
 
     Public attributs:
 
-      * same as FileEvent class
+      * same as _FileEventBase class
     """
 
-    def __init__(self, f_name):
+    def __init__(self, f_name, check=True):
         """
         Constructor
         """
         name_ttree = "teventvoltage"
-        if not os.path.exists(f_name):
-            logger.error(f"File {f_name} doesn't exist.")
-            raise FileNotFoundError
-        if not check_ttree_in_file(f_name, name_ttree):
-            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
-            raise AssertionError
+        if check:
+            if not os.path.exists(f_name):
+                logger.error(f"File {f_name} doesn't exist.")
+                raise FileNotFoundError
+            if not check_ttree_in_file(f_name, name_ttree):
+                logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+                raise AssertionError
         logger.info(f"Events  in file {f_name}")
         event = groot.VoltageEventTree(f_name)
         super().__init__(event)
@@ -278,7 +280,28 @@ class FileVoltageEvent(FileEvent):
         return o_tevent
 
 
-class FileADCeventProto(FileEvent):
+
+    
+def get_file_event(f_name):
+    """
+    Factory for ROOT event file, return an instance of FileSimuEfield or FileVoltageEvent
+    """
+    if not os.path.exists(f_name):
+        print('File does not exist')
+        logger.error(f"File {f_name} doesn't exist.")
+        raise FileNotFoundError
+    else:
+        trees_list = get_ttree_in_file(f_name)
+        if "teventefield" in trees_list:          # File with Efield info as input
+            return FileSimuEfield(f_name, False)
+        elif "teventvoltage" in trees_list:       # File with voltage info as input
+            return FileVoltageEvent(f_name, False)
+        else:
+            logger.error(f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}.")
+            raise AssertionError
+
+        
+class FileADCeventProto(_FileEventBase):
     """
 
     .. warning: Prototype for ADC event, work in progress
@@ -292,7 +315,7 @@ class FileADCeventProto(FileEvent):
 
     Public attributes:
 
-      * same as FileEvent class
+      * same as _FileEventBase class
       * all_traces array(nb_all_event_in_file, nb_sample)
     """
 
