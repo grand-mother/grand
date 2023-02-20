@@ -121,7 +121,7 @@ class MasterSimuDetectorWithRootIo:
         if not append_file and os.path.exists(file_out):
             logger.info(f"save on new file option => remove file {file_out}")
             os.remove(file_out)
-            #time.sleep(1)
+            # time.sleep(1)
         logger.info(f"save result in {file_out}")
         self.tt_volt = VoltageEventTree(file_out)
         # now fill Voltage object
@@ -208,7 +208,7 @@ class SimuDetectorUnitEffect:
         # object AntennaProcessing for Z arm
         self.ant_leff_z = None
         self.du_pos = None
-        self.params = {"flag_add_noise": False,"flag_add_rf": False, "lst": 18.0}
+        self.params = {"flag_add_noise": False, "flag_add_rf": False, "lst": 18.0}
         # FFT info
         self.sig_size = 0
         self.fact_padding = 1.2
@@ -264,7 +264,7 @@ class SimuDetectorUnitEffect:
         """
         logger.debug(f"{f_hour}")
         self.params["lst"] = f_hour
-        
+
     def set_flag_rf_chain(self, flag=True):
         """
         add RF chain
@@ -293,11 +293,15 @@ class SimuDetectorUnitEffect:
             self.fact_padding,
         )
         # precompute interpolation for all antennas with classmethod
-        AntennaProcessing.init_interpolation(self.freqs_mhz, self.ant_model.leff_sn.table.frequency/1e6)
+        logger.info("Precompute weight for linear interpolation of Leff in frequency")
+        AntennaProcessing.init_interpolation(
+            self.ant_model.leff_sn.table.frequency / 1e6, self.freqs_mhz
+        )
         # compute total transfer function of RF chain
         self.rf_chain.compute_for_freqs(self.freqs_mhz)
         if self.params["flag_add_noise"]:
             # lst: local sideral time, galactic noise max at 18h
+            logger.info("Compute galaxy noise for all traces")
             self.fft_noise_gal_3d = galaxy_radio_signal(
                 self.params["lst"],
                 self.fft_size,
@@ -369,9 +373,9 @@ class SimuDetectorUnitEffect:
         # 2) Add galactic noise
         ########################
         if self.params["flag_add_noise"]:
-            #noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
-            #logger.debug(np.std(noise_gal, axis=1))
-            #self.voc[idx_du] += noise_gal
+            # noise_gal = sf.irfft(self.fft_noise_gal_3d[idx_du])[:, : self.sig_size]
+            # logger.debug(np.std(noise_gal, axis=1))
+            # self.voc[idx_du] += noise_gal
             fft_voc_3d += self.fft_noise_gal_3d[idx_du]
         ########################
         # 3) RF chain
