@@ -22,12 +22,12 @@ class AntennaModelHorizon:
 class AntennaModelGp300(AntennaModelGeneric):
     def __init__(self):
         self.l_model_name = ["Light_GP300Antenna", "GP300Antenna"]
-                    
+
     def set_antenna_model(self, type_file):
         if not type_file in self.l_model_name:
-            logger.error('unknow model of Leff !')
+            logger.error("unknow model of Leff !")
             raise
-            
+
         if type_file == "GP300Antenna":
             logger.info(f"Load model of antenna GP300")
             path_ant = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
