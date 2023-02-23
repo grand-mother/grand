@@ -244,6 +244,8 @@ class DataTree:
         # Init tree from the name string
         if self._tree is None and self._tree_name is not None:
             self._set_tree(self._tree_name)
+        elif self._tree is not None:
+            self._set_tree(self._tree)
         # or create the tree
         else:
             self._create_tree()
