@@ -3,6 +3,9 @@
 import sys
 from grand.grandlib_classes.grandlib_classes import *
 
+# Avoid printing out whole traces
+np.set_printoptions(threshold=5)
+
 e = Event()
 
 # Readout the event from file
