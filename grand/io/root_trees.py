@@ -556,7 +556,7 @@ class DataTree:
         res = self._tree.GetEntryWithIndex(run_no, evt_no)
         if res == 0 or res == -1:
             logger.error(
-                f"No event with event number {evt_no} and run number {run_no} in the tree. Please provide proper numbers."
+                f"No event with event number {evt_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."
             )
             return 0
 
@@ -988,7 +988,7 @@ class MotherEventTree(DataTree):
         # If no such entry, return
         if res == 0 or res == -1:
             logger.error(
-                f"No event with event number {ev_no} and run number {run_no} in the tree. Please provide proper numbers."
+                f"No event with event number {ev_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."
             )
             return 0
 
