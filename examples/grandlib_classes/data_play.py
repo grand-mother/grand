@@ -14,9 +14,9 @@ if len(sys.argv)==2:
     e.print()
     print(e.data_source)
     for i,v in enumerate(e.voltages):
-        print(i, v.trace_x)
+        print(i, np.array(v.trace_x))
     for i,ef in enumerate(e.efields):
-        print(i, ef.trace_x)
+        print(i, np.array(ef.trace_x))
 
     # Hard exit to avoid ROOT crash on defriending - not needed for ROOT 6.26.02 and above
     if ROOT.gROOT.GetVersionInt() < 62602:
