@@ -5674,9 +5674,9 @@ class TRunEfieldSim(MotherRunTree):
 class TRunShowerSim(MotherRunTree):
     """The class for storing shower simulation-only data common for a whole run"""
 
-    _type: str = "runsimdata"
+    _type: str = "runshowersim"
 
-    _tree_name: str = "trunsimdata"
+    _tree_name: str = "trunshowersim"
 
     # simulation program (and version) used to simulate the shower
     _shower_sim: StdString = StdString("")
@@ -6612,7 +6612,7 @@ class DataFile():
     def _get_traces_lengths(self, tree):
         """Adds traces info to event trees"""
         # If tree is not of Event class (contains traces), do nothing
-        if not issubclass(tree.__class__, MotherEventTree) or "simdata" in tree.tree_name or "zhaires" in tree.tree_name:
+        if not issubclass(tree.__class__, MotherEventTree) or "sim" in tree.tree_name or "zhaires" in tree.tree_name:
             return None
         else:
             traces_lengths = tree.get_traces_lengths()
@@ -6641,7 +6641,7 @@ class DataFile():
         """Guesses the tree type from its name. Needed for old trees with missing metadata"""
         name = tree.GetName()
 
-        # Simdata trees
+        # Sim trees
         if "sim" in name:
             # if "runvoltage" in name:
             #     return "VoltageRunSimdataTree"
@@ -6649,15 +6649,15 @@ class DataFile():
             #     return "VoltageEventSimdataTree"
             if "runefield" in name:
                 return "TRunEfieldSim"
-            elif "eventefield" in name:
-                return "EfieldEventSimdataTree"
+            # elif "eventefield" in name:
+            #     return "EfieldEventSimdataTree"
             elif "runshower" in name:
                 return "TRunShowerSim"
-            elif "eventshower" in name:
+            elif "shower" in name:
                 return "TShowerSim"
-        # Zhaires tree
-        elif "eventshowerzhaires" in name:
-            return "ShowerEventZHAireSTree"
+        # # Zhaires tree
+        # elif "eventshowerzhaires" in name:
+        #     return "ShowerEventZHAireSTree"
         # Other trees
         else:
             if "run" in name:
