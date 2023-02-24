@@ -126,6 +126,8 @@ class DataTree:
     _comment: str = ""
     # TTree creation date/time in UTC - a naive time, without timezone set
     _creation_datetime: datetime.datetime = None
+    # Modification history - JSON
+    _modification_history: str = ""
 
     # Fields that are not branches
     _nonbranch_fields = [
@@ -143,6 +145,7 @@ class DataTree:
         "_modification_software_version",
         "_source_datetime",
         "_analysis_level",
+        "_modification_history",
     ]
 
     @property
@@ -223,6 +226,20 @@ class DataTree:
             self._creation_datetime = datetime.datetime.fromtimestamp(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
+
+    @property
+    def modification_history(self):
+        """Modification_history - if needed, added by user"""
+        return self._modification_history
+
+    @modification_history.setter
+    def modification_history(self, val: str) -> None:
+        # Remove the existing modification_history
+        self._tree.GetUserInfo().RemoveAt(7)
+        # Add the provided modification_history
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_history", val), 7)
+        # Update the property
+        self._modification_history = val
 
     @classmethod
     def get_default_tree_name(cls):
