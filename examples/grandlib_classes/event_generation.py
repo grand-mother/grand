@@ -39,9 +39,12 @@ for event_number in range(event_count):
         # The trace length
         v.n_points = np.random.randint(900, 1000)
         # v.n_points = np.random.randint(9, 10)
-        v.trace_x = np.random.randint(-200, 201, v.n_points)/100.
-        v.trace_y = np.random.randint(-200, 201, v.n_points)/100.
-        v.trace_z = np.random.randint(-200, 201, v.n_points)/100.
+        # v.trace_x = np.random.randint(-200, 201, v.n_points)/100.
+        # v.trace_y = np.random.randint(-200, 201, v.n_points)/100.
+        # v.trace_z = np.random.randint(-200, 201, v.n_points)/100.
+        v.trace = [np.random.randint(-200, 201, v.n_points) / 100., np.random.randint(-200, 201, v.n_points) / 100., np.random.randint(-200, 201, v.n_points) / 100.]
+        # print(v.trace, type(v.trace.x))
+        # exit()
         event.voltages.append(v)
 
         # The antenna part
@@ -57,9 +60,10 @@ for event_number in range(event_count):
         e = Efield()
         e.n_points = v.n_points
         v2ef = 1.17
-        e.trace_x = v.trace_x*v2ef
-        e.trace_y = v.trace_y*v2ef
-        e.trace_z = v.trace_z*v2ef
+        e.trace = [v.trace.x*v2ef, v.trace.y*v2ef, v.trace.z*v2ef]
+        # e.trace_x = v.trace_x*v2ef
+        # e.trace_y = v.trace_y*v2ef
+        # e.trace_z = v.trace_z*v2ef
         event.efields.append(e)
 
     # The shower part
