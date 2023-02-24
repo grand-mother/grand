@@ -1109,15 +1109,38 @@ class TRun(MotherRunTree):
     _data_generator: StdString = StdString("GRANDlib")
     ## Generator version: gtot version (in this case)
     _data_generator_version: StdString = StdString("0.1.0")
+    ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    ## Event format version of the DAQ
+    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Site name
     # _site: StdVectorList("string") = StdVectorList("string")
     _site: StdString = StdString("")
-    ## Site longitude
-    _site_long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
-    ## Site latitude
-    _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    ## Site layout
+    _site_layout: StdString = StdString("")
+    # ## Site longitude
+    # _site_long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # ## Site latitude
+    # _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Origin of the coordinate system used for the array
     _origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+
+    ## Detector unit (antenna) ID
+    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    ## Detector unit (antenna) (lat,lon,alt) position
+    _du_geoid: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    ## Detector unit (antenna) (x,y,z) position in site's referential
+    _du_xyz: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    ## Detector unit type
+    _du_type: StdVectorList = field(default_factory=lambda: StdVectorList("string"))
+    ## Detector unit (antenna) angular tilt
+    _du_tilt: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    ## Angular tilt of the ground at the antenna
+    _du_ground_tilt: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    ## Detector unit (antenna) nut ID
+    _du_nut: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    ## Detector unit (antenna) FrontEnd Board ID
+    _du_feb: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1220,6 +1243,24 @@ class TRun(MotherRunTree):
         self._data_generator_version.string.assign(value)
 
     @property
+    def event_type(self):
+        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
+        return self._event_type[0]
+
+    @event_type.setter
+    def event_type(self, value: np.uint32) -> None:
+        self._event_type[0] = value
+
+    @property
+    def event_version(self):
+        """Event format version of the DAQ"""
+        return self._event_version[0]
+
+    @event_version.setter
+    def event_version(self, value: np.uint32) -> None:
+        self._event_version[0] = value
+
+    @property
     def site(self):
         """Site name"""
         return str(self._site)
@@ -1235,24 +1276,39 @@ class TRun(MotherRunTree):
         self._site.string.assign(value)
 
     @property
-    def site_long(self):
-        """Site longitude"""
-        return np.array(self._site_long)
+    def site_layout(self):
+        """Site layout"""
+        return str(self._site_layout)
 
-    @site_long.setter
-    def site_long(self, value):
-        self._site_long = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("site_long", self._site_long)
+    @site_layout.setter
+    def site(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for site_layout {type(value)}. Either a string or a ROOT.std.string is required."
+            )
 
-    @property
-    def site_lat(self):
-        """Site latitude"""
-        return np.array(self._site_lat)
+        self._site_layout.string.assign(value)
 
-    @site_lat.setter
-    def site_lat(self, value):
-        self._site_lat = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("site_lat", self._site_lat)
+    # @property
+    # def site_long(self):
+    #     """Site longitude"""
+    #     return np.array(self._site_long)
+    #
+    # @site_long.setter
+    # def site_long(self, value):
+    #     self._site_long = np.array(value).astype(np.float32)
+    #     self._tree.SetBranchAddress("site_long", self._site_long)
+    #
+    # @property
+    # def site_lat(self):
+    #     """Site latitude"""
+    #     return np.array(self._site_lat)
+    #
+    # @site_lat.setter
+    # def site_lat(self, value):
+    #     self._site_lat = np.array(value).astype(np.float32)
+    #     self._tree.SetBranchAddress("site_lat", self._site_lat)
 
     @property
     def origin_geoid(self):
@@ -1264,6 +1320,197 @@ class TRun(MotherRunTree):
         self._origin_geoid = np.array(value).astype(np.float32)
         self._tree.SetBranchAddress("origin_geoid", self._origin_geoid)
 
+    @property
+    def du_id(self):
+        """Detector unit (antenna) ID"""
+        return self._du_id
+
+    @du_id.setter
+    def du_id(self, value) -> None:
+        # A list of strings was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_id.clear()
+            self._du_id += value
+        # A vector was given
+        elif isinstance(value, ROOT.vector("int")):
+            self._du_id._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of ints required."
+            )
+
+    @property
+    def du_geoid(self):
+        """Detector unit (antenna) (lat,lon,alt) position"""
+        return self._du_geoid
+
+    @du_geoid.setter
+    def du_geoid(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_geoid.clear()
+            self._du_geoid += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<float>")):
+            self._du_geoid._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_geoid {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+            )
+
+    @property
+    def du_xyz(self):
+        """Detector unit (antenna) (x,y,z) position in site's referential"""
+        return self._du_xyz
+
+    @du_xyz.setter
+    def du_xyz(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_xyz.clear()
+            self._du_xyz += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<float>")):
+            self._du_xyz._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_xyz {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+            )
+
+    @property
+    def du_type(self):
+        """Detector unit type"""
+        return self._du_type
+
+    @du_type.setter
+    def du_type(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_type.clear()
+            self._du_type += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("string")):
+            self._du_type._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_type {type(value)}. Either a list, an array or a ROOT.vector of string required."
+            )
+
+    @property
+    def du_tilt(self):
+        """Detector unit (antenna) angular tilt"""
+        return self._du_tilt
+
+    @du_tilt.setter
+    def du_tilt(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_tilt.clear()
+            self._du_tilt += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<float>")):
+            self._du_tilt._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_tilt {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+            )
+
+    @property
+    def du_ground_tilt(self):
+        """Angular tilt of the ground at the antenna"""
+        return self._du_ground_tilt
+
+    @du_ground_tilt.setter
+    def du_ground_tilt(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_ground_tilt.clear()
+            self._du_ground_tilt += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<float>")):
+            self._du_ground_tilt._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_ground_tilt {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+            )
+
+    @property
+    def du_nut(self):
+        """Detector unit (antenna) nut ID"""
+        return self._du_nut
+
+    @du_nut.setter
+    def du_nut(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_nut.clear()
+            self._du_nut += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("int")):
+            self._du_nut._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_nut {type(value)}. Either a list, an array or a ROOT.vector of int required."
+            )
+
+    @property
+    def du_feb(self):
+        """Detector unit (antenna) FrontEnd Board ID"""
+        return self._du_feb
+
+    @du_feb.setter
+    def du_feb(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._du_feb.clear()
+            self._du_feb += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("int")):
+            self._du_feb._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for du_feb {type(value)}. Either a list, an array or a ROOT.vector of int required."
+            )
 
 @dataclass
 ## The class for storing ADC traces and associated values for each event
@@ -1285,10 +1532,6 @@ class TADC(MotherEventTree):
     _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
-    ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
-    ## Event format version of the DAQ
-    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
     _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
@@ -1502,24 +1745,6 @@ class TADC(MotherEventTree):
     @time_nanoseconds.setter
     def time_nanoseconds(self, value: np.uint32) -> None:
         self._time_nanoseconds[0] = value
-
-    @property
-    def event_type(self):
-        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
-        return self._event_type[0]
-
-    @event_type.setter
-    def event_type(self, value: np.uint32) -> None:
-        self._event_type[0] = value
-
-    @property
-    def event_version(self):
-        """Event format version of the DAQ"""
-        return self._event_version[0]
-
-    @event_version.setter
-    def event_version(self, value: np.uint32) -> None:
-        self._event_version[0] = value
 
     @property
     def du_count(self):

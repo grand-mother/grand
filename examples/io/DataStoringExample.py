@@ -15,8 +15,10 @@ else:
 event_count = 10
 adc_traces = []
 traces = []
+trace_counts = []
 for ev in range(event_count):
     trace_count = np.random.randint(3, 7)
+    trace_counts.append(trace_count)
     adc_traces.append([])
     traces.append([])
     for i in range(trace_count):
@@ -47,6 +49,19 @@ trun.run_number = 0
 trun.site = "dummy site"
 trun.first_event = 0
 trun.last_event = event_count
+
+# Generate dummy infor for each detector unit from all the events
+for du in range(np.max(trace_counts)):
+    trun.du_id.append(du)
+    trun.du_geoid.append([1,2,3])
+    trun.du_xyz.append([4,5,6])
+    trun.du_type.append("antenna 1.0")
+    trun.du_tilt.append([4, 5, 6])
+    trun.du_ground_tilt.append([4, 5, 6])
+    trun.du_nut.append(du+10)
+    trun.du_feb.append(du+100)
+
+
 trun.fill()
 trun.write(filename)
 print("Wrote trun")
