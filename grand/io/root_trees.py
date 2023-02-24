@@ -868,96 +868,96 @@ class MotherEventTree(DataTree):
         loc_vars = dict(locals())
         run_trees = []
         for inst in grand_tree_list:
-            if type(inst) is RunTree:
+            if type(inst) is TRun:
                 run_trees.append(inst)
         # If any Run tree was found
         if len(run_trees) > 0:
-            # Warning if there is more than 1 RunTree in memory
+            # Warning if there is more than 1 TRun in memory
             if len(run_trees) > 1:
                 logger.warning(
-                    f"More than 1 RunTree detected in memory. Adding the last one {run_trees[-1]} as a friend"
+                    f"More than 1 TRun detected in memory. Adding the last one {run_trees[-1]} as a friend"
                 )
-            # Add the last one RunTree as a friend
+            # Add the last one TRun as a friend
             run_tree = run_trees[-1]
 
             # Add the Run TTree as a friend
             self.add_friend(run_tree.tree, run_tree.file)
 
-        # Do not add ADCEventTree as a friend to itself
-        if not isinstance(self, ADCEventTree):
+        # Do not add TADC as a friend to itself
+        if not isinstance(self, TADC):
             # Add the ADC tree as a friend if exists already
             adc_trees = []
             for inst in grand_tree_list:
-                if type(inst) is ADCEventTree:
+                if type(inst) is TADC:
                     adc_trees.append(inst)
             # If any ADC tree was found
             if len(adc_trees) > 0:
-                # Warning if there is more than 1 ADCEventTree in memory
+                # Warning if there is more than 1 TADC in memory
                 if len(adc_trees) > 1:
                     logger.warning(
-                        f"More than 1 ADCEventTree detected in memory. Adding the last one {adc_trees[-1]} as a friend"
+                        f"More than 1 TADC detected in memory. Adding the last one {adc_trees[-1]} as a friend"
                     )
-                # Add the last one ADCEventTree as a friend
+                # Add the last one TADC as a friend
                 adc_tree = adc_trees[-1]
 
                 # Add the ADC TTree as a friend
                 self.add_friend(adc_tree.tree, adc_tree.file)
 
-        # Do not add VoltageEventTree as a friend to itself
-        if not isinstance(self, VoltageEventTree):
+        # Do not add TRawVoltage as a friend to itself
+        if not isinstance(self, TRawVoltage):
             # Add the Voltage tree as a friend if exists already
             voltage_trees = []
             for inst in grand_tree_list:
-                if type(inst) is VoltageEventTree:
+                if type(inst) is TRawVoltage:
                     voltage_trees.append(inst)
-            # If any ADC tree was found
+            # If any voltage tree was found
             if len(voltage_trees) > 0:
-                # Warning if there is more than 1 VoltageEventTree in memory
+                # Warning if there is more than 1 TRawVoltage in memory
                 if len(voltage_trees) > 1:
                     logger.warning(
-                        f"More than 1 VoltageEventTree detected in memory. Adding the last one {voltage_trees[-1]} as a friend"
+                        f"More than 1 TRawVoltage detected in memory. Adding the last one {voltage_trees[-1]} as a friend"
                     )
-                # Add the last one VoltageEventTree as a friend
+                # Add the last one TRawVoltage as a friend
                 voltage_tree = voltage_trees[-1]
 
                 # Add the Voltage TTree as a friend
                 self.add_friend(voltage_tree.tree, voltage_tree.file)
 
-        # Do not add EfieldEventTree as a friend to itself
-        if not isinstance(self, EfieldEventTree):
+        # Do not add TEfield as a friend to itself
+        if not isinstance(self, TEfield):
             # Add the Efield tree as a friend if exists already
             efield_trees = []
             for inst in grand_tree_list:
-                if type(inst) is EfieldEventTree:
+                if type(inst) is TEfield:
                     efield_trees.append(inst)
-            # If any ADC tree was found
+            # If any Efield tree was found
             if len(efield_trees) > 0:
-                # Warning if there is more than 1 EfieldEventTree in memory
+                # Warning if there is more than 1 TEfield in memory
                 if len(efield_trees) > 1:
                     logger.warning(
-                        f"More than 1 EfieldEventTree detected in memory. Adding the last one {efield_trees[-1]} as a friend"
+                        f"More than 1 TEfield detected in memory. Adding the last one {efield_trees[-1]} as a friend"
                     )
-                # Add the last one EfieldEventTree as a friend
+                # Add the last one TEfield as a friend
                 efield_tree = efield_trees[-1]
 
                 # Add the Efield TTree as a friend
                 self.add_friend(efield_tree.tree, efield_tree.file)
 
-        # Do not add ShowerEventTree as a friend to itself
-        if not isinstance(self, ShowerEventTree):
+        # Do not add TShower as a friend to itself
+        if not isinstance(self, TShower):
             # Add the Shower tree as a friend if exists already
             shower_trees = []
             for inst in grand_tree_list:
-                if type(inst) is ShowerEventTree:
+                if type(inst) is TShower:
                     shower_trees.append(inst)
-            # If any ADC tree was found
+            # If any Shower tree was found
             if len(shower_trees) > 0:
-                # Warning if there is more than 1 ShowerEventTree in memory
+                # Warning if there is more than 1 TShower in memory
                 if len(shower_trees) > 1:
                     logger.warning(
-                        f"More than 1 ShowerEventTree detected in memory. Adding the last one {shower_trees[-1]} as a friend"
+                        f"More than 1 TShower detected in memory. Adding the last one {shower_trees[-1]} as a friend"
                     )
-                # Add the last one ShowerEventTree as a friend
+                # Add the last one TShower as a friend
                 shower_tree = shower_trees[-1]
 
                 # Add the Shower TTree as a friend
@@ -1084,7 +1084,7 @@ class MotherEventTree(DataTree):
 
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass
-class RunTree(MotherRunTree):
+class TRun(MotherRunTree):
     """A class wrapping around a TTree holding values common for the whole run"""
 
     _type: str = "run"
@@ -1267,12 +1267,12 @@ class RunTree(MotherRunTree):
 
 @dataclass
 ## The class for storing ADC traces and associated values for each event
-class ADCEventTree(MotherEventTree):
+class TADC(MotherEventTree):
     """The class for storing ADC traces and associated values for each event"""
 
-    _type: str = "eventadc"
+    _type: str = "adc"
 
-    _tree_name: str = "teventadc"
+    _tree_name: str = "tadc"
 
     ## Common for the whole event
     ## Event size
@@ -2782,7 +2782,7 @@ class ADCEventTree(MotherEventTree):
 
 @dataclass
 ## The class for storing voltage traces and associated values for each event
-class VoltageEventTree(MotherEventTree):
+class TRawVoltage(MotherEventTree):
     """The class for storing voltage traces and associated values for each event"""
 
     _type: str = "eventvoltage"
@@ -2979,7 +2979,7 @@ class VoltageEventTree(MotherEventTree):
     #         self._tree.SetTitle(self._tree_name)
     #
     #     self.create_branches()
-    #     logger.debug(f'Create VoltageEventTree object')
+    #     logger.debug(f'Create TRawVoltage object')
 
     @property
     def event_size(self):
@@ -4314,7 +4314,7 @@ class VoltageEventTree(MotherEventTree):
 
 @dataclass
 ## The class for storing Efield traces and associated values for each event
-class EfieldEventTree(MotherEventTree):
+class TEfield(MotherEventTree):
     """The class for storing Efield traces and associated values for each event"""
 
     _type: str = "eventefield"
@@ -5110,12 +5110,12 @@ class EfieldEventTree(MotherEventTree):
 
 @dataclass
 ## The class for storing reconstructed shower data common for each event
-class ShowerEventTree(MotherEventTree):
+class TShower(MotherEventTree):
     """The class for storing shower data common for each event"""
 
-    _type: str = "eventshower"
+    _type: str = "shower"
 
-    _tree_name: str = "teventshower"
+    _tree_name: str = "tshower"
 
     # Standarize shower primary type: If single particle, particle type. If not...tau decay,etc. TODO:
     _shower_type: StdString = StdString("")
@@ -5315,152 +5315,152 @@ class ShowerEventTree(MotherEventTree):
         self._core_time[0] = value
 
 
-@dataclass
-## The class for storing voltage simulation-only data common for a whole run
-class VoltageRunSimdataTree(MotherRunTree):
-    """The class for storing voltage simulation-only data common for a whole run"""
+# @dataclass
+# ## The class for storing voltage simulation-only data common for a whole run
+# class VoltageRunSimdataTree(MotherRunTree):
+#     """The class for storing voltage simulation-only data common for a whole run"""
+#
+#     _type: str = "runvoltagesimdata"
+#
+#     _tree_name: str = "trunvoltagesimdata"
+#
+#     _signal_sim: StdString = StdString("")  # name and model of the signal simulator
+#
+#     def __post_init__(self):
+#         super().__post_init__()
+#
+#         if self._tree.GetName() == "":
+#             self._tree.SetName(self._tree_name)
+#         if self._tree.GetTitle() == "":
+#             self._tree.SetTitle(self._tree_name)
+#
+#         self.create_branches()
+#
+#     @property
+#     def signal_sim(self):
+#         """Name and model of the signal simulator"""
+#         return str(self._signal_sim)
+#
+#     @signal_sim.setter
+#     def signal_sim(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._signal_sim.string.assign(value)
 
-    _type: str = "runvoltagesimdata"
 
-    _tree_name: str = "trunvoltagesimdata"
-
-    _signal_sim: StdString = StdString("")  # name and model of the signal simulator
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
-    @property
-    def signal_sim(self):
-        """Name and model of the signal simulator"""
-        return str(self._signal_sim)
-
-    @signal_sim.setter
-    def signal_sim(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._signal_sim.string.assign(value)
-
-
-@dataclass
-## The class for storing voltage simulation-only data common for each event
-class VoltageEventSimdataTree(MotherEventTree):
-    """The class for storing voltage simulation-only data common for each event"""
-
-    _type: str = "eventvoltagesimdata"
-
-    _tree_name: str = "teventvoltagesimdata"
-
-    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))  # Detector ID
-    _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
-    _p2p: StdVectorList = field(
-        default_factory=lambda: StdVectorList("float")
-    )  # peak 2 peak amplitudes (x,y,z,modulus)
-
-    # def __post_init__(self):
-    #     super().__post_init__()
-    #
-    #     if self._tree.GetName() == "":
-    #         self._tree.SetName(self._tree_name)
-    #     if self._tree.GetTitle() == "":
-    #         self._tree.SetTitle(self._tree_name)
-    #
-    #     self.create_branches()
-
-    @property
-    def du_id(self):
-        """Detector ID"""
-        return self._du_id
-
-    @du_id.setter
-    def du_id(self, value):
-
-        # A list was given
-        if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_id.clear()
-            self._du_id += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_id._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def t_0(self):
-        """Time window t0"""
-        return self._t_0
-
-    @t_0.setter
-    def t_0(self, value):
-
-        # A list was given
-        if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._t_0.clear()
-            self._t_0 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._t_0._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def p2p(self):
-        """Peak 2 peak amplitudes (x,y,z,modulus)"""
-        return self._p2p
-
-    @p2p.setter
-    def p2p(self, value):
-
-        # A list was given
-        if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._p2p.clear()
-            self._p2p += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._p2p._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
+# @dataclass
+# ## The class for storing voltage simulation-only data common for each event
+# class VoltageEventSimdataTree(MotherEventTree):
+#     """The class for storing voltage simulation-only data common for each event"""
+#
+#     _type: str = "eventvoltagesimdata"
+#
+#     _tree_name: str = "teventvoltagesimdata"
+#
+#     _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))  # Detector ID
+#     _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
+#     _p2p: StdVectorList = field(
+#         default_factory=lambda: StdVectorList("float")
+#     )  # peak 2 peak amplitudes (x,y,z,modulus)
+#
+#     # def __post_init__(self):
+#     #     super().__post_init__()
+#     #
+#     #     if self._tree.GetName() == "":
+#     #         self._tree.SetName(self._tree_name)
+#     #     if self._tree.GetTitle() == "":
+#     #         self._tree.SetTitle(self._tree_name)
+#     #
+#     #     self.create_branches()
+#
+#     @property
+#     def du_id(self):
+#         """Detector ID"""
+#         return self._du_id
+#
+#     @du_id.setter
+#     def du_id(self, value):
+#
+#         # A list was given
+#         if (
+#             isinstance(value, list)
+#             or isinstance(value, np.ndarray)
+#             or isinstance(value, StdVectorList)
+#         ):
+#             # Clear the vector before setting
+#             self._du_id.clear()
+#             self._du_id += value
+#         # A vector of strings was given
+#         elif isinstance(value, ROOT.vector("int")):
+#             self._du_id._vector = value
+#         else:
+#             raise ValueError(
+#                 f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required."
+#             )
+#
+#     @property
+#     def t_0(self):
+#         """Time window t0"""
+#         return self._t_0
+#
+#     @t_0.setter
+#     def t_0(self, value):
+#
+#         # A list was given
+#         if (
+#             isinstance(value, list)
+#             or isinstance(value, np.ndarray)
+#             or isinstance(value, StdVectorList)
+#         ):
+#             # Clear the vector before setting
+#             self._t_0.clear()
+#             self._t_0 += value
+#         # A vector of strings was given
+#         elif isinstance(value, ROOT.vector("float")):
+#             self._t_0._vector = value
+#         else:
+#             raise ValueError(
+#                 f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required."
+#             )
+#
+#     @property
+#     def p2p(self):
+#         """Peak 2 peak amplitudes (x,y,z,modulus)"""
+#         return self._p2p
+#
+#     @p2p.setter
+#     def p2p(self, value):
+#
+#         # A list was given
+#         if (
+#             isinstance(value, list)
+#             or isinstance(value, np.ndarray)
+#             or isinstance(value, StdVectorList)
+#         ):
+#             # Clear the vector before setting
+#             self._p2p.clear()
+#             self._p2p += value
+#         # A vector of strings was given
+#         elif isinstance(value, ROOT.vector("float")):
+#             self._p2p._vector = value
+#         else:
+#             raise ValueError(
+#                 f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required."
+#             )
 
 
 @dataclass
 ## The class for storing Efield simulation-only data common for a whole run
-class EfieldRunSimdataTree(MotherRunTree):
+class TRunEfieldSim(MotherRunTree):
     """The class for storing Efield simulation-only data common for a whole run"""
 
-    _type: str = "runefieldsimdata"
+    _type: str = "runefieldsim"
 
-    _tree_name: str = "trunefieldsimdata"
+    _tree_name: str = "trunefieldsim"
 
     ## Name and model of the electric field simulator
     # _field_sim: StdString = StdString("")
@@ -5563,115 +5563,115 @@ class EfieldRunSimdataTree(MotherRunTree):
         self._t_bin_size[0] = value
 
 
-@dataclass
-## The class for storing Efield simulation-only data common for each event
-class EfieldEventSimdataTree(MotherEventTree):
-    """The class for storing Efield simulation-only data common for each event"""
-
-    _type: str = "eventefieldsimdata"
-
-    _tree_name: str = "teventefieldsimdata"
-
-    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))  # Detector ID
-    _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
-    _p2p: StdVectorList = field(
-        default_factory=lambda: StdVectorList("float")
-    )  # peak 2 peak amplitudes (x,y,z,modulus)
-
-    # _event_size: np.ndarray = np.zeros(1, np.uint32)
-    # _start_time: StdVectorList("double") = StdVectorList("double")
-    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    # _det_time: StdVectorList("double") = StdVectorList("double")
-    # _e_det_time: StdVectorList("double") = StdVectorList("double")
-    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-
-    # def __post_init__(self):
-    #     super().__post_init__()
-    #
-    #     if self._tree.GetName() == "":
-    #         self._tree.SetName(self._tree_name)
-    #     if self._tree.GetTitle() == "":
-    #         self._tree.SetTitle(self._tree_name)
-    #
-    #     self.create_branches()
-
-    @property
-    def du_id(self):
-        """Detector ID"""
-        return self._du_id
-
-    @du_id.setter
-    def du_id(self, value):
-        # A list was given
-        if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_id.clear()
-            self._du_id += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_id._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def t_0(self):
-        """Time window t0"""
-        return self._t_0
-
-    @t_0.setter
-    def t_0(self, value):
-        # A list was given
-        if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._t_0.clear()
-            self._t_0 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._t_0._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def p2p(self):
-        """Peak 2 peak amplitudes (x,y,z,modulus)"""
-        return self._p2p
-
-    @p2p.setter
-    def p2p(self, value):
-        # A list was given
-        if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._p2p.clear()
-            self._p2p += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._p2p._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
+# @dataclass
+# ## The class for storing Efield simulation-only data common for each event
+# class EfieldEventSimdataTree(MotherEventTree):
+#     """The class for storing Efield simulation-only data common for each event"""
+#
+#     _type: str = "eventefieldsimdata"
+#
+#     _tree_name: str = "teventefieldsimdata"
+#
+#     _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))  # Detector ID
+#     _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
+#     _p2p: StdVectorList = field(
+#         default_factory=lambda: StdVectorList("float")
+#     )  # peak 2 peak amplitudes (x,y,z,modulus)
+#
+#     # _event_size: np.ndarray = np.zeros(1, np.uint32)
+#     # _start_time: StdVectorList("double") = StdVectorList("double")
+#     # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
+#     # _det_time: StdVectorList("double") = StdVectorList("double")
+#     # _e_det_time: StdVectorList("double") = StdVectorList("double")
+#     # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
+#     # _sampling_speed: StdVectorList("float") = StdVectorList("float")
+#
+#     # def __post_init__(self):
+#     #     super().__post_init__()
+#     #
+#     #     if self._tree.GetName() == "":
+#     #         self._tree.SetName(self._tree_name)
+#     #     if self._tree.GetTitle() == "":
+#     #         self._tree.SetTitle(self._tree_name)
+#     #
+#     #     self.create_branches()
+#
+#     @property
+#     def du_id(self):
+#         """Detector ID"""
+#         return self._du_id
+#
+#     @du_id.setter
+#     def du_id(self, value):
+#         # A list was given
+#         if (
+#             isinstance(value, list)
+#             or isinstance(value, np.ndarray)
+#             or isinstance(value, StdVectorList)
+#         ):
+#             # Clear the vector before setting
+#             self._du_id.clear()
+#             self._du_id += value
+#         # A vector of strings was given
+#         elif isinstance(value, ROOT.vector("int")):
+#             self._du_id._vector = value
+#         else:
+#             raise ValueError(
+#                 f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of float required."
+#             )
+#
+#     @property
+#     def t_0(self):
+#         """Time window t0"""
+#         return self._t_0
+#
+#     @t_0.setter
+#     def t_0(self, value):
+#         # A list was given
+#         if (
+#             isinstance(value, list)
+#             or isinstance(value, np.ndarray)
+#             or isinstance(value, StdVectorList)
+#         ):
+#             # Clear the vector before setting
+#             self._t_0.clear()
+#             self._t_0 += value
+#         # A vector of strings was given
+#         elif isinstance(value, ROOT.vector("float")):
+#             self._t_0._vector = value
+#         else:
+#             raise ValueError(
+#                 f"Incorrect type for t_0 {type(value)}. Either a list, an array or a ROOT.vector of float required."
+#             )
+#
+#     @property
+#     def p2p(self):
+#         """Peak 2 peak amplitudes (x,y,z,modulus)"""
+#         return self._p2p
+#
+#     @p2p.setter
+#     def p2p(self, value):
+#         # A list was given
+#         if (
+#             isinstance(value, list)
+#             or isinstance(value, np.ndarray)
+#             or isinstance(value, StdVectorList)
+#         ):
+#             # Clear the vector before setting
+#             self._p2p.clear()
+#             self._p2p += value
+#         # A vector of strings was given
+#         elif isinstance(value, ROOT.vector("float")):
+#             self._p2p._vector = value
+#         else:
+#             raise ValueError(
+#                 f"Incorrect type for p2p {type(value)}. Either a list, an array or a ROOT.vector of float required."
+#             )
 
 
 @dataclass
 ## The class for storing shower simulation-only data common for a whole run
-class ShowerRunSimdataTree(MotherRunTree):
+class TRunShowerSim(MotherRunTree):
     """The class for storing shower simulation-only data common for a whole run"""
 
     _type: str = "runsimdata"
@@ -5786,12 +5786,12 @@ class ShowerRunSimdataTree(MotherRunTree):
 
 @dataclass
 ## The class for storing a shower simulation-only data for each event
-class ShowerEventSimdataTree(MotherEventTree):
+class TShowerSim(MotherEventTree):
     """The class for storing a shower simulation-only data for each event"""
 
-    _type: str = "eventshowersimdata"
+    _type: str = "showersim"
 
-    _tree_name: str = "teventshowersimdata"
+    _tree_name: str = "tshowersim"
 
     ## Event name
     _event_name: StdString = StdString("")
@@ -6113,149 +6113,149 @@ class ShowerEventSimdataTree(MotherEventTree):
         self._tree.SetBranchAddress("cpu_time", self._cpu_time)
 
 
-@dataclass
-## The class for storing shower data for each event specific to ZHAireS only
-class ShowerEventZHAireSTree(MotherEventTree):
-    """The class for storing shower data for each event specific to ZHAireS only"""
-
-    _type: str = "eventshowerzhaires"
-
-    _tree_name: str = "teventshowerzhaires"
-
-    # ToDo: we need explanations of these parameters
-
-    _relative_thining: StdString = StdString("")
-    _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
-    _gamma_energy_cut: StdString = StdString("")
-    _electron_energy_cut: StdString = StdString("")
-    _muon_energy_cut: StdString = StdString("")
-    _meson_energy_cut: StdString = StdString("")
-    _nucleon_energy_cut: StdString = StdString("")
-    _other_parameters: StdString = StdString("")
-
-    # def __post_init__(self):
-    #     super().__post_init__()
-    #
-    #     if self._tree.GetName() == "":
-    #         self._tree.SetName(self._tree_name)
-    #     if self._tree.GetTitle() == "":
-    #         self._tree.SetTitle(self._tree_name)
-    #
-    #     self.create_branches()
-
-    @property
-    def relative_thining(self):
-        """Relative thinning energy"""
-        return str(self._relative_thining)
-
-    @relative_thining.setter
-    def relative_thining(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._relative_thining.string.assign(value)
-
-    @property
-    def weight_factor(self):
-        """Weight factor"""
-        return self._weight_factor[0]
-
-    @weight_factor.setter
-    def weight_factor(self, value: np.float64) -> None:
-        self._weight_factor[0] = value
-
-    @property
-    def gamma_energy_cut(self):
-        """Low energy cut for gammas(GeV)"""
-        return str(self._gamma_energy_cut)
-
-    @gamma_energy_cut.setter
-    def gamma_energy_cut(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._gamma_energy_cut.string.assign(value)
-
-    @property
-    def electron_energy_cut(self):
-        """Low energy cut for electrons (GeV)"""
-        return str(self._electron_energy_cut)
-
-    @electron_energy_cut.setter
-    def electron_energy_cut(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._electron_energy_cut.string.assign(value)
-
-    @property
-    def muon_energy_cut(self):
-        """Low energy cut for muons (GeV)"""
-        return str(self._muon_energy_cut)
-
-    @muon_energy_cut.setter
-    def muon_energy_cut(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._muon_energy_cut.string.assign(value)
-
-    @property
-    def meson_energy_cut(self):
-        """Low energy cut for mesons (GeV)"""
-        return str(self._meson_energy_cut)
-
-    @meson_energy_cut.setter
-    def meson_energy_cut(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._meson_energy_cut.string.assign(value)
-
-    @property
-    def nucleon_energy_cut(self):
-        """Low energy cut for nucleons (GeV)"""
-        return str(self._nucleon_energy_cut)
-
-    @nucleon_energy_cut.setter
-    def nucleon_energy_cut(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._nucleon_energy_cut.string.assign(value)
-
-    @property
-    def other_parameters(self):
-        """Other parameters"""
-        return str(self._other_parameters)
-
-    @other_parameters.setter
-    def other_parameters(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._other_parameters.string.assign(value)
+# @dataclass
+# ## The class for storing shower data for each event specific to ZHAireS only
+# class ShowerEventZHAireSTree(MotherEventTree):
+#     """The class for storing shower data for each event specific to ZHAireS only"""
+#
+#     _type: str = "eventshowerzhaires"
+#
+#     _tree_name: str = "teventshowerzhaires"
+#
+#     # ToDo: we need explanations of these parameters
+#
+#     _relative_thining: StdString = StdString("")
+#     _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
+#     _gamma_energy_cut: StdString = StdString("")
+#     _electron_energy_cut: StdString = StdString("")
+#     _muon_energy_cut: StdString = StdString("")
+#     _meson_energy_cut: StdString = StdString("")
+#     _nucleon_energy_cut: StdString = StdString("")
+#     _other_parameters: StdString = StdString("")
+#
+#     # def __post_init__(self):
+#     #     super().__post_init__()
+#     #
+#     #     if self._tree.GetName() == "":
+#     #         self._tree.SetName(self._tree_name)
+#     #     if self._tree.GetTitle() == "":
+#     #         self._tree.SetTitle(self._tree_name)
+#     #
+#     #     self.create_branches()
+#
+#     @property
+#     def relative_thining(self):
+#         """Relative thinning energy"""
+#         return str(self._relative_thining)
+#
+#     @relative_thining.setter
+#     def relative_thining(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for relative_thining {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._relative_thining.string.assign(value)
+#
+#     @property
+#     def weight_factor(self):
+#         """Weight factor"""
+#         return self._weight_factor[0]
+#
+#     @weight_factor.setter
+#     def weight_factor(self, value: np.float64) -> None:
+#         self._weight_factor[0] = value
+#
+#     @property
+#     def gamma_energy_cut(self):
+#         """Low energy cut for gammas(GeV)"""
+#         return str(self._gamma_energy_cut)
+#
+#     @gamma_energy_cut.setter
+#     def gamma_energy_cut(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for gamma_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._gamma_energy_cut.string.assign(value)
+#
+#     @property
+#     def electron_energy_cut(self):
+#         """Low energy cut for electrons (GeV)"""
+#         return str(self._electron_energy_cut)
+#
+#     @electron_energy_cut.setter
+#     def electron_energy_cut(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for electron_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._electron_energy_cut.string.assign(value)
+#
+#     @property
+#     def muon_energy_cut(self):
+#         """Low energy cut for muons (GeV)"""
+#         return str(self._muon_energy_cut)
+#
+#     @muon_energy_cut.setter
+#     def muon_energy_cut(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for muon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._muon_energy_cut.string.assign(value)
+#
+#     @property
+#     def meson_energy_cut(self):
+#         """Low energy cut for mesons (GeV)"""
+#         return str(self._meson_energy_cut)
+#
+#     @meson_energy_cut.setter
+#     def meson_energy_cut(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for meson_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._meson_energy_cut.string.assign(value)
+#
+#     @property
+#     def nucleon_energy_cut(self):
+#         """Low energy cut for nucleons (GeV)"""
+#         return str(self._nucleon_energy_cut)
+#
+#     @nucleon_energy_cut.setter
+#     def nucleon_energy_cut(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for nucleon_energy_cut {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._nucleon_energy_cut.string.assign(value)
+#
+#     @property
+#     def other_parameters(self):
+#         """Other parameters"""
+#         return str(self._other_parameters)
+#
+#     @other_parameters.setter
+#     def other_parameters(self, value):
+#         # Not a string was given
+#         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+#             raise ValueError(
+#                 f"Incorrect type for other_parameters {type(value)}. Either a string or a ROOT.std.string is required."
+#             )
+#
+#         self._other_parameters.string.assign(value)
 
 
 ## A class wrapping around TTree describing the detector information, like position, type, etc. It works as an array for readout in principle
@@ -6642,34 +6642,34 @@ class DataFile():
         name = tree.GetName()
 
         # Simdata trees
-        if "simdata" in name:
-            if "runvoltage" in name:
-                return "VoltageRunSimdataTree"
-            elif "eventvoltage" in name:
-                return "VoltageEventSimdataTree"
-            elif "runefield" in name:
-                return "EfieldRunSimdataTree"
+        if "sim" in name:
+            # if "runvoltage" in name:
+            #     return "VoltageRunSimdataTree"
+            # elif "eventvoltage" in name:
+            #     return "VoltageEventSimdataTree"
+            if "runefield" in name:
+                return "TRunEfieldSim"
             elif "eventefield" in name:
                 return "EfieldEventSimdataTree"
             elif "runshower" in name:
-                return "ShowerRunSimdataTree"
+                return "TRunShowerSim"
             elif "eventshower" in name:
-                return "ShowerEventSimdataTree"
+                return "TShowerSim"
         # Zhaires tree
         elif "eventshowerzhaires" in name:
             return "ShowerEventZHAireSTree"
         # Other trees
         else:
             if "run" in name:
-                return "RunTree"
-            elif "eventadc" in name:
-                return "ADCEventTree"
-            elif "eventvoltage" in name:
-                return "VoltageEventTree"
-            elif "eventefield" in name:
-                return "EfieldEventTree"
-            elif "eventshower" in name:
-                return "ShowerEventTree"
+                return "TRun"
+            elif "adc" in name:
+                return "TADC"
+            elif "voltage" in name:
+                return "TRawVoltage"
+            elif "efield" in name:
+                return "TEfield"
+            elif "shower" in name:
+                return "TShower"
 
 
     def _load_trees(self):

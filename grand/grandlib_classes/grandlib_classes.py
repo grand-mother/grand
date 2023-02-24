@@ -254,7 +254,7 @@ class Event():
 
         # Check the Run tree existence
         if trun := self.file.Get("trun"):
-            self.trun = RunTree(_tree=trun)
+            self.trun = TRun(_tree=trun)
             # Fill part of the event from trun
             self.fill_event_from_runtree()
         else:
@@ -264,7 +264,7 @@ class Event():
 
         # Check the EventVoltage tree existence
         if teventvoltage := self.file.Get("teventvoltage"):
-            self.teventvoltage = VoltageEventTree(_tree=teventvoltage)
+            self.teventvoltage = TRawVoltage(_tree=teventvoltage)
             # Fill part of the event from teventvoltage
             self.fill_event_from_eventvoltage_tree()
         else:
@@ -274,7 +274,7 @@ class Event():
 
         # Check the EventEfield tree existence
         if teventefield := self.file.Get("teventefield"):
-            self.teventefield = EfieldEventTree(_tree=teventefield)
+            self.teventefield = TEfield(_tree=teventefield)
             # Fill part of the event from teventefield
             self.fill_event_from_eventefield_tree()
         else:
@@ -284,7 +284,7 @@ class Event():
 
         # Check the EventShower tree existence
         if teventshower := self.file.Get("teventshower"):
-            self.teventshower = ShowerEventTree(_tree=teventshower)
+            self.teventshower = TShower(_tree=teventshower)
             # Fill part of the event from teventshower
             self.fill_event_from_eventshower_tree()
         else:
@@ -464,15 +464,15 @@ class Event():
         if self.trun is not None and not overwrite:
             raise TreeExists("The trun TTree already exists!")
 
-        # Look for the RunTree with the same file and name in the memory
+        # Look for the TRun with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
-            # If the RunTree with the same file and name in the memory exists, use it
-            if type(el)==RunTree and el._tree_name=="trun" and el._file_name==filename:
+            # If the TRun with the same file and name in the memory exists, use it
+            if type(el)==TRun and el._tree_name== "trun" and el._file_name==filename:
                 self.trun = el
                 break
-        # No same RunTree in memory - create a new one
+        # No same TRun in memory - create a new one
         else:
-            self.trun = RunTree(_file_name=filename, _tree_name="trun")
+            self.trun = TRun(_file_name=filename, _tree_name="trun")
 
         # Copy the event into the tree
         self.trun.run_number = self.run_number
@@ -499,15 +499,15 @@ class Event():
         if self.teventvoltage is not None and not overwrite:
             raise TreeExists("The teventvoltage TTree already exists!")
 
-        # Look for the VoltageEventTree with the same file and name in the memory
+        # Look for the TRawVoltage with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
-            # If the VoltageEventTree with the same file and name in the memory exists, use it
-            if type(el)==VoltageEventTree and el._tree_name=="teventvoltage" and el._file_name==filename:
+            # If the TRawVoltage with the same file and name in the memory exists, use it
+            if type(el)==TRawVoltage and el._tree_name== "teventvoltage" and el._file_name==filename:
                 self.teventvoltage = el
                 break
-        # No same VoltageEventTree in memory - create a new one
+        # No same TRawVoltage in memory - create a new one
         else:
-            self.teventvoltage = VoltageEventTree(_file_name = filename)
+            self.teventvoltage = TRawVoltage(_file_name = filename)
 
         self.teventvoltage.run_number = self.run_number
         self.teventvoltage.event_number = self.event_number
@@ -537,15 +537,15 @@ class Event():
         if self.teventefield is not None and not overwrite:
             raise TreeExists("The teventefield TTree already exists!")
 
-        # Look for the EfieldEventTree with the same file and name in the memory
+        # Look for the TEfield with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
-            # If the EfieldEventTree with the same file and name in the memory exists, use it
-            if type(el)==EfieldEventTree and el._tree_name=="teventefield" and el._file_name==filename:
+            # If the TEfield with the same file and name in the memory exists, use it
+            if type(el)==TEfield and el._tree_name== "teventefield" and el._file_name==filename:
                 self.teventefield = el
                 break
-        # No same EfieldEventTree in memory - create a new one
+        # No same TEfield in memory - create a new one
         else:
-            self.teventefield = EfieldEventTree(_file_name = filename)
+            self.teventefield = TEfield(_file_name = filename)
 
         self.teventefield.run_number = self.run_number
         self.teventefield.event_number = self.event_number
@@ -567,15 +567,15 @@ class Event():
         if self.teventshower is not None and not overwrite:
             raise TreeExists("The teventshower TTree already exists!")
 
-        # Look for the ShowerEventTree with the same file and name in the memory
+        # Look for the TShower with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
-            # If the ShowerEventTree with the same file and name in the memory exists, use it
-            if type(el)==ShowerEventTree and el._tree_name=="teventshower" and el._file_name==filename:
+            # If the TShower with the same file and name in the memory exists, use it
+            if type(el)==TShower and el._tree_name== "teventshower" and el._file_name==filename:
                 self.teventshower = el
                 break
-        # No same ShowerEventTree in memory - create a new one
+        # No same TShower in memory - create a new one
         else:
-            self.teventshower = ShowerEventTree(_file_name = filename)
+            self.teventshower = TShower(_file_name = filename)
 
         self.teventshower.run_number = self.run_number
         self.teventshower.event_number = self.event_number

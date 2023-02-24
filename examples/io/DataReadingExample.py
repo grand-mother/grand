@@ -5,10 +5,10 @@ import sys
 from grand.io.root_trees import *
 
 if len(sys.argv) < 2:
-    tadccounts = ADCEventTree("stored_data.root")
+    tadccounts = TADC("stored_data.root")
 else:
     print(f"Reading file {sys.argv[1]}")
-    tadccounts = ADCEventTree(sys.argv[1])
+    tadccounts = TADC(sys.argv[1])
 
 # Get the list of runs,events
 list_of_events = tadccounts.get_list_of_events()
@@ -32,9 +32,9 @@ for i, en in enumerate(tadccounts):
     print(i, en.event_number, en.run_number)
 
 if len(sys.argv) < 2:
-    tefield = EfieldEventTree("stored_data.root")
+    tefield = TEfield("stored_data.root")
 else:
-    tefield = EfieldEventTree(sys.argv[1])
+    tefield = TEfield(sys.argv[1])
 # tvoltage = GRANDVoltageTree("stored_data.root")
 
 list_of_events = tefield.get_list_of_events()
