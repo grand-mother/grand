@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, fields
 import numpy as np
 from typing import Any
 from grand.io.root_trees import *
-import os
+from grand.tools.coordinates import *
 import ROOT
 
 ## A class describing a single antenna; ToDo: Should it be antenna, or more general: Detector?
@@ -77,10 +77,9 @@ class Antenna():
     # gps_temp: float = 0
 
 
-
 ## A class for holding x,y,z single antenna traces over time
 @dataclass
-class Timetrace3D():
+class Timetrace3D:
     ## The trace length
     n_points: int = 0
     ## [ns] n_points x step = total timetrace length
@@ -91,11 +90,15 @@ class Timetrace3D():
     trigger_time: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
 
     ## Trace vector in X
-    trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+    # trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     ## Trace vector in Y
-    trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+    # trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     ## Trace vector in Z
-    trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+    # trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+
+    _trace: CartesianRepresentation = field(default_factory=lambda: np.zeros(1, np.float))
+    # _trace1: list = None
+    # trace: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
     ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
     ## Hilbert envelope vector in X
@@ -108,6 +111,14 @@ class Timetrace3D():
     ## ToDo: add additional quantities from the doc?
 
     ## ToDo: add additional quantities from the trees?
+
+    @property
+    def trace(self):
+        return self._trace
+
+    @trace.setter
+    def trace(self, v):
+        self._trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
 ## A class for holding voltage traces + additional information
 @dataclass
@@ -503,9 +514,12 @@ class Event():
 
         # Copy the contents of voltages to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.teventvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
-        self.teventvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
-        self.teventvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
+        self.teventvoltage.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.voltages]
+        self.teventvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        self.teventvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
+        # self.teventvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
+        # self.teventvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
+        # self.teventvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
 
         # Copy the contents of antennas to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
@@ -538,9 +552,12 @@ class Event():
 
         # Copy the contents of efields to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.teventefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
-        self.teventefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
-        self.teventefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
+        self.teventefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
+        self.teventefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
+        self.teventefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
+        # self.teventefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
+        # self.teventefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
+        # self.teventefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
 
         self.teventefield.fill()
 
