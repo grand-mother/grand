@@ -3,6 +3,7 @@
 import numpy as np
 import time
 import sys
+import ROOT
 from grand.io.root_trees import *
 
 # Check if a filename was provided on the command line
@@ -146,16 +147,103 @@ for ev in range(event_count):
 tadccounts.write(filename)
 print("Wrote tadccounts")
 
-# ********** Voltage ****************
+# ********** Raw Voltage ****************
 
 # Voltage has the same data as ADC counts tree, but recalculated to "real" (usually float) values
 
 # Recalculate ADC counts to voltage, just with a dummy conversion now: 0.9 V is equal to 8192 counts for XiHu data
 adc2v = 0.9 / 8192
 
-# Create the ADC counts tree
-tvoltage = TRawVoltage()
+# Create the Raw Voltage counts tree
+trawvoltage = TRawVoltage()
+trawvoltage.comment = "Generated DataStoringExample.py"
+
+# ROOT.gInterpreter.GenerateDictionary("vector<vector<vector<Float32_t>>>", "vector")
+
+# fill the tree with the generated events
+for ev in range(event_count):
+    trawvoltage.run_number = 0
+    trawvoltage.event_number = ev
+    # First data unit in the event
+    trawvoltage.first_du = 0
+    # As the event time add the current time
+    trawvoltage.time_seconds = int(time.mktime(time.gmtime()))
+    # Event nanoseconds 0 for now
+    trawvoltage.time_nanoseconds = 0
+    # Triggered event
+    trawvoltage.event_type = 0x8000
+    # The number of antennas in the event
+    trawvoltage.du_count = len(traces[ev])
+
+    # Loop through the event's traces
+    du_id = []
+    du_seconds = []
+    du_nanoseconds = []
+    trigger_position = []
+    trigger_flag = []
+    atm_temperature = []
+    atm_pressure = []
+    atm_humidity = []
+    acceleration_x = []
+    acceleration_y = []
+    acceleration_z = []
+    trace_x = []
+    trace_y = []
+    trace_z = []
+    for i, trace in enumerate(traces[ev]):
+        # print(ev,i, len(trace[0]))
+
+        # Dumb values just for filling
+        du_id.append(i)
+        du_seconds.append(trawvoltage.time_seconds)
+        du_nanoseconds.append(trawvoltage.time_nanoseconds)
+        trigger_position.append(i // 2)
+        trigger_flag.append(trawvoltage.event_type)
+        atm_temperature.append(20 + ev / 2)
+        atm_pressure.append(1024 + ev / 2)
+        atm_humidity.append(50 + ev / 2)
+        acceleration_x.append(ev / 2)
+        acceleration_y.append(ev / 3)
+        acceleration_z.append(ev / 4)
+
+        trace_x.append(trace[0])
+        trace_y.append(trace[1])
+        trace_z.append(trace[2])
+
+    trawvoltage.du_id = du_id
+    trawvoltage.du_seconds = du_seconds
+    trawvoltage.du_nanoseconds = du_nanoseconds
+    # trawvoltage.trigger_position = trigger_position
+    trawvoltage.trigger_flag = trigger_flag
+    trawvoltage.atm_temperature = atm_temperature
+    trawvoltage.atm_pressure = atm_pressure
+    trawvoltage.atm_humidity = atm_humidity
+    trawvoltage.acceleration_x = acceleration_x
+    trawvoltage.acceleration_y = acceleration_y
+    trawvoltage.acceleration_z = acceleration_z
+    trawvoltage.trace_0 = trace_x
+    trawvoltage.trace_1 = trace_y
+    trawvoltage.trace_2 = trace_z
+    # trawvoltage.trace_x = trace_x
+    # trawvoltage.trace_y = trace_y
+    # trawvoltage.trace_z = trace_z
+    # trawvoltage.trace_ch = [trace_x, trace_y, trace_z]
+
+    trawvoltage.fill()
+
+# write the tree to the storage
+trawvoltage.write(filename)
+print("Wrote trawvoltage")
+
+# ********** Voltage ****************
+
+# For now basically takes values from raw voltage, and just reassigns the channels
+
+# Create the Voltage counts tree
+tvoltage = TVoltage()
 tvoltage.comment = "Generated DataStoringExample.py"
+
+# ROOT.gInterpreter.GenerateDictionary("vector<vector<vector<Float32_t>>>", "vector")
 
 # fill the tree with the generated events
 for ev in range(event_count):
@@ -167,8 +255,6 @@ for ev in range(event_count):
     tvoltage.time_seconds = int(time.mktime(time.gmtime()))
     # Event nanoseconds 0 for now
     tvoltage.time_nanoseconds = 0
-    # Triggered event
-    tvoltage.event_type = 0x8000
     # The number of antennas in the event
     tvoltage.du_count = len(traces[ev])
 
@@ -195,7 +281,6 @@ for ev in range(event_count):
         du_seconds.append(tvoltage.time_seconds)
         du_nanoseconds.append(tvoltage.time_nanoseconds)
         trigger_position.append(i // 2)
-        trigger_flag.append(tvoltage.event_type)
         atm_temperature.append(20 + ev / 2)
         atm_pressure.append(1024 + ev / 2)
         atm_humidity.append(50 + ev / 2)
@@ -210,17 +295,16 @@ for ev in range(event_count):
     tvoltage.du_id = du_id
     tvoltage.du_seconds = du_seconds
     tvoltage.du_nanoseconds = du_nanoseconds
-    tvoltage.trigger_position = trigger_position
+    # tvoltage.trigger_position = trigger_position
     tvoltage.trigger_flag = trigger_flag
-    tvoltage.atm_temperature = atm_temperature
-    tvoltage.atm_pressure = atm_pressure
-    tvoltage.atm_humidity = atm_humidity
-    tvoltage.acceleration_x = acceleration_x
-    tvoltage.acceleration_y = acceleration_y
-    tvoltage.acceleration_z = acceleration_z
+    # tvoltage.acceleration_x = acceleration_x
+    # tvoltage.acceleration_y = acceleration_y
+    # tvoltage.acceleration_z = acceleration_z
+    tvoltage.du_acceleration = [acceleration_x, acceleration_y, acceleration_z]
     tvoltage.trace_x = trace_x
     tvoltage.trace_y = trace_y
     tvoltage.trace_z = trace_z
+    # tvoltage.trace_ch = [trace_x, trace_y, trace_z]
 
     tvoltage.fill()
 
@@ -312,11 +396,11 @@ for ev in range(0, event_count, 2):
     tefield.du_id = du_id
     tefield.du_seconds = du_seconds
     tefield.du_nanoseconds = du_nanoseconds
-    tefield.trigger_position = trigger_position
-    tefield.trigger_flag = trigger_flag
-    tefield.atm_temperature = atm_temperature
-    tefield.atm_pressure = atm_pressure
-    tefield.atm_humidity = atm_humidity
+    # tefield.trigger_position = trigger_position
+    # tefield.trigger_flag = trigger_flag
+    # tefield.atm_temperature = atm_temperature
+    # tefield.atm_pressure = atm_pressure
+    # tefield.atm_humidity = atm_humidity
     tefield.trace_x = trace_xs
     tefield.trace_y = trace_ys
     tefield.trace_z = trace_zs
