@@ -224,9 +224,9 @@ class Event():
 
     # Internal trees
     trun: ROOT.TTree = None
-    teventvoltage: ROOT.TTree = None
-    teventefield: ROOT.TTree = None
-    teventshower: ROOT.TTree = None
+    tvoltage: ROOT.TTree = None
+    tefield: ROOT.TTree = None
+    tshower: ROOT.TTree = None
 
     # Options
 
@@ -262,35 +262,35 @@ class Event():
             # Make trun really None
             self.trun = None
 
-        # Check the EventVoltage tree existence
-        if teventvoltage := self.file.Get("teventvoltage"):
-            self.teventvoltage = TRawVoltage(_tree=teventvoltage)
-            # Fill part of the event from teventvoltage
-            self.fill_event_from_eventvoltage_tree()
+        # Check the Voltage tree existence
+        if tvoltage := self.file.Get("tvoltage"):
+            self.tvoltage = TVoltage(_tree=tvoltage)
+            # Fill part of the event from tvoltage
+            self.fill_event_from_voltage_tree()
         else:
-            print("No EventVoltage tree. Voltage information will not be available.")
-            # Make teventvoltage really None
-            self.teventvoltage = None
+            print("No Voltage tree. Voltage information will not be available.")
+            # Make tvoltage really None
+            self.tvoltage = None
 
-        # Check the EventEfield tree existence
-        if teventefield := self.file.Get("teventefield"):
-            self.teventefield = TEfield(_tree=teventefield)
-            # Fill part of the event from teventefield
-            self.fill_event_from_eventefield_tree()
+        # Check the Efield tree existence
+        if tefield := self.file.Get("tefield"):
+            self.tefield = TEfield(_tree=tefield)
+            # Fill part of the event from tefield
+            self.fill_event_from_efield_tree()
         else:
             print("No Eventefield tree. Efield information will not be available.")
-            # Make teventefield really None
-            self.teventefield = None
+            # Make tefield really None
+            self.tefield = None
 
-        # Check the EventShower tree existence
-        if teventshower := self.file.Get("teventshower"):
-            self.teventshower = TShower(_tree=teventshower)
-            # Fill part of the event from teventshower
-            self.fill_event_from_eventshower_tree()
+        # Check the Shower tree existence
+        if tshower := self.file.Get("tshower"):
+            self.tshower = TShower(_tree=tshower)
+            # Fill part of the event from tshower
+            self.fill_event_from_shower_tree()
         else:
-            print("No EventShower tree. Shower information will not be available.")
-            # Make teventshower really None
-            self.teventshower = None
+            print("No Shower tree. Shower information will not be available.")
+            # Make tshower really None
+            self.tshower = None
 
 
     ## Fill part of the event from the Run tree
@@ -304,33 +304,33 @@ class Event():
         self.data_generator = self.trun.data_generator
         self.data_generator_version = self.trun.data_generator_version
         self.site = self.trun.site
-        self.site_long = self.trun.site_long
-        self.site_lat = self.trun.site_lat
+        # self.site_long = self.trun.site_long
+        # self.site_lat = self.trun.site_lat
         self.origin_geoid = self.trun.origin_geoid
 
-    ## Fill part of the event from the EventVoltage tree
-    def fill_event_from_eventvoltage_tree(self):
-        self.teventvoltage.get_event(self.event_number, self.run_number)
+    ## Fill part of the event from the Voltage tree
+    def fill_event_from_voltage_tree(self):
+        self.tvoltage.get_event(self.event_number, self.run_number)
         self.voltages = []
         self.antennas = []
         # Loop through traces
-        for i in range(len(self.teventvoltage.trace_x)):
+        for i in range(len(self.tvoltage.trace_x)):
             # Fill the voltage trace part
             v = Voltage()
-            tx = self.teventvoltage.trace_x[i]
+            tx = self.tvoltage.trace_x[i]
             v.n_points = len(tx)
             v.trace_x = tx
-            v.trace_y = self.teventvoltage.trace_y[i]
-            v.trace_z = self.teventvoltage.trace_z[i]
+            v.trace_y = self.tvoltage.trace_y[i]
+            v.trace_z = self.tvoltage.trace_z[i]
             self.voltages.append(v)
 
             # Fill the antenna part
             a = Antenna()
-            a.atm_temperature = self.teventvoltage.atm_temperature[i]
-            a.atm_pressure = self.teventvoltage.atm_pressure[i]
-            a.atm_humidity = self.teventvoltage.atm_humidity[i]
-            a.battery_level = self.teventvoltage.battery_level[i]
-            a.firmware_version = self.teventvoltage.firmware_version[i]
+            # a.atm_temperature = self.tvoltage.atm_temperature[i]
+            # a.atm_pressure = self.tvoltage.atm_pressure[i]
+            # a.atm_humidity = self.tvoltage.atm_humidity[i]
+            # a.battery_level = self.tvoltage.battery_level[i]
+            # a.firmware_version = self.tvoltage.firmware_version[i]
             self.antennas.append(a)
 
         # ## The trace length
@@ -350,42 +350,44 @@ class Event():
         # ## Hilbert envelope vector in X
         # _hilbert_trace_z: np.ndarray = np.zeros(1, np.float)
 
-    ## Fill part of the event from the EventEfield tree
-    def fill_event_from_eventefield_tree(self):
+    ## Fill part of the event from the Efield tree
+    def fill_event_from_efield_tree(self):
         # Initialise the Shower
         self.shower = Shower()
-        self.teventefield.get_event(self.event_number, self.run_number)
+        self.tefield.get_event(self.event_number, self.run_number)
         self.efields = []
         # Loop through traces
-        for i in range(len(self.teventefield.trace_x)):
+        for i in range(len(self.tefield.trace_x)):
             v = Efield()
-            tx = self.teventefield.trace_x[i]
+            tx = self.tefield.trace_x[i]
             v.n_points = len(tx)
             v.trace_x = tx
-            v.trace_y = self.teventefield.trace_y[i]
-            v.trace_z = self.teventefield.trace_z[i]
+            v.trace_y = self.tefield.trace_y[i]
+            v.trace_z = self.tefield.trace_z[i]
             self.efields.append(v)
 
-    ## Fill part of the event from the EventShower tree
-    def fill_event_from_eventshower_tree(self):
-        self.teventshower.get_event(self.event_number, self.run_number)
-        ## Shower energy [eV]
-        self.shower.energy = self.teventshower.shower_energy
+    ## Fill part of the event from the Shower tree
+    def fill_event_from_shower_tree(self):
+        self.tshower.get_event(self.event_number, self.run_number)
+        ## Shower energy from e+- (ie related to radio emission) (GeV)
+        self.shower.energy_em = self.tshower.energy_em
+        ## Shower total energy of the primary (including muons, neutrinos, ...) (GeV)
+        self.shower.energy_primary = self.tshower.energy_primary
         ## Shower Xmax [g/cm2]
-        self.shower.Xmax = self.teventshower.xmax_grams
+        self.shower.Xmax = self.tshower.xmax_grams
         ## Shower position in the site's reference frame
-        self.shower.Xmaxpos = self.teventshower.xmax_pos_shc
+        self.shower.Xmaxpos = self.tshower.xmax_pos_shc
         ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
         self.shower.origin_geoid = field(default_factory=lambda: np.zeros(3))
         ## Poistion of the core on the ground in the site's reference frame
-        self.shower.core_ground_pos = self.teventshower.shower_core_pos
+        self.shower.core_ground_pos = self.tshower.shower_core_pos
 
     ## Print all the class values
     def print(self):
         # Assign the TTree branches to the class fields
         for field in fields(self):
             # Skip the list fields
-            if any(x in field.name for x in {"antennas", "voltages", "efields", "shower"}): continue
+            if any(x in field.name for x in {"antennas", "voltages", "efields", "shower", "trun", "tvoltage", "tefield", "tshower"}): continue
             print("{:<30} {:>30}".format(field.name, str(getattr(self, field.name))))
 
         # Now deal with the list fields separately
@@ -443,19 +445,19 @@ class Event():
     def write_voltages(self, filename, overwrite=False):
         self.fill_voltage_tree(filename=filename)
         if self.auto_file_close:
-            self.teventvoltage.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+            self.tvoltage.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the efields to a file
     def write_efields(self, filename, overwrite=False):
         self.fill_efield_tree(filename=filename)
         if self.auto_file_close:
-            self.teventefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+            self.tefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the shower to a file
     def write_shower(self, filename, overwrite=False):
         self.fill_shower_tree(filename=filename)
         if self.auto_file_close:
-            self.teventshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+            self.tshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
 
     ## Fill the run tree from this Event
@@ -496,112 +498,112 @@ class Event():
     ## Fill the voltage tree from this Event
     def fill_voltage_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
-        if self.teventvoltage is not None and not overwrite:
-            raise TreeExists("The teventvoltage TTree already exists!")
+        if self.tvoltage is not None and not overwrite:
+            raise TreeExists("The tvoltage TTree already exists!")
 
-        # Look for the TRawVoltage with the same file and name in the memory
+        # Look for the TVoltage with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
-            # If the TRawVoltage with the same file and name in the memory exists, use it
-            if type(el)==TRawVoltage and el._tree_name== "teventvoltage" and el._file_name==filename:
-                self.teventvoltage = el
+            # If the TVoltage with the same file and name in the memory exists, use it
+            if type(el)==TVoltage and el._tree_name== "tvoltage" and el._file_name==filename:
+                self.tvoltage = el
                 break
-        # No same TRawVoltage in memory - create a new one
+        # No same TVoltage in memory - create a new one
         else:
-            self.teventvoltage = TRawVoltage(_file_name = filename)
+            self.tvoltage = TVoltage(_file_name = filename)
 
-        self.teventvoltage.run_number = self.run_number
-        self.teventvoltage.event_number = self.event_number
+        self.tvoltage.run_number = self.run_number
+        self.tvoltage.event_number = self.event_number
 
         # Copy the contents of voltages to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.teventvoltage.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.voltages]
-        self.teventvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
-        self.teventvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
-        # self.teventvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
-        # self.teventvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
-        # self.teventvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
+        self.tvoltage.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.voltages]
+        self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
+        # self.tvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
+        # self.tvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
+        # self.tvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
 
         # Copy the contents of antennas to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.teventvoltage.atm_temperature = np.array([np.array(a.atm_temperature) for a in self.antennas])
-        self.teventvoltage.atm_pressure = np.array([np.array(a.atm_pressure) for a in self.antennas])
-        self.teventvoltage.atm_humidity = np.array([np.array(a.atm_humidity) for a in self.antennas])
-        self.teventvoltage.battery_level = np.array([np.array(a.battery_level) for a in self.antennas])
-        self.teventvoltage.firmware_version = np.array([np.array(a.firmware_version) for a in self.antennas])
+        self.tvoltage.atm_temperature = np.array([np.array(a.atm_temperature) for a in self.antennas])
+        self.tvoltage.atm_pressure = np.array([np.array(a.atm_pressure) for a in self.antennas])
+        self.tvoltage.atm_humidity = np.array([np.array(a.atm_humidity) for a in self.antennas])
+        self.tvoltage.battery_level = np.array([np.array(a.battery_level) for a in self.antennas])
+        self.tvoltage.firmware_version = np.array([np.array(a.firmware_version) for a in self.antennas])
 
-        self.teventvoltage.fill()
+        self.tvoltage.fill()
 
     ## Fill the efield tree from this Event
     def fill_efield_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
-        if self.teventefield is not None and not overwrite:
-            raise TreeExists("The teventefield TTree already exists!")
+        if self.tefield is not None and not overwrite:
+            raise TreeExists("The tefield TTree already exists!")
 
         # Look for the TEfield with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TEfield with the same file and name in the memory exists, use it
-            if type(el)==TEfield and el._tree_name== "teventefield" and el._file_name==filename:
-                self.teventefield = el
+            if type(el)==TEfield and el._tree_name== "tefield" and el._file_name==filename:
+                self.tefield = el
                 break
         # No same TEfield in memory - create a new one
         else:
-            self.teventefield = TEfield(_file_name = filename)
+            self.tefield = TEfield(_file_name = filename)
 
-        self.teventefield.run_number = self.run_number
-        self.teventefield.event_number = self.event_number
+        self.tefield.run_number = self.run_number
+        self.tefield.event_number = self.event_number
 
         # Copy the contents of efields to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.teventefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
-        self.teventefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
-        self.teventefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
-        # self.teventefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
-        # self.teventefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
-        # self.teventefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
+        self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
+        self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
+        self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
+        # self.tefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
+        # self.tefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
+        # self.tefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
 
-        self.teventefield.fill()
+        self.tefield.fill()
 
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
-        if self.teventshower is not None and not overwrite:
-            raise TreeExists("The teventshower TTree already exists!")
+        if self.tshower is not None and not overwrite:
+            raise TreeExists("The tshower TTree already exists!")
 
         # Look for the TShower with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TShower with the same file and name in the memory exists, use it
-            if type(el)==TShower and el._tree_name== "teventshower" and el._file_name==filename:
-                self.teventshower = el
+            if type(el)==TShower and el._tree_name== "tshower" and el._file_name==filename:
+                self.tshower = el
                 break
         # No same TShower in memory - create a new one
         else:
-            self.teventshower = TShower(_file_name = filename)
+            self.tshower = TShower(_file_name = filename)
 
-        self.teventshower.run_number = self.run_number
-        self.teventshower.event_number = self.event_number
+        self.tshower.run_number = self.run_number
+        self.tshower.event_number = self.event_number
 
 
-        self.teventshower.shower_energy = self.shower.energy
+        self.tshower.shower_energy = self.shower.energy
         ## Shower Xmax [g/cm2]
-        self.teventshower.xmax_grams = self.shower.Xmax
+        self.tshower.xmax_grams = self.shower.Xmax
         ## Shower position in the site's reference frame
-        self.teventshower.xmax_pos_shc = self.shower.Xmaxpos
+        self.tshower.xmax_pos_shc = self.shower.Xmaxpos
         ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
         #self.shower.origin_geoid = np.zeros(3)
         ## Poistion of the core on the ground in the site's reference frame
-        self.teventshower.shower_core_pos = self.shower.core_ground_pos
+        self.tshower.shower_core_pos = self.shower.core_ground_pos
 
-        self.teventshower.fill()
+        self.tshower.fill()
 
     def close_files(self):
         """Close all files of the all trees - needed when auto_file_close is False"""
-        self.teventshower.write()
-        self.teventefield.write()
-        self.teventvoltage.write()
+        self.tshower.write()
+        self.tefield.write()
+        self.tvoltage.write()
         self.trun.write()
-        self.teventshower.close_file()
-        self.teventefield.close_file()
-        self.teventvoltage.close_file()
+        self.tshower.close_file()
+        self.tefield.close_file()
+        self.tvoltage.close_file()
         self.trun.close_file()
 
 
