@@ -1052,7 +1052,7 @@ class MotherEventTree(DataTree):
 
         traces_lengths = []
         # For ADC traces - 4 traces, different names
-        if "ADC" in self.__class__.__name__:
+        if "ADC" in self.__class__.__name__ or "RawVoltage" in self.__class__.__name__:
             traces_suffixes = [0, 1, 2, 3]
         # Other traces
         else:
