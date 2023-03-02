@@ -7402,6 +7402,55 @@ class TShowerSim(MotherEventTree):
     def tested_core_positions(self, value):
         set_vector_of_vectors(value, "vector<float>", self._tested_core_positions, "tested_core_positions")
 
+## General info on the noise generation
+@dataclass
+class TRunNoise(MotherRunTree):
+    """General info on the noise generation"""
+
+    _type: str = "runnoise"
+
+    _tree_name: str = "trunnoise"
+
+    ## Info to retrieve the map of galactic noise
+    _gal_noise_map: StdString = StdString("")
+    ## LST time when we generate the noise
+    _gal_noise_LST: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    ## Noise std dev for each arm of each antenna
+    _gal_noise_sigma: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+
+    @property
+    def gal_noise_map(self):
+        """Info to retrieve the map of galactic noise"""
+        return str(self._gal_noise_map)
+
+    @gal_noise_map.setter
+    def gal_noise_map(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for gal_noise_map {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        self._gal_noise_map.string.assign(value)
+
+    @property
+    def gal_noise_LST(self):
+        """LST time when we generate the noise"""
+        return self._gal_noise_LST[0]
+
+    @gal_noise_LST.setter
+    def gal_noise_LST(self, value: np.float32) -> None:
+        self._gal_noise_LST[0] = value
+
+    @property
+    def gal_noise_sigma(self):
+        """Noise std dev for each arm of each antenna"""
+        return np.array(self._gal_noise_sigma)
+
+    @gal_noise_sigma.setter
+    def gal_noise_sigma(self, value):
+        set_vector_of_vectors(value, "vector<float>", self._gal_noise_sigma, "gal_noise_sigma")
+
 
 # @dataclass
 # ## The class for storing shower data for each event specific to ZHAireS only
