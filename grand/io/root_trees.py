@@ -516,7 +516,6 @@ class DataTree:
             if not set_branches:
                 # self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
                 self._tree.Branch(value_name[1:], getattr(self, value_name)._vector)
-                if "trace" in value_name: print(value_name[1:], getattr(self, value_name)._vector, type(getattr(self, value_name)._vector))
             # Or set its address
             else:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
@@ -1302,7 +1301,7 @@ class TRun(MotherRunTree):
         return str(self._site_layout)
 
     @site_layout.setter
-    def site(self, value):
+    def site_layout(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
             raise ValueError(
@@ -5479,9 +5478,9 @@ class TVoltage(MotherEventTree):
 class TEfield(MotherEventTree):
     """The class for storing Efield traces and associated values for each event"""
 
-    _type: str = "eventefield"
+    _type: str = "efield"
 
-    _tree_name: str = "teventefield"
+    _tree_name: str = "tefield"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
     # _event_size: np.ndarray = np.zeros(1, np.uint32)
