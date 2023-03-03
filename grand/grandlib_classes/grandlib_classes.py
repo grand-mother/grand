@@ -20,17 +20,17 @@ class Antenna():
     ## The antenna model
     model: Any = 0
 
-    # ToDo: Parameters below come from the hardware, but do we want them here?
-    ## Atmospheric temperature (read via I2C)
-    atm_temperature: float = 0
-    ## Atmospheric pressure
-    atm_pressure: float = 0
-    ## Atmospheric humidity
-    atm_humidity: float = 0
-    ## Battery voltage
-    battery_level: float = 0
-    ## Firmware version
-    firmware_version: float = 0
+    # # ToDo: Parameters below come from the hardware, but do we want them here?
+    # ## Atmospheric temperature (read via I2C)
+    # atm_temperature: float = 0
+    # ## Atmospheric pressure
+    # atm_pressure: float = 0
+    # ## Atmospheric humidity
+    # atm_humidity: float = 0
+    # ## Battery voltage
+    # battery_level: float = 0
+    # ## Firmware version
+    # firmware_version: float = 0
 
     ## Maybe these should go somehow to the Timetrace3D?
     # ## ADC sampling frequency in MHz
@@ -96,7 +96,9 @@ class Timetrace3D:
     ## Trace vector in Z
     # trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
-    _trace: CartesianRepresentation = field(default_factory=lambda: np.zeros(1, np.float))
+    # _trace: CartesianRepresentation = field(default_factory=lambda: np.zeros(1, np.float))
+    # ToDo: Allow empty constructor in CartesianRepresentation?
+    _trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
     # _trace1: list = None
     # trace: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
@@ -404,11 +406,11 @@ class Event():
         print("\t{:<30} {:>30}".format("Position:", str([a.position for a in self.antennas])))
         print("\t{:<30} {:>30}".format("Tilt:", str([a.tilt for a in self.antennas])))
         print("\t{:<30} {:>30}".format("Acceleration:", str([a.acceleration for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Humidity:", str([a.atm_humidity for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Pressure:", str([a.atm_pressure for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Temperature:", str([a.atm_temperature for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Battery level:", str([a.battery_level for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Firmware version:", str([a.firmware_version for a in self.antennas])))
+        # print("\t{:<30} {:>30}".format("Humidity:", str([a.atm_humidity for a in self.antennas])))
+        # print("\t{:<30} {:>30}".format("Pressure:", str([a.atm_pressure for a in self.antennas])))
+        # print("\t{:<30} {:>30}".format("Temperature:", str([a.atm_temperature for a in self.antennas])))
+        # print("\t{:<30} {:>30}".format("Battery level:", str([a.battery_level for a in self.antennas])))
+        # print("\t{:<30} {:>30}".format("Firmware version:", str([a.firmware_version for a in self.antennas])))
 
         print("Voltages:")
         print("\t{:<30} {:>30}".format("Triggered status:", str([tr.is_triggered for tr in self.voltages])))
