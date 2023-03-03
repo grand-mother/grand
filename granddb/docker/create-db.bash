@@ -63,12 +63,14 @@ echo "Run pgsync"
 #pgsync  --defer-constraints --preserve
 pgsync  --defer-constraints grand
 
-seq=$(psql -h localhost -d granddb grandadmin -tc "select sequence_name from information_schema.sequences where sequence_catalog='granddb' ORDER BY sequence_name ;")
-
+#seq=$(psql -h localhost -d granddb grandadmin -tc "select sequence_name from information_schema.sequences where sequence_catalog='granddb' ORDER BY sequence_name ;")
+#seq=$(psql -h localhost -d granddb grandadmin -tc "SELECT c.relname as sequence_name FROM pg_class c WHERE c.relkind = 'S' ORDER BY sequence_name ;")
+seq=$(psql -h localhost -d granddb grandadmin -tc "SELECT sequencename from pg_sequences ORDER BY sequencename;")
 for i in $seq
 do
         cur=$(psql -h localhost -d granddb grandadmin -tc "select last_value from $i ;")
-        half=$(psql -h localhost -d granddb grandadmin -tc "select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='$i' ;")
+        #half=$(psql -h localhost -d granddb grandadmin -tc "select maximum_value::BIGINT / 2 from information_schema.sequences where sequence_name='$i' ;")
+        half=$(psql -h localhost -d granddb grandadmin -tc "select max_value::BIGINT / 2 from  pg_sequences where sequencename='$i' ;")
         if [ $cur -lt $half ]; then
                 psql -h localhost -d granddb grandadmin -tc "SELECT setval('$i', $half, true);" &> /dev/null
         fi
