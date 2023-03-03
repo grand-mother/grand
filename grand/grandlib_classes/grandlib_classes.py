@@ -103,12 +103,13 @@ class Timetrace3D:
     # trace: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
     ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
-    ## Hilbert envelope vector in X
-    hilbert_trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-    ## Hilbert envelope vector in X
-    hilbert_trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-    ## Hilbert envelope vector in X
-    hilbert_trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+    _hilbert_trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    # ## Hilbert envelope vector in X
+    # hilbert_trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+    # ## Hilbert envelope vector in X
+    # hilbert_trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
+    # ## Hilbert envelope vector in X
+    # hilbert_trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
     ## ToDo: add additional quantities from the doc?
 
@@ -121,6 +122,14 @@ class Timetrace3D:
     @trace.setter
     def trace(self, v):
         self._trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
+
+    @property
+    def hilbert_trace(self):
+        return self._hilbert_trace
+
+    @hilbert_trace.setter
+    def hilbert_trace(self, v):
+        self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
 ## A class for holding voltage traces + additional information
 @dataclass
