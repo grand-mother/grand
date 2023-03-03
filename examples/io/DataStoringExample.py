@@ -430,24 +430,28 @@ for i in range(tefield.get_entries()):
     tshower.event_number = tefield.event_number
 
     tshower.shower_type = "particle"
-    tshower.shower_energy = np.random.random(1) * 1e8
-    tshower.shower_azimuth = np.random.random(1) * 360
-    tshower.shower_zenith = np.random.random(1) * 180 - 90
+    tshower.energy_em = np.random.random(1) * 1e8
+    tshower.energy_primary = tshower.energy_em*1.2
+    tshower.azimuth = np.random.random(1) * 360
+    tshower.zenith = np.random.random(1) * 180 - 90
     tshower.shower_core_pos = np.random.random(3)
     tshower.atmos_model = "dense air dummy"
     tshower.atmos_model_param = np.random.random(3)
     tshower.magnetic_field = np.random.random(3)
-    tshower.date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-    tshower.ground_alt = 3000.0 + np.random.randint(0, 1000)
+    tshower.core_alt = 3000.0 + np.random.randint(0, 1000)
     tshower.xmax_grams = np.random.random(1) * 500
-    tshower.xmax_pos_shc = np.random.random(3)
-    tshower.xmax_alt = np.random.randint(3000, 5000) * 1.0
-    tshower.gh_fit_param = np.random.random(3)
-    tshower.core_time = np.random.randint(0, 10000) * 1.0
+    tshower.xmax_pos = np.random.random(3)
+    tshower.xmax_pos_shc = tshower.xmax_pos*0.5
+    t = datetime.datetime.now().timestamp()
+    tshower.core_time_s = int(t)
+    tshower.core_time_ns = t-int(t)*1e9
 
     tshower.fill()
 
 tshower.write(filename)
 print("Wrote tshower")
+
+# Need to manually close file if the script is executed in Jupyter
+tshower.close_file()
 
 print(f"Finished writing file {filename}")
