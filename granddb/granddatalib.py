@@ -1,4 +1,3 @@
-#import logging
 from pathlib import Path
 import scp
 import paramiko
@@ -11,7 +10,7 @@ from granddb.granddblib import Database
 import socket
 import grand.manage_log as mlg
 import copy
-
+import getpass
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__name__)
@@ -38,7 +37,7 @@ mlg.create_output_for_logger("debug", log_stdout=True)
 # [repositories]
 # Repo1 = ["protocol","server",port,["/directory1/", "/other/dir/"]]
 # [credentials]
-# Repo1 = ["user","password","keyfile","keypasswd"]
+# Repo1 = ["user","keyfile"]
 # [database]
 # localdb = ["host", port, "dbname", "user", "password", "sshtunnel_server", sshtunnel_port, "sshtunnel_credentials" ]]
 # [registerer]
@@ -79,7 +78,7 @@ class DataManager:
         if configur.has_section('credentials'):
             for name in configur['credentials']:
                 cred = json.loads(configur.get('credentials', name))
-                self._credentials[name] = Credentials(name, cred[0], cred[1], cred[2], cred[3])
+                self._credentials[name] = Credentials(name, cred[0], cred[1])
 
         if configur.has_section('directories'):
             # Get localdirs (the first in the list is the incoming)
@@ -90,6 +89,11 @@ class DataManager:
             # Add trailing slash if needed
             dirlist = [os.path.join(path, "") for path in dirlist]
             self._incoming = dirlist[0]
+            # Check that incoming directory exists
+            my_path = Path(self._incoming)
+            if not my_path.exists():
+                logger.error(f"Incoming directory {self._incoming} does not exists.")
+                exit(1)
             self._directories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
             # We also append localdirs to repositories... so search method will first look at local dirs before searching on remote locations
             # self._repositories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
@@ -236,12 +240,12 @@ class Credentials:
     _keyfile: str
     _keypasswd: str
 
-    def __init__(self, name, user, password, keyfile, keypasswd):
+    def __init__(self, name, user, keyfile):
         self._name = name
         self._user = user
-        self._password = password
+        self._password = ""
         self._keyfile = keyfile
-        self._keypasswd = keypasswd
+        self._keypasswd = ""
 
     def name(self):
         return self._name
@@ -283,7 +287,7 @@ class Datasource:
         self._port = port
         self._paths = [os.path.join(path, "") for path in paths]
         # By default no credentials
-        self._credentials = Credentials(name, "", "", "", "")
+        self._credentials = Credentials(name, "", "")
         self._incoming = incoming
         self.id_repository = id_repo
         if protocol == 'ssh':
@@ -351,22 +355,44 @@ class DatasourceLocal(Datasource):
     def get(self, file, path=None):
         # TODO : Check that path is in self.paths(), if not then copy in incoming ?
         found_file = None
+        # Path is given : we only search in that path
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Check that path is mounted if you run in docker !")
-            my_file = Path(path + file)
-            if my_file.is_file():
-                found_file = path + file
-            else:
+                logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
+
+            my_file = None
+            liste = list(Path(path).rglob(file))
+            for my_file in liste:
+                if my_file.is_file():
+                    found_file = my_file
+                    break
+
+            if my_file is None:
                 logger.debug(f"file {file}  not found in localdir {path}")
+            #my_file = Path(path + file)
+
+            #if my_file.is_file():
+            #    found_file = path + file
+            #else:
+            #    logger.debug(f"file {file}  not found in localdir {path}")
         else:
+            # No path given : we recursively search in all dirs and subdirs
             for path in self.paths():
                 logger.debug(f"search in localdir {path}{file}")
-                my_file = Path(path + file)
-                if my_file.is_file():
-                    found_file = path + file
+
+                #my_file = Path(path + file)
+                my_file = None
+                liste = list(Path(path).rglob(file))
+                for my_file in liste:
+                    if my_file.is_file():
+                        found_file = my_file
+                        break
+                if not my_file is None and my_file.is_file():
                     break
+                #if my_file.is_file():
+                #    found_file = path + file
+                #    break
                 else:
                     logger.debug(f"file {file} not found in localdir {path}")
 
@@ -389,32 +415,58 @@ class DatasourceLocal(Datasource):
 # @author Fleg
 # @date Sept 2022
 class DatasourceSsh(Datasource):
-
-    def set_client(self):
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(hostname=self.server(),
+    # function to set up the ssh connection. If recurse=True (default) then in case of failure the passwords will be asked and a second attempt will be made.
+    # If recurse=False (at the second attempt) then in case of failure a error message is raised and the return is set to none (which will made the search skipped)
+    def set_client(self, recurse=True):
+        try:
+            client = paramiko.SSHClient()
+            if self.credentials().keyfile() != "" and recurse is True:
+                self.credentials()._keypasswd = getpass.getpass(prompt="Please give password to decrypt keyfile " + self.credentials().keyfile() + ": ")
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(hostname=self.server(),
                        port=self.port() if self.port() != "" else None,
                        username=self.credentials().user() if self.credentials().user() != "" else None,
+                       password=self.credentials().password() if self.credentials().password() != "" else None,
                        key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
                        passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
+        except paramiko.AuthenticationException as e:
+            if recurse :
+                self.credentials()._password = getpass.getpass(prompt="Please give password for user " + self.credentials().user() + " @ " + self.server() + ":")
+                client = self.set_client(False)
+            else:
+                logger.error(f"Authentication error {e} during connection to {self.server()}")
+                client = None
+        except paramiko.SSHException as e:
+            if recurse :
+                self.credentials()._password = getpass.getpass(prompt="Please give password for user " + self.credentials().user() + " @ " + self.server() + ":")
+                client = self.set_client(False)
+            else:
+                logger.error(f"Error {e} during connection to {self.server()}")
+                client = None
         return client
 
     def get(self, file, path=None):
         import getpass
         localfile = None
         client = self.set_client()
-        if not (path is None):
-            logger.debug(f"search {path}{file} @ {self.name()}")
-            localfile = self.get_file(client, path, file)
-        else:
-            for path in self.paths():
-                logger.debug(f"search {path}{file} @ {self.name()}")
+        if not(client is None):
+            if not (path is None):
+                logger.debug(f"search {file} in {path} @ {self.name()}")
                 localfile = self.get_file(client, path, file)
-                if not (localfile is None):
-                    break
-                else:
-                    logger.debug(f"file not found in {path}{file} @ {self.name()}")
+                if (localfile is None):
+                    logger.debug(f"file {file} not found in {path} @ {self.name()}")
+            else:
+                for path in self.paths():
+                    logger.debug(f"search {file} in {path}@ {self.name()}")
+                    localfile = self.get_file(client, path, file)
+                    if not (localfile is None):
+                        break
+                    else:
+                        logger.debug(f"file {file} not found in {path} @ {self.name()}")
+        else:
+            logger.debug(f"Search in repository {self.name()} is skipped")
+
+
         return localfile
 
     ## Search for files in remote location accessed through ssh.
@@ -423,9 +475,13 @@ class DatasourceSsh(Datasource):
 
     def get_file(self, client, path, file):
         localfile = None
-        stdin, stdout, stderr = client.exec_command('ls ' + path + file)
-        lines = list(map(lambda s: s.strip(), stdout.readlines()))
-        if len(lines) == 1:
+        #stdin, stdout, stderr = client.exec_command('ls ' + path + file)
+        #lines = list(map(lambda s: s.strip(), stdout.readlines()))
+
+        stdin, stdout, stderr = client.exec_command('find ' + path + " -type f -name " + file)
+        lines = sorted(list(map(lambda s: s.strip(), stdout.readlines())), key=len)
+        if len(lines) >= 1:
+        #if len(lines) == 1:
             logger.debug(f"file found in repository {self.name()}  @ " + lines[0].strip('\n'))
             logger.debug(f"copy to {self.incoming()}{file}")
             scpp = scp.SCPClient(client.get_transport())

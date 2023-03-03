@@ -72,6 +72,7 @@ class Database:
         self._cred = cred
 
         if self._sshserv != "" and self._cred is not None:
+            #TODO: Check credentials for ssh tunnel and ask for passwds
             self.server = SSHTunnelForwarder(
                 (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),

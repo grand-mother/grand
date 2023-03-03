@@ -16,8 +16,8 @@ print("\nStart")
 dm = granddatalib.DataManager('config.ini')
 
 
-file = 'toto'
-print("\nGet")
+file = 'Coarse3.root'
+print("\nGet " + file)
 st = time.time()
 print("RESULTAT : " + str(dm.get(file)))
 et = time.time()
@@ -26,7 +26,7 @@ print((et-st)*1000)
 
 
 file = 'main.py'
-print("\nGet in localdir incoming")
+print("\nGet in localdir incoming " + file)
 st = time.time()
 print("RESULTAT : " + str(dm.get(file, "localdir","./incoming",)))
 et = time.time()
@@ -36,7 +36,7 @@ print((et-st)*1000)
 
 
 file = 'LyonAiresLibraryRun.ini'
-print("\nGet in localdir")
+print("\nGet in localdir " + file)
 st = time.time()
 print("RESULTAT : " + str(dm.get(file, "localdir")))
 et = time.time()
@@ -44,18 +44,24 @@ print((et-st)*1000)
 
 
 file = 'LyonAiresLibraryRun.ini'
-print("\nGet in CCIN2P3")
+print("\nGet in CC " + file)
 st = time.time()
-print("RESULTAT : " + str(dm.get(file, "CCIN2P3")))
+print("RESULTAT : " + str(dm.get(file, "CC")))
+et = time.time()
+print((et-st)*1000)
+
+file = 'LyonAiresLibraryRun.ini'
+print("\nGet in CC /sps/trend/fleg/" + file)
+st = time.time()
+print("RESULTAT : " + str(dm.get(file, "CC", "/sps/trend/fleg/")))
 et = time.time()
 print((et-st)*1000)
 
 
-
-file = 'titi'
-print("\nGet in CCIN2P3")
+file = 'Coarse3.root'
+print("\nGet in WEB " + file)
 st = time.time()
-print("RESULTAT : " + str(dm.get(file, "CCIN2P3")))
+print("RESULTAT : " + str(dm.get(file, "WEB")))
 et = time.time()
 print((et-st)*1000)
 
