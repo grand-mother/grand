@@ -9,13 +9,14 @@ import ROOT
 
 ## A class describing a single antenna; ToDo: Should it be antenna, or more general: Detector?
 @dataclass
-class Antenna():
+class Antenna:
     ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
-    position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    _position: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
     ## Antenna tilt
-    tilt: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    _tilt: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
     ## Antenna acceleration - this comes from hardware. ToDo: perhaps recalculate to tilt or remove tilt?
-    acceleration: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    _acceleration: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
 
     ## The antenna model
     model: Any = 0
@@ -32,49 +33,29 @@ class Antenna():
     # ## Firmware version
     # firmware_version: float = 0
 
-    ## Maybe these should go somehow to the Timetrace3D?
-    # ## ADC sampling frequency in MHz
-    # _adc_sampling_frequency: float = 0
-    # ## ADC sampling resolution in bits
-    # _adc_sampling_resolution: float = 0
-    # ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
-    # _adc_input_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
-    # _adc_enabled_channels: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## ADC samples callected in all channels
-    # _adc_samples_count_total: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## ADC samples callected in channel 0
-    # _adc_samples_count_channel0: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## ADC samples callected in channel 1
-    # _adc_samples_count_channel1: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## ADC samples callected in channel 2
-    # _adc_samples_count_channel2: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## ADC samples callected in channel 3
-    # _adc_samples_count_channel3: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
-    # _trigger_pattern: StdVectorList("unsigned short") = StdVectorList("unsigned short")
-    # ## Trigger rate - the number of triggers recorded in the second preceding the event
-    # _trigger_rate: StdVectorList("unsigned short") = StdVectorList("unsigned short")
+    @property
+    def position(self):
+        return self._position
 
-    # I don't think it is useful for the user
-    # ## Clock tick at which the event was triggered (used to calculate the trigger time)
-    # clock_tick: np.uint16 = 0
-    # ## Clock ticks per second
-    # clock_ticks_per_second: np.uint16 = 0
-    # ## GPS offset - offset between the PPS and the real second (in GPS).
-    # gps_offset: float = 0
-    # ## GPS leap second
-    # gps_leap_second: np.uint16 = 0
-    # ## GPS status
-    # gps_status: np.uint16 = 0
-    # ## GPS alarms
-    # gps_alarms: np.uint16 = 0
-    # ## GPS warnings
-    # gps_warnings: np.uint16 = 0
-    # ## GPS time
-    # gps_time: int = 0
-    # ## GPS temperature
-    # gps_temp: float = 0
+    @position.setter
+    def position(self, v):
+        self._position = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
+
+    @property
+    def tilt(self):
+        return self._tilt
+
+    @tilt.setter
+    def tilt(self, v):
+        self._tilt = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
+
+    @property
+    def acceleration(self):
+        return self._acceleration
+
+    @acceleration.setter
+    def acceleration(self, v):
+        self._acceleration = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
 
 ## A class for holding x,y,z single antenna traces over time
@@ -155,11 +136,37 @@ class Shower():
     ## Shower Xmax [g/cm2]
     Xmax: float = 0
     ## Shower position in the site's reference frame
-    Xmaxpos: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    _Xmaxpos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-    origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
     ## Poistion of the core on the ground in the site's reference frame
-    core_ground_pos: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    _core_ground_pos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+
+    @property
+    def Xmaxpos(self):
+        return self._Xmaxpos
+
+    @Xmaxpos.setter
+    def Xmaxpos(self, v):
+        self._Xmaxpos = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
+
+    @property
+    def origin_geoid(self):
+        return self._origin_geoid
+
+    @origin_geoid.setter
+    def origin_geoid(self, v):
+        self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
+
+    @property
+    def core_ground_pos(self):
+        return self._core_ground_pos
+
+    @core_ground_pos.setter
+    def core_ground_pos(self, v):
+        self._core_ground_pos = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
+
+
 
 ## A class for holding an event
 @dataclass
@@ -226,12 +233,12 @@ class Event():
     data_generator_version: str = "0.1.0"
     ## Site name
     site: str = "DummySite"
-    ## Site longitude
-    site_long: np.float32 = 0
-    ## Site latitude
-    site_lat: np.float32 = 0
+    # ## Site longitude
+    # site_long: np.float32 = 0
+    # ## Site latitude
+    # site_lat: np.float32 = 0
     ## Origin of the coordinate system used for the array
-    origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
 
     # Internal trees
     trun: ROOT.TTree = None
@@ -249,6 +256,14 @@ class Event():
         # If the file name and event number was given, init the Event from trees
         if self.file and self.event_number:
             self.fill_event_from_trees()
+
+    @property
+    def origin_geoid(self):
+        return self._origin_geoid
+
+    @origin_geoid.setter
+    def origin_geoid(self, v):
+        self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
     def fill_event_from_trees(self):
@@ -389,7 +404,7 @@ class Event():
         ## Shower position in the site's reference frame
         self.shower.Xmaxpos = self.tshower.xmax_pos_shc
         ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-        self.shower.origin_geoid = field(default_factory=lambda: np.zeros(3))
+        self.shower.origin_geoid = self.trun.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
         self.shower.core_ground_pos = self.tshower.shower_core_pos
 
@@ -406,15 +421,15 @@ class Event():
         print("Shower:")
         print("\t{:<30} {:>30}".format("Energy:", self.shower.energy))
         print("\t{:<30} {:>30}".format("Xmax [g/cm2]:", self.shower.Xmax))
-        print("\t{:<30} {:>30}".format("Xmax position:", str(self.shower.Xmaxpos)))
-        print("\t{:<30} {:>30}".format("Origin geoid:", str(self.shower.origin_geoid)))
-        print("\t{:<30} {:>30}".format("Core ground pos:", str(self.shower.core_ground_pos)))
+        print("\t{:<30} {:>30}".format("Xmax position:", str(self.shower.Xmaxpos.ravel())))
+        print("\t{:<30} {:>30}".format("Origin geoid:", str(self.shower.origin_geoid.ravel())))
+        print("\t{:<30} {:>30}".format("Core ground pos:", str(self.shower.core_ground_pos.ravel())))
 
         print("Antennas:")
         print("\t{:<30} {:>30}".format("No of antennas:", len(self.antennas)))
-        print("\t{:<30} {:>30}".format("Position:", str([a.position for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Tilt:", str([a.tilt for a in self.antennas])))
-        print("\t{:<30} {:>30}".format("Acceleration:", str([a.acceleration for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Position:", str([a.position.ravel() for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Tilt:", str([a.tilt.ravel() for a in self.antennas])))
+        print("\t{:<30} {:>30}".format("Acceleration:", str([a.acceleration.ravel() for a in self.antennas])))
         # print("\t{:<30} {:>30}".format("Humidity:", str([a.atm_humidity for a in self.antennas])))
         # print("\t{:<30} {:>30}".format("Pressure:", str([a.atm_pressure for a in self.antennas])))
         # print("\t{:<30} {:>30}".format("Temperature:", str([a.atm_temperature for a in self.antennas])))
@@ -494,8 +509,8 @@ class Event():
         self.trun.data_generator = self.data_generator
         self.trun.data_generator_version = self.data_generator_version
         self.trun.site = self.site
-        self.trun.site_long = self.site_long
-        self.trun.site_lat = self.site_lat
+        # self.trun.site_long = self.site_long
+        # self.trun.site_lat = self.site_lat
         self.trun.origin_geoid = self.origin_geoid
 
         # Fill the tree with values
