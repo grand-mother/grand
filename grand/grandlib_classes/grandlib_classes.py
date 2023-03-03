@@ -131,12 +131,18 @@ class Efield(Timetrace3D):
 ## A class for holding a shower
 @dataclass
 class Shower():
-    ## Shower energy [eV]
-    energy: float = 0
+    ## Shower from e+- (ie related to radio emission) (GeV)
+    energy_em: float = 0
+    ## Total energy of the primary (including muons, neutrinos, ...) (GeV)
+    energy_primary: float = 0
     ## Shower Xmax [g/cm2]
     Xmax: float = 0
     ## Shower position in the site's reference frame
     _Xmaxpos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    ## Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
+    azimuth: float = 0
+    ## Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
+    zenith: float = 0
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
     _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
     ## Poistion of the core on the ground in the site's reference frame
@@ -210,7 +216,7 @@ class Event():
     shower: Shower() = None
 
     ## Simualted shower for simulations
-    simShower: Shower() = None
+    simshower: Shower() = None
 
     # *** Run related properties
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
@@ -245,6 +251,7 @@ class Event():
     tvoltage: ROOT.TTree = None
     tefield: ROOT.TTree = None
     tshower: ROOT.TTree = None
+    tsimshower: ROOT.TTree = None
 
     # Options
 
@@ -266,7 +273,11 @@ class Event():
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self):
+    def fill_event_from_trees(self, simshower=False):
+        """Fill this event from trees
+        :param simshower: how to treat the TShower existing in the file, as simulation values  or reconstructed values
+        :type simshower: bool
+        """
         # Check if the file exist
         if not self.file:
             print("No file provided to init from. Aborting.")
@@ -304,19 +315,25 @@ class Event():
             # Fill part of the event from tefield
             self.fill_event_from_efield_tree()
         else:
-            print("No Eventefield tree. Efield information will not be available.")
+            print("No Efield tree. Efield information will not be available.")
             # Make tefield really None
             self.tefield = None
 
         # Check the Shower tree existence
         if tshower := self.file.Get("tshower"):
-            self.tshower = TShower(_tree=tshower)
+            if simshower:
+                self.tsimshower = TShower(_tree=tshower)
+            else:
+                self.tshower = TShower(_tree=tshower)
             # Fill part of the event from tshower
-            self.fill_event_from_shower_tree()
+            self.fill_event_from_shower_tree(simshower)
         else:
             print("No Shower tree. Shower information will not be available.")
             # Make tshower really None
-            self.tshower = None
+            if simshower:
+                self.tsimshower = None
+            else:
+                self.tshower = None
 
 
     ## Fill part of the event from the Run tree
@@ -378,8 +395,6 @@ class Event():
 
     ## Fill part of the event from the Efield tree
     def fill_event_from_efield_tree(self):
-        # Initialise the Shower
-        self.shower = Shower()
         self.tefield.get_event(self.event_number, self.run_number)
         self.efields = []
         # Loop through traces
@@ -393,20 +408,37 @@ class Event():
             self.efields.append(v)
 
     ## Fill part of the event from the Shower tree
-    def fill_event_from_shower_tree(self):
-        self.tshower.get_event(self.event_number, self.run_number)
+    def fill_event_from_shower_tree(self, simshower=False):
+        # The shower contains simulated parameters
+        if simshower:
+            # Initialise the Shower
+            self.simshower = Shower()
+            tree = self.tsimshower
+            shower = self.simshower
+        # The shower contains reconstructed parameters
+        else:
+            # Initialise the Shower
+            self.shower = Shower()
+            tree = self.tshower
+            shower = self.shower
+
+        tree.get_event(self.event_number, self.run_number)
         ## Shower energy from e+- (ie related to radio emission) (GeV)
-        self.shower.energy_em = self.tshower.energy_em
+        shower.energy_em = tree.energy_em
         ## Shower total energy of the primary (including muons, neutrinos, ...) (GeV)
-        self.shower.energy_primary = self.tshower.energy_primary
+        shower.energy_primary = tree.energy_primary
         ## Shower Xmax [g/cm2]
-        self.shower.Xmax = self.tshower.xmax_grams
+        shower.Xmax = tree.xmax_grams
         ## Shower position in the site's reference frame
-        self.shower.Xmaxpos = self.tshower.xmax_pos_shc
-        ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-        self.shower.origin_geoid = self.trun.origin_geoid
+        shower.Xmaxpos = tree.xmax_pos_shc
+        ## Shower azimuth
+        shower.azimuth = tree.azimuth
+        ## Shower zenith
+        shower.zenith = tree.zenith
+        ## Direction of the origin
+        shower.origin_geoid = self.trun.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
-        self.shower.core_ground_pos = self.tshower.shower_core_pos
+        shower.core_ground_pos = tree.shower_core_pos
 
     ## Print all the class values
     def print(self):
@@ -609,13 +641,18 @@ class Event():
         self.tshower.event_number = self.event_number
 
 
-        self.tshower.shower_energy = self.shower.energy
+        self.tshower.energy_em = self.shower.energy_em
+        self.tshower.energy_primary = self.shower.energy_primary
         ## Shower Xmax [g/cm2]
         self.tshower.xmax_grams = self.shower.Xmax
         ## Shower position in the site's reference frame
-        self.tshower.xmax_pos_shc = self.shower.Xmaxpos
-        ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-        #self.shower.origin_geoid = np.zeros(3)
+        self.tshower.xmax_pos = self.shower.Xmaxpos
+        ## Shower azimuth
+        self.tshower.azimuth = self.shower.azimuth
+        ## Shower zenith
+        self.tshower.zenith = self.shower.zenith
+        ## Direction of origin
+        self.tshower.origin_geoid = self.shower.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
         self.tshower.shower_core_pos = self.shower.core_ground_pos
 
