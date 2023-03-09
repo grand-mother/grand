@@ -140,6 +140,7 @@ class DataTree:
         "_tree_name",
         "_cur_du_id",
         "_entry_list",
+        "_attributes_and_properties",
         "_comment",
         "_creation_datetime",
         "_modification_software",
@@ -148,6 +149,15 @@ class DataTree:
         "_analysis_level",
         "_modification_history",
     ]
+
+    def __setattr__(self, key, value):
+        # Create a list of attributes and properties for the class if it doesn't exist
+        if not hasattr(self, "_attributes_and_properties"):
+            super().__setattr__("_attributes_and_properties", set([el1 for el in type(self).__mro__[:-1] for el1 in list(el.__dict__.keys()) + list(el.__annotations__.keys())]))
+        # If the attribute not in the list of class's attributes and properties, don't add it
+        if key not in self._attributes_and_properties:
+            raise AttributeError(f"{key} attribute for class {type(self)} doesn't exist.")
+        super().__setattr__(key, value)
 
     @property
     def tree(self):
