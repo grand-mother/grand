@@ -84,7 +84,7 @@ for ev in range(event_count):
     # Event nanoseconds 0 for now
     tadccounts.time_nanoseconds = 0
     # Triggered event
-    tadccounts.event_type = 0x8000
+    # tadccounts.event_type = 0x8000
     # The number of antennas in the event
     tadccounts.du_count = len(traces[ev])
 
@@ -112,7 +112,7 @@ for ev in range(event_count):
         du_seconds.append(tadccounts.time_seconds)
         du_nanoseconds.append(tadccounts.time_nanoseconds)
         trigger_position.append(i // 2)
-        trigger_flag.append(tadccounts.event_type)
+        trigger_flag.append(0x8000)
         atm_temperature.append(20 + ev // 2)
         atm_pressure.append(1024 + ev // 2)
         atm_humidity.append(50 + ev // 2)
@@ -171,7 +171,7 @@ for ev in range(event_count):
     # Event nanoseconds 0 for now
     trawvoltage.time_nanoseconds = 0
     # Triggered event
-    trawvoltage.event_type = 0x8000
+    # trawvoltage.event_type = 0x8000
     # The number of antennas in the event
     trawvoltage.du_count = len(traces[ev])
 
@@ -187,6 +187,7 @@ for ev in range(event_count):
     acceleration_x = []
     acceleration_y = []
     acceleration_z = []
+    acceleration = []
     trace_x = []
     trace_y = []
     trace_z = []
@@ -198,13 +199,14 @@ for ev in range(event_count):
         du_seconds.append(trawvoltage.time_seconds)
         du_nanoseconds.append(trawvoltage.time_nanoseconds)
         trigger_position.append(i // 2)
-        trigger_flag.append(trawvoltage.event_type)
+        trigger_flag.append(0x8000)
         atm_temperature.append(20 + ev / 2)
         atm_pressure.append(1024 + ev / 2)
         atm_humidity.append(50 + ev / 2)
         acceleration_x.append(ev / 2)
         acceleration_y.append(ev / 3)
         acceleration_z.append(ev / 4)
+        acceleration.append([ev / 2, ev / 3, ev / 4])
 
         trace_x.append(trace[0])
         trace_y.append(trace[1])
@@ -218,9 +220,11 @@ for ev in range(event_count):
     trawvoltage.atm_temperature = atm_temperature
     trawvoltage.atm_pressure = atm_pressure
     trawvoltage.atm_humidity = atm_humidity
-    trawvoltage.acceleration_x = acceleration_x
-    trawvoltage.acceleration_y = acceleration_y
-    trawvoltage.acceleration_z = acceleration_z
+    # trawvoltage.acceleration_x = acceleration_x
+    # trawvoltage.acceleration_y = acceleration_y
+    # trawvoltage.acceleration_z = acceleration_z
+    # ToDo: check if this is stored correctly
+    trawvoltage.du_acceleration = acceleration
     trawvoltage.trace_0 = trace_x
     trawvoltage.trace_1 = trace_y
     trawvoltage.trace_2 = trace_z
@@ -330,7 +334,7 @@ for ev in range(0, event_count, 2):
     tefield.run_number = 0
     tefield.event_number = ev
     # First data unit in the event
-    tefield.first_du = 0
+    # tefield.first_du = 0
     # As the event time add the current time
     tefield.time_seconds = int(time.mktime(time.gmtime()))
     # Event nanoseconds 0 for now
@@ -429,7 +433,7 @@ for i in range(tefield.get_entries()):
     tshower.run_number = tefield.run_number
     tshower.event_number = tefield.event_number
 
-    tshower.shower_type = "particle"
+    tshower.primary_type = "particle"
     tshower.energy_em = np.random.random(1) * 1e8
     tshower.energy_primary = tshower.energy_em*1.2
     tshower.azimuth = np.random.random(1) * 360
