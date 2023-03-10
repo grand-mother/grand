@@ -280,27 +280,27 @@ class FileVoltageEvent(_FileEventBase):
         return o_tevent
 
 
-
-    
 def get_file_event(f_name):
     """
     Factory for ROOT event file, return an instance of FileSimuEfield or FileVoltageEvent
     """
     if not os.path.exists(f_name):
-        print('File does not exist')
+        print("File does not exist")
         logger.error(f"File {f_name} doesn't exist.")
         raise FileNotFoundError
     else:
         trees_list = get_ttree_in_file(f_name)
-        if "teventefield" in trees_list:          # File with Efield info as input
+        if "teventefield" in trees_list:  # File with Efield info as input
             return FileSimuEfield(f_name, False)
-        elif "teventvoltage" in trees_list:       # File with voltage info as input
+        elif "teventvoltage" in trees_list:  # File with voltage info as input
             return FileVoltageEvent(f_name, False)
         else:
-            logger.error(f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}.")
+            logger.error(
+                f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
+            )
             raise AssertionError
 
-        
+
 class FileADCeventProto(_FileEventBase):
     """
 
