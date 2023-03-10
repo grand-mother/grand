@@ -1,9 +1,9 @@
 name: Tests with docker
 on:
   push:
-    paths-ignore:
-    - docs/requirements.txt
-    - examples/**
+    paths:
+    - grand/**
+    - tests/**
 
 jobs:
   Linux:
