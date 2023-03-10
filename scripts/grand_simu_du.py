@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 
 import argparse
-
+from typing import Union
 import numpy as np
 
 import grand.manage_log as mlg
-from grand.simu.master_simu import MasterSimuDetectorWithRootIo
+from grand.simu.efield2voltage import Efield2Voltage
 
 
 # specific logger definition for script because __mane__ is "__main__" !
@@ -35,8 +35,15 @@ def manage_args():
         help="don't add galactic noise.",
     )
     parser.add_argument(
+        "--no_rf_chain",
+        action="store_false",
+        default=True,
+        help="don't add RF chain.",
+    )
+    parser.add_argument(
         "-o",
         "--out_file",
+        default="",
         help="output file in GRANDROOT format. If the file exists it is overwritten.",
         required=True,
         # PB with option ???
@@ -51,13 +58,19 @@ def manage_args():
     parser.add_argument(
         "--seed",
         type=int,
-        default="-1",
-        help="Fix the random seed to reproduce same noise, must be positive integer",
+        default=-1, # -1 as a placeholder for None to maintain int type.
+        help="Fix the random seed to reproduce same galactic noise, must be positive integer",
     )
     parser.add_argument(
         "--lst",
         type=check_float_day_hour,
         default=18.0,
+        help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h.",
+    )
+    parser.add_argument(
+        "--padding_factor",
+        type=float,
+        default=1.0,
         help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h.",
     )
     # retrieve argument
@@ -70,13 +83,20 @@ if __name__ == "__main__":
     mlg.create_output_for_logger(args.verbose, log_stdout=True)
     logger.info(mlg.string_begin_script())
     # =============================================
-    if args.seed > 0:
-        logger.info(f"Fix numpy random seed")
-        np.random.seed(args.seed)
-    master = MasterSimuDetectorWithRootIo(args.file.name)
-    master.simu_du.set_flag_add_noise(args.no_noise)
-    master.simu_du.set_local_sideral_time(args.lst)
-    master.compute_event_idx(0)
-    master.save_voltage(args.out_file, append_file=False)
+    if not isinstance(args.seed, int):
+        raise TypeError(f"seed must be integer instead of {type(args.seed)}.")
+    else:
+        seed = None if args.seed==-1 else args.seed
+        logger.info(f"seed used for random number generator is {args.seed}.")
+
+    master = Efield2Voltage(args.file.name, seed, padding_factor=args.padding_factor)
+    master.params["add_noise"]    = args.no_noise
+    master.params["add_rf_chain"] = args.no_rf_chain
+    master.params["lst"]          = args.lst
+
+    #master.compute_event_idx(0)
+    #master.save_voltage(append_file=False)
+    master.compute_event_all()    # saves automatically
+
     # =============================================
     logger.info(mlg.string_end_script())

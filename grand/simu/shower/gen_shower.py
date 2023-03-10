@@ -83,7 +83,7 @@ class ShowerEvent:
         self.primary = d_shower.prim_type
         s_pos = d_shower.site_long_lat
         logger.info(f"Site position long lat: {s_pos}")
-        self.localize(s_pos[1], longitude=s_pos[0])
+        self.localize(s_pos[1], longitude=s_pos[0]) # self.frame comes from localize. RK: add obstime=dshower.date. It is now fixed to "2020-01-01".
         xmax = d_shower.xmax_pos_shc
         logger.info(f"xmax={xmax}")
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)

@@ -2,16 +2,31 @@
 Simulation of galaxy emission in radio frequency
 """
 
+# Note: plotting has been moved to grand/scripts/plot_noise.py. Run: ./plot_noise.py -h for help.
 
 import h5py
 import numpy as np
-import matplotlib.pyplot as plt
-
-from grand.num.signal import interpol_at_new_x
 from grand import grand_add_path_data
 
+def interpol_at_new_x(a_x, a_y, new_x):
+    """
+    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
+    and set to zero outside interval definition a_x
 
-def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
+    :param a_x (float, (N)): F(a_x) = a_y, N size of a_x
+    :param a_y (float, (N)): F(a_x) = a_y
+    :param new_x (float, (M)): new value of x
+
+    :return: F(new_x) (float, (M)): interpolation of F at new_x
+    """
+    from scipy import interpolate
+    assert a_x.shape[0] > 0
+    func_interpol = interpolate.interp1d(
+        a_x, a_y, "cubic", bounds_error=False, fill_value=(0.0, 0.0)
+    )
+    return func_interpol(new_x)
+
+def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, seed=None):
     """
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
@@ -20,51 +35,24 @@ def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
       PengFei and Xidian group
 
     :param f_lst: select the galactic noise LST at the LST moment
-    :type f_lst: float
+    :    type f_lst: float
     :param size_out: is the extended length
-    :type size_out: int
+    :    type size_out: int
     :param freqs_mhz: array of output frequencies
-    :type freqs_mhz: float (nb freq,)
+    :    type freqs_mhz: float (nb freq,)
     :param nb_ant: number of antennas
-    :type nb_ant: int
+    :    type nb_ant: int
     :param show_flag: print figure
-    :type show_flag: boll
+    :    type show_flag: boll
+    :param seed: if None, values are randomly generated as expected. 
+                 if number, same set of randomly generated output. This is useful for testing.
     :return: FFT of galactic noise for all DU and components
     :rtype: float(nb du, 3, nb freq)
     """
     # TODO: why lst is an integer ?
     lst = int(f_lst)
 
-    def plot():  # pragma: no cover
-        plt.figure(figsize=(9, 3))
-        plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        plt.subplot(1, 3, 1)
-        for l_g in range(3):
-            plt.plot(gala_freq, gala_psd_dbm[:, l_g, lst])
-        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel("PSD(dBm/Hz)", fontsize=15)
-        plt.title("Galactic Noise PSD", fontsize=15)
-        plt.subplot(1, 3, 2)
-        for l_g in range(3):
-            plt.plot(
-                gala_freq, 1e6 * np.sqrt(2 * 100 * pow(10, gala_power_dbm[:, l_g, lst] / 10) * 1e-3)
-            )  # SL
-        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel("Power(dBm)", fontsize=15)
-        plt.title("Galactic Noise Power", fontsize=15)
-        plt.subplot(1, 3, 3)
-        for l_g in range(3):
-            plt.plot(gala_freq, gala_voltage[:, l_g, lst])
-        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel("Voltage(uV)", fontsize=15)
-        plt.title("Galactic Noise Voltage", fontsize=15)
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.85)
-
-    gala_file = grand_add_path_data("model/sky/30_250galactic.mat")
+    gala_file = grand_add_path_data("sky/30_250galactic.mat")
     gala_show = h5py.File(gala_file, "r")
     gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
     gala_power_dbm = np.transpose(
@@ -75,9 +63,6 @@ def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
     )  # SL, microV per MHz, seems to be Vmax=sqrt(2*mean(V*V)), not std(V)=sqrt(mean(V*V))
     # gala_power_mag = np.transpose(gala_show["p_narrow"])
     gala_freq = gala_show["freq_all"]
-    if show_flag:
-        plot()
-        plt.show()
 
     """f_start = 30
     f_end = 250
@@ -98,6 +83,7 @@ def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
     v_amplitude[:, 1] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 1], freqs_mhz)
     v_amplitude[:, 2] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 2], freqs_mhz)
 
+    '''
     a_nor = np.zeros((nb_ant, nb_freq, 3), dtype=float)
     phase = np.zeros((nb_ant, nb_freq, 3), dtype=float)
     v_complex = np.zeros((nb_ant, 3, nb_freq), dtype=complex)
@@ -114,5 +100,18 @@ def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, show_flag=False):
                 # SL *size_out is because default scipy fft is normalised backward, *1/2 is because mean(cos(x)*cos(x)))
                 v_complex[l_ant, l_axis, l_fq] = abs(a_nor[l_ant, l_fq, l_axis] * size_out / 2)
                 v_complex[l_ant, l_axis, l_fq] *= np.exp(1j * phase[l_ant, l_fq, l_axis])
+    '''
+
+    # RK: above loop is replaced by lines below. Also np.random.default_rng(seed) is used instead of np.random.seed().
+    #     if seed is a fixed number, same set of randomly generated number is produced. This is useful for testing.
+    v_amplitude = v_amplitude.T
+    rng   = np.random.default_rng(seed)     
+    amp   = rng.normal(loc=0, scale=v_amplitude[np.newaxis,...], size=(nb_ant, 3, nb_freq))
+    phase = 2 * np.pi * rng.random(size=(nb_ant, 3, nb_freq))
+    v_complex = np.abs(amp * size_out / 2) * np.exp(1j * phase)
 
     return v_complex
+
+
+
+

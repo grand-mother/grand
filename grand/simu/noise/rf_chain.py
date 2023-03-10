@@ -23,6 +23,8 @@ Convention Port/direction:
  * 2 for Z / Up
  
 https://github.com/grand-mother/grand/blob/master/docs/GRANDreferential.pdf
+
+# Note: plotting has been moved to grand/scripts/plot_noise.py. Run: ./plot_noise.py -h for help.
 """
 
 import os.path
@@ -32,12 +34,28 @@ import scipy.fft as sf
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grand import grand_add_path_data_model
-from grand.num.signal import interpol_at_new_x
+from grand import grand_add_path_data
 
 
 logger = getLogger(__name__)
 
+def interpol_at_new_x(a_x, a_y, new_x):
+    """
+    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
+    and set to zero outside interval definition a_x
+
+    :param a_x (float, (N)): F(a_x) = a_y, N size of a_x
+    :param a_y (float, (N)): F(a_x) = a_y
+    :param new_x (float, (M)): new value of x
+
+    :return: F(new_x) (float, (M)): interpolation of F at new_x
+    """
+    from scipy import interpolate
+    assert a_x.shape[0] > 0
+    func_interpol = interpolate.interp1d(
+        a_x, a_y, "cubic", bounds_error=False, fill_value=(0.0, 0.0)
+    )
+    return func_interpol(new_x)
 
 class GenericProcessingDU:
     """
@@ -74,7 +92,6 @@ class GenericProcessingDU:
 
 class StandingWaveRatioGP300(GenericProcessingDU):
     """
-    :Authors: PengFei Zhang and Xidian group
 
     Class goals:
       * define VSWR value as s11 parameter
@@ -92,7 +109,7 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         :param axis:
         """
         file_address = os.path.join("detector", "antennaVSWR", f"{axis+1}.s1p")
-        return grand_add_path_data_model(file_address)
+        return grand_add_path_data(file_address)
 
     def compute_s11(self):
         """
@@ -118,33 +135,9 @@ class StandingWaveRatioGP300(GenericProcessingDU):
         self._db_s11 = db_s11
         self._f_db_s11 = freq
 
-    def plot_vswr(self):  # pragma: no cover
-        """
-        plot VSWR value
-        """
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        fig.suptitle(f"VSWR, s11 parameter")
-        ax1.set_title("db")
-        ax1.plot(self._f_db_s11, self._db_s11[0], "k", label="0")
-        ax1.plot(self._f_db_s11, self._db_s11[1], "y", label="1")
-        ax1.plot(self._f_db_s11, self._db_s11[2], "b", label="2")
-        ax1.set_ylabel(f"db")
-        ax1.set_xlabel(f"[MHz]")
-        ax1.grid()
-        ax1.legend()
-        ax2.set_title("abs(s_11)")
-        ax2.plot(self.freqs_out, np.abs(self.s11[:, 0]), "k", label="0")
-        ax2.plot(self.freqs_out, np.abs(self.s11[:, 1]), "y", label="1")
-        ax2.plot(self.freqs_out, np.abs(self.s11[:, 2]), "b", label="2")
-        ax2.set_ylabel(f"?")
-        ax2.set_xlabel(f"[MHz]")
-        ax2.grid()
-        ax2.legend()
-
 
 class LowNoiseAmplificatorGP300(GenericProcessingDU):
     """
-    :Authors: PengFei Zhang and Xidian group
 
     Class goals:
       * Perform the LNA filter on signal for each antenna
@@ -177,7 +170,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         :param axis:
         """
         lna_address = os.path.join("detector", "LNASparameter", f"{axis+1}.s2p")
-        return grand_add_path_data_model(lna_address)
+        return grand_add_path_data(lna_address)
 
     def _pre_compute(self):
         """
@@ -256,98 +249,6 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
         """
         return self.rho123.T
 
-    ### PLOT
-
-    def plot_gama(self):  # pragma: no cover
-        """
-        plot of intermediate calculation gamma
-        """
-        plt.figure()
-        plt.title("antenna_gama")
-        plt.plot(self.freqs_out, np.abs(self.antenna_gama[:, 0]), "k", label=r"0")
-        plt.plot(self.freqs_out, np.abs(self.antenna_gama[:, 1]), "y", label=r"1")
-        plt.plot(self.freqs_out, np.abs(self.antenna_gama[:, 2]), "b", label=r"2")
-        plt.grid()
-        plt.legend()
-
-    def plot_z(self):  # pragma: no cover
-        """
-        plot of intermediate calculation z
-        """
-        plt.figure()
-        plt.title("")
-        plt.plot(self.freqs_out, np.abs(self.z_ant[:, 0]), label=r"$\mathregular{Z_{A}}$")
-        plt.plot(self.freqs_out, np.abs(self.z_in_lna[:, 0]), label=r"$\mathregular{Z^{in}_{LNA}}$")
-        plt.grid()
-        plt.legend()
-
-    def plot_lna(self):  # pragma: no cover
-        """
-        plot of FFT LNA transfer function rho=rho_1*rho_2*rho_3
-        """
-        l_col = ["k", "y", "b"]
-        plt.figure()
-        # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        for port in range(3):
-            plt.plot(self.freqs_in, self._dbs21_a[port], l_col[port])
-        plt.ylim(20, 25)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{21}/dB} $", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc="lower right", fontsize=15)
-        plt.title(r"$\mathregular{S_{21}}$" + " of LNA test", fontsize=15)
-        plt.grid()
-        plt.figure(figsize=(9, 3))
-        # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        plt.subplot(1, 3, 1)
-        for port in range(3):
-            plt.plot(self.freqs_out, np.abs(self._rho1[:, port]), l_col[port])
-        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{mag(\rho_1)}$", fontsize=15)
-        plt.xlim(30, 250)
-        plt.title("the contribution of " + r"$\mathregular{ \rho_1}$")
-        plt.grid()
-        plt.subplot(1, 3, 2)
-        for port in range(3):
-            plt.plot(self.freqs_out, np.abs(self._rho2[:, port]), l_col[port])
-        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{mag(\rho_2)}$", fontsize=15)
-        plt.xlim(30, 250)
-        plt.title("the contribution of " + r"$\mathregular{ \rho_2}$")
-        plt.grid()
-        plt.subplot(1, 3, 3)
-        for port in range(3):
-            plt.plot(self.freqs_out, np.abs(self._rho3[:, port]), l_col[port])
-        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{mag(\rho_3)}$", fontsize=15)
-        plt.xlim(30, 250)
-        plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
-        plt.grid()
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.85)
-
-    def plot_rho_kernel(self):  # pragma: no cover
-        """
-        plot of LNA transfer function in time space
-        """
-        plt.figure()
-        plt.title("Rho kernel")
-        kernel_rho = sf.fftshift(sf.irfft(self.get_fft_rho_3d()), axes=1)
-        # kernel_rho = sf.irfft(self.get_fft_rho_3d())
-        print(kernel_rho.shape)
-        # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
-        v_time = np.arange(self.size_sig, dtype=np.float64) - self.size_sig // 2
-        dt_ns = 1e9 / (self.freqs_out[1] * self.size_sig * 1e6)
-        v_time_ns = dt_ns * v_time
-        plt.plot(v_time_ns, kernel_rho[0], "k", label="0")
-        plt.plot(v_time_ns, kernel_rho[1], "y", label="1")
-        plt.plot(v_time_ns, kernel_rho[2], "b", label="2")
-        plt.xlabel("ns")
-        plt.grid()
-        plt.legend()
-
 
 class VgaFilterBalunGP300(GenericProcessingDU):
     """
@@ -375,7 +276,7 @@ class VgaFilterBalunGP300(GenericProcessingDU):
         :param axis:
         """
         file_address = os.path.join("detector", "filterparameter", "1.s2p")
-        return grand_add_path_data_model(file_address)
+        return grand_add_path_data(file_address)
 
     ### GETTER
 
@@ -424,43 +325,6 @@ class VgaFilterBalunGP300(GenericProcessingDU):
         # fft VGA filter balun
         self.fft_vgafilbal = (1 + s11_complex) * s21_complex
 
-    ### PLOT
-
-    def plot_filter(self):  # pragma: no cover
-        """
-        Do plot of intermediate value to define filter
-        """
-        plt.figure(figsize=(6, 3))
-        # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        # S11 and S21 DB
-        plt.subplot(1, 2, 1)
-        plt.plot(self.freqs_in, self.dbs11)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{11}}$" + " mag/dB", fontsize=15)
-        plt.grid()
-        plt.subplot(1, 2, 2)
-        plt.plot(self.freqs_in, self.dbs21)
-        plt.grid()
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
-        plt.suptitle("S parameters of Filter", fontsize=15)
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.85)
-        # s21_add_vga
-        plt.figure()
-        # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        plt.plot(self.freqs_in, self.dbs21_add_vga)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.title("S parameters of Filter add VGA", fontsize=15)
-        plt.grid()
-        plt.figure()
-        plt.title("FFTS parameters of Filter add VGA", fontsize=15)
-        plt.plot(self.freqs_out, np.abs(self.fft_vgafilbal))
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.grid()
-
 
 class CableGP300(GenericProcessingDU):
     """
@@ -487,7 +351,7 @@ class CableGP300(GenericProcessingDU):
         :param axis:
         """
         file_address = os.path.join("detector", "cableparameter", "cable.s2p")
-        return grand_add_path_data_model(file_address)
+        return grand_add_path_data(file_address)
 
     ### GETTER
 
@@ -526,33 +390,6 @@ class CableGP300(GenericProcessingDU):
         s21_complex = s21_real + 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_out)
         self.fft_cable = (1 + s11_complex) * s21_complex
 
-    ### PLOT
-
-    def plot_cable(self):  # pragma: no cover
-        """
-        Do plot of intermediate value to define TF
-        """
-        plt.figure(figsize=(6, 3))
-        # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        plt.subplot(1, 2, 1)
-        plt.plot(self.freqs_in, self.dbs11)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{11}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
-        plt.subplot(1, 2, 2)
-        plt.plot(self.freqs_in, self.dbs21)
-        plt.ylim(-10, 0)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.legend(["port X", "port Y", "port Z"], loc="lower right")
-        plt.suptitle("S parameters of cable", fontsize=15)
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.85)
-        plt.figure()
-        plt.title("FFT cable")
-        plt.plot(self.freqs_out, np.abs(self.fft_cable))
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-
 
 class RfChainGP300:
     """
@@ -583,43 +420,5 @@ class RfChainGP300:
         """
         return self._total_tf
 
-    def plot_kernel(self):  # pragma: no cover
-        plt.figure()
-        plt.title("Kernels associated to total transfer function of RF chain")
-        kernel_0 = sf.fftshift(sf.irfft(self.get_tf_3d()[0, :]))
-        kernel_1 = sf.fftshift(sf.irfft(self.get_tf_3d()[1, :]))
-        kernel_2 = sf.fftshift(sf.irfft(self.get_tf_3d()[2, :]))
-        # kernel = sf.irfft(self.get_fft_rho_3d())
-        # TODO: self.size_sig//2 or self.size_sig//2 -1 ?
-        v_time = np.arange(self.lna.size_sig, dtype=np.float64) - self.lna.size_sig // 2
-        dt_ns = 1e9 / (self.lna.freqs_out[1] * self.lna.size_sig * 1e6)
-        v_time_ns = dt_ns * v_time
-        plt.plot(v_time_ns, kernel_0, "k", label="port 1")
-        plt.plot(v_time_ns, kernel_1, "y", label="port 2")
-        plt.plot(v_time_ns, kernel_2, "b", label="port 3")
-        plt.xlabel("ns")
-        plt.grid()
-        plt.legend()
 
-    def plot_tf(self):  # pragma: no cover
-        freqs = self.lna.freqs_out
-        plt.figure()
-        plt.subplot(1, 2, 1)
-        plt.xlim(40, 260)
-        plt.title("Amplitude total transfer function")
-        plt.plot(freqs, np.abs(self._total_tf[0]), "k", label="port 1")
-        plt.plot(freqs, np.abs(self._total_tf[1]), "y", label="port 2")
-        plt.plot(freqs, np.abs(self._total_tf[2]), "b", label="port 3")
-        plt.xlabel("MHz")
-        plt.grid()
-        plt.legend()
-        plt.subplot(1, 2, 2)
-        plt.xlim(40, 260)
-        plt.title("Phase total transfer function")
-        plt.plot(freqs, np.angle(self._total_tf[0], deg=True), "k", label="port 1")
-        plt.plot(freqs, np.angle(self._total_tf[1], deg=True), "y", label="port 2")
-        plt.plot(freqs, np.angle(self._total_tf[2], deg=True), "b", label="port 3")
-        plt.xlabel("MHz")
-        plt.ylabel("Deg")
-        plt.grid()
-        plt.legend()
+

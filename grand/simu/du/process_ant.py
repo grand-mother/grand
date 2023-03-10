@@ -19,7 +19,7 @@ from grand.geo.coordinates import (
     ECEF,
 )
 from grand.basis.type_trace import ElectricField, Voltage
-from grand.io.file_leff import TabulatedAntennaModel
+#from grand.io.file_leff import TabulatedAntennaModel #RK
 
 logger = getLogger(__name__)
 
@@ -38,7 +38,7 @@ class AntennaProcessing:
     pos: Union[LTP, GRANDCS]
 
     def __post_init__(self):
-        assert isinstance(self.model_leff, TabulatedAntennaModel)
+        #assert isinstance(self.model_leff, TabulatedAntennaModel) #RK
         self.size_fft = 0
         self.freqs_out_hz = 0
 
@@ -155,31 +155,31 @@ class AntennaProcessing:
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
         logger.info(
-            f"Source direction (degree): North_gap={float(phi_efield):.1f},\
-             Zenith_dist={float(theta_efield):.1f}"
+            f"Source direction (degree): azimuth={float(phi_efield):.1f},\
+             Zenith={float(theta_efield):.1f}"
         )
         # logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)
         # table store antenna response
-        table = self.model_leff.table
+        #table = self.model_leff.table
         # delta theta in degree
-        dtheta = table.theta[1] - table.theta[0]
+        dtheta = self.model_leff.theta[1] - self.model_leff.theta[0]
         # theta_efield between index it0 and it1 in theta antenna response representation
-        rt1 = (theta_efield - table.theta[0]) / dtheta
+        rt1 = (theta_efield - self.model_leff.theta[0]) / dtheta
         # prevent > 360 deg or >180 deg ?
-        it0 = int(np.floor(rt1) % table.theta.size)
+        it0 = int(np.floor(rt1) % self.model_leff.theta.size)
         it1 = it0 + 1
-        if it1 == table.theta.size:  # Prevent overflow
+        if it1 == self.model_leff.theta.size:  # Prevent overflow
             it1, rt1 = it0, 0
         else:
             rt1 -= np.floor(rt1)
         rt0 = 1 - rt1
         # phi_efield between index ip0 and ip1 in phi antenna response representation
-        dphi = table.phi[1] - table.phi[0]  # deg
-        rp1 = (phi_efield - table.phi[0]) / dphi
-        ip0 = int(np.floor(rp1) % table.phi.size)
+        dphi = self.model_leff.phi[1] - self.model_leff.phi[0]  # deg
+        rp1 = (phi_efield - self.model_leff.phi[0]) / dphi
+        ip0 = int(np.floor(rp1) % self.model_leff.phi.size)
         ip1 = ip0 + 1
-        if ip1 == table.phi.size:  # Results are periodic along phi
+        if ip1 == self.model_leff.phi.size:  # Results are periodic along phi
             ip1 = 0
         rp1 -= np.floor(rp1)
         rp0 = 1 - rp1
@@ -194,15 +194,27 @@ class AntennaProcessing:
             self.freqs_out_hz = fftfreq(self.size_fft, efield.a_time)
         logger.debug(f"size_fft={self.size_fft}")
         # frequency [Hz]
-        freq_ref_hz = table.frequency
-        ltr = interp_sphere_freq(table.leff_theta)  # LWP. m
-        lpr = interp_sphere_freq(table.leff_phi)  # LWP. m
-        lta = interp_sphere_freq(table.phase_theta_rad)
-        lpa = interp_sphere_freq(table.phase_phi_rad)
+        freq_ref_hz = self.model_leff.frequency
+
+        
+        ltr = interp_sphere_freq(self.model_leff.leff_theta)  # LWP. m
+        lpr = interp_sphere_freq(self.model_leff.leff_phi)  # LWP. m
+        lta = interp_sphere_freq(self.model_leff.phase_theta_rad)
+        lpa = interp_sphere_freq(self.model_leff.phase_phi_rad)
         # Pack the result as a Cartesian vector with complex values
         # fmt: off
         l_t = ltr*np.exp(1j * lta)
         l_p = lpr*np.exp(1j * lpa)
+        '''
+
+        # Based on Pablo's work. Interpolate complex leff instead of interpolating amplitude and phase separately.
+        #     Real and imaginary parts are smoother. Phase of leff has kink.
+        l_t_ = self.model_leff.leff_theta * np.exp(1j * self.model_leff.phase_theta_rad)
+        l_p_ = self.model_leff.leff_phi * np.exp(1j * self.model_leff.phase_phi_rad)
+        l_t  = interp_sphere_freq(l_t_)
+        l_p  = interp_sphere_freq(l_p_)
+        '''
+
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
         c_p, s_p = np.cos(p_rad), np.sin(p_rad)
@@ -210,7 +222,13 @@ class AntennaProcessing:
         self.l_y = l_t*c_t*s_p + c_p*l_p
         self.l_z = -s_t*l_t
         del l_t, l_p, c_t, s_t , c_p, s_p
-        # fmt: on
+        # antenna response in antenna frame in frequency domain.
+        fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
+
+        return fft_leff_frame_ant
+        '''
+        # RK: Make sure Efield's x, y, and z components are given in the antenna frame.
+        #     If Ex, Ey, Ez are in shower frame, uncomment this section.
         # Treating Leff as a vector (no change in magnitude) and transforming
         # it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame
@@ -222,6 +240,7 @@ class AntennaProcessing:
         # vector wrt shower frame. ECEF --> Shower
         self.fft_leff_frame_shower = np.matmul(frame.basis, fft_leff)
         return self.fft_leff_frame_shower
+        '''
 
     def compute_voltage(
         self,

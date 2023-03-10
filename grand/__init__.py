@@ -5,26 +5,6 @@ import os
 import os.path as osp
 from pathlib import Path
 
-from grand.geo import geomagnet, topography
-from grand.geo.topography import geoid_undulation, Reference, Topography
-from grand.geo import coordinates
-from grand.geo.geomagnet import Geomagnet
-from grand.geo.coordinates import (
-    Coordinates,
-    CartesianRepresentation,
-    SphericalRepresentation,
-    GeodeticRepresentation,
-    Geodetic,
-    GRANDCS,
-    LTP,
-    ECEF,
-    HorizontalVector,
-    Horizontal,
-    HorizontalRepresentation,
-    Rotation,
-)
-import grand.io.protocol as store
-
 
 def grand_get_path_root_pkg():
     """get the root path of grand git package, ex: /home/user/grand
@@ -56,6 +36,27 @@ def grand_add_path_data(s_file):
 
 def grand_add_path_data_model(s_file):
     return os.path.join(GRAND_DATA_PATH, "model", s_file)
+
+
+from grand.geo import geomagnet, topography
+from grand.geo.topography import geoid_undulation, Reference, Topography
+from grand.geo import coordinates
+from grand.geo.geomagnet import Geomagnet
+from grand.geo.coordinates import (
+    Coordinates,
+    CartesianRepresentation,
+    SphericalRepresentation,
+    GeodeticRepresentation,
+    Geodetic,
+    GRANDCS,
+    LTP,
+    ECEF,
+    HorizontalVector,
+    Horizontal,
+    HorizontalRepresentation,
+    Rotation,
+)
+import grand.io.protocol as store
 
 
 __all__ = [

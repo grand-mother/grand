@@ -280,7 +280,7 @@ class Stack:
         # Create the stack object
         stack_ = ffi.new("struct turtle_stack **")
         path_ = ffi.new("char []", str(path).encode())
-
+        
         r = lib.turtle_stack_create(stack_, path_, stack_size, ffi.NULL, ffi.NULL)
         if r != 0:
             raise LibraryError(r)

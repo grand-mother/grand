@@ -63,6 +63,7 @@ def get_peakamptime_norm_hilbert(a2_time, a3_trace):
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     """
+    #RK: This function is copied to grand/simu/master_simu.py where it is used. Remove it from here if it is not used anywhere else.
 
     :param sig_size:
     :param f_samp_mhz:
@@ -79,6 +80,8 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
 
 def interpol_at_new_x(a_x, a_y, new_x):
     """
+    #RK: This function is copied to galaxy.py and rf_chain.py where it is used. Remove it from here if it is not used anywhere else.
+
     Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
     and set to zero outside interval definition a_x
 

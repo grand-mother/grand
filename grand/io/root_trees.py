@@ -1,4 +1,6 @@
 """
+RK: latest copy of root_trees.py from dev_io_root as suggested by Lech.
+
 Read/Write python interface to GRAND data (real and simulated) stored in Cern ROOT TTrees.
 
 This is the interface for accessing GRAND ROOT TTrees that do not require the user (reader/writer of the TTrees) to have any knowledge of ROOT. It also hides the internals from the data generator, so that the changes in the format are not concerning the user.
@@ -11,7 +13,9 @@ import os
 
 import ROOT
 import numpy as np
+import glob
 
+from collections import defaultdict
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -20,6 +24,7 @@ else:
     from collections.abc import MutableSequence
 from dataclasses import dataclass, field
 
+thismodule = sys.modules[__name__]
 
 logger = getLogger(__name__)
 
@@ -115,16 +120,19 @@ class DataTree:
     _tree: ROOT.TTree = None
     # Tree name
     _tree_name: str = ""
+    # Tree type
+    _type: str = ""
     # A list of run_numbers or (run_number, event_number) pairs in the Tree
     _entry_list: list = field(default_factory=list)
     # Comment - if needed, added by user
     _comment: str = ""
     # TTree creation date/time in UTC - a naive time, without timezone set
-    _creation_datetime: datetime.datetime = datetime.datetime.utcnow()
+    _creation_datetime: datetime.datetime = None
 
     # Fields that are not branches
     _nonbranch_fields = [
         "_nonbranch_fields",
+        "_type",
         "_tree",
         "_file",
         "_file_name",
@@ -143,6 +151,20 @@ class DataTree:
     def tree(self):
         """The ROOT TTree in which the variables' values are stored"""
         return self._tree
+
+    @property
+    def type(self):
+        """The type of the tree"""
+        return self._type
+
+    @type.setter
+    def type(self, val: str) -> None:
+        # Remove the existing type
+        self._tree.GetUserInfo().RemoveAt(0)
+        # Add the provided type
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("type", val), 0)
+        # Update the property
+        self._type = val
 
     @property
     def file(self):
@@ -166,37 +188,52 @@ class DataTree:
         self._tree.SetTitle(val)
 
     @property
+    def file_name(self):
+        """The file in which the TTree is stored"""
+        return self._file_name
+
+    @property
     def comment(self):
         """Comment - if needed, added by user"""
-        return str(self._tree.GetUserInfo().At(0))
+        return self._comment
 
     @comment.setter
     def comment(self, val: str) -> None:
         # Remove the existing comment
-        self._tree.GetUserInfo().RemoveAt(0)
+        self._tree.GetUserInfo().RemoveAt(1)
         # Add the provided comment
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("comment", val), 0)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("comment", val), 1)
+        # Update the property
+        self._comment = val
 
     @property
     def creation_datetime(self):
-        """TTree creation date/time in UTC - a naive time, without timezone set"""
-        # Convert from ROOT's TDatime into Python's datetime object
-        return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(1).GetVal())
+        return self._creation_datetime
 
     @creation_datetime.setter
     def creation_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
-        self._tree.GetUserInfo().RemoveAt(1)
-        # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(
-            ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 1
-        )
+        self._tree.GetUserInfo().RemoveAt(2)
+        # Add the provided time
+        # If datetime was given
+        if type(val)==datetime.datetime:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 2)
+            self._creation_datetime = val
+        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        elif type(val)==int:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", val), 2)
+            self._creation_datetime = datetime.datetime.fromtimestamp(val)
+        else:
+            raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
 
     @classmethod
-    def _type(cls):
-        return cls
+    def get_default_tree_name(cls):
+        """Gets the default name of the tree of the class"""
+        return cls._tree_name
 
     def __post_init__(self):
+        self._type = type(self).__name__
+
         # Append the instance to the list of generated trees - needed later for adding friends
         grand_tree_list.append(self)
         # Init _file from TFile object
@@ -268,6 +305,8 @@ class DataTree:
                 logger.info(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
 
+        self.assign_metadata()
+
         # Fill the runs/events numbers from the tree (important if it already existed)
         self.fill_entry_list()
 
@@ -283,7 +322,7 @@ class DataTree:
         """Adds the current variable values as a new event to the tree"""
         pass
 
-    def write(self, *args, close_file=True, **kwargs):
+    def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
         """Write the tree to the file"""
         # Add the tree friends to this tree
         self.add_proper_friends()
@@ -294,14 +333,17 @@ class DataTree:
         if len(args) > 0 and ".root" in args[0][-5:]:
             self._file_name = args[0]
             # The TFile object is already in memory, just use it
-            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
+            # RK: if (f := ROOT.gROOT.GetListOfFiles()).FindObject(self._file_name) might be better.
+            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):  
                 self._file = f
+                # File exists, but reopen the file in the update mode in case it was read only
+                self._file.ReOpen("update")
             # Create a new TFile object
             else:
                 creating_file = True
                 # Overwrite requested
                 # ToDo: this does not really seem to work now
-                if "overwrite" in kwargs:
+                if overwrite:
                     self._file = ROOT.TFile(args[0], "recreate")
                 else:
                     # By default append
@@ -322,7 +364,7 @@ class DataTree:
         self._tree.Write(*args)
 
         # If TFile was created here, close it
-        if creating_file and close_file:
+        if (creating_file and close_file) or force_close_file:
             # Need to set 0 directory so that closing of the file does not delete the internal TTree
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
@@ -365,9 +407,11 @@ class DataTree:
         """Return the number of events in the tree"""
         return self.get_number_of_entries()
 
-    def add_friend(self, value):
+    def add_friend(self, value, filename=""):
+        # ToDo: Due to a bug discovered during DC1, disable adding of the friends for now
+        return 0
         """Add a friend to the tree"""
-        self._tree.AddFriend(value)
+        self._tree.AddFriend(value, filename)
 
     def remove_friend(self, value):
         """Remove a friend from the tree"""
@@ -389,80 +433,90 @@ class DataTree:
             set_branches = True
 
         # Loop through the class fields
-        for field in self.__dataclass_fields__:
+        # for field in self.__dataclass_fields__:
+        for field in self.__dict__:
             # Skip fields that are not the part of the stored data
             if field in self._nonbranch_fields:
                 continue
             # Create a branch for the field
             # print(self.__dataclass_fields__[field])
-            self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
+            # self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
+            self.create_branch_from_field(self.__dict__[field], set_branches, field)
 
     ## Create a specific branch of a TTree computing its type from the corresponding class field
-    def create_branch_from_field(self, value, set_branches=False):
+    def create_branch_from_field(self, value, set_branches=False, value_name=""):
         """Create a specific branch of a TTree computing its type from the corresponding class field"""
         # Handle numpy arrays
-        if isinstance(value.default, np.ndarray):
+        # for key in dir(value):
+        #     print(getattr(value, key))
+        if isinstance(value, np.ndarray):
             # Generate ROOT TTree data type string
 
             # If the value is a (1D) numpy array with more than 1 value, make it an (1D) array in ROOT
-            if value.default.size > 1:
-                val_type = f"[{value.default.size}]"
+            if value.size > 1:
+                val_type = f"[{value.size}]"
             else:
                 val_type = ""
 
             # Data type
-            if value.default.dtype == np.int8:
+            if value.dtype == np.int8:
                 val_type += "/B"
-            elif value.default.dtype == np.uint8:
+            elif value.dtype == np.uint8:
                 val_type += "/b"
-            elif value.default.dtype == np.int16:
+            elif value.dtype == np.int16:
                 val_type += "/S"
-            elif value.default.dtype == np.uint16:
+            elif value.dtype == np.uint16:
                 val_type += "/s"
-            elif value.default.dtype == np.int32:
+            elif value.dtype == np.int32:
                 val_type += "/I"
-            elif value.default.dtype == np.uint32:
+            elif value.dtype == np.uint32:
                 val_type += "/i"
-            elif value.default.dtype == np.int64:
+            elif value.dtype == np.int64:
                 val_type += "/L"
-            elif value.default.dtype == np.uint64:
+            elif value.dtype == np.uint64:
                 val_type += "/l"
-            elif value.default.dtype == np.float32:
+            elif value.dtype == np.float32:
                 val_type += "/F"
-            elif value.default.dtype == np.float64:
+            elif value.dtype == np.float64:
                 val_type += "/D"
-            elif value.default.dtype == np.bool_:
+            elif value.dtype == np.bool_:
                 val_type += "/O"
 
             # Create the branch
             if not set_branches:
                 self._tree.Branch(
-                    value.name[1:], getattr(self, value.name), value.name[1:] + val_type
+                    value_name[1:], getattr(self, value_name), value_name[1:] + val_type
                 )
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name))
+                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name))
         # ROOT vectors as StdVectorList
         # elif "vector" in str(type(value.default)):
         # Not sure why type is not StdVectorList when using factory... thus not isinstance, but id comparison
-        elif id(value.type) == id(StdVectorList):
+        # elif id(value.type) == id(StdVectorList):
+        elif type(value) == StdVectorList:
             # Create the branch
             if not set_branches:
-                self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
+                # self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
+                self._tree.Branch(value_name[1:], getattr(self, value_name)._vector)
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
+                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
+                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
-        elif id(value.type) == id(StdString):
+        # elif id(value.type) == id(StdString):
+        elif type(value) == StdString:
             # Create the branch
             if not set_branches:
-                self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+                # self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+                self._tree.Branch(value_name[1:], getattr(self, value_name).string)
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
+                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
+                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name).string)
         else:
-            raise ValueError(f"Unsupported type {value.type}. Can't create a branch.")
+            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
@@ -482,8 +536,10 @@ class DataTree:
     ## Create metadata for the tree
     def create_metadata(self):
         """Create metadata for the tree"""
-        # Add the metadata to the tree
-        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        # ToDo: stupid, because default values are generated here and in the class fields definitions. 
+        #       But definition of the class field does not call the setter, which is needed to attach 
+        #       these fields to the tree.
+        self.type = self._type
         self.comment = ""
         self.creation_datetime = datetime.datetime.utcnow()
 
@@ -491,12 +547,13 @@ class DataTree:
     def assign_metadata(self):
         """Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree"""
         for i, el in enumerate(self._tree.GetUserInfo()):
-            # meta as TParameter
-            try:
-                setattr(self, "_" + el.GetName(), el.GetVal())
             # meta as TNamed
-            except:
-                setattr(self, "_" + el.GetName(), el.GetTitle())
+            if type(el)==ROOT.TNamed:
+                # setattr(self, "_" + el.GetName(), el.GetTitle())
+                setattr(self, el.GetName(), el.GetTitle())
+            # meta as TParameter
+            else:
+                setattr(self, el.GetName(), el.GetVal())
 
     ## Get entry with indices
     def get_entry_with_index(self, run_no=0, evt_no=0):
@@ -528,22 +585,59 @@ class DataTree:
                 val = f'"{val}"'
             print(f"{el.GetName():40} {val}")
 
+    @staticmethod
+    def get_metadata_as_dict(tree):
+        """Get the meta information as a dictionary"""
+
+        metadata = {}
+
+        for el in tree.GetUserInfo():
+            try:
+                val = el.GetVal()
+            except:
+                val = el.GetTitle()
+
+            metadata[el.GetName()]=val
+
+        return metadata
+
     ## Copy contents of another dataclass instance of the same type to this instance
     def copy_contents(self, source):
-        """Copy contents of another dataclass instance of the same type to this instance"""
+        """Copy contents of another dataclass instance of similar type to this instance
+        The source has to have some field the same as this tree. For example EventEfieldTree and EventVoltageTree"""
         # ToDo: Shallow copy with assigning branches would be probably faster, but it would be... shallow ;)
         for k in source.__dict__.keys():
-            if k in self._nonbranch_fields:
+            # Skip the nonbranch fields and fields not belonging to this tree type
+            if k in self._nonbranch_fields or k not in self.__dict__.keys():
                 continue
-            setattr(self, k[1:], getattr(source, k[1:]))
+            try:
+                setattr(self, k[1:], getattr(source, k[1:]))
+            except TypeError:
+                logger.warning(f"The type of {k} in {source.tree_name} and {self._tree_name} differs. Not copying.")
 
+    def get_tree_size(self):
+        """Get the tree size in memory and on disk, similar to what comes from the Print()"""
+        mem_size = self._tree.GetDirectory().GetKey(self._tree_name).GetKeylen()
+        mem_size += self._tree.GetTotBytes()
+        b = ROOT.TBufferFile(ROOT.TBuffer.kWrite, 10000)
+        self._tree.IsA().WriteBuffer(b, self._tree)
+        mem_size += b.Length()
+
+        disk_size = self._tree.GetZipBytes()
+        disk_size += self._tree.GetDirectory().GetKey(self._tree_name).GetNbytes()
+
+        return mem_size, disk_size
+
+    def close_file(self):
+        """Close the file associated to the tree"""
+        self._file.Close()
 
 ## A mother class for classes with Run values
 @dataclass
 class MotherRunTree(DataTree):
     """A mother class for classes with Run values"""
 
-    _run_number: np.ndarray = np.zeros(1, np.uint32)
+    _run_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     @property
     def run_number(self):
@@ -561,6 +655,11 @@ class MotherRunTree(DataTree):
             raise NotUniqueEvent(
                 f"A run with run_number={self.run_number} already exists in the TTree."
             )
+
+        # Repoen the file in write mode, if it exists
+        # Reopening in case of different mode takes here ~0.06 s, in case of the same mode, 0.0005 s, so negligible
+        if self._file is not None:
+            self._file.ReOpen("update")
 
         # Fill the tree
         self._tree.Fill()
@@ -630,12 +729,12 @@ class MotherRunTree(DataTree):
 class MotherEventTree(DataTree):
     """A mother class for classes with Event values"""
 
-    _run_number: np.ndarray = np.zeros(1, np.uint32)
+    _run_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
-    _event_number: np.ndarray = np.zeros(1, np.uint32)
+    _event_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     # Unix creation datetime of the source tree; 0 s means no source
-    _source_datetime: datetime.datetime = datetime.datetime.fromtimestamp(0)
+    _source_datetime: datetime.datetime = None
     # The tool used to generate this tree's values from another tree
     _modification_software: str = ""
     # The version of the tool used to generate this tree's values from another tree
@@ -665,52 +764,63 @@ class MotherEventTree(DataTree):
     def source_datetime(self):
         """Unix creation datetime of the source tree; 0 s means no source"""
         # Convert from ROOT's TDatime into Python's datetime object
-        return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(2).GetVal())
+        # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
+        return self._source_datetime
 
     @source_datetime.setter
     def source_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
-        self._tree.GetUserInfo().RemoveAt(2)
-        # Add the provided datetime
-        self._tree.GetUserInfo().AddAt(
-            ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 2
-        )
+        self._tree.GetUserInfo().RemoveAt(3)
+
+        # If datetime was given
+        if type(val)==datetime.datetime:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 3)
+            self._source_datetime = val
+        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        elif type(val)==int:
+            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", val), 3)
+            self._source_datetime = datetime.datetime.fromtimestamp(val)
+        else:
+            raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
 
     @property
     def modification_software(self):
         """The tool used to generate this tree's values from another tree"""
-        return str(self._tree.GetUserInfo().At(3))
+        return self._modification_software
 
     @modification_software.setter
     def modification_software(self, val: str) -> None:
         # Remove the existing modification software
-        self._tree.GetUserInfo().RemoveAt(3)
+        self._tree.GetUserInfo().RemoveAt(4)
         # Add the provided modification software
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 3)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 4)
+        self._modification_software = val
 
     @property
     def modification_software_version(self):
         """The tool used to generate this tree's values from another tree"""
-        return str(self._tree.GetUserInfo().At(4))
+        return self._modification_software_version
 
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
         # Remove the existing modification software version
-        self._tree.GetUserInfo().RemoveAt(4)
+        self._tree.GetUserInfo().RemoveAt(5)
         # Add the provided modification software version
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 4)
+        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 5)
+        self._modification_software_version = val
 
     @property
     def analysis_level(self):
         """The analysis level of this tree"""
-        return int(self._tree.GetUserInfo().At(5))
+        return self._analysis_level
 
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
         # Remove the existing analysis level
-        self._tree.GetUserInfo().RemoveAt(5)
+        self._tree.GetUserInfo().RemoveAt(6)
         # Add the provided analysis level
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 5)
+        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 6)
+        self._analysis_level = val
 
     def __post_init__(self):
         super().__post_init__()
@@ -741,6 +851,11 @@ class MotherEventTree(DataTree):
                 f"An event with (run_number,event_number)=({self.run_number},{self.event_number}) already exists in the TTree {self._tree.GetName()}."
             )
 
+        # Repoen the file in write mode, if it exists
+        # Reopening in case of different mode takes here ~0.06 s, in case of the same mode, 0.0005 s, so negligible
+        if self._file is not None:
+            self._file.ReOpen("update")
+
         # Fill the tree
         self._tree.Fill()
 
@@ -769,7 +884,7 @@ class MotherEventTree(DataTree):
             run_tree = run_trees[-1]
 
             # Add the Run TTree as a friend
-            self.add_friend(run_tree.tree)
+            self.add_friend(run_tree.tree, run_tree.file)
 
         # Do not add ADCEventTree as a friend to itself
         if not isinstance(self, ADCEventTree):
@@ -789,7 +904,7 @@ class MotherEventTree(DataTree):
                 adc_tree = adc_trees[-1]
 
                 # Add the ADC TTree as a friend
-                self.add_friend(adc_tree.tree)
+                self.add_friend(adc_tree.tree, adc_tree.file)
 
         # Do not add VoltageEventTree as a friend to itself
         if not isinstance(self, VoltageEventTree):
@@ -809,7 +924,7 @@ class MotherEventTree(DataTree):
                 voltage_tree = voltage_trees[-1]
 
                 # Add the Voltage TTree as a friend
-                self.add_friend(voltage_tree.tree)
+                self.add_friend(voltage_tree.tree, voltage_tree.file)
 
         # Do not add EfieldEventTree as a friend to itself
         if not isinstance(self, EfieldEventTree):
@@ -829,7 +944,7 @@ class MotherEventTree(DataTree):
                 efield_tree = efield_trees[-1]
 
                 # Add the Efield TTree as a friend
-                self.add_friend(efield_tree.tree)
+                self.add_friend(efield_tree.tree, efield_tree.file)
 
         # Do not add ShowerEventTree as a friend to itself
         if not isinstance(self, ShowerEventTree):
@@ -849,7 +964,7 @@ class MotherEventTree(DataTree):
                 shower_tree = shower_trees[-1]
 
                 # Add the Shower TTree as a friend
-                self.add_friend(shower_tree.tree)
+                self.add_friend(shower_tree.tree, shower_tree.file)
 
     ## List events in the tree together with runs
     def print_list_of_events(self):
@@ -911,24 +1026,84 @@ class MotherEventTree(DataTree):
 
         return True
 
+    def get_traces_lengths(self):
+        """Gets the traces lengths for each event"""
+
+        # If there are no traces in the tree, return None
+        if self._tree.GetListOfLeaves().FindObject("trace_x")==None and self._tree.GetListOfLeaves().FindObject("trace_0")==None:
+            return None
+
+        traces_lengths = []
+        # For ADC traces - 4 traces, different names
+        if "ADC" in self.__class__.__name__:
+            traces_suffixes = [0, 1, 2, 3]
+        # Other traces
+        else:
+            traces_suffixes = ["x", "y", "z"]
+
+        # Get sizes of each traces
+        for i in traces_suffixes:
+                cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
+                traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
+
+        return traces_lengths
+
+    def get_list_of_dus(self):
+        """Gets the list of all detector units used for each event"""
+
+        # If there are no detector unit ids in the tree, return None
+        if self._tree.GetListOfLeaves().FindObject("du_id") == None:
+            return None
+
+        # Try to store the currently read entry
+        try:
+            current_entry = self._tree.GetReadEntry()
+        # if failed, store None
+        except:
+            current_entry = None
+
+        # Get the detector units branch
+        du_br = self._tree.GetBranch("du_id")
+
+        detector_units = []
+        # Loop through all entries
+        for i in range(du_br.GetEntries()):
+            du_br.GetEntry(i)
+            detector_units.append(self.du_id)
+
+        # If there was an entry read before this action, come back to this entry
+        if current_entry is not None:
+            du_br.GetEntry(current_entry)
+
+        return detector_units
+
+    def get_list_of_all_used_dus(self):
+        """Compiles the list of all detector units used in the events of the tree"""
+        dus = self.get_list_of_dus()
+        if dus is not None:
+            return np.unique(np.array(dus).flatten()).tolist()
+        else:
+            return None
 
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass
 class RunTree(MotherRunTree):
     """A class wrapping around a TTree holding values common for the whole run"""
 
+    _type: str = "run"
+
     _tree_name: str = "trun"
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
-    _run_mode: np.ndarray = np.zeros(1, np.uint32)
+    _run_mode: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Run's first event
-    _first_event: np.ndarray = np.zeros(1, np.uint32)
+    _first_event: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First event time
-    _first_event_time: np.ndarray = np.zeros(1, np.uint32)
+    _first_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Run's last event
-    _last_event: np.ndarray = np.zeros(1, np.uint32)
+    _last_event: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Last event time
-    _last_event_time: np.ndarray = np.zeros(1, np.uint32)
+    _last_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     # These are not from the hardware
     ## Data source: detector, simulation, other
@@ -941,11 +1116,11 @@ class RunTree(MotherRunTree):
     # _site: StdVectorList("string") = StdVectorList("string")
     _site: StdString = StdString("")
     ## Site longitude
-    _site_long: np.ndarray = np.zeros(1, np.float32)
+    _site_long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Site latitude
-    _site_lat: np.ndarray = np.zeros(1, np.float32)
+    _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Origin of the coordinate system used for the array
-    _origin_geoid: np.ndarray = np.zeros(3, np.float32)
+    _origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1098,25 +1273,27 @@ class RunTree(MotherRunTree):
 class ADCEventTree(MotherEventTree):
     """The class for storing ADC traces and associated values for each event"""
 
+    _type: str = "eventadc"
+
     _tree_name: str = "teventadc"
 
     ## Common for the whole event
     ## Event size
-    _event_size: np.ndarray = np.zeros(1, np.uint32)
+    _event_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event in the run number
-    _t3_number: np.ndarray = np.zeros(1, np.uint32)
+    _t3_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First detector unit that triggered in the event
-    _first_du: np.ndarray = np.zeros(1, np.uint32)
+    _first_du: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Unix time corresponding to the GPS seconds of the first triggered station
-    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
-    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event format version of the DAQ
-    _event_version: np.ndarray = np.zeros(1, np.uint32)
+    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
-    _du_count: np.ndarray = np.zeros(1, np.uint32)
+    _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
@@ -2611,6 +2788,8 @@ class ADCEventTree(MotherEventTree):
 class VoltageEventTree(MotherEventTree):
     """The class for storing voltage traces and associated values for each event"""
 
+    _type: str = "eventvoltage"
+
     _tree_name: str = "teventvoltage"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -2624,21 +2803,21 @@ class VoltageEventTree(MotherEventTree):
 
     ## Common for the whole event
     ## Event size
-    _event_size: np.ndarray = np.zeros(1, np.uint32)
+    _event_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event in the run number
-    _t3_number: np.ndarray = np.zeros(1, np.uint32)
+    _t3_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First detector unit that triggered in the event
-    _first_du: np.ndarray = np.zeros(1, np.uint32)
+    _first_du: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Unix time corresponding to the GPS seconds of the trigger
-    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
-    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Event format version of the DAQ
-    _event_version: np.ndarray = np.zeros(1, np.uint32)
+    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
-    _du_count: np.ndarray = np.zeros(1, np.uint32)
+    _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
@@ -4141,6 +4320,8 @@ class VoltageEventTree(MotherEventTree):
 class EfieldEventTree(MotherEventTree):
     """The class for storing Efield traces and associated values for each event"""
 
+    _type: str = "eventefield"
+
     _tree_name: str = "teventefield"
 
     # _du_id: StdVectorList("int") = StdVectorList("int")
@@ -4154,13 +4335,13 @@ class EfieldEventTree(MotherEventTree):
 
     ## Common for the whole event
     ## Unix time corresponding to the GPS seconds of the trigger
-    _time_seconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
-    _time_nanoseconds: np.ndarray = np.zeros(1, np.uint32)
+    _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = np.zeros(1, np.uint32)
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
-    _du_count: np.ndarray = np.zeros(1, np.uint32)
+    _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
@@ -4935,49 +5116,38 @@ class EfieldEventTree(MotherEventTree):
 class ShowerEventTree(MotherEventTree):
     """The class for storing shower data common for each event"""
 
+    _type: str = "eventshower"
+
     _tree_name: str = "teventshower"
 
-    _shower_type: StdString = StdString(
-        ""
-    )  # shower primary type: If single particle, particle type. If not...tau decay,etc. TODO: Standarize
-    _shower_energy: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower energy (GeV)  Check unit conventions.
-    _shower_azimuth: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_zenith: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_core_pos: np.ndarray = np.zeros(
-        4, np.float32
-    )  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
-    _atmos_model: StdString = StdString("")  # Atmospheric model name TODO:standarize
-    _atmos_model_param: np.ndarray = np.zeros(
-        3, np.float32
-    )  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _magnetic_field: np.ndarray = np.zeros(
-        3, np.float32
-    )  # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _date: StdString = StdString(
-        ""
-    )  # Event Date and time. TODO:standarize (date format, time format)
-    _ground_alt: np.ndarray = np.zeros(1, np.float32)  # Ground Altitude (m)
-    _xmax_grams: np.ndarray = np.zeros(
-        1, np.float32
-    )  # shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_pos_shc: np.ndarray = np.zeros(
-        3, np.float64
-    )  # shower Xmax position in shower coordinates
-    _xmax_alt: np.ndarray = np.zeros(
-        1, np.float64
-    )  # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _gh_fit_param: np.ndarray = np.zeros(
-        3, np.float32
-    )  # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
-    _core_time: np.ndarray = np.zeros(
-        1, np.float64
-    )  # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
+    # Standarize shower primary type: If single particle, particle type. If not...tau decay,etc. TODO:
+    _shower_type: StdString = StdString("")
+    # shower energy (GeV)  Check unit conventions.
+    _shower_energy: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
+    _shower_azimuth: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    _shower_zenith: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))  # shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
+    _shower_core_pos: np.ndarray = field(default_factory=lambda: np.zeros(4, np.float32))  # shower core position TODO: Coordinates in geoid?. Undefined for neutrinos.
+    # Atmospheric model name TODO:standarize
+    _atmos_model: StdString = StdString("")
+    # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
+    _atmos_model_param: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
+    _magnetic_field: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # Event Date and time. TODO:standarize (date format, time format)
+    _date: StdString = StdString("")
+    # Ground Altitude (m)
+    _ground_alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # shower Xmax depth  (g/cm2 along the shower axis)
+    _xmax_grams: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # shower Xmax position in shower coordinates
+    _xmax_pos_shc: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float64))
+    # altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
+    _xmax_alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
+    # X0,Xmax,Lambda (g/cm2) (3 parameter GH function fit to the longitudinal development of all particles)
+    _gh_fit_param: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # ToDo: Check; time when the shower was at the core position - defined in Charles, but not in Zhaires/Coreas?
+    _core_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
 
     # def __post_init__(self):
     #     super().__post_init__()
@@ -5153,6 +5323,8 @@ class ShowerEventTree(MotherEventTree):
 class VoltageRunSimdataTree(MotherRunTree):
     """The class for storing voltage simulation-only data common for a whole run"""
 
+    _type: str = "runvoltagesimdata"
+
     _tree_name: str = "trunvoltagesimdata"
 
     _signal_sim: StdString = StdString("")  # name and model of the signal simulator
@@ -5187,6 +5359,8 @@ class VoltageRunSimdataTree(MotherRunTree):
 ## The class for storing voltage simulation-only data common for each event
 class VoltageEventSimdataTree(MotherEventTree):
     """The class for storing voltage simulation-only data common for each event"""
+
+    _type: str = "eventvoltagesimdata"
 
     _tree_name: str = "teventvoltagesimdata"
 
@@ -5287,6 +5461,8 @@ class VoltageEventSimdataTree(MotherEventTree):
 class EfieldRunSimdataTree(MotherRunTree):
     """The class for storing Efield simulation-only data common for a whole run"""
 
+    _type: str = "runefieldsimdata"
+
     _tree_name: str = "trunefieldsimdata"
 
     ## Name and model of the electric field simulator
@@ -5297,9 +5473,9 @@ class EfieldRunSimdataTree(MotherRunTree):
         default_factory=lambda: StdVectorList("double")
     )
     ## The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
-    _t_pre: np.ndarray = np.zeros(1, np.float32)
-    _t_post: np.ndarray = np.zeros(1, np.float32)
-    _t_bin_size: np.ndarray = np.zeros(1, np.float32)
+    _t_pre: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    _t_post: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    _t_bin_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     def __post_init__(self):
         super().__post_init__()
@@ -5394,6 +5570,8 @@ class EfieldRunSimdataTree(MotherRunTree):
 ## The class for storing Efield simulation-only data common for each event
 class EfieldEventSimdataTree(MotherEventTree):
     """The class for storing Efield simulation-only data common for each event"""
+
+    _type: str = "eventefieldsimdata"
 
     _tree_name: str = "teventefieldsimdata"
 
@@ -5499,18 +5677,26 @@ class EfieldEventSimdataTree(MotherEventTree):
 class ShowerRunSimdataTree(MotherRunTree):
     """The class for storing shower simulation-only data common for a whole run"""
 
+    _type: str = "runsimdata"
+
     _tree_name: str = "trunsimdata"
 
-    _shower_sim: StdString = StdString(
-        ""
-    )  # simulation program (and version) used to simulate the shower
-    _rel_thin: np.ndarray = np.zeros(1, np.float32)  # relative thinning energy
-    _weight_factor: np.ndarray = np.zeros(1, np.float32)  # weight factor
-    _lowe_cut_e: np.ndarray = np.zeros(1, np.float32)  # low energy cut for electrons(GeV)
-    _lowe_cut_gamma: np.ndarray = np.zeros(1, np.float32)  # low energy cut for gammas(GeV)
-    _lowe_cut_mu: np.ndarray = np.zeros(1, np.float32)  # low energy cut for muons(GeV)
-    _lowe_cut_meson: np.ndarray = np.zeros(1, np.float32)  # low energy cut for mesons(GeV)
-    _lowe_cut_nucleon: np.ndarray = np.zeros(1, np.float32)  # low energy cut for nuceleons(GeV)
+    # simulation program (and version) used to simulate the shower
+    _shower_sim: StdString = StdString("")
+    # relative thinning energy
+    _rel_thin: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # weight factor
+    _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for electrons(GeV)
+    _lowe_cut_e: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for gammas(GeV)
+    _lowe_cut_gamma: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for muons(GeV)
+    _lowe_cut_mu: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for mesons(GeV)
+    _lowe_cut_meson: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # low energy cut for nuceleons(GeV)
+    _lowe_cut_nucleon: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     def __post_init__(self):
         super().__post_init__()
@@ -5606,6 +5792,8 @@ class ShowerRunSimdataTree(MotherRunTree):
 class ShowerEventSimdataTree(MotherEventTree):
     """The class for storing a shower simulation-only data for each event"""
 
+    _type: str = "eventshowersimdata"
+
     _tree_name: str = "teventshowersimdata"
 
     ## Event name
@@ -5614,24 +5802,22 @@ class ShowerEventSimdataTree(MotherEventTree):
     ## Event Date and time. TODO:standarize (date format, time format)
     _date: StdString = StdString("")
     ## Random seed
-    _rnd_seed: np.ndarray = np.zeros(1, np.float64)
+    _rnd_seed: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     ## Energy in neutrinos generated in the shower (GeV). Usefull for invisible energy
-    _energy_in_neutrinos: np.ndarray = np.zeros(1, np.float32)
+    _energy_in_neutrinos: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     # _prim_energy: np.ndarray = np.zeros(1, np.float32)  # primary energy (GeV) TODO: Support multiple primaries. Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
     ## Primary energy (GeV) TODO: Check unit conventions. # LWP: Multiple primaries? I guess, variable count. Thus variable size array or a std::vector
     _prim_energy: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Shower azimuth TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth. Also, geoid vs sphere problem
-    _shower_azimuth: np.ndarray = np.zeros(1, np.float32)
+    _shower_azimuth: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Shower zenith  TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth
-    _shower_zenith: np.ndarray = np.zeros(1, np.float32)
+    _shower_zenith: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     # _prim_type: StdVectorList("string") = StdVectorList("string")  # primary particle type TODO: Support multiple primaries. standarize (PDG?)
     ## Primary particle type TODO: standarize (PDG?)
     _prim_type: StdVectorList = field(default_factory=lambda: StdVectorList("string"))
     # _prim_injpoint_shc: np.ndarray = np.zeros(4, np.float32)  # primary injection point in Shower coordinates TODO: Support multiple primaries
     ## Primary injection point in Shower coordinates
-    _prim_injpoint_shc: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<float>")
-    )
+    _prim_injpoint_shc: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     # _prim_inj_alt_shc: np.ndarray = np.zeros(1, np.float32)  # primary injection altitude in Shower Coordinates TODO: Support multiple primaries
     ## Primary injection altitude in Shower Coordinates
     _prim_inj_alt_shc: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
@@ -5641,26 +5827,23 @@ class ShowerEventSimdataTree(MotherEventTree):
     ## Atmospheric model name TODO:standarize
     _atmos_model: StdString = StdString("")
     # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
-    _atmos_model_param: np.ndarray = np.zeros(3, np.float32)
+    _atmos_model_param: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     # Magnetic field parameters: Inclination, Declination, modulus. TODO: Standarize. Check units. Think about coordinates. Shower coordinates make sense.
-    _magnetic_field: np.ndarray = np.zeros(3, np.float32)
+    _magnetic_field: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     ## Shower Xmax depth  (g/cm2 along the shower axis)
-    _xmax_grams: np.ndarray = np.zeros(1, np.float32)
+    _xmax_grams: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Shower Xmax position in shower coordinates
-    _xmax_pos_shc: np.ndarray = np.zeros(3, np.float64)
+    _xmax_pos_shc: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float64))
     ## Distance of Xmax  [m]
-    _xmax_distance: np.ndarray = np.zeros(1, np.float64)
+    _xmax_distance: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     ## Altitude of Xmax  (m, in the shower simulation earth. Its important for the index of refraction )
-    _xmax_alt: np.ndarray = np.zeros(1, np.float64)
-    _hadronic_model: StdString = StdString(
-        ""
-    )  # high energy hadronic model (and version) used TODO: standarize
-    _low_energy_model: StdString = StdString(
-        ""
-    )  # high energy model (and version) used TODO: standarize
-    _cpu_time: np.ndarray = np.zeros(
-        1, np.float32
-    )  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    _xmax_alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
+    # high energy hadronic model (and version) used TODO: standarize
+    _hadronic_model: StdString = StdString("")
+    # high energy model (and version) used TODO: standarize
+    _low_energy_model: StdString = StdString("")
+    # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    _cpu_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     # def __post_init__(self):
     #     super().__post_init__()
@@ -5938,12 +6121,14 @@ class ShowerEventSimdataTree(MotherEventTree):
 class ShowerEventZHAireSTree(MotherEventTree):
     """The class for storing shower data for each event specific to ZHAireS only"""
 
+    _type: str = "eventshowerzhaires"
+
     _tree_name: str = "teventshowerzhaires"
 
     # ToDo: we need explanations of these parameters
 
     _relative_thining: StdString = StdString("")
-    _weight_factor: np.ndarray = np.zeros(1, np.float64)
+    _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     _gamma_energy_cut: StdString = StdString("")
     _electron_energy_cut: StdString = StdString("")
     _muon_energy_cut: StdString = StdString("")
@@ -6084,15 +6269,15 @@ class DetectorInfo(DataTree):
     _tree_name: str = "tdetectorinfo"
 
     ## Detector Unit id
-    _du_id: np.ndarray = np.zeros(1, np.float32)
+    _du_id: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Currently read out unit. Not publicly visible
     _cur_du_id: int = -1
     ## Detector longitude
-    _long: np.ndarray = np.zeros(1, np.float32)
+    _long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Detector latitude
-    _lat: np.ndarray = np.zeros(1, np.float32)
+    _lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Detector altitude
-    _alt: np.ndarray = np.zeros(1, np.float32)
+    _alt: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Detector type
     _type: StdString = StdString("antenna")
     ## Detector description
@@ -6226,3 +6411,277 @@ def set_vector_of_vectors(value, vec_type, variable, variable_name):
         raise ValueError(
             f"Incorrect type for {variable_name} {type(value)}. Either a list of lists, a list of arrays or a ROOT.vector of vectors required."
         )
+
+## Class holding the information about GRAND data in a directory
+class DataDirectory():
+    """Class holding the information about GRAND data in a directory"""
+
+    def __init__(self, dir_name: str, recursive: bool = False):
+        """
+        @param dir_name: the name of the directory to be scanned
+        @param recursive: if to scan the directory recursively
+        """
+
+        # Make the path absolute
+        self.dir_name = os.path.abspath(dir_name)
+
+        # Get the file list
+        self.file_list = self.get_list_of_files(recursive)
+
+        # Get the file handle list
+        self.file_handle_list = self.get_list_of_files_handles()
+
+        # Create chains and set them as attributes
+        self.create_chains()
+
+    def get_list_of_files(self, recursive: bool = False):
+        """Gets list of files in the directory"""
+        return sorted(glob.glob(os.path.join(self.dir_name, "*.root"), recursive=recursive))
+
+    def get_list_of_files_handles(self):
+        """Go through the list of files in the directory and open all of them"""
+        file_handle_list = []
+
+        for filename in self.file_list:
+            file_handle_list.append(DataFile(filename))
+
+        return file_handle_list
+
+    def create_chains(self):
+        chains_dict = {}
+        tree_types = set()
+        # Loop through the list of file handles
+        for i,f in enumerate(self.file_handle_list):
+            # Collect the tree types
+            tree_types.update(*f.tree_types.keys())
+
+            # Select the highest analysis level trees for each class and store these trees as main attributes
+            for key in f.tree_types:
+                if key=="run":
+                    setattr(self, "trun", f.dict_of_trees["trun"])
+                else:
+                    max_analysis_level=-1
+                    for key1 in f.tree_types[key].keys():
+                        el = f.tree_types[key][key1]
+                        chain_name = el["name"]
+                        if "analysis_level" in el:
+                            if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
+                                max_analysis_level = el["analysis_level"]
+                                max_anal_chain_name = chain_name
+
+                                setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
+
+
+                        if chain_name not in chains_dict:
+                            chains_dict[chain_name] = ROOT.TChain(chain_name)
+                        chains_dict[chain_name].Add(self.file_list[i])
+
+
+                        # In case there is no analysis level info in the tree (old trees), just take the last one
+                        if max_analysis_level==-1:
+                            max_anal_chain_name = el["name"]
+
+                    setattr(self, "t"+key, chains_dict[max_anal_chain_name])
+
+
+
+    def print(self, recursive=True):
+        """Prints all the information about all the data"""
+        pass
+
+    def get_list_of_chains(self):
+        """Gets list of TTree chains of specific type from the directory"""
+        pass
+
+    def print_list_of_chains(self):
+        """Prints list of TTree chains of specific type from the directory"""
+        pass
+
+class DataFile():
+    """Class holding the information about GRAND TTrees in the specified file"""
+
+    # Holds all the trees in the file, by tree name
+    dict_of_trees = {}
+    # Holds the list of trees in the file, but just with maximal level
+    list_of_trees = []
+    # Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
+    tree_types = defaultdict(dict)
+
+    def __init__(self, filename):
+        """filename can be either a string or a ROOT.TFile"""
+        # If a string given, open the file
+        if type(filename) is str:
+            f = ROOT.TFile(filename)
+            self.f = f
+        elif type(filename) is ROOT.TFile:
+            self.f = filename
+        else:
+            raise TypeError(f"Unsupported type {type(filename)} as a filename")
+
+        # Loop through the keys
+        for key in f.GetListOfKeys():
+            t = f.Get(key.GetName())
+            # Process only TTrees
+            if type(t) != ROOT.TTree:
+                continue
+
+            # Get the basic information about the tree
+            tree_info = self.get_tree_info(t)
+
+            # Add the tree to a dict for this tree class
+            self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
+
+            self.dict_of_trees[tree_info["name"]] = t
+
+        # Select the highest analysis level trees for each class and store these trees as main attributes
+        # Loop through tree types
+        for key in self.tree_types:
+            if key=="run":
+                setattr(self, "trun", self.dict_of_trees["trun"])
+            else:
+                max_analysis_level=-1
+                # Loop through trees in the current tree type
+                for key1 in self.tree_types[key].keys():
+                    el = self.tree_types[key][key1]
+                    tree_class = getattr(thismodule, el["type"])
+                    tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
+                    # If there is analysis level info in the tree, attribute each level and max level
+                    if "analysis_level" in el:
+                        if el["analysis_level"] > max_analysis_level or el["analysis_level"]==0:
+                            max_analysis_level = el["analysis_level"]
+                            max_anal_tree_name = el["name"]
+                            max_anal_tree_type = el["type"]
+                        setattr(self, tree_class.get_default_tree_name()+"_"+str(el["analysis_level"]), tree_instance)
+                    # In case there is no analysis level info in the tree (old trees), just take the last one
+                    elif max_analysis_level==-1:
+                        max_anal_tree_name = el["name"]
+                        max_anal_tree_type = el["type"]
+
+                    traces_lenghts = self._get_traces_lengths(tree_instance)
+                    if traces_lenghts is not None:
+                        el["traces_lengths"] = traces_lenghts
+
+                    dus = self._get_list_of_all_used_dus(tree_instance)
+                    if dus is not None:
+                        el["dus"] = dus
+
+                    el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
+
+                tree_class = getattr(thismodule, max_anal_tree_type)
+                tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+                setattr(self, tree_class.get_default_tree_name(), tree_instance)
+                self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+
+    def print(self):
+        """Prints the information about the TTrees in the file"""
+
+        print(f"File size: {self.f.GetSize():40}")
+        print(f"Tree classes found in the file: {str([el for el in self.tree_types.keys()]):40}")
+
+        for key in self.tree_types:
+            print(f"Trees of type {key:<40}: {str([el for el in self.tree_types[key].keys()]):<40}")
+
+        for key in self.tree_types:
+            for key1 in self.tree_types[key].keys():
+                # print(f"{key1}: {self.tree_types[key][key1]}")
+                print(key1)
+                for key2 in self.tree_types[key][key1]:
+                    print(f"  {key2:<20}: {self.tree_types[key][key1][key2]}")
+
+
+    def get_tree_info(self, tree):
+        """Gets the information about the tree"""
+
+        # If tree is a string, turn it into a TTree
+        if type(tree)==str:
+            tree = getattr(self, tree)
+        # If tree is a GRAND tree class
+        if issubclass(tree.__class__, DataTree):
+            tree = tree._tree
+
+        tree_info = {"evt_cnt": tree.GetEntries(), "name": tree.GetName()}
+
+        meta_dict = DataTree.get_metadata_as_dict(tree)
+
+        # Deduce the tree type if not in the metadata
+        if "type" not in meta_dict.keys():
+            tree_info["type"] = self._guess_tree_type(tree)
+
+        tree_info.update(meta_dict)
+
+        return tree_info
+
+
+    def _get_traces_lengths(self, tree):
+        """Adds traces info to event trees"""
+        # If tree is not of Event class (contains traces), do nothing
+        if not issubclass(tree.__class__, MotherEventTree) or "simdata" in tree.tree_name or "zhaires" in tree.tree_name:
+            return None
+        else:
+            traces_lengths = tree.get_traces_lengths()
+            if traces_lengths is None:
+                return None
+
+            # Check if traces have constant length
+            if np.unique(np.array(traces_lengths).ravel()).size!=1:
+                logger.warning(f"Traces lengths vary through events or axes for {tree.tree_name}! {traces_lengths}")
+                return traces_lengths
+            else:
+                return traces_lengths[0][0]
+
+    def _get_list_of_all_used_dus(self, tree):
+        """Get list of all data units used in the tree"""
+        if issubclass(tree.__class__, MotherEventTree):
+            return tree.get_list_of_all_used_dus()
+        else:
+            return None
+
+    def print_tree_info(self, tree):
+        """Prints the information about the tree"""
+        pass
+
+    def _guess_tree_type(self, tree):
+        """Guesses the tree type from its name. Needed for old trees with missing metadata"""
+        name = tree.GetName()
+
+        # Simdata trees
+        if "simdata" in name:
+            if "runvoltage" in name:
+                return "VoltageRunSimdataTree"
+            elif "eventvoltage" in name:
+                return "VoltageEventSimdataTree"
+            elif "runefield" in name:
+                return "EfieldRunSimdataTree"
+            elif "eventefield" in name:
+                return "EfieldEventSimdataTree"
+            elif "runshower" in name:
+                return "ShowerRunSimdataTree"
+            elif "eventshower" in name:
+                return "ShowerEventSimdataTree"
+        # Zhaires tree
+        elif "eventshowerzhaires" in name:
+            return "ShowerEventZHAireSTree"
+        # Other trees
+        else:
+            if "run" in name:
+                return "RunTree"
+            elif "eventadc" in name:
+                return "ADCEventTree"
+            elif "eventvoltage" in name:
+                return "VoltageEventTree"
+            elif "eventefield" in name:
+                return "EfieldEventTree"
+            elif "eventshower" in name:
+                return "ShowerEventTree"
+
+
+    def _load_trees(self):
+        # Loop through the keys
+            # Process only TTrees
+                # Get the basic information about the tree
+                # Add the tree to a dict for this tree class
+        # Select the highest analysis level trees for each class and store these trees as main attributes
+        pass
+
+
+

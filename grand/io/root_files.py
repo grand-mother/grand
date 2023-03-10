@@ -47,13 +47,12 @@ class FileEvent:
       * initialize instance to the first event
       * conversion io.root array to numpy if necessary
 
-
     Public attributes:
 
         * tt_event object: object ROOT_tree of type TTree Event
         * f_name str: path/name to ROOT file
         * l_events list : list of tuple (event, run)
-        * traces float(N,3,S): 3D trace of N detecttor unit with S samples
+        * traces float(N,3,S): 3D trace of N detector unit with S samples
         * idx_event int:  current object contents data of event at index idx_event in l_events
         * delta_t_ns float: [ns] time sampling
         * evt_nb int: given by l_events list(idx_event)
@@ -164,6 +163,83 @@ class FileEvent:
         return o_tevent
 
 
+class File:
+    """
+    Simulation file with Efield or Voltage information.
+    """
+
+    def __init__(self, f_name):
+        """
+        Constructor for Efield and voltage event.
+        """
+        self.f_name: str    = f_name
+
+        if not os.path.exists(f_name):
+            logger.error(f"File {f_name} doesn't exist.")
+            raise FileNotFoundError
+        else:
+            # Note to Lech: let's add get_list_of_keys_name() method in class DataTree in root_trees.py 
+            tfile   = ROOT.TFile.Open(f_name)
+            l_ttree = tfile.GetListOfKeys()
+            self.trees_list = [ttree.GetName() for ttree in l_ttree]
+            if "teventefield" in self.trees_list:          # File with Efield info as input
+                self.event   = groot.EfieldEventTree(f_name)
+                self.shower  = groot.ShowerEventSimdataTree(f_name)
+                self.run     = groot.RunTree(f_name)
+                self.run_sim = groot.EfieldRunSimdataTree(f_name)
+            elif "teventvoltage" in self.trees_list:       # File with voltage info as input
+                self.event = groot.VoltageEventTree(f_name)
+            else:
+                logger.error(f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}.")
+                raise AssertionError
+
+            self.event_list = self.event.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
+
+        logger.info(f"Events  in file {f_name}")
+
+    def get_event(self, event_idx=0):
+        """
+        Load traces/pos of event/run evt_nb/run_nb
+        :param evt_nb:
+        :param run_nb:
+        """
+        self.event_idx: int = event_idx  # index of events in the input file. 0 for first event and so on.
+        if self.event_idx<len(self.event_list): 
+            self.evt_nb = self.event_list[self.event_idx][0] 
+            self.run_nb = self.event_list[self.event_idx][1]
+        else:
+            logger.warning(f"Event index {self.event_idx} is out of range. It must be less than {len(self.event_list)}.")
+            return False
+
+        logger.info(f"load event: {self.evt_nb} of run  {self.run_nb}")
+        self.event.get_event(self.evt_nb, self.run_nb)
+
+        trace_shape = np.asarray(self.event.trace_x).shape     # (du_count, len(trace_x[0]))
+        self.traces = np.empty((trace_shape[0], 3, trace_shape[1]), dtype=np.float32)
+        self.traces[:, 0, :] = np.asarray(self.event.trace_x, dtype=np.float32)
+        self.traces[:, 1, :] = np.asarray(self.event.trace_y, dtype=np.float32)
+        self.traces[:, 2, :] = np.asarray(self.event.trace_z, dtype=np.float32)
+
+        self.du_pos = np.empty((trace_shape[0], 3), dtype=np.float32)
+        self.du_pos[:, 0] = np.asarray(self.event.pos_x, dtype=np.float32)
+        self.du_pos[:, 1] = np.asarray(self.event.pos_y, dtype=np.float32)
+        self.du_pos[:, 2] = np.asarray(self.event.pos_z, dtype=np.float32)
+
+    def get_next_event(self):
+        """
+        Load next event, return False at the end of list else True
+        """
+        self.event_idx += 1
+        if self.event_idx<len(self.event_list): 
+            self.evt_nb = self.event_list[self.event_idx][0] 
+            self.run_nb = self.event_list[self.event_idx][1]
+        else:
+            logger.warning(f"Event index {self.event_idx} is out of range. It must be less than {len(self.event_list)}.")
+            return False
+
+        return self.get_event(self.evt_nb, self.run_nb)
+
+
 class FileSimuEfield(FileEvent):
     """
     File simulation of air shower with 5 TTree
@@ -203,11 +279,12 @@ class FileSimuEfield(FileEvent):
             logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
             raise AssertionError
         logger.info(f"Events  in file {f_name}")
+
         event = groot.EfieldEventTree(f_name)
         super().__init__(event)
         self.tt_efield = self.tt_event
         self.tt_shower = groot.ShowerEventSimdataTree(f_name)
-        self.tt_run = groot.RunTree(f_name)
+        self.tt_run    = groot.RunTree(f_name)
         self.tt_run_sim = groot.EfieldRunSimdataTree(f_name)
         self.load_event_idx(0)
         self.f_name = f_name
@@ -379,3 +456,6 @@ class FileADCeventProto(FileEvent):
         self.du_pos[:, 0] = np.array(self.tt_event.gps_long, dtype=np.float32)
         self.du_pos[:, 1] = np.array(self.tt_event.gps_lat, dtype=np.float32)
         self.du_pos[:, 2] = np.array(self.tt_event.gps_alt, dtype=np.float32)
+
+
+

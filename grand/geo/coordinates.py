@@ -15,6 +15,7 @@ units:
 
 from __future__ import annotations
 from typing import Optional, Tuple, Union, Any
+from typing_extensions import Final
 from datetime import datetime
 import copy as _copy
 import enum
@@ -22,21 +23,19 @@ import os
 from numbers import Number
 from logging import getLogger
 import warnings
-
-
 import numpy as np
-
 try:
     from scipy.spatial.transform import Rotation as _Rotation
 except ImportError:
     _Rotation = None
-
-from ..libs import turtle
-from . import DATADIR
+from . import turtle
+from grand import grand_get_path_root_pkg
 
 logger = getLogger(__name__)
 # add protection against casting complex to real
 warnings.filterwarnings(action="error", category=np.ComplexWarning)
+
+DATADIR: Final = grand_get_path_root_pkg() + "/data"  # for geoid_undulation egm96.png file.
 
 # Mean value of proposed GP300 layout. Just a placeholder for the default GP300 origin.
 grd_origin_lat = 38.88849  # degree

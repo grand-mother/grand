@@ -6,7 +6,7 @@ import datetime
 
 import numpy
 
-from . import DATADIR
+#from . import DATADIR
 from .._core import ffi, lib
 
 
@@ -36,13 +36,13 @@ class LibraryError(RuntimeError):
 class Snapshot:
     """Proxy for a GULL snapshot object"""
 
-    def __init__(self, model="IGRF13", date="2020-01-01"):
+    def __init__(self, filename="", date="2020-01-01"):
         """Create a snapshot of the geo-magnetic field
 
         Parameters
         ----------
-        model : str
-            The geo-magnetic model to use (IGRF13, or WMM2020)
+        filename : str
+            The filename with geo-magnetic model info is stored (IGRF13.COF, or WMM2020.COF)
         date : str or datetime.date
             The day at which the snapshot is taken
 
@@ -52,7 +52,8 @@ class Snapshot:
             A GULL library error occured, e.g. if the model parameters are not
             valid
         """
-        self._snapshot, self._model, self._date = None, None, None
+        #self._snapshot, self._model, self._date = None, None, None
+        self._snapshot, self._date = None, None
         self._workspace = ffi.new("double **")
         self._order, self._altitude = None, None
 
@@ -63,14 +64,17 @@ class Snapshot:
         else:
             d = date
 
-        path = ffi.new("char []", f"{DATADIR}/gull/{model}.COF".encode())
+        #path = ffi.new("char []", f"{DATADIR}/gull/{model}.COF".encode())
+        #path = ffi.new("char []", f"{DATADIR}/{model}.COF".encode())
+        path  = ffi.new("char []", filename.encode())
         line = ffi.new("int *")
 
         r = lib.gull_snapshot_create(snapshot, path, d.day, d.month, d.year)
         if r != 0:
             raise LibraryError(r)
         self._snapshot = snapshot
-        self._model, self._date = model, d
+        #self._model, self._date = model, d
+        self._date = d
 
         # Get the meta-data
         order = ffi.new("int *")
@@ -139,10 +143,10 @@ class Snapshot:
         """The date of the snapshot"""
         return self._date
 
-    @property
-    def model(self):
-        """The world magnetic model"""
-        return self._model
+    #@property
+    #def model(self):
+    #    """The world magnetic model"""
+    #    return self._model
 
     @property
     def order(self):

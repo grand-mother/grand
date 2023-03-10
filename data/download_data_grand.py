@@ -37,9 +37,8 @@ FILE_MODEL = "grand_model_2207.tar.gz"
 #             self.pbar.finish()
 
 
-
 # 1- test if download is necessary
-if os.path.exists(grand_add_path_data_model('detector')):
+if os.path.exists(grand_add_path_data('detector')):
     print("==============================")
     print('Skip download data model')
     sys.exit(0)
@@ -61,10 +60,11 @@ print("==============================")
 print('Extract tar file')
 try:
     my_tar = tarfile.open(tar_file)
-    my_tar.extractall(grand_add_path_data_model('')) 
+    my_tar.extractall(grand_add_path_data(''))
     my_tar.close()
+    os.remove(tar_file)  # delete zipped file are extraction.
 except:
     print(f"Extract failed '{tar_file}'")
     sys.exit(1)
-print("data model available in grand/data/model directory !")
+print("data model available in grand/data directory !")
 sys.exit(0) 

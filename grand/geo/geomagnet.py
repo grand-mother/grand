@@ -5,13 +5,16 @@ from __future__ import annotations
 from typing import Optional, Union
 from typing_extensions import Final
 
+from grand import grand_get_path_root_pkg
 from grand.geo.coordinates import CartesianRepresentation, GeodeticRepresentation
 from grand.geo.coordinates import ECEF, Geodetic, GRANDCS, LTP, _cartesian_to_horizontal
-from ..libs.gull import Snapshot as _Snapshot
+from .gull import Snapshot as _Snapshot
 
 import numpy
 import datetime
 from datetime import date
+
+DATADIR: Final = grand_get_path_root_pkg() + "/data/geomagnet"
 
 _default_model: Final = "IGRF13"
 """The default geo-magnetic model, i.e. IGRF13.
@@ -101,7 +104,9 @@ class Geomagnet:
         self.location = geodetic_loc
 
         # Calculate magnetic field
-        self.snapshot = _Snapshot(self.model, self.obstime)
+        data_file     = f"{DATADIR}/{self.model}.COF"
+        #self.snapshot = _Snapshot(self.model, self.obstime)
+        self.snapshot = _Snapshot(data_file, self.obstime)
         Bfield = self.snapshot(geodetic_loc.latitude, geodetic_loc.longitude, geodetic_loc.height)
 
         # Output magnetic field is either in [Bx, By, Bz] or [[Bx1, By1, Bz1], [Bx2, By2, Bz2], ....]
