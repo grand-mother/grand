@@ -47,14 +47,15 @@ class Efield2Voltage:
       * Save output in ROOT format
     """
 
-    def __init__(self, f_input, seed=None, padding_factor=1.0):
+    def __init__(self, f_input, f_output, seed=None, padding_factor=1.0):
         self.f_input    = f_input
+        self.f_output   = f_output
         self.seed       = seed                                  # used to generate same set of random numbers. (gal noise)
         self.padding_factor = padding_factor
-        self.events     = groot.EfieldEventTree(f_input)        # traces and du_pos are stored here
-        self.run        = groot.RunTree(f_input)                # site_long, site_lat info is stored here. Used to define shower frame.
-        self.run_sim    = groot.EfieldRunSimdataTree(f_input)   # dt_ns is stored here
-        self.shower     = groot.ShowerEventSimdataTree(f_input) # shower info (like theta, phi, xmax etc) are stored here.
+        self.events     = groot.TEfield(f_input)                # traces and du_pos are stored here
+        self.run        = groot.TRun(f_input)                   # site_long, site_lat info is stored here. Used to define shower frame.
+        self.run_sim    = groot.TRunEfieldSim(f_input)          # dt_ns is stored here
+        self.shower     = groot.TShower(f_input)                # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list= self.events.get_list_of_events()      # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain   = grfc.RfChainGP300()                   # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model  = AntennaModel()                        # loads antenna models. time consuming. ant_type='GP300' (default), 'Horizon'
@@ -90,21 +91,19 @@ class Efield2Voltage:
         self.traces[:, 0, :] = np.asarray(self.events.trace_x, dtype=np.float32)
         self.traces[:, 1, :] = np.asarray(self.events.trace_y, dtype=np.float32)
         self.traces[:, 2, :] = np.asarray(self.events.trace_z, dtype=np.float32)
-        # stack antenna position
-        self.du_pos = np.empty((trace_shape[0], 3), dtype=np.float32)
-        self.du_pos[:, 0] = np.asarray(self.events.pos_x, dtype=np.float32)
-        self.du_pos[:, 1] = np.asarray(self.events.pos_y, dtype=np.float32)
-        self.du_pos[:, 2] = np.asarray(self.events.pos_z, dtype=np.float32)
+        self.du_pos = np.asarray(self.run.du_xyz) # antenna position wrt local grand coordinate
+
         # container to collect computed Voc and the final voltage in time domain for one event.
         self.voc   = np.zeros_like(self.traces)
         self.v_out = np.zeros_like(self.traces)
+
         # shower information like theta, phi, xmax etc for one event.
         shower = ShowerEvent()
-        self.shower.site_long_lat = np.array([self.run.site_long, self.run.site_lat])
-        shower.load_root(self.shower)               # Note that 'shower' is an instance of 'self.shower' for one event.
-        self.evt_shower = shower
-        self.dt_ns      = self.run_sim.t_bin_size               # sampling time in ns, sampling freq = 1e9/dt_ns.
-        self.f_samp_mhz = 1e3/self.dt_ns                        # MHz
+        self.shower.origin_geoid  = self.run.origin_geoid    # [lat, lon, height]
+        shower.load_root(self.shower)               # calculates grand_ref_frame, shower_frame, Xmax in LTP etc
+        self.evt_shower = shower                    # Note that 'shower' is an instance of 'self.shower' for one event.
+        self.dt_ns      = self.run_sim.t_bin_size   # sampling time in ns, sampling freq = 1e9/dt_ns.
+        self.f_samp_mhz = 1e3/self.dt_ns            # MHz
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples() # t_samples.shape = (nb_du, self.sig_size)
         # common frequencies for all processing in Fourier domain.
@@ -135,11 +134,12 @@ class Efield2Voltage:
         :param du_idx: index of DU
         :    type du_idx: int
         """
+
         antenna_location = coord.LTP(
-            x=self.du_pos[du_idx, 0],
-            y=self.du_pos[du_idx, 1],
-            z=self.du_pos[du_idx, 2],
-            frame=self.evt_shower.frame
+            x=self.du_pos[du_idx, 0], #self.du_pos[du_idx, 0],    # antenna position wrt local grand coordinate
+            y=self.du_pos[du_idx, 1], #self.du_pos[du_idx, 1],    # antenna position wrt local grand coordinate
+            z=self.du_pos[du_idx, 2], #self.du_pos[du_idx, 2],    # antenna position wrt local grand coordinate
+            frame=self.evt_shower.grand_ref_frame
             )
         logger.debug(antenna_location)
         antenna_frame = coord.LTP(
@@ -200,13 +200,13 @@ class Efield2Voltage:
         # ----- antenna responses -----
         # compute_voltage() --> return Voltage(t=t, V=volt_t)
         self.voc[du_idx, 0] = self.ant_leff_sn.compute_voltage(
-            self.evt_shower.maximum, efield_idx, self.evt_shower.frame
+            self.evt_shower.maximum, efield_idx, self.evt_shower.shower_frame
         ).V
         self.voc[du_idx, 1] = self.ant_leff_ew.compute_voltage(
-            self.evt_shower.maximum, efield_idx, self.evt_shower.frame
+            self.evt_shower.maximum, efield_idx, self.evt_shower.shower_frame
         ).V
         self.voc[du_idx, 2] = self.ant_leff_z.compute_voltage(
-            self.evt_shower.maximum, efield_idx, self.evt_shower.frame
+            self.evt_shower.maximum, efield_idx, self.evt_shower.shower_frame
         ).V
 
         # only save Voc in frequency domain if you are adding either galactic noise or RF chain.
@@ -280,7 +280,7 @@ class Efield2Voltage:
             self.compute_event_idx(evt_idx)
             self.save_voltage()
 
-    def save_voltage(self, f_output="", append_file=False):
+    def save_voltage(self, append_file=True):
         """
         : output path/file = self.f_output. It must be defined during instantiation of this class.
         :    type file_out: str
@@ -288,18 +288,17 @@ class Efield2Voltage:
         :    type append_file: bool
         """
         # delete file can take time => start with this action
-        if f_output == "":
+        if self.f_output == "":
             split_file = os.path.splitext(self.f_input)
-            f_output   = split_file[0]+"_voltage_event.root"
+            self.f_output   = split_file[0]+"_voltage_event.root"
             logger.info(f"No output file was defined. Output file is automatically defined as {f_output}")
-            #raise AssertionError
         if not append_file and os.path.exists(f_output):
             logger.info(f"save on new file option => remove file {f_output}")
             os.remove(f_output)
             time.sleep(1)
 
-        logger.info(f"save result in {f_output}")
-        self.tt_volt = groot.VoltageEventTree(f_output)
+        logger.info(f"save result in {self.f_output}")
+        self.tt_volt = groot.TVoltage(self.f_output)
 
         # Fill voltage object. d_root = events
         self.tt_volt.du_count     = self.nb_du
@@ -320,16 +319,11 @@ class Efield2Voltage:
             # logger.info(f"shape: {self.simu_du.voc[idx, 0].shape}")
             self.tt_volt.du_nanoseconds.append(self.events.du_nanoseconds[idx])
             self.tt_volt.du_seconds.append(self.events.du_seconds[idx])
-            self.tt_volt.adc_sampling_frequency.append(int(self.f_samp_mhz))     # RK: why integer?
             self.tt_volt.du_id.append(int(self.du_id[idx]))
             # logger.info(f"du_id {type(self.o_traces.du_id[idx])}")
             self.tt_volt.trace_x.append(self.v_out[idx, 0].astype(np.float64).tolist())
             self.tt_volt.trace_y.append(self.v_out[idx, 1].astype(np.float64).tolist())
             self.tt_volt.trace_z.append(self.v_out[idx, 2].astype(np.float64).tolist())
-            # position
-            self.tt_volt.pos_x.append(self.events.pos_x[idx])
-            self.tt_volt.pos_y.append(self.events.pos_y[idx])
-            self.tt_volt.pos_z.append(self.events.pos_z[idx])
         self.tt_volt.fill()
         self.tt_volt.write()
 

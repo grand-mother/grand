@@ -34,9 +34,9 @@ def tabulated_antenna_model(filename, tag=""):
     split_file = os.path.splitext(filename)
 
     if split_file[-1]==".npy" and tag=="": 
-        f, R, X, theta, phi, lefft, leffp, phaset, phasep = numpy.load(path, mmap_mode="r")
+        f, R, X, theta, phi, lefft, leffp, phaset, phasep = np.load(filename, mmap_mode="r")
         n_f = f.shape[0]
-        n_theta = len(numpy.unique(theta[0, :]))
+        n_theta = len(np.unique(theta[0, :]))
         n_phi = int(R.shape[1] / n_theta)
         shape = (n_f, n_phi, n_theta)
         logger.debug(f"shape freq, phi, theta: {f.shape} {phi.shape} {theta.shape}")
@@ -138,7 +138,6 @@ class AntennaModel:
         if du_type=="GP300":
             logger.info(f"Loading GP300 antenna model ...")
             
-            '''
             path_ant = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
             #path_ant = grand_add_path_data("detector/Light_GP300Antenna_EWarm_leff.npz")
             self.leff_ew = tabulated_antenna_model(path_ant)
@@ -147,12 +146,11 @@ class AntennaModel:
             self.leff_sn = tabulated_antenna_model(path_ant)
             path_ant = grand_add_path_data("detector/GP300Antenna_Zarm_leff.npy")
             #path_ant = grand_add_path_data("detector/Light_GP300Antenna_Zarm_leff.npz")
-            self.leff_z = tabulated_antenna(path_ant)
-            '''
-
-            self.leff_ew = tabulated_antenna_model("/home/data_challenge1_pm_lwp/PM_functions/PM_files/GP300Antenna_EWarm_leff_reshaped_float32.npy", tag='LP')
-            self.leff_sn = tabulated_antenna_model("/home/data_challenge1_pm_lwp/PM_functions/PM_files/GP300Antenna_SNarm_leff_reshaped_float32.npy", tag='LP')
-            self.leff_z = tabulated_antenna_model("/home/data_challenge1_pm_lwp/PM_functions/PM_files/GP300Antenna_Zarm_leff_reshaped_float32.npy", tag='LP')
+            self.leff_z = tabulated_antenna_model(path_ant)
+            
+            #self.leff_ew = tabulated_antenna_model("/home/data_challenge1_pm_lwp/PM_functions/PM_files/GP300Antenna_EWarm_leff_reshaped_float32.npy", tag='LP')
+            #self.leff_sn = tabulated_antenna_model("/home/data_challenge1_pm_lwp/PM_functions/PM_files/GP300Antenna_SNarm_leff_reshaped_float32.npy", tag='LP')
+            #self.leff_z = tabulated_antenna_model("/home/data_challenge1_pm_lwp/PM_functions/PM_files/GP300Antenna_Zarm_leff_reshaped_float32.npy", tag='LP')
 
         if du_type=='Horizon':
             path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")

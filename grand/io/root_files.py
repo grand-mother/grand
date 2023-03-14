@@ -182,13 +182,14 @@ class File:
             tfile   = ROOT.TFile.Open(f_name)
             l_ttree = tfile.GetListOfKeys()
             self.trees_list = [ttree.GetName() for ttree in l_ttree]
-            if "teventefield" in self.trees_list:          # File with Efield info as input
-                self.event   = groot.EfieldEventTree(f_name)
-                self.shower  = groot.ShowerEventSimdataTree(f_name)
-                self.run     = groot.RunTree(f_name)
-                self.run_sim = groot.EfieldRunSimdataTree(f_name)
-            elif "teventvoltage" in self.trees_list:       # File with voltage info as input
-                self.event = groot.VoltageEventTree(f_name)
+            #if "teventefield" in self.trees_list:          # File with Efield info as input
+            if "tefield" in self.trees_list:          # File with Efield info as input
+                self.event   = groot.TEfield(f_name)
+                self.shower  = groot.TShower(f_name)
+                self.run     = groot.TRun(f_name)
+                self.run_sim = groot.TRunEfieldSim(f_name)
+            elif "tvoltage" in self.trees_list:       # File with voltage info as input
+                self.event = groot.TVoltage(f_name)
             else:
                 logger.error(f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}.")
                 raise AssertionError
@@ -219,11 +220,6 @@ class File:
         self.traces[:, 0, :] = np.asarray(self.event.trace_x, dtype=np.float32)
         self.traces[:, 1, :] = np.asarray(self.event.trace_y, dtype=np.float32)
         self.traces[:, 2, :] = np.asarray(self.event.trace_z, dtype=np.float32)
-
-        self.du_pos = np.empty((trace_shape[0], 3), dtype=np.float32)
-        self.du_pos[:, 0] = np.asarray(self.event.pos_x, dtype=np.float32)
-        self.du_pos[:, 1] = np.asarray(self.event.pos_y, dtype=np.float32)
-        self.du_pos[:, 2] = np.asarray(self.event.pos_z, dtype=np.float32)
 
     def get_next_event(self):
         """
@@ -271,7 +267,7 @@ class FileSimuEfield(FileEvent):
         """
         Constructor
         """
-        name_ttree = "teventefield"
+        name_ttree = "tefield"
         if not os.path.exists(f_name):
             logger.error(f"File {f_name} doesn't exist.")
             raise FileNotFoundError
@@ -283,9 +279,9 @@ class FileSimuEfield(FileEvent):
         event = groot.EfieldEventTree(f_name)
         super().__init__(event)
         self.tt_efield = self.tt_event
-        self.tt_shower = groot.ShowerEventSimdataTree(f_name)
-        self.tt_run    = groot.RunTree(f_name)
-        self.tt_run_sim = groot.EfieldRunSimdataTree(f_name)
+        self.tt_shower = groot.TShower(f_name)
+        self.tt_shower  = groot.TRun(f_name)
+        self.tt_run_sim = groot.TRunEfieldSim(f_name)
         self.load_event_idx(0)
         self.f_name = f_name
 
@@ -333,7 +329,7 @@ class FileVoltageEvent(FileEvent):
         """
         Constructor
         """
-        name_ttree = "teventvoltage"
+        name_ttree = "tvoltage"
         if not os.path.exists(f_name):
             logger.error(f"File {f_name} doesn't exist.")
             raise FileNotFoundError
@@ -341,7 +337,7 @@ class FileVoltageEvent(FileEvent):
             logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
             raise AssertionError
         logger.info(f"Events  in file {f_name}")
-        event = groot.VoltageEventTree(f_name)
+        event = groot.TVoltage(f_name)
         super().__init__(event)
         self.load_event_idx(0)
         self.f_name = f_name
@@ -378,7 +374,7 @@ class FileADCeventProto(FileEvent):
         Constructor
         """
         self.warning = True
-        name_ttree = "teventadc"
+        name_ttree = "tadc"
         if not os.path.exists(f_name):
             logger.error(f"File {f_name} doesn't exist.")
             raise FileNotFoundError
@@ -386,7 +382,8 @@ class FileADCeventProto(FileEvent):
             logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
             raise AssertionError
         logger.info(f"Events  in file {f_name}")
-        event = groot.ADCEventTree(f_name)
+        #event = groot.ADCEventTree(f_name)
+        event = groot.TADC(f_name)
         super().__init__(event)
         self.load_event_idx(0)
         self.f_name = f_name

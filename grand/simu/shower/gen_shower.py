@@ -77,16 +77,30 @@ class ShowerEvent:
     fields: Optional[FieldsCollection] = None
 
     def load_root(self, d_shower):
-        self.energy = d_shower.prim_energy
-        self.zenith = d_shower.shower_zenith
-        self.azimuth = d_shower.shower_azimuth
-        self.primary = d_shower.prim_type
-        s_pos = d_shower.site_long_lat
-        logger.info(f"Site position long lat: {s_pos}")
-        self.localize(s_pos[1], longitude=s_pos[0]) # self.frame comes from localize. RK: add obstime=dshower.date. It is now fixed to "2020-01-01".
+        self.energy = d_shower.energy_primary
+        self.zenith = d_shower.zenith
+        self.azimuth = d_shower.azimuth
+        self.primary = d_shower.primary_type
+        origin_geoid = Geodetic(
+            latitude=d_shower.origin_geoid[0],
+            longitude=d_shower.origin_geoid[1],
+            height=d_shower.origin_geoid[2])
+        self.grand_ref_frame = GRANDCS(location=origin_geoid)    # used to define antenna position.
+        shower_core = GRANDCS(
+            x=d_shower.shower_core_pos[0],
+            y=d_shower.shower_core_pos[1],
+            z=d_shower.shower_core_pos[2],
+            location=origin_geoid)  #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
+        self.shower_frame = LTP(
+            location=shower_core,
+            orientation="NWU",
+            magnetic=True)          #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
+
+        #logger.info(f"Site position long lat: {s_pos}")
+        logger.info(f"Site origin [lat, long, height]: {origin_geoid}")
         xmax = d_shower.xmax_pos_shc
-        logger.info(f"xmax={xmax}")
-        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
+        logger.info(f"xmax in shower coordinate: {xmax}")
+        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.shower_frame)
 
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
@@ -175,23 +189,6 @@ class ShowerEvent:
 
             m = len(self.fields)
             logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
-
-    def localize(
-        self,
-        latitude,
-        longitude,
-        height=0,
-        declination: Optional[float] = None,
-        obstime: Union[str, datetime] = "2020-01-01",
-    ) -> None:
-        location = Geodetic(latitude=latitude, longitude=longitude, height=height)  # RK
-        self.frame = LTP(
-            location=location,
-            orientation="NWU",
-            magnetic=True,
-            declination=declination,
-            obstime=obstime,
-        )
 
     def shower_frame(self):
         # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
