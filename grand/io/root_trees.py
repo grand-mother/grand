@@ -2070,13 +2070,13 @@ class TADC(MotherEventTree):
     ## GPS time
     _gps_time: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Longitude
-    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
     ## Latitude
-    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
     ## Altitude
-    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
     ## GPS temperature
-    _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+    _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
     _digi_ctrl: StdVectorList = field(
         default_factory=lambda: StdVectorList("vector<unsigned short>")
@@ -3007,11 +3007,11 @@ class TADC(MotherEventTree):
             self._gps_long.clear()
             self._gps_long += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned long long")):
             self._gps_long._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of unsigned long longs required."
             )
 
     @property
@@ -3031,11 +3031,11 @@ class TADC(MotherEventTree):
             self._gps_lat.clear()
             self._gps_lat += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned long long")):
             self._gps_lat._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of unsigned long longs required."
             )
 
     @property
@@ -3055,11 +3055,11 @@ class TADC(MotherEventTree):
             self._gps_alt.clear()
             self._gps_alt += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned long long")):
             self._gps_alt._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of unsigned long longs required."
             )
 
     @property
@@ -3079,11 +3079,11 @@ class TADC(MotherEventTree):
             self._gps_temp.clear()
             self._gps_temp += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned long long")):
             self._gps_temp._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned long longs required."
             )
 
     @property
@@ -3555,7 +3555,7 @@ class TRawVoltage(MotherEventTree):
     # _adc_samples_count_channel_z: StdVectorList = field(
     #     default_factory=lambda: StdVectorList("unsigned short")
     # )
-    ## ADC samples callected in channel z
+    ## ADC samples callected in channels (0,1,2,3)
     _adc_samples_count_channel: StdVectorList = field(
         default_factory=lambda: StdVectorList("vector<unsigned short>")
     )
