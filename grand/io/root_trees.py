@@ -48,6 +48,8 @@ class StdVectorList(MutableSequence):
         self._vector = ROOT.vector(vec_type)(value)
         #: C++ type for the std::vector (eg. "float", "string", etc.)
         self.vec_type = vec_type
+        # The number of dimensions of this vector
+        self.ndim = vec_type.count("vector")+1
 
     def __len__(self):
         return self._vector.size()
@@ -90,6 +92,32 @@ class StdVectorList(MutableSequence):
                 return str([list(el) for el in self._vector])
 
         return str(list(self._vector))
+
+    # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
+    def __iadd__(self, value):
+        if isinstance(value, list):
+            pass
+        if isinstance(value, np.ndarray):
+            # tolist() is faster than list() for numpy array
+            value = value.tolist()
+        else:
+            value = list(value)
+
+        # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+        try:
+            self._vector += value
+        except TypeError:
+            # Slow conversion to simple types. No better idea for now
+            if self.vec_type.split()[-1] in ["int", "long", "short", "char"]:
+                if self.ndim==1: value = [int(el) for el in value]
+                elif self.ndim==2: value = [int(el1) for el in value for el1 in el]
+                elif self.ndim==3: value = [int(el2) for el in value for el1 in el for el2 in el1]
+                elif self.ndim==4: value = [int(el3) for el in value for el1 in el for el2 in el1 for el3 in el2]
+                else: raise TypeError("Unsupported number of dimensions for a list/array of non-standard python type")
+
+            self._vector += value
+
+        return self
 
 
 class StdString:
@@ -1975,6 +2003,10 @@ class TADC(MotherEventTree):
     _time_seconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     _time_nanoseconds: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
+    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    ## Event format version of the DAQ
+    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
     _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
@@ -2188,6 +2220,24 @@ class TADC(MotherEventTree):
     @time_nanoseconds.setter
     def time_nanoseconds(self, value: np.uint32) -> None:
         self._time_nanoseconds[0] = value
+
+    @property
+    def event_type(self):
+        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
+        return self._event_type[0]
+
+    @event_type.setter
+    def event_type(self, value: np.uint32) -> None:
+        self._event_type[0] = value
+
+    @property
+    def event_version(self):
+        """Event format version of the DAQ"""
+        return self._event_version[0]
+
+    @event_version.setter
+    def event_version(self, value: np.uint32) -> None:
+        self._event_version[0] = value
 
     @property
     def du_count(self):
