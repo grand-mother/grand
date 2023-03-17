@@ -138,10 +138,11 @@ for ev in range(event_count):
     tadccounts.acceleration_x = acceleration_x
     tadccounts.acceleration_y = acceleration_y
     tadccounts.acceleration_z = acceleration_z
-    tadccounts.trace_0 = trace_0
-    tadccounts.trace_1 = trace_1
-    tadccounts.trace_2 = trace_2
-    tadccounts.trace_3 = trace_3
+    # tadccounts.trace_0 = trace_0
+    # tadccounts.trace_1 = trace_1
+    # tadccounts.trace_2 = trace_2
+    # tadccounts.trace_3 = trace_3
+    tadccounts.trace_ch = [trace_0, trace_1, trace_2, trace_3]
 
     tadccounts.fill()
 
@@ -227,13 +228,13 @@ for ev in range(event_count):
     # trawvoltage.acceleration_z = acceleration_z
     # ToDo: check if this is stored correctly
     trawvoltage.du_acceleration = acceleration
-    trawvoltage.trace_0 = trace_x
-    trawvoltage.trace_1 = trace_y
-    trawvoltage.trace_2 = trace_z
+    # trawvoltage.trace_0 = trace_x
+    # trawvoltage.trace_1 = trace_y
+    # trawvoltage.trace_2 = trace_z
     # trawvoltage.trace_x = trace_x
     # trawvoltage.trace_y = trace_y
     # trawvoltage.trace_z = trace_z
-    # trawvoltage.trace_ch = [trace_x, trace_y, trace_z]
+    trawvoltage.trace_ch = [trace_x, trace_y, trace_z]
 
     trawvoltage.fill()
 
@@ -307,10 +308,10 @@ for ev in range(event_count):
     # tvoltage.acceleration_y = acceleration_y
     # tvoltage.acceleration_z = acceleration_z
     tvoltage.du_acceleration = [acceleration_x, acceleration_y, acceleration_z]
-    tvoltage.trace_x = trace_x
-    tvoltage.trace_y = trace_y
-    tvoltage.trace_z = trace_z
-    # tvoltage.trace_ch = [trace_x, trace_y, trace_z]
+    # tvoltage.trace_x = trace_x
+    # tvoltage.trace_y = trace_y
+    # tvoltage.trace_z = trace_z
+    tvoltage.trace = [trace_x, trace_y, trace_z]
 
     tvoltage.fill()
 
@@ -407,15 +408,18 @@ for ev in range(0, event_count, 2):
     # tefield.atm_temperature = atm_temperature
     # tefield.atm_pressure = atm_pressure
     # tefield.atm_humidity = atm_humidity
-    tefield.trace_x = trace_xs
-    tefield.trace_y = trace_ys
-    tefield.trace_z = trace_zs
-    tefield.fft_mag_x = fft_mag_xs
-    tefield.fft_mag_y = fft_mag_ys
-    tefield.fft_mag_z = fft_mag_zs
-    tefield.fft_phase_x = fft_phase_xs
-    tefield.fft_phase_y = fft_phase_ys
-    tefield.fft_phase_z = fft_phase_zs
+    # tefield.trace_x = trace_xs
+    # tefield.trace_y = trace_ys
+    # tefield.trace_z = trace_zs
+    tefield.trace = [trace_xs, trace_ys, trace_zs]
+    # tefield.fft_mag_x = fft_mag_xs
+    # tefield.fft_mag_y = fft_mag_ys
+    # tefield.fft_mag_z = fft_mag_zs
+    # tefield.fft_mag = [fft_mag_xs, fft_mag_ys, fft_mag_zs]
+    # tefield.fft_phase_x = fft_phase_xs
+    # tefield.fft_phase_y = fft_phase_ys
+    # tefield.fft_phase_z = fft_phase_zs
+    # tefield.fft_phase = [fft_phase_xs, fft_phase_ys, fft_phase_zs]
 
     tefield.fill()
 

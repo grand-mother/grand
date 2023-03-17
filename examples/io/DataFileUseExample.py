@@ -19,4 +19,5 @@ df.tvoltage.get_entry(0)
 print(f"\nRead run number {df.tvoltage.run_number}, event number {df.tvoltage.event_number} of tvoltage")
 # Print the trace X for du 0 for this event
 print("Trace X for du 0 for tvoltage:")
-print(df.tvoltage.trace_x[0])
+print(df.tvoltage.trace[0][0])
+
