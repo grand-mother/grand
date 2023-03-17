@@ -12,8 +12,15 @@ import os
 import ROOT
 import numpy as np
 import glob
+import array
 
 from collections import defaultdict
+
+# Conversion between numpy dtype and array.array typecodes
+numpy_to_array_typecodes = {np.int8: 'b', np.int16: 'h', np.int32: 'i', np.int64: 'q', np.uint8: 'B', np.uint16: 'H', np.uint32: 'I', np.uint64: 'Q', np.float32: 'f', np.float64: 'd', np.complex64: 'F', np.complex128: 'D'}
+
+# Conversion between C++ type and array.array typecodes
+cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q', 'unsigned char': 'B', 'unsigned short': 'H', 'unsigned int': 'I', 'unsigned long long': 'Q', 'float': 'f', 'double': 'd', 'string': 'u'}
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -48,6 +55,11 @@ class StdVectorList(MutableSequence):
         self._vector = ROOT.vector(vec_type)(value)
         #: C++ type for the std::vector (eg. "float", "string", etc.)
         self.vec_type = vec_type
+        # Basic type of the vector - different than vec_type in case of vector of vectors
+        if "<" in self.vec_type:
+            self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
+        else:
+            self.basic_vec_type = self.vec_type
         # The number of dimensions of this vector
         self.ndim = vec_type.count("vector")+1
 
@@ -98,8 +110,8 @@ class StdVectorList(MutableSequence):
         if isinstance(value, list):
             pass
         if isinstance(value, np.ndarray):
-            # tolist() is faster than list() for numpy array
-            value = value.tolist()
+            # Fastest to convert this way to array.array, that is accepted properly by ROOT.vector()
+            value = array.array(numpy_to_array_typecodes[value.dtype], value.tobytes())
         else:
             value = list(value)
 
@@ -109,11 +121,12 @@ class StdVectorList(MutableSequence):
         except TypeError:
             # Slow conversion to simple types. No better idea for now
             if self.vec_type.split()[-1] in ["int", "long", "short", "char"]:
-                if self.ndim==1: value = [int(el) for el in value]
-                elif self.ndim==2: value = [int(el1) for el in value for el1 in el]
-                elif self.ndim==3: value = [int(el2) for el in value for el1 in el for el2 in el1]
-                elif self.ndim==4: value = [int(el3) for el in value for el1 in el for el2 in el1 for el3 in el2]
-                else: raise TypeError("Unsupported number of dimensions for a list/array of non-standard python type")
+                value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                # if self.ndim==1: value = [int(el) for el in value]
+                # elif self.ndim==2: value = [int(el1) for el in value for el1 in el]
+                # elif self.ndim==3: value = [int(el2) for el in value for el1 in el for el2 in el1]
+                # elif self.ndim==4: value = [int(el3) for el in value for el1 in el for el2 in el1 for el3 in el2]
+                # else: raise TypeError("Unsupported number of dimensions for a list/array of non-standard python type")
 
             self._vector += value
 
