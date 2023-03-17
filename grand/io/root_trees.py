@@ -123,9 +123,13 @@ class StdVectorList(MutableSequence):
 
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
-        if isinstance(value, list):
-            pass
-        if isinstance(value, np.ndarray):
+        # Python float is really a double, so for vector of floats it sometimes is not accepted (but why not always?)
+        if isinstance(value, list) and self.basic_vec_type.split()[-1]=="float":
+            if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+            if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+            if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+
+        elif isinstance(value, np.ndarray):
             # Fastest to convert this way to array.array, that is accepted properly by ROOT.vector()
             value = array.array(numpy_to_array_typecodes[value.dtype], value.tobytes())
         else:
@@ -136,13 +140,10 @@ class StdVectorList(MutableSequence):
             self._vector += value
         except TypeError:
             # Slow conversion to simple types. No better idea for now
-            if self.vec_type.split()[-1] in ["int", "long", "short", "char"]:
-                value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                # if self.ndim==1: value = [int(el) for el in value]
-                # elif self.ndim==2: value = [int(el1) for el in value for el1 in el]
-                # elif self.ndim==3: value = [int(el2) for el in value for el1 in el for el2 in el1]
-                # elif self.ndim==4: value = [int(el3) for el in value for el1 in el for el2 in el1 for el3 in el2]
-                # else: raise TypeError("Unsupported number of dimensions for a list/array of non-standard python type")
+            if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
 
             self._vector += value
 
@@ -2186,14 +2187,16 @@ class TADC(MotherEventTree):
     # _e_det_time: StdVectorList("double") = StdVectorList("double")
     # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
     # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-    ## ADC trace 0
-    _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
-    ## ADC trace 1
-    _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
-    ## ADC trace 2
-    _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
-    ## ADC trace 3
-    _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
+    # ## ADC trace 0
+    # _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
+    # ## ADC trace 1
+    # _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
+    # ## ADC trace 2
+    # _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
+    # ## ADC trace 3
+    # _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
+    ## ADC traces for channels (0,1,2,3)
+    _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<short>>"))
 
     # def __post_init__(self):
     #     super().__post_init__()
@@ -3429,101 +3432,126 @@ class TADC(MotherEventTree):
                 f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
             )
 
-    @property
-    def trace_0(self):
-        """ADC trace 0"""
-        return self._trace_0
+    # @property
+    # def trace_0(self):
+    #     """ADC trace 0"""
+    #     return self._trace_0
+    #
+    # @trace_0.setter
+    # def trace_0(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_0.clear()
+    #         self._trace_0 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<short>")):
+    #         # With vectors, I think the address is assigned, so in principle the below is needed only on the first setting of the branch
+    #         self._trace_0._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+    #         )
+    #
+    # @property
+    # def trace_1(self):
+    #     """ADC trace 1"""
+    #     return self._trace_1
+    #
+    # @trace_1.setter
+    # def trace_1(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_1.clear()
+    #         self._trace_1 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<short>")):
+    #         self._trace_1._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #         )
+    #
+    # @property
+    # def trace_2(self):
+    #     """ADC trace 2"""
+    #     return self._trace_2
+    #
+    # @trace_2.setter
+    # def trace_2(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_2.clear()
+    #         self._trace_2 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<short>")):
+    #         self._trace_2._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+    #         )
+    #
+    # @property
+    # def trace_3(self):
+    #     """ADC trace 3"""
+    #     return self._trace_3
+    #
+    # @trace_3.setter
+    # def trace_3(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_3.clear()
+    #         self._trace_3 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<short>")):
+    #         self._trace_3._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+    #         )
 
-    @trace_0.setter
-    def trace_0(self, value):
+    @property
+    def trace_ch(self):
+        """ADC traces for channels (0,1,2,3)"""
+        return self._trace_ch
+
+    @trace_ch.setter
+    def trace_ch(self, value):
         # A list was given
         if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
-            self._trace_0.clear()
-            self._trace_0 += value
+            self._trace_ch._vector.clear()
+            self._trace_ch += value
+
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<short>")):
-            # With vectors, I think the address is assigned, so in principle the below is needed only on the first setting of the branch
-            self._trace_0._vector = value
+        elif isinstance(value, ROOT.vector("vector<vector<short>>")):
+            self._trace_ch._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
-            )
-
-    @property
-    def trace_1(self):
-        """ADC trace 1"""
-        return self._trace_1
-
-    @trace_1.setter
-    def trace_1(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_1.clear()
-            self._trace_1 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<short>")):
-            self._trace_1._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def trace_2(self):
-        """ADC trace 2"""
-        return self._trace_2
-
-    @trace_2.setter
-    def trace_2(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_2.clear()
-            self._trace_2 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<short>")):
-            self._trace_2._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
-            )
-
-    @property
-    def trace_3(self):
-        """ADC trace 3"""
-        return self._trace_3
-
-    @trace_3.setter
-    def trace_3(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_3.clear()
-            self._trace_3 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<short>")):
-            self._trace_3._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of vector<short> required."
+                f"Incorrect type for trace_ch {type(value)}. Either a list, an array or a ROOT.vector of vector<vector<short>> required."
             )
 
 
@@ -3722,17 +3750,17 @@ class TRawVoltage(MotherEventTree):
     # _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     # ## Voltage trace in Z direction
     # _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Voltage trace in channel 0
-    _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Voltage trace in channel 1
-    _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Voltage trace in channel 2
-    _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Voltage trace in channel 3
-    _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in channel 0
+    # _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in channel 1
+    # _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in channel 2
+    # _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in channel 3
+    # _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
     ## Voltage traces for channels 1,2,3,4 in muV
-    # _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+    _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
     # _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     # def __post_init__(self):
@@ -5052,134 +5080,126 @@ class TRawVoltage(MotherEventTree):
                 f"Incorrect type for ioff {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
             )
 
-    @property
-    def trace_0(self):
-        """Voltage trace channel 0"""
-        return self._trace_0
-
-    @trace_0.setter
-    def trace_0(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_0.clear()
-            self._trace_0 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_0._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def trace_1(self):
-        """Voltage trace in channel 1"""
-        return self._trace_1
-
-    @trace_1.setter
-    def trace_1(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_1.clear()
-            self._trace_1 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_1._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def trace_2(self):
-        """Voltage trace in channel 2"""
-        return self._trace_2
-
-    @trace_2.setter
-    def trace_2(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_2.clear()
-            self._trace_2 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_2._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def trace_3(self):
-        """Voltage trace in channel 3"""
-        return self._trace_3
-
-    @trace_3.setter
-    def trace_3(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_3.clear()
-            self._trace_3 += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_3._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
     # @property
-    # def trace_ch(self):
-    #     """Voltage traces in (x,y,z) directions in muV"""
-    #     return self._trace_ch
+    # def trace_0(self):
+    #     """Voltage trace channel 0"""
+    #     return self._trace_0
     #
-    # @trace_ch.setter
-    # def trace_ch(self, value):
+    # @trace_0.setter
+    # def trace_0(self, value):
     #     # A list was given
     #     if (
-    #         isinstance(value, list)
-    #         or isinstance(value, np.ndarray)
-    #         or isinstance(value, StdVectorList)
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
     #     ):
     #         # Clear the vector before setting
-    #         self._trace_ch._vector.clear()
-    #         self._trace_ch += value
-    #
-    #         # # Need to manually loop through the 3D vector for now :(
-    #         # va = ROOT.vector("vector<float>")()
-    #         # for el in value:
-    #         #     va.clear()
-    #         #     va+=el
-    #         #     # print(va)
-    #         #     self._trace_ch._vector.push_back(va)
-    #
+    #         self._trace_0.clear()
+    #         self._trace_0 += value
     #     # A vector of strings was given
-    #     elif isinstance(value, ROOT.vector("vector<vector<float>>")):
-    #         self._trace_ch._vector = value
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_0._vector = value
     #     else:
     #         raise ValueError(
-    #             f"Incorrect type for trace_ch {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #             f"Incorrect type for trace_0 {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
     #         )
+    #
+    # @property
+    # def trace_1(self):
+    #     """Voltage trace in channel 1"""
+    #     return self._trace_1
+    #
+    # @trace_1.setter
+    # def trace_1(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_1.clear()
+    #         self._trace_1 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_1._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_1 {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def trace_2(self):
+    #     """Voltage trace in channel 2"""
+    #     return self._trace_2
+    #
+    # @trace_2.setter
+    # def trace_2(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_2.clear()
+    #         self._trace_2 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_2._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_2 {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def trace_3(self):
+    #     """Voltage trace in channel 3"""
+    #     return self._trace_3
+    #
+    # @trace_3.setter
+    # def trace_3(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_3.clear()
+    #         self._trace_3 += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_3._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_3 {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+
+    @property
+    def trace_ch(self):
+        """Voltage traces for channels (0,1,2,3) in muV"""
+        return self._trace_ch
+
+    @trace_ch.setter
+    def trace_ch(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._trace_ch._vector.clear()
+            self._trace_ch += value
+
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<vector<float>>")):
+            self._trace_ch._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for trace_ch {type(value)}. Either a list, an array or a ROOT.vector of vector<vector<float>> required."
+            )
 
 
 @dataclass
@@ -5215,14 +5235,14 @@ class TVoltage(MotherEventTree):
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
 
-    ## Voltage trace in X direction
-    _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Voltage trace in Y direction
-    _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Voltage trace in Z direction
-    _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in X direction
+    # _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in Y direction
+    # _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Voltage trace in Z direction
+    # _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Voltage traces for antenna arms (x,y,z)
-    # _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+    _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
     # _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     ## Peak2peak amplitude (muV)
@@ -5410,109 +5430,102 @@ class TVoltage(MotherEventTree):
                 f"Incorrect type for trigger_rate {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
             )
 
-    @property
-    def trace_x(self):
-        """Efield trace in X direction"""
-        return self._trace_x
-
-    @trace_x.setter
-    def trace_x(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_x.clear()
-            self._trace_x += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_x._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def trace_y(self):
-        """Efield trace in Y direction"""
-        return self._trace_y
-
-    @trace_y.setter
-    def trace_y(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_y.clear()
-            self._trace_y += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_y._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def trace_z(self):
-        """Efield trace in Z direction"""
-        return self._trace_z
-
-    @trace_z.setter
-    def trace_z(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trace_z.clear()
-            self._trace_z += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_z._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
     # @property
-    # def trace_ch(self):
-    #     """Voltage traces in (x,y,z) directions in muV"""
-    #     return self._trace_ch
+    # def trace_x(self):
+    #     """Efield trace in X direction"""
+    #     return self._trace_x
     #
-    # @trace_ch.setter
-    # def trace_ch(self, value):
+    # @trace_x.setter
+    # def trace_x(self, value):
     #     # A list was given
     #     if (
-    #         isinstance(value, list)
-    #         or isinstance(value, np.ndarray)
-    #         or isinstance(value, StdVectorList)
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
     #     ):
     #         # Clear the vector before setting
-    #         self._trace_ch._vector.clear()
-    #
-    #         # Need to manually loop through the 3D vector for now :(
-    #         va = ROOT.vector("vector<float>")()
-    #         for el in value:
-    #             va.clear()
-    #             va+=el
-    #             # print(va)
-    #             self._trace_ch._vector.push_back(va)
-    #
+    #         self._trace_x.clear()
+    #         self._trace_x += value
     #     # A vector of strings was given
-    #     elif isinstance(value, ROOT.vector("vector<vector<float>>")):
-    #         self._trace_ch._vector = value
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_x._vector = value
     #     else:
     #         raise ValueError(
-    #             f"Incorrect type for trace_ch {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #             f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
     #         )
+    #
+    # @property
+    # def trace_y(self):
+    #     """Efield trace in Y direction"""
+    #     return self._trace_y
+    #
+    # @trace_y.setter
+    # def trace_y(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_y.clear()
+    #         self._trace_y += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_y._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def trace_z(self):
+    #     """Efield trace in Z direction"""
+    #     return self._trace_z
+    #
+    # @trace_z.setter
+    # def trace_z(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_z.clear()
+    #         self._trace_z += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_z._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+
+    @property
+    def trace(self):
+        """Voltage traces in (x,y,z) directions in muV"""
+        return self._trace
+
+    @trace.setter
+    def trace(self, value):
+        # A list was given
+        if (
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._trace._vector.clear()
+            self._trace += value
+
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("vector<vector<float>>")):
+            self._trace._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for trace {type(value)}. Either a list, an array or a ROOT.vector of vector<vector<float>> required."
+            )
 
     @property
     def p2p(self):
@@ -5599,24 +5612,32 @@ class TEfield(MotherEventTree):
     ## Nanoseconds of the trigger for this DU
     _du_nanoseconds: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
 
-    ## Efield trace in X direction
-    _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Efield trace in Y direction
-    _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## Efield trace in Z direction
-    _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## FFT magnitude in X direction
-    _fft_mag_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## FFT magnitude in Y direction
-    _fft_mag_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## FFT magnitude in Z direction
-    _fft_mag_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## FFT phase in X direction
-    _fft_phase_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## FFT phase in Y direction
-    _fft_phase_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    ## FFT phase in Z direction
-    _fft_phase_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Efield trace in X direction
+    # _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Efield trace in Y direction
+    # _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## Efield trace in Z direction
+    # _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## FFT magnitude in X direction
+    # _fft_mag_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## FFT magnitude in Y direction
+    # _fft_mag_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## FFT magnitude in Z direction
+    # _fft_mag_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## FFT phase in X direction
+    # _fft_phase_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## FFT phase in Y direction
+    # _fft_phase_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    # ## FFT phase in Z direction
+    # _fft_phase_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+
+    ## Efield traces for antenna arms (x,y,z)
+    _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+    ## FFT magnitude for antenna arms (x,y,z)
+    _fft_mag: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+    ## FFT phase for antenna arms (x,y,z)
+    _fft_phase: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+
 
     ## Peak-to-peak amplitudes for X, Y, Z (muV/m)
     _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
@@ -6103,220 +6124,295 @@ class TEfield(MotherEventTree):
                 f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
             )
 
-    @property
-    def trace_x(self):
-        """Efield trace in X direction"""
-        return self._trace_x
+    # @property
+    # def trace_x(self):
+    #     """Efield trace in X direction"""
+    #     return self._trace_x
+    #
+    # @trace_x.setter
+    # def trace_x(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_x.clear()
+    #         self._trace_x += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_x._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #         )
+    #
+    # @property
+    # def trace_y(self):
+    #     """Efield trace in Y direction"""
+    #     return self._trace_y
+    #
+    # @trace_y.setter
+    # def trace_y(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_y.clear()
+    #         self._trace_y += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_y._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def trace_z(self):
+    #     """Efield trace in Z direction"""
+    #     return self._trace_z
+    #
+    # @trace_z.setter
+    # def trace_z(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trace_z.clear()
+    #         self._trace_z += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._trace_z._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def fft_mag_x(self):
+    #     """FFT magnitude in X direction"""
+    #     return self._fft_mag_x
+    #
+    # @fft_mag_x.setter
+    # def fft_mag_x(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._fft_mag_x.clear()
+    #         self._fft_mag_x += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._fft_mag_x._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def fft_mag_y(self):
+    #     """FFT magnitude in Y direction"""
+    #     return self._fft_mag_y
+    #
+    # @fft_mag_y.setter
+    # def fft_mag_y(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._fft_mag_y.clear()
+    #         self._fft_mag_y += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._fft_mag_y._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def fft_mag_z(self):
+    #     """FFT magnitude in Z direction"""
+    #     return self._fft_mag_z
+    #
+    # @fft_mag_z.setter
+    # def fft_mag_z(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._fft_mag_z.clear()
+    #         self._fft_mag_z += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._fft_mag_z._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def fft_phase_x(self):
+    #     """FFT phase in X direction"""
+    #     return self._fft_phase_x
+    #
+    # @fft_phase_x.setter
+    # def fft_phase_x(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._fft_phase_x.clear()
+    #         self._fft_phase_x += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._fft_phase_x._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def fft_phase_y(self):
+    #     """FFT phase in Y direction"""
+    #     return self._fft_phase_y
+    #
+    # @fft_phase_y.setter
+    # def fft_phase_y(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._fft_phase_y.clear()
+    #         self._fft_phase_y += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._fft_phase_y._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
+    #
+    # @property
+    # def fft_phase_z(self):
+    #     """FFT phase in Z direction"""
+    #     return self._fft_phase_z
+    #
+    # @fft_phase_z.setter
+    # def fft_phase_z(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._fft_phase_z.clear()
+    #         self._fft_phase_z += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._fft_phase_z._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+    #         )
 
-    @trace_x.setter
-    def trace_x(self, value):
+    @property
+    def trace(self):
+        """Efield traces in (x,y,z) directions in muV"""
+        return self._trace
+
+    @trace.setter
+    def trace(self, value):
         # A list was given
         if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
-            self._trace_x.clear()
-            self._trace_x += value
+            self._trace._vector.clear()
+            self._trace += value
+
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_x._vector = value
+        elif isinstance(value, ROOT.vector("vector<vector<float>>")):
+            self._trace._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for trace_x {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+                f"Incorrect type for trace {type(value)}. Either a list, an array or a ROOT.vector of vector<vector<float>> required."
             )
 
     @property
-    def trace_y(self):
-        """Efield trace in Y direction"""
-        return self._trace_y
+    def fft_mag(self):
+        """Efield fft_mags in (x,y,z) directions in muV"""
+        return self._fft_mag
 
-    @trace_y.setter
-    def trace_y(self, value):
+    @fft_mag.setter
+    def fft_mag(self, value):
         # A list was given
         if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
-            self._trace_y.clear()
-            self._trace_y += value
+            self._fft_mag._vector.clear()
+            self._fft_mag += value
+
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_y._vector = value
+        elif isinstance(value, ROOT.vector("vector<vector<float>>")):
+            self._fft_mag._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for trace_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
+                f"Incorrect type for fft_mag {type(value)}. Either a list, an array or a ROOT.vector of vector<vector<float>> required."
             )
 
     @property
-    def trace_z(self):
-        """Efield trace in Z direction"""
-        return self._trace_z
+    def fft_phase(self):
+        """Efield fft_phases in (x,y,z) directions in muV"""
+        return self._fft_phase
 
-    @trace_z.setter
-    def trace_z(self, value):
+    @fft_phase.setter
+    def fft_phase(self, value):
         # A list was given
         if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
+            isinstance(value, list)
+            or isinstance(value, np.ndarray)
+            or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
-            self._trace_z.clear()
-            self._trace_z += value
+            self._fft_phase._vector.clear()
+            self._fft_phase += value
+
         # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._trace_z._vector = value
+        elif isinstance(value, ROOT.vector("vector<vector<float>>")):
+            self._fft_phase._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for trace_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def fft_mag_x(self):
-        """FFT magnitude in X direction"""
-        return self._fft_mag_x
-
-    @fft_mag_x.setter
-    def fft_mag_x(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._fft_mag_x.clear()
-            self._fft_mag_x += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_mag_x._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for fft_mag_x {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def fft_mag_y(self):
-        """FFT magnitude in Y direction"""
-        return self._fft_mag_y
-
-    @fft_mag_y.setter
-    def fft_mag_y(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._fft_mag_y.clear()
-            self._fft_mag_y += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_mag_y._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for fft_mag_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def fft_mag_z(self):
-        """FFT magnitude in Z direction"""
-        return self._fft_mag_z
-
-    @fft_mag_z.setter
-    def fft_mag_z(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._fft_mag_z.clear()
-            self._fft_mag_z += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_mag_z._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for fft_mag_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def fft_phase_x(self):
-        """FFT phase in X direction"""
-        return self._fft_phase_x
-
-    @fft_phase_x.setter
-    def fft_phase_x(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._fft_phase_x.clear()
-            self._fft_phase_x += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_phase_x._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for fft_phase_x {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def fft_phase_y(self):
-        """FFT phase in Y direction"""
-        return self._fft_phase_y
-
-    @fft_phase_y.setter
-    def fft_phase_y(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._fft_phase_y.clear()
-            self._fft_phase_y += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_phase_y._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for fft_phase_y {type(value)}. Either a list, an array or a ROOT.vector of float required."
-            )
-
-    @property
-    def fft_phase_z(self):
-        """FFT phase in Z direction"""
-        return self._fft_phase_z
-
-    @fft_phase_z.setter
-    def fft_phase_z(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._fft_phase_z.clear()
-            self._fft_phase_z += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._fft_phase_z._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for fft_phase_z {type(value)}. Either a list, an array or a ROOT.vector of float required."
+                f"Incorrect type for fft_phase {type(value)}. Either a list, an array or a ROOT.vector of vector<vector<float>> required."
             )
 
     @property
