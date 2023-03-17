@@ -80,11 +80,27 @@ class StdVectorList(MutableSequence):
         # If this is a vector of vectors, convert a subvector to list for the return
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[index])):
-                return list(self._vector[index])
+                if self.ndim == 2:
+                    return list(self._vector[index])
+                elif self.ndim == 3:
+                    return [list(el) for el in self._vector[index]]
+                elif self.ndim == 4:
+                    return [list(el) for el1 in self._vector[index] for el in el1]
+                else:
+                    return self._vector[index]
             else:
                 return self._vector[index]
         else:
             raise IndexError("list index out of range")
+
+    def __eq__(self, other):
+        # Make comparisons to lists with same contents true
+        if self.ndim == 1:
+            return list(self._vector) == other
+        elif self.ndim == 2:
+            return [list(el) for el in self._vector] == other
+        elif self.ndim == 3:
+            return [list(el) for el1 in self._vector for el in el1] == other
 
     def append(self, value):
         """Append the value to the list"""
@@ -5147,14 +5163,15 @@ class TRawVoltage(MotherEventTree):
     #     ):
     #         # Clear the vector before setting
     #         self._trace_ch._vector.clear()
+    #         self._trace_ch += value
     #
-    #         # Need to manually loop through the 3D vector for now :(
-    #         va = ROOT.vector("vector<float>")()
-    #         for el in value:
-    #             va.clear()
-    #             va+=el
-    #             # print(va)
-    #             self._trace_ch._vector.push_back(va)
+    #         # # Need to manually loop through the 3D vector for now :(
+    #         # va = ROOT.vector("vector<float>")()
+    #         # for el in value:
+    #         #     va.clear()
+    #         #     va+=el
+    #         #     # print(va)
+    #         #     self._trace_ch._vector.push_back(va)
     #
     #     # A vector of strings was given
     #     elif isinstance(value, ROOT.vector("vector<vector<float>>")):
