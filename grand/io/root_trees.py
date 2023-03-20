@@ -2115,10 +2115,10 @@ class TADC(MotherEventTree):
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
-    _clock_tick: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+    _clock_tick: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Clock ticks per second
     _clock_ticks_per_second: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
+        default_factory=lambda: StdVectorList("unsigned int")
     )
     ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
     _gps_offset: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
@@ -2139,7 +2139,7 @@ class TADC(MotherEventTree):
     ## Altitude
     _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
     ## GPS temperature
-    _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
+    _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
     _digi_ctrl: StdVectorList = field(
         default_factory=lambda: StdVectorList("vector<unsigned short>")
@@ -2898,11 +2898,11 @@ class TADC(MotherEventTree):
             self._clock_tick.clear()
             self._clock_tick += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned int")):
             self._clock_tick._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
             )
 
     @property
@@ -2922,11 +2922,11 @@ class TADC(MotherEventTree):
             self._clock_ticks_per_second.clear()
             self._clock_ticks_per_second += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned int")):
             self._clock_ticks_per_second._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
             )
 
     @property
@@ -3162,11 +3162,11 @@ class TADC(MotherEventTree):
             self._gps_temp.clear()
             self._gps_temp += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned long long")):
+        elif isinstance(value, ROOT.vector("unsigned int")):
             self._gps_temp._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned long longs required."
+                f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
             )
 
     @property
@@ -3672,10 +3672,10 @@ class TRawVoltage(MotherEventTree):
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
-    _clock_tick: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+    _clock_tick: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Clock ticks per second
     _clock_ticks_per_second: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
+        default_factory=lambda: StdVectorList("unsigned int")
     )
     ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
     _gps_offset: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
@@ -3690,11 +3690,11 @@ class TRawVoltage(MotherEventTree):
     ## GPS time
     _gps_time: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
     ## Longitude
-    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    _gps_long: StdVectorList = field(default_factory=lambda: StdVectorList("double"))
     ## Latitude
-    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    _gps_lat: StdVectorList = field(default_factory=lambda: StdVectorList("double"))
     ## Altitude
-    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("double"))
     ## GPS temperature
     _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     # ## X position in site's referential
@@ -4522,11 +4522,11 @@ class TRawVoltage(MotherEventTree):
             self._clock_tick.clear()
             self._clock_tick += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned int")):
             self._clock_tick._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for clock_tick {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
             )
 
     @property
@@ -4546,11 +4546,11 @@ class TRawVoltage(MotherEventTree):
             self._clock_ticks_per_second.clear()
             self._clock_ticks_per_second += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
+        elif isinstance(value, ROOT.vector("unsigned int")):
             self._clock_ticks_per_second._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+                f"Incorrect type for clock_ticks_per_second {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
             )
 
     @property
@@ -4714,11 +4714,11 @@ class TRawVoltage(MotherEventTree):
             self._gps_long.clear()
             self._gps_long += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("float")):
+        elif isinstance(value, ROOT.vector("double")):
             self._gps_long._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+                f"Incorrect type for gps_long {type(value)}. Either a list, an array or a ROOT.vector of doubles required."
             )
 
     @property
@@ -4738,11 +4738,11 @@ class TRawVoltage(MotherEventTree):
             self._gps_lat.clear()
             self._gps_lat += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("float")):
+        elif isinstance(value, ROOT.vector("double")):
             self._gps_lat._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+                f"Incorrect type for gps_lat {type(value)}. Either a list, an array or a ROOT.vector of doubles required."
             )
 
     @property
@@ -4762,11 +4762,11 @@ class TRawVoltage(MotherEventTree):
             self._gps_alt.clear()
             self._gps_alt += value
         # A vector was given
-        elif isinstance(value, ROOT.vector("float")):
+        elif isinstance(value, ROOT.vector("double")):
             self._gps_alt._vector = value
         else:
             raise ValueError(
-                f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+                f"Incorrect type for gps_alt {type(value)}. Either a list, an array or a ROOT.vector of doubles required."
             )
 
     @property
