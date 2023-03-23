@@ -109,6 +109,10 @@ class StdVectorList(MutableSequence):
         if isinstance(value, np.generic):
             self._vector.push_back(value.item())
         else:
+            if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
+                if self.ndim == 2: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                if self.ndim == 3: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                if self.ndim == 4: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
             self._vector.push_back(value)
 
     def clear(self):
@@ -125,14 +129,14 @@ class StdVectorList(MutableSequence):
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
         # Python float is really a double, so for vector of floats it sometimes is not accepted (but why not always?)
-        if isinstance(value, list) and self.basic_vec_type.split()[-1]=="float":
+        if (isinstance(value, list) and self.basic_vec_type.split()[-1]=="float") or isinstance(value, np.ndarray):
             if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
             if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
             if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
 
-        elif isinstance(value, np.ndarray):
-            # Fastest to convert this way to array.array, that is accepted properly by ROOT.vector()
-            value = array.array(numpy_to_array_typecodes[value.dtype], value.tobytes())
+        # elif isinstance(value, np.ndarray):
+        #     # Fastest to convert this way to array.array, that is accepted properly by ROOT.vector()
+        #     value = array.array(numpy_to_array_typecodes[value.dtype], value.tobytes())
         else:
             value = list(value)
 
