@@ -19,6 +19,7 @@ traces = []
 trace_counts = []
 for ev in range(event_count):
     trace_count = np.random.randint(3, 7)
+    print(f"{trace_count} traces for event {ev}")
     trace_counts.append(trace_count)
     adc_traces.append([])
     traces.append([])
@@ -39,6 +40,7 @@ for ev in range(event_count):
                 (adc_traces[-1][i][0] * 0.9 / 8192).astype(np.float32),
                 (adc_traces[-1][i][1] * 0.9 / 8192).astype(np.float32),
                 (adc_traces[-1][i][2] * 0.9 / 8192).astype(np.float32),
+                (adc_traces[-1][i][3] * 0.9 / 8192).astype(np.float32),
             )
         )
 
@@ -106,6 +108,7 @@ for ev in range(event_count):
     trace_1 = []
     trace_2 = []
     trace_3 = []
+    trace_ch = []
     for i, trace in enumerate(adc_traces[ev]):
         # print(ev,i, len(trace[0]))
 
@@ -122,10 +125,8 @@ for ev in range(event_count):
         acceleration_y.append(ev // 3)
         acceleration_z.append(ev // 4)
 
-        trace_0.append(trace[0] + 1)
-        trace_1.append(trace[1] + 2)
-        trace_2.append(trace[2] + 3)
-        trace_3.append(trace[3] + 4)
+        # Append list of time traces for channels 0/1/2/3
+        trace_ch.append([trace[0] + 1, trace[1] + 1, trace[2] + 1, trace[3] + 4])
 
     tadccounts.du_id = du_id
     tadccounts.du_seconds = du_seconds
@@ -138,11 +139,7 @@ for ev in range(event_count):
     tadccounts.acceleration_x = acceleration_x
     tadccounts.acceleration_y = acceleration_y
     tadccounts.acceleration_z = acceleration_z
-    # tadccounts.trace_0 = trace_0
-    # tadccounts.trace_1 = trace_1
-    # tadccounts.trace_2 = trace_2
-    # tadccounts.trace_3 = trace_3
-    tadccounts.trace_ch = [trace_0, trace_1, trace_2, trace_3]
+    tadccounts.trace_ch = trace_ch
 
     tadccounts.fill()
 
@@ -194,6 +191,7 @@ for ev in range(event_count):
     trace_x = []
     trace_y = []
     trace_z = []
+    trace_ch = []
     for i, trace in enumerate(traces[ev]):
         # print(ev,i, len(trace[0]))
 
@@ -211,9 +209,10 @@ for ev in range(event_count):
         acceleration_z.append(ev / 4)
         acceleration.append([ev / 2, ev / 3, ev / 4])
 
-        trace_x.append(trace[0])
-        trace_y.append(trace[1])
-        trace_z.append(trace[2])
+        # trace_x.append(trace[0])
+        # trace_y.append(trace[1])
+        # trace_z.append(trace[2])
+        trace_ch.append([trace[0], trace[1], trace[2], trace[3]])
 
     trawvoltage.du_id = du_id
     trawvoltage.du_seconds = du_seconds
@@ -234,7 +233,8 @@ for ev in range(event_count):
     # trawvoltage.trace_x = trace_x
     # trawvoltage.trace_y = trace_y
     # trawvoltage.trace_z = trace_z
-    trawvoltage.trace_ch = [trace_x, trace_y, trace_z]
+    # trawvoltage.trace_ch = [trace_x, trace_y, trace_z]
+    trawvoltage.trace_ch = trace_ch
 
     trawvoltage.fill()
 
@@ -280,6 +280,7 @@ for ev in range(event_count):
     trace_x = []
     trace_y = []
     trace_z = []
+    trace_xyz = []
     for i, trace in enumerate(traces[ev]):
         # print(ev,i, len(trace[0]))
 
@@ -295,9 +296,7 @@ for ev in range(event_count):
         acceleration_y.append(ev / 3)
         acceleration_z.append(ev / 4)
 
-        trace_x.append(trace[0])
-        trace_y.append(trace[1])
-        trace_z.append(trace[2])
+        trace_xyz.append([trace[0], trace[1], trace[2]])
 
     tvoltage.du_id = du_id
     tvoltage.du_seconds = du_seconds
@@ -311,7 +310,8 @@ for ev in range(event_count):
     # tvoltage.trace_x = trace_x
     # tvoltage.trace_y = trace_y
     # tvoltage.trace_z = trace_z
-    tvoltage.trace = [trace_x, trace_y, trace_z]
+    # tvoltage.trace = [trace_x, trace_y, trace_z]
+    tvoltage.trace = trace_xyz
 
     tvoltage.fill()
 
@@ -365,6 +365,9 @@ for ev in range(0, event_count, 2):
     fft_phase_xs = []
     fft_phase_ys = []
     fft_phase_zs = []
+    trace_xyz = []
+    fft_mag_xyz = []
+    fft_phase_xyz = []
 
     for i, trace in enumerate(traces[ev]):
         # print(ev,i, len(trace[0]))
@@ -381,24 +384,31 @@ for ev in range(0, event_count, 2):
 
         # To multiply a list by a number elementwise, convert to a numpy array and back
         # Here a real ComputeEfield() function should be called instead of multiplying adc2v
-        # ToDo: better read the Voltage trace from the TTree
-        trace_xs.append((np.array(trace[0]) * v2ef).astype(np.float32).tolist())
-        trace_ys.append((np.array(trace[1]) * v2ef).astype(np.float32).tolist())
-        trace_zs.append((np.array(trace[2]) * v2ef).astype(np.float32).tolist())
 
-        # FFTS
-        fft = fftpack.fft(trace[0])
-        fft_mag_xs.append(np.abs(fft))
+        # trace_xs.append((np.array(trace[0]) * v2ef).astype(np.float32).tolist())
+        # trace_ys.append((np.array(trace[1]) * v2ef).astype(np.float32).tolist())
+        # trace_zs.append((np.array(trace[2]) * v2ef).astype(np.float32).tolist())
+        #
+        # # FFTS
+        # fft = fftpack.fft(trace[0])
+        # fft_mag_xs.append(np.abs(fft))
+
+        # fft_phase_xs.append(np.abs(fft))
+        # fft = fftpack.fft(trace[1])
+        # fft_mag_ys.append(np.abs(fft))
+        # # ToDo: recall how to calculate the phase easily
+        # fft_phase_ys.append(np.abs(fft))
+        # fft = fftpack.fft(trace[2])
+        # fft_mag_zs.append(np.abs(fft))
+        # # ToDo: recall how to calculate the phase easily
+        # fft_phase_zs.append(np.abs(fft))
+
+        # ToDo: better read the Voltage trace from the TTree
+        trace_xyz.append([(np.array(trace[0]) * v2ef).astype(np.float32).tolist(), (np.array(trace[1]) * v2ef).astype(np.float32).tolist(), (np.array(trace[2]) * v2ef).astype(np.float32).tolist()])
+        fft_mag_xyz.append([np.abs(fftpack.fft(trace[0])), np.abs(fftpack.fft(trace[0])), np.abs(fftpack.fft(trace[0]))])
         # ToDo: recall how to calculate the phase easily
-        fft_phase_xs.append(np.abs(fft))
-        fft = fftpack.fft(trace[1])
-        fft_mag_ys.append(np.abs(fft))
-        # ToDo: recall how to calculate the phase easily
-        fft_phase_ys.append(np.abs(fft))
-        fft = fftpack.fft(trace[2])
-        fft_mag_zs.append(np.abs(fft))
-        # ToDo: recall how to calculate the phase easily
-        fft_phase_zs.append(np.abs(fft))
+        fft_phase_xyz.append([np.abs(fftpack.fft(trace[0]))+10, np.abs(fftpack.fft(trace[0]))+10, np.abs(fftpack.fft(trace[0]))+10])
+
 
     tefield.du_id = du_id
     tefield.du_seconds = du_seconds
@@ -411,7 +421,7 @@ for ev in range(0, event_count, 2):
     # tefield.trace_x = trace_xs
     # tefield.trace_y = trace_ys
     # tefield.trace_z = trace_zs
-    tefield.trace = [trace_xs, trace_ys, trace_zs]
+    # tefield.trace = [trace_xs, trace_ys, trace_zs]
     # tefield.fft_mag_x = fft_mag_xs
     # tefield.fft_mag_y = fft_mag_ys
     # tefield.fft_mag_z = fft_mag_zs
@@ -420,6 +430,10 @@ for ev in range(0, event_count, 2):
     # tefield.fft_phase_y = fft_phase_ys
     # tefield.fft_phase_z = fft_phase_zs
     # tefield.fft_phase = [fft_phase_xs, fft_phase_ys, fft_phase_zs]
+
+    tefield.trace = trace_xyz
+    tefield.fft_mag = fft_mag_xyz
+    tefield.fft_phase = fft_phase_xyz
 
     tefield.fill()
 
