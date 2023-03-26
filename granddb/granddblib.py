@@ -4,7 +4,7 @@ from sshtunnel import SSHTunnelForwarder
 import numpy
 import grand.io.root_trees
 import re
-import rootdblib as rdb
+import granddb.rootdblib as rdb
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 import grand.manage_log as mlg
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("debug", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=False)
 
 
 
@@ -72,6 +72,7 @@ class Database:
         self._cred = cred
 
         if self._sshserv != "" and self._cred is not None:
+            #TODO: Check credentials for ssh tunnel and ask for passwds
             self.server = SSHTunnelForwarder(
                 (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),
@@ -267,14 +268,13 @@ class Database:
                 pass
             else:
                 repo_access.path = path
-                self.sqlalchemysession.commit()
         else:
             repository_access = {'id_repository': id_repository, 'id_protocol': id_protocol, 'port': port,
                                  'server_name': server, 'path': path}
             container = self.tables()['repository_access'](**repository_access)
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
-            #self.sqlalchemysession.commit()
+
         savepoint.commit()
         return id_repository
 
@@ -292,8 +292,10 @@ class Database:
         file_exist = self.sqlalchemysession.query(self.tables()['file']).filter_by(
             filename=os.path.basename(newfilename)).first()
         if file_exist is not None:
+            #file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
+            #    id_repository=id_repository).first()
             file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
-                id_repository=id_repository).first()
+                id_repository=id_repository,path=os.path.dirname(newfilename)).first()
             if file_exist_here is None:
                 # file exists in different repo. We only need to register it in the current repo
                 register_file = True
@@ -314,7 +316,7 @@ class Database:
                 self.sqlalchemysession.add(container)
                 self.sqlalchemysession.flush()
                 idfile = container.id_file
-            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository)
+            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=os.path.dirname(newfilename))
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
         return idfile, isnewfile
@@ -329,8 +331,12 @@ class Database:
             table = getattr(rfile, treename + "ToDB")['table']
             if table not in tables:
                 tables[table] = {}
-            # For events we iterates over event_number and run_number
-            if treename in ["teventefield", "teventshowersimdata", "teventshowerzhaires", 'teventshower',
+
+            #print(" DEST TABLE =" + getattr(rfile, treename + "ToDB")["table"])
+
+
+            # For events we iterates over event_number and run_number "teventshowerzhaires"-> pb: previously in event, but now in run !
+            if treename in ["teventefield", "teventshowersimdata",  'teventshower',
                             'teventvoltage']:
                 for event, run in rfile.TreeList[treename].get_list_of_events():
                     if not (run, event) in tables[table]:
@@ -345,20 +351,26 @@ class Database:
 
             # For runs we iterates over run_number
             elif treename in ["trun", "trunefieldsimdata"]:
+            #elif treename in ["trun"]:
                 for run in rfile.TreeList[treename].get_list_of_runs():
                     if run not in tables[table]:
                         tables[table][run] = {}
                     rfile.TreeList[treename].get_run(run)
                     for param, field in getattr(rfile, treename + "ToDB").items():
                         if param != "table":
-                            value = casttodb(getattr(rfile.TreeList[treename], param))
-                            if field.find('id_') >= 0:
-                                value = self.get_or_create_fk('run', field, value)
-                            tables[table][run][field] = value
+                            try:
+                                value = casttodb(getattr(rfile.TreeList[treename], param))
+                                if field.find('id_') >= 0:
+                                    value = self.get_or_create_fk('run', field, value)
+                                tables[table][run][field] = value
+                            except:
+                                logger.warning(f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
 
         # insert runs first, get id_run and update events before inserting event !
         for r in tables['run']:
             container = self.tables()['run'](**tables['run'][r])
+            print(container)
+            print(tables['run'][r])
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
             # update id_run in events

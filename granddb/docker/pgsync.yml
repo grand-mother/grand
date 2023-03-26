@@ -1,0 +1,35 @@
+# source database URL
+from: postgres://MASTER_USER:MASTER_PASSWORD@MASTER_SERVER:MASTER_PORT/MASTER_DB
+
+# destination database URL
+to: postgres://grandadmin:GRANDADMIN_PASSWORD@localhost:5432/granddb
+
+
+groups:
+  grand:
+    protocol: "where id_protocol < (select max_value::BIGINT / 2 from pg_sequences where sequencename='protocol_id_protocol_seq')"
+    repository: "where id_repository < (select max_value::BIGINT / 2 from pg_sequences where sequencename='repository_id_repository_seq')"
+    repository_access: "where id_repository < (select max_value::BIGINT / 2 from pg_sequences where sequencename='repository_id_repository_seq') and id_protocol < (select max_value::BIGINT / 2 from pg_sequences where sequencename='protocol_id_protocol_seq')"
+    provider: "where id_provider < (select max_value::BIGINT / 2 from pg_sequences where sequencename='provider_id_provider_seq')"
+    file: "where id_file < (select max_value::BIGINT / 2 from pg_sequences where sequencename='file_id_file_seq')"
+    file_location: "where id_file < (select max_value::BIGINT / 2 from pg_sequences where sequencename='file_id_file_seq') and id_repository < (select max_value::BIGINT / 2 from pg_sequences where sequencename='repository_id_repository_seq')"
+    tree_type: "where id_tree_type < (select max_value::BIGINT / 2 from pg_sequences where sequencename='tree_type_id_tree_type_seq')"
+    file_trees: "where id_file < (select max_value::BIGINT / 2 from pg_sequences where sequencename='file_id_file_seq') and id_tree_type < (select max_value::BIGINT / 2 from pg_sequences where sequencename='tree_type_id_tree_type_seq')"
+    modification_software: "where id_modification_software < (select max_value::BIGINT / 2 from pg_sequences where sequencename='modification_software_id_modification_software_seq')"
+    data_source: "where id_data_source < (select max_value::BIGINT / 2 from pg_sequences where sequencename='data_source_id_data_source_seq')"
+    data_generator: "where id_data_generator < (select max_value::BIGINT / 2 from pg_sequences where sequencename='data_generator_id_data_generator_seq')"
+    data_generator_version: "where id_data_generator_version < (select max_value::BIGINT / 2 from pg_sequences where sequencename='data_generator_version_id_data_generator_version_seq')"
+    refractivity_model: "where id_refractivity_model < (select max_value::BIGINT / 2 from pg_sequences where sequencename='refractivity_model_id_refractivity_model_seq')"
+    run_mode: "where id_run_mode < (select max_value::BIGINT / 2 from pg_sequences where sequencename='run_mode_id_run_mode_seq')"
+    site: "where id_site < (select max_value::BIGINT / 2 from pg_sequences where sequencename='site_id_site_seq')"
+    site_layout: "where id_site_layout < (select max_value::BIGINT / 2 from pg_sequences where sequencename='site_layout_id_site_layout_seq')"
+    du: "where id_du < (select max_value::BIGINT / 2 from pg_sequences where sequencename='du_id_du_seq')"
+    low_energy_model: "where id_low_energy_model < (select max_value::BIGINT / 2 from pg_sequences where sequencename='low_energy_model_id_low_energy_model_seq')"
+    hadronic_model: "where id_hadronic_model < (select max_value::BIGINT / 2 from pg_sequences where sequencename='hadronic_model_id_hadronic_model_seq')"
+    particule_type: "where id_particule_type < (select max_value::BIGINT / 2 from pg_sequences where sequencename='particule_type_id_particule_type_seq')"
+    event_type: "where id_event_type < (select max_value::BIGINT / 2 from pg_sequences where sequencename='event_type_id_event_type_seq')"
+    atmos_model: "where id_atmos_model < (select max_value::BIGINT / 2 from pg_sequences where sequencename='atmos_model_id_atmos_model_seq')"
+    run: "where id_run < (select max_value::BIGINT / 2 from pg_sequences where sequencename='run_id_run_seq')"
+    event: "where id_event < (select max_value::BIGINT / 2 from pg_sequences where sequencename='event_id_event_seq')"
+    file_contains: "where id_file < (select max_value::BIGINT / 2 from pg_sequences where sequencename='file_id_file_seq') and id_run < (select max_value::BIGINT / 2 from pg_sequences where sequencename='run_id_run_seq') and id_event < (select max_value::BIGINT / 2 from pg_sequences where sequencename='event_id_event_seq')"
+
