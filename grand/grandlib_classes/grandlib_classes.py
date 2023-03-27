@@ -273,7 +273,7 @@ class Event():
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self, simshower=False):
+    def fill_event_from_trees(self, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2]):
         """Fill this event from trees
         :param simshower: how to treat the TShower existing in the file, as simulation values  or reconstructed values
         :type simshower: bool
@@ -299,15 +299,29 @@ class Event():
             # Make trun really None
             self.trun = None
 
-        # Check the Voltage tree existence
-        if tvoltage := self.file.Get("tvoltage"):
-            self.tvoltage = TVoltage(_tree=tvoltage)
-            # Fill part of the event from tvoltage
-            self.fill_event_from_voltage_tree()
+        # Use standard voltage tree
+        if not use_trawvoltage:
+            # Check the Voltage tree existence
+            if tvoltage := self.file.Get("tvoltage"):
+                self.tvoltage = TVoltage(_tree=tvoltage)
+                # Fill part of the event from tvoltage
+                self.fill_event_from_voltage_tree()
+            else:
+                print("No Voltage tree. Voltage information will not be available.")
+                # Make tvoltage really None
+                self.tvoltage = None
+        # Use trawvoltage tree
         else:
-            print("No Voltage tree. Voltage information will not be available.")
-            # Make tvoltage really None
-            self.tvoltage = None
+            # Check the Voltage tree existence
+            if tvoltage := self.file.Get("trawvoltage"):
+                self.tvoltage = TRawVoltage(_tree=tvoltage)
+                # Fill part of the event from tvoltage
+                self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
+            else:
+                print("No TRawVoltage tree. Voltage information will not be available.")
+                # Make tvoltage really None
+                self.tvoltage = None
+
 
         # Check the Efield tree existence
         if tefield := self.file.Get("tefield"):
@@ -352,20 +366,34 @@ class Event():
         self.origin_geoid = self.trun.origin_geoid
 
     ## Fill part of the event from the Voltage tree
-    def fill_event_from_voltage_tree(self):
+    def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
         self.tvoltage.get_event(self.event_number, self.run_number)
+        # self.tvoltage.get_entry(0)
         self.voltages = []
         self.antennas = []
+
+        # Get number of DUs
+        if not use_trawvoltage:
+            trace_cnt = len(self.tvoltage.trace)
+        else:
+            trace_cnt = len(self.tvoltage.trace_ch)
         # Loop through traces
-        for i in range(len(self.tvoltage.trace_x)):
+        for i in range(trace_cnt):
             # Fill the voltage trace part
             v = Voltage()
-            tx = self.tvoltage.trace_x[i]
+            if not use_trawvoltage:
+                tx = self.tvoltage.trace[i][0]
+            else:
+                tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
             v.trace_x = tx
-            v.trace_y = self.tvoltage.trace_y[i]
-            v.trace_z = self.tvoltage.trace_z[i]
+            if not use_trawvoltage:
+                v.trace_y = self.tvoltage.trace[i][1]
+                v.trace_z = self.tvoltage.trace[i][2]
+            else:
+                v.trace_y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
+                v.trace_z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
             self.voltages.append(v)
 
             # Fill the antenna part
@@ -399,14 +427,14 @@ class Event():
         self.tefield.get_event(self.event_number, self.run_number)
         self.efields = []
         # Loop through traces
-        for i in range(len(self.tefield.trace_x)):
+        for i in range(len(self.tefield.trace[0])):
             v = Efield()
-            tx = self.tefield.trace_x[i]
+            tx = self.tefield.trace[0][i]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             v.trace_x = tx
-            v.trace_y = self.tefield.trace_y[i]
-            v.trace_z = self.tefield.trace_z[i]
+            v.trace_y = self.tefield.trace[0][i]
+            v.trace_z = self.tefield.trace[0][i]
             self.efields.append(v)
 
     ## Fill part of the event from the Shower tree
@@ -453,7 +481,7 @@ class Event():
         # Now deal with the list fields separately
 
         print("Shower:")
-        print("\t{:<30} {:>30}".format("Energy:", self.shower.energy))
+        print("\t{:<30} {:>30}".format("Energy EM:", self.shower.energy_em))
         print("\t{:<30} {:>30}".format("Xmax [g/cm2]:", self.shower.Xmax))
         print("\t{:<30} {:>30}".format("Xmax position:", str(self.shower.Xmaxpos.ravel())))
         print("\t{:<30} {:>30}".format("Origin geoid:", str(self.shower.origin_geoid.ravel())))
@@ -472,12 +500,12 @@ class Event():
 
         print("Voltages:")
         print("\t{:<30} {:>30}".format("Triggered status:", str([tr.is_triggered for tr in self.voltages])))
-        print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace_x) for tr in self.voltages])))
-        print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace_x[0] for tr in self.voltages])))
+        print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace[0]) for tr in self.voltages])))
+        print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace[0][0] for tr in self.voltages])))
 
         print("Efields:")
-        print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace_x) for tr in self.efields])))
-        print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace_x[0] for tr in self.efields])))
+        print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace[0]) for tr in self.efields])))
+        print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace[0][0] for tr in self.efields])))
 
     ## Write the Event to a file
     def write(self, common_filename=None, shower_filename=None, efields_filename=None, voltages_filename=None, run_filename=None, overwrite=False):
@@ -576,9 +604,10 @@ class Event():
 
         # Copy the contents of voltages to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tvoltage.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.voltages]
-        self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
-        self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
+        self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.voltages], [np.array(v.trace.y).astype(np.float32) for v in self.voltages], [np.array(v.trace.z).astype(np.float32) for v in self.voltages]]
+        # self.tvoltage.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        # self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        # self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
@@ -614,9 +643,10 @@ class Event():
 
         # Copy the contents of efields to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
-        self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
-        self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
+        self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        # self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
+        # self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
+        # self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
         # self.tefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
         # self.tefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
         # self.tefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
@@ -653,8 +683,6 @@ class Event():
         self.tshower.azimuth = self.shower.azimuth
         ## Shower zenith
         self.tshower.zenith = self.shower.zenith
-        ## Direction of origin
-        self.tshower.origin_geoid = self.shower.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
         self.tshower.shower_core_pos = self.shower.core_ground_pos
 
