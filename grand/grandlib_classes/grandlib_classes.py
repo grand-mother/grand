@@ -362,6 +362,7 @@ class Event():
             v = Voltage()
             tx = self.tvoltage.trace_x[i]
             v.n_points = len(tx)
+            v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
             v.trace_x = tx
             v.trace_y = self.tvoltage.trace_y[i]
             v.trace_z = self.tvoltage.trace_z[i]
@@ -402,6 +403,7 @@ class Event():
             v = Efield()
             tx = self.tefield.trace_x[i]
             v.n_points = len(tx)
+            v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             v.trace_x = tx
             v.trace_y = self.tefield.trace_y[i]
             v.trace_z = self.tefield.trace_z[i]
