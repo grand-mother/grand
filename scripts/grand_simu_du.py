@@ -87,9 +87,9 @@ if __name__ == "__main__":
         raise TypeError(f"seed must be integer instead of {type(args.seed)}.")
     else:
         seed = None if args.seed==-1 else args.seed
-        logger.info(f"seed used for random number generator is {args.seed}.")
+        logger.info(f"seed used for random number generator is {seed}.")
 
-    master = Efield2Voltage(args.file.name, seed, padding_factor=args.padding_factor)
+    master = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
     master.params["add_noise"]    = args.no_noise
     master.params["add_rf_chain"] = args.no_rf_chain
     master.params["lst"]          = args.lst
