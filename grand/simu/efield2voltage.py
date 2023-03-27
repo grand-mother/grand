@@ -60,6 +60,7 @@ class Efield2Voltage:
         self.rf_chain   = grfc.RfChainGP300()                   # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model  = AntennaModel()                        # loads antenna models. time consuming. ant_type='GP300' (default), 'Horizon'
         self.params     = {"add_noise": True, "lst": 18.0, "add_rf_chain":True}
+        self.last_run   = -1                                    # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=0):
         """
@@ -79,19 +80,18 @@ class Efield2Voltage:
 
         self.events.get_event(self.evt_nb, self.run_nb)           # update traces, du_pos etc for event with event_idx.
         self.shower.get_event(self.evt_nb, self.run_nb)           # update shower info (theta, phi, xmax etc) for event with event_idx.
-        self.run.get_run(self.run_nb)                             # update run info to get site latitude and longitude.
-        self.run_sim.get_run(self.run_nb)                         # update run info to get dt_ns to calculate time_samples.
+        if self.last_run != self.run_nb:                          # load only for new run.
+            self.run.get_run(self.run_nb)                         # update run info to get site latitude and longitude.
+            self.run_sim.get_run(self.run_nb)                     # update run info to get dt_ns to calculate time_samples.
+            self.last_run = self.run_nb
 
         # stack efield traces
-        trace_shape   = np.asarray(self.events.trace_x).shape     # (nb_du, len(trace_x[0]))
-        self.du_id    = np.asarray(self.events.du_id)             # used for printing info and saving in voltage tree. 
+        trace_shape   = np.asarray(self.events.trace).shape     # (nb_du, 3, tbins of a trace)
+        self.du_id    = np.asarray(self.events.du_id)           # used for printing info and saving in voltage tree. 
         self.nb_du    = trace_shape[0]
         self.sig_size = trace_shape[-1]
-        self.traces   = np.empty((trace_shape[0], 3, trace_shape[1]), dtype=np.float32)
-        self.traces[:, 0, :] = np.asarray(self.events.trace_x, dtype=np.float32)
-        self.traces[:, 1, :] = np.asarray(self.events.trace_y, dtype=np.float32)
-        self.traces[:, 2, :] = np.asarray(self.events.trace_z, dtype=np.float32)
-        self.du_pos = np.asarray(self.run.du_xyz) # antenna position wrt local grand coordinate
+        self.traces   = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
 
         # container to collect computed Voc and the final voltage in time domain for one event.
         self.voc   = np.zeros_like(self.traces)
@@ -99,7 +99,7 @@ class Efield2Voltage:
 
         # shower information like theta, phi, xmax etc for one event.
         shower = ShowerEvent()
-        self.shower.origin_geoid  = self.run.origin_geoid    # [lat, lon, height]
+        shower.origin_geoid  = self.run.origin_geoid    # [lat, lon, height]
         shower.load_root(self.shower)               # calculates grand_ref_frame, shower_frame, Xmax in LTP etc
         self.evt_shower = shower                    # Note that 'shower' is an instance of 'self.shower' for one event.
         self.dt_ns      = self.run_sim.t_bin_size   # sampling time in ns, sampling freq = 1e9/dt_ns.
@@ -290,7 +290,7 @@ class Efield2Voltage:
         # delete file can take time => start with this action
         if self.f_output == "":
             split_file = os.path.splitext(self.f_input)
-            self.f_output   = split_file[0]+"_voltage_event.root"
+            self.f_output   = split_file[0]+"_voltage.root"
             logger.info(f"No output file was defined. Output file is automatically defined as {f_output}")
         if not append_file and os.path.exists(f_output):
             logger.info(f"save on new file option => remove file {f_output}")
@@ -312,18 +312,11 @@ class Efield2Voltage:
         self.tt_volt.first_du         = self.du_id[0]
         self.tt_volt.time_seconds     = self.events.time_seconds
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
+        self.tt_volt.du_nanoseconds = self.events.du_nanoseconds
+        self.tt_volt.du_seconds = self.events.du_seconds
+        self.tt_volt.du_id = self.du_id
+        self.tt_volt.trace = self.v_out
 
-        # Loop is required for StdVectorList data type.
-        for idx in range(self.nb_du):
-            logger.debug(f"add DU {self.du_id[idx]} in ROOT file")
-            # logger.info(f"shape: {self.simu_du.voc[idx, 0].shape}")
-            self.tt_volt.du_nanoseconds.append(self.events.du_nanoseconds[idx])
-            self.tt_volt.du_seconds.append(self.events.du_seconds[idx])
-            self.tt_volt.du_id.append(int(self.du_id[idx]))
-            # logger.info(f"du_id {type(self.o_traces.du_id[idx])}")
-            self.tt_volt.trace_x.append(self.v_out[idx, 0].astype(np.float64).tolist())
-            self.tt_volt.trace_y.append(self.v_out[idx, 1].astype(np.float64).tolist())
-            self.tt_volt.trace_z.append(self.v_out[idx, 2].astype(np.float64).tolist())
         self.tt_volt.fill()
         self.tt_volt.write()
 

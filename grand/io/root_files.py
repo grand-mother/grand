@@ -4,6 +4,7 @@ Manage ROOT file of type Efield simulation, voltage ADCevent is experimental
 
 import os.path
 from logging import getLogger
+from typing import Optional
 
 import numpy as np
 import ROOT
@@ -38,7 +39,6 @@ def check_ttree_in_file(f_root, ttree_name):
     """
     return ttree_name in get_ttree_in_file(f_root)
 
-
 class FileEvent:
     """
     Goals of the class:
@@ -68,9 +68,8 @@ class FileEvent:
         self.tt_event = tt_event
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
-        # number detector in event
         self.idx_event = -1
-        self.delta_t_ns = 0.5
+        self.delta_t_ns = -1
         self.evt_nb = -1
         self.run_nb = -1
         self.nb_du = 0
@@ -110,17 +109,21 @@ class FileEvent:
         # efield
         self.tt_event.get_event(evt_nb, run_nb)
         self.nb_du = self.tt_event.du_count
-        trace_size = len(self.tt_event.trace_x[0])
-        if trace_size != self.traces.shape[2]:
-            self.traces = np.empty((self.nb_du, 3, trace_size), dtype=np.float32)
-            logger.info(f"resize numpy array trace to {self.traces.shape}")
-        self.traces[:, 0, :] = np.array(self.tt_event.trace_x, dtype=np.float32)
-        self.traces[:, 1, :] = np.array(self.tt_event.trace_y, dtype=np.float32)
-        self.traces[:, 2, :] = np.array(self.tt_event.trace_z, dtype=np.float32)
-        self.du_pos = np.empty((self.nb_du, 3), dtype=np.float32)
-        self.du_pos[:, 0] = np.array(self.tt_event.pos_x, dtype=np.float32)
-        self.du_pos[:, 1] = np.array(self.tt_event.pos_y, dtype=np.float32)
-        self.du_pos[:, 2] = np.array(self.tt_event.pos_z, dtype=np.float32)
+        
+        #trace_size = len(self.tt_event.trace_x[0])
+        trace_size = np.asarray(self.tt_event.trace).shape[-1]
+
+        #if trace_size != self.traces.shape[2]:
+        #    self.traces = np.empty((self.nb_du, 3, trace_size), dtype=np.float32)
+        #    logger.info(f"resize numpy array trace to {self.traces.shape}")
+        self.traces = np.asarray(self.tt_event.trace)
+        #self.traces[:, 0, :] = np.array(self.tt_event.trace_x, dtype=np.float32)
+        #self.traces[:, 1, :] = np.array(self.tt_event.trace_y, dtype=np.float32)
+        #self.traces[:, 2, :] = np.array(self.tt_event.trace_z, dtype=np.float32)
+        #self.du_pos = np.empty((self.nb_du, 3), dtype=np.float32)
+        #self.du_pos[:, 0] = np.array(self.tt_event.pos_x, dtype=np.float32)
+        #self.du_pos[:, 1] = np.array(self.tt_event.pos_y, dtype=np.float32)
+        #self.du_pos[:, 2] = np.array(self.tt_event.pos_z, dtype=np.float32)
 
     def get_nb_du(self):
         """
@@ -162,39 +165,72 @@ class FileEvent:
         o_tevent.init_network(self.du_pos, du_id)
         return o_tevent
 
-
 class File:
     """
     Simulation file with Efield or Voltage information.
+    """
+    """
+    Goals of the class:
+
+      * add access to event by index not by identifier (event, run)
+      * initialize instance to the first event
+      * conversion io.root array to numpy if necessary
+
+    Public attributes:
+
+        * event object: object ROOT_tree of type TTree Event
+        * f_name str: path/name to ROOT file
+        * l_events list : list of tuple (event, run)
+        * traces float(du_count,3,sig_size): 3D trace of N detector unit with S samples
+        * traces_time float(du_count,sig_size): time bins of traces for each antenna.
+        * sig_size int: number of time bins in traces
+        * t_bin_size float: [ns] time sampling
+        * event_number int: given by l_events list(idx_event)
+        * run_number int: given by l_events list(idx_event)
+        * du_id array: ID of DU in current event
+        * du_count int: number of DU in current object. len(du_id).
+        * du_xyz float(N,3): cartesian position of detector unit
     """
 
     def __init__(self, f_name):
         """
         Constructor for Efield and voltage event.
         """
-        self.f_name: str    = f_name
+        self.run_number: Optional[None, int]         = None
+        self.event_number: Optional[None, int]       = None
+        self.traces: Optional[None, np.ndarray]      = None
+        self.traces_time: Optional[None, np.ndarray] = None
+        self.sig_size: Optional[None, int]           = None
+        self.t_bin_size: Optional[float]             = 0.5
+        self.du_id: Optional[None, np,ndarray, list] = None
+        self.du_count: Optional[None, int]           = None
+        self.du_xyz: Optional[None, np.ndarray]      = None
+        self.f_name: Optional[str] = ""
+        self.tag: Optional[str]    = ""
 
         if not os.path.exists(f_name):
             logger.error(f"File {f_name} doesn't exist.")
             raise FileNotFoundError
         else:
-            # Note to Lech: let's add get_list_of_keys_name() method in class DataTree in root_trees.py 
+            self.f_name = f_name
             tfile   = ROOT.TFile.Open(f_name)
             l_ttree = tfile.GetListOfKeys()
             self.trees_list = [ttree.GetName() for ttree in l_ttree]
-            #if "teventefield" in self.trees_list:          # File with Efield info as input
             if "tefield" in self.trees_list:          # File with Efield info as input
+                self.tag     = "efield"
                 self.event   = groot.TEfield(f_name)
                 self.shower  = groot.TShower(f_name)
                 self.run     = groot.TRun(f_name)
                 self.run_sim = groot.TRunEfieldSim(f_name)
             elif "tvoltage" in self.trees_list:       # File with voltage info as input
+                self.tag   = "voltage"
                 self.event = groot.TVoltage(f_name)
             else:
-                logger.error(f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}.")
+                logger.error(f"File {f_name} doesn't content TTree tefield or tvoltage. It contains {self.trees_list}.")
                 raise AssertionError
 
             self.event_list = self.event.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
+            self.get_event(event_idx=0)  # initialize instance to the first event
 
         logger.info(f"Events  in file {f_name}")
 
@@ -205,21 +241,27 @@ class File:
         :param run_nb:
         """
         self.event_idx: int = event_idx  # index of events in the input file. 0 for first event and so on.
-        if self.event_idx<len(self.event_list): 
-            self.evt_nb = self.event_list[self.event_idx][0] 
-            self.run_nb = self.event_list[self.event_idx][1]
+        if self.event_idx<len(self.event_list):
+            self.event_number = self.event_list[self.event_idx][0] 
+            self.run_number = self.event_list[self.event_idx][1]
         else:
             logger.warning(f"Event index {self.event_idx} is out of range. It must be less than {len(self.event_list)}.")
             return False
 
-        logger.info(f"load event: {self.evt_nb} of run  {self.run_nb}")
-        self.event.get_event(self.evt_nb, self.run_nb)
+        logger.info(f"load event: {self.event_number} of run  {self.run_number}")
+        self.event.get_event(self.event_number, self.run_number)
+        self.traces = np.asarray(self.event.trace)
+        self.sig_size = self.traces.shape[-1]
+        self.du_id  = np.asarray(self.event.du_id)
+        self.du_count  = self.event.du_count
+        if self.tag=="efield":
+            self.shower.get_event(self.event_number, self.run_number)
+            self.run.get_run(self.run_number)
+            self.run_sim.get_run(self.run_number)
+            self.du_xyz = np.asarray(self.run.du_xyz)
+            self.t_bin_size = self.run_sim.t_bin_size
 
-        trace_shape = np.asarray(self.event.trace_x).shape     # (du_count, len(trace_x[0]))
-        self.traces = np.empty((trace_shape[0], 3, trace_shape[1]), dtype=np.float32)
-        self.traces[:, 0, :] = np.asarray(self.event.trace_x, dtype=np.float32)
-        self.traces[:, 1, :] = np.asarray(self.event.trace_y, dtype=np.float32)
-        self.traces[:, 2, :] = np.asarray(self.event.trace_z, dtype=np.float32)
+        self.traces_time = self.get_traces_time()
 
     def get_next_event(self):
         """
@@ -227,14 +269,24 @@ class File:
         """
         self.event_idx += 1
         if self.event_idx<len(self.event_list): 
-            self.evt_nb = self.event_list[self.event_idx][0] 
-            self.run_nb = self.event_list[self.event_idx][1]
+            return self.get_event(self.event_idx)
         else:
             logger.warning(f"Event index {self.event_idx} is out of range. It must be less than {len(self.event_list)}.")
             return False
 
-        return self.get_event(self.evt_nb, self.run_nb)
+    def get_traces_time(self):
+        """
+        Define time sample in ns for the duration of the trace
+        t_samples.shape  = (nb_du, self.sig_size)
+        t_start_ns.shape = (nb_du,)
+        """
+        t_start_ns = np.asarray(self.event.du_nanoseconds)[...,np.newaxis]  # shape = (nb_du, 1)
 
+        outer_product = np.outer(self.t_bin_size * np.ones(self.du_count), np.arange(0, self.sig_size, dtype=np.float64))
+        t_samples = outer_product + t_start_ns
+        logger.info(f"shape du_nanoseconds and t_samples =  {t_start_ns.shape}, {t_samples.shape}")
+
+        return t_samples
 
 class FileSimuEfield(FileEvent):
     """

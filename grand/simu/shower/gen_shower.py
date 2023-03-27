@@ -73,7 +73,7 @@ class ShowerEvent:
     core: Optional[CartesianRepresentation] = None
     geomagnet: Optional[CartesianRepresentation] = None
     maximum: Optional[CartesianRepresentation] = None
-    ground_alt: float = 0.0
+    origin_geoid: Optional[list, np.ndarray] = None
     fields: Optional[FieldsCollection] = None
 
     def load_root(self, d_shower):
@@ -81,10 +81,13 @@ class ShowerEvent:
         self.zenith = d_shower.zenith
         self.azimuth = d_shower.azimuth
         self.primary = d_shower.primary_type
-        origin_geoid = Geodetic(
-            latitude=d_shower.origin_geoid[0],
-            longitude=d_shower.origin_geoid[1],
-            height=d_shower.origin_geoid[2])
+        if self.origin_geoid is not None:
+            origin_geoid = Geodetic(
+                latitude=self.origin_geoid[0],
+                longitude=self.origin_geoid[1],
+                height=self.origin_geoid[2])
+        else:
+            raise Exception("Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid")
         self.grand_ref_frame = GRANDCS(location=origin_geoid)    # used to define antenna position.
         shower_core = GRANDCS(
             x=d_shower.shower_core_pos[0],
