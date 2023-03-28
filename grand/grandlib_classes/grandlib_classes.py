@@ -297,6 +297,7 @@ class Event():
             self.trun = TRun(_tree=trun)
             # Fill part of the event from trun
             self.fill_event_from_runtree()
+            print("Run information loaded.")
         else:
             print("No Run tree. Run information will not be available.")
             # Make trun really None
@@ -309,6 +310,7 @@ class Event():
                 self.tvoltage = TVoltage(_tree=tvoltage)
                 # Fill part of the event from tvoltage
                 self.fill_event_from_voltage_tree()
+                print("Voltage information loaded.")
             else:
                 print("No Voltage tree. Voltage information will not be available.")
                 # Make tvoltage really None
@@ -320,6 +322,7 @@ class Event():
                 self.tvoltage = TRawVoltage(_tree=tvoltage)
                 # Fill part of the event from tvoltage
                 self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
+                print("Voltage information (from TRawVoltage) loaded.")
             else:
                 print("No TRawVoltage tree. Voltage information will not be available.")
                 # Make tvoltage really None
@@ -331,6 +334,7 @@ class Event():
             self.tefield = TEfield(_tree=tefield)
             # Fill part of the event from tefield
             self.fill_event_from_efield_tree()
+            print("Efield information loaded.")
         else:
             print("No Efield tree. Efield information will not be available.")
             # Make tefield really None
@@ -344,6 +348,7 @@ class Event():
                 self.tshower = TShower(_tree=tshower)
             # Fill part of the event from tshower
             self.fill_event_from_shower_tree(simshower)
+            print("Shower information loaded.")
         else:
             print("No Shower tree. Shower information will not be available.")
             # Make tshower really None
