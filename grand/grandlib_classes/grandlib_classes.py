@@ -184,6 +184,8 @@ class Event():
     event_number: int = None
     ## The run number of the current event
     run_number: int = None
+    ## The entry number - used for enforcing loading specific entry from all the event trees. Makes sense only if those trees have all the same events.
+    _entry_number: int = None
 
 
     ## Antennas participating in the event
@@ -263,8 +265,8 @@ class Event():
 
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
-        # If the file name and event number was given, init the Event from trees
-        if self.file and self.event_number:
+        # If the file name was given, init the Event from trees
+        if self.file:
             self.fill_event_from_trees()
 
     @property
@@ -276,7 +278,7 @@ class Event():
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2]):
+    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2]):
         """Fill this event from trees
         :param simshower: how to treat the TShower existing in the file, as simulation values  or reconstructed values
         :type simshower: bool
@@ -290,14 +292,37 @@ class Event():
         if not isinstance(self.file, ROOT.TFile):
             self.file = ROOT.TFile(self.file, "read")
 
+        # *** Set the run/event/entry number if requested.
+
+        # If entry/event/run number not specified, take the first entry
+        run_entry_number = None
+        if self._entry_number is None and self.run_number is None and self.event_number is None and entry_number is None and run_number is None and event_number is None:
+            entry_number = 0
+            run_entry_number = 0
+
+        # Don't allow specifying entry and event/run at the same time, because... what to chose?
+        if entry_number is not None and (run_number is not None or event_number is not None):
+            print("Please provide only entry_number or event/run_number!")
+        if entry_number is not None:
+            self._entry_number = entry_number
+            # ToDo: this should be run number from an even tree with entry_number...
+            if run_entry_number is None and self.run_number is None:
+                run_entry_number = 0
+        else:
+            if run_number is not None:
+                self.run_number = run_number
+            if event_number is not None:
+                self.event_number = event_number
+
         # *** Check what TTrees are available and fill according to their availability
 
         # Check the Run tree existence
         if trun := self.file.Get("trun"):
             self.trun = TRun(_tree=trun)
             # Fill part of the event from trun
-            self.fill_event_from_runtree()
-            print("Run information loaded.")
+            ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
+            if ret: print("Run information loaded.")
+            else: print("No Run tree. Run information will not be available.")
         else:
             print("No Run tree. Run information will not be available.")
             # Make trun really None
@@ -309,8 +334,12 @@ class Event():
             if tvoltage := self.file.Get("tvoltage"):
                 self.tvoltage = TVoltage(_tree=tvoltage)
                 # Fill part of the event from tvoltage
-                self.fill_event_from_voltage_tree()
-                print("Voltage information loaded.")
+                ret = self.fill_event_from_voltage_tree()
+                if ret: print("Voltage information loaded.")
+                else:
+                    print("No Voltage tree. Voltage information will not be available.")
+                    # Make tvoltage really None
+                    self.tvoltage = None
             else:
                 print("No Voltage tree. Voltage information will not be available.")
                 # Make tvoltage really None
@@ -321,8 +350,12 @@ class Event():
             if tvoltage := self.file.Get("trawvoltage"):
                 self.tvoltage = TRawVoltage(_tree=tvoltage)
                 # Fill part of the event from tvoltage
-                self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
-                print("Voltage information (from TRawVoltage) loaded.")
+                ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
+                if ret: print("Voltage information (from TRawVoltage) loaded.")
+                else:
+                    print("No TRawVoltage tree. Voltage information will not be available.")
+                    # Make tvoltage really None
+                    self.tvoltage = None
             else:
                 print("No TRawVoltage tree. Voltage information will not be available.")
                 # Make tvoltage really None
@@ -333,8 +366,12 @@ class Event():
         if tefield := self.file.Get("tefield"):
             self.tefield = TEfield(_tree=tefield)
             # Fill part of the event from tefield
-            self.fill_event_from_efield_tree()
-            print("Efield information loaded.")
+            ret = self.fill_event_from_efield_tree()
+            if ret: print("Efield information loaded.")
+            else:
+                print("No Efield tree. Efield information will not be available.")
+                # Make tefield really None
+                self.tefield = None
         else:
             print("No Efield tree. Efield information will not be available.")
             # Make tefield really None
@@ -347,8 +384,15 @@ class Event():
             else:
                 self.tshower = TShower(_tree=tshower)
             # Fill part of the event from tshower
-            self.fill_event_from_shower_tree(simshower)
-            print("Shower information loaded.")
+            ret = self.fill_event_from_shower_tree(simshower)
+            if ret: print("Shower information loaded.")
+            else:
+                print("No Shower tree. Shower information will not be available.")
+                # Make tshower really None
+                if simshower:
+                    self.tsimshower = None
+                else:
+                    self.tshower = None
         else:
             print("No Shower tree. Shower information will not be available.")
             # Make tshower really None
@@ -359,9 +403,13 @@ class Event():
 
 
     ## Fill part of the event from the Run tree
-    def fill_event_from_runtree(self):
+    def fill_event_from_runtree(self, run_entry_number=None):
+        ret = 1
         # Read the event into the class
-        self.trun.get_run(self.run_number)
+        if run_entry_number is None:
+            ret = self.trun.get_run(self.run_number)
+        else:
+            ret = self.trun.get_entry(run_entry_number)
 
         # Copy the values
         self.run_mode = self.trun.run_mode
@@ -373,9 +421,15 @@ class Event():
         # self.site_lat = self.trun.site_lat
         self.origin_geoid = self.trun.origin_geoid
 
+        return ret
+
     ## Fill part of the event from the Voltage tree
     def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
-        self.tvoltage.get_event(self.event_number, self.run_number)
+        ret = 1
+        if self._entry_number is not None:
+            ret = self.tvoltage._tree.GetEntry(self._entry_number)
+        else:
+            ret = self.tvoltage.get_event(self.event_number, self.run_number)
         # self.tvoltage.get_entry(0)
         self.voltages = []
         self.antennas = []
@@ -432,9 +486,15 @@ class Event():
         # ## Hilbert envelope vector in X
         # _hilbert_trace_z: np.ndarray = np.zeros(1, np.float)
 
+        return ret
+
     ## Fill part of the event from the Efield tree
     def fill_event_from_efield_tree(self):
-        self.tefield.get_event(self.event_number, self.run_number)
+        ret = 1
+        if self._entry_number is not None:
+            ret = self.tvoltage.get_entry(self._entry_number)
+        else:
+            ret = self.tefield.get_event(self.event_number, self.run_number)
         self.efields = []
         # Loop through traces
         for i in range(len(self.tefield.trace[0])):
@@ -449,8 +509,11 @@ class Event():
             v.trace.z = self.tefield.trace[0][i]
             self.efields.append(v)
 
+        return ret
+
     ## Fill part of the event from the Shower tree
     def fill_event_from_shower_tree(self, simshower=False):
+        ret = 1
         # The shower contains simulated parameters
         if simshower:
             # Initialise the Shower
@@ -464,7 +527,10 @@ class Event():
             tree = self.tshower
             shower = self.shower
 
-        tree.get_event(self.event_number, self.run_number)
+        if self._entry_number is not None:
+            ret = self.tvoltage.get_entry(self._entry_number)
+        else:
+            ret = tree.get_event(self.event_number, self.run_number)
         ## Shower energy from e+- (ie related to radio emission) (GeV)
         shower.energy_em = tree.energy_em
         ## Shower total energy of the primary (including muons, neutrinos, ...) (GeV)
@@ -481,6 +547,8 @@ class Event():
         shower.origin_geoid = self.trun.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
         shower.core_ground_pos = tree.shower_core_pos
+
+        return ret
 
     ## Print all the class values
     def print(self):
