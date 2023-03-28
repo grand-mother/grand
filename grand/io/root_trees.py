@@ -1236,6 +1236,8 @@ class TRun(MotherRunTree):
     _du_nut: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
     ## Detector unit (antenna) FrontEnd Board ID
     _du_feb: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
+    _t_bin_size: np.ndarray = field(default_factory=lambda: StdVectorList("float"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1606,6 +1608,32 @@ class TRun(MotherRunTree):
             raise ValueError(
                 f"Incorrect type for du_feb {type(value)}. Either a list, an array or a ROOT.vector of int required."
             )
+
+    @property
+    def t_bin_size(self):
+        """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
+        return self._t_bin_size
+
+    @t_bin_size.setter
+    def t_bin_size(self, value):
+        # A list was given
+        if (
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._t_bin_size.clear()
+            self._t_bin_size += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._t_bin_size._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for t_bin_size {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
+
+
 
 ## General info on the voltage common to all events.
 @dataclass
@@ -6521,8 +6549,6 @@ class TRunEfieldSim(MotherRunTree):
     _t_pre: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Finishing time of antenna data collection time window
     _t_post: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
-    ## Time bin size
-    _t_bin_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     ## Simulator name (aires/corsika, etc.)
     _sim_name: StdString = StdString("")
@@ -6595,15 +6621,6 @@ class TRunEfieldSim(MotherRunTree):
     @t_post.setter
     def t_post(self, value):
         self._t_post[0] = value
-
-    @property
-    def t_bin_size(self):
-        """Time bin size"""
-        return self._t_bin_size[0]
-
-    @t_bin_size.setter
-    def t_bin_size(self, value):
-        self._t_bin_size[0] = value
 
     @property
     def sim_name(self):
