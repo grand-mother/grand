@@ -390,13 +390,15 @@ class Event():
                 tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
-            v.trace_x = tx
+            # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
+            v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float), y=np.zeros(len(tx), np.float), z=np.zeros(len(tx), np.float))
+            v.trace.x = tx
             if not use_trawvoltage:
-                v.trace_y = self.tvoltage.trace[i][1]
-                v.trace_z = self.tvoltage.trace[i][2]
+                v.trace.y = self.tvoltage.trace[i][1]
+                v.trace.z = self.tvoltage.trace[i][2]
             else:
-                v.trace_y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
-                v.trace_z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
+                v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
+                v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
             self.voltages.append(v)
 
             # Fill the antenna part
@@ -435,9 +437,11 @@ class Event():
             tx = self.tefield.trace[0][i]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
-            v.trace_x = tx
-            v.trace_y = self.tefield.trace[0][i]
-            v.trace_z = self.tefield.trace[0][i]
+            # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
+            v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float), y=np.zeros(len(tx), np.float), z=np.zeros(len(tx), np.float))
+            v.trace.x = tx
+            v.trace.y = self.tefield.trace[0][i]
+            v.trace.z = self.tefield.trace[0][i]
             self.efields.append(v)
 
     ## Fill part of the event from the Shower tree
