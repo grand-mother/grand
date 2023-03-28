@@ -187,13 +187,16 @@ class Event():
 
 
     ## Antennas participating in the event
-    antennas: list[Antenna] = None
+    # antennas: list[Antenna] = None
+    antennas: list = None
     ## Event multiplicity: ToDo: what is it?
     L: int = 0
     ## Voltages from different antennas
-    voltages: list[Voltage] = None
+    # voltages: list[Voltage] = None
+    voltages: list = None
     ## Efields from different antennas
-    efields: list[Efield] = None
+    # efields: list[Efield] = None
+    efields: list = None
 
     # Reconstruction parameters
     ## Was this event reconstructed?
