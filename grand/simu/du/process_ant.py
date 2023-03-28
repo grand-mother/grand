@@ -160,8 +160,6 @@ class AntennaProcessing:
         )
         # logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)
-        # table store antenna response
-        #table = self.model_leff.table
         # delta theta in degree
         dtheta = self.model_leff.theta[1] - self.model_leff.theta[0]
         # theta_efield between index it0 and it1 in theta antenna response representation
@@ -196,25 +194,11 @@ class AntennaProcessing:
         # frequency [Hz]
         freq_ref_hz = self.model_leff.frequency
 
-        
-        ltr = interp_sphere_freq(self.model_leff.leff_theta)  # LWP. m
-        lpr = interp_sphere_freq(self.model_leff.leff_phi)  # LWP. m
-        lta = interp_sphere_freq(self.model_leff.phase_theta_rad)
-        lpa = interp_sphere_freq(self.model_leff.phase_phi_rad)
-        # Pack the result as a Cartesian vector with complex values
-        # fmt: off
-        l_t = ltr*np.exp(1j * lta)
-        l_p = lpr*np.exp(1j * lpa)
-        '''
-
-        # Based on Pablo's work. Interpolate complex leff instead of interpolating amplitude and phase separately.
+        # Based on Jean-Marc and Pablo's work. Interpolate complex leff (Re + j*Im) instead of interpolating amplitude and phase separately.
         #     Real and imaginary parts are smoother. Phase of leff has kink.
-        l_t_ = self.model_leff.leff_theta * np.exp(1j * self.model_leff.phase_theta_rad)
-        l_p_ = self.model_leff.leff_phi * np.exp(1j * self.model_leff.phase_phi_rad)
-        l_t  = interp_sphere_freq(l_t_)
-        l_p  = interp_sphere_freq(l_p_)
-        '''
-
+        l_t  = interp_sphere_freq(self.model_leff.leff_theta_reim)
+        l_p  = interp_sphere_freq(self.model_leff.leff_phi_reim)
+        
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
         c_p, s_p = np.cos(p_rad), np.sin(p_rad)
@@ -223,25 +207,26 @@ class AntennaProcessing:
         self.l_z = -s_t*l_t
         del l_t, l_p, c_t, s_t , c_p, s_p
         # antenna response in antenna frame in frequency domain.
-        fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
+        #fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
 
-        return fft_leff_frame_ant
-        '''
-        # RK: Make sure Efield's x, y, and z components are given in the antenna frame.
-        #     If Ex, Ey, Ez are in shower frame, uncomment this section.
+        # RK: Make sure that Efield's x, y, and z components are given in the shower frame.
         # Treating Leff as a vector (no change in magnitude) and transforming
         # it to the shower frame from antenna frame.
         # antenna frame --> ECEF frame --> shower frame
         # TODO: there might be an easier way to do this.
         # vector wrt ECEF frame. AntennaProcessing --> ECEF
-        fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
-        fft_leff = np.matmul(self.pos.basis.T, fft_leff_frame_ant)
-        self.leff_frame_ant = fft_leff_frame_ant
+        #fft_leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
+        leff_frame_ant = np.array([self.l_x, self.l_y, self.l_z])
+        #fft_leff = np.matmul(self.pos.basis.T, fft_leff_frame_ant)
+        leff_frame_ecef = np.matmul(self.pos.basis.T, leff_frame_ant)
+        #self.leff_frame_ant = fft_leff_frame_ant
+        self.leff_frame_ant = leff_frame_ant
         # vector wrt shower frame. ECEF --> Shower
-        self.fft_leff_frame_shower = np.matmul(frame.basis, fft_leff)
-        return self.fft_leff_frame_shower
-        '''
+        #self.fft_leff_frame_shower = np.matmul(frame.basis, fft_leff)
+        self.leff_frame_shower = np.matmul(frame.basis, leff_frame_ecef)
 
+        return self.leff_frame_shower
+        
     def compute_voltage(
         self,
         xmax: LTP,
@@ -262,14 +247,19 @@ class AntennaProcessing:
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input fft_leff and field are in shower frame.
-        fft_leff = self.effective_length(xmax, efield, frame)
-        logger.debug(fft_leff.shape)
+        #fft_leff = self.effective_length(xmax, efield, frame)
+        leff = self.effective_length(xmax, efield, frame)
+        #logger.debug(fft_leff.shape)
+        logger.debug(leff.shape)
         # E is CartesianRepresentation
         fft_e = efield.get_fft(self.size_fft)
         logger.debug(f"size_fft={self.size_fft}")
         # convol e_xyz field by Leff in Fourier space
+        #self.fft_resp_volt = (
+        #    fft_e[0] * fft_leff[0] + fft_e[1] * fft_leff[1] + fft_e[2] * fft_leff[2]
+        #)
         self.fft_resp_volt = (
-            fft_e[0] * fft_leff[0] + fft_e[1] * fft_leff[1] + fft_e[2] * fft_leff[2]
+            fft_e[0] * leff[0] + fft_e[1] * leff[1] + fft_e[2] * leff[2]
         )
         # inverse FFT and remove zero-padding
         resp_volt = sf.irfft(self.fft_resp_volt)[: efield.e_xyz.shape[1]]
