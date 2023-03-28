@@ -731,7 +731,7 @@ class MotherRunTree(DataTree):
     @property
     def run_number(self):
         """The run number for this tree entry"""
-        return self._run_number[0]
+        return int(self._run_number[0])
 
     @run_number.setter
     def run_number(self, val: np.uint32) -> None:
@@ -780,6 +780,8 @@ class MotherRunTree(DataTree):
     # Readout the TTree entry corresponding to the run
     def get_run(self, run_no):
         """Readout the TTree entry corresponding to the run"""
+        # Make sure we have an int
+        run_no = int(run_no)
         # Try to get the run from the tree
         res = self._tree.GetEntryWithIndex(run_no)
         # If no such entry, return
@@ -834,7 +836,7 @@ class MotherEventTree(DataTree):
     @property
     def run_number(self):
         """The run number of the current event"""
-        return self._run_number[0]
+        return int(self._run_number[0])
 
     @run_number.setter
     def run_number(self, val: np.uint32) -> None:
@@ -843,7 +845,7 @@ class MotherEventTree(DataTree):
     @property
     def event_number(self):
         """The event number of the current event"""
-        return self._event_number[0]
+        return int(self._event_number[0])
 
     @event_number.setter
     def event_number(self, val: np.uint32) -> None:
