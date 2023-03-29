@@ -10,6 +10,9 @@ import ROOT
 ## A class describing a single antenna; ToDo: Should it be antenna, or more general: Detector?
 @dataclass
 class Antenna:
+    ## Antenna ID - the du_id from the trees
+    id: int = -1
+
     ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
     # position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     _position: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
