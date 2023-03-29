@@ -439,6 +439,20 @@ class Event():
         self.origin_geoid = self.trun.origin_geoid
         self._t_bin_size = self.trun.t_bin_size
 
+        self.antennas = []
+
+        # Fill the antenna part
+        for i in range(len(self.trun.du_id)):
+            a = Antenna()
+            a.id = self.trun.du_id[i]
+            a.position.x = self.trun.du_xyz[i][0]
+            a.position.y = self.trun.du_xyz[i][1]
+            a.position.z = self.trun.du_xyz[i][2]
+            a.tilt.x = self.trun.du_tilt[i][0]
+            a.tilt.y = self.trun.du_tilt[i][1]
+
+            self.antennas.append(a)
+
         return ret
 
     ## Fill part of the event from the Voltage tree
@@ -450,7 +464,6 @@ class Event():
             ret = self.tvoltage.get_event(self.event_number, self.run_number)
         # self.tvoltage.get_entry(0)
         self.voltages = []
-        self.antennas = []
 
         # Needed to select the first trace later. ToDo: maybe the first trace in the file is always first in time? That would save time...
         start_times = []
@@ -482,15 +495,6 @@ class Event():
                 v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
                 v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
             self.voltages.append(v)
-
-            # Fill the antenna part
-            a = Antenna()
-            # a.atm_temperature = self.tvoltage.atm_temperature[i]
-            # a.atm_pressure = self.tvoltage.atm_pressure[i]
-            # a.atm_humidity = self.tvoltage.atm_humidity[i]
-            # a.battery_level = self.tvoltage.battery_level[i]
-            # a.firmware_version = self.tvoltage.firmware_version[i]
-            self.antennas.append(a)
 
         # ## The trace length
         # _n_points: int = 0
