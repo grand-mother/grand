@@ -15,11 +15,11 @@ class Antenna:
 
     ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
     # position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
-    _position: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _position: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
     ## Antenna tilt
-    _tilt: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _tilt: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
     ## Antenna acceleration - this comes from hardware. ToDo: perhaps recalculate to tilt or remove tilt?
-    _acceleration: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _acceleration: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
 
     ## The antenna model
     model: Any = 0
@@ -68,10 +68,12 @@ class Timetrace3D:
     n_points: int = 0
     ## [ns] n_points x step = total timetrace length
     time_step: float = 0
-    ## Start time as unix time with nanoseconds
+    ## Start time of the trace as unix time with nanoseconds
     t0: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
     ## Trigger time as unix time with nanoseconds
     trigger_time: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
+    ## The size of the time bin - the time resolution in ns
+    t_bin_size: float = 2
 
     ## Trace vector in X
     # trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
@@ -80,14 +82,17 @@ class Timetrace3D:
     ## Trace vector in Z
     # trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
-    # _trace: CartesianRepresentation = field(default_factory=lambda: np.zeros(1, np.float))
     # ToDo: Allow empty constructor in CartesianRepresentation?
-    _trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    ## Trace 3D vector (x,y,z)
+    _trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(0, np.float32), y=np.zeros(0, np.float32), z=np.zeros(0, np.float32)))
     # _trace1: list = None
     # trace: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
+    # The time vector [ns] - generated from the trace length, t0 and t_bin_size
+    t_vector: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+
     ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
-    _hilbert_trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _hilbert_trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(0, np.float32), y=np.zeros(0, np.float32), z=np.zeros(0, np.float32)))
     # ## Hilbert envelope vector in X
     # hilbert_trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
     # ## Hilbert envelope vector in X
@@ -99,8 +104,13 @@ class Timetrace3D:
 
     ## ToDo: add additional quantities from the trees?
 
+    def calculate_t_vector(self, time_offset):
+        """Calculation of the time vector - should be called manually when all the necessary parameters of the Timetrace3D are set"""
+        self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset)
+
     @property
     def trace(self):
+        """Trace 3D vector (x,y,z)"""
         return self._trace
 
     @trace.setter
@@ -109,6 +119,7 @@ class Timetrace3D:
 
     @property
     def hilbert_trace(self):
+        """Hilbert envelope 3D vector (x,y,z)"""
         return self._hilbert_trace
 
     @hilbert_trace.setter
@@ -141,15 +152,15 @@ class Shower():
     ## Shower Xmax [g/cm2]
     Xmax: float = 0
     ## Shower position in the site's reference frame
-    _Xmaxpos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _Xmaxpos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
     ## Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
     azimuth: float = 0
     ## Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
     zenith: float = 0
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
     ## Poistion of the core on the ground in the site's reference frame
-    _core_ground_pos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _core_ground_pos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
 
     @property
     def Xmaxpos(self):
@@ -252,7 +263,10 @@ class Event():
     # ## Site latitude
     # site_lat: np.float32 = 0
     ## Origin of the coordinate system used for the array
-    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float), y=np.zeros(1, np.float), z=np.zeros(1, np.float)))
+    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
+
+    ## Time bin size [ns]
+    _t_bin_size: int = 2
 
     # Internal trees
     trun: ROOT.TTree = None
@@ -423,6 +437,7 @@ class Event():
         # self.site_long = self.trun.site_long
         # self.site_lat = self.trun.site_lat
         self.origin_geoid = self.trun.origin_geoid
+        self._t_bin_size = self.trun.t_bin_size
 
         return ret
 
@@ -436,6 +451,9 @@ class Event():
         # self.tvoltage.get_entry(0)
         self.voltages = []
         self.antennas = []
+
+        # Needed to select the first trace later. ToDo: maybe the first trace in the file is always first in time? That would save time...
+        start_times = []
 
         # Get number of DUs
         if not use_trawvoltage:
@@ -452,8 +470,10 @@ class Event():
                 tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
+            start_times.append(v.t0)
+            v.t_bin_size = self._t_bin_size
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
-            v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float), y=np.zeros(len(tx), np.float), z=np.zeros(len(tx), np.float))
+            v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
             if not use_trawvoltage:
                 v.trace.y = self.tvoltage.trace[i][1]
@@ -506,7 +526,7 @@ class Event():
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
-            v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float), y=np.zeros(len(tx), np.float), z=np.zeros(len(tx), np.float))
+            v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
             v.trace.y = self.tefield.trace[0][i]
             v.trace.z = self.tefield.trace[0][i]
