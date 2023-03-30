@@ -106,7 +106,8 @@ class Timetrace3D:
 
     def calculate_t_vector(self, time_offset):
         """Calculation of the time vector - should be called manually when all the necessary parameters of the Timetrace3D are set"""
-        self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset)
+        # ToDo: t0 is at the moment the trigger time, not the start time...
+        self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
 
     @property
     def trace(self):
@@ -459,20 +460,21 @@ class Event():
     def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
         ret = 1
         if self._entry_number is not None:
-            ret = self.tvoltage._tree.GetEntry(self._entry_number)
+            ret = self.tvoltage.get_entry(self._entry_number)
         else:
             ret = self.tvoltage.get_event(self.event_number, self.run_number)
         # self.tvoltage.get_entry(0)
         self.voltages = []
-
-        # Needed to select the first trace later. ToDo: maybe the first trace in the file is always first in time? That would save time...
-        start_times = []
 
         # Get number of DUs
         if not use_trawvoltage:
             trace_cnt = len(self.tvoltage.trace)
         else:
             trace_cnt = len(self.tvoltage.trace_ch)
+
+        # Obtain the start time of the earliest trace. ToDo: maybe the first trace in the file is always first in time? That would save time...
+        min_t0 = np.min(np.array(np.array(self.tvoltage.du_seconds).astype(np.int64)*1000000000+np.array(self.tvoltage.du_nanoseconds).astype(np.int64), dtype="datetime64[ns]"))
+
         # Loop through traces
         for i in range(trace_cnt):
             # Fill the voltage trace part
@@ -483,7 +485,6 @@ class Event():
                 tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
-            start_times.append(v.t0)
             v.t_bin_size = self._t_bin_size
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
@@ -494,6 +495,10 @@ class Event():
             else:
                 v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
                 v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
+
+            # Generate the time array
+            v.calculate_t_vector(min_t0)
+
             self.voltages.append(v)
 
         # ## The trace length
@@ -519,7 +524,7 @@ class Event():
     def fill_event_from_efield_tree(self):
         ret = 1
         if self._entry_number is not None:
-            ret = self.tvoltage.get_entry(self._entry_number)
+            ret = self.tefield.get_entry(self._entry_number)
         else:
             ret = self.tefield.get_event(self.event_number, self.run_number)
         self.efields = []
@@ -555,7 +560,7 @@ class Event():
             shower = self.shower
 
         if self._entry_number is not None:
-            ret = self.tvoltage.get_entry(self._entry_number)
+            ret = tree.get_entry(self._entry_number)
         else:
             ret = tree.get_event(self.event_number, self.run_number)
         ## Shower energy from e+- (ie related to radio emission) (GeV)
