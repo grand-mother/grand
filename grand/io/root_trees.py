@@ -484,6 +484,22 @@ class DataTree:
         self.assign_branches()
         return res
 
+    def get_v1(self):
+        '''Get first vector of results from scan()'''
+        return self._tree.GetV1()
+
+    def get_v2(self):
+        '''Get second vector of results from scan()'''
+        return self._tree.GetV2()
+
+    def get_v3(self):
+        '''Get third vector of results from scan()'''
+        return self._tree.GetV3()
+
+    def get_v4(self):
+        '''Get fourth vector of results from scan()'''
+        return self._tree.GetV4()
+
     ## All three methods below return the number of entries
     def get_entries(self):
         """Return the number of events in the tree"""
