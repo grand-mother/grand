@@ -423,6 +423,11 @@ class Event():
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self, run_entry_number=None):
         ret = 1
+
+        # If run number not provided in any way, get the first entry
+        if run_entry_number is None and self.run_number is None:
+            run_entry_number = 0
+
         # Read the event into the class
         if run_entry_number is None:
             ret = self.trun.get_run(self.run_number)
@@ -811,6 +816,91 @@ class Event():
         self.tvoltage.close_file()
         self.trun.close_file()
 
+class EventList:
+    """A class giving access/iteration over multiple events"""
+
+    ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
+    file: ROOT.TFile = None
+
+    def __init__(self, file_name, **kwargs):
+        # If TFile was given
+        if isinstance(file_name, ROOT.TFile):
+            self.file_name = file_name.GetName()
+            self.file = file_name
+        # String with file name was given
+        elif isinstance(file_name, str):
+            self.file = ROOT.TFile(file_name, "read")
+
+        # The arguments to be passed to Event.fill_event_from_trees()
+        self.init_kwargs = kwargs
+
+    def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
+        """Get specified event from the event list"""
+
+        # Don't allow specifying entry and event/run at the same time, because... what to chose?
+        if entry_number is not None and (run_number is not None or event_number is not None):
+            print("Please provide only entry_number or event/run_number!")
+            return None
+
+        e = Event()
+        e.file = self.file
+
+        # If entry/event/run number not specified, take the first entry
+        run_entry_number = None
+        if entry_number is None and run_number is None and event_number is None:
+            entry_number = 0
+
+        if entry_number is not None:
+            e._entry_number = entry_number
+        else:
+            if run_number is None:
+                run_number = 0
+            if event_number is not None:
+                e.run_number=run_number
+                e.event_number=event_number
+            else:
+                print("Please provide event_number and run_number, or entry_number")
+                return None
+
+        # Fill the event
+        if fill_event:
+            # Overwrite the init kwargs with kwargs given here
+            if len(kwargs)>0:
+                e.fill_event_from_trees(**kwargs)
+            else:
+                e.fill_event_from_trees(**self.init_kwargs)
+
+        return e
+
+    def get_number_of_events(self):
+        """Get the number of events in the list"""
+
+        # ToDo: at the moment assumes the same number of events in all the trees
+        df = DataFile(self.file)
+
+        # First, try to get the number of events from tshower
+        if "TShower" in df.tree_types:
+            return df.tshower.get_entries()
+        elif "TEfield" in df.tree_types:
+            return df.tefield.get_entries()
+        elif "TVoltage" in df.tree_types:
+            return df.tvoltage.get_entries()
+        elif "TRawVoltage" in df.tree_types:
+            return df.trawvoltage.get_entries()
+        else:
+            print("Can not find any tree to provide the number of events in the file.")
+            return None
+
+    ## Return the iterable over self
+    def __iter__(self):
+        # Always start the iteration with the first entry
+        current_entry = 0
+
+        entries_cnt = self.get_number_of_events()
+
+        while current_entry < entries_cnt:
+            yield self.get_event(entry_number=current_entry)
+            current_entry += 1
 
 
 ## Exception risen if the TTree already exists
