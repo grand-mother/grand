@@ -62,7 +62,7 @@ class StdVectorList(MutableSequence):
         else:
             self.basic_vec_type = self.vec_type
         # The number of dimensions of this vector
-        self.ndim = vec_type.count("vector")+1
+        self.ndim = vec_type.count("vector") + 1
 
     def __len__(self):
         return self._vector.size()
@@ -129,7 +129,7 @@ class StdVectorList(MutableSequence):
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
         # Python float is really a double, so for vector of floats it sometimes is not accepted (but why not always?)
-        if (isinstance(value, list) and self.basic_vec_type.split()[-1]=="float") or isinstance(value, np.ndarray):
+        if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
             if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
             if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
             if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
@@ -1654,7 +1654,6 @@ class TRun(MotherRunTree):
             )
 
 
-
 ## General info on the voltage common to all events.
 @dataclass
 class TRunVoltage(MotherRunTree):
@@ -2065,7 +2064,6 @@ class TRunVoltage(MotherRunTree):
             raise ValueError(
                 f"Incorrect type for channel_trig_settings_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
             )
-
 
 
 @dataclass
@@ -3593,9 +3591,9 @@ class TADC(MotherEventTree):
     def trace_ch(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace_ch._vector.clear()
@@ -3816,6 +3814,7 @@ class TRawVoltage(MotherEventTree):
 
     ## Voltage traces for channels 1,2,3,4 in muV
     _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+
     # _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     # def __post_init__(self):
@@ -5240,9 +5239,9 @@ class TRawVoltage(MotherEventTree):
     def trace_ch(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace_ch._vector.clear()
@@ -5566,9 +5565,9 @@ class TVoltage(MotherEventTree):
     def trace(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace._vector.clear()
@@ -5692,7 +5691,6 @@ class TEfield(MotherEventTree):
     _fft_mag: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
     ## FFT phase for antenna arms (x,y,z)
     _fft_phase: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
-
 
     ## Peak-to-peak amplitudes for X, Y, Z (muV/m)
     _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
@@ -6067,9 +6065,9 @@ class TEfield(MotherEventTree):
     def trace(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace._vector.clear()
@@ -6092,9 +6090,9 @@ class TEfield(MotherEventTree):
     def fft_mag(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._fft_mag._vector.clear()
@@ -6117,9 +6115,9 @@ class TEfield(MotherEventTree):
     def fft_phase(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._fft_phase._vector.clear()
@@ -6673,7 +6671,6 @@ class TRunEfieldSim(MotherRunTree):
         self._sim_version.string.assign(value)
 
 
-
 # @dataclass
 # ## The class for storing Efield simulation-only data common for each event
 # class EfieldEventSimdataTree(MotherEventTree):
@@ -6994,7 +6991,6 @@ class TShowerSim(MotherEventTree):
     ## Core positions tested for that shower to generate the event (effective area study)
     _tested_core_positions: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
-
     @property
     def input_name(self):
         """File name in the simulator"""
@@ -7293,6 +7289,7 @@ class TShowerSim(MotherEventTree):
     @tested_core_positions.setter
     def tested_core_positions(self, value):
         set_vector_of_vectors(value, "vector<float>", self._tested_core_positions, "tested_core_positions")
+
 
 ## General info on the noise generation
 @dataclass
@@ -7645,8 +7642,9 @@ def set_vector_of_vectors(value, vec_type, variable, variable_name):
                 f"Incorrect type for {variable_name} {type(value)}. Either a list, an array or a ROOT.vector required."
             )
 
+
 ## Class holding the information about GRAND data in a directory
-class DataDirectory():
+class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
     def __init__(self, dir_name: str, recursive: bool = False):
@@ -7727,7 +7725,7 @@ class DataDirectory():
         pass
 
 
-class DataFile():
+class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
 
     # Holds all the trees in the file, by tree name
