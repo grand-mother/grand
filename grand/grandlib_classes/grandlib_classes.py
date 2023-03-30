@@ -74,6 +74,8 @@ class Timetrace3D:
     trigger_time: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
     ## The size of the time bin - the time resolution in ns
     t_bin_size: float = 2
+    ## The Detector Unit ID
+    du_id: int = -1
 
     ## Trace vector in X
     # trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
@@ -504,6 +506,8 @@ class Event():
             # Generate the time array
             v.calculate_t_vector(min_t0)
 
+            v.du_id = self.tvoltage.du_id[i]
+
             self.voltages.append(v)
 
         # ## The trace length
@@ -544,6 +548,9 @@ class Event():
             v.trace.x = tx
             v.trace.y = self.tefield.trace[0][i]
             v.trace.z = self.tefield.trace[0][i]
+
+            v.du_id = self.tvoltage.du_id[i]
+
             self.efields.append(v)
 
         return ret
