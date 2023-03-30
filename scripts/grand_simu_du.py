@@ -65,13 +65,13 @@ def manage_args():
         "--lst",
         type=check_float_day_hour,
         default=18.0,
-        help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h.",
+        help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h for the EW arm.",
     )
     parser.add_argument(
         "--padding_factor",
         type=float,
         default=1.0,
-        help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h.",
+        help="add 0 at the end of the efield trace",
     )
     # retrieve argument
     return parser.parse_args()
