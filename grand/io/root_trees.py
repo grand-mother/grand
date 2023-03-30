@@ -258,6 +258,7 @@ class DataTree:
     @tree_name.setter
     def tree_name(self, val):
         """Set the tree name"""
+        # ToDo: enforce the name to start with the type!
         self._tree_name = val
         self._tree.SetName(val)
         self._tree.SetTitle(val)
