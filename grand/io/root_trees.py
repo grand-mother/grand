@@ -484,20 +484,24 @@ class DataTree:
         self.assign_branches()
         return res
 
+    def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0):
+        """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX()."""
+        return self._tree.Draw(varexp, selection, option, nentries, firstentry)
+
     def get_v1(self):
-        '''Get first vector of results from scan()'''
+        '''Get first vector of results from draw()'''
         return self._tree.GetV1()
 
     def get_v2(self):
-        '''Get second vector of results from scan()'''
+        '''Get second vector of results from draw()'''
         return self._tree.GetV2()
 
     def get_v3(self):
-        '''Get third vector of results from scan()'''
+        '''Get third vector of results from draw()'''
         return self._tree.GetV3()
 
     def get_v4(self):
-        '''Get fourth vector of results from scan()'''
+        '''Get fourth vector of results from draw()'''
         return self._tree.GetV4()
 
     ## All three methods below return the number of entries
