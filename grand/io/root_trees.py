@@ -451,6 +451,7 @@ class DataTree:
         # If the writing options are not explicitly specified, add kWriteDelete option, that deletes the old cycle after writing the new cycle in the TFile
         if len(args) < 2:
             args = ["", ROOT.TObject.kWriteDelete]
+        # ToDo: make sure that the tree has different name than the trees existing in the file!
         self._tree.Write(*args)
 
         # If TFile was created here, close it
@@ -7747,8 +7748,8 @@ class DataFile:
             raise TypeError(f"Unsupported type {type(filename)} as a filename")
 
         # Loop through the keys
-        for key in f.GetListOfKeys():
-            t = f.Get(key.GetName())
+        for key in self.f.GetListOfKeys():
+            t = self.f.Get(key.GetName())
             # Process only TTrees
             if type(t) != ROOT.TTree:
                 continue
