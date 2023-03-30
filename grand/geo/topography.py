@@ -92,23 +92,10 @@ def _get_geoid():
     global _geoid
 
     if _geoid is None:
-        path = os.path.join(DATADIR, "egm96.png")
+        #path = os.path.join(DATADIR, "egm96.png")
+        path = Path(grand_get_path_root_pkg()) / "data" / "egm96.png"
         _geoid = _Map(path)
     return _geoid
-
-
-def geoid_undulationX(coordinates):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
-    """
-    geoid = _get_geoid()
-
-    # Compute the geodetic coordinates
-    geodetic = Geodetic(coordinates)
-    z = geoid.elevation(geodetic.longitude, geodetic.latitude)
-
-    return z
-
 
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     """Get the geoid undulation. This function calculates the height of
@@ -137,7 +124,7 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     """
     Update the cache of topography data.
     Data are stored in https://github.com/grand-mother/store/releases.
-    Locally saved as .../grand/data/topography/*.SRTMGL1.hgt
+    Locally saved as .../grand/data/topography/*.hgt
     """
     if clear:
         for p in DATADIR.glob("**/*.*"):
@@ -202,8 +189,11 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
                 lat = -lat if lat < 0 else lat
                 lon = -lon if lon < 0 else lon
 
+                base     = f"{ns}{lat:02.0f}{ew}{lon:03.0f}"
                 basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt"
-                path = DATADIR / basename
+                print('topography:', ns, lat, ew, lon, basename)
+                #path = DATADIR / basename
+                path = DATADIR / (base+".hgt")
                 if not path.exists():
                     print("Caching data for", path)
                     try:
@@ -212,7 +202,7 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
                         )  # stored in github.com/grand-mother/store/releases.
                     except store.InvalidBLOB:
                         raise ValueError(
-                            f"missing data for {basename}"
+                            f"missing data in GRAND repository for {basename}. Download it from https://search.earthdata.nasa.gov/search/granules?p=C1000000240-LPDAAC_ECS&pg[0][v]=f&pg[0][gsk]=-start_date&tl=1680158515.135!3!!"
                         ) from None  # RK: what is this? and why?
                     else:
                         with path.open("wb") as f:
