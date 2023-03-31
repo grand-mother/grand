@@ -234,10 +234,12 @@ class DataTree:
 
     @type.setter
     def type(self, val: str) -> None:
-        # Remove the existing type
-        self._tree.GetUserInfo().RemoveAt(0)
-        # Add the provided type
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("type", val), 0)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("type")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("type", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
         # Update the property
         self._type = val
 
@@ -275,10 +277,13 @@ class DataTree:
 
     @comment.setter
     def comment(self, val: str) -> None:
-        # Remove the existing comment
-        self._tree.GetUserInfo().RemoveAt(1)
-        # Add the provided comment
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("comment", val), 1)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("comment")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("comment", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         # Update the property
         self._comment = val
 
@@ -288,19 +293,23 @@ class DataTree:
 
     @creation_datetime.setter
     def creation_datetime(self, val: datetime.datetime) -> None:
-        # Remove the existing datetime
-        self._tree.GetUserInfo().RemoveAt(2)
-        # Add the provided time
-        # If datetime was given
+        # If datetime was given, convert it to int
         if type(val) == datetime.datetime:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 2)
-            self._creation_datetime = val
-        # If timestamp was given - this happens when initialising with self.assign_metadata()
+            val = int(val.timestamp())
+            val_dt = val
         elif type(val) == int:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", val), 2)
-            self._creation_datetime = datetime.datetime.fromtimestamp(val)
+            val_dt = datetime.datetime.fromtimestamp(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
+
+        # The meta field does not exist, add it
+        if (el := self._tree.GetUserInfo().FindObject("creation_datetime")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("creation_datetime", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._creation_datetime = val_dt
 
     @property
     def modification_history(self):
@@ -309,10 +318,13 @@ class DataTree:
 
     @modification_history.setter
     def modification_history(self, val: str) -> None:
-        # Remove the existing modification_history
-        self._tree.GetUserInfo().RemoveAt(7)
-        # Add the provided modification_history
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_history", val), 7)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_history")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_history", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         # Update the property
         self._modification_history = val
 
@@ -652,14 +664,16 @@ class DataTree:
         self.type = self._type
         self.comment = ""
         self.creation_datetime = datetime.datetime.utcnow()
+        self.modification_history = ""
 
     ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree
     def assign_metadata(self):
         """Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree"""
-        for i, el in enumerate(self._tree.GetUserInfo()):
+        metadata_count = self._tree.GetUserInfo().GetEntries()
+        for i in range(metadata_count):
+            el = self._tree.GetUserInfo().At(i)
             # meta as TNamed
             if type(el) == ROOT.TNamed:
-                # setattr(self, "_" + el.GetName(), el.GetTitle())
                 setattr(self, el.GetName(), el.GetTitle())
             # meta as TParameter
             else:
@@ -883,18 +897,27 @@ class MotherEventTree(DataTree):
     @source_datetime.setter
     def source_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
-        self._tree.GetUserInfo().RemoveAt(3)
+        self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
 
         # If datetime was given
         if type(val) == datetime.datetime:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 3)
-            self._source_datetime = val
+            val = int(val.timestamp())
+            val_dt = val
         # If timestamp was given - this happens when initialising with self.assign_metadata()
         elif type(val) == int:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", val), 3)
-            self._source_datetime = datetime.datetime.fromtimestamp(val)
+            val_dt = datetime.datetime.fromtimestamp(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
+
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._source_datetime = val_dt
+
 
     @property
     def modification_software(self):
@@ -903,10 +926,13 @@ class MotherEventTree(DataTree):
 
     @modification_software.setter
     def modification_software(self, val: str) -> None:
-        # Remove the existing modification software
-        self._tree.GetUserInfo().RemoveAt(4)
-        # Add the provided modification software
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 4)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         self._modification_software = val
 
     @property
@@ -916,10 +942,13 @@ class MotherEventTree(DataTree):
 
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
-        # Remove the existing modification software version
-        self._tree.GetUserInfo().RemoveAt(5)
-        # Add the provided modification software version
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 5)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         self._modification_software_version = val
 
     @property
@@ -929,10 +958,13 @@ class MotherEventTree(DataTree):
 
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
-        # Remove the existing analysis level
-        self._tree.GetUserInfo().RemoveAt(6)
-        # Add the provided analysis level
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 6)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
         self._analysis_level = val
 
     def __post_init__(self):
