@@ -200,13 +200,13 @@ class Efield2Voltage:
         # ----- antenna responses -----
         # compute_voltage() --> return Voltage(t=t, V=volt_t)
         self.voc[du_idx, 0] = self.ant_leff_sn.compute_voltage(
-            self.evt_shower.maximum, efield_idx, self.evt_shower.shower_frame
+            self.evt_shower.maximum, efield_idx, self.evt_shower.frame
         ).V
         self.voc[du_idx, 1] = self.ant_leff_ew.compute_voltage(
-            self.evt_shower.maximum, efield_idx, self.evt_shower.shower_frame
+            self.evt_shower.maximum, efield_idx, self.evt_shower.frame
         ).V
         self.voc[du_idx, 2] = self.ant_leff_z.compute_voltage(
-            self.evt_shower.maximum, efield_idx, self.evt_shower.shower_frame
+            self.evt_shower.maximum, efield_idx, self.evt_shower.frame
         ).V
 
         # only save Voc in frequency domain if you are adding either galactic noise or RF chain.

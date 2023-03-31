@@ -89,13 +89,13 @@ class ShowerEvent:
         else:
             raise Exception("Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid")
         self.grand_ref_frame = GRANDCS(location=origin_geoid)    # used to define antenna position.
-        shower_core = GRANDCS(
+        self.core = GRANDCS(
             x=d_shower.shower_core_pos[0],
             y=d_shower.shower_core_pos[1],
             z=d_shower.shower_core_pos[2],
             location=origin_geoid)  #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
-        self.shower_frame = LTP(
-            location=shower_core,
+        self.frame = LTP(
+            location=self.core,
             orientation="NWU",
             magnetic=True)          #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
 
@@ -103,7 +103,7 @@ class ShowerEvent:
         logger.info(f"Site origin [lat, long, height]: {origin_geoid}")
         xmax = d_shower.xmax_pos_shc
         logger.info(f"xmax in shower coordinate: {xmax}")
-        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.shower_frame)
+        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
