@@ -721,6 +721,10 @@ class DataTree:
             except:
                 val = el.GetTitle()
 
+            # Convert unix time if this is the datetime
+            if "datetime" in el.GetName() and val!=0:
+                val = datetime.datetime.fromtimestamp(val)
+
             metadata[el.GetName()] = val
 
         return metadata
