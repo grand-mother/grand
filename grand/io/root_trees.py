@@ -625,8 +625,11 @@ class DataTree:
                 self._tree.Branch(value_name[1:], getattr(self, value_name)._vector)
             # Or set its address
             else:
-                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
-                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
+                # Try to attach the branch from the tree
+                try:
+                    self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
+                except:
+                    logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
         # elif id(value.type) == id(StdString):
