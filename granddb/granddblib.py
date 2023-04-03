@@ -325,33 +325,37 @@ class Database:
     # It will first read the file and walk along datas to determine what has to be registered
     def register_filecontent(self, file, idfile):
         tables = {}
-        rfile = rdb.RootFile(file)
+        rfile = rdb.RootFile(str(file))
 
         for treename in rfile.TreeList:
             table = getattr(rfile, treename + "ToDB")['table']
             if table not in tables:
                 tables[table] = {}
 
-            #print(" DEST TABLE =" + getattr(rfile, treename + "ToDB")["table"])
-
-
             # For events we iterates over event_number and run_number "teventshowerzhaires"-> pb: previously in event, but now in run !
-            if treename in ["teventefield", "teventshowersimdata",  'teventshower',
-                            'teventvoltage']:
+            if treename in ["teventefield", "teventshowersimdata",  "teventshower","teventvoltage",
+                            "tadc","trawvoltage","tvoltage","tefield","tshower","tshowersim"]:
                 for event, run in rfile.TreeList[treename].get_list_of_events():
                     if not (run, event) in tables[table]:
                         tables[table][(run, event)] = {}
+
                     rfile.TreeList[treename].get_event(event, run)
                     for param, field in getattr(rfile, treename + "ToDB").items():
                         if param != "table":
                             value = casttodb(getattr(rfile.TreeList[treename], param))
                             if field.find('id_') >= 0:
                                 value = self.get_or_create_fk('event', field, value)
+
                             tables[table][(run, event)][field] = value
 
+                            #if param == "du_id":
+                            #    print("run=" + str(run) + "event=" + str(event) + param + str(getattr(rfile.TreeList[treename], param)))
+                            #    tables[table][(run, event)].setdefault(field,[]).append(value)
+                            #else:
+                            #    tables[table][(run, event)][field] = value
+
             # For runs we iterates over run_number
-            elif treename in ["trun", "trunefieldsimdata"]:
-            #elif treename in ["trun"]:
+            elif treename in ["trun", "trunefieldsimdata","trunvoltage","trunefieldsim","trunshowersim","trunnoise"]:
                 for run in rfile.TreeList[treename].get_list_of_runs():
                     if run not in tables[table]:
                         tables[table][run] = {}
@@ -369,8 +373,6 @@ class Database:
         # insert runs first, get id_run and update events before inserting event !
         for r in tables['run']:
             container = self.tables()['run'](**tables['run'][r])
-            print(container)
-            print(tables['run'][r])
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
             # update id_run in events
@@ -381,6 +383,7 @@ class Database:
                 else:
                     # event has no run associated !
                     # We will not register the event and have to remove this event from the list
+                    print("no valid")
                     novalidevents.append(e)
             # We will not register the events with no run and have to remove them from the list !
             # But maybe better to let the program crash (thus comment the next two lines) !!!
@@ -411,6 +414,10 @@ class Database:
 
     def register_file(self, orgfilename, newfilename, id_repository, provider):
         idfile, read_file = self.register_filename(orgfilename, newfilename, id_repository, provider)
+
+
         if read_file:
-            self.register_filecontent(newfilename,idfile)
+            #We read the localfile and not the remote one
+            self.register_filecontent(orgfilename,idfile)
+            #self.register_filecontent(newfilename,idfile)
         self.sqlalchemysession.commit()

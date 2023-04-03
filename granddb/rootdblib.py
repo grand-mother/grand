@@ -1,23 +1,35 @@
-#import uproot
 import ROOT
 import grand.io.root_trees as groot
 
 
 class RootFile:
     # Use dict to associate rootfile ttree class to root_tree classe
-    TreeToClass = {'trun': groot.RunTree,
-                   'teventadc': groot.ADCEventTree,
-                   'teventvoltage': groot.VoltageEventTree,
-                   'teventefield': groot.EfieldEventTree,
-                   'teventshower': groot.ShowerEventTree,
-                   'trunvoltagesimdata': groot.VoltageRunSimdataTree,
-                   'teventvoltagesimdata': groot.VoltageEventSimdataTree,
-                   'trunefieldsimdata': groot.EfieldRunSimdataTree,
-                   'teventefieldsimdata': groot.EfieldEventSimdataTree,
-                   'trunsimdata': groot.ShowerRunSimdataTree,
-                   'teventshowersimdata': groot.ShowerEventSimdataTree,
-                   'teventshowerzhaires': groot.ShowerEventZHAireSTree,
-                   'tdetectorinfo': groot.DetectorInfo
+    RunTrees = ["trun", "trunefieldsimdata","trunvoltage","trunefieldsim","trunshowersim","trunnoise"]
+    EventTrees = ["teventefield", "teventshowersimdata",  "teventshower","teventvoltage",
+                  "tadc","trawvoltage","tvoltage","tefield","tshower","tshowersim"]
+    TreeToClass = {'trun': groot.TRun,
+                   'teventadc': groot.TADC,
+                   'teventvoltage': groot.TVoltage,
+                   'teventefield': groot.TEfield,
+                   'teventshower': groot.TShower,
+                   'trunvoltagesimdata': groot.TRunVoltage,
+                   'teventvoltagesimdata': groot.TVoltage,
+                   'trunefieldsimdata': groot.TRunEfieldSim,
+                   'teventefieldsimdata': groot.TEfield,
+                   'trunsimdata': groot.TRunEfieldSim,
+                   'teventshowersimdata': groot.TShower,
+                   'teventshowerzhaires': groot.TShowerSim,
+                   'tdetectorinfo': groot.TRun,
+                   'trunvoltage':  groot.TRunVoltage,
+                   'tadc':  groot.TADC,
+                   'trawvoltage':  groot.TRawVoltage,
+                   'tvoltage':  groot.TVoltage,
+                   'tefield':  groot.TEfield,
+                   'tshower':  groot.TShower,
+                   'trunefieldsim':  groot.TRunEfieldSim,
+                   'trunshowersim':  groot.TRunShowerSim,
+                   'tshowersim':  groot.TShowerSim,
+                   'trunnoise': groot.TRunNoise
                    }
     tefieldToDB = {
         'table': 'event',
@@ -31,6 +43,8 @@ class RootFile:
     }
     tshowersimToDB = {
         'table': 'event',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'input_name': 'sim_input_name',
         'event_date': 'sim_event_date',
         'rnd_seed': 'sim_rnd_seed',
@@ -60,6 +74,7 @@ class RootFile:
     }
     trunshowersimToDB = {
         'table': 'run',
+        'run_number': 'run_number',
         'rel_thin': 'rel_thin',
         'weight_factor': 'weight_factor',
         'lowe_cut_e': 'lowe_cut_e',
@@ -73,6 +88,7 @@ class RootFile:
     }
     trunefieldsimToDB = {
         'table': 'run',
+        'run_number': 'run_number',
         'refractivity_model': 'id_refractivity_model',
         'refractivity_model_parameters': 'refractivity_model_parameters',
         't_pre': 't_pre',
@@ -94,16 +110,20 @@ class RootFile:
         'data_generator_version': 'id_data_generator_version',
         'site': 'id_site',
 #        'site_layout': 'id_site_layout',
-        'origin_geoid': 'origin_geoid'
+        'origin_geoid': 'origin_geoid',
+        't_bin_size': 't_bin_size'
     }
 
     trunnoiseToDB = {
         'table': 'run',
+        'run_number': 'run_number',
         'GalNoiseMap': 'GalNoiseMap',
         'GalNoiseLST': 'GalNoiseLST'
     }
     tadcToDB = {
         'table': 'event',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'event_size': 'adc_event_size',
         't3_number': 'adc_t3_number',
         'first_du': 'adc_id_first_du',
@@ -116,6 +136,8 @@ class RootFile:
     }
     trawvoltageToDB = {
         'table': 'event',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'first_du': 'voltage_id_first_du',
         'time_seconds': 'voltage_time_seconds',
         'time_nanoseconds': 'voltage_time_nanoseconds',
@@ -123,6 +145,8 @@ class RootFile:
     }
     tvoltageToDB = {
         'table': 'event',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'first_du': 'voltage_id_first_du',
         'time_seconds': 'voltage_time_seconds',
         'time_nanoseconds': 'voltage_time_nanoseconds',
@@ -167,6 +191,8 @@ class RootFile:
     }
     teventshowersimdataToDB = {
         'table': 'event',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'event_name': 'sim_input_name',
         'date': 'sim_event_date',
         'rnd_seed': 'sim_rnd_seed',
@@ -191,6 +217,8 @@ class RootFile:
     }
     teventshowerzhairesToDB = {
         'table': 'run',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'relative_thining': 'rel_thin',
         'weight_factor': 'weight_factor',
         'gamma_energy_cut': 'lowe_cut_gamma',
@@ -202,6 +230,7 @@ class RootFile:
     }
     trunefieldsimdataToDB = {
         'table': 'run',
+        'run_number': 'run_number',
         'refractivity_model': 'id_refractivity_model',
         'refractivity_model_parameters': 'refractivity_model_parameters',
         't_pre': 't_pre',
@@ -214,6 +243,8 @@ class RootFile:
 
     teventvoltageToDB = {
         'table': 'event',
+        'run_number': 'run_number',
+        'event_number': 'event_number',
         'event_size': 'adc_event_size',
         't3_number': 'adc_t3_number',
         'first_du': 'adc_id_first_du',
@@ -253,26 +284,20 @@ class RootFile:
     ## We retreive the list of Ttrees in the file  and store them as the corresponding class from root_files.py in the dict TreeList
     def __init__(self, f_name):
         myfile = ROOT.TFile(f_name)
-        for keyo in myfile.GetListOfKeys():
-            key = keyo.GetName()
-            if key in self.TreeToClass:
-                self.TreeList[key] = self.TreeToClass[key](f_name)
+
+        for key in myfile.GetListOfKeys():
+            name = key.GetName()
+            #Names of trees should start with their type followed by _ and whatever
+            ttype = name.split('_', 1)[0]
+
+            if ttype in self.TreeToClass:
+                self.TreeList[ttype] = self.TreeToClass[ttype](f_name)
             else:
-                print(key + " is unknown")
+                print(ttype + " is unknown")
 
     def copy_content_to(self, file):
         for treename in self.TreeList:
-            print(treename)
             tree = self.TreeToClass[treename](file)
             tree.copy_contents(self.TreeList[treename])
             tree.write()
 
-
-    ## OLD VERSION WITH UPROOT
-#    def __init__(self, f_name):
-#        myfile = uproot.open(f_name)
-#        for key in myfile.keys(cycle=False):
-#            if key in self.TreeToClass:
-#                self.TreeList[key] = self.TreeToClass[key](f_name)
-#            else:
-#                print(key + " is unknown")
