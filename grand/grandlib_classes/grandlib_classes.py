@@ -208,14 +208,21 @@ class Event():
     ## Antennas participating in the event
     # antennas: list[Antenna] = None
     antennas: list = None
-    ## Event multiplicity: ToDo: what is it?
-    L: int = 0
     ## Voltages from different antennas
     # voltages: list[Voltage] = None
     voltages: list = None
     ## Efields from different antennas
     # efields: list[Efield] = None
     efields: list = None
+
+    ## Reconstructed shower
+    shower: Shower() = None
+
+    ## Simualted shower for simulations
+    simshower: Shower() = None
+
+    ## Event multiplicity: ToDo: what is it?
+    L: int = 0
 
     # Reconstruction parameters
     ## Was this event reconstructed?
@@ -233,12 +240,6 @@ class Event():
 
     ## Is this an EAS?
     is_eas: bool = False
-
-    ## Reconstructed shower
-    shower: Shower() = None
-
-    ## Simualted shower for simulations
-    simshower: Shower() = None
 
     # *** Run related properties
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
