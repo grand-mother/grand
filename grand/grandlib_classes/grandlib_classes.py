@@ -273,11 +273,11 @@ class Event():
     _t_bin_size: int = 2
 
     # Internal trees
-    trun: ROOT.TTree = None
-    tvoltage: ROOT.TTree = None
-    tefield: ROOT.TTree = None
-    tshower: ROOT.TTree = None
-    tsimshower: ROOT.TTree = None
+    trun: TRun = None
+    tvoltage: TVoltage = None
+    tefield: TEfield = None
+    tshower: TShower = None
+    tsimshower: TShower = None
 
     # Options
 
