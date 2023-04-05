@@ -720,8 +720,8 @@ class Event:
             self.tefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the shower to a file
-    def write_shower(self, filename, overwrite=False):
-        self.fill_shower_tree(filename=filename)
+    def write_shower(self, filename, overwrite=False, tree_name="tshower"):
+        self.fill_shower_tree(filename=filename, tree_name=tree_name)
         if self.auto_file_close:
             self.tshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
@@ -832,7 +832,7 @@ class Event:
         self.tefield.fill()
 
     ## Fill the shower tree from this Event
-    def fill_shower_tree(self, overwrite=False, filename=None):
+    def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
         # Fill only if the tree not initialised yet
         if self.tshower is not None and not overwrite:
             raise TreeExists("The tshower TTree already exists!")
@@ -845,7 +845,7 @@ class Event:
                 break
         # No same TShower in memory - create a new one
         else:
-            self.tshower = TShower(_file_name = filename)
+            self.tshower = TShower(_file_name=filename, tree_name=tree_name)
 
         self.tshower.run_number = self.run_number
         self.tshower.event_number = self.event_number
