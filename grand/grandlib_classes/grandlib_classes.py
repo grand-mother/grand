@@ -7,11 +7,12 @@ from grand.io.root_trees import *
 from grand.tools.coordinates import *
 import ROOT
 
-## A class describing a single antenna; ToDo: Should it be antenna, or more general: Detector?
 @dataclass
 class Antenna:
-    ## Antenna ID - the du_id from the trees
+    """A class describing a single antenna"""
+
     id: int = -1
+    """Antenna ID - the du_id from the trees"""
 
     ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
     # position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
@@ -21,8 +22,8 @@ class Antenna:
     ## Antenna acceleration - this comes from hardware. ToDo: perhaps recalculate to tilt or remove tilt?
     _acceleration: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
 
-    ## The antenna model
     model: Any = 0
+    """The antenna model"""
 
     # # ToDo: Parameters below come from the hardware, but do we want them here?
     # ## Atmospheric temperature (read via I2C)
@@ -38,6 +39,7 @@ class Antenna:
 
     @property
     def position(self):
+        """Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)"""
         return self._position
 
     @position.setter
@@ -46,6 +48,7 @@ class Antenna:
 
     @property
     def tilt(self):
+        """Antenna tilt"""
         return self._tilt
 
     @tilt.setter
@@ -54,6 +57,7 @@ class Antenna:
 
     @property
     def acceleration(self):
+        """Antenna acceleration - this comes from hardware."""
         return self._acceleration
 
     @acceleration.setter
@@ -61,21 +65,27 @@ class Antenna:
         self._acceleration = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
 
-## A class for holding x,y,z single antenna traces over time
 @dataclass
 class Timetrace3D:
-    ## The trace length
+    """A class for holding x,y,z single antenna traces over time"""
+
     n_points: int = 0
-    ## [ns] n_points x step = total timetrace length
+    """The trace length"""
+
     time_step: float = 0
-    ## Start time of the trace as unix time with nanoseconds
+    """[ns] n_points x step = total timetrace length"""
+
     t0: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
-    ## Trigger time as unix time with nanoseconds
+    """Start time of the trace as unix time with nanoseconds"""
+
     trigger_time: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
-    ## The size of the time bin - the time resolution in ns
+    """Trigger time as unix time with nanoseconds"""
+
     t_bin_size: float = 2
-    ## The Detector Unit ID
+    """The size of the time bin - the time resolution in ns"""
+
     du_id: int = -1
+    """The Detector Unit ID"""
 
     ## Trace vector in X
     # trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
@@ -90,8 +100,8 @@ class Timetrace3D:
     # _trace1: list = None
     # trace: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
 
-    # The time vector [ns] - generated from the trace length, t0 and t_bin_size
     t_vector: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    """The time vector [ns] - generated from the trace length, t0 and t_bin_size"""
 
     ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
     _hilbert_trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(0, np.float32), y=np.zeros(0, np.float32), z=np.zeros(0, np.float32)))
@@ -122,51 +132,62 @@ class Timetrace3D:
 
     @property
     def hilbert_trace(self):
-        """Hilbert envelope 3D vector (x,y,z)"""
+        """Hilbert envelope 3D vector (x,y,z) - not defined in the hardware"""
         return self._hilbert_trace
 
     @hilbert_trace.setter
     def hilbert_trace(self, v):
         self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
-## A class for holding voltage traces + additional information
 @dataclass
 class Voltage(Timetrace3D):
+    """A class for holding voltage traces + additional information"""
+
     ## GPS time of the trigger - why would we want it? We have already _trigger_time in Timetrace3D, that is GPS time + nanoseconds
     # _GPS_trigtime: np.uint32 = 0
-    ## Is this a triggered trace? - not sure if it should be here or in Timetrace3D, or perhaps further up in the event
     is_triggered: bool = True
+    """Is this a triggered trace? - not sure if it should be here or in Timetrace3D, or perhaps further up in the event"""
 
-## A class for holding Efield traces + additional information
 @dataclass
 class Efield(Timetrace3D):
-    ## Polarization angle of the reconstructed Efield in the shower plane [deg]
-    eta: float = 0
-    ## Ratio of the geomagnetic to charge excess contributions
-    a_ratio: float = 0
+    """A class for holding Efield traces + additional information"""
 
-## A class for holding a shower
+    eta: float = 0
+    """Polarization angle of the reconstructed Efield in the shower plane [deg]"""
+
+    a_ratio: float = 0
+    """Ratio of the geomagnetic to charge excess contributions"""
+
 @dataclass
-class Shower():
-    ## Shower from e+- (ie related to radio emission) (GeV)
+class Shower:
+    """A class for holding a shower"""
+
     energy_em: float = 0
-    ## Total energy of the primary (including muons, neutrinos, ...) (GeV)
+    """Shower from e+- (ie related to radio emission) (GeV)"""
+
     energy_primary: float = 0
-    ## Shower Xmax [g/cm2]
+    """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
+
     Xmax: float = 0
-    ## Shower position in the site's reference frame
+    """Shower Xmax [g/cm2]"""
+
     _Xmaxpos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-    ## Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
+    """Shower position in the site's reference frame"""
+
     azimuth: float = 0
-    ## Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
+    """Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")"""
+
     zenith: float = 0
+    """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
+
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
     _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-    ## Poistion of the core on the ground in the site's reference frame
+    ## Position of the core on the ground in the site's reference frame
     _core_ground_pos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
 
     @property
     def Xmaxpos(self):
+        """Shower position in the site's reference frame"""
         return self._Xmaxpos
 
     @Xmaxpos.setter
@@ -175,6 +196,7 @@ class Shower():
 
     @property
     def origin_geoid(self):
+        """Direction of origin"""
         return self._origin_geoid
 
     @origin_geoid.setter
@@ -183,6 +205,7 @@ class Shower():
 
     @property
     def core_ground_pos(self):
+        """Position of the core on the ground in the site's reference frame"""
         return self._core_ground_pos
 
     @core_ground_pos.setter
@@ -191,59 +214,73 @@ class Shower():
 
 
 
-## A class for holding an event
 @dataclass
-class Event():
-    ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
+class Event:
+    """A class for holding an event"""
+
+    # ToDo: this should allow for multiple files holding different TTrees and TChains in the future
     file: ROOT.TFile = None
+    """The instance of the file with TTrees containing the event. """
 
-    ## The current event in the file number
     event_number: int = None
-    ## The run number of the current event
+    """The current event in the file number"""
+
     run_number: int = None
-    ## The entry number - used for enforcing loading specific entry from all the event trees. Makes sense only if those trees have all the same events.
+    """The run number of the current event"""
+
     _entry_number: int = None
+    """The entry number - used for enforcing loading specific entry from all the event trees. Makes sense only if those trees have all the same events."""
 
-
-    ## Antennas participating in the event
     # antennas: list[Antenna] = None
     antennas: list = None
-    ## Voltages from different antennas
+    """Antennas participating in the event"""
+
     # voltages: list[Voltage] = None
     voltages: list = None
-    ## Efields from different antennas
+    """Voltages from different antennas"""
+
     # efields: list[Efield] = None
     efields: list = None
+    """Efields from different antennas"""
 
-    ## Reconstructed shower
     shower: Shower() = None
+    """Reconstructed shower"""
 
-    ## Simualted shower for simulations
     simshower: Shower() = None
+    """Simualted shower for simulations"""
 
-    ## Event multiplicity: ToDo: what is it?
+    ## ToDo: what is it?
     L: int = 0
+    """Event multiplicity"""
 
     # Reconstruction parameters
-    ## Was this event reconstructed?
-    is_reconstructed: bool = False
-    ## Is this event associated to a single wave based on reconstruction
-    is_wave: bool = False
-    ## Vector of origin of plane wave fit
-    origin_planewave: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
-    ## Chi2 of plane wave fit
-    chi2_planewave: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
-    ## Position of the source according to spherical fit
-    origin_sphere: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
-    ## Chi2 of spherical fit
-    chi2_sphere: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
 
-    ## Is this an EAS?
+    is_reconstructed: bool = False
+    """Was this event reconstructed"""
+
+    is_wave: bool = False
+    """Is this event associated to a single wave based on reconstruction"""
+
+    origin_planewave: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    """Vector of origin of plane wave fit"""
+
+    chi2_planewave: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    """Chi2 of plane wave fit"""
+
+    origin_sphere: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    """Position of the source according to spherical fit"""
+
+    chi2_sphere: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    """Chi2 of spherical fit"""
+
     is_eas: bool = False
+    """Is this an EAS?"""
 
     # *** Run related properties
-    ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
+    ## ToDo: should get enum description for that, but I don't think it exists at the moment
     run_mode: np.uint32 = 0
+    """Run mode - calibration/test/physics."""
+
     # ToDo: list of readable events should be held somewhere in this interface, but where?
     ## Run's first event
     # _first_event: np.ndarray = np.zeros(1, np.uint32)
@@ -254,35 +291,50 @@ class Event():
     ## Last event time
     # _last_event_time: np.ndarray = np.zeros(1, np.uint32)
     # These are not from the hardware
-    ## Data source: detector, simulation, other
+
     data_source: str = "other"
-    ## Data generator: gtot (in this case)
+    """Data source, detector, simulation, other"""
+
     data_generator: str = "GRANDlib"
-    ## Generator version: gtot version (in this case)
+    """Data generator, gtot (in this case)"""
+
     data_generator_version: str = "0.1.0"
-    ## Site name
+    """Generator version, gtot version (in this case)"""
+
     site: str = "DummySite"
+    """Site name"""
+
     # ## Site longitude
     # site_long: np.float32 = 0
     # ## Site latitude
     # site_lat: np.float32 = 0
-    ## Origin of the coordinate system used for the array
-    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
 
-    ## Time bin size [ns]
+    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
+    """Origin of the coordinate system used for the array"""
+
     _t_bin_size: int = 2
+    """Time bin size [ns]"""
 
     # Internal trees
     trun: TRun = None
+    """DOI's TRun tree containing all run information"""
+
     tvoltage: TVoltage = None
+    """DOI's TVoltage/TRawVoltage tree containing voltage information"""
+
     tefield: TEfield = None
+    """DOI's TEfield tree containing Efield information"""
+
     tshower: TShower = None
+    """DOI's TShower tree containing reconstructed shower information"""
+
     tsimshower: TShower = None
+    """DOI's TShower tree containing simulated shower information"""
 
     # Options
 
-    # Close files automatically after event write? - slower writing but less maitanance by the user
     auto_file_close: bool = True
+    """Close files automatically after event write? - slower writing but less maitanance by the user"""
 
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
@@ -292,6 +344,7 @@ class Event():
 
     @property
     def origin_geoid(self):
+        """Origin of the coordinate system used for the array"""
         return self._origin_geoid
 
     @origin_geoid.setter
