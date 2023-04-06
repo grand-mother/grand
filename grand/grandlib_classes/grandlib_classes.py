@@ -845,7 +845,7 @@ class Event:
                 break
         # No same TShower in memory - create a new one
         else:
-            self.tshower = TShower(_file_name=filename, tree_name=tree_name)
+            self.tshower = TShower(_file_name=filename, _tree_name=tree_name)
 
         self.tshower.run_number = self.run_number
         self.tshower.event_number = self.event_number
