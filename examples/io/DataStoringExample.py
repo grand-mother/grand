@@ -54,6 +54,7 @@ trun.run_number = 0
 trun.site = "dummy site"
 trun.first_event = 0
 trun.last_event = event_count
+trun.t_bin_size = [0.5]
 
 # Generate dummy infor for each detector unit from all the events
 for du in range(np.max(trace_counts)):
