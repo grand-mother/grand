@@ -93,7 +93,7 @@ def main():
     o_tevent = d_event.get_obj_handling3dtraces()
     if args.info:
         print(f"Nb events     : {d_event.get_nb_events()}")
-        print(f"Nb DU         : {d_event.get_nb_du()}")
+        print(f"Nb DU         : {d_event.get_du_count()}")
         print(f"Size trace    : {d_event.get_size_trace()}")
     assert isinstance(o_tevent, Handling3dTracesOfEvent)
     if args.list_du:

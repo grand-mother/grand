@@ -47,7 +47,7 @@ tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
 
 # 2- download
 print("==============================")
-print("Download data model (~ 1GB) for GRAND, please wait ...")
+print("Download data model (~ 350MB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")

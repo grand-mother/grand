@@ -1,5 +1,7 @@
-"""
+#!/usr/bin/env python
 
+"""
+Plotting script for galactic noise and RF chain.
 """
 import numpy as np
 import h5py
@@ -8,7 +10,6 @@ import scipy.fft as sf
 import grand.simu.noise.rf_chain as grfc
 from grand import grand_add_path_data
 import grand.manage_log as mlg
-import grand.simu.du.rf_chain as edu
 
 import matplotlib.pyplot as plt
 params = {
@@ -17,7 +18,7 @@ params = {
     "axes.titlesize": 23,
     "xtick.labelsize": 20,
     "ytick.labelsize": 20,
-    "figure.figsize": (10, 8),
+    "figure.figsize": (8, 6),
     "axes.grid": False,
 }
 plt.rcParams.update(params)
@@ -89,23 +90,23 @@ def plot(args="galactic", **kwargs):
     if args=='vswr':
 
         vswr = grfc.StandingWaveRatioGP300()
+        vswr.set_out_freq_mhz(freq_MHz)
         vswr.compute_s11()
 
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        fig.suptitle(f"VSWR, s11 parameter")
-        ax1.set_title("db")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13,5))
+        fig.suptitle(f"VSWR", fontsize=18)
         ax1.plot(vswr._f_db_s11, vswr._db_s11[0], "k", label="0")
         ax1.plot(vswr._f_db_s11, vswr._db_s11[1], "y", label="1")
         ax1.plot(vswr._f_db_s11, vswr._db_s11[2], "b", label="2")
         ax1.set_ylabel(f"db")
         ax1.set_xlabel(f"[MHz]")
-        ax1.grid()
+        ax1.grid(ls='--', alpha=0.3)
         ax1.legend()
-        ax2.set_title("abs(s_11)")
+        #ax2.yaxis.set_ticks_position = ax2.yaxis.set_label_position = 'right'
         ax2.plot(vswr.freqs_out, np.abs(vswr.s11[:, 0]), "k", label="0")
         ax2.plot(vswr.freqs_out, np.abs(vswr.s11[:, 1]), "y", label="1")
         ax2.plot(vswr.freqs_out, np.abs(vswr.s11[:, 2]), "b", label="2")
-        ax2.set_ylabel(f"s11")
+        ax2.set_ylabel(f"abs(s11)")
         ax2.set_xlabel(f"[MHz]")
         plt.grid(ls='--', alpha=0.3)
         ax2.legend()
@@ -142,18 +143,20 @@ def plot(args="galactic", **kwargs):
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
         plt.legend()
-        #plt.savefig("lna_s21.png", bbox_inches="tight")
+        plt.savefig("lna_s21.png", bbox_inches="tight")
 
         """
         plot of intermediate calculation gamma
         """
         plt.figure()
-        plt.title(r"S$_{11}^{\rm vswr}$")
+        plt.title(r"VSWR}$")
         plt.plot(lna.freqs_out, np.abs(lna.antenna_gama[:, 0]), "k", label=r"0")
         plt.plot(lna.freqs_out, np.abs(lna.antenna_gama[:, 1]), "y", label=r"1")
         plt.plot(lna.freqs_out, np.abs(lna.antenna_gama[:, 2]), "b", label=r"2")
         plt.grid(ls='--', alpha=0.3)
         plt.legend()
+        plt.xlabel(f"Frequency [MHz]")
+        plt.ylabel(r"abs(S$_{11}$)")
 
         """
         plot of intermediate calculation z
@@ -164,6 +167,8 @@ def plot(args="galactic", **kwargs):
         plt.plot(lna.freqs_out, np.abs(lna.z_in_lna[:, 0]), label=r"$\mathregular{Z^{in}_{LNA}}$")
         plt.grid(ls='--', alpha=0.3)
         plt.legend()
+        plt.xlabel(f"Frequency [MHz]")
+        plt.ylabel(f"Z")
 
         """
         plot of FFT LNA transfer function rho=rho_1*rho_2*rho_3
@@ -181,38 +186,35 @@ def plot(args="galactic", **kwargs):
         plt.title(r"$\mathregular{S_{21}}$" + " of LNA test", fontsize=15)
         plt.grid(ls='--', alpha=0.3)
         
-        plt.figure(figsize=(9, 3))
+        plt.figure(figsize=(9, 9))
         # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
-        plt.subplot(1, 3, 1)
+        plt.subplot(3, 1, 1)
         for port in range(3):
             plt.plot(lna.freqs_out, np.abs(lna._rho1[:, port]), l_col[port])
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{mag(\rho_1)}$", fontsize=15)
+        plt.ylabel(r"mag($\rho_1$)", fontsize=15)
         plt.xlim(30, 250)
-        plt.title("the contribution of " + r"$\mathregular{ \rho_1}$")
         plt.grid(ls='--', alpha=0.3)
-        plt.subplot(1, 3, 2)
+        plt.xticks([])
+        plt.subplot(3, 1, 2)
         for port in range(3):
             plt.plot(lna.freqs_out, np.abs(lna._rho2[:, port]), l_col[port])
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{mag(\rho_2)}$", fontsize=15)
+        plt.ylabel(r"mag($\rho_2$)", fontsize=15)
         plt.xlim(30, 250)
-        plt.title("the contribution of " + r"$\mathregular{ \rho_2}$")
         plt.grid(ls='--', alpha=0.3)
-        plt.subplot(1, 3, 3)
+        plt.xticks([])
+        plt.subplot(3, 1, 3)
         for port in range(3):
             plt.plot(lna.freqs_out, np.abs(lna._rho3[:, port]), l_col[port])
         plt.legend(["port X", "port Y", "port Z"], loc="upper right")
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{mag(\rho_3)}$", fontsize=15)
+        plt.xlabel("Frequency(MHz)", fontsize=18)
+        plt.ylabel(r"mag($\rho_3$)", fontsize=15)
         plt.xlim(30, 250)
-        plt.title("the contribution of " + r"$\mathregular{ \rho_3}$")
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
-        plt.savefig("lna_rho1_2_3.png", bbox_inches="tight")
+        #plt.savefig("lna_rho1_2_3.png", bbox_inches="tight")
 
         """
         plot of LNA transfer function in time space
@@ -256,32 +258,34 @@ def plot(args="galactic", **kwargs):
         vga = grfc.VgaFilterBalunGP300()
         vga.compute_for_freqs(freq_MHz)
 
-        plt.figure(figsize=(6, 3))
+        plt.figure()
         # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
         # S11 and S21 DB
-        plt.subplot(1, 2, 1)
+        plt.subplot(2, 1, 1)
         plt.plot(vga.freqs_in, vga.dbs11)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{11}}$" + " mag/dB", fontsize=15)
+        plt.ylabel(r"S$_{11}$ mag/dB", fontsize=15)
         plt.grid(ls='--', alpha=0.3)
-        plt.subplot(1, 2, 2)
+        ax = plt.gca()
+        ax.set_xticklabels([])
+        plt.title("S parameters of Filter", fontsize=18)
+        plt.subplot(2, 1, 2)
         plt.plot(vga.freqs_in, vga.dbs21)
         plt.grid(ls='--', alpha=0.3)
-        plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
+        plt.xlabel("Frequency(MHz)", fontsize=16)
+        plt.ylabel(r"S$_{21}$ mag/dB", fontsize=15)
         plt.legend(["port X", "port Y", "port Z"], loc="lower right")
-        plt.suptitle("S parameters of Filter", fontsize=15)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+
         # s21_add_vga
-        plt.figure()
-        # plt.rcParams["font.sans-serif"] = ["Times New Roman"]
+        plt.figure(figsize=(8,3))
         plt.plot(vga.freqs_in, vga.dbs21_add_vga)
         plt.xlabel("Frequency(MHz)", fontsize=15)
-        plt.ylabel(r"$\mathregular{S_{21}}$" + " mag/dB", fontsize=15)
-        plt.title("S parameters of Filter add VGA", fontsize=15)
+        plt.ylabel(r"S$_{21}$ mag/dB", fontsize=15)
+        plt.title("S parameters of Filter add VGA", fontsize=18)
         plt.grid(ls='--', alpha=0.3)
-        plt.figure()
+
+        plt.figure(figsize=(8,3))
         plt.title("FFTS parameters of Filter add VGA", fontsize=15)
         plt.plot(vga.freqs_out, np.abs(vga.fft_vgafilbal))
         plt.xlabel("Frequency(MHz)", fontsize=15)

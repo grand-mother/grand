@@ -47,7 +47,7 @@ class Efield2Voltage:
       * Save output in ROOT format
     """
 
-    def __init__(self, f_input, f_output, seed=None, padding_factor=1.0):
+    def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0):
         self.f_input    = f_input
         self.f_output   = f_output
         self.seed       = seed                                  # used to generate same set of random numbers. (gal noise)
