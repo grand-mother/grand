@@ -6,8 +6,8 @@ Calculation of DU response in volt for first event in Efield input file.
 
 ```bash
 # grand_simu_du.py -h
-usage: grand_simu_du.py [-h] [--no_noise] -o OUT_FILE [--verbose {debug,info,warning,error,critical}]
-                        [--seed SEED] [--lst LST]
+usage: grand_simu_du.py [-h] [--no_noise] [--no_rf_chain] -o OUT_FILE [--verbose {debug,info,warning,error,critical}]
+                        [--seed SEED] [--lst LST] [--padding_factor FLOAT]
                         file
 
 Calculation of DU response in volt for first event in Efield input file.
@@ -31,26 +31,25 @@ optional arguments:
 ## Example
 
 ```bash
-/home/dc1# grand_simu_du.py --lst 10 --seed -10 --verbose info Coarse2_xmax_add.root  -o c2_test.root 
-10:26:08.446  INFO [grand.manage_log 189] create handler for root logger: ['grand']
-10:26:08.446  INFO [grand.scripts.grand_simu_du 71] 
-10:26:08.446  INFO [grand.scripts.grand_simu_du 71] ===========> Begin at 2022-12-09T10:26:08Z <===========
-10:26:08.446  INFO [grand.scripts.grand_simu_du 71] 
-10:26:08.446  INFO [grand.scripts.grand_simu_du 71] 
-10:26:08.556  INFO [grand.io.root_files 200] Events  in file Coarse2_xmax_add.root
-10:26:08.758  INFO [grand.io.root_files 108] load event: 1 of run  0
-10:26:08.780  INFO [grand.io.root_files 115] resize numpy array trace to (96, 3, 999)
-10:26:08.798  INFO [grand.io.root_files 219] load tt_shower: 1 of run  0
-10:26:08.802  INFO [grand.simu.du.model_ant_du 23] Load model of antenna GP300
-10:26:08.802  INFO [grand.io.file_leff 82] Loading tabulated antenna model from /home/dc1/grand/data/model/detector/GP300Antenna_EWarm_leff.npy:/
-10
+/home/dc1# grand_simu_du.py --lst 18 --seed 0 --verbose info test_efield.root  -o test_voltage_jpt.root 
+05:42:43.526  INFO [grand.manage_log 187] create handler for root logger: ['grand']
+05:42:43.527  INFO [grand.scripts.grand_simu_du 84] 
+05:42:43.527  INFO [grand.scripts.grand_simu_du 84] ===========> Begin at 2023-04-07T05:42:43Z <===========
+05:42:43.527  INFO [grand.scripts.grand_simu_du 84] 
+05:42:43.527  INFO [grand.scripts.grand_simu_du 84] 
+05:42:43.527  INFO [grand.scripts.grand_simu_du 90] seed used for random number generator is 0.
+05:42:45.606  INFO [grand.simu.du.antenna_model 104] Loading GP300 antenna model ...
+05:42:45.607  INFO [grand.simu.du.antenna_model 72] Loading /home/grand/data/detector/Light_GP300Antenna_EWarm_leff.npz
+05:42:49.067  INFO [grand.simu.du.antenna_model 72] Loading /home/grand/data/detector/Light_GP300Antenna_SNarm_leff.npz
+05:42:53.614  INFO [grand.simu.du.antenna_model 72] Loading /home/grand/data/detector/Light_GP300Antenna_Zarm_leff.npz
+05:42:58.785  INFO [grand.simu.efield2voltage 79] Running on event-number: 1, run-number: 0
 ...
-0:26:19.907  INFO [grand.simu.master_simu 119] save result in c2_test.root
-10:26:19.915 WARNING [grand.io.root_trees 263] No valid teventvoltage TTree in the file c2_test.root. Creating a new one.
-10:26:20.169  INFO [grand.scripts.grand_simu_du 82] 
-10:26:20.169  INFO [grand.scripts.grand_simu_du 82] 
-10:26:20.169  INFO [grand.scripts.grand_simu_du 82] ===========> End at 2022-12-09T10:26:20Z <===========
-10:26:20.169  INFO [grand.scripts.grand_simu_du 82] Duration (h:m:s): 0:00:11.722876
+05:43:29.537  INFO [grand.simu.efield2voltage 300] save result in test_voltage_jpt.root
+05:43:29.563 WARNING [grand.io.root_trees 391] No valid tvoltage TTree in the file test_voltage_jpt.root. Creating a new one.
+05:43:31.142  INFO [grand.scripts.grand_simu_du 102] 
+05:43:31.142  INFO [grand.scripts.grand_simu_du 102] 
+05:43:31.142  INFO [grand.scripts.grand_simu_du 102] ===========> End at 2023-04-07T05:43:31Z <===========
+05:43:31.142  INFO [grand.scripts.grand_simu_du 102] Duration (h:m:s): 0:00:47.615486
 ```
 
 
