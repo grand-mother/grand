@@ -15,12 +15,12 @@ filename = 'Coarse3.root'
 
 #print(dm.get(filename))
 #file = dm.get(filename)
-#print(dm.register_file(filename))
+print(dm.register_file(filename))
 
-fileres = dm.SearchFileInDB(filename)
-print(fileres)
-print(f"search for {fileres[0][0]} at {fileres[0][1]}")
+#fileres = dm.SearchFileInDB(filename)
+#print(fileres)
+#print(f"search for {fileres[0][0]} at {fileres[0][1]}")
 
-print(dm.get(fileres[0][0], fileres[0][1]))
+#print(dm.get(fileres[0][0], fileres[0][1]))
 
 
