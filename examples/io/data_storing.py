@@ -51,6 +51,7 @@ trun.site_layout = "Grid"
 trun.origin_geoid = np.array([40.98, 93.93, 1287.0]) # [latitude, longitude, height]
 trun.du_id = np.arange(96) # 0,1,2,...95
 trun.du_xyz= du_xyz
+trun.t_bin_size= np.array([0.5])
 trun.fill()
 trun.write(filename)
 print("Wrote trun")

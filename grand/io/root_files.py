@@ -234,12 +234,11 @@ class File:
                 self.event   = groot.TEfield(f_name)
                 self.shower  = groot.TShower(f_name)
                 self.run     = groot.TRun(f_name)
-                self.run_sim = groot.TRunEfieldSim(f_name)
             elif "tvoltage" in self.trees_list:       # File with voltage info as input
                 self.tag   = "voltage"
                 self.event = groot.TVoltage(f_name)
             else:
-                logger.error(f"File {f_name} doesn't content TTree tefield or tvoltage. It contains {self.trees_list}.")
+                logger.error(f"File {f_name} doesn't contain TTree tefield or tvoltage. It contains {self.trees_list}.")
                 raise AssertionError
 
             self.event_list = self.event.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
@@ -270,9 +269,8 @@ class File:
         if self.tag=="efield":
             self.shower.get_event(self.event_number, self.run_number)
             self.run.get_run(self.run_number)
-            self.run_sim.get_run(self.run_number)
             self.du_xyz = np.asarray(self.run.du_xyz)
-            self.t_bin_size = self.run_sim.t_bin_size
+            self.t_bin_size = self.run.t_bin_size
 
         self.traces_time = self.get_traces_time()
 
@@ -323,7 +321,6 @@ class FileSimuEfield(FileEvent):
       * tt_efield object EfieldEventTree
       * tt_shower object ShowerEventSimdataTree
       * tt_run object RunTree
-      * tt_run_sim object EfieldRunSimdataTree
 
     """
 
@@ -345,7 +342,6 @@ class FileSimuEfield(FileEvent):
         self.tt_efield = self.tt_event
         self.tt_shower = groot.TShower(f_name)
         self.tt_run    = groot.TRun(f_name)
-        self.tt_run_sim = groot.TRunEfieldSim(f_name)
         self.load_event_idx(0)
         self.f_name = f_name
 
@@ -362,10 +358,8 @@ class FileSimuEfield(FileEvent):
         self.tt_shower.get_event(event_number, run_number)
         # synchronize runTree on same run
         self.tt_run.get_run(run_number)
-        #self.tt_shower.site_long_lat = np.array([self.tt_run.site_long, self.tt_run.site_lat])
         # synchronize EfieldRunSimdataTree on same run
-        self.tt_run_sim.get_run(run_number)
-        self.t_bin_size = self.tt_run_sim.t_bin_size
+        self.t_bin_size = self.tt_run.t_bin_size
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
 
     def get_obj_handling3dtraces(self):

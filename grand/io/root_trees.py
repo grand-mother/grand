@@ -62,7 +62,7 @@ class StdVectorList(MutableSequence):
         else:
             self.basic_vec_type = self.vec_type
         # The number of dimensions of this vector
-        self.ndim = vec_type.count("vector")+1
+        self.ndim = vec_type.count("vector") + 1
 
     def __len__(self):
         return self._vector.size()
@@ -129,7 +129,7 @@ class StdVectorList(MutableSequence):
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
         # Python float is really a double, so for vector of floats it sometimes is not accepted (but why not always?)
-        if (isinstance(value, list) and self.basic_vec_type.split()[-1]=="float") or isinstance(value, np.ndarray):
+        if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
             if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
             if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
             if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
@@ -234,10 +234,12 @@ class DataTree:
 
     @type.setter
     def type(self, val: str) -> None:
-        # Remove the existing type
-        self._tree.GetUserInfo().RemoveAt(0)
-        # Add the provided type
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("type", val), 0)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("type")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("type", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
         # Update the property
         self._type = val
 
@@ -258,6 +260,7 @@ class DataTree:
     @tree_name.setter
     def tree_name(self, val):
         """Set the tree name"""
+        # ToDo: enforce the name to start with the type!
         self._tree_name = val
         self._tree.SetName(val)
         self._tree.SetTitle(val)
@@ -274,10 +277,13 @@ class DataTree:
 
     @comment.setter
     def comment(self, val: str) -> None:
-        # Remove the existing comment
-        self._tree.GetUserInfo().RemoveAt(1)
-        # Add the provided comment
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("comment", val), 1)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("comment")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("comment", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         # Update the property
         self._comment = val
 
@@ -287,19 +293,23 @@ class DataTree:
 
     @creation_datetime.setter
     def creation_datetime(self, val: datetime.datetime) -> None:
-        # Remove the existing datetime
-        self._tree.GetUserInfo().RemoveAt(2)
-        # Add the provided time
-        # If datetime was given
+        # If datetime was given, convert it to int
         if type(val) == datetime.datetime:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", int(val.timestamp())), 2)
-            self._creation_datetime = val
-        # If timestamp was given - this happens when initialising with self.assign_metadata()
+            val = int(val.timestamp())
+            val_dt = val
         elif type(val) == int:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("creation_datetime", val), 2)
-            self._creation_datetime = datetime.datetime.fromtimestamp(val)
+            val_dt = datetime.datetime.fromtimestamp(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
+
+        # The meta field does not exist, add it
+        if (el := self._tree.GetUserInfo().FindObject("creation_datetime")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("creation_datetime", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._creation_datetime = val_dt
 
     @property
     def modification_history(self):
@@ -308,10 +318,13 @@ class DataTree:
 
     @modification_history.setter
     def modification_history(self, val: str) -> None:
-        # Remove the existing modification_history
-        self._tree.GetUserInfo().RemoveAt(7)
-        # Add the provided modification_history
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_history", val), 7)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_history")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_history", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         # Update the property
         self._modification_history = val
 
@@ -451,6 +464,7 @@ class DataTree:
         # If the writing options are not explicitly specified, add kWriteDelete option, that deletes the old cycle after writing the new cycle in the TFile
         if len(args) < 2:
             args = ["", ROOT.TObject.kWriteDelete]
+        # ToDo: make sure that the tree has different name than the trees existing in the file!
         self._tree.Write(*args)
 
         # If TFile was created here, close it
@@ -483,6 +497,26 @@ class DataTree:
         res = self._tree.GetEntry(ev_no)
         self.assign_branches()
         return res
+
+    def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0):
+        """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX()."""
+        return self._tree.Draw(varexp, selection, option, nentries, firstentry)
+
+    def get_v1(self):
+        '''Get first vector of results from draw()'''
+        return self._tree.GetV1()
+
+    def get_v2(self):
+        '''Get second vector of results from draw()'''
+        return self._tree.GetV2()
+
+    def get_v3(self):
+        '''Get third vector of results from draw()'''
+        return self._tree.GetV3()
+
+    def get_v4(self):
+        '''Get fourth vector of results from draw()'''
+        return self._tree.GetV4()
 
     ## All three methods below return the number of entries
     def get_entries(self):
@@ -591,8 +625,11 @@ class DataTree:
                 self._tree.Branch(value_name[1:], getattr(self, value_name)._vector)
             # Or set its address
             else:
-                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name)._vector)
-                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
+                # Try to attach the branch from the tree
+                try:
+                    self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
+                except:
+                    logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
         # elif id(value.type) == id(StdString):
@@ -630,14 +667,16 @@ class DataTree:
         self.type = self._type
         self.comment = ""
         self.creation_datetime = datetime.datetime.utcnow()
+        self.modification_history = ""
 
     ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree
     def assign_metadata(self):
         """Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree"""
-        for i, el in enumerate(self._tree.GetUserInfo()):
+        metadata_count = self._tree.GetUserInfo().GetEntries()
+        for i in range(metadata_count):
+            el = self._tree.GetUserInfo().At(i)
             # meta as TNamed
             if type(el) == ROOT.TNamed:
-                # setattr(self, "_" + el.GetName(), el.GetTitle())
                 setattr(self, el.GetName(), el.GetTitle())
             # meta as TParameter
             else:
@@ -685,6 +724,10 @@ class DataTree:
             except:
                 val = el.GetTitle()
 
+            # Convert unix time if this is the datetime
+            if "datetime" in el.GetName() and val!=0:
+                val = datetime.datetime.fromtimestamp(val)
+
             metadata[el.GetName()] = val
 
         return metadata
@@ -731,7 +774,7 @@ class MotherRunTree(DataTree):
     @property
     def run_number(self):
         """The run number for this tree entry"""
-        return self._run_number[0]
+        return int(self._run_number[0])
 
     @run_number.setter
     def run_number(self, val: np.uint32) -> None:
@@ -780,6 +823,8 @@ class MotherRunTree(DataTree):
     # Readout the TTree entry corresponding to the run
     def get_run(self, run_no):
         """Readout the TTree entry corresponding to the run"""
+        # Make sure we have an int
+        run_no = int(run_no)
         # Try to get the run from the tree
         res = self._tree.GetEntryWithIndex(run_no)
         # If no such entry, return
@@ -834,7 +879,7 @@ class MotherEventTree(DataTree):
     @property
     def run_number(self):
         """The run number of the current event"""
-        return self._run_number[0]
+        return int(self._run_number[0])
 
     @run_number.setter
     def run_number(self, val: np.uint32) -> None:
@@ -843,7 +888,7 @@ class MotherEventTree(DataTree):
     @property
     def event_number(self):
         """The event number of the current event"""
-        return self._event_number[0]
+        return int(self._event_number[0])
 
     @event_number.setter
     def event_number(self, val: np.uint32) -> None:
@@ -859,18 +904,27 @@ class MotherEventTree(DataTree):
     @source_datetime.setter
     def source_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
-        self._tree.GetUserInfo().RemoveAt(3)
+        self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
 
         # If datetime was given
         if type(val) == datetime.datetime:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", int(val.timestamp())), 3)
-            self._source_datetime = val
+            val = int(val.timestamp())
+            val_dt = val
         # If timestamp was given - this happens when initialising with self.assign_metadata()
         elif type(val) == int:
-            self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("source_datetime", val), 3)
-            self._source_datetime = datetime.datetime.fromtimestamp(val)
+            val_dt = datetime.datetime.fromtimestamp(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
+
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._source_datetime = val_dt
+
 
     @property
     def modification_software(self):
@@ -879,10 +933,13 @@ class MotherEventTree(DataTree):
 
     @modification_software.setter
     def modification_software(self, val: str) -> None:
-        # Remove the existing modification software
-        self._tree.GetUserInfo().RemoveAt(4)
-        # Add the provided modification software
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software", val), 4)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         self._modification_software = val
 
     @property
@@ -892,10 +949,13 @@ class MotherEventTree(DataTree):
 
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
-        # Remove the existing modification software version
-        self._tree.GetUserInfo().RemoveAt(5)
-        # Add the provided modification software version
-        self._tree.GetUserInfo().AddAt(ROOT.TNamed("modification_software_version", val), 5)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
         self._modification_software_version = val
 
     @property
@@ -905,10 +965,13 @@ class MotherEventTree(DataTree):
 
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
-        # Remove the existing analysis level
-        self._tree.GetUserInfo().RemoveAt(6)
-        # Add the provided analysis level
-        self._tree.GetUserInfo().AddAt(ROOT.TParameter(int)("analysis_level", int(val)), 6)
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
         self._analysis_level = val
 
     def __post_init__(self):
@@ -1234,6 +1297,8 @@ class TRun(MotherRunTree):
     _du_nut: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
     ## Detector unit (antenna) FrontEnd Board ID
     _du_feb: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
+    _t_bin_size: np.ndarray = field(default_factory=lambda: StdVectorList("float"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1604,6 +1669,31 @@ class TRun(MotherRunTree):
             raise ValueError(
                 f"Incorrect type for du_feb {type(value)}. Either a list, an array or a ROOT.vector of int required."
             )
+
+    @property
+    def t_bin_size(self):
+        """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
+        return self._t_bin_size
+
+    @t_bin_size.setter
+    def t_bin_size(self, value):
+        # A list was given
+        if (
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
+        ):
+            # Clear the vector before setting
+            self._t_bin_size.clear()
+            self._t_bin_size += value
+        # A vector of strings was given
+        elif isinstance(value, ROOT.vector("float")):
+            self._t_bin_size._vector = value
+        else:
+            raise ValueError(
+                f"Incorrect type for t_bin_size {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+            )
+
 
 ## General info on the voltage common to all events.
 @dataclass
@@ -2015,7 +2105,6 @@ class TRunVoltage(MotherRunTree):
             raise ValueError(
                 f"Incorrect type for channel_trig_settings_z {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
             )
-
 
 
 @dataclass
@@ -3543,9 +3632,9 @@ class TADC(MotherEventTree):
     def trace_ch(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace_ch._vector.clear()
@@ -3766,6 +3855,7 @@ class TRawVoltage(MotherEventTree):
 
     ## Voltage traces for channels 1,2,3,4 in muV
     _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
+
     # _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     # def __post_init__(self):
@@ -5190,9 +5280,9 @@ class TRawVoltage(MotherEventTree):
     def trace_ch(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace_ch._vector.clear()
@@ -5516,9 +5606,9 @@ class TVoltage(MotherEventTree):
     def trace(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace._vector.clear()
@@ -5642,7 +5732,6 @@ class TEfield(MotherEventTree):
     _fft_mag: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
     ## FFT phase for antenna arms (x,y,z)
     _fft_phase: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<float>>"))
-
 
     ## Peak-to-peak amplitudes for X, Y, Z (muV/m)
     _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
@@ -6017,9 +6106,9 @@ class TEfield(MotherEventTree):
     def trace(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._trace._vector.clear()
@@ -6042,9 +6131,9 @@ class TEfield(MotherEventTree):
     def fft_mag(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._fft_mag._vector.clear()
@@ -6067,9 +6156,9 @@ class TEfield(MotherEventTree):
     def fft_phase(self, value):
         # A list was given
         if (
-            isinstance(value, list)
-            or isinstance(value, np.ndarray)
-            or isinstance(value, StdVectorList)
+                isinstance(value, list)
+                or isinstance(value, np.ndarray)
+                or isinstance(value, StdVectorList)
         ):
             # Clear the vector before setting
             self._fft_phase._vector.clear()
@@ -6519,8 +6608,6 @@ class TRunEfieldSim(MotherRunTree):
     _t_pre: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Finishing time of antenna data collection time window
     _t_post: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
-    ## Time bin size
-    _t_bin_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     ## Simulator name (aires/corsika, etc.)
     _sim_name: StdString = StdString("")
@@ -6595,15 +6682,6 @@ class TRunEfieldSim(MotherRunTree):
         self._t_post[0] = value
 
     @property
-    def t_bin_size(self):
-        """Time bin size"""
-        return self._t_bin_size[0]
-
-    @t_bin_size.setter
-    def t_bin_size(self, value):
-        self._t_bin_size[0] = value
-
-    @property
     def sim_name(self):
         """Simulator name (aires/corsika, etc.)"""
         return str(self._sim_name)
@@ -6632,7 +6710,6 @@ class TRunEfieldSim(MotherRunTree):
             )
 
         self._sim_version.string.assign(value)
-
 
 
 # @dataclass
@@ -6955,7 +7032,6 @@ class TShowerSim(MotherEventTree):
     ## Core positions tested for that shower to generate the event (effective area study)
     _tested_core_positions: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
-
     @property
     def input_name(self):
         """File name in the simulator"""
@@ -7254,6 +7330,7 @@ class TShowerSim(MotherEventTree):
     @tested_core_positions.setter
     def tested_core_positions(self, value):
         set_vector_of_vectors(value, "vector<float>", self._tested_core_positions, "tested_core_positions")
+
 
 ## General info on the noise generation
 @dataclass
@@ -7606,8 +7683,9 @@ def set_vector_of_vectors(value, vec_type, variable, variable_name):
                 f"Incorrect type for {variable_name} {type(value)}. Either a list, an array or a ROOT.vector required."
             )
 
+
 ## Class holding the information about GRAND data in a directory
-class DataDirectory():
+class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
     def __init__(self, dir_name: str, recursive: bool = False):
@@ -7688,7 +7766,7 @@ class DataDirectory():
         pass
 
 
-class DataFile():
+class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
 
     # Holds all the trees in the file, by tree name
@@ -7710,8 +7788,8 @@ class DataFile():
             raise TypeError(f"Unsupported type {type(filename)} as a filename")
 
         # Loop through the keys
-        for key in f.GetListOfKeys():
-            t = f.Get(key.GetName())
+        for key in self.f.GetListOfKeys():
+            t = self.f.Get(key.GetName())
             # Process only TTrees
             if type(t) != ROOT.TTree:
                 continue

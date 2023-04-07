@@ -54,7 +54,6 @@ class Efield2Voltage:
         self.padding_factor = padding_factor
         self.events     = groot.TEfield(f_input)                # traces and du_pos are stored here
         self.run        = groot.TRun(f_input)                   # site_long, site_lat info is stored here. Used to define shower frame.
-        self.run_sim    = groot.TRunEfieldSim(f_input)          # dt_ns is stored here
         self.shower     = groot.TShower(f_input)                # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list= self.events.get_list_of_events()      # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain   = grfc.RfChainGP300()                   # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
@@ -82,7 +81,6 @@ class Efield2Voltage:
         self.shower.get_event(self.evt_nb, self.run_nb)           # update shower info (theta, phi, xmax etc) for event with event_idx.
         if self.last_run != self.run_nb:                          # load only for new run.
             self.run.get_run(self.run_nb)                         # update run info to get site latitude and longitude.
-            self.run_sim.get_run(self.run_nb)                     # update run info to get dt_ns to calculate time_samples.
             self.last_run = self.run_nb
 
         # stack efield traces
@@ -102,7 +100,7 @@ class Efield2Voltage:
         shower.origin_geoid  = self.run.origin_geoid    # [lat, lon, height]
         shower.load_root(self.shower)               # calculates grand_ref_frame, shower_frame, Xmax in LTP etc
         self.evt_shower = shower                    # Note that 'shower' is an instance of 'self.shower' for one event.
-        self.dt_ns      = self.run_sim.t_bin_size   # sampling time in ns, sampling freq = 1e9/dt_ns.
+        self.dt_ns      = np.asarray(self.run.t_bin_size)   # sampling time in ns, sampling freq = 1e9/dt_ns.
         self.f_samp_mhz = 1e3/self.dt_ns            # MHz
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples() # t_samples.shape = (nb_du, self.sig_size)
