@@ -169,7 +169,7 @@ class LowNoiseAmplificatorGP300(GenericProcessingDU):
 
         :param axis:
         """
-        lna_address = os.path.join("detector", "LNASparameter", f"{axis+1}.s2p")
+        lna_address = os.path.join("detector", "LNASparameter", f"{axis+1}.s2p")    
         return grand_add_path_data(lna_address)
 
     def _pre_compute(self):
@@ -301,11 +301,13 @@ class VgaFilterBalunGP300(GenericProcessingDU):
         gain_vga = -1.5
         r_balun = 630 * 2 / 650
         freqs_in = self.freqs_in
+        # S11
         dbs11 = self.data_filter[:, 1]
         degs11 = self.data_filter[:, 2]
         mags11 = 10 ** (dbs11 / 20)
         res11 = mags11 * np.cos(np.deg2rad(degs11))
         ims11 = mags11 * np.sin(np.deg2rad(degs11))
+        # S21
         dbs21 = self.data_filter[:, 3]
         dbs21_add_vga = dbs21 + gain_vga + 20 * np.log10(r_balun)
         degs21 = self.data_filter[:, 4]
@@ -324,6 +326,9 @@ class VgaFilterBalunGP300(GenericProcessingDU):
         s21_complex = s21_real + 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_out)
         # fft VGA filter balun
         self.fft_vgafilbal = (1 + s11_complex) * s21_complex
+        # Add attribut
+        self.vfb_s11 = s11_complex
+        self.vfb_s21 = s21_complex
 
 
 class CableGP300(GenericProcessingDU):
