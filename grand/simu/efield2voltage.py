@@ -57,7 +57,7 @@ class Efield2Voltage:
         self.shower     = groot.TShower(f_input)                # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list= self.events.get_list_of_events()      # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain   = grfc.RfChainGP300()                   # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
-        self.ant_model  = AntennaModel()                        # loads antenna models. time consuming. ant_type='GP300' (default), 'Horizon'
+        self.ant_model  = AntennaModel()                        # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
         self.params     = {"add_noise": True, "lst": 18.0, "add_rf_chain":True}
         self.last_run   = -1                                    # Not to load run info everytime event info is loaded.
 
@@ -111,6 +111,10 @@ class Efield2Voltage:
             self.padding_factor,
         )
         logger.info(f"Length of frequency bins with padding factor {self.padding_factor} is {len(self.freqs_mhz)}.")
+        # initialize linear interpolation of Leff for self.freqs_mhz frequency. This is required once per event.
+        AntennaProcessing.init_interpolation(
+            self.ant_model.leff_sn.frequency/1e6, self.freqs_mhz
+        )
         # Compute galactic noise.
         if self.params["add_noise"]:
             # lst: local sideral time, galactic noise max at 18h

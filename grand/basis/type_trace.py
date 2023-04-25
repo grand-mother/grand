@@ -41,6 +41,12 @@ class ElectricField:
             self.fft_e_3d = sf.rfft(self.e_xyz, n=size_sig_pad)
             return self.fft_e_3d
 
+    def get_delta_time_s(self):
+        return self.a_time[1] - self.a_time[0]
+
+    def get_nb_sample(self):
+        return self.e_xyz.shape[1]
+
     @classmethod
     def load(cls, node: io.DataNode):
         logger.debug(f"Loading E-field from {node.filename}:{node.path}")
