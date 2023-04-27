@@ -154,6 +154,48 @@ class StdVectorList(MutableSequence):
 
         return self
 
+class StdVectorListDesc:
+    """A descriptor for StdVectorList - makes use of it possible in dataclasses with setting property and setter"""
+    def __init__(self, vec_type):
+        self.factory = lambda: StdVectorList(vec_type)
+
+    def __set_name__(self, type, name):
+        self.name = name
+        self.attrname = f"_{name}"
+
+    def create_default(self, obj):
+        setattr(obj, self.attrname, self.factory())
+
+    def __get__(self, obj, obj_type):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        return getattr(obj, self.attrname)
+
+    def __set__(self, obj, value):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        # This is needed for default init as a field of an upper class
+        if isinstance(value, StdVectorListDesc):
+            value = getattr(obj, self.attrname)
+        inst = getattr(obj, self.attrname)
+        vector = inst._vector
+        # A list was given
+        if isinstance(value, list) or isinstance(value, np.ndarray) or isinstance(value, StdVectorList):
+            # Clear the vector before setting
+            vector.clear()
+            inst += value
+        # A vector of vectors was given
+        elif isinstance(value, ROOT.vector(inst.vec_type)):
+            vector = value
+        else:
+            if "vector" in inst.vec_type:
+                raise ValueError(
+                    f"Incorrect type for {self.name} {type(value)}. Either a list of lists, a list of arrays or a ROOT.vector of vectors required."
+                )
+            else:
+                raise ValueError(
+                    f"Incorrect type for {self.name} {type(value)}. Either a list, an array or a ROOT.vector required."
+                )
 
 class StdString:
     """A python string interface to ROOT's std::string"""
@@ -211,9 +253,11 @@ class DataTree:
         "_source_datetime",
         "_analysis_level",
         "_modification_history",
+        "__setattr__"
     ]
 
-    def __setattr__(self, key, value):
+    # def __setattr__(self, key, value):
+    def mod_setattr(self, key, value):
         # Create a list of attributes and properties for the class if it doesn't exist
         if not hasattr(self, "_attributes_and_properties"):
             super().__setattr__("_attributes_and_properties", set([el1 for el in type(self).__mro__[:-1] for el1 in list(el.__dict__.keys()) + list(el.__annotations__.keys())]))
@@ -353,6 +397,12 @@ class DataTree:
         # or create the tree
         else:
             self._create_tree()
+
+        for field in self.__dict__:
+            if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
+                print("not set for", field)
+                
+        self.__setattr__ = self.mod_setattr
 
     ## Return the iterable over self
     def __iter__(self):
@@ -573,6 +623,12 @@ class DataTree:
         # Handle numpy arrays
         # for key in dir(value):
         #     print(getattr(value, key))
+
+        # Not all values start with _
+        branch_name = value_name
+        if value_name[0] == "_":
+            branch_name = value_name[1:]
+
         if isinstance(value, np.ndarray):
             # Generate ROOT TTree data type string
 
@@ -608,28 +664,29 @@ class DataTree:
 
             # Create the branch
             if not set_branches:
-                self._tree.Branch(
-                    value_name[1:], getattr(self, value_name), value_name[1:] + val_type
-                )
+                # self._tree.Branch(value_name[1:], getattr(self, value_name), value_name[1:] + val_type)
+                self._tree.Branch(branch_name, getattr(self, value_name), branch_name + val_type)
             # Or set its address
             else:
-                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name))
+                # self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name))
+                self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         # ROOT vectors as StdVectorList
         # elif "vector" in str(type(value.default)):
         # Not sure why type is not StdVectorList when using factory... thus not isinstance, but id comparison
         # elif id(value.type) == id(StdVectorList):
-        elif type(value) == StdVectorList:
+        elif type(value) == StdVectorList or type(value) == StdVectorListDesc:
             # Create the branch
             if not set_branches:
-                # self._tree.Branch(value.name[1:], getattr(self, value.name)._vector)
-                self._tree.Branch(value_name[1:], getattr(self, value_name)._vector)
+                self._tree.Branch(branch_name, getattr(self, value_name)._vector)
             # Or set its address
             else:
                 # Try to attach the branch from the tree
                 try:
-                    self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
+                    # self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name)._vector)
+                    self._tree.SetBranchAddress(branch_name, getattr(self, value_name)._vector)
                 except:
-                    logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
+                    # logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
+                    logger.warning(f"Could not find branch {branch_name} in tree {self.tree_name}. This branch will not be filled.")
         # For some reason that I don't get, the isinstance does not work here
         # elif isinstance(value.type, str):
         # elif id(value.type) == id(StdString):
@@ -637,11 +694,11 @@ class DataTree:
             # Create the branch
             if not set_branches:
                 # self._tree.Branch(value.name[1:], getattr(self, value.name).string)
-                self._tree.Branch(value_name[1:], getattr(self, value_name).string)
+                self._tree.Branch(branch_name, getattr(self, value_name).string)
             # Or set its address
             else:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
-                self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name).string)
+                self._tree.SetBranchAddress(branch_name, getattr(self, value_name).string)
         else:
             raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
 
@@ -653,12 +710,14 @@ class DataTree:
             # Skip fields that are not the part of the stored data
             if field in self._nonbranch_fields:
                 continue
+            field_name = field
+            if field[0] == "_": field_name=field[1:]
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
-            u = getattr(self._tree, field[1:])
+            u = getattr(self._tree, field_name)
             # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
             # Assign the TTree branch value to the class field
-            setattr(self, field[1:], u)
+            setattr(self, field_name, u)
 
     ## Create metadata for the tree
     def create_metadata(self):
@@ -2175,36 +2234,58 @@ class TADC(MotherEventTree):
     _adc_sampling_resolution: StdVectorList = field(
         default_factory=lambda: StdVectorList("unsigned short")
     )
-    ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
-    _adc_input_channels: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
-    _adc_enabled_channels: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## ADC samples callected in all channels
-    _adc_samples_count_total: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## ADC samples callected in channel 0
-    _adc_samples_count_channel0: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## ADC samples callected in channel 1
-    _adc_samples_count_channel1: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## ADC samples callected in channel 2
-    _adc_samples_count_channel2: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## ADC samples callected in channel 3
-    _adc_samples_count_channel3: StdVectorList = field(
-        default_factory=lambda: StdVectorList("unsigned short")
-    )
-    ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
-    _trigger_pattern: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+
+    # ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
+    # _adc_input_channels: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+
+    adc_input_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    """ADC input channels"""
+
+    # ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
+    # _adc_enabled_channels: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+
+    adc_enabled_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    """ADC enabled channels"""
+
+    # ## ADC samples callected in all channels
+    # _adc_samples_count_total: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+    # ## ADC samples callected in channel 0
+    # _adc_samples_count_channel0: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+    # ## ADC samples callected in channel 1
+    # _adc_samples_count_channel1: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+    # ## ADC samples callected in channel 2
+    # _adc_samples_count_channel2: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+    # ## ADC samples callected in channel 3
+    # _adc_samples_count_channel3: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("unsigned short")
+    # )
+
+    adc_samples_count_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+
+    # ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
+    # _trigger_pattern: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
+
+    trigger_pattern_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    trigger_pattern_ch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    trigger_pattern_notch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    trigger_pattern_redch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    trigger_pattern_ch2_ch3: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    trigger_pattern_calibration: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    trigger_pattern_10s: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    trigger_pattern_external_test_pulse: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     _trigger_rate: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
@@ -2233,46 +2314,97 @@ class TADC(MotherEventTree):
     _gps_alt: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned long long"))
     ## GPS temperature
     _gps_temp: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned int"))
-    ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
-    _digi_ctrl: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    _digi_prepost_trig_windows: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties0: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties1: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties2: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    _channel_properties3: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings0: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings1: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings2: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
-    ## Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    _channel_trig_settings3: StdVectorList = field(
-        default_factory=lambda: StdVectorList("vector<unsigned short>")
-    )
+    # ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
+    # _digi_ctrl: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+
+    # Digital control register
+    enable_auto_reset_timeout: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    force_firmware_reset: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_filter_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    enable_1PPS: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_DAQ: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+
+    # Trigger enable mask register
+    enable_trigger_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    enable_trigger_ch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_trigger_notch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_trigger_redch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_trigger_ch2_ch3: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_trigger_calibration: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_trigger_10s: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    enable_trigger_external_test_pulse: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+
+    # Test pulse rate divider and channel readout enable
+    enable_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    fire_single_test_pulse: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    test_pulse_rate_divider: StdVectorListDesc = field(default=StdVectorListDesc("char"))
+
+    # Common coincidence readout time window
+    common_coincidence_time: StdVectorListDesc = field(default=StdVectorListDesc("short"))
+
+    # Input selector for readout channel
+    selector_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+
+    # ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
+    # _digi_prepost_trig_windows: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+
+    pre_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    post_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+
+    # ## Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    # _channel_properties0: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+    # ## Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    # _channel_properties1: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+    # ## Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    # _channel_properties2: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+    # ## Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?
+    # _channel_properties3: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+
+    gain_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
+    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    offset_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    base_maximum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
+    base_minimum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
+
+    # ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    # _channel_trig_settings0: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+    # ## Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    # _channel_trig_settings1: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+    # ## Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    # _channel_trig_settings2: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+    # ## Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    # _channel_trig_settings3: StdVectorList = field(
+    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
+    # )
+
+    signal_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
+    noise_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
+    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    qmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    qmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+
     ## ?? What is it? Some kind of the adc trace offset?
     _ioff: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     # _start_time: StdVectorList("double") = StdVectorList("double")
@@ -2758,53 +2890,53 @@ class TADC(MotherEventTree):
                 f"Incorrect type for adc_sampling_resolution {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
             )
 
-    @property
-    def adc_input_channels(self):
-        """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
-        return self._adc_input_channels
+    # @property
+    # def adc_input_channels(self):
+    #     """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
+    #     return self._adc_input_channels
+    #
+    # @adc_input_channels.setter
+    # def adc_input_channels(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._adc_input_channels.clear()
+    #         self._adc_input_channels += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned short")):
+    #         self._adc_input_channels._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+    #         )
 
-    @adc_input_channels.setter
-    def adc_input_channels(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._adc_input_channels.clear()
-            self._adc_input_channels += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_input_channels._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for adc_input_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
-            )
-
-    @property
-    def adc_enabled_channels(self):
-        """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
-        return self._adc_enabled_channels
-
-    @adc_enabled_channels.setter
-    def adc_enabled_channels(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._adc_enabled_channels.clear()
-            self._adc_enabled_channels += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
-            self._adc_enabled_channels._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
-            )
+    # @property
+    # def adc_enabled_channels(self):
+    #     """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
+    #     return self._adc_enabled_channels
+    #
+    # @adc_enabled_channels.setter
+    # def adc_enabled_channels(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._adc_enabled_channels.clear()
+    #         self._adc_enabled_channels += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned short")):
+    #         self._adc_enabled_channels._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for adc_enabled_channels {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+    #         )
 
     @property
     def adc_samples_count_total(self):
@@ -2926,29 +3058,29 @@ class TADC(MotherEventTree):
                 f"Incorrect type for adc_samples_count_channel3 {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
             )
 
-    @property
-    def trigger_pattern(self):
-        """Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?"""
-        return self._trigger_pattern
-
-    @trigger_pattern.setter
-    def trigger_pattern(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._trigger_pattern.clear()
-            self._trigger_pattern += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("unsigned short")):
-            self._trigger_pattern._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
-            )
+    # @property
+    # def trigger_pattern(self):
+    #     """Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?"""
+    #     return self._trigger_pattern
+    #
+    # @trigger_pattern.setter
+    # def trigger_pattern(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._trigger_pattern.clear()
+    #         self._trigger_pattern += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("unsigned short")):
+    #         self._trigger_pattern._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for trigger_pattern {type(value)}. Either a list, an array or a ROOT.vector of unsigned shorts required."
+    #         )
 
     @property
     def trigger_rate(self):
@@ -3262,245 +3394,245 @@ class TADC(MotherEventTree):
                 f"Incorrect type for gps_temp {type(value)}. Either a list, an array or a ROOT.vector of unsigned ints required."
             )
 
-    @property
-    def digi_ctrl(self):
-        """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?"""
-        return self._digi_ctrl
+    # @property
+    # def digi_ctrl(self):
+    #     """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?"""
+    #     return self._digi_ctrl
+    #
+    # @digi_ctrl.setter
+    # def digi_ctrl(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._digi_ctrl.clear()
+    #         self._digi_ctrl += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._digi_ctrl._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
 
-    @digi_ctrl.setter
-    def digi_ctrl(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._digi_ctrl.clear()
-            self._digi_ctrl += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_ctrl._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for digi_ctrl {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
+    # @property
+    # def digi_prepost_trig_windows(self):
+    #     """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
+    #     return self._digi_prepost_trig_windows
+    #
+    # @digi_prepost_trig_windows.setter
+    # def digi_prepost_trig_windows(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._digi_prepost_trig_windows.clear()
+    #         self._digi_prepost_trig_windows += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._digi_prepost_trig_windows._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
 
-    @property
-    def digi_prepost_trig_windows(self):
-        """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
-        return self._digi_prepost_trig_windows
-
-    @digi_prepost_trig_windows.setter
-    def digi_prepost_trig_windows(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._digi_prepost_trig_windows.clear()
-            self._digi_prepost_trig_windows += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._digi_prepost_trig_windows._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for digi_prepost_trig_windows {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_properties0(self):
-        """Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
-        return self._channel_properties0
-
-    @channel_properties0.setter
-    def channel_properties0(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_properties0.clear()
-            self._channel_properties0 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties0._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_properties1(self):
-        """Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
-        return self._channel_properties1
-
-    @channel_properties1.setter
-    def channel_properties1(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_properties1.clear()
-            self._channel_properties1 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties1._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_properties2(self):
-        """Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
-        return self._channel_properties2
-
-    @channel_properties2.setter
-    def channel_properties2(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_properties2.clear()
-            self._channel_properties2 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties2._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_properties3(self):
-        """Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
-        return self._channel_properties3
-
-    @channel_properties3.setter
-    def channel_properties3(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_properties3.clear()
-            self._channel_properties3 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_properties3._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_trig_settings0(self):
-        """Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
-        return self._channel_trig_settings0
-
-    @channel_trig_settings0.setter
-    def channel_trig_settings0(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_trig_settings0.clear()
-            self._channel_trig_settings0 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings0._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_trig_settings1(self):
-        """Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
-        return self._channel_trig_settings1
-
-    @channel_trig_settings1.setter
-    def channel_trig_settings1(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_trig_settings1.clear()
-            self._channel_trig_settings1 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings1._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_trig_settings2(self):
-        """Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
-        return self._channel_trig_settings2
-
-    @channel_trig_settings2.setter
-    def channel_trig_settings2(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_trig_settings2.clear()
-            self._channel_trig_settings2 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings2._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
-
-    @property
-    def channel_trig_settings3(self):
-        """Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
-        return self._channel_trig_settings3
-
-    @channel_trig_settings3.setter
-    def channel_trig_settings3(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._channel_trig_settings3.clear()
-            self._channel_trig_settings3 += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("vector<unsigned short>")):
-            self._channel_trig_settings3._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
-            )
+    # @property
+    # def channel_properties0(self):
+    #     """Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_properties0
+    #
+    # @channel_properties0.setter
+    # def channel_properties0(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_properties0.clear()
+    #         self._channel_properties0 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_properties0._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_properties0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_properties1(self):
+    #     """Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_properties1
+    #
+    # @channel_properties1.setter
+    # def channel_properties1(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_properties1.clear()
+    #         self._channel_properties1 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_properties1._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_properties1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_properties2(self):
+    #     """Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_properties2
+    #
+    # @channel_properties2.setter
+    # def channel_properties2(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_properties2.clear()
+    #         self._channel_properties2 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_properties2._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_properties2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_properties3(self):
+    #     """Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_properties3
+    #
+    # @channel_properties3.setter
+    # def channel_properties3(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_properties3.clear()
+    #         self._channel_properties3 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_properties3._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_properties3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_trig_settings0(self):
+    #     """Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_trig_settings0
+    #
+    # @channel_trig_settings0.setter
+    # def channel_trig_settings0(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_trig_settings0.clear()
+    #         self._channel_trig_settings0 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_trig_settings0._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_trig_settings0 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_trig_settings1(self):
+    #     """Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_trig_settings1
+    #
+    # @channel_trig_settings1.setter
+    # def channel_trig_settings1(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_trig_settings1.clear()
+    #         self._channel_trig_settings1 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_trig_settings1._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_trig_settings1 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_trig_settings2(self):
+    #     """Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_trig_settings2
+    #
+    # @channel_trig_settings2.setter
+    # def channel_trig_settings2(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_trig_settings2.clear()
+    #         self._channel_trig_settings2 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_trig_settings2._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_trig_settings2 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
+    #
+    # @property
+    # def channel_trig_settings3(self):
+    #     """Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    #     return self._channel_trig_settings3
+    #
+    # @channel_trig_settings3.setter
+    # def channel_trig_settings3(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._channel_trig_settings3.clear()
+    #         self._channel_trig_settings3 += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("vector<unsigned short>")):
+    #         self._channel_trig_settings3._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for channel_trig_settings3 {type(value)}. Either a list, an array or a ROOT.vector of vector<unsigned short>s required."
+    #         )
 
     @property
     def ioff(self):
