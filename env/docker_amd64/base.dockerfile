@@ -8,6 +8,7 @@ RUN apt-get update\
 && apt-get install -y git\
 && apt install -y make\
 && apt install -y libpng-dev\
+&& apt install -y graphviz\
 && apt install -y pip
 
 

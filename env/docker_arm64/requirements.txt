@@ -2,6 +2,7 @@ asttokens
 attrs
 backcall
 black
+black[jupyter]
 cffi
 click
 cycler
@@ -42,3 +43,11 @@ traitlets
 typing-extensions
 wcwidth
 numba
+paramiko
+scp
+SQLAlchemy
+sshtunnel
+urllib3
+astropy
+awkward
+uproot
