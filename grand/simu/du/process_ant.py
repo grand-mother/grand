@@ -200,7 +200,6 @@ class AntennaProcessing:
 
         logger.debug(f"size_fft={self.size_fft}")
         # interpolation Leff theta and phi on sphere
-        logger.debug(f"leff_phi_cart: {self.model_leff.leff_phi_reim.shape}")
         leff = self.model_leff.leff_theta_reim
         leff_itp_t = (
                  rp0 * rt0 * leff[:, ip0, it0] \
