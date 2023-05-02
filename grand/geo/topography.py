@@ -21,7 +21,8 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )
-#from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
+
+# from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
 from .turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
 import grand.io.protocol as store
 from .._core import ffi, lib
@@ -92,10 +93,11 @@ def _get_geoid():
     global _geoid
 
     if _geoid is None:
-        #path = os.path.join(DATADIR, "egm96.png")
+        # path = os.path.join(DATADIR, "egm96.png")
         path = Path(grand_get_path_root_pkg()) / "data" / "egm96.png"
         _geoid = _Map(path)
     return _geoid
+
 
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     """Get the geoid undulation. This function calculates the height of
@@ -189,11 +191,11 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
                 lat = -lat if lat < 0 else lat
                 lon = -lon if lon < 0 else lon
 
-                base     = f"{ns}{lat:02.0f}{ew}{lon:03.0f}"
+                base = f"{ns}{lat:02.0f}{ew}{lon:03.0f}"
                 basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt"
-                print('topography:', ns, lat, ew, lon, basename)
-                #path = DATADIR / basename
-                path = DATADIR / (base+".hgt")
+                print("topography:", ns, lat, ew, lon, basename)
+                # path = DATADIR / basename
+                path = DATADIR / (base + ".hgt")
                 if not path.exists():
                     print("Caching data for", path)
                     try:
@@ -213,6 +215,10 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     # Reset the topography proxy
     global _default_topography
     _default_topography = None
+
+def cachedir() -> Path:
+    """Get the location of the topography data cache."""
+    return DATADIR
 
 
 def datadir() -> Path:

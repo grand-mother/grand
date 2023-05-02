@@ -58,7 +58,7 @@ class TopographyTest(TestCase):
     def test_topography_cache(self):
         # Check the cache config
         self.assertEqual(topography.model(), "SRTMGL1")
-        self.assertRegex(str(topography.cachedir()), "^.*/grand/geo/data/topography")
+        self.assertRegex(str(topography.cachedir()), "^.*/grand/data/topography")
 
         # Clear the cache
         topography.update_data(clear=True)
