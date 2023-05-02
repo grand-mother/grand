@@ -7,15 +7,15 @@ import unittest
 
 from grand.geo import gull
 from tests import TestCase
+from grand import grand_add_path_data
 
 
 class GullTest(TestCase):
     """Unit tests for the gull sub-package"""
 
     def test_snapshot(self):
-        snapshot = gull.Snapshot()
+        snapshot = gull.Snapshot(grand_add_path_data("geomagnet/IGRF13.COF"))
         self.assertNotEqual(snapshot._snapshot, None)
-        self.assertEqual(snapshot.model, "IGRF13")
         d = snapshot.date
         self.assertEqual(d.year, 2020)
         self.assertEqual(d.month, 1)
@@ -25,9 +25,8 @@ class GullTest(TestCase):
         self.assertEqual(snapshot.altitude[1], 600e03)
         del snapshot
 
-        snapshot = gull.Snapshot("WMM2020", "2020-03-23")
+        snapshot = gull.Snapshot(grand_add_path_data("geomagnet/WMM2020.COF"), "2020-03-23")
         self.assertNotEqual(snapshot._snapshot, None)
-        self.assertEqual(snapshot.model, "WMM2020")
         d = snapshot.date
         self.assertEqual(d.year, 2020)
         self.assertEqual(d.month, 3)

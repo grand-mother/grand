@@ -34,10 +34,6 @@ def grand_add_path_data(s_file):
     return os.path.join(GRAND_DATA_PATH, s_file)
 
 
-def grand_add_path_data_model(s_file):
-    return os.path.join(GRAND_DATA_PATH, "model", s_file)
-
-
 from grand.geo import geomagnet, topography
 from grand.geo.topography import geoid_undulation, Reference, Topography
 from grand.geo import coordinates

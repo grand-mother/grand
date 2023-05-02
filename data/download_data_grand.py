@@ -14,7 +14,7 @@ from urllib import request
 #TODO: add progressbar to grand lib
 #import progressbar
 
-from grand import GRAND_DATA_PATH, grand_add_path_data, grand_add_path_data_model
+from grand import GRAND_DATA_PATH, grand_add_path_data
 
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
 #FILE_MODEL = "grand_model_2207.tar.gz"
