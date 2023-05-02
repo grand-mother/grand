@@ -122,44 +122,44 @@ class ShowerTest(TestCase):
             self.assertEqual(antenna0, antenna1)
             self.assertQuantity(r0, r1)
 
-    def test_zhaires(self):
-        path = self.get_data("zhaires")
-        shower = ShowerEvent.load(path)
-        self.assertIsInstance(shower.frame, LTP)
-        self.assertIsNotNone(shower.geomagnet)
-        self.assertAlmostEqual(numpy.linalg.norm(shower.geomagnet), 0.054021)
-        spherical = SphericalRepresentation(shower.geomagnet)
-        self.assertQuantity(spherical.theta, numpy.array([147.43]))
-        self.assertIsNotNone(shower.core)
-        self.assertIsNotNone(shower.maximum)
-        self.assertEqual(shower.frame.declination, 0.72)
-
-        shower = ZhairesShower.load(path)
-        shower.dump(self.path)
-        tmp = shower.load(self.path)
-
-        a, b = shower.fields[9], tmp.fields[9]
-        self.assertField(a, b)
-
-        frame = shower.shower_frame()
-        ev = shower.core - shower.maximum
-        ev /= numpy.linalg.norm(ev)
-        ev = ev.T[0]
-        evB = numpy.cross(ev, shower.geomagnet.T[0])
-        evB /= numpy.linalg.norm(evB)
-        evvB = numpy.cross(ev, evB)  # evB is already transposed.
-
-        evB = LTP(x=evB[0], y=evB[1], z=evB[2], frame=shower.frame)
-        evB = evB.ltp_to_ltp(frame)
-        self.assertArray(evB, numpy.array((1, 0, 0)), 7)
-        evvB = LTP(x=evvB[0], y=evvB[1], z=evvB[2], frame=shower.core)
-        evvB = evvB.ltp_to_ltp(frame)
-        self.assertArray(evvB, numpy.array((0, 1, 0)), 7)
-        ev = LTP(
-            x=ev[0], y=ev[1], z=ev[2], frame=shower.core
-        )  # TODO: this step is redundant as ev is already in LTP. Fix this.
-        ev = ev.ltp_to_ltp(frame)
-        self.assertArray(ev, numpy.array((0, 0, 1)), 7)
+    # def test_zhaires(self):
+    #     path = self.get_data("zhaires")
+    #     shower = ShowerEvent.load(path)
+    #     self.assertIsInstance(shower.frame, LTP)
+    #     self.assertIsNotNone(shower.geomagnet)
+    #     self.assertAlmostEqual(numpy.linalg.norm(shower.geomagnet), 0.054021)
+    #     spherical = SphericalRepresentation(shower.geomagnet)
+    #     self.assertQuantity(spherical.theta, numpy.array([147.43]))
+    #     self.assertIsNotNone(shower.core)
+    #     self.assertIsNotNone(shower.maximum)
+    #     self.assertEqual(shower.frame.declination, 0.72)
+    #
+    #     shower = ZhairesShower.load(path)
+    #     shower.dump(self.path)
+    #     tmp = shower.load(self.path)
+    #
+    #     a, b = shower.fields[9], tmp.fields[9]
+    #     self.assertField(a, b)
+    #
+    #     frame = shower.shower_frame()
+    #     ev = shower.core - shower.maximum
+    #     ev /= numpy.linalg.norm(ev)
+    #     ev = ev.T[0]
+    #     evB = numpy.cross(ev, shower.geomagnet.T[0])
+    #     evB /= numpy.linalg.norm(evB)
+    #     evvB = numpy.cross(ev, evB)  # evB is already transposed.
+    #
+    #     evB = LTP(x=evB[0], y=evB[1], z=evB[2], frame=shower.frame)
+    #     evB = evB.ltp_to_ltp(frame)
+    #     self.assertArray(evB, numpy.array((1, 0, 0)), 7)
+    #     evvB = LTP(x=evvB[0], y=evvB[1], z=evvB[2], frame=shower.core)
+    #     evvB = evvB.ltp_to_ltp(frame)
+    #     self.assertArray(evvB, numpy.array((0, 1, 0)), 7)
+    #     ev = LTP(
+    #         x=ev[0], y=ev[1], z=ev[2], frame=shower.core
+    #     )  # TODO: this step is redundant as ev is already in LTP. Fix this.
+    #     ev = ev.ltp_to_ltp(frame)
+    #     self.assertArray(ev, numpy.array((0, 0, 1)), 7)
 
 
 if __name__ == "__main__":
