@@ -9,7 +9,7 @@ import unittest
 import numpy
 
 import grand.io.protocol as store
-from grand.libs import turtle
+from grand.geo import turtle
 from tests import TestCase
 
 

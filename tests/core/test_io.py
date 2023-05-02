@@ -10,7 +10,6 @@ import unittest
 # import astropy.units as u
 import numpy
 
-import grand.io.hdf5 as io
 from grand import (
     Geodetic,
     ECEF,

@@ -14,7 +14,7 @@ from grand import ECEF, CartesianRepresentation, LTP
 from grand.simu.du.process_ant import AntennaProcessing
 from grand.basis.type_trace import ElectricField,Voltage
 from grand import grand_add_path_data_model
-from grand.io.file_leff import TabulatedAntennaModel
+from grand.simu.du.antenna_model import tabulated_antenna_model
 from grand.simu.du.process_ant import MissingFrameError
 
 
@@ -37,7 +37,7 @@ class AntennaTest(TestCase):
 
         path_ant = grand_add_path_data_model('detector/HorizonAntenna_EWarm_leff_loaded.npy')
         if osp.exists(path_ant):
-            self._model = TabulatedAntennaModel.load(path_ant)
+            self._model = tabulated_antenna_model(path_ant)
             return self._model
         else:
             self.skipTest(f'missing {path_ant}')

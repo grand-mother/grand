@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from grand.simu.du.rf_chain import VgaFilterBalunGP300
+from grand.simu.noise.rf_chain import VgaFilterBalunGP300
 
 
 

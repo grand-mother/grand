@@ -5,7 +5,7 @@ Unit tests for the grand.libs.gull module
 import os
 import unittest
 
-from grand.libs import gull
+from grand.geo import gull
 from tests import TestCase
 
 
