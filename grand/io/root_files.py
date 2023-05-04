@@ -359,7 +359,7 @@ class FileSimuEfield(FileEvent):
         # synchronize runTree on same run
         self.tt_run.get_run(run_number)
         # synchronize EfieldRunSimdataTree on same run
-        self.t_bin_size = self.tt_run.t_bin_size
+        self.t_bin_size =  np.asarray(self.tt_run.t_bin_size)
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
 
     def get_obj_handling3dtraces(self):
