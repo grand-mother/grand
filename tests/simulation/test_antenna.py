@@ -36,7 +36,7 @@ class AntennaTest(TestCase):
             pass
 
         #path_ant = grand_add_path_data('detector/HorizonAntenna_EWarm_leff_loaded.npy')
-        path_ant = grand_add_path_data('detector/Light_GP300Antenna_EWarm_leff_loaded.npz')
+        path_ant = grand_add_path_data('detector/Light_GP300Antenna_EWarm_leff.npz')
         if osp.exists(path_ant):
             self._model = tabulated_antenna_model(path_ant)
             return self._model
