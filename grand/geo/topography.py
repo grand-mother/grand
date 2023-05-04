@@ -192,7 +192,7 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
                 lon = -lon if lon < 0 else lon
 
                 base = f"{ns}{lat:02.0f}{ew}{lon:03.0f}"
-                basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt"
+                basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt" # .gz will be added in protocol.py
                 print("topography:", ns, lat, ew, lon, basename)
                 # path = DATADIR / basename
                 path = DATADIR / (base + ".hgt")

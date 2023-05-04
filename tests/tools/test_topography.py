@@ -62,16 +62,18 @@ class TopographyTest(TestCase):
             )
         )
         topography.update_data(c)
-        self.assertTrue((topography.cachedir() / "N40E096.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N40E094.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N41E094.hgt").exists())
 
-        # c = ECEF(GeodeticRepresentation(latitude=40 * u.deg,
-        #                                longitude=90.5 * u.deg))
-        c = ECEF(Geodetic(latitude=40, longitude=94.5, height=0))
+        c = ECEF(Geodetic(latitude=40, longitude=93.5, height=0))
         topography.update_data(c, radius=100e3)  # RK radius in meters.
+        self.assertTrue((topography.cachedir() / "N39E092.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N39E093.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N39E094.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N40E092.hgt").exists())
         self.assertTrue((topography.cachedir() / "N40E093.hgt").exists())
-        self.assertTrue((topography.cachedir() / "N40E095.hgt").exists())
-        self.assertTrue((topography.cachedir() / "N41E093.hgt").exists())
-        self.assertTrue((topography.cachedir() / "N41E095.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N40E094.hgt").exists())
+        self.assertTrue((topography.cachedir() / "N41E094.hgt").exists())
 
     def test_topography_elevation(self):
         # Fetch a test tile
