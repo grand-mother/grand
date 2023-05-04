@@ -45,17 +45,19 @@ class AntennaTest(TestCase):
 
     def test_tabulated(self):
         t = self.model
-        shape = (281, 72, 91)
+        shape = (221, 361, 91)   # shape (freq, phi, theta) (221, 361, 91)
 
         self.assertEqual(t.frequency.size, shape[0])
         self.assertEqual(t.phi.size, shape[1])
         self.assertEqual(t.theta.size, shape[2])
         # self.assertEqual(t.resistance.shape, shape)
         # self.assertEqual(t.reactance.shape, shape)
-        self.assertEqual(t.leff_theta.shape, shape)
-        self.assertEqual(t.leff_phi.shape, shape)
-        self.assertEqual(t.phase_theta.shape, shape)
-        self.assertEqual(t.phase_phi.shape, shape)
+        self.assertEqual(t.leff_theta, None)  # placeholder if .npy files are used.
+        self.assertEqual(t.leff_phi, None)    # placeholder if .npy files are used.
+        self.assertEqual(t.phase_theta, None)
+        self.assertEqual(t.phase_phi, None)
+        self.assertEqual(t.leff_theta_reim.shape, shape)  # Real + j Imag. shape (freq, phi, theta)
+        self.assertEqual(t.leff_phi_reim.shape, shape)    # Real + j Imag. shape (freq, phi, theta)
 
         # self.model.dump(self.path)
         # tr = TabulatedAntennaModel.load(self.path).table
