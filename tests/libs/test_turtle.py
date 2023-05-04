@@ -9,6 +9,7 @@ import unittest
 import numpy
 
 import grand.io.protocol as store
+from grand import grand_get_path_root_pkg
 from grand.geo import turtle
 from tests import TestCase
 
@@ -18,8 +19,8 @@ class TurtleTest(TestCase):
 
     @staticmethod
     def get_stack_data():
-        dirname = Path("tests/topography")
-        basename = Path("N38E083.SRTMGL1.hgt")
+        dirname = Path(grand_get_path_root_pkg()) / "data" / "topography"
+        basename = Path("N41E096.hgt")
         path = dirname / basename
         if not path.exists():
             try:
@@ -32,7 +33,7 @@ class TurtleTest(TestCase):
 
     @staticmethod
     def get_map_data():
-        return Path(__file__).parent / "data" / "map.png"
+        return Path(grand_get_path_root_pkg()) / "data" / "egm96.png"
 
     def test_ecef(self):
         # Reference values
@@ -120,7 +121,8 @@ class TurtleTest(TestCase):
         self.assertEqual(stack.stack_size, 0)
 
         # Check the elevation getter for a single entry
-        elevation = stack.elevation(38.5, 83.5)
+        #elevation = stack.elevation(38.5, 83.5)
+        elevation = stack.elevation(41.5, 96.5)
         self.assertFalse(numpy.isnan(elevation))
 
         # Check the elevation getter for out of map entries
@@ -129,7 +131,8 @@ class TurtleTest(TestCase):
 
         # Check the elevation getter for vectorized entries
         n = 10
-        elevation = stack.elevation(n * (38.5,), n * (83.5,))
+        #elevation = stack.elevation(n * (38.5,), n * (83.5,))
+        elevation = stack.elevation(n * (41.5,), n * (96.5,))
         for i in range(n):
             self.assertFalse(numpy.isnan(elevation[i]))
 
