@@ -368,7 +368,7 @@ class Handling3dTracesOfEvent:
         """
         Plot footprint max value
         """
-        self.network.plot_footprint_1d(self.get_max_norm(), "Max ||Efield||", self)
+        self.network.plot_footprint_1d(self.get_max_norm(), "Max ||trace||", self)
 
     def plot_footprint_time_max(self):  # pragma: no cover
         """
