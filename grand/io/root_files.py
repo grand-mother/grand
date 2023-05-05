@@ -252,7 +252,7 @@ class FileSimuEfield(_FileEventBase):
         """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.init_network(self.du_xyz)
-        o_tevent.set_unit_axis("$\mu$V/m", "cart")
+        o_tevent.set_unit_axis(r"$\mu$V/m", "cart")
         return o_tevent
 
 
@@ -291,7 +291,7 @@ class FileVoltageEvent(_FileEventBase):
         Return a traces container IO independent
         """
         o_tevent = super().get_obj_handling3dtraces()
-        o_tevent.set_unit_axis("$\mu$V", "dir")
+        o_tevent.set_unit_axis(r"$\mu$V", "dir")
         return o_tevent
 
 
