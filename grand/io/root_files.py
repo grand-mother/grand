@@ -67,26 +67,26 @@ class _FileEventBase:
         """
         Constructor
         """
-        self.run_number: Optional[None, int]         = None
-        self.event_number: Optional[None, int]       = None
-        self.traces: Optional[None, np.ndarray]      = None
-        self.sig_size: Optional[None, int]           = None
-        self.t_bin_size: Optional[float]             = 0.5
-        self.du_id: Optional[None, np,ndarray, list] = None
-        self.du_count: Optional[None, int]           = None
-        self.du_xyz: Optional[None, np.ndarray]      = None
+        self.run_number: Optional[None, int] = None
+        self.event_number: Optional[None, int] = None
+        self.traces: Optional[None, np.ndarray] = None
+        self.sig_size: Optional[None, int] = None
+        self.t_bin_size: Optional[float] = 0.5
+        self.du_id: Optional[None, np, ndarray, list] = None
+        self.du_count: Optional[None, int] = None
+        self.du_xyz: Optional[None, np.ndarray] = None
         self.f_name: Optional[str] = ""
-        self.tag: Optional[str]    = ""
+        self.tag: Optional[str] = ""
 
         self.tt_event = tt_event
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
-        #self.delta_t_ns = -1
-        #self.evt_nb = -1
-        #self.run_nb = -1
-        #self.nb_du = 0
-        #self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)
+        # self.delta_t_ns = -1
+        # self.evt_nb = -1
+        # self.run_nb = -1
+        # self.nb_du = 0
+        # self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)
         self.f_name = ""
 
     def load_event_idx(self, idx):
@@ -121,24 +121,24 @@ class _FileEventBase:
         logger.info(f"load event: {event_number} of run  {run_number}")
         # efield
         self.tt_event.get_event(event_number, run_number)
-        self.du_id    = self.tt_event.du_id
+        self.du_id = self.tt_event.du_id
         self.du_count = self.tt_event.du_count
-        
-        #trace_size = len(self.tt_event.trace_x[0])
+
+        # trace_size = len(self.tt_event.trace_x[0])
         trace_size = np.asarray(self.tt_event.trace).shape[-1]
 
-        #if trace_size != self.traces.shape[2]:
+        # if trace_size != self.traces.shape[2]:
         #    self.traces = np.empty((self.du_count, 3, trace_size), dtype=np.float32)
         #    logger.info(f"resize numpy array trace to {self.traces.shape}")
         self.traces = np.asarray(self.tt_event.trace)
         self.sig_size = self.traces.shape[-1]
-        #self.traces[:, 0, :] = np.array(self.tt_event.trace_x, dtype=np.float32)
-        #self.traces[:, 1, :] = np.array(self.tt_event.trace_y, dtype=np.float32)
-        #self.traces[:, 2, :] = np.array(self.tt_event.trace_z, dtype=np.float32)
-        #self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)
-        #self.du_pos[:, 0] = np.array(self.tt_event.pos_x, dtype=np.float32)
-        #self.du_pos[:, 1] = np.array(self.tt_event.pos_y, dtype=np.float32)
-        #self.du_pos[:, 2] = np.array(self.tt_event.pos_z, dtype=np.float32)
+        # self.traces[:, 0, :] = np.array(self.tt_event.trace_x, dtype=np.float32)
+        # self.traces[:, 1, :] = np.array(self.tt_event.trace_y, dtype=np.float32)
+        # self.traces[:, 2, :] = np.array(self.tt_event.trace_z, dtype=np.float32)
+        # self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)
+        # self.du_pos[:, 0] = np.array(self.tt_event.pos_x, dtype=np.float32)
+        # self.du_pos[:, 1] = np.array(self.tt_event.pos_y, dtype=np.float32)
+        # self.du_pos[:, 2] = np.array(self.tt_event.pos_z, dtype=np.float32)
 
     def get_du_count(self):
         """
@@ -168,7 +168,9 @@ class _FileEventBase:
         """
         Return a traces container IO independent Handling3dTracesOfEvent
         """
-        o_tevent = Handling3dTracesOfEvent(f"{self.f_name} evt={self.event_number} run={self.run_number}")
+        o_tevent = Handling3dTracesOfEvent(
+            f"{self.f_name} evt={self.event_number} run={self.run_number}"
+        )
         # TODO: difference between du_id for all network and for specific event ?
         du_id = np.array(self.tt_event.du_id)
         o_tevent.init_traces(
@@ -223,7 +225,7 @@ class FileSimuEfield(_FileEventBase):
         super().__init__(event)
         self.tt_efield = self.tt_event
         self.tt_shower = groot.TShower(f_name)
-        self.tt_run    = groot.TRun(f_name)
+        self.tt_run = groot.TRun(f_name)
         self.load_event_idx(0)
         self.f_name = f_name
 
@@ -241,7 +243,7 @@ class FileSimuEfield(_FileEventBase):
         # synchronize runTree on same run
         self.tt_run.get_run(run_number)
         # synchronize EfieldRunSimdataTree on same run
-        self.t_bin_size =  np.asarray(self.tt_run.t_bin_size)
+        self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
 
     def get_obj_handling3dtraces(self):
@@ -292,22 +294,22 @@ class FileVoltageEvent(_FileEventBase):
         return o_tevent
 
 
-
-    
 def get_file_event(f_name):
     """
     Factory for ROOT event file, return an instance of FileSimuEfield or FileVoltageEvent
     """
     if not os.path.exists(f_name):
-        print('File does not exist')
+        print("File does not exist")
         logger.error(f"File {f_name} doesn't exist.")
         raise FileNotFoundError
     else:
         trees_list = get_ttree_in_file(f_name)
-        if "tefield" in trees_list:          # File with Efield info as input
+        if "tefield" in trees_list:  # File with Efield info as input
             return FileSimuEfield(f_name, False)
-        elif "tvoltage" in trees_list:       # File with voltage info as input
+        elif "tvoltage" in trees_list:  # File with voltage info as input
             return FileVoltageEvent(f_name, False)
         else:
-            logger.error(f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}.")
+            logger.error(
+                f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
+            )
             raise AssertionError
