@@ -1,12 +1,23 @@
 # Description 
-Directory of data defining the various large models: antenna, electronics, galaxy, topography, geomagnet.
 
-Automatically loaded with env/setup.sh, so under github doesn't content data files
+## detector directory
 
-Note: Do not put geoid undulation file "egm96.png" inside topography data folder.
+**Under github doesn't content data files, because they are too large**
+
+This directory stored data defining the various models for GRANDLIB like:
+ * antenna for each axis
+ * electronics effect: LNA, filter, cable
+ * galaxy signal 
+
+Automatically loaded with env/setup.sh, 
 
 # Notes about download script
 
-## How reload
+## How reload a GRAND model
 
-## How update
+* remove/change name of directory grand/data/model/detector
+* in directory grand/data, do 
+
+```
+python download_data_grand.py
+```
