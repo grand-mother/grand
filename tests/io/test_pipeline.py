@@ -19,7 +19,10 @@ class PipelineTest(TestCase):
         output_file= Path(grand_get_path_root_pkg()) / "data" / "test_voltage.root"
 
         self.assertTrue((input_file).exists())
-        os.remove(output_file)
+        try:
+            os.remove(output_file)
+        except:
+            pass
         self.assertFalse((output_file).exists())
 
         pipeline = Pipeline()
