@@ -110,6 +110,7 @@ class Handling3dTracesOfEvent:
         :param du_id:
         :type du_id:
         """
+        self.network = DetectorUnitNetwork(self.name)
         self.network.init_pos_id(du_pos, self.du_id)
 
     def set_unit_axis(self, str_unit="TBD", axis_name="idx"):
