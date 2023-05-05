@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
-from grand.io.root_files import get_file_event
+from grand.io.root_files import get_file_event, get_ttree_in_file
 from grand.basis.traces_event import Handling3dTracesOfEvent
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
@@ -84,6 +84,7 @@ def main():
         print(f"Nb events     : {d_event.get_nb_events()}")
         print(f"Nb DU         : {d_event.get_du_count()}")
         print(f"Size trace    : {d_event.get_size_trace()}")
+        print(f"TTree         : {get_ttree_in_file(args.file.name)}")
     assert isinstance(o_tevent, Handling3dTracesOfEvent)
     if args.list_du:
         print(f"Identifier DU : {o_tevent.d_idxdu.keys()}")
@@ -102,6 +103,8 @@ def main():
             return
         o_tevent.plot_trace_du(args.trace)
         o_tevent.plot_ps_trace_du(args.trace)
+    if args.list_ttree:
+        print(get_ttree_in_file(args.file.name))
     if args.dump != -100:
         if not args.dump in o_tevent.d_idxdu.keys():
             logger.error(f"ERROR: unknown DU identifer")
