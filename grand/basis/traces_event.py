@@ -71,7 +71,7 @@ class Handling3dTracesOfEvent:
         #  and the reverse of white (not visible on plot) is black
         self._color = ["k", "y", "b"]
         self.axis_name = self._d_axis_val["idx"]
-        self.network = DetectorUnitNetwork(self.name)
+        self.network = None
 
     ### INTERNAL
 
@@ -102,7 +102,7 @@ class Handling3dTracesOfEvent:
         assert du_id.shape[0] == t_start_ns.shape[0]
         self._define_t_samples()
 
-    def init_network(self, du_pos, du_id):
+    def init_network(self, du_pos):
         """
 
         :param du_pos:
@@ -110,7 +110,7 @@ class Handling3dTracesOfEvent:
         :param du_id:
         :type du_id:
         """
-        self.network.init_pos_id(du_pos, du_id)
+        self.network.init_pos_id(du_pos, self.du_id)
 
     def set_unit_axis(self, str_unit="TBD", axis_name="idx"):
         """
@@ -362,17 +362,38 @@ class Handling3dTracesOfEvent:
         """
         Plot time max and max value by component
         """
-        self.network.plot_footprint_4d(self, "3D")
+        if self.network:
+            self.network.plot_footprint_4d(self, "3D")
+        else:
+            logger.error("DU network isn't defined, can't plot footprint")
 
     def plot_footprint_val_max(self):  # pragma: no cover
         """
         Plot footprint max value
         """
-        self.network.plot_footprint_1d(self.get_max_norm(), "Max ||trace||", self)
+        if self.network:
+            self.network.plot_footprint_1d(self.get_max_norm(), "Max ||trace||", self)
+        else:
+            logger.error("DU network isn't defined, can't plot footprint")        
+        
+    def plot_footprint_val_max_inter(self):  # pragma: no cover
+        """
+        Plot footprint max value
+        """
+        if self.network:
+            a_time, a_values = self.get_extended_traces()
+            self.network.plot_footprint_time(a_time, a_values, "test")
+        else:
+            logger.error("DU network isn't defined, can't plot footprint")        
 
     def plot_footprint_time_max(self):  # pragma: no cover
         """
         Plot footprint time associated to max value
         """
         tmax, _ = self.get_tmax_vmax()
-        self.network.plot_footprint_1d(tmax, "Time of max value", self, scale="lin")
+        if self.network:
+            self.network.plot_footprint_1d(tmax, "Time of max value", self, scale="lin")
+        else:
+            logger.error("DU network isn't defined, can't plot footprint")        
+        
+        

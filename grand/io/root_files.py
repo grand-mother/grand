@@ -179,7 +179,6 @@ class _FileEventBase:
             np.array(self.tt_event.du_nanoseconds),
             self.get_sampling_freq_mhz(),
         )
-        o_tevent.init_network(self.du_xyz, du_id)
         return o_tevent
 
 
@@ -245,12 +244,14 @@ class FileSimuEfield(_FileEventBase):
         # synchronize EfieldRunSimdataTree on same run
         self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
+        
 
     def get_obj_handling3dtraces(self):
         """
         Return a traces container IO independent
         """
         o_tevent = super().get_obj_handling3dtraces()
+        o_tevent.init_network(self.du_xyz)
         o_tevent.set_unit_axis("$\mu$V/m", "cart")
         return o_tevent
 

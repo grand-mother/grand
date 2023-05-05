@@ -92,11 +92,8 @@ def main():
         o_tevent.plot_all_traces_as_image()
     if args.footprint:
         o_tevent.plot_footprint_val_max()
-        a_time, a_values = o_tevent.get_extended_traces()
     if args.time_val:
-        o_tevent.plot_footprint_time_max()
-        a_time, a_values = o_tevent.get_extended_traces()
-        o_tevent.network.plot_footprint_time(a_time, a_values, "test")
+        o_tevent.plot_footprint_val_max_inter()
     if args.trace != -100:
         if not args.trace in o_tevent.d_idxdu.keys():
             logger.error(f"ERROR: unknown DU identifer")
