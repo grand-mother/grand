@@ -71,7 +71,7 @@ def manage_args():
         "--padding_factor",
         type=float,
         default=1.0,
-        help="Increase size of signal with zero padding, for 1.2 value the size is increased of 20%",
+        help="Increase size of signal with zero padding, with 1.2 the size is increased of 20%%. ",
     )
     # retrieve argument
     return parser.parse_args()
