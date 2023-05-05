@@ -1276,11 +1276,14 @@ class MotherEventTree(DataTree):
         # Get the detector units branch
         du_br = self._tree.GetBranch("du_id")
 
-        detector_units = []
-        # Loop through all entries
-        for i in range(du_br.GetEntries()):
-            du_br.GetEntry(i)
-            detector_units.append(self.du_id)
+        # detector_units = []
+        # # Loop through all entries
+        # for i in range(du_br.GetEntries()):
+        #     du_br.GetEntry(i)
+        #     detector_units.append(self.du_id)
+
+        count = self.draw("du_id", "", "goff")
+        detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
 
         # If there was an entry read before this action, come back to this entry
         if current_entry is not None:
