@@ -293,10 +293,10 @@ class Efield2Voltage:
         if self.f_output == "":
             split_file = os.path.splitext(self.f_input)
             self.f_output   = split_file[0]+"_voltage.root"
-            logger.info(f"No output file was defined. Output file is automatically defined as {f_output}")
-        if not append_file and os.path.exists(f_output):
-            logger.info(f"save on new file option => remove file {f_output}")
-            os.remove(f_output)
+            logger.info(f"No output file was defined. Output file is automatically defined as {self.f_output}")
+        if not append_file and os.path.exists(self.f_output):
+            logger.info(f"save on new file option => remove file {self.f_output}")
+            os.remove(self.f_output)
             time.sleep(1)
 
         logger.info(f"save result in {self.f_output}")
