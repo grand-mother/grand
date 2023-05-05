@@ -212,14 +212,14 @@ class FileSimuEfield(_FileEventBase):
         Constructor
         """
         name_ttree = "tefield"
-        if not os.path.exists(f_name):
-            logger.error(f"File {f_name} doesn't exist.")
-            raise FileNotFoundError
-        if not check_ttree_in_file(f_name, name_ttree):
-            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
-            raise AssertionError
+        if check:
+            if not os.path.exists(f_name):
+                logger.error(f"File {f_name} doesn't exist.")
+                raise FileNotFoundError
+            if not check_ttree_in_file(f_name, name_ttree):
+                logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+                raise AssertionError
         logger.info(f"Events  in file {f_name}")
-
         event = groot.TEfield(f_name)
         super().__init__(event)
         self.tt_efield = self.tt_event
@@ -274,12 +274,13 @@ class FileVoltageEvent(_FileEventBase):
         Constructor
         """
         name_ttree = "tvoltage"
-        if not os.path.exists(f_name):
-            logger.error(f"File {f_name} doesn't exist.")
-            raise FileNotFoundError
-        if not check_ttree_in_file(f_name, name_ttree):
-            logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
-            raise AssertionError
+        if check:
+            if not os.path.exists(f_name):
+                logger.error(f"File {f_name} doesn't exist.")
+                raise FileNotFoundError
+            if not check_ttree_in_file(f_name, name_ttree):
+                logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
+                raise AssertionError
         logger.info(f"Events  in file {f_name}")
         event = groot.TVoltage(f_name)
         super().__init__(event)
@@ -303,14 +304,12 @@ def get_file_event(f_name):
         print("File does not exist")
         logger.error(f"File {f_name} doesn't exist.")
         raise FileNotFoundError
-    else:
-        trees_list = get_ttree_in_file(f_name)
-        if "tefield" in trees_list:  # File with Efield info as input
-            return FileSimuEfield(f_name, False)
-        elif "tvoltage" in trees_list:  # File with voltage info as input
-            return FileVoltageEvent(f_name, False)
-        else:
-            logger.error(
-                f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
-            )
-            raise AssertionError
+    trees_list = get_ttree_in_file(f_name)
+    if "tefield" in trees_list:  # File with Efield info as input
+        return FileSimuEfield(f_name, False)
+    if "tvoltage" in trees_list:  # File with voltage info as input
+        return FileVoltageEvent(f_name, False)
+    logger.error(
+        f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
+    )
+    raise AssertionError
