@@ -2240,7 +2240,7 @@ class TADC(MotherEventTree):
     #     default_factory=lambda: StdVectorList("unsigned short")
     # )
 
-    adc_input_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    adc_input_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     """ADC input channels"""
 
     # ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
@@ -2339,13 +2339,13 @@ class TADC(MotherEventTree):
     # Test pulse rate divider and channel readout enable
     enable_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
     fire_single_test_pulse: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
-    test_pulse_rate_divider: StdVectorListDesc = field(default=StdVectorListDesc("char"))
+    test_pulse_rate_divider: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
 
     # Common coincidence readout time window
-    common_coincidence_time: StdVectorListDesc = field(default=StdVectorListDesc("short"))
+    common_coincidence_time: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
 
     # Input selector for readout channel
-    selector_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    selector_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
 
     # ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
     # _digi_prepost_trig_windows: StdVectorList = field(
@@ -2372,11 +2372,11 @@ class TADC(MotherEventTree):
     #     default_factory=lambda: StdVectorList("vector<unsigned short>")
     # )
 
-    gain_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
-    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    offset_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    base_maximum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
-    base_minimum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
+    gain_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    offset_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    base_maximum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    base_minimum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
 
     # ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
     # _channel_trig_settings0: StdVectorList = field(
@@ -2395,15 +2395,15 @@ class TADC(MotherEventTree):
     #     default_factory=lambda: StdVectorList("vector<unsigned short>")
     # )
 
-    signal_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
-    noise_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<short>"))
-    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    qmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
-    qmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<char>"))
+    signal_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    noise_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    qmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    qmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
 
     ## ?? What is it? Some kind of the adc trace offset?
     _ioff: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
