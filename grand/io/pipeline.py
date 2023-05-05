@@ -81,7 +81,8 @@ class Pipeline:
             logger.info("writing on output file")
 
             for key, command in self.command_dict.items():
-                if key=="efield2voltage": 
+                if key=="efield2voltage":
+                    command.f_output = kwargs['f_output']
                     command.compute_event_all()
 
 
