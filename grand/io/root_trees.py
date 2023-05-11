@@ -410,7 +410,7 @@ class DataTree:
         current_entry = 0
 
         while current_entry < self._tree.GetEntries():
-            self._tree.GetEntry(current_entry)
+            self.get_entry(current_entry)
             yield self
             current_entry += 1
 
