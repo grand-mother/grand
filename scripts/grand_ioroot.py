@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
-from grand.io.root_files import FileSimuEfield, FileVoltageEvent, get_ttree_in_file
+from grand.io.root_files import get_file_event, get_ttree_in_file
 from grand.basis.traces_event import Handling3dTracesOfEvent
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
@@ -20,12 +20,6 @@ def manage_args():
     parser = argparse.ArgumentParser(description="Information and plot event/traces for ROOT file")
     parser.add_argument(
         "file", help="path and name of ROOT file GRAND", type=argparse.FileType("r")
-    )
-    parser.add_argument(
-        "--ttree",
-        choices=["efield", "voltage"],
-        default="efield",
-        help="Define the event TTree to read in file. Default is efield",
     )
     parser.add_argument(
         "-f",
@@ -84,35 +78,30 @@ def manage_args():
 def main():
     #
     args = manage_args()
-    if args.list_ttree:
-        print(f"TTree in file : {get_ttree_in_file(args.file.name)}")
-    if args.ttree == "efield":
-        d_event = FileSimuEfield(args.file.name)
-    elif args.ttree == "voltage":
-        d_event = FileVoltageEvent(args.file.name)
+    d_event = get_file_event(args.file.name)
     o_tevent = d_event.get_obj_handling3dtraces()
     if args.info:
         print(f"Nb events     : {d_event.get_nb_events()}")
         print(f"Nb DU         : {d_event.get_du_count()}")
         print(f"Size trace    : {d_event.get_size_trace()}")
+        print(f"TTree         : {get_ttree_in_file(args.file.name)}")
     assert isinstance(o_tevent, Handling3dTracesOfEvent)
     if args.list_du:
         print(f"Identifier DU : {o_tevent.d_idxdu.keys()}")
     if args.trace_image:
         o_tevent.plot_all_traces_as_image()
     if args.footprint:
-        o_tevent.network.plot_footprint_1d(o_tevent.get_max_norm(), "Max ||Efield||", o_tevent)
-        a_time, a_values = o_tevent.get_extended_traces()
+        o_tevent.plot_footprint_val_max()
     if args.time_val:
-        o_tevent.plot_footprint_time_max()
-        a_time, a_values = o_tevent.get_extended_traces()
-        o_tevent.network.plot_footprint_time(a_time, a_values, "test")
+        o_tevent.plot_footprint_val_max_inter()
     if args.trace != -100:
         if not args.trace in o_tevent.d_idxdu.keys():
             logger.error(f"ERROR: unknown DU identifer")
             return
         o_tevent.plot_trace_du(args.trace)
         o_tevent.plot_ps_trace_du(args.trace)
+    if args.list_ttree:
+        print(get_ttree_in_file(args.file.name))
     if args.dump != -100:
         if not args.dump in o_tevent.d_idxdu.keys():
             logger.error(f"ERROR: unknown DU identifer")

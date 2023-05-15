@@ -38,9 +38,11 @@ class PreComputeInterpol:
     # index of freq in first in band 30-250MHz
     idx_first: Any = None
     # index of freq in last plus one in band 30-250MHz
-    #idx_lastp1: Any = None # JM
-    idx_last: Any = None    # RK: replaced idx_lastp1 to idx_last
-    # array of index where f_out are in f_in
+    idx_lastp1: Any = None # JM
+    #idx_last: Any = None    # RK: replaced idx_lastp1 to idx_last
+    # array of index where f_out are in f_in for 
+    # interpolation between idx_itp[i], idx_itp[i]+1
+    # with c_inf and c_sup coefficient
     idx_itp: Any = None
     # array of coefficient inf
     c_inf: Any = None
@@ -58,15 +60,23 @@ class PreComputeInterpol:
         # index of freq in first in band, + 1 to have first in band
         idx_first = int(freq_in_mhz[0] / d_freq_out) + 1
         # index of freq in last plus one, + 1 to have first out band
-        #idx_lastp1 = int(freq_in_mhz[-1] / d_freq_out) + 1 # JM
-        idx_last = int(freq_in_mhz[-1] / d_freq_out)        # RK: idx_lastp1 --> idx_last
+        idx_lastp1 = int(freq_in_mhz[-1] / d_freq_out) + 1
+        # https://github.com/grand-mother/collaboration-issues/issues/30
+        #idx_last = int(freq_in_mhz[-1] / d_freq_out)      # RK: idx_lastp1 --> idx_last
         self.idx_first = idx_first
-        self.idx_last = idx_last
+        self.idx_lastp1 = idx_lastp1
         d_freq_in = freq_in_mhz[1] - freq_in_mhz[0]
-        freq_in_band = freq_out_mhz[idx_first:idx_last]
+        freq_in_band = freq_out_mhz[idx_first:idx_lastp1]
         self.idx_itp = np.trunc((freq_in_band - freq_in_mhz[0]) / d_freq_in).astype(int)
         # define coefficient of linear interpolation
         self.c_sup = (freq_in_band - freq_in_mhz[self.idx_itp]) / d_freq_in
+        if self.idx_itp[-1]+1 == freq_in_mhz.shape[0]:
+            # https://github.com/grand-mother/collaboration-issues/issues/30
+            logger.info(f" ** Specfic processing when f_in = k * f_out else IndexError **")
+            self.idx_itp[-1] -= 1
+            # in this case last c_sup must be zero
+            # check it !
+            assert np.allclose(self.c_sup[-1], 0)
         self.c_inf = 1 - self.c_sup
 
     def get_linear_interpol(self, a_val):
@@ -222,9 +232,9 @@ class AntennaProcessing:
         )
         # now add zeros outside leff frequency band and unpack leff theta , phi
         l_t = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
-        l_t[pre.idx_first : pre.idx_last] = leff_itp[0]
+        l_t[pre.idx_first : pre.idx_lastp1] = leff_itp[0]
         l_p = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
-        l_p[pre.idx_first : pre.idx_last] = leff_itp[1]
+        l_p[pre.idx_first : pre.idx_lastp1] = leff_itp[1]
         # fmt: off
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
