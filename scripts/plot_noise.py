@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import h5py
 import scipy.fft as sf
 
-import grand.simu.noise.rf_chain as grfc
+import grand.sim.detector.rf_chain as grfc
 from grand import grand_add_path_data
 
 freq_MHz = np.arange(30, 251, 1)
@@ -27,7 +27,7 @@ def plot(args="galactic", **kwargs):
 
         lst = int(lst)
 
-        gala_file = grand_add_path_data("sky/30_250galactic.mat")
+        gala_file = grand_add_path_data("noise/30_250galactic.mat")
         gala_show = h5py.File(gala_file, "r")
         gala_psd_dbm   = np.transpose(gala_show["psd_narrow_huatu"])
         # SL, dbm per MHz, P=mean(V*V)/imp with imp=100 ohms
@@ -71,7 +71,7 @@ def plot(args="galactic", **kwargs):
 
     if args=='vswr':
 
-        vswr = grfc.StandingWaveRatioGP300()
+        vswr = grfc.StandingWaveRatio()
         vswr.compute_s11()
 
         fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -96,7 +96,7 @@ def plot(args="galactic", **kwargs):
 
     if args=='lna':
 
-        lna = grfc.LowNoiseAmplificatorGP300()
+        lna = grfc.LowNoiseAmplifier()
         lna.compute_for_freqs(freq_MHz)
 
         """
@@ -188,7 +188,7 @@ def plot(args="galactic", **kwargs):
 
     if args=="vga":
 
-        vga = grfc.VgaFilterBalunGP300()
+        vga = grfc.VGAFilterBalun()
         vga.compute_for_freqs(freq_MHz)
 
         plt.figure(figsize=(6, 3))
@@ -224,7 +224,7 @@ def plot(args="galactic", **kwargs):
         plt.show()
 
     if args=='cable':
-        cable  = grfc.CableGP300()
+        cable  = grfc.Cable()
         cable.compute_for_freqs(freq_MHz)
 
         plt.figure(figsize=(6, 3))
@@ -251,7 +251,7 @@ def plot(args="galactic", **kwargs):
 
     if args=='rf_chain':
 
-        rfchain= grfc.RfChainGP300()
+        rfchain= grfc.RFChain()
         rfchain.compute_for_freqs(freq_MHz)
 
         plt.figure()
@@ -273,16 +273,17 @@ def plot(args="galactic", **kwargs):
 
         freqs = rfchain.lna.freqs_out
         plt.figure()
-        plt.subplot(1, 2, 1)
+        plt.subplot(2, 1, 1)
         plt.xlim(40, 260)
         plt.title("Amplitude total transfer function")
         plt.plot(freqs, np.abs(rfchain._total_tf[0]), "k", label="port 1")
         plt.plot(freqs, np.abs(rfchain._total_tf[1]), "y", label="port 2")
         plt.plot(freqs, np.abs(rfchain._total_tf[2]), "b", label="port 3")
-        plt.xlabel("MHz")
+        #plt.xlabel("MHz")
+        plt.xticks(visible=False)
         plt.grid()
         plt.legend()
-        plt.subplot(1, 2, 2)
+        plt.subplot(2, 1, 2)
         plt.xlim(40, 260)
         plt.title("Phase total transfer function")
         plt.plot(freqs, np.angle(rfchain._total_tf[0], deg=True), "k", label="port 1")
@@ -292,8 +293,8 @@ def plot(args="galactic", **kwargs):
         plt.ylabel("Deg")
         plt.grid()
         plt.legend()
+        plt.savefig("total_transfer_function.png")
         plt.show()
-
 
 if __name__ == "__main__":
     import argparse

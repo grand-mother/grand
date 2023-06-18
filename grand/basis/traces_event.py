@@ -10,7 +10,7 @@ from matplotlib import colors
 from matplotlib.backend_bases import MouseButton
 
 from grand.basis.du_network import DetectorUnitNetwork
-import grand.num.signal as gsig
+import grand.basis.signal as gsig
 
 
 logger = getLogger(__name__)

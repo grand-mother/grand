@@ -7,10 +7,10 @@ from typing import Dict, Optional, List
 
 import numpy
 
-from grand import CartesianRepresentation, SphericalRepresentation
-from grand.simu.shower.gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
+from grand.geo.coordinates import CartesianRepresentation, SphericalRepresentation
+from grand.sim.shower.gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
 from grand.basis.type_trace import ElectricField
-from grand.simu.shower.pdg import ParticleCode
+from grand.sim.shower.pdg import ParticleCode
 
 __all__ = ["CoreasShower"]
 

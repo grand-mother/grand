@@ -9,7 +9,7 @@ from typing import Optional
 import numpy as np
 import ROOT
 
-import grand.io.root_trees as groot
+import grand.dataio.root_trees as groot
 from grand.basis.traces_event import Handling3dTracesOfEvent
 
 logger = getLogger(__name__)
@@ -182,7 +182,7 @@ class _FileEventBase:
         return o_tevent
 
 
-class FileSimuEfield(_FileEventBase):
+class FileEfield(_FileEventBase):
     """
     File simulation of air shower with 4 TTree
 
@@ -256,7 +256,7 @@ class FileSimuEfield(_FileEventBase):
         return o_tevent
 
 
-class FileVoltageEvent(_FileEventBase):
+class FileVoltage(_FileEventBase):
     """
     Goals of the class:
 
@@ -306,9 +306,9 @@ def get_file_event(f_name):
         raise FileNotFoundError
     trees_list = get_ttree_in_file(f_name)
     if "tefield" in trees_list:  # File with Efield info as input
-        return FileSimuEfield(f_name, False)
+        return FileEfield(f_name, False)
     if "tvoltage" in trees_list:  # File with voltage info as input
-        return FileVoltageEvent(f_name, False)
+        return FileVoltage(f_name, False)
     logger.error(
         f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
     )

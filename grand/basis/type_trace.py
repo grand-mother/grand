@@ -12,7 +12,7 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )
-from grand.io import io_node as io  # , ECEF, LTP
+from grand.dataio import io_node as io  # , ECEF, LTP
 
 
 logger = getLogger(__name__)

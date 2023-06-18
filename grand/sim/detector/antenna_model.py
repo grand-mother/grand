@@ -1,7 +1,6 @@
 from logging import getLogger
 
 from grand import grand_add_path_data
-#from grand.io.file_leff import TabulatedAntennaModel
 
 from dataclasses import dataclass, fields
 from typing import Union, Any

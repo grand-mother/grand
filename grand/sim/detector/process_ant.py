@@ -20,7 +20,6 @@ from grand.geo.coordinates import (
     ECEF,
 )
 from grand.basis.type_trace import ElectricField, Voltage
-#from grand.io.file_leff import TabulatedAntennaModel
 
 logger = getLogger(__name__)
 
@@ -275,20 +274,20 @@ class AntennaProcessing:
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input fft_leff and field are in shower frame.
-        fft_leff = self.effective_length(xmax, efield, frame)
-        logger.debug(fft_leff.shape)
+        leff_f = self.effective_length(xmax, efield, frame)
+        logger.debug(leff_f.shape)
         # E is CartesianRepresentation
         fft_e = efield.get_fft(self.size_fft)
-        logger.debug(f"size_fft leff={fft_leff.shape}")
-        logger.debug(f"size_fft efield={fft_e.shape}")
+        logger.debug(f"size_fft leff={leff_f.shape}")
+        logger.debug(f"size_fft efield={leff_f.shape}")
         # convol e_xyz field by Leff in Fourier space
-        self.fft_resp_volt = (
-            fft_e[0] * fft_leff[0] + fft_e[1] * fft_leff[1] + fft_e[2] * fft_leff[2]
+        self.voc_f = (
+            fft_e[0] * leff_f[0] + fft_e[1] * leff_f[1] + fft_e[2] * leff_f[2]
         )
         # inverse FFT and remove zero-padding
-        resp_volt = sf.irfft(self.fft_resp_volt)[: efield.e_xyz.shape[1]]
+        voc = sf.irfft(self.voc_f)[: efield.e_xyz.shape[1]]
         # WARNING do not used : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])
         t = efield.a_time
         logger.debug(f"time : {t.dtype} {t.shape}")
-        logger.debug(f"volt : {resp_volt.dtype} {resp_volt.shape}")
-        return Voltage(t=t, V=resp_volt)
+        logger.debug(f"volt : {voc.dtype} {voc.shape}")
+        return Voltage(t=t, V=voc)

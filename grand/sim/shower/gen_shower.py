@@ -9,9 +9,9 @@ from datetime import datetime
 
 import numpy as np
 
-from grand.simu.shower.pdg import ParticleCode
+from grand.sim.shower.pdg import ParticleCode
 from grand.basis.type_trace import ElectricField, Voltage
-from grand.io import io_node as io
+from grand.dataio import io_node as io
 
 # TODO: when the unused import grand.io.root_trees is defined test coverage indicate test on it
 # from grand.io.root_trees import ShowerEventSimdataTree
@@ -89,11 +89,13 @@ class ShowerEvent:
         else:
             raise Exception("Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid")
         self.grand_ref_frame = GRANDCS(location=origin_geoid)    # used to define antenna position.
+        # define a shower core in GRANDCS. shower_core_pos are given in GRANDCS.
         self.core = GRANDCS(
             x=d_shower.shower_core_pos[0],
             y=d_shower.shower_core_pos[1],
             z=d_shower.shower_core_pos[2],
             location=origin_geoid)  #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
+        # define a shower frame. DU positions and Xmax is defined wrt this frame.
         self.frame = LTP(
             location=self.core,
             orientation="NWU",

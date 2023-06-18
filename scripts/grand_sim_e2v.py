@@ -5,7 +5,7 @@ from typing import Union
 import numpy as np
 
 import grand.manage_log as mlg
-from grand.simu.efield2voltage import Efield2Voltage
+from grand.sim.efield2voltage import Efield2Voltage
 
 
 # specific logger definition for script because __mane__ is "__main__" !
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     #master.compute_event_idx(0)
     #master.save_voltage(append_file=False)
-    master.compute_event_all()    # saves automatically
+    master.compute_voltage()    # saves automatically
 
     # =============================================
     logger.info(mlg.string_end_script())

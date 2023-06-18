@@ -9,7 +9,7 @@ RK TODO: implement techniques used in LP's execute_pipeline where output_trees
 
 import numpy as np
 from logging import getLogger
-import grand.io.root_trees as groot
+import grand.dataio.root_trees as groot
 from dataclasses import dataclass
 
 logger = getLogger(__name__)
@@ -51,7 +51,7 @@ class Pipeline:
         if name=='efield2voltage':
             logger.info("Reading efield2voltage")
             # call class to compute voltage from efield.
-            from grand.simu.efield2voltage import Efield2Voltage
+            from grand.sim.efield2voltage import Efield2Voltage
 
             #print('kwargs:', kwargs)
             #events      = groot.EfieldEventTree(self.f_input) 

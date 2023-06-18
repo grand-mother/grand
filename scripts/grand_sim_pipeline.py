@@ -2,7 +2,7 @@
 Example script to compute voltage from electric-field using GRAND pipeline.
 """
 
-from grand.io.pipeline import Pipeline
+from grand.basis.pipeline import Pipeline
 
 import grand.manage_log as mlg
 logger = mlg.get_logger_for_script(__file__)
@@ -13,7 +13,7 @@ logger.info(mlg.string_begin_script())
 pipeline = Pipeline()
 
 pipeline.Add("reader", 
-            f_input="/home/data_challenge1_pm_lwp/data/Coarse2_xmax_add.root") # filename = str, list of str
+            f_input="../data/test_efield.root") # filename = str, list of str
 
 pipeline.Add("efield2voltage", 
             add_noise=True, 
@@ -23,7 +23,7 @@ pipeline.Add("efield2voltage",
             padding_factor=1.2)
 
 pipeline.Add("writer", 
-            f_output="Coarse2_xmax_add_voltage_event.root")
+            f_output="test_voltage.root")
 
 
 logger.info(mlg.string_end_script())

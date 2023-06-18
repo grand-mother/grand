@@ -2,8 +2,6 @@
 Simulation of galaxy emission in radio frequency
 """
 
-# Note: plotting has been moved to grand/scripts/plot_noise.py. Run: ./plot_noise.py -h for help.
-
 import h5py
 import numpy as np
 from grand import grand_add_path_data
@@ -26,7 +24,7 @@ def interpol_at_new_x(a_x, a_y, new_x):
     )
     return func_interpol(new_x)
 
-def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, seed=None):
+def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None):
     """
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
@@ -52,7 +50,7 @@ def galaxy_radio_signal(f_lst, size_out, freqs_mhz, nb_ant, seed=None):
     # TODO: why lst is an integer ?
     lst = int(f_lst)
 
-    gala_file = grand_add_path_data("sky/30_250galactic.mat")
+    gala_file = grand_add_path_data("noise/30_250galactic.mat")
     gala_show = h5py.File(gala_file, "r")
     gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
     gala_power_dbm = np.transpose(

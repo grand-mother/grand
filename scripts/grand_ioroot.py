@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
-from grand.io.root_files import get_file_event, get_ttree_in_file
+from grand.dataio.root_files import get_file_event, get_ttree_in_file
 from grand.basis.traces_event import Handling3dTracesOfEvent
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
