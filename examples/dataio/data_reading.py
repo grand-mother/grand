@@ -4,7 +4,7 @@ An example of reading data from a file
 '''
 import numpy as np
 import sys
-from grand.io.root_trees import *
+from grand.dataio.root_trees import *
 
 if len(sys.argv) < 2:
     tadccounts = TADC("stored_data.root")

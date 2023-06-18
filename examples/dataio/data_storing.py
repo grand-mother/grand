@@ -6,7 +6,7 @@ An example of storing traces to a file using root_trees.py
 import numpy as np
 import time
 import sys
-from grand.io.root_trees import *
+from grand.dataio.root_trees import *
 
 # Check if a filename was provided on the command line
 if len(sys.argv) == 2 and sys.argv[1][-5:] == ".root":

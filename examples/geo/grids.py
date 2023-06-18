@@ -4,7 +4,6 @@ source: https://github.com/kumikokotera/GRAND_tools/blob/master/grid_shape/grids
 
 from __future__ import absolute_import
 import numpy as np
-#import astropy.units as u
 import logging
 import os
 import sys
