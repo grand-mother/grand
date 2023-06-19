@@ -1,0 +1,98 @@
+
+##############################################################################################
+# Aires simulation header generated with CreateAiresInputHeaderFromGRAND                     #
+##############################################################################################
+TaskName GP10_192745211400_SD075V
+PrimaryParticle Proton
+PrimaryEnergy 3e+07 GeV
+PrimaryZenAngle 22.96 deg
+PrimaryAzimAngle 180.47 deg Magnetic
+RandomSeed 0.960744369
+##############################################################################################
+#############################################################################################
+#Antenna List Generated from ./PublicDataFiles/GP10PositionsSmall151-Aires.csv
+#Core Position: 6114472.520 -452068.509 1425.000
+#############################################################################################
+
+####################################################################################
+# Antenna List created with CreateAntennaListInp v0.1                              #
+####################################################################################
+AddAntenna A0     -222.69      -57.12        0.00
+AddAntenna A1     -547.69       67.88        0.00
+AddAntenna A2     -547.69      317.88        0.00
+AddAntenna A3     -330.69      192.88        0.00
+AddAntenna A4     -330.69      442.88        0.00
+AddAntenna A5     -114.69       67.88        0.00
+AddAntenna A6     -114.69      317.88        0.00
+AddAntenna A7     -114.69      567.88        0.00
+AddAntenna A8      102.31      442.88        0.00
+AddAntenna A9      102.31      129.88        0.00
+####################################################################################
+FresnelTime On
+ZHAireS On
+####################################################################################
+# CreateAntennaListInp Finished                                                    #
+####################################################################################
+
+######################################################################################
+# Antenna TimeWindow created with CreateTimeWindowInp v0                             #
+# Xmax to Antenna Distance:2.4326500 km
+######################################################################################
+AntennaTimeMin -200.00 ns
+AntennaTimeMax 1300.00 ns
+ExpectedXmaxDist 2432.65 m
+######################################################################################
+
+# SimParametersFile Follows ##################################################################
+# SimParametersFile: ./PublicDataFiles/Auger.Normal.Skeleton.inp
+##############################################################################################
+#A GRAND SHOWER SKELETON
+#------------------------------------------------------------------------------
+#
+#AIRES Section
+#
+#AIRES Section
+PropagatePrimary On
+
+#Configure the site
+Site Malargue
+Date 2021 5 13
+
+#Set up thinning.
+Thinning 1E-5 Rel
+ThinningWFactor 0.06
+TotalShowers 1
+
+#Table Export
+#increase the number of observing levels (more detailed longitudinal files, at the expense of a bigger idf data file)
+ObservingLevels 510 100.000 km 1.5 km
+
+RLimsTables 100 m 20 km
+
+#dont save ground or lgtpcles if you wont use them (waste space)
+SaveNotInFile lgtpcles All
+SaveNotInFile grdpcles All
+
+#This is for the job to finish before it runs out of wall time in Lyon (48hs)
+MaxCpuTimePerRun 120 min
+RunsPerProcess 23
+#This is to make Aires use the local $TMPDIR for the Scratch. This will speed up the simulation and reduce the load on sps
+Import TMPDIR
+FileDirectory Scratch {TMPDIR}
+
+#Speed up sims for radio
+#increase the energy threshold up to 3MeV (specially if you are not interested in the ground particles)..saves up to 50% time
+ElectronCutEnergy 1 MeV
+ElectronRoughCut 1 MeV
+GammaCutEnergy 1 MeV
+GammaRoughCut 1 MeV
+
+#ZHAireS-Specific
+#removes from the fresnel time output the vector potential and the antena positions, leaving only antena number, time and electric field components
+ReducedDATOutput On
+#creates an additional CoREAS compatible output
+CoREASOutput On
+#The Antenna time window is set by the antenna positions generator.
+TimeDomainBin 0.50 ns
+
+#End of SimParametersFile ####################################################################
