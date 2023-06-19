@@ -1,0 +1,16 @@
+AntennaPosition = 0.0 0.0 1000 1
+AntennaPosition = 0.0 13.0 1000 2
+AntennaPosition = 0.0 26.0 1000 3
+AntennaPosition = 0.0 39.0 1000 4
+AntennaPosition = 13.0 0.0 1000 5
+AntennaPosition = 13.0 13.0 1000 6
+AntennaPosition = 13.0 26.0 1000 7
+AntennaPosition = 13.0 39.0 1000 8
+AntennaPosition = 26.0 0.0 1000 9
+AntennaPosition = 26.0 13.0 1000 10
+AntennaPosition = 26.0 26.0 1000 11
+AntennaPosition = 26.0 39.0 1000 12
+AntennaPosition = 39.0 0.0 1000 13
+AntennaPosition = 39.0 13.0 1000 14
+AntennaPosition = 39.0 26.0 1000 15
+AntennaPosition = 39.0 39.0 1000 16

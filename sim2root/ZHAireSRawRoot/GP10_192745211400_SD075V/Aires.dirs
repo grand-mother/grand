@@ -1,0 +1,9 @@
+# This is the AIRES dirs file. DO NOT EDIT.
+Aires_DHost='ccwslurm0141'
+Aires_DUserName='tueros'
+Aires_DTaskName='GP10_192745211400_SD075V'
+Aires_DRandomfn='__Aires1101_3236'
+Aires_DOutput=
+Aires_DGlobal=
+Aires_DExport=
+Aires_DScratch='/tmp/'
