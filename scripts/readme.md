@@ -31,7 +31,7 @@ optional arguments:
 ## Example
 
 ```bash
-/home/dc1# convert_efield2voltage.py --lst 18 --seed 0 --verbose info ../data/test_efield.root  -o test_voltage.root 
+grand/scripts# convert_efield2voltage.py --lst 18 --seed 0 --verbose info ../data/test_efield.root  -o test_voltage.root 
 05:42:43.526  INFO [grand.manage_log 187] create handler for root logger: ['grand']
 05:42:43.527  INFO [grand.scripts.grand_simu_du 84] 
 05:42:43.527  INFO [grand.scripts.grand_simu_du 84] ===========> Begin at 2023-04-07T05:42:43Z <===========
@@ -60,7 +60,7 @@ Information and plot galactic noise.
 ## Help
 
 ```bash
-/home/dc1# plot_noise.py -h
+grand/scripts# plot_noise.py -h
 usage: plot_noise.py [-h] [--lst {int value}] [--savefig]
 
 Information and plot parameters of galactic noise
@@ -85,7 +85,7 @@ Plot parameters of RF chain components for version 1.
 ## Help
 
 ```bash
-/home/dc1# plot_noise.py -h
+grand/scripts# plot_noise.py -h
 usage: plot_rf_chain.py [-h] [{lna, balun_after_lna, cable, vga, balun_before_adc, rf_chain}]
 
 Information and plot parameters of various components of the RF chain (version 1).

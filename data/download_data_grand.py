@@ -18,7 +18,7 @@ from grand import GRAND_DATA_PATH, grand_add_path_data
 
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
 #FILE_MODEL = "grand_model_2207.tar.gz"
-LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2304.tar.gz"
+LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2306.tar.gz"
 FILE_MODEL = LINK_MODEL.split("/")[-1]
 
 
@@ -48,7 +48,7 @@ tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
 
 # 2- download
 print("==============================")
-print("Download data model (~ 430MB) for GRAND, please wait ...")
+print("Download data model (~ 452MB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")
