@@ -1123,6 +1123,10 @@ if __name__ == "__main__":
         Add --lst <int> for galactic noise. i.e ./plot_noise.py galactic --lst 18."
         )
     parser.add_argument(
+        "plot_option",
+        help="what do you want to plot? example: lna.",
+    )
+    parser.add_argument(
         "--savefig",
         action="store_true",
         default=False,

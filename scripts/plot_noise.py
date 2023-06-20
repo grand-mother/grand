@@ -114,5 +114,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    plot(args.plot_option, lst=args.lst, savefig=args.savefig)
+    plot(lst=args.lst, savefig=args.savefig)
 

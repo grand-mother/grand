@@ -1,12 +1,12 @@
-# grand_simu_du.py
+# convert_efield2voltage.py
 
 Calculation of DU response in volt for first event in Efield input file.
 
 ## help
 
 ```bash
-# grand_simu_du.py -h
-usage: grand_simu_du.py [-h] [--no_noise] [--no_rf_chain] -o OUT_FILE [--verbose {debug,info,warning,error,critical}]
+# convert_efield2voltage.py -h
+usage: convert_efield2voltage.py [-h] [--no_noise] [--no_rf_chain] -o OUT_FILE [--verbose {debug,info,warning,error,critical}]
                         [--seed SEED] [--lst LST] [--padding_factor FLOAT]
                         file
 
@@ -31,7 +31,7 @@ optional arguments:
 ## Example
 
 ```bash
-/home/dc1# grand_simu_du.py --lst 18 --seed 0 --verbose info test_efield.root  -o test_voltage_jpt.root 
+/home/dc1# convert_efield2voltage.py --lst 18 --seed 0 --verbose info ../data/test_efield.root  -o test_voltage.root 
 05:42:43.526  INFO [grand.manage_log 187] create handler for root logger: ['grand']
 05:42:43.527  INFO [grand.scripts.grand_simu_du 84] 
 05:42:43.527  INFO [grand.scripts.grand_simu_du 84] ===========> Begin at 2023-04-07T05:42:43Z <===========
@@ -53,38 +53,51 @@ optional arguments:
 ```
 
 
-# grand_ioroot.py
+# plot_noise.py
 
-Information and plot event/traces for ROOT file
+Information and plot galactic noise.
 
 ## Help
 
 ```bash
-/home/dc1# grand_ioroot.py -h
-usage: grand_ioroot.py [-h] [--ttree {efield,voltage}] [-f] [--time_val] [-t TRACE] [--trace_image] [--list_du] [--list_ttree] [--dump DUMP] [-i] file
+/home/dc1# plot_noise.py -h
+usage: plot_noise.py [-h] [--lst {int value}] [--savefig]
 
-Information and plot event/traces for ROOT file
-
-positional arguments:
-  file                  path and name of ROOT file GRAND
+Information and plot parameters of galactic noise
 
 optional arguments:
   -h, --help            show this help message and exit
-  --ttree {efield,voltage}
-                        Define the event TTree to read in file. Default is efield
-  -f, --footprint       interactive plot (double click) of footprint, max value for each DU
-  --time_val            interactive plot, value of each DU at time t defined by a slider
-  -t TRACE, --trace TRACE
-                        plot trace x,y,z and power spectrum of detector unit (DU)
-  --trace_image         interactive image plot (double click) of norm of traces
-  --list_du             list of identifier of DU
-  --list_ttree          list of TTree present in file
-  --dump DUMP           dump trace of DU
-  -i, --info            some information about the contents of the file
+  --lst {integer value}
+                        plot parameters of the galactic noise for the given LST. Default value is 18.
+  --savefig             give this option if you like to save plots. Default is False.
 ```
 
 ## Example
 
 ```bash
-grand_ioroot.py --ttree voltage --footprint c2_test.root
+plot_noise.py --lst 10 --savefig
+```
+
+# plot_rf_chain.py
+
+Plot parameters of RF chain components for version 1.
+
+## Help
+
+```bash
+/home/dc1# plot_noise.py -h
+usage: plot_rf_chain.py [-h] [{lna, balun_after_lna, cable, vga, balun_before_adc, rf_chain}]
+
+Information and plot parameters of various components of the RF chain (version 1).
+
+optional arguments:
+  -h, --help            show this help message and exit
+  plot_option           {lna, balun_after_lna, vga, cable, balun_before_adc, rf_chain}
+                        plot parameters of various components of the RF chain. plot_option allows you to choose component.
+```
+
+## Example
+
+```bash
+python3 plot_rf_chain.py lna
 ```
