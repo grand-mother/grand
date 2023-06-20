@@ -77,6 +77,8 @@ def manage_args():
 
 def main():
     #
+    logger.info("Example script to deal with 3D traces.")
+
     args = manage_args()
     d_event = get_file_event(args.file.name)
     o_tevent = d_event.get_obj_handling3dtraces()

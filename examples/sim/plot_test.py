@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from grand.dataio.root_files import get_file_event
 import numpy as np
 import os

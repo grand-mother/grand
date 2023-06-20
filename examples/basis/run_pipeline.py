@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Example script to compute voltage from electric-field using GRAND pipeline.
 """
@@ -9,6 +11,7 @@ logger = mlg.get_logger_for_script(__file__)
 mlg.create_output_for_logger(log_stdout=True)
 logger.info(mlg.string_begin_script())
 
+logger.info("Example script to implement pipeline.")
 
 pipeline = Pipeline()
 

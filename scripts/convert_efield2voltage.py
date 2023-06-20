@@ -1,17 +1,5 @@
 #! /usr/bin/env python3
 
-import argparse
-from typing import Union
-import numpy as np
-
-import grand.manage_log as mlg
-from grand.sim.efield2voltage import Efield2Voltage
-
-
-# specific logger definition for script because __mane__ is "__main__" !
-logger = mlg.get_logger_for_script(__file__)
-
-
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
     if f_hour < 0 or f_hour > 24:
@@ -78,6 +66,18 @@ def manage_args():
 
 
 if __name__ == "__main__":
+    import argparse
+    from typing import Union
+    import numpy as np
+
+    import grand.manage_log as mlg
+    from grand.sim.efield2voltage import Efield2Voltage
+
+    # specific logger definition for script because __mane__ is "__main__" !
+    logger = mlg.get_logger_for_script(__file__)
+
+    logger.info("Computing voltage from the input electric field.")
+
     args = manage_args()
     # define a handler for logger : standard only
     mlg.create_output_for_logger(args.verbose, log_stdout=True)
