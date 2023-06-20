@@ -8,7 +8,7 @@ import unittest
 
 import numpy
 
-import grand.io.protocol as store
+import grand.dataio.protocol as store
 from grand import grand_get_path_root_pkg
 from grand.geo import turtle
 from tests import TestCase

@@ -8,10 +8,10 @@ import os
 from pathlib import Path
 from typing import Optional, Union, Any
 from typing_extensions import Final
+import numpy as np
 
 from grand import grand_get_path_root_pkg
 
-import numpy as np
 from . import DATADIR
 from grand.geo.coordinates import (
     ECEF,

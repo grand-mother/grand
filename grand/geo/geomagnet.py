@@ -4,15 +4,14 @@ from __future__ import annotations
 
 from typing import Optional, Union
 from typing_extensions import Final
+import numpy
+import datetime
+from datetime import date
 
 from grand import grand_get_path_root_pkg
 from grand.geo.coordinates import CartesianRepresentation, GeodeticRepresentation
 from grand.geo.coordinates import ECEF, Geodetic, GRANDCS, LTP, _cartesian_to_horizontal
 from .gull import Snapshot as _Snapshot
-
-import numpy
-import datetime
-from datetime import date
 
 DATADIR: Final = grand_get_path_root_pkg() + "/data/geomagnet"
 
@@ -88,7 +87,8 @@ class Geomagnet:
 
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRAND cs. OR latitude=deg, longitude=deg, height=meter.
-        if latitude != None and longitude != None and height != None:
+        #if latitude != None and longitude != None and height != None:
+        if (latitude is not None) and (longitude is not None) and (height is not None):
             geodetic_loc = Geodetic(latitude=latitude, longitude=longitude, height=height)
         elif isinstance(location, (ECEF, Geodetic, GeodeticRepresentation, LTP, GRANDCS)):
             geodetic_loc = Geodetic(location)

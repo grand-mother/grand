@@ -3,15 +3,15 @@ from __future__ import annotations
 from collections import OrderedDict
 from dataclasses import dataclass, fields
 from logging import getLogger
-from pathlib import Path
+#from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
 
 import numpy as np
 
 from grand.sim.shower.pdg import ParticleCode
-from grand.basis.type_trace import ElectricField, Voltage
-from grand.dataio import io_node as io
+#from grand.basis.type_trace import ElectricField, Voltage
+#from grand.dataio import io_node as io
 
 # TODO: when the unused import grand.io.root_trees is defined test coverage indicate test on it
 # from grand.io.root_trees import ShowerEventSimdataTree
@@ -21,14 +21,15 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )  # RK
-from fontTools.ttLib.tables import D_S_I_G_
+#from fontTools.ttLib.tables import D_S_I_G_
 
-__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
-
+#__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
+__all__ = ["ShowerEvent"]
 
 logger = getLogger(__name__)
 
-
+"""
+#RK: From previous version of grandlib. This part is no longer used.
 @dataclass
 class CollectionEntry:
     electric: Optional[ElectricField] = None
@@ -62,7 +63,7 @@ class CollectionEntry:
 class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
     pass
 
-
+"""
 @dataclass
 class ShowerEvent:
     energy: Optional[float] = None
@@ -74,8 +75,10 @@ class ShowerEvent:
     geomagnet: Optional[CartesianRepresentation] = None
     maximum: Optional[CartesianRepresentation] = None
     origin_geoid: Optional[list, np.ndarray] = None
-    fields: Optional[FieldsCollection] = None
+    fields: Optional[OrderedDict] = None
 
+    # Since ROOT is the only format in which GRAND data will be stored in, 
+    # so the code to deal with other formats are deleted.
     def load_root(self, d_shower):
         self.energy = d_shower.energy_primary
         self.zenith = d_shower.zenith
@@ -107,6 +110,10 @@ class ShowerEvent:
         logger.info(f"xmax in shower coordinate: {xmax}")
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 
+    """
+    # Since ROOT is the only format in which GRAND data will be stored in, 
+    # so the code to deal with other formats are deleted. These commented 
+    # part of the code is not used anywhere in the grandlib.
     @classmethod
     def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         baseclass = cls
@@ -123,8 +130,8 @@ class ShowerEvent:
                 if not hasattr(cls, loader):
                     # Detection of the simulation engine. Lazy imports are used
                     # in order to avoid circular references
-                    from grand.simu.shower.coreas import CoreasShower
-                    from grand.simu.shower.zhaires import ZhairesShower
+                    from grand.sim.shower.coreas import CoreasShower
+                    from grand.sim.shower.zhaires import ZhairesShower
 
                     if CoreasShower.check_dir(source):
                         baseclass = CoreasShower
@@ -213,3 +220,4 @@ class ShowerEvent:
         self.frame.basis = np.vstack((evB, evvB, ev))
 
         return self.frame
+    """

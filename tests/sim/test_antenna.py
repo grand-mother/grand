@@ -1,5 +1,5 @@
 '''
-Unit tests for the grand.simu.du module
+Unit tests for the grand.sim.detector module
 '''
 
 from pathlib import Path
@@ -11,11 +11,11 @@ import os.path as osp
 import numpy
 
 from grand import ECEF, CartesianRepresentation, LTP
-from grand.simu.du.process_ant import AntennaProcessing
+from grand.sim.detector.process_ant import AntennaProcessing
 from grand.basis.type_trace import ElectricField,Voltage
 from grand import grand_add_path_data
-from grand.simu.du.antenna_model import tabulated_antenna_model
-from grand.simu.du.process_ant import MissingFrameError
+from grand.sim.detector.antenna_model import tabulated_antenna_model
+from grand.sim.detector.process_ant import MissingFrameError
 
 
 class AntennaTest(TestCase):

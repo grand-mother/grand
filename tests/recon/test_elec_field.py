@@ -6,13 +6,13 @@ import unittest
 from tests import TestCase
 from pathlib import Path
 
-from grand.recons.elec_field import EstimateEfield
+from grand.recon.elec_field import EstimateEfield
 from grand import grand_get_path_root_pkg
 
 class ElecFieldTest(TestCase):
     """Unit tests for the pipeline module"""
 
-    filename = Path(grand_get_path_root_pkg()) / "grand" / "recons" / "elec_field.py"
+    filename = Path(grand_get_path_root_pkg()) / "grand" / "recon" / "elec_field.py"
 
     def test_efield(self):
         efield = EstimateEfield(params={})

@@ -37,7 +37,7 @@ class Pipeline:
     command_dict = {}
 
     def Add(self, name, **kwargs):
-
+        name = name.lower()
         if name=='reader':
             logger.info("Reading input files")
             if 'f_input' in kwargs.keys():
@@ -83,7 +83,7 @@ class Pipeline:
             for key, command in self.command_dict.items():
                 if key=="efield2voltage":
                     command.f_output = kwargs['f_output']
-                    command.compute_event_all()
+                    command.compute_voltage()
 
 
 '''

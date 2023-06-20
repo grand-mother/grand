@@ -6,7 +6,7 @@ Created on 20 févr. 2023
 
 import numpy as np
 
-from grand.simu.du.process_ant import PreComputeInterpol
+from grand.sim.detector.process_ant import PreComputeInterpol
 
 F_in = np.linspace(20, 30, num=11, endpoint=True)
 D_freq_out = 2.1

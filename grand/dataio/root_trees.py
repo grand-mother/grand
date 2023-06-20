@@ -7930,15 +7930,15 @@ class DataFile:
         #     return "ShowerEventZHAireSTree"
         # Other trees
         else:
-            if "run" in name:
+            if "trun" in name:
                 return "TRun"
-            elif "adc" in name:
+            elif "tadc" in name:
                 return "TADC"
-            elif "voltage" in name:
+            elif "tvoltage" in name:
                 return "TRawVoltage"
-            elif "efield" in name:
+            elif "tefield" in name:
                 return "TEfield"
-            elif "shower" in name:
+            elif "tshower" in name:
                 return "TShower"
 
     def _load_trees(self):

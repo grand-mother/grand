@@ -1,10 +1,10 @@
 """
-Unit tests for the grand.io.protocol module
+Unit tests for the grand.dataio.protocol module
 """
 
 import unittest
 
-from grand.io.protocol import InvalidBLOB, get
+from grand.dataio.protocol import InvalidBLOB, get
 from tests import TestCase
 
 

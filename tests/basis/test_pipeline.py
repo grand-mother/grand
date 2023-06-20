@@ -1,13 +1,13 @@
 """
-Unit tests for the grand.io.protocol module
+Unit tests for the grand.dataio.protocol module
 """
 
 import unittest
 from tests import TestCase
 from pathlib import Path
 import os
-from grand.io.protocol import InvalidBLOB, get
-from grand.io.pipeline import Pipeline
+from grand.dataio.protocol import InvalidBLOB, get
+from grand.basis.pipeline import Pipeline
 from grand import grand_get_path_root_pkg
 
 
@@ -38,6 +38,8 @@ class PipelineTest(TestCase):
                     f_output=str(output_file))
 
         self.assertTrue((output_file).exists())
+        
+        #os.remove(output_file)
 
 if __name__ == "__main__":
     unittest.main()

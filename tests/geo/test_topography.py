@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy
 from tests import TestCase
 
-import grand.io.protocol as store
+import grand.dataio.protocol as store
 import grand.geo as tools
 from grand import topography, Topography, geoid_undulation  # , Reference
 from grand import grand_get_path_root_pkg
