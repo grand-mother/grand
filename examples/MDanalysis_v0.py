@@ -1,14 +1,18 @@
 #ccenv root
-import grand.io.root_files as grf
+'''
+This module is not maintained.
+'''
+import grand.dataio.root_trees as rt
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
 from scipy import optimize
+#from scipy import signal
+from scipy.stats import norm
 
 # Analysis of 20Hz data
-# Taken on Auger site in November 2022
-# Using wrapper class from root_files
-# OMH Nov 20229
+# Taken on Auger site in NOvember 2022
+# OMH Nov 2022
 
 def singleTraceProcess(t,x,N=5,DISPLAY=True):
    sig = np.std(x)
@@ -23,15 +27,13 @@ def singleTraceProcess(t,x,N=5,DISPLAY=True):
    fft=np.abs(np.fft.rfft(x))
    freq=np.fft.rfftfreq(len(x))*fsamp/1e6
    ntrig = sum(itrue)
-
    #show traces
    if ntrig>0:
        print("Event", i)
        print("Channel x: sigma = ",sig, "LSB, Nb spikes=",ntrig)
        if DISPLAY:
-           #plt.subplots(2,1)
-           #plt.subplot(211)
-           plt.figure()
+           plt.subplots(2,1)
+           plt.subplot(211)
            plt.plot(t,x)
            plt.plot(ttrig[itrue],xtrig[itrue],'or')
            plt.plot([0,max(t)],[th,th],'--r')
@@ -41,33 +43,28 @@ def singleTraceProcess(t,x,N=5,DISPLAY=True):
            plt.ylabel("Channel 0 (LSB)")
 
            # FFT
-           #plt.subplot(212)
-           #plt.semilogy(freq,fft)
-           #plt.xlim(min(freq),max(freq))
-           #plt.xlabel("Frequency (MHz)")
-           #plt.ylabel("log(FFT)")
-
-           #plt.show()
+           plt.subplot(212)
+           plt.semilogy(freq,fft)
+           plt.xlim(min(freq),max(freq))
+           plt.xlabel("Frequency (MHz)")
+           plt.ylabel("log(FFT)")
 
    return ntrig, sig, fft, freq
 
 DISPLAY = True
 sites = {'BLS':[6010, 6080, 6081],'LosLeones':[6020],'Claire':[6030],'Culen':[6040],'AERA':[6050,6051],'AERApowerline':[6060,6061],'CLF':[6070,6071],'Mafalda':[6090,6091],'SolaStereo':[6100, 6101,6110,6111]}
 N = 5
+#args are rootfile and number of events to show
+f=sys.argv[1]
+if len(sys.argv)>2:
+    nshow=int(sys.argv[2])
+else:
+    nshow=0
 
-## Load data
-f=sys.argv[1]  # FIle name
-try:
-    fa = grf.FileADCevent(f)
-except:
-    print("Could not load file",f,". Abort.")
-    sys.exit()
-try:
-    adc = fa.get_obj_handlingtracesofevent_all()
-except:
-    print("Could not load ADCEvent tree. Abort.")  # Fails when trace size is not a constant+integer in the file
-    sys.exit()
-traces = adc.traces  #  Array of dimension nevents*nchannels*nsamples
+evt=rt.ADCEventTree(f)
+listevt=evt.get_list_of_events()
+if nshow>len(listevt):
+    nshow=len(listevt)
 
 runpath = f.split("/")[-1].split(".")[0]
 runid = runpath.split("_")[0][2:]
@@ -83,26 +80,58 @@ for i,s in enumerate(sites):
 print("Site=",site)
 subrun=runpath.split("_")[-1]
 print("Subrun:",subrun)
-fsamp=500e6  # Hardcoded
+evt.get_event(listevt[10][0],listevt[10][1]) # Skip first 3 events
+fsamp=evt.adc_sampling_frequency[0]*1e6 #Hz
+#assuming the same configuration for all events of the run
+ib0=evt.adc_samples_count_channel0[0]
+ib1=evt.adc_samples_count_channel1[0]
+ib2=evt.adc_samples_count_channel2[0]
+ib3=evt.adc_samples_count_channel3[0]
 print("Sampling frequency:",fsamp)
-ib0 = traces.shape[2]  # Trace length. Warning: in raw data this can differ for first events (left overs??)
 print("Trace length:",ib0)
-nevents = traces.shape[0]
+nevents = np.shape(listevt)[0]
 print("Nb of events in run:",nevents)
-nch = traces.shape[1]
+
 t = np.linspace(0,ib0/fsamp,ib0)*1e6
 
-# Loop on events
+gpstime=np.zeros((len(listevt)),dtype='int')
+max0=np.zeros((len(listevt)),dtype='int')
+trace0=np.zeros((len(listevt),ib0),dtype='int')
+trace1=np.zeros((len(listevt),ib1),dtype='int')
+trace2=np.zeros((len(listevt),ib2),dtype='int')
+trace3=np.zeros((len(listevt),ib3),dtype='int')
 ntrigs = 0
+
+
 for i in range(min(nevents,1e200)):
+    evt.get_event(listevt[i][0],listevt[i][1])
+    #print("event length=",evt.adc_samples_count_channel0[:])
+    #print(type(evt.adc_samples_count_channel0))
+    if i<10:  # Skip first events because could be leftovers in memory
+        continue
+
+    gpstime[i]=evt.gps_time[0]
+    #print(evt.gps_time[0])
+    #print(evt.gps_lat[0])
+    trace0[i]=evt.trace_0[0]
+    trace1[i]=evt.trace_1[0]
+    trace2[i]=evt.trace_2[0]
+    trace3[i]=evt.trace_3[0]
+
     if i/100 == np.floor(i/100):
-        print(i,"/",nevents)
-    ntrig, sig, fft, freq = singleTraceProcess(t,traces[i,0,:],N,DISPLAY)
+      print(i,"/",nevents)
+    ntrig, sig, fft, freq = singleTraceProcess(t,trace0[i],N,DISPLAY)
     ntrigs += ntrig
+    if ntrig>0:
+        #plt.show()
+        #print("Nb spikes observed:",ntrig)
+        a = 1
     try:
       meanfft = meanfft + fft
     except:
       meanfft = fft
+
+#np.savetxt("txt/" + runpath + ".txt", dttrigall)
 
 #Summary stats
 dur_ev = ib0/fsamp
@@ -111,26 +140,23 @@ trig_rate = ntrigs/dur_tot
 print(ntrigs,"pulses above",N,"sigmas in",nevents,"timetraces of length",dur_ev*1e6,"mus.")
 print("Mean = ", ntrigs/nevents,"pulses/trace, Rate = ",trig_rate,"Hz")
 print('Total run duration is',dur_tot,'s.')
-for i in range(nch):
-  print("Std dev Channel",i,":",np.std(traces[:,i,:]))
+print("Std dev Channel 0:",np.std(trace0))
+#print("Std dev Channel 1:",np.std(trace1))
 
 # Summary histograms
-xdata = traces[:,0,:].flatten()  # All data along x channel
+xdata = trace0.flatten()
 meanfft = meanfft/nevents
-meanfft[0:10] = meanfft[10] # Kill first frequency bins
-plt.figure()
-hamp = plt.hist(xdata, 200)
-hampx = hamp[1][1:]
-hampy = hamp[0]/dur_tot  # Normalize to time
+meanfft[0:10] = meanfft[10]
 
-plt.figure()
 plt.subplots(2,1)
 plt.subplot(211)
-plt.plot(hampx,hampy,'+')
+hamp = plt.hist(xdata, 100)
+hampx = hamp[1][1:]
+hampy = hamp[0]/dur_tot  # Normalize to time
 sig = np.std(xdata)
 if DISPLAY:
     # Alternative: gauss fit
-    p0 = [nevents*ib0/200,0,sig]
+    p0 = [nevents*ib0/100,0,sig]
     print(p0)
     sel3s = np.logical_and(hampx>-3*sig,hampx<3*sig)
     sel5s = np.logical_and(hampx>-5*sig,hampx<5*sig)

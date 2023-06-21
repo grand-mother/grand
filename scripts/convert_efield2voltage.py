@@ -83,18 +83,15 @@ if __name__ == "__main__":
     mlg.create_output_for_logger(args.verbose, log_stdout=True)
     logger.info(mlg.string_begin_script())
     # =============================================
-    if not isinstance(args.seed, int):
-        raise TypeError(f"seed must be integer instead of {type(args.seed)}.")
-    else:
-        seed = None if args.seed==-1 else args.seed
-        logger.info(f"seed used for random number generator is {seed}.")
+    seed = None if args.seed==-1 else args.seed
+    logger.info(f"seed used for random number generator is {seed}.")
 
     master = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
     master.params["add_noise"]    = args.no_noise
     master.params["add_rf_chain"] = args.no_rf_chain
     master.params["lst"]          = args.lst
 
-    #master.compute_event_idx(0)
+    #master.compute_voltage_event(0)
     #master.save_voltage(append_file=False)
     master.compute_voltage()    # saves automatically
 

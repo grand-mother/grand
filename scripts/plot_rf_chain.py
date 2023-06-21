@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Plot qunatities related to galactic noise and RF chain.
+Plot qunatities related to the RF chain.
+
+June 2023, RK
 """
 import numpy as np
 import h5py
@@ -74,6 +76,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{11}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("lna_s11.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of LNA S21
@@ -104,6 +109,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{21}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("lna_s21.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of LNA S12
@@ -134,6 +142,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{12}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("lna_s12.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of LNA S22
@@ -164,6 +175,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{22}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("lna_s22.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of LNA S-parameters in dB
@@ -209,6 +223,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("lna_sparams_dB.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of all LNA S-parameters
@@ -254,6 +271,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("lna_sparams.png", bbox_inches='tight')
+        plt.show()
 
     if args=="balun_after_lna":
 
@@ -291,6 +311,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{11}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_after_lna_s11.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot S21 of Balun after LNA
@@ -321,6 +344,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{21}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_after_lna_s21.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot S12 of Balun after LNA
@@ -351,6 +377,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{12}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_after_lna_s12.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot S22 of Balun after LNA
@@ -381,6 +410,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{22}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_after_lna_s22.png", bbox_inches='tight')
+        plt.show()
 
         # Balun after LNA S-parameters
         plt.figure(figsize=(8, 12))
@@ -424,6 +456,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("balun_after_lna_sparams.png", bbox_inches='tight')
+        plt.show()
 
     if args=='cable':
         print("Parameters of cable and connector")
@@ -460,6 +495,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{11}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("cable_s11.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of Cable S21
@@ -490,6 +528,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{21}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("cable_s21.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of Cable S12
@@ -520,6 +561,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{12}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("cable_s12.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of Cable S22
@@ -550,6 +594,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{22}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("cable_s22.png", bbox_inches='tight')
+        plt.show()
 
         # Cable S-parameters in dB
         plt.figure(figsize=(8, 12))
@@ -593,6 +640,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("cable_sparams_dB.png", bbox_inches='tight')
+        plt.show()
 
         # Cable S-parameters
         plt.figure(figsize=(8, 12))
@@ -636,6 +686,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("cable_sparams.png", bbox_inches='tight')
+        plt.show()
 
     if args=='vga':
         print("Parameters of VGA and filter")
@@ -672,6 +725,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{11}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("vga_s11.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of VGA+Filter S21
@@ -702,6 +758,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{21}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("vga_s21.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of VGA+Filter S12
@@ -732,6 +791,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{12}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("vga_s12.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot of VGA+Filter S22
@@ -762,6 +824,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{22}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("vga_s22.png", bbox_inches='tight')
+        plt.show()
 
         # VGA+Filter S-parameters in dB
         plt.figure(figsize=(8, 12))
@@ -805,6 +870,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("vga_sparams_dB.png", bbox_inches='tight')
+        plt.show()
 
         # VGA+Filter S-parameters
         plt.figure(figsize=(8, 12))
@@ -848,6 +916,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("vga_sparams.png", bbox_inches='tight')
+        plt.show()
 
     if args=='balun_before_adc':
         print("Parameters of Balun before ADC")
@@ -883,6 +954,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{11}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_before_adc_s11.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot S21 of Balun before ADC
@@ -913,6 +987,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{21}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_before_adc_s21.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot S12 of Balun before ADC
@@ -943,6 +1020,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{12}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_before_adc_s12.png", bbox_inches='tight')
+        plt.show()
 
         """
         plot S22 of Balun before ADC
@@ -973,6 +1053,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.ylabel(r"abs(S$_{22}$)")
         plt.xlabel(f"Frequency [MHz]")
         plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("balun_before_adc_s22.png", bbox_inches='tight')
+        plt.show()
 
         # Balun before ADC S-parameters
         plt.figure(figsize=(8, 12))
@@ -1016,6 +1099,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("balun_before_adc_sparams.png", bbox_inches='tight')
+        plt.show()
 
     if args=='rf_chain':
 
@@ -1055,6 +1141,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("impedance_antenna.png", bbox_inches='tight')
+        plt.show()
 
         # Input Impedance. Zin
         plt.figure(figsize=(8, 12))
@@ -1085,6 +1174,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("impedance_input.png", bbox_inches='tight')
+        plt.show()
 
         # Load Impedance. Zload
         plt.figure(figsize=(10, 8))
@@ -1097,6 +1189,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("impedance_load.png", bbox_inches='tight')
+        plt.show()
 
         plt.figure()
         for port in range(3):
@@ -1111,6 +1206,9 @@ def plot(args="lna", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.title(f"VGA gain: {gain} dB")
+        if savefig:
+            plt.savefig(f"total_transfer_function_vgagain{gain}.png", bbox_inches='tight')
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -1118,9 +1216,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Parser to select which noise quantity to plot. \
-        To Run: ./plot_noise.py <plot_option>. \
-        <plot_option>: galactic, vswr, lna, vga, cable, rf_chain. \
-        Add --lst <int> for galactic noise. i.e ./plot_noise.py galactic --lst 18."
+        To Run: ./plot_rf_chain.py <plot_option>. \
+        <plot_option>: lna, balun_after_lna, vga, cable, balun_before_adc, rf_chain \
+        example: ./plot_rf_chain.py lna --savefig"
         )
     parser.add_argument(
         "plot_option",

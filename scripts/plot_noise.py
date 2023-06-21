@@ -5,11 +5,8 @@ Plot qunatities related to galactic noise and RF chain.
 """
 import numpy as np
 import h5py
-import scipy.fft as sf
 
-import grand.sim.detector.rf_chain as grfc
 from grand import grand_add_path_data
-import grand.manage_log as mlg
 
 import matplotlib.pyplot as plt
 params = {
@@ -26,15 +23,9 @@ plt.rcParams.update(params)
 l_col = ['k', 'y', 'b']
 freq_MHz = np.arange(30, 251, 1)
 
-# specific logger definition for script because __mane__ is "__main__" !
-logger = mlg.get_logger_for_script(__file__)
-
-# define a handler for logger : standard only
-mlg.create_output_for_logger("debug", log_stdout=True)
-
 # To Run:
-#   python3 plot_noise.py galactic_noise
-#   options: [galactic, vswr, lna, vga, cable, rf_chain]
+#   python3 plot_noise.py
+#   python3 plot_noise.py lst 10 --savefig
 
 def plot(savefig=False, **kwargs):
 
@@ -94,9 +85,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Parser to select which noise quantity to plot. \
-        To Run: ./plot_noise.py <plot_option>. \
-        <plot_option>: galactic, vswr, lna, vga, cable, rf_chain. \
-        Add --lst <int> for galactic noise. i.e ./plot_noise.py galactic --lst 18."
+        To Run: ./plot_noise.py \
+        Add --lst <int> for galactic noise. i.e ./plot_noise.py --lst 18 --savefig."
         )
     parser.add_argument(
         "--lst",
@@ -112,7 +102,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
 
     plot(lst=args.lst, savefig=args.savefig)
 
