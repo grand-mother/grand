@@ -1,5 +1,50 @@
 #! /usr/bin/env python3
+"""
+Script to compute voltage from electric field.
+Electric field traces are provided in a ROOT file.
 
+To Run:
+    python convert_efield2voltage.py <efield.root> -o <output.root> # RF chain and noise added automatically.
+    python convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 --lst 10
+    convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --no_rf_chain
+
+In this file:
+    signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
+    signal.compute_voltage()    # saves automatically
+
+    Options that can be given to compute_voltage() depending on what you want to compute.
+        Compute/simulate voltage for any or all DUs for any or all events in input file.
+
+        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)). If None, all events in an input file is used.
+        :    type: int, list, np.ndarray
+        :param du_idx: index of DU for which voltage is computed. If None, all DUs of an event is used. du_idx can be used for only one event.
+        :    type: int, list, np.ndarray
+        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
+        :    type: int, list, np.ndarray
+        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
+        :    type: int, list, np.ndarray  
+
+        Note: Either event_idx, or both event_number and run_number must be provided, or all three must be None.      
+              if du_idx is provided, voltage of the given DU of the given event is computed. 
+              du_idx can be an integer or list/np.ndarray. du_idx can be used for only one event.
+              If improper event_idx or (event_number and run_number) is used, an error is generated when self.get_event() is called.
+              Selective events with either event_idx or both event_number and run_number can be given.
+              If list/np.ndarray is provided, length of event_number and run_number must be equal.    
+
+
+Computing voltage with your own function to compute Voc.
+    signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
+    my_volt = my_function(....)
+    signal.voc = my_volt.voc
+    signal.voc_f = my_volt.voc_f
+    signal.vout = my_volt.vout
+    signal.vout_f = my_volt.vout_f
+    Note: make sure that the frequency bins in my_function() is equal to signal.freqs_mhz.
+    signal.add(noise)          # make sure shape of noise broadcasts with the shape of signal.voc_f.
+    signal.multiply(rf_chain)  # make sure shape of rf_chain broadcasts with the shape of signal.vout_f.
+
+June 2023, JM and RK.
+"""
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
     if f_hour < 0 or f_hour > 24:
@@ -71,7 +116,7 @@ if __name__ == "__main__":
     import numpy as np
 
     import grand.manage_log as mlg
-    from grand.sim.efield2voltage import Efield2Voltage
+    from grand import Efield2Voltage
 
     # specific logger definition for script because __mane__ is "__main__" !
     logger = mlg.get_logger_for_script(__file__)
@@ -86,14 +131,14 @@ if __name__ == "__main__":
     seed = None if args.seed==-1 else args.seed
     logger.info(f"seed used for random number generator is {seed}.")
 
-    master = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
-    master.params["add_noise"]    = args.no_noise
-    master.params["add_rf_chain"] = args.no_rf_chain
-    master.params["lst"]          = args.lst
+    signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
+    signal.params["add_noise"]    = args.no_noise
+    signal.params["add_rf_chain"] = args.no_rf_chain
+    signal.params["lst"]          = args.lst
 
-    #master.compute_voltage_event(0)
-    #master.save_voltage(append_file=False)
-    master.compute_voltage()    # saves automatically
+    #signal.compute_voltage_event(0)
+    #signal.save_voltage(append_file=False)
+    signal.compute_voltage()    # saves automatically
 
     # =============================================
     logger.info(mlg.string_end_script())
