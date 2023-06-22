@@ -46,7 +46,7 @@ class TopographyTest(TestCase):
         self.assertRegex(str(topography.cachedir()), str(Path(grand_get_path_root_pkg())/"data"/"topography"))
 
         # Clear the cache
-        topography.update_data(clear=True)
+        topography.update_data(clear=False)
         self.assertFalse([p for p in topography.cachedir().glob("**/*")])
 
         # Fetch data
