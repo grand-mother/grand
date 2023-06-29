@@ -155,7 +155,7 @@ class StdVectorList(MutableSequence):
         return self
 
 class StdVectorListDesc:
-    """A descriptor for StdVectorList - makes use of it possible in dataclasses with setting property and setter"""
+    """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
     def __init__(self, vec_type):
         self.factory = lambda: StdVectorList(vec_type)
 
@@ -196,6 +196,34 @@ class StdVectorListDesc:
                 raise ValueError(
                     f"Incorrect type for {self.name} {type(value)}. Either a list, an array or a ROOT.vector required."
                 )
+
+class TTreeScalarDesc:
+    """A descriptor for scalars assigned to TTrees as numpy arrays of size 1 - makes use of it possible in dataclasses without setting property and setter"""
+    def __init__(self, dtype):
+        self.factory = lambda: np.zeros(1, dtype)
+
+    def __set_name__(self, type, name):
+        self.name = name
+        self.attrname = f"_{name}"
+
+    def create_default(self, obj):
+        setattr(obj, self.attrname, self.factory())
+
+    def __get__(self, obj, obj_type):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        return getattr(obj, self.attrname)[0]
+
+    def __set__(self, obj, value):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        # This is needed for default init as a field of an upper class
+        if isinstance(value, TTreeScalarDesc):
+            value = getattr(obj, self.attrname)
+        inst = getattr(obj, self.attrname)
+        print("inst", inst, inst[0], value)
+
+        inst[0] = value
 
 class StdString:
     """A python string interface to ROOT's std::string"""
@@ -6964,8 +6992,15 @@ class TRunShowerSim(MotherRunTree):
 
     # relative thinning energy
     _rel_thin: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
-    # weight factor
-    _weight_factor: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    # maximum_weight (weight factor)
+    _maximum_weight: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    """the maximum weight, computed in zhaires as PrimaryEnergy*RelativeThinning*WeightFactor/14.0 (see aires manual section 3.3.6 and 2.3.2) to make it mean the same as Corsika Wmax"""
+
+    hadronic_thinning: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """the ratio of energy at wich thining starts in hadrons and electromagnetic particles"""
+    hadronic_thinning_weight: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """the ratio of electromagnetic to hadronic maximum weights"""
+
     # low energy cut for electrons (GeV)
     _lowe_cut_e: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     # low energy cut for gammas (GeV)
@@ -7003,13 +7038,13 @@ class TRunShowerSim(MotherRunTree):
         self._rel_thin[0] = value
 
     @property
-    def weight_factor(self):
-        """weight factor"""
-        return self._weight_factor[0]
+    def maximum_weight(self):
+        """maximum_weight"""
+        return self._maximum_weight[0]
 
-    @weight_factor.setter
-    def weight_factor(self, value):
-        self._weight_factor[0] = value
+    @maximum_weight.setter
+    def maximum_weight(self, value):
+        self._maximum_weight[0] = value
 
     @property
     def lowe_cut_e(self):
@@ -7118,15 +7153,21 @@ class TShowerSim(MotherEventTree):
     ## Random seed
     _rnd_seed: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     ## Primary energy (GeV)
-    _sim_primary_energy: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    # primary_energy: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Primary particle type
-    _sim_primary_type: StdVectorList = field(default_factory=lambda: StdVectorList("string"))
+    # primary_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
     ## Primary injection point in Shower Coordinates
-    _sim_primary_inj_point_shc: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    primary_inj_point_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     ## Primary injection altitude in Shower Coordinates
-    _sim_primary_inj_alt_shc: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    primary_inj_alt_shc: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Primary injection direction in Shower Coordinates
-    _sim_primary_inj_dir_shc: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+
+    ## Table of air density [g/cm3] and vertical depth [g/cm2] versus altitude [m]
+    atmos_altitude: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    atmos_density: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    atmos_depth: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+
     ## High energy hadronic model (and version) used
     _hadronic_model: StdString = StdString("")
     ## Energy model (and version) used
@@ -7136,36 +7177,42 @@ class TShowerSim(MotherEventTree):
 
     ## Slant depth of the observing levels for longitudinal development tables
     _long_depth: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_depth: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of electrons
-    _long_eminus: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_eminus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of positrons
-    _long_eplus: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_eplus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of muons-
-    _long_muminus: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_muminus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of muons+
-    _long_muplus: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_muplus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of gammas
-    _long_gamma: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_gamma: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of pions, kaons, etc.
-    _long_hadron: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_pd_hadron: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy in low energy gammas
-    _long_gamma_elow: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_gamma_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy in low energy e+/e-
-    _long_e_elow: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_e_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy deposited by e+/e-
-    _long_e_edep: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_e_edep: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy in low energy mu+/mu-
-    _long_mu_elow: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_mu_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy deposited by mu+/mu-
-    _long_mu_edep: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_mu_edep: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy in low energy hadrons
-    _long_hadron_elow: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_hadron_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy deposited by hadrons
-    _long_hadron_edep: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_hadron_edep: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Energy in created neutrinos
-    _long_neutrino: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
+    long_neutrino: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Core positions tested for that shower to generate the event (effective area study)
     _tested_core_positions: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+
+    event_weight: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """statistical weight given to the event"""
+    tested_cores: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """tested core positions"""
 
     @property
     def input_name(self):
@@ -7200,87 +7247,87 @@ class TShowerSim(MotherEventTree):
     def rnd_seed(self, value):
         self._rnd_seed[0] = value
 
-    @property
-    def sim_primary_energy(self):
-        """Primary energy (GeV)"""
-        return self._sim_primary_energy
-
-    @sim_primary_energy.setter
-    def sim_primary_energy(self, value):
-        # A list of strings was given
-        if isinstance(value, list):
-            # Clear the vector before setting
-            self._sim_primary_energy.clear()
-            self._sim_primary_energy += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._sim_primary_energy._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for sim_primary_energy {type(value)}. Either a list or a ROOT.vector of floats required."
-            )
-
-    @property
-    def sim_primary_type(self):
-        """Primary particle type"""
-        return self._sim_primary_type
-
-    @sim_primary_type.setter
-    def sim_primary_type(self, value):
-        # A list of strings was given
-        if isinstance(value, list):
-            # Clear the vector before setting
-            self._sim_primary_type.clear()
-            self._sim_primary_type += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("string")):
-            self._sim_primary_type._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for sim_primary_type {type(value)}. Either a list or a ROOT.vector of strings required."
-            )
-
-    @property
-    def sim_primary_inj_point_shc(self):
-        """Primary injection point in Shower coordinates"""
-        return np.array(self._sim_primary_inj_point_shc)
-
-    @sim_primary_inj_point_shc.setter
-    def sim_primary_inj_point_shc(self, value):
-        set_vector_of_vectors(value, "vector<float>", self._sim_primary_inj_point_shc, "sim_primary_inj_point_shc")
-
-    @property
-    def sim_primary_inj_alt_shc(self):
-        """Primary injection altitude in Shower Coordinates"""
-        return self._sim_primary_inj_alt_shc
-
-    @sim_primary_inj_alt_shc.setter
-    def sim_primary_inj_alt_shc(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._sim_primary_inj_alt_shc.clear()
-            self._sim_primary_inj_alt_shc += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._sim_primary_inj_alt_shc._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for sim_primary_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required."
-            )
-
-    @property
-    def sim_primary_inj_dir_shc(self):
-        """Primary injection direction in Shower Coordinates"""
-        return np.array(self._sim_primary_inj_dir_shc)
-
-    @sim_primary_inj_dir_shc.setter
-    def sim_primary_inj_dir_shc(self, value):
-        set_vector_of_vectors(value, "vector<float>", self._sim_primary_inj_dir_shc, "sim_primary_inj_dir_shc")
+    # @property
+    # def sim_primary_energy(self):
+    #     """Primary energy (GeV)"""
+    #     return self._sim_primary_energy
+    #
+    # @sim_primary_energy.setter
+    # def sim_primary_energy(self, value):
+    #     # A list of strings was given
+    #     if isinstance(value, list):
+    #         # Clear the vector before setting
+    #         self._sim_primary_energy.clear()
+    #         self._sim_primary_energy += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("float")):
+    #         self._sim_primary_energy._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for sim_primary_energy {type(value)}. Either a list or a ROOT.vector of floats required."
+    #         )
+    #
+    # @property
+    # def sim_primary_type(self):
+    #     """Primary particle type"""
+    #     return self._sim_primary_type
+    #
+    # @sim_primary_type.setter
+    # def sim_primary_type(self, value):
+    #     # A list of strings was given
+    #     if isinstance(value, list):
+    #         # Clear the vector before setting
+    #         self._sim_primary_type.clear()
+    #         self._sim_primary_type += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("string")):
+    #         self._sim_primary_type._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for sim_primary_type {type(value)}. Either a list or a ROOT.vector of strings required."
+    #         )
+    #
+    # @property
+    # def sim_primary_inj_point_shc(self):
+    #     """Primary injection point in Shower coordinates"""
+    #     return np.array(self._sim_primary_inj_point_shc)
+    #
+    # @sim_primary_inj_point_shc.setter
+    # def sim_primary_inj_point_shc(self, value):
+    #     set_vector_of_vectors(value, "vector<float>", self._sim_primary_inj_point_shc, "sim_primary_inj_point_shc")
+    #
+    # @property
+    # def sim_primary_inj_alt_shc(self):
+    #     """Primary injection altitude in Shower Coordinates"""
+    #     return self._sim_primary_inj_alt_shc
+    #
+    # @sim_primary_inj_alt_shc.setter
+    # def sim_primary_inj_alt_shc(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._sim_primary_inj_alt_shc.clear()
+    #         self._sim_primary_inj_alt_shc += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("float")):
+    #         self._sim_primary_inj_alt_shc._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for sim_primary_inj_alt_shc {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+    #         )
+    #
+    # @property
+    # def sim_primary_inj_dir_shc(self):
+    #     """Primary injection direction in Shower Coordinates"""
+    #     return np.array(self._sim_primary_inj_dir_shc)
+    #
+    # @sim_primary_inj_dir_shc.setter
+    # def sim_primary_inj_dir_shc(self, value):
+    #     set_vector_of_vectors(value, "vector<float>", self._sim_primary_inj_dir_shc, "sim_primary_inj_dir_shc")
 
     @property
     def hadronic_model(self):
@@ -7385,77 +7432,77 @@ class TShowerSim(MotherEventTree):
     def long_hadron(self, value):
         set_vector_of_vectors(value, "float", self._long_hadron, "long_hadron")
 
-    @property
-    def long_gamma_elow(self):
-        """Number of electrons"""
-        return np.array(self._long_gamma_elow)
-
-    @long_gamma_elow.setter
-    def long_gamma_elow(self, value):
-        set_vector_of_vectors(value, "float", self._long_gamma_elow, "long_gamma_elow")
-
-    @property
-    def long_e_elow(self):
-        """Number of electrons"""
-        return np.array(self._long_e_elow)
-
-    @long_e_elow.setter
-    def long_e_elow(self, value):
-        set_vector_of_vectors(value, "float", self._long_e_elow, "long_e_elow")
-
-    @property
-    def long_e_edep(self):
-        """Number of electrons"""
-        return np.array(self._long_e_edep)
-
-    @long_e_edep.setter
-    def long_e_edep(self, value):
-        set_vector_of_vectors(value, "float", self._long_e_edep, "long_e_edep")
-
-    @property
-    def long_mu_elow(self):
-        """Number of electrons"""
-        return np.array(self._long_mu_elow)
-
-    @long_mu_elow.setter
-    def long_mu_elow(self, value):
-        set_vector_of_vectors(value, "float", self._long_mu_elow, "long_mu_elow")
-
-    @property
-    def long_mu_edep(self):
-        """Number of electrons"""
-        return np.array(self._long_mu_edep)
-
-    @long_mu_edep.setter
-    def long_mu_edep(self, value):
-        set_vector_of_vectors(value, "float", self._long_mu_edep, "long_mu_edep")
-
-    @property
-    def long_hadron_elow(self):
-        """Number of electrons"""
-        return np.array(self._long_hadron_elow)
-
-    @long_hadron_elow.setter
-    def long_hadron_elow(self, value):
-        set_vector_of_vectors(value, "float", self._long_hadron_elow, "long_hadron_elow")
-
-    @property
-    def long_hadron_edep(self):
-        """Number of electrons"""
-        return np.array(self._long_hadron_edep)
-
-    @long_hadron_edep.setter
-    def long_hadron_edep(self, value):
-        set_vector_of_vectors(value, "float", self._long_hadron_edep, "long_hadron_edep")
-
-    @property
-    def long_neutrinos(self):
-        """Number of electrons"""
-        return np.array(self._long_neutrinos)
-
-    @long_neutrinos.setter
-    def long_neutrinos(self, value):
-        set_vector_of_vectors(value, "float", self._long_neutrinos, "long_neutrinos")
+    # @property
+    # def long_gamma_elow(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_gamma_elow)
+    #
+    # @long_gamma_elow.setter
+    # def long_gamma_elow(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_gamma_elow, "long_gamma_elow")
+    #
+    # @property
+    # def long_e_elow(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_e_elow)
+    #
+    # @long_e_elow.setter
+    # def long_e_elow(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_e_elow, "long_e_elow")
+    #
+    # @property
+    # def long_e_edep(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_e_edep)
+    #
+    # @long_e_edep.setter
+    # def long_e_edep(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_e_edep, "long_e_edep")
+    #
+    # @property
+    # def long_mu_elow(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_mu_elow)
+    #
+    # @long_mu_elow.setter
+    # def long_mu_elow(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_mu_elow, "long_mu_elow")
+    #
+    # @property
+    # def long_mu_edep(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_mu_edep)
+    #
+    # @long_mu_edep.setter
+    # def long_mu_edep(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_mu_edep, "long_mu_edep")
+    #
+    # @property
+    # def long_hadron_elow(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_hadron_elow)
+    #
+    # @long_hadron_elow.setter
+    # def long_hadron_elow(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_hadron_elow, "long_hadron_elow")
+    #
+    # @property
+    # def long_hadron_edep(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_hadron_edep)
+    #
+    # @long_hadron_edep.setter
+    # def long_hadron_edep(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_hadron_edep, "long_hadron_edep")
+    #
+    # @property
+    # def long_neutrinos(self):
+    #     """Number of electrons"""
+    #     return np.array(self._long_neutrinos)
+    #
+    # @long_neutrinos.setter
+    # def long_neutrinos(self, value):
+    #     set_vector_of_vectors(value, "float", self._long_neutrinos, "long_neutrinos")
 
     @property
     def tested_core_positions(self):
