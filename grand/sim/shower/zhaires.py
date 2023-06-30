@@ -11,9 +11,9 @@ import h5py
 import numpy
 
 
-from .generic import CollectionEntry, FieldsCollection, ShowerEvent
+from .gen_shower import CollectionEntry, FieldsCollection, ShowerEvent
 from ..antenna import ElectricField
-from ..pdg import ParticleCode
+from grand.sim.shower.pdg import ParticleCode
 from ...tools.coordinates import ECEF, LTP, Geodetic
 from ...tools.coordinates import (
     CartesianRepresentation,
@@ -166,7 +166,7 @@ class ZhairesShower(ShowerEvent):
         inp["maximum"] = LTP(x=Xmax.x, y=Xmax.y, z=Xmax.z, frame=inp["frame"])  # RK
 
         # Positions are in LTP frame with origin at shower core. Usually shower frame has 'NWU' orientation,
-        # where N=magnetic north. Defined in ..../grand/tests/simulation/data/zhaires/*.sry file.
+        # where N=magnetic north. Defined in ..../grand/tests/sim/data/zhaires/*.sry file.
         positions = {}
         ant_file = path / "antpos.dat"  # Ex: 1 A0  0.00000E+00  2.70450E+02  2.90000E+03
         if ant_file.exists():
@@ -199,7 +199,7 @@ class ZhairesShower(ShowerEvent):
         fields: Optional[FieldsCollection] = None
         raw_fields = {}
         for field_path in path.glob("a*.trace"):
-            # Example field_path => ..../grand/tests/simulation/data/zhaires/a1.trace
+            # Example field_path => ..../grand/tests/sim/data/zhaires/a1.trace
             #                    =>    time [ns]      Ex [uVm]    Ey [uVm]   Ez [uVm]
             #                    => -1.1463000E+04  -5.723E-05  -1.946E-04  4.324E-04
             antenna = int(field_path.name[1:].split(".", 1)[0])

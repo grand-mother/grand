@@ -10,7 +10,7 @@ import unittest
 # import astropy.units as u
 import numpy
 
-import grand.io.hdf5 as io
+import grand.dataio.hdf5 as io
 from grand import (
     Geodetic,
     ECEF,
@@ -25,7 +25,7 @@ from tests import TestCase
 class IoTest(TestCase):
     """Unit tests for grand.hdf5 class"""
 
-    path = Path("io.hdf5")
+    path = Path("dataio.hdf5")
 
     def tearDown(self):
         self.path.unlink()
@@ -59,11 +59,11 @@ class IoTest(TestCase):
                                rotation=Rotation.from_euler('z', 90 * u.deg))
         }
 
-        with io.open(self.path, 'w') as root:
+        with dataio.open(self.path, 'w') as root:
             for k, v in elements.items():
                 root.write(k, v)
 
-        with io.open(self.path) as root:
+        with dataio.open(self.path) as root:
             for name, element in root.elements:
                 a = elements[name]
 

@@ -9,7 +9,7 @@ from numbers import Number
 import numpy
 
 from .generic import AntennaModel
-from grand.io import hdf5
+from grand.dataio import hdf5
 
 __all__ = ["DataTable", "TabulatedAntennaModel"]
 

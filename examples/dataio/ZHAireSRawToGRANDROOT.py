@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 sys.path.append(".")
 import AiresInfoFunctionsGRANDROOT as AiresInfo
 import ZHAireSInputGenerator as ZHAireSGen
-from grand.io.root_trees import *
+from grand.dataio.root_trees import *
 #from root_trees import *
 from copy import deepcopy
 logging.basicConfig(level=logging.INFO)	
@@ -26,7 +26,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True):
     '''
-    This routine will read a ZHAireS simulation located in InputFlder and put it in the RootFileHandle. 
+    This routine will read a ZHAireS sim located in InputFlder and put it in the RootFileHandle.
     RunID is the ID of the run is going to be associated with, which should be already existing in the file.
     EventID is the ID of the Event
     
@@ -116,7 +116,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimE
     #     return -1
 
     #############################################################################################################################
-    # ShowerSimInfo (deals with the details for the simulation). This might be simulator-dependent (CoREAS has different parameters)
+    # ShowerSimInfo (deals with the details for the sim). This might be simulator-dependent (CoREAS has different parameters)
     #############################################################################################################################
     if(SimShowerInfo):
         #########################################################################################################################
@@ -139,7 +139,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimE
         # The tree with whole Run information
         Run = TRun(FileName)
         print("NOW SIMSHOWER")
-        # The tree with general simulation-only information
+        # The tree with general sim-only information
         SimShower = TShowerSim(FileName)
         # The tree with ZHAireS only information
         SimZhairesShower = ShowerEventZHAireSTree(FileName)
@@ -186,7 +186,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimE
         
         #TODO: Document how the core position needs to be stored in the EventParametersFile. 
         #TODO  Decide coordinate system (site specific): Maybe store lat/lon and altitude of origin of coordinates, and put a cartesian there?
-        #      An incoming porblem is that zhaires on its simulations uses a fixed earth radius...so the simulation wont be 100% consistent with the "geoid" grand coordinates. 
+        #      An incoming porblem is that zhaires on its simulations uses a fixed earth radius...so the sim wont be 100% consistent with the "geoid" grand coordinates.
         # LWP: we could use Earth-centered coordinates for everything: MJT: dont really know how to handle that. Still need all the coordinate handle machinery to be developed.
 
         CorePosition=ZHAireSGen.GetCorePositionFromParametersFile(EventParametersFile[0])
@@ -195,7 +195,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimE
         # FieldSimulator="ZHAireS "+str(FieldSimulator)
 
         #TODO: These are ZHAireS specific parameters. Other simulators wont have these parameters, and might have others. How to handle this?
-        #Should we save the input and sry file inside the ROOT file? like a string? And parse simulation software specific parameters from there?
+        #Should we save the input and sry file inside the ROOT file? like a string? And parse sim software specific parameters from there?
         # LWP: perhaps we should have a separate tree for universal simulator parameters (that would not exist for a real experiment) and specific trees for specific simulators? But then we can forget about automatic parsing of such non-universal ttree. Perhaps some longish string in the universal simulator tree, to be parsed if anyone wants and knows how to, would be better?
         RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])
         WeightFactor=AiresInfo.GetWeightFactorFromSry(sryfile[0])
@@ -219,13 +219,13 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimE
         # _prim_inj_dir_shc: np.ndarray = np.zeros(3, np.float32)  # primary injection direction in Shower Coordinates  TODO: Support multiple primaries
         # _hadronic_model: StdVectorList("string") = StdVectorList("string")  # high energy hadronic model (and version) used TODO: standarize
         # _low_energy_model: StdVectorList("string") = StdVectorList("string")  # high energy model (and version) used TODO: standarize
-        # _cpu_time: np.ndarray = np.zeros(3, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+        # _cpu_time: np.ndarray = np.zeros(3, np.float32)  # Time it took for the sim. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
 
         Run.run_number = RunID
         Run.site = Site
         Run.site_long = Long
         Run.site_lat = Lat
-        Run.data_source = "simulation"
+        Run.data_source = "sim"
         Run.data_generator = "ZHAireS"
         Run.data_generator_version = str(FieldSimulator)
 
@@ -520,7 +520,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimE
                 # ToDo: should SlopeA and SlopeB placeholders be added? Not sure, because perhaps this kind of constant geometry will be held somewhere else, as it's not measured. Unless acceleration from gps means that
 
 
-                # ToDo: at least some of the below should be filled in, but I don't know where are they stored in the simulation
+                # ToDo: at least some of the below should be filled in, but I don't know where are they stored in the sim
                 # _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
                 # ## Nanoseconds of the trigger for this DU
                 # _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")

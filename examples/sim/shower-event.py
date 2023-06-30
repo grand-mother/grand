@@ -17,7 +17,7 @@ from grand import (
 )
 
 
-from grand.simulation import Antenna, ShowerEvent, TabulatedAntennaModel
+from grand.sim import Antenna, ShowerEvent, TabulatedAntennaModel
 import grand.manage_log as mlg
 
 # define a handler for logger : standart output and file log.txt
@@ -27,8 +27,8 @@ mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 logger = mlg.get_logger_for_script(__file__)
 logger.info(mlg.string_begin_script())
 
-# Load the radio shower simulation data
-showerdir = osp.join(get_root_grand_git(), "tests/simulation/data/zhaires")
+# Load the radio shower sim data
+showerdir = osp.join(get_root_grand_git(), "tests/sim/data/zhaires")
 shower = ShowerEvent.load(showerdir)
 
 if shower.frame is None:

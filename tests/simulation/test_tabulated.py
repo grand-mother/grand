@@ -1,4 +1,4 @@
-from grand.simulation.antenna.tabulated import *
+from grand.sim.antenna.tabulated import *
 
 
 def test_TabulatedAntennaModel_dump():

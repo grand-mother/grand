@@ -1,7 +1,7 @@
 """! Signal processing
 
 - This module contains several signal processing
-functionalities to be applied to simulation/data
+functionalities to be applied to sim/data
 - operations are meant to be on the signal traces 
 for individual antennas, suitable to be used both
 in Grandlib format/ read from hdf5 files

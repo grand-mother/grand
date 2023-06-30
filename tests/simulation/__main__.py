@@ -1,5 +1,5 @@
 """
-Run all unit tests for the grand.simulation package
+Run all unit tests for the grand.sim package
 """
 
 from .. import main

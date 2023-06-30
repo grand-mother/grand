@@ -34,7 +34,7 @@ import os
 import glob
 import logging
 
-#this function reads he Aires .sry file and tries to extract information from the simulation parameters
+#this function reads he Aires .sry file and tries to extract information from the sim parameters
 #using the .sry file is preferred to using the .inp files because:
 #Output is standarized: you dont know what you can find in an .inp file (leading spaces, commented lines, repeated keywords, etc)
 #Output is what really happened, not what the user whished it would happen when he did his crappy .inp file.

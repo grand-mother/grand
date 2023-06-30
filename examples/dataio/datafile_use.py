@@ -2,7 +2,7 @@
 # An example of using DataFile for ROOT file reading
 import numpy as np
 import sys
-from grand.io.root_trees import *
+from grand.dataio.root_trees import *
 
 # Need to provide a file to read
 if len(sys.argv)<2:

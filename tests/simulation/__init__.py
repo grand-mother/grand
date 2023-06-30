@@ -1,3 +1,3 @@
 """
-Unit tests for the grand.simulation package
+Unit tests for the grand.sim package
 """

@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field, fields
 import numpy as np
 from typing import Any
-from grand.io.root_trees import *
+from grand.dataio.root_trees import *
 from grand.tools.coordinates import *
 import ROOT
 
@@ -293,7 +293,7 @@ class Event:
     # These are not from the hardware
 
     data_source: str = "other"
-    """Data source, detector, simulation, other"""
+    """Data source, detector, sim, other"""
 
     data_generator: str = "GRANDlib"
     """Data generator, gtot (in this case)"""
@@ -354,7 +354,7 @@ class Event:
     ## Fill this event from trees
     def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2]):
         """Fill this event from trees
-        :param simshower: how to treat the TShower existing in the file, as simulation values  or reconstructed values
+        :param simshower: how to treat the TShower existing in the file, as sim values  or reconstructed values
         :type simshower: bool
         """
         # Check if the file exist

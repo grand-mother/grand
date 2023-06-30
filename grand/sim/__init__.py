@@ -6,7 +6,7 @@ from .antenna import (
     TabulatedAntennaModel,
     Voltage,
 )
-from .pdg import ParticleCode
+from grand.sim.shower.pdg import ParticleCode
 from .shower import CoreasShower, ShowerEvent, ZhairesShower
 
 __all__ = [

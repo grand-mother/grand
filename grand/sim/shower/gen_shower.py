@@ -9,9 +9,9 @@ from datetime import datetime
 
 import numpy
 
-from ..pdg import ParticleCode
+from grand.sim.shower.pdg import ParticleCode
 from ..antenna import ElectricField, Voltage
-from grand.io import hdf5
+from grand.dataio import hdf5
 from ...tools.coordinates import (
     Geodetic,
     LTP,
@@ -87,7 +87,7 @@ class ShowerEvent:
                 loader = "_from_dir"
 
                 if not hasattr(cls, loader):
-                    # Detection of the simulation engine. Lazy imports are used
+                    # Detection of the sim engine. Lazy imports are used
                     # in order to avoid circular references
                     from .coreas import CoreasShower
                     from .zhaires import ZhairesShower

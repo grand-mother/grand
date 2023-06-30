@@ -1,5 +1,5 @@
 """
-Unit tests for the grand.simulation.shower module
+Unit tests for the grand.sim.shower module
 """
 
 from collections import OrderedDict
@@ -9,10 +9,10 @@ import unittest
 
 import numpy
 
-from grand import store, io, LTP, CartesianRepresentation, SphericalRepresentation
-from grand.simulation import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
-from grand.simulation.pdg import ParticleCode
-from grand.simulation.shower.generic import CollectionEntry
+from grand import store, dataio, LTP, CartesianRepresentation, SphericalRepresentation
+from grand.sim import CoreasShower, ElectricField, ShowerEvent, ZhairesShower
+from grand.sim.shower.pdg import ParticleCode
+from grand.sim.shower.gen_shower import CollectionEntry
 from tests import TestCase
 
 
@@ -86,11 +86,11 @@ class ShowerTest(TestCase):
         compare_showers()
 
         nodepath = "montecarlo/shower"
-        with io.open(self.path, "w") as root:
+        with dataio.open(self.path, "w") as root:
             node = root.branch(nodepath)
             shower.dump(node)
 
-        with io.open(self.path) as root:
+        with dataio.open(self.path) as root:
             node = root[nodepath]
             tmp = ShowerEvent.load(node)
 

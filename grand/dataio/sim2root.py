@@ -3,7 +3,7 @@
 ## by Lech Wiktor Piotrowski
 
 import os
-#from grand.io.root_trees import *
+#from grand.dataio.root_trees import *
 import argparse
 from types import SimpleNamespace
 import sys
@@ -169,7 +169,7 @@ def rawefield2grandrootrun(trawefield, gt):
 
 # Convert the RawShowerTree entries
 def rawshower2grandroot(trawshower, gt):
-    ### Event name (the task name, can be usefull to track the original simulation)
+    ### Event name (the task name, can be usefull to track the original sim)
     ## ToDo: not in TShowerSim - decide
     # gt.tshowersim.event_name = trawshower.event_name
 
@@ -249,7 +249,7 @@ def rawshower2grandroot(trawshower, gt):
     ### low energy model (and version) used TODO: standarize
     gt.tshowersim.low_energy_model = trawshower.low_energy_model
 
-    ### Time it took for the simulation of the cascade (s). In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+    ### Time it took for the sim of the cascade (s). In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
     gt.tshowersim.cpu_time = trawshower.cpu_time
 
     ###META ZHAireS/Coreas

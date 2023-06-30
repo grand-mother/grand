@@ -15,7 +15,7 @@ from ...tools.coordinates import (
 )  # RK
 
 
-from grand.io import hdf5  # , ECEF, LTP
+from grand.dataio import hdf5  # , ECEF, LTP
 
 # __all__ = ["Antenna", "AntennaModel", "ElectricField", "MissingFrameError", "Voltage"]
 

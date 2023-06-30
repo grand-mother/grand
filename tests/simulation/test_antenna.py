@@ -1,5 +1,5 @@
 '''
-Unit tests for the grand.simulation.antenna module
+Unit tests for the grand.sim.antenna module
 '''
 
 from pathlib import Path
@@ -11,7 +11,7 @@ import numpy
 
 from grand import ECEF, CartesianRepresentation, LTP, Geodetic, GRAND_DATA_PATH
 
-from grand.simulation import Antenna, ElectricField, MissingFrameError,        \
+from grand.sim import Antenna, ElectricField, MissingFrameError,        \
                              TabulatedAntennaModel, Voltage
 from tests import TestCase
 

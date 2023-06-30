@@ -1349,7 +1349,7 @@ class TRun(MotherRunTree):
     _last_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
 
     # These are not from the hardware
-    ## Data source: detector, simulation, other
+    ## Data source: detector, sim, other
     _data_source: StdString = StdString("detector")
     ## Data generator: gtot (in this case)
     _data_generator: StdString = StdString("GRANDlib")
@@ -1447,7 +1447,7 @@ class TRun(MotherRunTree):
 
     @property
     def data_source(self):
-        """Data source: detector, simulation, other"""
+        """Data source: detector, sim, other"""
         return str(self._data_source)
 
     @data_source.setter
@@ -6614,9 +6614,9 @@ class TShower(MotherEventTree):
 
 
 # @dataclass
-# ## The class for storing voltage simulation-only data common for a whole run
+# ## The class for storing voltage sim-only data common for a whole run
 # class VoltageRunSimdataTree(MotherRunTree):
-#     """The class for storing voltage simulation-only data common for a whole run"""
+#     """The class for storing voltage sim-only data common for a whole run"""
 #
 #     _type: str = "runvoltagesimdata"
 #
@@ -6651,9 +6651,9 @@ class TShower(MotherEventTree):
 
 
 # @dataclass
-# ## The class for storing voltage simulation-only data common for each event
+# ## The class for storing voltage sim-only data common for each event
 # class VoltageEventSimdataTree(MotherEventTree):
-#     """The class for storing voltage simulation-only data common for each event"""
+#     """The class for storing voltage sim-only data common for each event"""
 #
 #     _type: str = "eventvoltagesimdata"
 #
@@ -6752,9 +6752,9 @@ class TShower(MotherEventTree):
 
 
 @dataclass
-## The class for storing Efield simulation-only data common for a whole run
+## The class for storing Efield sim-only data common for a whole run
 class TRunEfieldSim(MotherRunTree):
-    """The class for storing Efield simulation-only data common for a whole run"""
+    """The class for storing Efield sim-only data common for a whole run"""
 
     _type: str = "runefieldsim"
 
@@ -6876,9 +6876,9 @@ class TRunEfieldSim(MotherRunTree):
 
 
 # @dataclass
-# ## The class for storing Efield simulation-only data common for each event
+# ## The class for storing Efield sim-only data common for each event
 # class EfieldEventSimdataTree(MotherEventTree):
-#     """The class for storing Efield simulation-only data common for each event"""
+#     """The class for storing Efield sim-only data common for each event"""
 #
 #     _type: str = "eventefieldsimdata"
 #
@@ -6982,7 +6982,7 @@ class TRunEfieldSim(MotherRunTree):
 
 
 @dataclass
-## The class for storing shower simulation-only data common for a whole run
+## The class for storing shower sim-only data common for a whole run
 class TRunShowerSim(MotherRunTree):
     """Run-level info associated with simulated showers"""
 
@@ -7138,7 +7138,7 @@ class TRunShowerSim(MotherRunTree):
 
 
 @dataclass
-## The class for storing a shower simulation-only data for each event
+## The class for storing a shower sim-only data for each event
 class TShowerSim(MotherEventTree):
     """Event-level info associated with simulated showers"""
 
@@ -7172,7 +7172,7 @@ class TShowerSim(MotherEventTree):
     _hadronic_model: StdString = StdString("")
     ## Energy model (and version) used
     _low_energy_model: StdString = StdString("")
-    ## Time it took for the simulation
+    ## Time it took for the sim
     _cpu_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
 
     ## Slant depth of the observing levels for longitudinal development tables
@@ -7361,7 +7361,7 @@ class TShowerSim(MotherEventTree):
 
     @property
     def cpu_time(self):
-        """Time it took for the simulation"""
+        """Time it took for the sim"""
         return np.array(self._cpu_time)
 
     @cpu_time.setter
