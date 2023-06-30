@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, fields
 import numpy as np
 from typing import Any
 from grand.dataio.root_trees import *
-from grand.tools.coordinates import *
+from grand.geo.coordinates import *
 import ROOT
 
 @dataclass
