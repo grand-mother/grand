@@ -603,7 +603,7 @@ class Event:
             v.trace.y = self.tefield.trace[0][i]
             v.trace.z = self.tefield.trace[0][i]
 
-            v.du_id = self.tvoltage.du_id[i]
+            v.du_id = self.tefield.du_id[i]
 
             self.efields.append(v)
 
@@ -752,6 +752,7 @@ class Event:
         # self.trun.site_long = self.site_long
         # self.trun.site_lat = self.site_lat
         self.trun.origin_geoid = self.origin_geoid
+        self.trun.t_bin_size = self._t_bin_size
 
         # Fill the tree with values
         try:
@@ -781,8 +782,12 @@ class Event:
         self.tvoltage.event_number = self.event_number
 
         # Copy the contents of voltages to the tree
+
+        # Set the DU id
+        self.tvoltage.du_id = [v.du_id for v in self.voltages]
+
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.voltages], [np.array(v.trace.y).astype(np.float32) for v in self.voltages], [np.array(v.trace.z).astype(np.float32) for v in self.voltages]]
+        self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
         # self.tvoltage.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
@@ -824,6 +829,10 @@ class Event:
         self.tefield.event_number = self.event_number
 
         # Copy the contents of efields to the tree
+
+        # Set the DU id
+        self.tefield.du_id = [v.du_id for v in self.voltages]
+
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
         self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
         # self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
@@ -834,7 +843,6 @@ class Event:
         # self.tefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
 
         # Fill the times from t0
-        print(type(self.efields[0].t0))
         self.tefield.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.efields]
         self.tefield.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.efields]
 
