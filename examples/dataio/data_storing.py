@@ -1,5 +1,8 @@
 #!/usr/bin/python
-# An example of storing traces to a file
+'''
+An example of storing traces to a file using root_trees.py
+'''
+
 import numpy as np
 import time
 import sys
@@ -73,7 +76,6 @@ trun.write(filename)
 print("Wrote trun")
 
 # ********** ADC Counts ****************
-
 # Create the ADC counts tree
 tadccounts = TADC()
 tadccounts.comment = "Generated data_storing.py"
@@ -337,10 +339,9 @@ tefield.comment = "Generated data_storing.py"
 for ev in range(0, event_count, 2):
     tefield.run_number = 0
     tefield.event_number = ev
-    # First data unit in the event
-    # tefield.first_du = 0
-    # As the event time add the current time
+    # Unix time corresponding to the GPS seconds of the trigger
     tefield.time_seconds = int(time.mktime(time.gmtime()))
+    # GPS nanoseconds corresponding to the trigger of the first triggered station
     # Event nanoseconds 0 for now
     tefield.time_nanoseconds = 0
     # Triggered event

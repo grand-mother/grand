@@ -3,35 +3,40 @@ from __future__ import annotations
 from collections import OrderedDict
 from dataclasses import dataclass, fields
 from logging import getLogger
-from pathlib import Path
+#from pathlib import Path
 from typing import cast, MutableMapping, Optional, Union
 from datetime import datetime
 
-import numpy
+import numpy as np
 
 from grand.sim.shower.pdg import ParticleCode
-from ..antenna import ElectricField, Voltage
-from grand.dataio import hdf5
-from ...tools.coordinates import (
+#from grand.basis.type_trace import ElectricField, Voltage
+#from grand.dataio import io_node as io
+
+# TODO: when the unused import grand.io.root_trees is defined test coverage indicate test on it
+# from grand.io.root_trees import ShowerEventSimdataTree
+from grand.geo.coordinates import (
     Geodetic,
     LTP,
     GRANDCS,
     CartesianRepresentation,
 )  # RK
+#from fontTools.ttLib.tables import D_S_I_G_
 
-__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
-
+#__all__ = ["CollectionEntry", "FieldsCollection", "ShowerEvent"]
+__all__ = ["ShowerEvent"]
 
 logger = getLogger(__name__)
 
-
+"""
+#RK: From previous version of grandlib. This part is no longer used.
 @dataclass
 class CollectionEntry:
     electric: Optional[ElectricField] = None
     voltage: Optional[Voltage] = None
 
     @classmethod
-    def load(cls, node: hdf5.DataNode) -> CollectionEntry:
+    def load(cls, node: io.DataNode) -> CollectionEntry:
         try:
             subnode = node["electric"]
         except KeyError:
@@ -48,7 +53,7 @@ class CollectionEntry:
 
         return cls(electric, voltage)
 
-    def dump(self, node: hdf5.DataNode) -> None:
+    def dump(self, node: io.DataNode) -> None:
         if self.electric is not None:
             self.electric.dump(node.branch("electric"))
         if self.voltage is not None:
@@ -58,7 +63,7 @@ class CollectionEntry:
 class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
     pass
 
-
+"""
 @dataclass
 class ShowerEvent:
     energy: Optional[float] = None
@@ -69,14 +74,51 @@ class ShowerEvent:
     core: Optional[CartesianRepresentation] = None
     geomagnet: Optional[CartesianRepresentation] = None
     maximum: Optional[CartesianRepresentation] = None
-    ground_alt: float = 0.0
-    fields: Optional[FieldsCollection] = None
+    origin_geoid: Optional[list, np.ndarray] = None
+    fields: Optional[OrderedDict] = None
 
+    # Since ROOT is the only format in which GRAND data will be stored in, 
+    # so the code to deal with other formats are deleted.
+    def load_root(self, d_shower):
+        self.energy = d_shower.energy_primary
+        self.zenith = d_shower.zenith
+        self.azimuth = d_shower.azimuth
+        self.primary = d_shower.primary_type
+        if self.origin_geoid is not None:
+            origin_geoid = Geodetic(
+                latitude=self.origin_geoid[0],
+                longitude=self.origin_geoid[1],
+                height=self.origin_geoid[2])
+        else:
+            raise Exception("Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid")
+        self.grand_ref_frame = GRANDCS(location=origin_geoid)    # used to define antenna position.
+        # define a shower core in GRANDCS. shower_core_pos are given in GRANDCS.
+        self.core = GRANDCS(
+            x=d_shower.shower_core_pos[0],
+            y=d_shower.shower_core_pos[1],
+            z=d_shower.shower_core_pos[2],
+            location=origin_geoid)  #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
+        # define a shower frame. DU positions and Xmax is defined wrt this frame.
+        self.frame = LTP(
+            location=self.core,
+            orientation="NWU",
+            magnetic=True)          #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
+
+        #logger.info(f"Site position long lat: {s_pos}")
+        logger.info(f"Site origin [lat, long, height]: {origin_geoid}")
+        xmax = d_shower.xmax_pos_shc
+        logger.info(f"xmax in shower coordinate: {xmax}")
+        self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
+
+    """
+    # Since ROOT is the only format in which GRAND data will be stored in, 
+    # so the code to deal with other formats are deleted. These commented 
+    # part of the code is not used anywhere in the grandlib.
     @classmethod
-    def load(cls, source: Union[Path, str, hdf5.DataNode]) -> ShowerEvent:
+    def load(cls, source: Union[Path, str, io.DataNode]) -> ShowerEvent:
         baseclass = cls
-        if type(source) == hdf5.DataNode:
-            source = cast(hdf5.DataNode, source)
+        if type(source) == io.DataNode:
+            source = cast(io.DataNode, source)
             filename = f"{source.filename}:{source.path}"
             loader = "_from_datanode"
         else:
@@ -85,12 +127,11 @@ class ShowerEvent:
             source = Path(source)
             if source.is_dir():
                 loader = "_from_dir"
-
                 if not hasattr(cls, loader):
-                    # Detection of the sim engine. Lazy imports are used
+                    # Detection of the simulation engine. Lazy imports are used
                     # in order to avoid circular references
-                    from .coreas import CoreasShower
-                    from .zhaires import ZhairesShower
+                    from grand.sim.shower.coreas import CoreasShower
+                    from grand.sim.shower.zhaires import ZhairesShower
 
                     if CoreasShower.check_dir(source):
                         baseclass = CoreasShower
@@ -98,30 +139,24 @@ class ShowerEvent:
                         baseclass = ZhairesShower
             else:
                 loader = "_from_datafile"
-
         logger.info(f"Loading shower data from {filename}")
-        # print(f'Loading shower data from {filename}')
-        # print('loader', loader)
-
         try:
             load = getattr(baseclass, loader)
         except AttributeError as load_exit:
             raise NotImplementedError("Invalid data format") from load_exit
         else:
             self = load(source)
-
         if self.fields is not None:
             logger.info(f"Loaded {len(self.fields)} field(s) from {filename}")
-
         return self
 
     @classmethod
     def _from_datafile(cls, path: Path) -> ShowerEvent:
-        with hdf5.open(path) as root:
+        with io.open(path) as root:
             return cls._from_datanode(root)
 
     @classmethod
-    def _from_datanode(cls, node: hdf5.DataNode) -> ShowerEvent:
+    def _from_datanode(cls, node: io.DataNode) -> ShowerEvent:
         kwargs = {}
         for name, data in node.elements:
             kwargs[name] = data
@@ -140,16 +175,16 @@ class ShowerEvent:
 
         return cls(**kwargs)
 
-    def dump(self, source: Union[Path, str, hdf5.DataNode]) -> None:
-        if type(source) == hdf5.DataNode:
-            source = cast(hdf5.DataNode, source)
+    def dump(self, source: Union[Path, str, io.DataNode]) -> None:
+        if type(source) == io.DataNode:
+            source = cast(io.DataNode, source)
             self._to_datanode(source)
         else:
             source = cast(Union[Path, str], source)
-            with hdf5.open(source, "w") as root:
+            with io.open(source, "w") as root:
                 self._to_datanode(root)
 
-    def _to_datanode(self, node: hdf5.DataNode):
+    def _to_datanode(self, node: io.DataNode):
         logger.info(f"Dumping shower data to {node.filename}:{node.path}")
 
         for f in fields(self):
@@ -167,38 +202,22 @@ class ShowerEvent:
             m = len(self.fields)
             logger.info(f"Dumped {m} field(s) to {node.filename}:{node.path}")
 
-    def localize(
-        self,
-        latitude,
-        longitude,
-        height=0,
-        declination: Optional[float] = None,
-        obstime: Union[str, datetime] = "2020-01-01",
-    ) -> None:
-        location = Geodetic(latitude=latitude, longitude=longitude, height=height)  # RK
-        self.frame = LTP(
-            location=location,
-            orientation="NWU",
-            magnetic=True,
-            declination=declination,
-            obstime=obstime,
-        )
-
     def shower_frame(self):
         # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev
         ev = self.core - self.maximum
-        ev /= numpy.linalg.norm(ev)
+        ev /= np.linalg.norm(ev)
         ev = ev.T[0]  # [[x], [y], [z]] --> [x, y, z]
-        evB = numpy.cross(ev, self.geomagnet.T[0])
-        evB /= numpy.linalg.norm(evB)
-        evvB = numpy.cross(ev, evB)
+        evB = np.cross(ev, self.geomagnet.T[0])
+        evB /= np.linalg.norm(evB)
+        evvB = np.cross(ev, evB)
 
         # change these unit vector from 'NWU' LTP frame to ECEF frame.
         # RK TODO: Going back to ECEF frame is a common process for vectors.
         #          Develop a function to do this.
-        ev = numpy.matmul(self.frame.basis.T, ev)
-        evB = numpy.matmul(self.frame.basis.T, evB)
-        evvB = numpy.matmul(self.frame.basis.T, evvB)
-        self.frame.basis = numpy.vstack((evB, evvB, ev))
+        ev = np.matmul(self.frame.basis.T, ev)
+        evB = np.matmul(self.frame.basis.T, evB)
+        evvB = np.matmul(self.frame.basis.T, evvB)
+        self.frame.basis = np.vstack((evB, evvB, ev))
 
         return self.frame
+    """

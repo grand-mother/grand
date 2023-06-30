@@ -1,6 +1,7 @@
 # Code quality tools for developper
 
-Initialize code quality tools in current env.
+Initialize code quality tools in current env, not necessary in docker GRANDLIB container.
+
 
 After 
 
