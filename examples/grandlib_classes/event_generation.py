@@ -26,6 +26,8 @@ for event_number in range(event_count):
     event.site = "dummy site"
     event.first_event = 0
     event.last_event = event_count
+    # ToDo: this should be a proper list
+    event._t_bin_size = [2]
 
     # Fill the voltage and antenna part with _dummy random_ data
     event.voltages = []
@@ -43,8 +45,7 @@ for event_number in range(event_count):
         # v.trace_y = np.random.randint(-200, 201, v.n_points)/100.
         # v.trace_z = np.random.randint(-200, 201, v.n_points)/100.
         v.trace = [np.random.randint(-200, 201, v.n_points) / 100., np.random.randint(-200, 201, v.n_points) / 100., np.random.randint(-200, 201, v.n_points) / 100.]
-        # print(v.trace, type(v.trace.x))
-        # exit()
+        v.du_id = i
         event.voltages.append(v)
 
         # The antenna part
@@ -54,6 +55,7 @@ for event_number in range(event_count):
         a.atm_humidity = np.random.rand()*100
         a.battery_level = np.random.rand()*100
         a.firmware_version = 1
+        a.id = i
         event.antennas.append(a)
 
         # The efield part
@@ -64,6 +66,7 @@ for event_number in range(event_count):
         # e.trace_x = v.trace_x*v2ef
         # e.trace_y = v.trace_y*v2ef
         # e.trace_z = v.trace_z*v2ef
+        e.du_id = i
         event.efields.append(e)
 
     # The shower part
