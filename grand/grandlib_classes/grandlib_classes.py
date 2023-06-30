@@ -790,6 +790,10 @@ class Event:
         # self.tvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
 
+        # Fill the times from t0
+        self.tvoltage.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.voltages]
+        self.tvoltage.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.voltages]
+
         # Copy the contents of antennas to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
         self.tvoltage.atm_temperature = np.array([np.array(a.atm_temperature) for a in self.antennas])
@@ -828,6 +832,11 @@ class Event:
         # self.tefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
         # self.tefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
         # self.tefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
+
+        # Fill the times from t0
+        print(type(self.efields[0].t0))
+        self.tefield.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.efields]
+        self.tefield.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.efields]
 
         self.tefield.fill()
 
