@@ -239,7 +239,7 @@ class StdString:
 class StdStringDesc:
     """A descriptor for scalars assigned to TTrees as numpy arrays of size 1 - makes use of it possible in dataclasses without setting property and setter"""
 
-    def __init__(self, value):
+    def __init__(self, value=""):
         self.factory = lambda: ROOT.string(value)
 
     def __set_name__(self, type, name):
@@ -1392,21 +1392,20 @@ class TRun(MotherRunTree):
 
     # These are not from the hardware
     ## Data source: detector, sim, other
-    # _data_source: StdString = StdString("detector")
     data_source: StdStringDesc = field(default=StdStringDesc("detector"))
     ## Data generator: gtot (in this case)
-    _data_generator: StdString = StdString("GRANDlib")
+    data_generator: StdStringDesc = field(default=StdStringDesc("GRANDlib"))
     ## Generator version: gtot version (in this case)
-    _data_generator_version: StdString = StdString("0.1.0")
+    data_generator_version: StdStringDesc = field(default=StdStringDesc("0.1.0"))
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
     event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Event format version of the DAQ
     event_version: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Site name
     # _site: StdVectorList("string") = StdVectorList("string")
-    _site: StdString = StdString("")
+    site: StdStringDesc = field(default=StdStringDesc())
     ## Site layout
-    _site_layout: StdString = StdString("")
+    site_layout: StdStringDesc = field(default=StdStringDesc())
     # ## Site longitude
     # _site_long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     # ## Site latitude
@@ -1503,36 +1502,36 @@ class TRun(MotherRunTree):
     #
     #     self._data_source.string.assign(value)
 
-    @property
-    def data_generator(self):
-        """Data generator: gtot (in this case)"""
-        return str(self._data_generator)
-
-    @data_generator.setter
-    def data_generator(self, value) -> None:
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._data_generator.string.assign(value)
-
-    @property
-    def data_generator_version(self):
-        """Generator version: gtot version (in this case)"""
-        return str(self._data_generator_version)
-
-    @data_generator_version.setter
-    def data_generator_version(self, value) -> None:
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._data_generator_version.string.assign(value)
-
+    # @property
+    # def data_generator(self):
+    #     """Data generator: gtot (in this case)"""
+    #     return str(self._data_generator)
+    #
+    # @data_generator.setter
+    # def data_generator(self, value) -> None:
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         raise ValueError(
+    #             f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+    #         )
+    #
+    #     self._data_generator.string.assign(value)
+    #
+    # @property
+    # def data_generator_version(self):
+    #     """Generator version: gtot version (in this case)"""
+    #     return str(self._data_generator_version)
+    #
+    # @data_generator_version.setter
+    # def data_generator_version(self, value) -> None:
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         raise ValueError(
+    #             f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+    #         )
+    #
+    #     self._data_generator_version.string.assign(value)
+    #
     # @property
     # def event_type(self):
     #     """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
@@ -1551,36 +1550,36 @@ class TRun(MotherRunTree):
     # def event_version(self, value: np.uint32) -> None:
     #     self._event_version[0] = value
 
-    @property
-    def site(self):
-        """Site name"""
-        return str(self._site)
-
-    @site.setter
-    def site(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._site.string.assign(value)
-
-    @property
-    def site_layout(self):
-        """Site layout"""
-        return str(self._site_layout)
-
-    @site_layout.setter
-    def site_layout(self, value):
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for site_layout {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._site_layout.string.assign(value)
-
+    # @property
+    # def site(self):
+    #     """Site name"""
+    #     return str(self._site)
+    #
+    # @site.setter
+    # def site(self, value):
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         raise ValueError(
+    #             f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+    #         )
+    #
+    #     self._site.string.assign(value)
+    #
+    # @property
+    # def site_layout(self):
+    #     """Site layout"""
+    #     return str(self._site_layout)
+    #
+    # @site_layout.setter
+    # def site_layout(self, value):
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         raise ValueError(
+    #             f"Incorrect type for site_layout {type(value)}. Either a string or a ROOT.std.string is required."
+    #         )
+    #
+    #     self._site_layout.string.assign(value)
+    #
     # @property
     # def site_long(self):
     #     """Site longitude"""
