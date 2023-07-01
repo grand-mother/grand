@@ -221,7 +221,6 @@ class TTreeScalarDesc:
         if isinstance(value, TTreeScalarDesc):
             value = getattr(obj, self.attrname)
         inst = getattr(obj, self.attrname)
-        print("inst", inst, inst[0], value)
 
         inst[0] = value
 
@@ -236,6 +235,40 @@ class StdString:
 
     def __repr__(self):
         return str(self.string)
+
+class StdStringDesc:
+    """A descriptor for scalars assigned to TTrees as numpy arrays of size 1 - makes use of it possible in dataclasses without setting property and setter"""
+
+    def __init__(self, value):
+        self.factory = lambda: ROOT.string(value)
+
+    def __set_name__(self, type, name):
+        self.name = name
+        self.attrname = f"_{name}"
+
+    def create_default(self, obj):
+        setattr(obj, self.attrname, self.factory())
+
+    def __get__(self, obj, obj_type):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        return str(getattr(obj, self.attrname))
+
+    def __set__(self, obj, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string) or isinstance(value, StdStringDesc)):
+            raise ValueError(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        # This is needed for default init as a field of an upper class
+        if isinstance(value, StdStringDesc):
+            value = getattr(obj, self.attrname)
+        inst = getattr(obj, self.attrname)
+
+        inst.assign(value)
 
 
 @dataclass
@@ -727,6 +760,15 @@ class DataTree:
             else:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name).string)
+        elif isinstance(value, ROOT.string):
+            # Create the branch
+            if not set_branches:
+                # self._tree.Branch(value.name[1:], getattr(self, value.name).string)
+                self._tree.Branch(branch_name, getattr(self, value_name))
+            # Or set its address
+            else:
+                # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
+                self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         else:
             raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
 
@@ -1338,27 +1380,28 @@ class TRun(MotherRunTree):
     _tree_name: str = "trun"
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
-    _run_mode: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    run_mode: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Run's first event
-    _first_event: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    first_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## First event time
-    _first_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    first_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Run's last event
-    _last_event: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    last_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Last event time
-    _last_event_time: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    last_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
     # These are not from the hardware
     ## Data source: detector, sim, other
-    _data_source: StdString = StdString("detector")
+    # _data_source: StdString = StdString("detector")
+    data_source: StdStringDesc = field(default=StdStringDesc("detector"))
     ## Data generator: gtot (in this case)
     _data_generator: StdString = StdString("GRANDlib")
     ## Generator version: gtot version (in this case)
     _data_generator_version: StdString = StdString("0.1.0")
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Event format version of the DAQ
-    _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
+    event_version: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Site name
     # _site: StdVectorList("string") = StdVectorList("string")
     _site: StdString = StdString("")
@@ -1400,65 +1443,65 @@ class TRun(MotherRunTree):
 
         self.create_branches()
 
-    @property
-    def run_mode(self):
-        """Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment"""
-        return self._run_mode[0]
+    # @property
+    # def run_mode(self):
+    #     """Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment"""
+    #     return self._run_mode[0]
+    #
+    # @run_mode.setter
+    # def run_mode(self, value: np.uint32) -> None:
+    #     self._run_mode[0] = value
+    #
+    # @property
+    # def first_event(self):
+    #     """Run's first event"""
+    #     return self._first_event[0]
+    #
+    # @first_event.setter
+    # def first_event(self, value: np.uint32) -> None:
+    #     self._first_event[0] = value
+    #
+    # @property
+    # def first_event_time(self):
+    #     """First event time"""
+    #     return self._first_event_time[0]
+    #
+    # @first_event_time.setter
+    # def first_event_time(self, value: np.uint32) -> None:
+    #     self._first_event_time[0] = value
+    #
+    # @property
+    # def last_event(self):
+    #     """Run's last event"""
+    #     return self._last_event[0]
+    #
+    # @last_event.setter
+    # def last_event(self, value: np.uint32) -> None:
+    #     self._last_event[0] = value
+    #
+    # @property
+    # def last_event_time(self):
+    #     """Last event time"""
+    #     return self._last_event_time[0]
+    #
+    # @last_event_time.setter
+    # def last_event_time(self, value: np.uint32) -> None:
+    #     self._last_event_time[0] = value
 
-    @run_mode.setter
-    def run_mode(self, value: np.uint32) -> None:
-        self._run_mode[0] = value
-
-    @property
-    def first_event(self):
-        """Run's first event"""
-        return self._first_event[0]
-
-    @first_event.setter
-    def first_event(self, value: np.uint32) -> None:
-        self._first_event[0] = value
-
-    @property
-    def first_event_time(self):
-        """First event time"""
-        return self._first_event_time[0]
-
-    @first_event_time.setter
-    def first_event_time(self, value: np.uint32) -> None:
-        self._first_event_time[0] = value
-
-    @property
-    def last_event(self):
-        """Run's last event"""
-        return self._last_event[0]
-
-    @last_event.setter
-    def last_event(self, value: np.uint32) -> None:
-        self._last_event[0] = value
-
-    @property
-    def last_event_time(self):
-        """Last event time"""
-        return self._last_event_time[0]
-
-    @last_event_time.setter
-    def last_event_time(self, value: np.uint32) -> None:
-        self._last_event_time[0] = value
-
-    @property
-    def data_source(self):
-        """Data source: detector, sim, other"""
-        return str(self._data_source)
-
-    @data_source.setter
-    def data_source(self, value) -> None:
-        # Not a string was given
-        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
-            raise ValueError(
-                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
-            )
-
-        self._data_source.string.assign(value)
+    # @property
+    # def data_source(self):
+    #     """Data source: detector, sim, other"""
+    #     return str(self._data_source)
+    #
+    # @data_source.setter
+    # def data_source(self, value) -> None:
+    #     # Not a string was given
+    #     if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+    #         raise ValueError(
+    #             f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+    #         )
+    #
+    #     self._data_source.string.assign(value)
 
     @property
     def data_generator(self):
@@ -1490,23 +1533,23 @@ class TRun(MotherRunTree):
 
         self._data_generator_version.string.assign(value)
 
-    @property
-    def event_type(self):
-        """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
-        return self._event_type[0]
-
-    @event_type.setter
-    def event_type(self, value: np.uint32) -> None:
-        self._event_type[0] = value
-
-    @property
-    def event_version(self):
-        """Event format version of the DAQ"""
-        return self._event_version[0]
-
-    @event_version.setter
-    def event_version(self, value: np.uint32) -> None:
-        self._event_version[0] = value
+    # @property
+    # def event_type(self):
+    #     """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
+    #     return self._event_type[0]
+    #
+    # @event_type.setter
+    # def event_type(self, value: np.uint32) -> None:
+    #     self._event_type[0] = value
+    #
+    # @property
+    # def event_version(self):
+    #     """Event format version of the DAQ"""
+    #     return self._event_version[0]
+    #
+    # @event_version.setter
+    # def event_version(self, value: np.uint32) -> None:
+    #     self._event_version[0] = value
 
     @property
     def site(self):
