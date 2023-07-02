@@ -9,8 +9,7 @@ import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
 import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
-from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
-
+#from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand  #this is not needded becouse root_trees is imported on RawTrees
 
 def CoreasToRawRoot(path):
   """
