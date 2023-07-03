@@ -10,7 +10,7 @@ import sys
 import time
 sys.path.append("/data/GRAND/GrandRawRoot/Common")
 import raw_root_trees as RawTrees
-from root_trees import *
+from grand.dataio.root_trees import *
 
 
 # Command line argument parsing
