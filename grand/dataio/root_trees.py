@@ -246,12 +246,9 @@ class TTreeArrayDesc:
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         # This is needed for default init as a field of an upper class
-        print("val1", value)
         if isinstance(value, TTreeArrayDesc):
             value = getattr(obj, self.attrname)
-        print("val2", value)
         inst = getattr(obj, self.attrname)
-        print("inst", inst)
 
         inst[:] = np.array(value).astype(self.dtype)
 
@@ -705,7 +702,7 @@ class DataTree:
             if field in self._nonbranch_fields:
                 continue
             # Create a branch for the field
-            # print(self.__dataclass_fields__[field])
+            # print(field, self.__dict__[field], type(self.__dict__[field]))
             # self.create_branch_from_field(self.__dataclass_fields__[field], set_branches)
             self.create_branch_from_field(self.__dict__[field], set_branches, field)
 
@@ -1442,27 +1439,26 @@ class TRun(MotherRunTree):
     # ## Site latitude
     # _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Origin of the coordinate system used for the array
-    # _origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
 
     ## Detector unit (antenna) ID
-    _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int"))
     ## Detector unit (antenna) (lat,lon,alt) position
-    _du_geoid: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     ## Detector unit (antenna) (x,y,z) position in site's referential
-    _du_xyz: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     ## Detector unit type
-    _du_type: StdVectorList = field(default_factory=lambda: StdVectorList("string"))
+    du_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
     ## Detector unit (antenna) angular tilt
-    _du_tilt: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    du_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     ## Angular tilt of the ground at the antenna
-    _du_ground_tilt: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
+    du_ground_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     ## Detector unit (antenna) nut ID
-    _du_nut: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    du_nut: StdVectorListDesc = field(default=StdVectorListDesc("int"))
     ## Detector unit (antenna) FrontEnd Board ID
-    _du_feb: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
+    du_feb: StdVectorListDesc = field(default=StdVectorListDesc("int"))
     ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
-    _t_bin_size: np.ndarray = field(default_factory=lambda: StdVectorList("float"))
+    t_bin_size: StdVectorListDesc = field(default=StdVectorListDesc("float"))
 
     def __post_init__(self):
         super().__post_init__()
@@ -1641,222 +1637,222 @@ class TRun(MotherRunTree):
     # def origin_geoid(self, value):
     #     self._origin_geoid = np.array(value).astype(np.float32)
     #     self._tree.SetBranchAddress("origin_geoid", self._origin_geoid)
-
-    @property
-    def du_id(self):
-        """Detector unit (antenna) ID"""
-        return self._du_id
-
-    @du_id.setter
-    def du_id(self, value) -> None:
-        # A list of strings was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_id.clear()
-            self._du_id += value
-        # A vector was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_id._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of ints required."
-            )
-
-    @property
-    def du_geoid(self):
-        """Detector unit (antenna) (lat,lon,alt) position"""
-        return self._du_geoid
-
-    @du_geoid.setter
-    def du_geoid(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_geoid.clear()
-            self._du_geoid += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._du_geoid._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_geoid {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def du_xyz(self):
-        """Detector unit (antenna) (x,y,z) position in site's referential"""
-        return self._du_xyz
-
-    @du_xyz.setter
-    def du_xyz(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_xyz.clear()
-            self._du_xyz += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._du_xyz._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_xyz {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def du_type(self):
-        """Detector unit type"""
-        return self._du_type
-
-    @du_type.setter
-    def du_type(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_type.clear()
-            self._du_type += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("string")):
-            self._du_type._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_type {type(value)}. Either a list, an array or a ROOT.vector of string required."
-            )
-
-    @property
-    def du_tilt(self):
-        """Detector unit (antenna) angular tilt"""
-        return self._du_tilt
-
-    @du_tilt.setter
-    def du_tilt(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_tilt.clear()
-            self._du_tilt += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._du_tilt._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_tilt {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def du_ground_tilt(self):
-        """Angular tilt of the ground at the antenna"""
-        return self._du_ground_tilt
-
-    @du_ground_tilt.setter
-    def du_ground_tilt(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_ground_tilt.clear()
-            self._du_ground_tilt += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("vector<float>")):
-            self._du_ground_tilt._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_ground_tilt {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
-            )
-
-    @property
-    def du_nut(self):
-        """Detector unit (antenna) nut ID"""
-        return self._du_nut
-
-    @du_nut.setter
-    def du_nut(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_nut.clear()
-            self._du_nut += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_nut._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_nut {type(value)}. Either a list, an array or a ROOT.vector of int required."
-            )
-
-    @property
-    def du_feb(self):
-        """Detector unit (antenna) FrontEnd Board ID"""
-        return self._du_feb
-
-    @du_feb.setter
-    def du_feb(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._du_feb.clear()
-            self._du_feb += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("int")):
-            self._du_feb._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for du_feb {type(value)}. Either a list, an array or a ROOT.vector of int required."
-            )
-
-    @property
-    def t_bin_size(self):
-        """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
-        return self._t_bin_size
-
-    @t_bin_size.setter
-    def t_bin_size(self, value):
-        # A list was given
-        if (
-                isinstance(value, list)
-                or isinstance(value, np.ndarray)
-                or isinstance(value, StdVectorList)
-        ):
-            # Clear the vector before setting
-            self._t_bin_size.clear()
-            self._t_bin_size += value
-        # A vector of strings was given
-        elif isinstance(value, ROOT.vector("float")):
-            self._t_bin_size._vector = value
-        else:
-            raise ValueError(
-                f"Incorrect type for t_bin_size {type(value)}. Either a list, an array or a ROOT.vector of floats required."
-            )
+    #
+    # @property
+    # def du_id(self):
+    #     """Detector unit (antenna) ID"""
+    #     return self._du_id
+    #
+    # @du_id.setter
+    # def du_id(self, value) -> None:
+    #     # A list of strings was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_id.clear()
+    #         self._du_id += value
+    #     # A vector was given
+    #     elif isinstance(value, ROOT.vector("int")):
+    #         self._du_id._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_id {type(value)}. Either a list, an array or a ROOT.vector of ints required."
+    #         )
+    #
+    # @property
+    # def du_geoid(self):
+    #     """Detector unit (antenna) (lat,lon,alt) position"""
+    #     return self._du_geoid
+    #
+    # @du_geoid.setter
+    # def du_geoid(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_geoid.clear()
+    #         self._du_geoid += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._du_geoid._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_geoid {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #         )
+    #
+    # @property
+    # def du_xyz(self):
+    #     """Detector unit (antenna) (x,y,z) position in site's referential"""
+    #     return self._du_xyz
+    #
+    # @du_xyz.setter
+    # def du_xyz(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_xyz.clear()
+    #         self._du_xyz += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._du_xyz._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_xyz {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #         )
+    #
+    # @property
+    # def du_type(self):
+    #     """Detector unit type"""
+    #     return self._du_type
+    #
+    # @du_type.setter
+    # def du_type(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_type.clear()
+    #         self._du_type += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("string")):
+    #         self._du_type._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_type {type(value)}. Either a list, an array or a ROOT.vector of string required."
+    #         )
+    #
+    # @property
+    # def du_tilt(self):
+    #     """Detector unit (antenna) angular tilt"""
+    #     return self._du_tilt
+    #
+    # @du_tilt.setter
+    # def du_tilt(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_tilt.clear()
+    #         self._du_tilt += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._du_tilt._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_tilt {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #         )
+    #
+    # @property
+    # def du_ground_tilt(self):
+    #     """Angular tilt of the ground at the antenna"""
+    #     return self._du_ground_tilt
+    #
+    # @du_ground_tilt.setter
+    # def du_ground_tilt(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_ground_tilt.clear()
+    #         self._du_ground_tilt += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("vector<float>")):
+    #         self._du_ground_tilt._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_ground_tilt {type(value)}. Either a list, an array or a ROOT.vector of vector<float> required."
+    #         )
+    #
+    # @property
+    # def du_nut(self):
+    #     """Detector unit (antenna) nut ID"""
+    #     return self._du_nut
+    #
+    # @du_nut.setter
+    # def du_nut(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_nut.clear()
+    #         self._du_nut += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("int")):
+    #         self._du_nut._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_nut {type(value)}. Either a list, an array or a ROOT.vector of int required."
+    #         )
+    #
+    # @property
+    # def du_feb(self):
+    #     """Detector unit (antenna) FrontEnd Board ID"""
+    #     return self._du_feb
+    #
+    # @du_feb.setter
+    # def du_feb(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._du_feb.clear()
+    #         self._du_feb += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("int")):
+    #         self._du_feb._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for du_feb {type(value)}. Either a list, an array or a ROOT.vector of int required."
+    #         )
+    #
+    # @property
+    # def t_bin_size(self):
+    #     """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
+    #     return self._t_bin_size
+    #
+    # @t_bin_size.setter
+    # def t_bin_size(self, value):
+    #     # A list was given
+    #     if (
+    #             isinstance(value, list)
+    #             or isinstance(value, np.ndarray)
+    #             or isinstance(value, StdVectorList)
+    #     ):
+    #         # Clear the vector before setting
+    #         self._t_bin_size.clear()
+    #         self._t_bin_size += value
+    #     # A vector of strings was given
+    #     elif isinstance(value, ROOT.vector("float")):
+    #         self._t_bin_size._vector = value
+    #     else:
+    #         raise ValueError(
+    #             f"Incorrect type for t_bin_size {type(value)}. Either a list, an array or a ROOT.vector of floats required."
+    #         )
 
 
 ## General info on the voltage common to all events.
