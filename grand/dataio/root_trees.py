@@ -224,6 +224,37 @@ class TTreeScalarDesc:
 
         inst[0] = value
 
+class TTreeArrayDesc:
+    """A descriptor for numpy arrays stored in TTrees. Ensures the type and converts to array (in case of for eg. list). Makes use of it possible in dataclasses without setting property and setter"""
+    def __init__(self, shape, dtype):
+        self.factory = lambda: np.zeros(shape, dtype)
+        self.dtype = dtype
+
+    def __set_name__(self, type, name):
+        self.name = name
+        self.attrname = f"_{name}"
+
+    def create_default(self, obj):
+        setattr(obj, self.attrname, self.factory())
+
+    def __get__(self, obj, obj_type):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        return getattr(obj, self.attrname)
+
+    def __set__(self, obj, value):
+        if not hasattr(obj, self.attrname):
+            self.create_default(obj)
+        # This is needed for default init as a field of an upper class
+        print("val1", value)
+        if isinstance(value, TTreeArrayDesc):
+            value = getattr(obj, self.attrname)
+        print("val2", value)
+        inst = getattr(obj, self.attrname)
+        print("inst", inst)
+
+        inst[:] = np.array(value).astype(self.dtype)
+
 class StdString:
     """A python string interface to ROOT's std::string"""
 
@@ -237,7 +268,7 @@ class StdString:
         return str(self.string)
 
 class StdStringDesc:
-    """A descriptor for scalars assigned to TTrees as numpy arrays of size 1 - makes use of it possible in dataclasses without setting property and setter"""
+    """A descriptor for strings assigned to TTrees as python strings - makes use of it possible in dataclasses without setting property and setter"""
 
     def __init__(self, value=""):
         self.factory = lambda: ROOT.string(value)
@@ -1411,7 +1442,8 @@ class TRun(MotherRunTree):
     # ## Site latitude
     # _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Origin of the coordinate system used for the array
-    _origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    # _origin_geoid: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
+    origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
 
     ## Detector unit (antenna) ID
     _du_id: StdVectorList = field(default_factory=lambda: StdVectorList("int"))
@@ -1599,16 +1631,16 @@ class TRun(MotherRunTree):
     # def site_lat(self, value):
     #     self._site_lat = np.array(value).astype(np.float32)
     #     self._tree.SetBranchAddress("site_lat", self._site_lat)
-
-    @property
-    def origin_geoid(self):
-        """Origin of the coordinate system used for the array"""
-        return np.array(self._origin_geoid)
-
-    @origin_geoid.setter
-    def origin_geoid(self, value):
-        self._origin_geoid = np.array(value).astype(np.float32)
-        self._tree.SetBranchAddress("origin_geoid", self._origin_geoid)
+    #
+    # @property
+    # def origin_geoid(self):
+    #     """Origin of the coordinate system used for the array"""
+    #     return np.array(self._origin_geoid)
+    #
+    # @origin_geoid.setter
+    # def origin_geoid(self, value):
+    #     self._origin_geoid = np.array(value).astype(np.float32)
+    #     self._tree.SetBranchAddress("origin_geoid", self._origin_geoid)
 
     @property
     def du_id(self):
