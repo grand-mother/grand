@@ -33,3 +33,8 @@ jobs:
         echo "toto"
         echo "version: 1.1" > version
       shell: bash
+
+    - name: commit
+      uses: actions-js/push@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
