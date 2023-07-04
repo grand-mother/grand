@@ -17,6 +17,7 @@ dm = granddatalib.DataManager('config.ini')
 
 
 file = 'Coarse3.root'
+file = 'GRAND.TEST-RAW.20230309203415.001.root'
 print("\nGet " + file)
 st = time.time()
 print("RESULTAT : " + str(dm.get(file)))
