@@ -26,8 +26,9 @@ from dataclasses import dataclass, field
 thismodule = sys.modules[__name__]
 
 #from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
-sys.path.append("../../grand/io")
-from root_trees import *
+#sys.path.append("../../grand/io")
+#from root_trees import *
+from grand.dataio.root_trees import *
 
 
 ###########################################################################################################################################################################################################

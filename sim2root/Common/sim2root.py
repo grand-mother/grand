@@ -6,7 +6,7 @@ import os
 import argparse
 from types import SimpleNamespace
 import time
-from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
+from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 import raw_root_trees as RawTrees # this is here in Common
 
 
