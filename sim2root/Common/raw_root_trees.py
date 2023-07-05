@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 thismodule = sys.modules[__name__]
 
 #from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
-#sys.path.append("../../grand/io")
+#sys.path.append("../../grand/dataio/")  #matias: i need this to make it work on my system. got to figure it out 
 #from root_trees import *
 from grand.dataio.root_trees import *
 
@@ -47,10 +47,10 @@ class RawShowerTree(MotherEventTree):
 
     _tree_name: str = "trawshower"
     
-    ## Name and version of the shower simulator
+    ### Name and version of the shower simulator
     _sim_name: StdString = StdString("")
 
-    ### Event name (the task name, can be usefull to track the original simulation)
+    ###X Event name (the task name, can be usefull to track the original simulation) 
     _event_name: StdString = StdString("")
 
     ### Event Date  (used to define the atmosphere and/or the magnetic field)
@@ -65,7 +65,7 @@ class RawShowerTree(MotherEventTree):
     ### Energy in neutrinos generated in the shower (GeV). Useful for invisible energy computation
     _energy_in_neutrinos: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     
-    ### Primary energy (GeV) 
+    ###X Primary energy (GeV) 
     energy_primary: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     
     ### Shower azimuth (deg, CR convention)

@@ -51,6 +51,7 @@ AiresPath="/home/mjtueros/aires/bin"
 def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Primary zenith angle:' in line:
@@ -77,6 +78,7 @@ def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
 def GetAzimuthAngleFromSry(sry_file,outmode="GRAND"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Primary azimuth angle:' in line:
@@ -107,6 +109,7 @@ def GetAzimuthAngleFromSry(sry_file,outmode="GRAND"):
 def GetEnergyFromSry(sry_file,outmode="GRAND"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Primary energy:' in line:
@@ -176,6 +179,7 @@ def GetCorePositionFromInp(inp_file,outmode="N/A"):
 def GetThinningRelativeEnergyFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Thinning energy:' in line:
@@ -203,6 +207,7 @@ def GetThinningRelativeEnergyFromSry(sry_file,outmode="N/A"):
 def GetGammaEnergyCutFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Cut energy for gammas:' in line:
@@ -241,6 +246,7 @@ def GetGammaEnergyCutFromSry(sry_file,outmode="N/A"):
 def GetElectronEnergyCutFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Cut energy for e+ e-:' in line:
@@ -279,6 +285,7 @@ def GetElectronEnergyCutFromSry(sry_file,outmode="N/A"):
 def GetMuonEnergyCutFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Cut energy for mu+ mu-:' in line:
@@ -317,6 +324,7 @@ def GetMuonEnergyCutFromSry(sry_file,outmode="N/A"):
 def GetMesonEnergyCutFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Cut energy for mesons:' in line:
@@ -355,6 +363,7 @@ def GetMesonEnergyCutFromSry(sry_file,outmode="N/A"):
 def GetNucleonEnergyCutFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Cut energy for nucleons:' in line:
@@ -393,6 +402,7 @@ def GetNucleonEnergyCutFromSry(sry_file,outmode="N/A"):
 def GetPrimaryFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Primary particle:' in line:
@@ -438,6 +448,7 @@ def GetPrimaryFromSry(sry_file,outmode="N/A"):
 def GetSlantXmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not found, becouse the fit didnt converge
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Sl. depth of max. (g/cm2)' in line:
@@ -461,6 +472,7 @@ def GetSlantXmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not
 def GetNmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not found, becouse the fit didnt converge
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Charged pcles. at maximum' in line:
@@ -484,6 +496,7 @@ def GetNmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not foun
 def GetKmXmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not found, becouse the fit didnt converge, or becouse this is not ZHAireS, or its latest version
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if ('Location of max.(Km)' in line) or ('Pos. Max.' in line)  :
@@ -510,6 +523,7 @@ def GetKmXmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not fo
 def GetExpectedKmXmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax is not found, becouse the fit didnt converge, or becouse this is not ZHAireS, or its latest version
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Exp Distance To Xmax' in line:
@@ -534,6 +548,7 @@ def GetExpectedKmXmaxFromSry(sry_file,outmode="N/A"): #To do. Handle when Xmax i
 def GetTaskNameFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Task Name:' in line:
@@ -562,6 +577,7 @@ def GetTaskNameFromSry(sry_file,outmode="N/A"):
 def GetRandomSeedFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Seed of random generator:' in line:
@@ -584,6 +600,7 @@ def GetRandomSeedFromSry(sry_file,outmode="N/A"):
 def GetGroundAltitudeFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Ground altitude:' in line:
@@ -611,6 +628,7 @@ def GetGroundAltitudeFromSry(sry_file,outmode="N/A"):
 def GetGroundDepthFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Ground altitude:' in line:
@@ -641,6 +659,7 @@ def GetGroundDepthFromSry(sry_file,outmode="N/A"):
 def GetTimeBinFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Time Domain Bin Size:' in line:
@@ -669,6 +688,7 @@ def GetTimeBinFromSry(sry_file,outmode="N/A"):
 def GetTimeWindowMinFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Antenna Time Window Min:' in line:
@@ -697,6 +717,7 @@ def GetTimeWindowMinFromSry(sry_file,outmode="N/A"):
 def GetTimeWindowMaxFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Antenna Time Window Max:' in line:
@@ -725,6 +746,7 @@ def GetTimeWindowMaxFromSry(sry_file,outmode="N/A"):
 def GetWeightFactorFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Max. stat. weight factor:' in line:
@@ -750,6 +772,7 @@ def GetWeightFactorFromSry(sry_file,outmode="N/A"):
 def GetEMtoHadronWFRatioFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'EM to Hadron WF ratio:' in line:
@@ -783,6 +806,7 @@ def GetMagneticFieldFromSry(sry_file,outmode="N/A"):
   fielddeclination=float(0.0)
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Geomagnetic field:' in line:
@@ -825,6 +849,7 @@ def GetMagneticFieldFromSry(sry_file,outmode="N/A"):
 def GetTotalCPUTimeFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Total CPU time' in line:
@@ -872,6 +897,7 @@ def GetTotalCPUTimeFromSry(sry_file,outmode="N/A"):
 def GetHadronicModelFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Hadronic Mean Free Paths' in line:
@@ -894,6 +920,7 @@ def GetHadronicModelFromSry(sry_file,outmode="N/A"):
 def GetRandomSeedFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Seed of random generator:' in line:
@@ -916,6 +943,7 @@ def GetRandomSeedFromSry(sry_file,outmode="N/A"):
 def GetAiresVersionFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'This is AIRES version' in line:
@@ -940,6 +968,7 @@ def GetAiresVersionFromSry(sry_file,outmode="N/A"):
 def GetZHAireSVersionFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'With ZHAireS version' in line:
@@ -965,6 +994,7 @@ def GetZHAireSVersionFromSry(sry_file,outmode="N/A"):
 def GetAtmosphericModelFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Atmospheric model' in line:
@@ -1008,6 +1038,7 @@ def GetSiteFromSry(sry_file,outmode="N/A"):
 def GetLatLongFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if '(Lat:' in line:
@@ -1036,6 +1067,7 @@ def GetLatLongFromSry(sry_file,outmode="N/A"):
 def GetDateFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Date:' in line:
@@ -1058,6 +1090,7 @@ def GetDateFromSry(sry_file,outmode="N/A"):
 def GetInjectionAltitudeFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Injection altitude' in line:
@@ -1085,6 +1118,7 @@ def GetInjectionAltitudeFromSry(sry_file,outmode="N/A"):
 def GetEnergyFractionInNeutrinosFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       founditonce=0
       for line in datafile:
@@ -1157,6 +1191,7 @@ def GetAntennaInfoFromSry(sry_file,outmode="N/A"):
   AntennaN=0
   try:
     datafile=open(sry_file,'r')
+    datafile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if(Read):
