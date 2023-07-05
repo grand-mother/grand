@@ -30,9 +30,7 @@ jobs:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "toto"
-        echo "version: 1.1" > version
-      shell: bash
+        python scripts/update_version.py
 
     - name: commit
       uses: actions-js/push@master
