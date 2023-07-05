@@ -1,5 +1,5 @@
 from os.path import exists
-versionfile = "grand/io/version"
+versionfile = "grand/dataio/version"
 
 if not exists(versionfile):
     version = "0.0.0"
