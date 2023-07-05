@@ -25,11 +25,15 @@ jobs:
         python-version: "3.10"
     
     - name: Update version number
+      id: update-version
       env:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        python scripts/update_version.py
+        python scripts/update_version.py >> "$GITHUB_OUTPUT"
+
+    - name: get version
+      run: echo "${{ steps.update-version.outputs.version}}"
 
     - name: Commit version
       uses: actions-js/push@master
