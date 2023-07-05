@@ -324,6 +324,93 @@ class Database:
     ## @brief Function to register (if necessary) the content of a file into the database.
     # It will first read the file and walk along datas to determine what has to be registered
     def register_filecontent(self, file, idfile):
+        # ttrees will be a dict of trees to add. key is the tree name and value is a dict with all values for the tree.
+        ttrees = {}
+        #tables = {}
+        rfile = rdb.RootFile(str(file))
+        # We iterate over all trees
+        for treename in rfile.TreeList:
+            treetype = treename.split('_', 1)[0]
+            table = getattr(rfile, treetype + "ToDB")['table']
+            ttrees[treename] = {}
+
+            # Get metadata and add file_trees record
+            print("META")
+            metatree = {}
+            tablemeta = "file_trees"
+            metatree['id_file'] = idfile
+            for meta, field in rfile.metaToDB.items():
+                #try/except to avoid stopping when metadata is not present in root file
+                try:
+                    value = casttodb(getattr(rfile.TreeList[treename], meta))
+                    if field.find('id_') >= 0:
+                        value = self.get_or_create_fk(tablemeta, field, value)
+                    metatree[field] = value
+                    print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
+                except:
+                    pass
+            #Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
+            metatree['tree_name']=treename
+            container = self.tables()[tablemeta](**metatree)
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+
+            if treetype in rfile.EventTrees:
+
+                # For events we iterates over event_number and run_number
+                for event, run in rfile.TreeList[treename].get_list_of_events():
+                    if not (run, event) in ttrees[treename]:
+                        ttrees[treename][(run, event)] = {}
+
+                    rfile.TreeList[treename].get_event(event, run)
+                    for param, field in getattr(rfile, treetype + "ToDB").items():
+                        if param != "table":
+                            value = casttodb(getattr(rfile.TreeList[treename], param))
+                            # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
+                            if field.startswith('id_') :
+                                value = self.get_or_create_fk(table, field, value)
+
+                            ttrees[treename][(run, event)][field] = value
+
+                        else:
+                            ttrees[treename][(run, event)]['id_file'] = idfile
+                            ttrees[treename][(run, event)]['tree_name'] = treename
+
+                    container = self.tables()[table](**ttrees[treename][(run, event)])
+                    self.sqlalchemysession.add(container)
+                    self.sqlalchemysession.flush()
+
+            # For runs we iterates over run_number
+            elif treename in rfile.RunTrees:
+                for run in rfile.TreeList[treename].get_list_of_runs():
+                    if run not in ttrees[treename]:
+                        ttrees[treename][run] = {}
+
+                    rfile.TreeList[treename].get_run(run)
+                    for param, field in getattr(rfile, treename + "ToDB").items():
+                        if param != "table":
+                            try:
+                                value = casttodb(getattr(rfile.TreeList[treename], param))
+                                # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
+                                if field.startswith('id_') :
+                                    value = self.get_or_create_fk(table, field, value)
+
+                                ttrees[treename][run][field] = value
+
+                            except:
+                                logger.warning(f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
+                        else:
+                            ttrees[treename][run]['id_file'] = idfile
+                            ttrees[treename][run]['tree_name'] = treename
+
+                    container = self.tables()[table](**ttrees[treename][run])
+                    self.sqlalchemysession.add(container)
+                    self.sqlalchemysession.flush()
+
+
+
+#TODO: Get metadata and add file_trees
+    def old_register_filecontent(self, file, idfile):
         tables = {}
         rfile = rdb.RootFile(str(file))
 
@@ -415,7 +502,32 @@ class Database:
     def register_file(self, orgfilename, newfilename, id_repository, provider):
         idfile, read_file = self.register_filename(orgfilename, newfilename, id_repository, provider)
 
+        ## REMOVE ##
+        rfile = rdb.RootFile(str(orgfilename))
+        gfile = grand.io.root_trees.DataFile(str(orgfilename))
+        print("--- list")
+        print(str(gfile.list_of_trees))
+        print("--- dict")
+        print(str(gfile.dict_of_trees))
+        print("--- iterate list")
+        for tre in gfile.list_of_trees:
+            print(str(tre))
 
+        print("--- iterate dict")
+        for tre in gfile.dict_of_trees:
+            print(str(tre))
+            tretype = tre.split('_', 1)[0]
+            print(str(gfile.get_tree_info(tretype)))
+
+        #print(str(gfile.tree_types))
+        print("xx")
+        for key1 in gfile.tree_types['TRawVoltage'].keys():
+            print(str(key1))
+        print("---")
+        for treename in rfile.TreeList:
+            print(treename)
+        print("--- end ---")
+        ## END REMOVE ##
         if read_file:
             #We read the localfile and not the remote one
             self.register_filecontent(orgfilename,idfile)
