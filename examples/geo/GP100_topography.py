@@ -23,7 +23,7 @@ dunhuang = Geodetic(latitude=40.902317, longitude=94.054550, height=0)
 # Get the corresponding topography data. Note that does are dowloaded from the
 # web and cached which might take some time. Reducing the area results in less
 # data to be downloaded, i.e. speeding up this step
-radius = 10000  # m
+radius = 1000  # m
 topography.update_data(dunhuang, radius=radius)
 
 # Generate a grid of local coordinates using numpy.meshgrid

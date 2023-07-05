@@ -12,7 +12,7 @@ from grand import Geodetic, LTP, GRANDCS
 from grand.simu.du.process_ant import AntennaProcessing
 from grand.simu.shower.gen_shower import ShowerEvent
 from grand.io.file_leff import TabulatedAntennaModel
-from grand import grand_add_path_data_model, grand_get_path_root_pkg
+from grand import grand_add_path_data, grand_get_path_root_pkg
 import grand.manage_log as mlg
 
 # specific logger definition for script because __mane__ is "__main__" !
@@ -21,8 +21,8 @@ logger = mlg.get_logger_for_script(__file__)
 # define a handler for logger : standart output and file log.txt
 mlg.create_output_for_logger("debug", log_file="log.txt", log_stdout=True)
 
-G_path_ant_300 = grand_add_path_data_model("detector/GP300Antenna_EWarm_leff.npy")
-G_path_ant = grand_add_path_data_model("detector/HorizonAntenna_EWarm_leff_loaded.npy")
+G_path_ant_300 = grand_add_path_data("detector/GP300Antenna_EWarm_leff.npy")
+G_path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
 G_r_ant = TabulatedAntennaModel.load(G_path_ant_300)
 
 

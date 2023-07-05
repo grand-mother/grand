@@ -12,7 +12,7 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )
-from grand.io import io_node as io  # , ECEF, LTP
+#from grand.dataio import io_node as io  # , ECEF, LTP
 
 
 logger = getLogger(__name__)
@@ -41,6 +41,14 @@ class ElectricField:
             self.fft_e_3d = sf.rfft(self.e_xyz, n=size_sig_pad)
             return self.fft_e_3d
 
+    def get_delta_time_s(self):
+        return self.a_time[1] - self.a_time[0]
+
+    def get_nb_sample(self):
+        return self.e_xyz.shape[1]
+
+    """
+    #RK: From previous version of grandlib. This part is no longer used.
     @classmethod
     def load(cls, node: io.DataNode):
         logger.debug(f"Loading E-field from {node.filename}:{node.path}")
@@ -71,13 +79,35 @@ class ElectricField:
 
         if self.frame is not None:
             node.write("frame", self.frame)
-
+    """
 
 @dataclass
 class Voltage:
     t: np.ndarray  # [s]
     V: np.ndarray  # [?]
 
+    def __post_init__(self):
+        self.v_fft = None
+
+    def get_fft(self, size_sig_pad):
+        """
+        :param size_sig_pad:
+        :type size_sig_pad:
+        """
+        if self.v_fft is not None:
+            return self.v_fft
+        else:
+            self.v_fft = sf.rfft(self.V, n=size_sig_pad)
+            return self.v_fft
+
+    def get_delta_time_s(self):
+        return self.t[1] - self.t[0]
+
+    def get_nb_sample(self):
+        return self.V.shape[-1]
+
+    """
+    #RK: From previous version of grandlib. This part is no longer used.
     @classmethod
     def load(cls, node: io.DataNode):
         logger.debug("Loading voltage from {node.filename}:{node.path}")
@@ -89,3 +119,6 @@ class Voltage:
         logger.debug("Dumping E-field to {node.filename}:{node.path}")
         node.write("t", self.t, dtype="f4")
         node.write("V", self.V, dtype="f4")
+    """
+
+

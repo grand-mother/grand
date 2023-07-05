@@ -8,8 +8,10 @@ import os
 from pathlib import Path
 from typing import Optional, Union, Any
 from typing_extensions import Final
-
 import numpy as np
+
+from grand import grand_get_path_root_pkg
+
 from . import DATADIR
 from grand.geo.coordinates import (
     ECEF,
@@ -19,8 +21,9 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )
-from ..libs.turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
-import grand.io.protocol as store
+
+from .turtle import Map as _Map, Stack as _Stack, Stepper as _Stepper
+import grand.dataio.protocol as store
 from .._core import ffi, lib
 
 __all__ = [
@@ -43,7 +46,7 @@ class Reference(enum.IntEnum):
     LOCAL = enum.auto()
 
 
-_CACHEDIR: Final = Path(__file__).parent / "data" / "topography"
+DATADIR: Final = Path(grand_get_path_root_pkg()) / "data" / "topography"
 """Location of cached topography data"""
 
 
@@ -70,8 +73,8 @@ def distance(
     global _default_topography
 
     if _default_topography is None:
-        _CACHEDIR.mkdir(exist_ok=True)
-        _default_topography = Topography(_CACHEDIR)
+        DATADIR.mkdir(exist_ok=True)
+        _default_topography = Topography(DATADIR)
     return _default_topography.distance(position, direction, maximum_distance)
 
 
@@ -80,8 +83,8 @@ def elevation(coordinates, reference: Optional[str] = _default_reference):
     global _default_topography
 
     if _default_topography is None:
-        _CACHEDIR.mkdir(exist_ok=True)
-        _default_topography = Topography(_CACHEDIR)
+        DATADIR.mkdir(exist_ok=True)
+        _default_topography = Topography(DATADIR)
     return _default_topography.elevation(coordinates, reference)
 
 
@@ -89,22 +92,10 @@ def _get_geoid():
     global _geoid
 
     if _geoid is None:
-        path = os.path.join(DATADIR, "egm96.png")
+        # path = os.path.join(DATADIR, "egm96.png")
+        path = Path(grand_get_path_root_pkg()) / "data" / "egm96.png"
         _geoid = _Map(path)
     return _geoid
-
-
-def geoid_undulationX(coordinates):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
-    """
-    geoid = _get_geoid()
-
-    # Compute the geodetic coordinates
-    geodetic = Geodetic(coordinates)
-    z = geoid.elevation(geodetic.longitude, geodetic.latitude)
-
-    return z
 
 
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
@@ -134,14 +125,14 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     """
     Update the cache of topography data.
     Data are stored in https://github.com/grand-mother/store/releases.
-    Locally saved as .../grand/grand/tools/data/topography/*.SRTMGL1.hgt
+    Locally saved as .../grand/data/topography/*.hgt
     """
     if clear:
-        for p in _CACHEDIR.glob("**/*.*"):
+        for p in DATADIR.glob("**/*.*"):
             p.unlink()
 
     if coordinates is not None:
-        _CACHEDIR.mkdir(exist_ok=True)
+        DATADIR.mkdir(exist_ok=True)
 
         # Compute the bounding box
         if isinstance(coordinates, (ECEF, Geodetic, GeodeticRepresentation, GRANDCS, LTP)):
@@ -149,7 +140,7 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
         else:
             raise TypeError(
                 type(coordinates),
-                "Coordinate must be in ECEF, Geodetic, GeodeticRepresentaion, GRAND or LTP.",
+                "Coordinate must be in ECEF, Geodetic, GeodeticRepresentaion, GRANDCS or LTP.",
             )
 
         coordinates = Geodetic(coordinates)
@@ -199,8 +190,11 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
                 lat = -lat if lat < 0 else lat
                 lon = -lon if lon < 0 else lon
 
-                basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt"
-                path = _CACHEDIR / basename
+                base = f"{ns}{lat:02.0f}{ew}{lon:03.0f}"
+                basename = f"{ns}{lat:02.0f}{ew}{lon:03.0f}.SRTMGL1.hgt" # .gz will be added in protocol.py
+                print("topography:", ns, lat, ew, lon, basename)
+                # path = DATADIR / basename
+                path = DATADIR / (base + ".hgt")
                 if not path.exists():
                     print("Caching data for", path)
                     try:
@@ -209,7 +203,7 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
                         )  # stored in github.com/grand-mother/store/releases.
                     except store.InvalidBLOB:
                         raise ValueError(
-                            f"missing data for {basename}"
+                            f"missing data in GRAND repository for {basename}. Download it from https://search.earthdata.nasa.gov/search/granules?p=C1000000240-LPDAAC_ECS&pg[0][v]=f&pg[0][gsk]=-start_date&tl=1680158515.135!3!!"
                         ) from None  # RK: what is this? and why?
                     else:
                         with path.open("wb") as f:
@@ -221,10 +215,14 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     global _default_topography
     _default_topography = None
 
-
 def cachedir() -> Path:
     """Get the location of the topography data cache."""
-    return _CACHEDIR
+    return DATADIR
+
+
+def datadir() -> Path:
+    """Get the location of the topography data cache."""
+    return DATADIR
 
 
 def model() -> str:
@@ -235,7 +233,7 @@ def model() -> str:
 class Topography:
     """Proxy to topography data."""
 
-    def __init__(self, path: Union[Path, str] = _CACHEDIR) -> None:
+    def __init__(self, path: Union[Path, str] = DATADIR) -> None:
         self._stack = _Stack(str(path))
         self._stepper: Optional[_Stepper] = None
 
