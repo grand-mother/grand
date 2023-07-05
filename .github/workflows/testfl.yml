@@ -6,7 +6,7 @@ name: Versioning test
 on:
   push:
     paths:
-      - granddb/docker/test.py
+      - grand/dataio/root_trees.py
 
 
 jobs:
@@ -25,14 +25,14 @@ jobs:
       with:
         python-version: "3.10"
     
-    - name: Check  update
+    - name: Update version number
       env:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{ secrets.GITHUB_TOKEN }}
       run: |
         python scripts/update_version.py
 
-    - name: commit
+    - name: Commit version
       uses: actions-js/push@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
