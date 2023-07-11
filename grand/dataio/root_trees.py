@@ -760,9 +760,6 @@ class DataTree:
                 # self._tree.SetBranchAddress(value_name[1:], getattr(self, value_name))
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         # ROOT vectors as StdVectorList
-        # elif "vector" in str(type(value.default)):
-        # Not sure why type is not StdVectorList when using factory... thus not isinstance, but id comparison
-        # elif id(value.type) == id(StdVectorList):
         elif type(value) == StdVectorList or type(value) == StdVectorListDesc:
             # Create the branch
             if not set_branches:
@@ -776,9 +773,6 @@ class DataTree:
                 except:
                     # logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
                     logger.warning(f"Could not find branch {branch_name} in tree {self.tree_name}. This branch will not be filled.")
-        # For some reason that I don't get, the isinstance does not work here
-        # elif isinstance(value.type, str):
-        # elif id(value.type) == id(StdString):
         elif type(value) == StdString:
             # Create the branch
             if not set_branches:
@@ -1346,12 +1340,6 @@ class MotherEventTree(DataTree):
         # Get the detector units branch
         du_br = self._tree.GetBranch("du_id")
 
-        # detector_units = []
-        # # Loop through all entries
-        # for i in range(du_br.GetEntries()):
-        #     du_br.GetEntry(i)
-        #     detector_units.append(self.du_id)
-
         count = self.draw("du_id", "", "goff")
         detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
 
@@ -1406,10 +1394,6 @@ class TRun(MotherRunTree):
     site: StdStringDesc = field(default=StdStringDesc())
     ## Site layout
     site_layout: StdStringDesc = field(default=StdStringDesc())
-    # ## Site longitude
-    # _site_long: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
-    # ## Site latitude
-    # _site_lat: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ## Origin of the coordinate system used for the array
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
 
@@ -1549,47 +1533,13 @@ class TADC(MotherEventTree):
     ## ADC sampling resolution in bits
     adc_sampling_resolution: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
 
-    # ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
-    # _adc_input_channels: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-
     adc_input_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     """ADC input channels"""
-
-    # ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
-    # _adc_enabled_channels: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
 
     adc_enabled_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
     """ADC enabled channels"""
 
-    # ## ADC samples callected in all channels
-    # _adc_samples_count_total: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel 0
-    # _adc_samples_count_channel0: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel 1
-    # _adc_samples_count_channel1: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel 2
-    # _adc_samples_count_channel2: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel 3
-    # _adc_samples_count_channel3: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-
     adc_samples_count_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-
-    # ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
-    # _trigger_pattern: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
 
     trigger_pattern_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
     trigger_pattern_ch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
@@ -1626,10 +1576,6 @@ class TADC(MotherEventTree):
     gps_alt: StdVectorListDesc = field(default=StdVectorListDesc("unsigned long long"))
     ## GPS temperature
     gps_temp: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
-    # ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
-    # _digi_ctrl: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
 
     # Digital control register
     enable_auto_reset_timeout: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
@@ -1659,53 +1605,14 @@ class TADC(MotherEventTree):
     # Input selector for readout channel
     selector_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
 
-    # ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    # _digi_prepost_trig_windows: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-
     pre_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     post_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-
-    # ## Channel 0 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties0: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel 1 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties1: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel 2 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties2: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel 3 properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties3: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
 
     gain_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     offset_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     base_maximum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     base_minimum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-
-    # ## Channel 0 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings0: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel 1 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings1: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel 2 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings2: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel 3 trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings3: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
 
     signal_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     noise_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
@@ -1719,20 +1626,7 @@ class TADC(MotherEventTree):
 
     ## ?? What is it? Some kind of the adc trace offset?
     ioff: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
-    # _start_time: StdVectorList("double") = StdVectorList("double")
-    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    # _det_time: StdVectorList("double") = StdVectorList("double")
-    # _e_det_time: StdVectorList("double") = StdVectorList("double")
-    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-    # ## ADC trace 0
-    # _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
-    # ## ADC trace 1
-    # _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
-    # ## ADC trace 2
-    # _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
-    # ## ADC trace 3
-    # _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<short>"))
+
     ## ADC traces for channels (0,1,2,3)
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<short>>"))
 
@@ -1745,51 +1639,25 @@ class TRawVoltage(MotherEventTree):
     _type: str = "rawvoltage"
 
     _tree_name: str = "trawvoltage"
-
-    # _du_id: StdVectorList("int") = StdVectorList("int")
-    # _event_size: np.ndarray = np.zeros(1, np.uint32)
-    # _start_time: StdVectorList("double") = StdVectorList("double")
-    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    # _det_time: StdVectorList("double") = StdVectorList("double")
-    # _e_det_time: StdVectorList("double") = StdVectorList("double")
-    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-
     ## Common for the whole event
     ## Event size
     event_size: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    # ## Event in the run number
-    # _t3_number: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## First detector unit that triggered in the event
     first_du: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Unix time corresponding to the GPS seconds of the trigger
     time_seconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     time_nanoseconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
-    # ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
-    # _event_type: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
-    # ## Event format version of the DAQ
-    # _event_version: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
     ## Number of detector units in the event - basically the antennas count
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
     ## Specific for each Detector Unit
-    # ## The T3 trigger number
-    # _event_id: StdVectorList = field(default_factory=lambda: StdVectorList("unsigned short"))
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
-    ## Unix time of the start of the trace for this DU
-    # _du_t0_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
-    ## Nanoseconds of the start of the trace for this DU
-    # _du_t0_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
-    # ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
-    # _trigger_position: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     ## Atmospheric temperature (read via I2C)
@@ -1800,50 +1668,8 @@ class TRawVoltage(MotherEventTree):
     atm_humidity: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Acceleration of the antenna in (x,y,z) in m/s2
     du_acceleration: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    # ## Acceleration of the antenna in X
-    # _acceleration_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    # ## Acceleration of the antenna in Y
-    # _acceleration_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    # ## Acceleration of the antenna in Z
-    # _acceleration_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Battery voltage
     battery_level: StdVectorListDesc = field(default=StdVectorListDesc("float"))
-    # ## Firmware version
-    # _firmware_version: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC sampling frequency in MHz
-    # _adc_sampling_frequency: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC sampling resolution in bits
-    # _adc_sampling_resolution: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
-    # _adc_input_channels: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
-    # _adc_enabled_channels: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in all channels
-    # _adc_samples_count_total: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel x
-    # _adc_samples_count_channel_x: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel y
-    # _adc_samples_count_channel_y: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
-    # ## ADC samples callected in channel z
-    # _adc_samples_count_channel_z: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("unsigned short")
-    # )
     ## ADC samples callected in channels (0,1,2,3)
     adc_samples_count_channel: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
@@ -1874,73 +1700,12 @@ class TRawVoltage(MotherEventTree):
     gps_alt: StdVectorListDesc = field(default=StdVectorListDesc("double"))
     ## GPS temperature
     gps_temp: StdVectorListDesc = field(default=StdVectorListDesc("float"))
-    # ## X position in site's referential
-    # _pos_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    # ## Y position in site's referential
-    # _pos_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    # ## Z position in site's referential
-    # _pos_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    # ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual). ToDo: Decode?
-    # _digi_ctrl: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
-    # _digi_prepost_trig_windows: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties_x: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties_y: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?
-    # _channel_properties_z: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings_x: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings_y: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
-    # ## Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
-    # _channel_trig_settings_z: StdVectorList = field(
-    #     default_factory=lambda: StdVectorList("vector<unsigned short>")
-    # )
+
     ## ?? What is it? Some kind of the adc trace offset?
     ioff: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
 
-    # _start_time: StdVectorList("double") = StdVectorList("double")
-    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    # _det_time: StdVectorList("double") = StdVectorList("double")
-    # _e_det_time: StdVectorList("double") = StdVectorList("double")
-    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-
-    # ## Voltage trace in X direction
-    # _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in Y direction
-    # _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in Z direction
-    # _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in channel 0
-    # _trace_0: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in channel 1
-    # _trace_1: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in channel 2
-    # _trace_2: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in channel 3
-    # _trace_3: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-
     ## Voltage traces for channels 1,2,3,4 in muV
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
-
-    # _trace_ch: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
 
 @dataclass
@@ -1976,12 +1741,6 @@ class TVoltage(MotherEventTree):
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     trigger_rate: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
 
-    # ## Voltage trace in X direction
-    # _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in Y direction
-    # _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Voltage trace in Z direction
-    # _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
     ## Voltage traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
     # _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
@@ -2001,15 +1760,6 @@ class TEfield(MotherEventTree):
 
     _tree_name: str = "tefield"
 
-    # _du_id: StdVectorList("int") = StdVectorList("int")
-    # _event_size: np.ndarray = np.zeros(1, np.uint32)
-    # _start_time: StdVectorList("double") = StdVectorList("double")
-    # _rel_peak_time: StdVectorList("float") = StdVectorList("float")
-    # _det_time: StdVectorList("double") = StdVectorList("double")
-    # _e_det_time: StdVectorList("double") = StdVectorList("double")
-    # _isTriggered: StdVectorList("bool") = StdVectorList("bool")
-    # _sampling_speed: StdVectorList("float") = StdVectorList("float")
-
     ## Common for the whole event
     ## Unix time corresponding to the GPS seconds of the trigger
     time_seconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
@@ -2027,25 +1777,6 @@ class TEfield(MotherEventTree):
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
-
-    # ## Efield trace in X direction
-    # _trace_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Efield trace in Y direction
-    # _trace_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## Efield trace in Z direction
-    # _trace_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## FFT magnitude in X direction
-    # _fft_mag_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## FFT magnitude in Y direction
-    # _fft_mag_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## FFT magnitude in Z direction
-    # _fft_mag_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## FFT phase in X direction
-    # _fft_phase_x: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## FFT phase in Y direction
-    # _fft_phase_y: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
-    # ## FFT phase in Z direction
-    # _fft_phase_z: StdVectorList = field(default_factory=lambda: StdVectorList("vector<float>"))
 
     ## Efield traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
@@ -2114,8 +1845,6 @@ class TRunEfieldSim(MotherRunTree):
 
     _tree_name: str = "trunefieldsim"
 
-    ## Name and model of the electric field simulator
-    # _field_sim: StdString = StdString("")
     ## Name of the atmospheric index of refraction model
     refractivity_model: StdStringDesc = field(default=StdStringDesc())
     refractivity_model_parameters: StdVectorListDesc = field(default=StdVectorListDesc("double"))
