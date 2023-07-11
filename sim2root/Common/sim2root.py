@@ -13,6 +13,9 @@ import raw_root_trees as RawTrees # this is here in Common
 # Command line argument parsing
 clparser = argparse.ArgumentParser()
 clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw data TTrees")
+clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
+clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
 clargs = clparser.parse_args()
 
 
@@ -51,6 +54,9 @@ def main():
                 rawshower2grandrootrun(trawshower, gt)
                 # Convert the RawEfield entries
                 rawefield2grandrootrun(trawefield, gt)
+
+                # Set the origin geoid
+                gt.trun.origin_geoid = get_origin_geoid(clargs)
 
                 # Fill the run trees and write
                 gt.trun.fill()
@@ -150,7 +156,10 @@ def rawefield2grandrootrun(trawefield, gt):
     # Leave only the unique du_ids
     du_ids = du_ids[unique_dus_idx]
     # Stack x/y/z together and leave only the ones for unique du_ids
-    du_xyzs = np.stack([du_xs, du_ys, du_zs])[:,unique_dus_idx]
+    du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
+
+    # The TRun run number
+    gt.trun.run_number = trawefield.run_number
 
     # Assign the du ids and positions to the trun tree
     gt.trun.du_id = du_ids
@@ -160,8 +169,7 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.t_pre = trawefield.t_pre
     gt.trunefieldsim.t_post = trawefield.t_post
     # ToDo: shouldn't this and above be created for every DU in sims?
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
-
+    gt.trun.t_bin_size = [trawefield.t_bin_size*1e9]*len(du_ids)
 
 
 # Convert the RawShowerTree entries
@@ -335,6 +343,10 @@ def rawefield2grandroot(trawefield, gt):
     ## Efield trace in X,Y,Z direction
     gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
 
+    # Generate trigger times from t0s
+    gt.tefield.du_seconds = np.int64((trawefield.t_0 - trawefield.t_pre)/1e9)
+    gt.tefield.du_nanoseconds = np.int64((trawefield.t_0 - trawefield.t_pre)-np.array(gt.tefield.du_seconds)*1e9)
+
 # Convert the RawMetaTree entries
 def rawmeta2grandroot(trawmeta, gt):
     gt.tshower.shower_core_pos = trawmeta.shower_core_pos
@@ -342,6 +354,10 @@ def rawmeta2grandroot(trawmeta, gt):
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
 
+## Get origin geoid
+def get_origin_geoid(clargs):
+    origin_geoid = [clargs.latitude, clargs.longitude, clargs.altitude]
+    return origin_geoid
 
 if __name__ == '__main__':
     main()
