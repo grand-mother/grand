@@ -1858,16 +1858,6 @@ class TRunEfieldSim(MotherRunTree):
     ## Simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
-
 
 @dataclass
 ## The class for storing shower sim-only data common for a whole run
@@ -1905,16 +1895,6 @@ class TRunShowerSim(MotherRunTree):
     sim_name: StdStringDesc = field(default=StdStringDesc())
     # Simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        if self._tree.GetName() == "":
-            self._tree.SetName(self._tree_name)
-        if self._tree.GetTitle() == "":
-            self._tree.SetTitle(self._tree_name)
-
-        self.create_branches()
 
 
 @dataclass
