@@ -31,7 +31,8 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     assert padding_factor >= 1
     dt_s      = 1e-6 / f_samp_mhz
     fast_size = sf.next_fast_len(int(padding_factor * sig_size + 0.5))
-    freqs_mhz = sf.rfftfreq(fast_size, dt_s) * 1e-6
+    # ToDo: this function (or something higher) should properly handle different time bin for each trace
+    freqs_mhz = sf.rfftfreq(fast_size, dt_s[0]) * 1e-6
     return fast_size, freqs_mhz
 
 
