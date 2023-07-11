@@ -97,6 +97,7 @@ def GetCorePositionFromParametersFile(filename):
 def GetArrayNameFromParametersFile(inp_file):
   try:
     datafile=open(inp_file,'r')
+    datafile.close()
     with open(inp_file, "r") as datafile:
       for line in datafile:
         if 'ArrayName:' in line:
