@@ -1471,6 +1471,16 @@ class TRunVoltage(MotherRunTree):
     ## Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
     channel_trig_settings_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
 
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
 
 @dataclass
 ## The class for storing ADC traces and associated values for each event
@@ -1858,6 +1868,16 @@ class TRunEfieldSim(MotherRunTree):
     ## Simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
 
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
 
 @dataclass
 ## The class for storing shower sim-only data common for a whole run
@@ -1895,6 +1915,16 @@ class TRunShowerSim(MotherRunTree):
     sim_name: StdStringDesc = field(default=StdStringDesc())
     # Simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
 
 
 @dataclass
@@ -1990,6 +2020,16 @@ class TRunNoise(MotherRunTree):
     gal_noise_LST: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Noise std dev for each arm of each antenna
     gal_noise_sigma: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
 
 
 ## Exception raised when an already existing event/run is added to a tree
