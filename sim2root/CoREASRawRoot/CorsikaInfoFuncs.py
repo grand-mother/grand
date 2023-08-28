@@ -98,19 +98,15 @@ def get_antenna_position(pathAntennaList, antenna):
     .list files are structured like "AntennaPosition = x y z name"
 
     """
-    with open(pathAntennaList, "r") as datafile:
-        for line in datafile:
-            if antenna in line:
-                positions = line
-    """
-    >>> positions
-    'AntennaPosition = 39.0 39.0 1000 16\n'
-    >>> positions.split(" ")
-    ['AntennaPosition', '=', '39.0', '39.0', '1000', '16\n']
-    """
-    x = np.float32(positions.split(" ")[2]) * 100 # convert to m
-    y = np.float32(positions.split(" ")[3]) * 100 # convert to m
-    z = np.float32(positions.split(" ")[4]) * 100 # convert to m
+    file = np.genfromtxt(pathAntennaList, dtype = "str")
+    # get antenna positions from file
+    # file[:,0] and file[:,1] are useless (they are simply "AntennaPosition" and "=")
+    # get the x, y and z positions
+    x = file[:,2].astype(float) * 100 # convert to m
+    y = file[:,3].astype(float) * 100 # convert to m
+    z = file[:,4].astype(float) * 100 # convert to m
+    # get the names of the antennas
+    name = file[:,5]
 
     return x, y, z
 
