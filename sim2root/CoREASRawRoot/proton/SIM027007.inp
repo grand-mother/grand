@@ -1,0 +1,33 @@
+RUNNR   027007
+EVTNR   1
+SEED    1027007    0    0
+SEED    1027008    0    0
+SEED    1027009    0    0
+SEED    1027010    0    0
+SEED    1027011    0    0
+SEED    1027012    0    0
+NSHOW   1
+PRMPAR  14
+ERANGE  2.51188643151E+09    2.51188643151E+09
+THETAP  69.0    69.0
+PHIP    334.15 334.15
+ECUTS   3.0E-01 1.0E-02 2.5E-04 2.5E-04
+PARALLEL 1E3 2.51188643151E+06 1 F
+ELMFLG  T    T
+THIN    1e-06 2.51188643151E+03 5.0E+03
+THINH   1.000E+00 1.000E+02
+STEPFC  1.0
+OBSLEV  156400.0
+ECTMAP  1.E+15
+MUMULT  T
+MUADDI  T
+MAXPRT  1
+MAGNET  26.860    49.687
+PAROUT  T  F
+LONGI   T   5.     T       T
+RADNKG  5.E+05
+ATMFILE /home/hk-project-radiohfi/bg5912/work/soft/corsika-77420/run//ATMOSPHERE_20170401120000_Dunhuang.DAT
+DIRECT  /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set03/sim_storage//inp//9.4/
+DATDIR  /home/hk-project-radiohfi/bg5912/work/soft/corsika-77420/run/
+USER    bg5912
+EXIT
