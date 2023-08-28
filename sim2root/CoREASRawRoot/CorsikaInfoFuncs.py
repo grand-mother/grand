@@ -88,6 +88,24 @@ def antenna_positions_dict(pathAntennaList):
     # get the IDs of the antennas
     antennaInfo["ID"] = file[:,5]
 
+    # Extract the IDs of the antennas from the names
+    antenna_ids = []
+    for name in file[:, 5]:
+        match = search(r'gp_(\d+)', name)  # Extract digits after last underscore
+        if match:
+            antenna_ids.append(match.group())
+        else:
+            # Handle the generic IDs for antennas with complex names
+            generic_id_counter = 1
+            antennaInfo["ID"] = []
+            for antenna_id in antenna_ids:
+                if antenna_id is None:
+                    generic_id = f"antenna_{generic_id_counter}"
+                    antennaInfo["ID"].append(generic_id)
+                    generic_id_counter += 1
+                else:
+                    antennaInfo["ID"].append(antenna_id)
+
     return antennaInfo
 
 
