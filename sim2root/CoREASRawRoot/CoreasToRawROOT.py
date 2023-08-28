@@ -54,7 +54,8 @@ def CoreasToRawRoot(path):
 
   # ********** load RUN.inp **********
   # find inp files
-  available_inp_files = glob.glob(path + "RUN??????.inp")
+  print(path)
+  available_inp_files = glob.glob(path + "(SIM|RUN)??????.inp") #inp files can be named with SIM or RUN, so we will search for both
 
   # inp status messages
   if len(available_inp_files) == 0:
