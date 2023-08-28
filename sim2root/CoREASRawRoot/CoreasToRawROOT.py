@@ -54,8 +54,7 @@ def CoreasToRawRoot(path):
 
   # ********** load RUN.inp **********
   # find inp files
-  print("hiiii")
-  #inp files can be named with SIM or RUN, so we will search for both
+  # inp files can be named with SIM or RUN, so we will search for both
   available_inp_files_sim = glob.glob(path + "SIM??????.inp")
   available_inp_files_run = glob.glob(path + "RUN??????.inp")
 
