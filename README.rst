@@ -60,7 +60,7 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 
 .. _ROOT: https://root.cern/install/
 
-.. _TURTLE: https://github.com/niess/gull
+.. _TURTLE: https://github.com/niess/turtle
 
 .. _GULL: https://github.com/niess/gull
 
