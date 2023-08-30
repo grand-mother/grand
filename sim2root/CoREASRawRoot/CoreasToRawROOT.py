@@ -134,7 +134,7 @@ def CoreasToRawRoot(path):
   GPSNanoSecs = read_params(reas_input, "GPSNanoSecs")
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
-  zenith = read_params(reas_input, "ShowerZenithAngle")
+  zenith = read_params(reas_input, "ShowerZenithAngle") # TODO: change this! these are just in the long reas files
   azimuth = read_params(reas_input, "ShowerAzimuthAngle")
 
   Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
