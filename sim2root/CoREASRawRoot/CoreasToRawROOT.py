@@ -89,7 +89,7 @@ def CoreasToRawRoot(path):
 
   For now, we just want this for the height the of first interaction.
   """
-  log_file = glob.glob(path + "*.log") # TODO: sanity check?
+  log_file = glob.glob(path + "*.log") # TODO: sanity check? - logs don't have set names though
 
   if len(log_file) == 0:
     print("[ERROR] No log file found in this directory. Please check directory and try again.")
