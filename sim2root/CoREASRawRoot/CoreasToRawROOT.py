@@ -128,8 +128,8 @@ def CoreasToRawRoot(path):
 
   GroundLevelRefractiveIndex = read_params(reas_input, "GroundLevelRefractiveIndex") # refractive index at 0m asl
 
-  RunID = read_params(reas_input, "RunNumber")
-  EventID = read_params(reas_input, "EventNumber")
+  RunID = int(read_params(reas_input, "RunNumber"))
+  EventID = int(read_params(reas_input, "EventNumber"))
   GPSSecs = read_params(reas_input, "GPSSecs")
   GPSNanoSecs = read_params(reas_input, "GPSNanoSecs")
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
@@ -396,8 +396,6 @@ def CoreasToRawRoot(path):
   # store all antenna IDs in ant_IDs
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
   antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
-  print(antenna_IDs)
-  print(len(antenna_names), len(antenna_IDs))
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
   ############################################################################################################################
