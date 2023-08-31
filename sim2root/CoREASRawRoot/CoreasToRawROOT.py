@@ -4,7 +4,6 @@
 
 import sys
 import glob
-import datetime #to get the unix timestamp
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
@@ -15,8 +14,6 @@ def CoreasToRawRoot(path):
   put meaningful comments here - maybe after I clean up the structure of this file
 
   """
-  #WARNING: output file name hardcoded in the root tree section
-
   print("-----------------------------------------")
   print("------ COREAS to RAWROOT converter ------")
   print("-----------------------------------------")
@@ -438,7 +435,7 @@ def CoreasToRawRoot(path):
   print("******")
   RawEfield.fill()
   RawEfield.write()
-  
+
   #############################################################
   # fill SimCoreasShower with all leftover info               #
   #############################################################
@@ -458,7 +455,7 @@ def CoreasToRawRoot(path):
   SimCoreasShower.maxprt = maxprt
   SimCoreasShower.radnkg = radnkg
 
-  SimCoreasShower.parallel_ectcut = ECTCUT # = [ECTCUT, ECTMAX]
+  SimCoreasShower.parallel_ectcut = ECTCUT 
   SimCoreasShower.parallel_ectmax = ECTMAX
 
   SimCoreasShower.fill()
