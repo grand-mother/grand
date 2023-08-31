@@ -104,7 +104,7 @@ def CoreasToRawRoot(path):
   print("*****************************************")
 
   first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
-  # read hadronic model
+  hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
   # read low energy model
   # read coreas version
 
@@ -253,8 +253,7 @@ def CoreasToRawRoot(path):
 
 
   print("*****************************************")
-  HadronicModel = "sibyll" #TODO:Unhardcode this
-  print("[WARNING] hard-coded HadronicModel", HadronicModel) 
+  HadronicModel = hadr_interaction
   LowEnergyModel = "urqmd" #TODO:Unhardcode this
   print("[WARNING] hard-coded LowEnergyModel", LowEnergyModel)
   print("*****************************************")

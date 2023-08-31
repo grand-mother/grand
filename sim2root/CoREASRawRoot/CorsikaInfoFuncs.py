@@ -113,6 +113,19 @@ def read_first_interaction(log_file):
 
 
 
+def read_HADRONIC_INTERACTION(log_file):
+    with open(log_file, mode="r") as datafile:
+        for line in datafile:
+            if "S I B Y L L  2.3d" in line:
+                hadr_interaction = "Sibyll 2.3d"
+                print("hadronic interaction model =", hadr_interaction)
+            else:
+                hadr_interaction = "n/a"
+                print("hadronic interaction model =", hadr_interaction)
+    return str(hadr_interaction)
+
+
+
 def antenna_positions_dict(pathAntennaList):
     """
     get antenna positions from SIM??????.list and store in a dictionary
