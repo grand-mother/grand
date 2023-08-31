@@ -258,9 +258,6 @@ def CoreasToRawRoot(path):
   print("*****************************************")
 
   # TODO: add function for reading logs
-  # TODO: add CPU time
-  CPUTime = 1.
-  print("[WARNING] CPUTime is hardcoded")
   # TODO: find injection altitude in TPlotter.h/cpp
   InjectionAltitude = 100.
   print("[WARNING] InjectionAltitude is hardcoded")
