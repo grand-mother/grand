@@ -416,7 +416,7 @@ def CoreasToRawRoot(path):
   print("******")
   print("filling traces")
   for index, antenna in enumerate(antenna_names): 
-    tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0] #TODO: this has to be antenna_name not ID!
+    tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0]
 
     # load the efield traces for this antenna
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
