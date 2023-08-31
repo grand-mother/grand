@@ -2,6 +2,7 @@
 ## Extra functions used for conversion of Coreas simulations to GRANDRaw ROOT files
 ## by Jelena Köhler
 
+import re
 from re import search
 import io
 import numpy as np
@@ -88,23 +89,28 @@ def antenna_positions_dict(pathAntennaList):
     # get the IDs of the antennas
     antennaInfo["name"] = file[:,5].astype(str)
 
-    # # Extract the IDs of the antennas from the names
-    # antenna_ids = []
-    # for name in file[:, 5]:
-    #     match = search(r'gp_(\d+)', name)  # Extract digits after last underscore
-    #     if match:
-    #         antenna_ids.append(match.group())
-    #     else:
-    #         # Handle the generic IDs for antennas with complex names
-    #         generic_id_counter = 1
-    #         antennaInfo["ID"] = []
-    #         for antenna_id in antenna_ids:
-    #             if antenna_id is None:
-    #                 generic_id = f"antenna_{generic_id_counter}"
-    #                 antennaInfo["ID"].append(generic_id)
-    #                 generic_id_counter += 1
-    #             else:
-    #                 antennaInfo["ID"].append(antenna_id)
+    # Extract the IDs of the antennas from the names
+    antennaInfo["ID"] = []
+    # Use a counter to give generic IDs to antennas with unknown names
+    generic_id_counter = 1
+
+    for name in file[:, 5]:
+        GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after last underscore
+        stshp_match = search(r'pos_(\d+)_(\d+)_(\d+)_(gp|sp)', name)
+
+        if GP_match: # match GP13
+            print(f"found GP13 antenna {name}")
+            antennaInfo["ID"].append(int(GP_match.group(1))) # Group 1 contains the ID
+
+        elif stshp_match: # match starshapes
+            print(f"found starshape antenna {name}")
+            stshp_id = f"{stshp_match.group(1)}{stshp_match.group(2)}{stshp_match.group(3)}" # stshp_id = xyz
+            antennaInfo["ID"].append(int(stshp_id)) 
+
+        else: # Give generic IDs to antennas with other names
+            print(f"found antenna {name}")
+            antennaInfo["ID"].append(int(generic_id_counter))
+            generic_id_counter += 1
 
     return antennaInfo
 
