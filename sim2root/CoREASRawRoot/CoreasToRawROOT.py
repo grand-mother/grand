@@ -105,8 +105,7 @@ def CoreasToRawRoot(path):
 
   first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
   hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
-  # read low energy model
-  # read coreas version
+  coreas_version    = read_coreas_version(log_file)
 
   ###############################
   # Part B: Generate ROOT Trees #
@@ -254,7 +253,7 @@ def CoreasToRawRoot(path):
 
   print("*****************************************")
   HadronicModel = hadr_interaction
-  LowEnergyModel = "urqmd" #TODO:Unhardcode this
+  LowEnergyModel = "urqmd" # might not be possible to get this info from mpi runs
   print("[WARNING] hard-coded LowEnergyModel", LowEnergyModel)
   print("*****************************************")
 
@@ -275,7 +274,7 @@ def CoreasToRawRoot(path):
 
   # ********** fill RawShower **********
   RawShower.run_number = RunID
-  RawShower.sim_name = "Coreas"  # TODO:Unhardcode this, add version, etc
+  RawShower.sim_name = coreas_version
   RawShower.event_number = EventID
   RawShower.event_name = FileName
   RawShower.event_date = Date
