@@ -246,7 +246,7 @@ def CoreasToRawRoot(path):
 
   AtmosphericModel = read_atmos(inp_input)
   Date = read_date(inp_input) # from ATM file. TODO: unhardcode this
-  t1 = time.strptime(Date.strip(),"%Y-%m-%d")
+  t1 = time.strptime(Date.strip(),"%Y%m%d")
   UnixDate = int(time.mktime(t1))
 
 
@@ -292,7 +292,6 @@ def CoreasToRawRoot(path):
   RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
   RawShower.hadronic_model = HadronicModel
   RawShower.low_energy_model = LowEnergyModel
-  RawShower.cpu_time = float(CPUTime)
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
