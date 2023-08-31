@@ -22,28 +22,29 @@ def CoreasToRawRoot(path):
   ###############################
 
   print("Checking", path, "for *.reas and *.inp files (shower info).")
-  # TODO: check if the IDs in SIM.reas and RUN.inp match
-  # TODO: maybe specify RUN number as input value - or as choice when there is more than one 
 
   # ********** load SIM.reas **********
   # find reas files
   if glob.glob(path + "SIM??????-*.reas"):
       available_reas_files = glob.glob(path + "SIM??????-*.reas") # these are from parallel runs - I will mostly have these
+
   else:
       available_reas_files = glob.glob(path + "SIM??????.reas") # these are from normal runs
-
+      
 
   # reas status messages
   if len(available_reas_files) == 0:
-    print("[ERROR] No reas file found in this directory. Please check directory and try again.")
-    quit()
+    sys.exit("[ERROR] No reas file found in this directory. Please check directory and try again.")
   elif len(available_reas_files) > 1:
     print("Found", available_reas_files)
     print("[WARNING] More than one reas file found in directory. Only reas file", available_reas_files[0], "will be used.")
     reas_input = available_reas_files[0]
+    simID = reas_input[:9]
+
   else:
     print("Found", available_reas_files)
     reas_input = available_reas_files[0]
+    simID = reas_input[3:9] # use for sanity checks - make sure the files that are read in all belong to the same sim
     print("Converting reas file", reas_input, "to GRANDroot.")
   print("*****************************************")
 
@@ -51,10 +52,10 @@ def CoreasToRawRoot(path):
   # ********** load RUN.inp **********
   # find inp files
   # inp files can be named with SIM or RUN, so we will search for both
-  if glob.glob(path + "SIM??????.inp"):
-    available_inp_files = glob.glob(path + "SIM??????.inp")
-  elif glob.glob(path + "RUN??????.inp"):
-    available_inp_files = glob.glob(path + "RUN??????.inp")
+  if glob.glob(path + f"SIM{simID}.inp"):
+    available_inp_files = glob.glob(path + f"SIM{simID}.inp")
+  elif glob.glob(path + f"RUN{simID}.inp"):
+    available_inp_files = glob.glob(path + f"RUN{simID}.inp")
   else:
      sys.exit("No input file found. Please check path and filename and try again.")
 
@@ -75,7 +76,7 @@ def CoreasToRawRoot(path):
 
   # ********** load traces **********
   print("Checking subdirectories for *.dat files (traces).")
-  available_traces = glob.glob(path + "SIM??????_coreas/*.dat")
+  available_traces = glob.glob(path + f"SIM{simID}_coreas/*.dat")
   print("Found", len(available_traces), "*.dat files (traces).")
   print("*****************************************")
   # in each dat file:
@@ -88,7 +89,7 @@ def CoreasToRawRoot(path):
 
   For now, we just want this for the height the of first interaction.
   """
-  log_file = glob.glob(path + "*.log")
+  log_file = glob.glob(path + "*.log") # TODO: sanity check?
 
   if len(log_file) == 0:
     print("[ERROR] No log file found in this directory. Please check directory and try again.")
@@ -200,7 +201,7 @@ def CoreasToRawRoot(path):
 
   ##########################################
   # get all info from the long file
-  pathLongFile = glob.glob(path + "DAT??????.long")[0]
+  pathLongFile = glob.glob(path + f"DAT{simID}.long")[0]
 
   # the long file has an annoying setup, which I (very inelegantly) circumvent with this function:
   n_data, dE_data, hillas_parameter = read_long(pathLongFile)
@@ -385,7 +386,7 @@ def CoreasToRawRoot(path):
 
   #****** load positions ******
   # the list file contains all antenna positions for each antenna ID
-  pathAntennaList = glob.glob(path + "*.list")[0]
+  pathAntennaList = glob.glob(path + f"{simID}.list")[0]
   # store all antenna IDs in ant_IDs
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
   antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
@@ -416,7 +417,7 @@ def CoreasToRawRoot(path):
   print("******")
   print("filling traces")
   for index, antenna in enumerate(antenna_names): 
-    tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0]
+    tracefile = glob.glob(path + f"SIM{simID}_coreas/raw_" + str(antenna) + ".dat")[0]
 
     # load the efield traces for this antenna
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
