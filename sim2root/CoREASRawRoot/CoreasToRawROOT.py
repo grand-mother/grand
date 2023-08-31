@@ -9,7 +9,6 @@ import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
 import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
-#from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand  #this is not needded becouse root_trees is imported on RawTrees
 
 def CoreasToRawRoot(path):
   """
@@ -180,8 +179,6 @@ def CoreasToRawRoot(path):
   # MPIID: ID for mpi run (ignore for now)
   # T/F flag for extra output file (ignore for now)
 
-  # elmflg = ["T", "T"] # COREAS-only (ignore for now)
-
   # In Zhaires converter: RelativeThinning, WeightFactor
   # I have:
   Thin  = [1,2,3] 
@@ -261,14 +258,6 @@ def CoreasToRawRoot(path):
   InjectionAltitude = 100.
   print("[WARNING] InjectionAltitude is hardcoded")
 
-  ArrayName = "GP13" # TODO: unhardcode this - do we even use this?
-  # print("[WARNING] ArrayName is hardcoded")
-
-  # SlantXmax
-  # XmaxPosition
-  # XmaxDistance
-  # XmaxAltitude
-
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
@@ -300,10 +289,6 @@ def CoreasToRawRoot(path):
   RawShower.atmos_model = str(AtmosphericModel)
 
   RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
-  # RawShower.xmax_grams = SlantXmax
-  # RawShower.xmax_pos_shc = XmaxPosition
-  # RawShower.xmax_distance = XmaxDistance
-  # RawShower.xmax_alt = XmaxAltitude
   RawShower.hadronic_model = HadronicModel
   RawShower.low_energy_model = LowEnergyModel
   RawShower.cpu_time = float(CPUTime)
@@ -350,7 +335,6 @@ def CoreasToRawRoot(path):
   
   # gamma cut - I believe this was the same value as for another particle
   # for now: use hadron cut as placeholder
-  # TODO ASAP: check this
   RawShower.long_ed_gamma_cut = ed_hadron_cut
   
   RawShower.long_ed_gamma_ioniz = ed_gamma
@@ -396,6 +380,7 @@ def CoreasToRawRoot(path):
   # store all antenna IDs in ant_IDs
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
   antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
+
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
   ############################################################################################################################
@@ -406,7 +391,6 @@ def CoreasToRawRoot(path):
   RawEfield.run_number = RunID
   RawEfield.event_number = EventID
 
-  RawEfield.efield_sim = "Coreas" # TODO: unhardcode this and add versions
 
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
@@ -454,12 +438,12 @@ def CoreasToRawRoot(path):
   print("******")
   RawEfield.fill()
   RawEfield.write()
+  
   #############################################################
   # fill SimCoreasShower with all leftover info               #
   #############################################################
   
   # store all leftover information here
-
   SimCoreasShower.AutomaticTimeBoundaries = AutomaticTimeBoundaries
   SimCoreasShower.ResolutionReductionScale = ResolutionReductionScale
   SimCoreasShower.GroundLevelRefractiveIndex = GroundLevelRefractiveIndex
