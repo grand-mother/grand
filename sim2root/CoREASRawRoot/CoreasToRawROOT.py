@@ -190,13 +190,11 @@ def CoreasToRawRoot(path):
 
   # In Zhaires converter: RelativeThinning, WeightFactor
   # I have:
-  Thin  = [1,2,3] 
-  print("[WARNING] THIN is hardcoded")
+  Thin  = read_list_of_params(inp_input, "THIN")
   # THIN = [limit, weight, Rmax]
-  ThinH = [1,2] 
-  print("[WARNING] THINH is hardcoded")
+  ThinH = read_list_of_params(inp_input, "THINH")
   # THINH = [limit, weight] for hadrons
-
+  
   ##########################################
   # get all info from the long file
   pathLongFile = glob.glob(path + f"DAT{simID}.long")[0]
