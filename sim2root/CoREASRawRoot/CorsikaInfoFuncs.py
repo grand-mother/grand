@@ -86,7 +86,7 @@ def antenna_positions_dict(pathAntennaList):
     antennaInfo["y"] = file[:,3].astype(float) * 100 # convert to m
     antennaInfo["z"] = file[:,4].astype(float) * 100 # convert to m
     # get the IDs of the antennas
-    antennaInfo["ID"] = file[:,5]
+    antennaInfo["name"] = file[:,5].astype(str)
 
     # # Extract the IDs of the antennas from the names
     # antenna_ids = []

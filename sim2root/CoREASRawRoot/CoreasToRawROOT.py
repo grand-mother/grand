@@ -392,7 +392,7 @@ def CoreasToRawRoot(path):
   # the list file contains all antenna positions for each antenna ID
   pathAntennaList = glob.glob(path + "*.list")[0]
   # store all antenna IDs in ant_IDs
-  ant_IDs = antenna_positions_dict(pathAntennaList)["ID"]
+  antenna_names = antenna_positions_dict(pathAntennaList)["name"]
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
   ############################################################################################################################
@@ -419,8 +419,8 @@ def CoreasToRawRoot(path):
   # loop through polarizations and positions for each antenna
   print("******")
   print("filling traces")
-  for index, antenna in enumerate(ant_IDs):
-    tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0]
+  for index, antenna in enumerate(antenna_names): 
+    tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0] #TODO: this has to be antenna_name not ID!
 
     # load the efield traces for this antenna
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
@@ -432,7 +432,7 @@ def CoreasToRawRoot(path):
     trace_z = efield[:,3]
     
     # in Zhaires converter: AntennaN[ant_ID]
-    RawEfield.du_id.append(int(antenna))
+    RawEfield.du_name.append(str(antenna))
     RawEfield.t_0.append(timestamp[0].astype(float))
 
     # Traces
