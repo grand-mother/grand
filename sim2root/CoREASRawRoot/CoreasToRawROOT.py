@@ -169,8 +169,9 @@ def CoreasToRawRoot(path):
 
   RandomSeed = read_params(inp_input, "SEED")
 
-  ecuts = [1,2,3,4] 
-  print("[WARNING] ecuts is hardcoded")
+  ecuts = read_list_of_params(inp_input, "ECUTS")
+  print(ecuts)
+  quit()
   # 0: hadrons & nuclei, 1: muons, 2: e-, 3: photons
   GammaEnergyCut    = ecuts[3]
   ElectronEnergyCut = ecuts[2]
