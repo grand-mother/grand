@@ -92,8 +92,7 @@ def CoreasToRawRoot(path):
   log_file = glob.glob(path + "*.log") # TODO: sanity check? - logs don't have set names though
 
   if len(log_file) == 0:
-    print("[ERROR] No log file found in this directory. Please check directory and try again.")
-    quit()
+    print("[WARNING] No log file found in this directory. Please check directory and try again.")
   elif len(log_file) > 1:
     print("Found", available_inp_files)
     print("[WARNING] More than one log file found in directory. Only log file", log_file[0], "will be used.")
@@ -104,7 +103,10 @@ def CoreasToRawRoot(path):
     print("Extracting info from log file", log_file, "for GRANDroot.")
   print("*****************************************")
 
-  first_interaction = read_first_interaction(log_file) # height of first interaction
+  first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+  # read hadronic model
+  # read low energy model
+  # read coreas version
 
   ###############################
   # Part B: Generate ROOT Trees #
@@ -257,7 +259,6 @@ def CoreasToRawRoot(path):
   print("[WARNING] hard-coded LowEnergyModel", LowEnergyModel)
   print("*****************************************")
 
-  # TODO: add function for reading logs
   # TODO: find injection altitude in TPlotter.h/cpp
   InjectionAltitude = 100.
   print("[WARNING] InjectionAltitude is hardcoded")
