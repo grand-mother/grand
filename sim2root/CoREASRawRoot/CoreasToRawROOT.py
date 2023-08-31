@@ -132,17 +132,31 @@ def CoreasToRawRoot(path):
   GPSNanoSecs = read_params(reas_input, "GPSNanoSecs")
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
-  zenith = read_params(reas_input, "ShowerZenithAngle") # TODO: change this! these are just in the long reas files
-  azimuth = read_params(reas_input, "ShowerAzimuthAngle")
+  if read_params(reas_input, "ShowerZenithAngle"):
+    zenith = read_params(reas_input, "ShowerZenithAngle")
+    azimuth = read_params(reas_input, "ShowerAzimuthAngle")
 
-  Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
-  Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA -> TODO: change to PDG system
-  DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
-  DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
-  FieldIntensity = read_params(reas_input, "MagneticFieldStrength") # in Gauss -> TODO: change to mT
-  FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
-  GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
+    Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
+    Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
+    DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
+    DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") # in Gauss -> TODO: change to mT
+    FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
+    GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
+  else:
+    zenith = read_params(inp_input, "ShowerZenithAngle")
+    azimuth = read_params(inp_input, "ShowerAzimuthAngle")
+
+    Energy = read_params(inp_input, "PrimaryParticleEnergy") # in GeV
+    Primary = read_params(inp_input, "PrimaryParticleType") # as defined in CORSIKA
+    print("[WARNING] DepthOfShowerMaximum, DistanceOfShowerMaximum hardcoded")
+    print("[WARNING] FieldIntensity, FieldInclination, GeomagneticAngle hardcoded for Dunhuang")
+    DepthOfShowerMaximum = -1
+    DistanceOfShowerMaximum = -1
+    FieldIntensity = 0.5648236565
+    FieldInclination = 61.60505071
+    GeomagneticAngle = 93.82137564
 
   # from inp file
   nshow = read_params(inp_input, "NSHOW") # number of showers - should always be 1 for coreas, so maybe we dont need this parameter at all
@@ -155,8 +169,8 @@ def CoreasToRawRoot(path):
   # fix these values! for now: placeholders
   # TODO: read and store all seeds as a list
   print("[WARNING] RandomSeed is hardcoded")
-  RandomSeed = [1,2,3,4,5,6]
-  
+  RandomSeed = read_params(inp_input, "SEED")
+
   ecuts = [1,2,3,4] 
   print("[WARNING] ecuts is hardcoded")
   # 0: hadrons & nuclei, 1: muons, 2: e-, 3: photons
@@ -276,8 +290,7 @@ def CoreasToRawRoot(path):
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
 
-  RawShower.rnd_seed = RandomSeed[0] # TODO: figure out how to put the whole list here
-  # right now I get this error "ValueError: setting an array element with a sequence." if I try to pass just "RandomSeed"
+  RawShower.rnd_seed = RandomSeed
 
   RawShower.energy_in_neutrinos = EnergyInNeutrinos
   RawShower.energy_primary = [Energy]
