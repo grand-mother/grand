@@ -39,12 +39,12 @@ def CoreasToRawRoot(path):
     print("Found", available_reas_files)
     print("[WARNING] More than one reas file found in directory. Only reas file", available_reas_files[0], "will be used.")
     reas_input = available_reas_files[0]
-    simID = reas_input[:9]
+    simID = reas_input.split(path)[1][3:9]
 
   else:
     print("Found", available_reas_files)
     reas_input = available_reas_files[0]
-    simID = reas_input[3:9] # use for sanity checks - make sure the files that are read in all belong to the same sim
+    simID = reas_input.split(path)[1][3:9] # use for sanity checks - make sure the files that are read in all belong to the same sim
     print("Converting reas file", reas_input, "to GRANDroot.")
   print("*****************************************")
 
@@ -386,7 +386,7 @@ def CoreasToRawRoot(path):
 
   #****** load positions ******
   # the list file contains all antenna positions for each antenna ID
-  pathAntennaList = glob.glob(path + f"{simID}.list")[0]
+  pathAntennaList = glob.glob(path + f"SIM{simID}.list")[0]
   # store all antenna IDs in ant_IDs
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
   antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
