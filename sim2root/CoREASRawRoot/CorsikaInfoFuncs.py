@@ -8,26 +8,69 @@ import io
 import numpy as np
 
 
-# read values from SIM.reas or RUN.inp
+# read single values from SIM.reas or RUN.inp
 def find_input_vals(line):
   return search(r'[-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?', line)
 
 
 
+# read a list of values from SIM.reas or RUN.inp
+def find_input_vals_list(line):
+  # basically search for up to four values with the same rules as in find_input_vals
+  match1 = search(r'[-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?', line)
+  match2 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  match3 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  match4 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  match5 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  
+  if match5:
+    return list(match5.group(1), match5.group(2), match5.group(3), match5.group(4), match5.group(5))
+  elif match4:
+    return list(match4.group(1), match4.group(2), match4.group(3), match4.group(4))
+  elif match3:
+    return list(match3.group(1), match3.group(2), match3.group(3))
+  elif match2:
+    return list(match2.group(1), match2.group(2))
+  else:
+     return match1
+  
+
+
+
+# read single values from SIM.reas or RUN.inp
 def read_params(input_file, param):
   # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
-  val = "1111"
+  val = ""
   with open(input_file, "r") as datafile:
     for line in datafile:
       if param in line:
         line = line.lstrip()
-        if find_input_vals(line):
-          val = find_input_vals(line).group()
+        if find_input_vals_list(line):
+          val = find_input_vals_list(list)
           print(param, "=", val)
           break 
           # this is a problem for AutomaticTimeBoundaries, because it also shows up in other comments
           # therefore, just break after the first one is found. this can definitely be improved
   return float(val)
+
+
+
+# read a list of values from SIM.reas or RUN.inp
+def read_list_of_params(input_file, param):
+    # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
+    val = ""
+    with open(input_file, "r") as datafile:
+        for line in datafile:
+            if param in line:
+                line = line.lstrip()
+                if find_input_vals(line):
+                    val = find_input_vals(line).group()
+                    print(param, "=", val)
+                    break 
+            # this is a problem for AutomaticTimeBoundaries, because it also shows up in other comments
+            # therefore, just break after the first one is found. this can definitely be improved
+    return float(val)
+
 
 
 
