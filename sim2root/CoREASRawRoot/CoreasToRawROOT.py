@@ -234,8 +234,10 @@ def CoreasToRawRoot(path):
   EnergyInNeutrinos = 1. # placeholder
   # + energy in all other particles
 
-  # RawROOT addition
-  EventName = "Event_" + str(EventID)
+  if EventID == 1:
+     FileName = "Run_" + str(RunID)   
+  else: 
+     FileName = "Event_" + str(EventID)
 
   AtmosphericModel = read_atmos(inp_input)
   Date = "2017-04-01" # from ATM file. TODO: unhardcode this
@@ -270,7 +272,7 @@ def CoreasToRawRoot(path):
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + EventName +".root"
+  OutputFileName = "Coreas_" + FileName +".root"
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -282,7 +284,7 @@ def CoreasToRawRoot(path):
   RawShower.run_number = RunID
   RawShower.sim_name = "Coreas"  # TODO:Unhardcode this, add version, etc
   RawShower.event_number = EventID
-  RawShower.event_name = EventName
+  RawShower.event_name = FileName
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
 
@@ -393,6 +395,9 @@ def CoreasToRawRoot(path):
   pathAntennaList = glob.glob(path + "*.list")[0]
   # store all antenna IDs in ant_IDs
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
+  antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
+  print(antenna_IDs)
+  print(len(antenna_names), len(antenna_IDs))
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
   ############################################################################################################################
@@ -433,6 +438,8 @@ def CoreasToRawRoot(path):
     
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_name.append(str(antenna))
+    RawEfield.du_id.append(int(antenna_IDs[index]))
+
     RawEfield.t_0.append(timestamp[0].astype(float))
 
     # Traces
@@ -476,9 +483,9 @@ def CoreasToRawRoot(path):
   SimCoreasShower.write()
   #############################################################
 
-  print("### The event written was ", EventName, "###")
+  print("### The event written was ", FileName, "###")
   print("### The name of the file is ", OutputFileName, "###")
-  return EventName
+  return FileName
 
 
 
