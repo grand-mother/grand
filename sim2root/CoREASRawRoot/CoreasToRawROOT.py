@@ -170,8 +170,6 @@ def CoreasToRawRoot(path):
   RandomSeed = read_params(inp_input, "SEED")
 
   ecuts = read_list_of_params(inp_input, "ECUTS")
-  print(ecuts)
-  quit()
   # 0: hadrons & nuclei, 1: muons, 2: e-, 3: photons
   GammaEnergyCut    = ecuts[3]
   ElectronEnergyCut = ecuts[2]
@@ -180,8 +178,7 @@ def CoreasToRawRoot(path):
   NucleonEnergyCut  = ecuts[0]
   MesonEnergyCut    = HadronEnergyCut # mesons are hadronic, so this should be fine
 
-  parallel = [1,2] # COREAS-only
-  print("[WARNING] parallel is hardcoded")
+  parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
   ECTCUT = parallel[0]
   ECTMAX = parallel[1]
 
