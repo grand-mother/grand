@@ -96,14 +96,11 @@ def antenna_positions_dict(pathAntennaList):
 
     for name in file[:, 5]:
         GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after last underscore
-        stshp_match = search(r'pos_(\d+)_(\d+)_(\d+)_(gp|sp)', name)
 
         if GP_match: # match GP13
-            print(f"found GP13 antenna {name}")
             antennaInfo["ID"].append(int(GP_match.group(1))) # Group 1 contains the ID
 
         else: # Give generic IDs to antennas with other names
-            print(f"found antenna {name}")
             antennaInfo["ID"].append(int(generic_id_counter))
             generic_id_counter += 1
 
