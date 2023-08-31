@@ -84,6 +84,16 @@ def read_atmos(input_file):
 
 
 
+def read_date(input_file):
+    # RUN.inp only
+    with open(input_file, mode="r") as datafile:
+        for line in datafile:
+            if "ATMFILE" in line:
+                date = line.split("ATMOSPHERE_")[-1][:8]
+    return date
+
+
+
 def read_site(input_file):
     # RUN.inp only
     atmos = read_atmos(input_file)
