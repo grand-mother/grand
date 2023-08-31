@@ -165,10 +165,7 @@ def CoreasToRawRoot(path):
   radnkg = str(read_params(inp_input, "RADNKG"))
   print("*****************************************")
 
-  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  # fix these values! for now: placeholders
-  # TODO: read and store all seeds as a list
-  print("[WARNING] RandomSeed is hardcoded")
+
   RandomSeed = read_params(inp_input, "SEED")
 
   ecuts = [1,2,3,4] 
