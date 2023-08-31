@@ -393,8 +393,6 @@ def CoreasToRawRoot(path):
   pathAntennaList = glob.glob(path + "*.list")[0]
   # store all antenna IDs in ant_IDs
   ant_IDs = antenna_positions_dict(pathAntennaList)["ID"]
-
-
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
   ############################################################################################################################
@@ -420,9 +418,8 @@ def CoreasToRawRoot(path):
 
   # loop through polarizations and positions for each antenna
   print("******")
-  print("Antenna positions (x,y,z)")
-    
-  for antenna in ant_IDs:
+  print("filling traces")
+  for index, antenna in enumerate(ant_IDs):
     tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0]
 
     # load the efield traces for this antenna
@@ -434,27 +431,21 @@ def CoreasToRawRoot(path):
     trace_y = efield[:,2]
     trace_z = efield[:,3]
     
-    
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_id.append(int(antenna))
-    RawEfield.t_0.append(timestamp[0].astype(np.float32))
+    RawEfield.t_0.append(timestamp[0].astype(float))
 
     # Traces
-    RawEfield.trace_x.append(trace_x.astype(np.float32))
-    RawEfield.trace_y.append(trace_y.astype(np.float32))
-    RawEfield.trace_z.append(trace_z.astype(np.float32))
-
+    RawEfield.trace_x.append(trace_x.astype(float))
+    RawEfield.trace_y.append(trace_y.astype(float))
+    RawEfield.trace_z.append(trace_z.astype(float))
 
     # Antenna positions in showers's referential in [m]
     ant_position = get_antenna_position(pathAntennaList, antenna)
+    RawEfield.du_x.append(ant_position[0][index].astype(float))
+    RawEfield.du_y.append(ant_position[1][index].astype(float))
+    RawEfield.du_z.append(ant_position[2][index].astype(float))
     
-    print("for antenna number:", antenna)
-    print(ant_position)
-    
-    RawEfield.du_x.append(ant_position[0].astype(np.float32))
-    RawEfield.du_y.append(ant_position[1].astype(np.float32))
-    RawEfield.du_z.append(ant_position[2].astype(np.float32))
-  
   print("******")
   RawEfield.fill()
   RawEfield.write()
