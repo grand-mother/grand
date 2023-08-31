@@ -475,7 +475,7 @@ def CoreasToRawRoot(path):
   SimCoreasShower.write()
   #############################################################
 
-  print("### The event written was ", FileName, "###")
+  print("### The event written is", FileName, "###")
   print("### The name of the file is ", OutputFileName, "###")
   return FileName
 
