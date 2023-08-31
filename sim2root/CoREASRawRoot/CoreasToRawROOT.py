@@ -51,10 +51,12 @@ def CoreasToRawRoot(path):
   # ********** load RUN.inp **********
   # find inp files
   # inp files can be named with SIM or RUN, so we will search for both
-  available_inp_files_sim = glob.glob(path + "SIM??????.inp")
-  available_inp_files_run = glob.glob(path + "RUN??????.inp")
-
-  available_inp_files = available_inp_files_sim + available_inp_files_run
+  if glob.glob(path + "SIM??????.inp"):
+    available_inp_files = glob.glob(path + "SIM??????.inp")
+  elif glob.glob(path + "RUN??????.inp"):
+    available_inp_files = glob.glob(path + "RUN??????.inp")
+  else:
+     sys.exit("No input file found. Please check path and filename and try again.")
 
 
   # inp status messages
