@@ -1,6 +1,6 @@
 #!/usr/bin/python
 ## Conversion of Coreas simulations to GRANDRaw ROOT files
-## by Jelena Köhler
+## by Jelena Köhler, @jelenakhlr
 
 import sys
 import glob
@@ -9,11 +9,15 @@ from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
 import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 
-def CoreasToRawRoot(path):
-  """
-  put meaningful comments here - maybe after I clean up the structure of this file
+"""
+run with
+python3 CoreasToRawRoot <directory with Coreas Sim>
 
-  """
+for more info, refer to the readme
+"""
+
+
+def CoreasToRawRoot(path):
   print("-----------------------------------------")
   print("------ COREAS to RAWROOT converter ------")
   print("-----------------------------------------")

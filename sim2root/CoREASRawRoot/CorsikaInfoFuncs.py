@@ -1,6 +1,6 @@
 #!/usr/bin/python
 ## Extra functions used for conversion of Coreas simulations to GRANDRaw ROOT files
-## by Jelena Köhler
+## by Jelena Köhler, @jelenakhlr
 
 import re
 from re import search
