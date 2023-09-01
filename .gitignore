@@ -68,3 +68,4 @@ docs/apidoc-only/sphinx/source/grand.*
 # mac 
 .DS_Store
 
+*.pyc

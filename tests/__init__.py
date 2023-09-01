@@ -96,7 +96,7 @@ def main():
 
         globs = {
             "geomagnet": geomagnet,
-            "io": io,
+            "dataio": io,
             "store": store,
             "topography": topography,
             "CartesianRepresentation": CartesianRepresentation,

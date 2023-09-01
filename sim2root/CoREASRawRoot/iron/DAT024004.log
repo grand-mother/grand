@@ -1,0 +1,2048 @@
+Input: arguments read from the command line are /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.inp 
+For inputs the FILE "/hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.inp" will be used
+
+ *******************************************************
+ **                                               
+ ** You are using the CoREAS V1.4 radio simulation code
+ **                                               
+ ** PERFORMANCE OPTIMIZED VERSION v1.3           
+ **                                               
+ **  THIN/CURVED/SLANT/STACKIN/PRESHOWER: 1/1/1/0/0
+ **                                               
+ ** Please cite the following article:            
+ ** T. Huege, M. Ludwig, C.W. James, AIP Conf. Proc.
+ ** 1535, 128-132 (2013), doi:10.1063/1.4807534     
+ **                                               
+ *******************************************************
+
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ 
+
+ CoREAS-001024009-000000001: SetShowerAxis zenith=69deg   azimuth=-1.5e+02deg
+ CoREAS-001024009-000000001: height of first interaction 2.9e+04m
+ CoREAS-001024009-000000001: observation level 1.6e+03m
+
+ CoREAS-001024009-000000001: x=60km , y=36km , z=28km , SlantDepth=53g/cm2 , Time=0.00073s 
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS-001024009-000000001: The following parameters are used for the radio calculation
+
+# CoREAS V1.4 by Tim Huege <tim.huege@kit.edu> with contributions by Marianne Ludwig and Clancy James - parameter file
+
+# parameters setting up the spatial observer configuration:
+
+CoreCoordinateNorth = 0			; in cm
+CoreCoordinateWest = 0			; in cm
+CoreCoordinateVertical = 156400			; in cm
+
+# parameters setting up the temporal observer configuration:
+
+TimeResolution = 2e-10				; in s
+AutomaticTimeBoundaries = 1e-07			; 0: off, x: automatic boundaries with width x in s
+TimeLowerBoundary = -1				; in s, only if AutomaticTimeBoundaries set to 0
+TimeUpperBoundary = 1				; in s, only if AutomaticTimeBoundaries set to 0
+ResolutionReductionScale = 0			; 0: off, x: decrease time resolution linearly every x cm in radius
+
+# parameters setting up the simulation functionality:
+GroundLevelRefractiveIndex = 1.000312		; specify refractive index at 0 m asl
+
+# event information for Offline simulations:
+
+EventNumber = 1
+RunNumber = 24004
+GPSSecs = 0
+GPSNanoSecs = 0
+CoreEastingOffline = 0				; in meters
+CoreNorthingOffline = 0				; in meters
+CoreVerticalOffline = 0				; in meters
+OfflineCoordinateSystem =  Reference                
+RotationAngleForMagfieldDeclination = 0.12532		; in degrees
+Comment =
+
+# event information for your convenience and backwards compatibility with other software, these values are not used as input parameters for the simulation:
+
+ShowerZenithAngle = 68.99999851			; in degrees
+ShowerAzimuthAngle = -149.3399962		; in degrees, 0: shower propagates to north, 90: to west
+PrimaryParticleEnergy = 3.981071616e+18			; in eV
+PrimaryParticleType = 14			; as defined in CORSIKA
+DepthOfShowerMaximum = -1		; slant depth in g/cm^2
+DistanceOfShowerMaximum = -1		; geometrical distance of shower maximum from core in cm
+MagneticFieldStrength = 0.5648236565			; in Gauss
+MagneticFieldInclinationAngle = 61.60505071		; in degrees, >0: in northern hemisphere, <0: in southern hemisphere
+GeomagneticAngle = 93.82137564			; in degrees
+CorsikaFilePath = ./
+CorsikaParameterFile = SIM024004.inp
+
+Using refractivity lookup table from GDAS-based file.
+GDAS-provided refractivity table extends to altitude of 26.2984391 km.
+Extrapolating to edge of atmosphere at 112.8292 km using Gladstone-Dale law.
+
+ Tabulated atmosphere inside CoREAS has following parameters
+     Minimum height: -999.560882 m
+     Maximum height: 112829.2 m
+         Resolution: 0.9999999993 m
+   Number of points: 113829
+
+ Setting up tabulated integrated refractivities for curved geometries.
+ Number of tan(theta) bins: 10000
+ Spacing of tan(theta) bins: 0.006
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+
+
+
+
+
+
+
+
+
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+ ********************** PYINIT: initialization completed **********************
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+ ********************** PYINIT: initialization completed **********************
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+
+
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+ ====================================================
+ |                                                  |
+ |                 S I B Y L L  2.3d                |
+ |                                                  |
+ |         HADRONIC INTERACTION MONTE CARLO         |
+ |                        BY                        |
+ |            Eun-Joo AHN, Felix RIEHN              |
+ |      R. ENGEL, A. FEDYNITCH, R.S. FLETCHER,      |
+ |       T.K. GAISSER, P. LIPARI, T. STANEV         |
+ |                                                  |
+ | Publication to be cited when using this program: |
+ | Eun-Joo AHN et al., Phys.Rev. D80 (2009) 094003  |
+ | F. RIEHN et al., Phys.Rev. D102 (2020) 063002    |
+ | last modifications: F. Riehn (05/20/2020)        |
+ ====================================================
+
+
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           1           0 air..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           2          14 nit..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+ SIG_AIR_INI: initializing target: (i,A)           3          16 oxy..
+1****************** PYINIT: initialization of PYTHIA routines *****************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+1****************** PYINIT: initialization of PYTHIA routines *****************
+
+ ********************** PYINIT: initialization completed **********************
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+ CoREAS: Parameter file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.reas successfully imported!
+ CoREAS: Antenna list file /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.list successfully imported!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ normit: Error! sumpart.eq.0
+ ***(W) scatter: no entry found for fin. state -> forced elastic scat. 
+ particles:line=           9 ecm=   1.91685624062614     
+      collision of    :          100           0  0.000000000000000E+000
+          26          -3   1.52243831111703     
+                 sigma=  0.130978877657855       0.000000000000000E+000
+  0.000000000000000E+000  0.000000000000000E+000  0.000000000000000E+000
+  0.000000000000000E+000  0.000000000000000E+000  0.000000000000000E+000
+  0.000000000000000E+000  0.000000000000000E+000  0.000000000000000E+000
+  0.000000000000000E+000  0.000000000000000E+000           6
+Parallel Task #11 SUCCESSFULLY FINALIZED
+Parallel Task #17 SUCCESSFULLY FINALIZED
+Parallel Task #37 SUCCESSFULLY FINALIZED
+Parallel Task #31 SUCCESSFULLY FINALIZED
+Parallel Task #41 SUCCESSFULLY FINALIZED
+Parallel Task #18 SUCCESSFULLY FINALIZED
+Parallel Task #73 SUCCESSFULLY FINALIZED
+Parallel Task #47 SUCCESSFULLY FINALIZED
+Parallel Task #5 SUCCESSFULLY FINALIZED
+Parallel Task #19 SUCCESSFULLY FINALIZED
+Parallel Task #39 SUCCESSFULLY FINALIZED
+Parallel Task #65 SUCCESSFULLY FINALIZED
+Parallel Task #16 SUCCESSFULLY FINALIZED
+Parallel Task #66 SUCCESSFULLY FINALIZED
+Parallel Task #52 SUCCESSFULLY FINALIZED
+Parallel Task #8 SUCCESSFULLY FINALIZED
+Parallel Task #59 SUCCESSFULLY FINALIZED
+Parallel Task #71 SUCCESSFULLY FINALIZED
+Parallel Task #9 SUCCESSFULLY FINALIZED
+Parallel Task #1 SUCCESSFULLY FINALIZED
+Parallel Task #13 SUCCESSFULLY FINALIZED
+Parallel Task #33 SUCCESSFULLY FINALIZED
+Parallel Task #32 SUCCESSFULLY FINALIZED
+Parallel Task #7 SUCCESSFULLY FINALIZED
+Parallel Task #44 SUCCESSFULLY FINALIZED
+Parallel Task #23 SUCCESSFULLY FINALIZED
+Parallel Task #57 SUCCESSFULLY FINALIZED
+Parallel Task #2 SUCCESSFULLY FINALIZED
+Parallel Task #70 SUCCESSFULLY FINALIZED
+Parallel Task #27 SUCCESSFULLY FINALIZED
+Parallel Task #62 SUCCESSFULLY FINALIZED
+Parallel Task #45 SUCCESSFULLY FINALIZED
+Parallel Task #10 SUCCESSFULLY FINALIZED
+Parallel Task #53 SUCCESSFULLY FINALIZED
+Parallel Task #35 SUCCESSFULLY FINALIZED
+Parallel Task #55 SUCCESSFULLY FINALIZED
+Parallel Task #56 SUCCESSFULLY FINALIZED
+Parallel Task #26 SUCCESSFULLY FINALIZED
+Parallel Task #25 SUCCESSFULLY FINALIZED
+Parallel Task #69 SUCCESSFULLY FINALIZED
+Parallel Task #6 SUCCESSFULLY FINALIZED
+Parallel Task #38 SUCCESSFULLY FINALIZED
+Parallel Task #36 SUCCESSFULLY FINALIZED
+Parallel Task #58 SUCCESSFULLY FINALIZED
+Parallel Task #4 SUCCESSFULLY FINALIZED
+Parallel Task #68 SUCCESSFULLY FINALIZED
+Parallel Task #42 SUCCESSFULLY FINALIZED
+Parallel Task #34 SUCCESSFULLY FINALIZED
+Parallel Task #3 SUCCESSFULLY FINALIZED
+Parallel Task #51 SUCCESSFULLY FINALIZED
+Parallel Task #74 SUCCESSFULLY FINALIZED
+Parallel Task #46 SUCCESSFULLY FINALIZED
+Parallel Task #61 SUCCESSFULLY FINALIZED
+Parallel Task #28 SUCCESSFULLY FINALIZED
+Parallel Task #24 SUCCESSFULLY FINALIZED
+Parallel Task #72 SUCCESSFULLY FINALIZED
+Parallel Task #12 SUCCESSFULLY FINALIZED
+Parallel Task #50 SUCCESSFULLY FINALIZED
+Parallel Task #60 SUCCESSFULLY FINALIZED
+Parallel Task #75 SUCCESSFULLY FINALIZED
+Parallel Task #21 SUCCESSFULLY FINALIZED
+Parallel Task #64 SUCCESSFULLY FINALIZED
+Parallel Task #30 SUCCESSFULLY FINALIZED
+Parallel Task #20 SUCCESSFULLY FINALIZED
+Parallel Task #48 SUCCESSFULLY FINALIZED
+Parallel Task #49 SUCCESSFULLY FINALIZED
+Parallel Task #40 SUCCESSFULLY FINALIZED
+Parallel Task #0 SUCCESSFULLY FINALIZED
+Parallel Task #63 SUCCESSFULLY FINALIZED
+Parallel Task #22 SUCCESSFULLY FINALIZED
+Parallel Task #29 SUCCESSFULLY FINALIZED
+Parallel Task #67 SUCCESSFULLY FINALIZED
+Parallel Task #43 SUCCESSFULLY FINALIZED
+Parallel Task #15 SUCCESSFULLY FINALIZED
+Parallel Task #54 SUCCESSFULLY FINALIZED
+Parallel Task #14 SUCCESSFULLY FINALIZED

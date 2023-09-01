@@ -1,0 +1,29 @@
+======================= Conjuring Cosmic Showers =======================
+starting job number 021006
+time: Mon Aug 28 13:49:50 CEST 2023
+job number 021006 complete
+time: Mon Aug 28 14:58:18 CEST 2023
+- - - - - - - - - - - - - - Cleansing Cauldron - - - - - - - - - - - - - -
+created /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT021006/
+moving binaries and corsika_timetables to /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT021006/
+=================== Enchantment Successfully Executed ===================
+
+============================= JOB FEEDBACK =============================
+
+Job ID: 2081948
+Cluster: hk
+User/Group: bg5912/hk-project-radiohfi
+State: COMPLETED (exit code 0)
+Partition: cpuonly
+Nodes: 1
+Cores per node: 152
+Nodelist: hkn0101
+CPU Utilized: 3-14:18:28
+CPU Efficiency: 49.49% of 7-06:22:40 core-walltime
+Job Wall-clock time: 01:08:50
+Starttime: Mon Aug 28 13:49:28 2023
+Endtime: Mon Aug 28 14:58:18 2023
+Memory Utilized: 126.23 GB
+Memory Efficiency: 53.15% of 237.50 GB
+Energy Consumed: 2692985 Joule / 748.051388888889 Watthours
+Average node power draw: 652.054479418886 Watt
