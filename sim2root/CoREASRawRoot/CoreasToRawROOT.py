@@ -298,7 +298,7 @@ def CoreasToRawRoot(path):
   RawShower.maximum_weight = Thin[1]
   RawShower.hadronic_thinning = ThinH[0]
   RawShower.hadronic_thinning_weight = ThinH[1]
-  RawShower.rmax = Thin[2]*100 #cm -> m
+  RawShower.rmax = float(Thin[2]) * 100 #cm -> m
 
   # * CUTS *
   RawShower.lowe_cut_gamma = GammaEnergyCut
