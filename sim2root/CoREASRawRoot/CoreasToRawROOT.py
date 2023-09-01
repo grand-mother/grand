@@ -362,9 +362,9 @@ def CoreasToRawRoot(path):
   
   #****** info from input files: ******
 
-  # TODO ASAP: find these values
-  RefractionIndexModel = "model"
-  RefractionIndexParameters = [1,2,3] # ? 
+  # # TODO ASAP: find these values
+  # RefractionIndexModel = "model"
+  # RefractionIndexParameters = [1,2,3] # ? 
   
   TimeWindowMin = TimeLowerBoundary # from reas
   TimeWindowMax = TimeUpperBoundary # from reas
@@ -391,9 +391,8 @@ def CoreasToRawRoot(path):
   RawEfield.run_number = RunID
   RawEfield.event_number = EventID
 
-
-  RawEfield.refractivity_model = RefractionIndexModel                                       
-  RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
+  # RawEfield.refractivity_model = RefractionIndexModel                                       
+  # RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
         
   RawEfield.t_pre = TimeWindowMin
   RawEfield.t_post = TimeWindowMax
