@@ -6,6 +6,7 @@ import re
 from re import search
 import io
 import numpy as np
+from datetime import datetime
 
 
 # read single values from SIM.reas or RUN.inp
@@ -89,8 +90,12 @@ def read_date(input_file):
     with open(input_file, mode="r") as datafile:
         for line in datafile:
             if "ATMFILE" in line:
-                date = line.split("ATMOSPHERE_")[-1][:8]
-    return date
+                date_string = line.split("ATMOSPHERE_")[-1][:8]
+                # Parse the date string in the original format (YYYYMMDD)
+                date_obj = datetime.strptime(date_string, '%Y%m%d')
+                # Format the date with dashes (YYYY-MM-DD)
+                formatted_date = date_obj.strftime('%Y-%m-%d')
+    return formatted_date
 
 
 

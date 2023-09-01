@@ -249,8 +249,8 @@ def CoreasToRawRoot(path):
      FileName = "Event_" + str(EventID)
 
   AtmosphericModel = read_atmos(inp_input)
-  Date = read_date(inp_input) # from ATM file. TODO: unhardcode this
-  t1 = time.strptime(Date.strip(),"%Y%m%d")
+  Date = read_date(inp_input)
+  t1 = time.strptime(Date.strip(),"%Y-%m-%d")
   UnixDate = int(time.mktime(t1))
 
 
