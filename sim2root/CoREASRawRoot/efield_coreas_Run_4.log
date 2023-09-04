@@ -1,0 +1,409 @@
+12:02:12.588  INFO [grand.manage_log 187] create handler for root logger: ['grand']
+12:02:12.588  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 129] 
+12:02:12.588  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 129] ===========> Begin at 2023-09-04T12:02:12Z <===========
+12:02:12.588  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 129] 
+12:02:12.588  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 129] 
+12:02:12.588  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 132] seed used for random number generator is None.
+12:02:12.996  INFO [grand.sim.detector.rf_chain 473] vga gain: 20 dB
+12:02:12.999  INFO [grand.sim.detector.antenna_model 103] Loading GP300 antenna model ...
+12:02:12.999  INFO [grand.sim.detector.antenna_model 71] Using /home/grand/data/detector/Light_GP300Antenna_EWarm_leff.npz
+12:02:13.246  INFO [grand.sim.detector.antenna_model 71] Using /home/grand/data/detector/Light_GP300Antenna_SNarm_leff.npz
+12:02:13.454  INFO [grand.sim.detector.antenna_model 71] Using /home/grand/data/detector/Light_GP300Antenna_Zarm_leff.npz
+12:02:13.666  INFO [grand.sim.efield2voltage 93] Running on event_number: 1, run_number: 4
+12:02:13.721  INFO [grand.geo.turtle 222] Map constructor add map /home/grand/data/egm96.png in cache memory 
+12:02:13.724  INFO [grand.sim.shower.gen_shower 119] Site origin [lat, long, height]: [[  40.98455811]
+12:02:13.724  INFO [grand.sim.shower.gen_shower 119]  [  93.95224762]
+12:02:13.724  INFO [grand.sim.shower.gen_shower 119]  [1200.        ]]
+12:02:13.725  INFO [grand.sim.shower.gen_shower 121] xmax in shower coordinate: [0. 0. 0.]
+12:02:13.725  INFO [grand.sim.efield2voltage 114] shower origin in Geodetic: [  40.98456   93.95225 1200.     ]
+12:02:13.729  INFO [grand.sim.efield2voltage 192] shape du_nanoseconds and t_samples =  (16, 1), (16, 2082)
+12:02:13.730  INFO [grand.sim.efield2voltage 126] Length of frequency bins with padding factor 1.0 is 1051.
+12:02:13.746  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 1
+12:02:13.747  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-178.2, zenith=180.0
+12:02:13.748  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-178.2, zenith=180.0
+12:02:13.749  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-178.2, zenith=180.0
+12:02:13.749  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 2
+12:02:13.750  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=179.3
+12:02:13.751  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=179.3
+12:02:13.751  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=179.3
+12:02:13.752  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 3
+12:02:13.753  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=178.5
+12:02:13.753  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=178.5
+12:02:13.754  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=178.5
+12:02:13.754  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 4
+12:02:13.756  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=177.8
+12:02:13.756  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=177.8
+12:02:13.757  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-90.1, zenith=177.8
+12:02:13.757  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 5
+12:02:13.758  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=179.3
+12:02:13.759  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=179.3
+12:02:13.759  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=179.3
+12:02:13.759  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 6
+12:02:13.761  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=179.0
+12:02:13.761  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=179.0
+12:02:13.762  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=179.0
+12:02:13.762  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 7
+12:02:13.763  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-116.6, zenith=178.4
+12:02:13.764  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-116.6, zenith=178.4
+12:02:13.764  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-116.6, zenith=178.4
+12:02:13.764  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 8
+12:02:13.766  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-108.5, zenith=177.7
+12:02:13.766  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-108.5, zenith=177.7
+12:02:13.767  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-108.5, zenith=177.7
+12:02:13.767  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 9
+12:02:13.768  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=178.5
+12:02:13.769  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=178.5
+12:02:13.769  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=178.5
+12:02:13.769  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 10
+12:02:13.771  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-153.5, zenith=178.4
+12:02:13.771  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-153.5, zenith=178.4
+12:02:13.772  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-153.5, zenith=178.4
+12:02:13.772  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 11
+12:02:13.773  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=177.9
+12:02:13.774  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=177.9
+12:02:13.774  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=177.9
+12:02:13.774  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 12
+0 1
+0 None None
+1 4
+TShower(_file=<cppyy.gbl.TFile object at 0xaaaafb7ce620>, _file_name='gr_Coreas_Run_4.root', _tree=<cppyy.gbl.TTree object at 0xaaaafc058110>, _tree_name='tshower', _type='TShower', _entry_list=[(4, 1)], _comment='', _creation_datetime=datetime.datetime(2023, 9, 1, 9, 40, 19), _modification_history='', run_number=4, event_number=1, _source_datetime=datetime.datetime(1970, 1, 1, 0, 0), _modification_software='', _modification_software_version='', _analysis_level=0, primary_type='14.0', energy_em=0.0, energy_primary=1000000.0, azimuth=0.0, zenith=0.0, direction=array([0., 0., 0.], dtype=float32), shower_core_pos=array([0., 0., 0.], dtype=float32), atmos_model='ATMOSPHERE_20170401120000_Dunhuang.DAT\n', atmos_model_param=array([0., 0., 0.], dtype=float32), magnetic_field=array([61.60505  ,  2.087    ,  0.5648236], dtype=float32), core_alt=0.0, xmax_grams=0.0, xmax_pos=array([0., 0., 0.], dtype=float32), xmax_pos_shc=array([0., 0., 0.], dtype=float32), core_time_s=0.0, core_time_ns=0.0)
+geoid [  40.98456   93.95225 1200.     ]
+origin_geoid [40.98455811] [93.95224762] [1200.]
+self.grand_ref_frame [[0.]
+ [0.]
+ [0.]]
+basic [[-332399.01279797]
+ [4811146.98072513]
+ [4161910.7642386 ]]
+self.frame [[ 1.92940182e-09]
+ [ 5.55594320e-11]
+ [-8.01014145e-10]]
+antenna_frame =  [[-6.12008112e-10]
+ [ 4.18327448e-12]
+ [ 7.04399347e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-6.12008112e-10]
+ [ 4.18327448e-12]
+ [ 7.04399347e-10]]
+pos [[-6.12008112e-10]
+ [ 4.18327448e-12]
+ [ 7.04399347e-10]]
+pos [[-6.12008112e-10]
+ [ 4.18327448e-12]
+ [ 7.04399347e-10]]
+antenna_frame =  [[ 6.24172420e-10]
+ [ 2.86505006e-10]
+ [-7.19484645e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[ 6.24172420e-10]
+ [ 2.86505006e-10]
+ [-7.19484645e-10]]
+pos [[ 6.24172420e-10]
+ [ 2.86505006e-10]
+ [-7.19484645e-10]]
+pos [[ 6.24172420e-10]
+ [ 2.86505006e-10]
+ [-7.19484645e-10]]
+antenna_frame =  [[ 6.36189887e-10]
+ [ 5.77205427e-10]
+ [-7.34453543e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[ 6.36189887e-10]
+ [ 5.77205427e-10]
+ [-7.34453543e-10]]
+pos [[ 6.36189887e-10]
+ [ 5.77205427e-10]
+ [-7.34453543e-10]]
+pos [[ 6.36189887e-10]
+ [ 5.77205427e-10]
+ [-7.34453543e-10]]
+antenna_frame =  [[-6.86214037e-10]
+ [ 4.04173373e-10]
+ [-6.31770825e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-6.86214037e-10]
+ [ 4.04173373e-10]
+ [-6.31770825e-10]]
+pos [[-6.86214037e-10]
+ [ 4.04173373e-10]
+ [-6.31770825e-10]]
+pos [[-6.86214037e-10]
+ [ 4.04173373e-10]
+ [-6.31770825e-10]]
+antenna_frame =  [[ 6.29278916e-10]
+ [ 4.02366921e-10]
+ [-7.25473003e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[ 6.29278916e-10]
+ [ 4.02366921e-10]
+ [-7.25473003e-10]]
+pos [[ 6.29278916e-10]
+ [ 4.02366921e-10]
+ [-7.25473003e-10]]
+pos [[ 6.29278916e-10]
+ [ 4.02366921e-10]
+ [-7.25473003e-10]]
+antenna_frame =  [[0.]
+ [0.]
+ [0.]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[0.]
+ [0.]
+ [0.]]
+pos [[0.]
+ [0.]
+ [0.]]
+pos [[0.]
+ [0.]
+ [0.]]
+antenna_frame =  [[-7.38389465e-11]
+ [ 4.00626887e-10]
+ [-1.33626712e-09]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-7.38389465e-11]
+ [ 4.00626887e-10]
+ [-1.33626712e-09]]
+pos [[-7.38389465e-11]
+ [ 4.00626887e-10]
+ [-1.33626712e-09]]
+pos [[-7.38389465e-11]
+ [ 4.00626887e-10]
+ [-1.33626712e-09]]
+antenna_frame =  [[-1.32948510e-09]
+ [-3.47603122e-10]
+ [ 1.11280587e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-1.32948510e-09]
+ [-3.47603122e-10]
+ [ 1.11280587e-10]]
+pos [[-1.32948510e-09]
+ [-3.47603122e-10]
+ [ 1.11280587e-10]]
+pos [[-1.32948510e-09]
+ [-3.47603122e-10]
+ [ 1.11280587e-10]]
+antenna_frame =  [[ 6.88112921e-10]
+ [-3.46215012e-10]
+ [ 6.29261675e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[ 6.88112921e-10]
+ [-3.46215012e-10]
+ [ 6.29261675e-10]]
+pos [[ 6.88112921e-10]
+ [-3.46215012e-10]
+ [ 6.29261675e-10]]
+pos [[ 6.88112921e-10]
+ [-3.46215012e-10]
+ [ 6.29261675e-10]]
+antenna_frame =  [[ 6.04996614e-10]
+ [-1.78105037e-10]
+ [-6.95105717e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[ 6.04996614e-10]
+ [-1.78105037e-10]
+ [-6.95105717e-10]]
+pos [[ 6.04996614e-10]
+ [-1.78105037e-10]
+ [-6.95105717e-10]]
+pos [[ 6.04996614e-10]
+ [-1.78105037e-10]
+ [-6.95105717e-10]]
+antenna_frame =  [[7.53556479e-10]
+ [1.22203533e-09]
+ [5.48005609e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[7.53556479e-10]
+ [1.22203533e-09]
+ [5.48005609e-10]]
+pos [[7.53556479e-10]
+ [1.22203533e-09]
+ [5.48005609e-10]]
+pos [[7.53556479e-10]
+ [1.22203533e-09]
+ [5.48005609e-10]]
+antenna_frame =  [[-6.74764583e-10]
+ [-1.50682854e-09]
+ [ 7.81965685e-10]]
+evt_shower 12:02:13.776  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-123.8, zenith=177.4
+12:02:13.776  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-123.8, zenith=177.4
+12:02:13.777  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-123.8, zenith=177.4
+12:02:13.777  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 13
+12:02:13.779  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=177.8
+12:02:13.779  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=177.8
+12:02:13.779  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=179.9, zenith=177.8
+12:02:13.780  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 14
+12:02:13.781  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-161.7, zenith=177.7
+12:02:13.781  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-161.7, zenith=177.7
+12:02:13.782  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-161.7, zenith=177.7
+12:02:13.782  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 15
+12:02:13.783  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-146.4, zenith=177.4
+12:02:13.784  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-146.4, zenith=177.4
+12:02:13.784  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-146.4, zenith=177.4
+12:02:13.785  INFO [grand.sim.efield2voltage 233] ==============>  Processing DU with id: 16
+12:02:13.786  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=176.9
+12:02:13.787  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=176.9
+12:02:13.787  INFO [grand.sim.detector.process_ant 164] Source direction (degree): azimuth=-135.1, zenith=176.9
+12:02:13.790  INFO [grand.sim.efield2voltage 466] save result in efield_Coreas_Run_4.root
+12:02:13.791 WARNING [grand.dataio.root_trees 543] No valid tvoltage TTree in the file efield_Coreas_Run_4.root. Creating a new one.
+12:02:13.896  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 144] 
+12:02:13.896  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 144] 
+12:02:13.896  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 144] ===========> End at 2023-09-04T12:02:13Z <===========
+12:02:13.896  INFO [grand.sim2root.CoREASRawRoot.......scripts.convert_efield2voltage 144] Duration (h:m:s): 0:00:01.308307
+ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-6.74764583e-10]
+ [-1.50682854e-09]
+ [ 7.81965685e-10]]
+pos [[-6.74764583e-10]
+ [-1.50682854e-09]
+ [ 7.81965685e-10]]
+pos [[-6.74764583e-10]
+ [-1.50682854e-09]
+ [ 7.81965685e-10]]
+antenna_frame =  [[7.32028118e-10]
+ [6.99188587e-10]
+ [5.74911185e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[7.32028118e-10]
+ [6.99188587e-10]
+ [5.74911185e-10]]
+pos [[7.32028118e-10]
+ [6.99188587e-10]
+ [5.74911185e-10]]
+pos [[7.32028118e-10]
+ [6.99188587e-10]
+ [5.74911185e-10]]
+antenna_frame =  [[-1.90565253e-09]
+ [ 5.28112588e-10]
+ [ 7.69683484e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-1.90565253e-09]
+ [ 5.28112588e-10]
+ [ 7.69683484e-10]]
+pos [[-1.90565253e-09]
+ [ 5.28112588e-10]
+ [ 7.69683484e-10]]
+pos [[-1.90565253e-09]
+ [ 5.28112588e-10]
+ [ 7.69683484e-10]]
+antenna_frame =  [[-9.02332939e-11]
+ [-5.93485784e-12]
+ [-1.31526968e-09]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[-9.02332939e-11]
+ [-5.93485784e-12]
+ [-1.31526968e-09]]
+pos [[-9.02332939e-11]
+ [-5.93485784e-12]
+ [-1.31526968e-09]]
+pos [[-9.02332939e-11]
+ [-5.93485784e-12]
+ [-1.31526968e-09]]
+antenna_frame =  [[7.07472886e-10]
+ [1.18588077e-10]
+ [6.05254698e-10]]
+evt_shower ShowerEvent(energy=1000000.0, zenith=0.0, azimuth=0.0, primary='14.0', frame=LTP([[ 1.92940182e-09],
+     [ 5.55594320e-11],
+     [-8.01014145e-10]]), core=GRANDCS([[0.],
+         [0.],
+         [0.]]), geomagnet=None, maximum=LTP([[0.],
+     [0.],
+     [0.]]), origin_geoid=array([  40.98456,   93.95225, 1200.     ], dtype=float32), fields=None)
+pos [[7.07472886e-10]
+ [1.18588077e-10]
+ [6.05254698e-10]]
+pos [[7.07472886e-10]
+ [1.18588077e-10]
+ [6.05254698e-10]]
+pos [[7.07472886e-10]
+ [1.18588077e-10]
+ [6.05254698e-10]]

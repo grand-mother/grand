@@ -1,0 +1,36 @@
+#!/bin/bash
+#SBATCH --job-name=024004
+#SBATCH --output=/hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//log//9.6/_log%j.out
+#SBATCH --error=/hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//log//9.6/_log%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=76
+#SBATCH --cpus-per-task=1
+#SBATCH --time=2-00:00:00
+
+# Load MPI module (if necessary)
+# module load mpi
+# Set the path to your MPI-Corsika executable
+MPI_CORSIKA_EXEC='/home/hk-project-radiohfi/bg5912/work/soft/corsika-77420/run///mpi_corsika77420Linux_SIBYLL_urqmd_thin_coreas_parallel_runner'
+
+# Set the path to your input and output files
+INPUT_FILE='/hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/SIM024004.inp'
+LOG_FILE='/hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//log//9.6/DAT024004.log'
+
+echo ======================= Conjuring Cosmic Showers  ======================= 
+echo starting job number 024004 
+echo time: $(date)
+# Run the MPI-Corsika executable
+mpirun --bind-to core:overload-allowed --map-by core -report-bindings -np $SLURM_NTASKS $MPI_CORSIKA_EXEC $INPUT_FILE > $LOG_FILE
+
+echo job number 024004 complete
+echo time: $(date)
+echo - - - - - - - - - - - - - - Cleansing Cauldron - - - - - - - - - - - - - - 
+mkdir /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT024004/
+echo created /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT024004/
+echo moving binaries and corsika_timetables to /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT024004/
+mv /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6//DAT??????-* /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT024004/
+mv /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6//corsika_timetable-* /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6/DAT024004/
+rm -r /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6//../../data/ 
+rm -r /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6//../../temp/ 
+rm -r /hkfs/work/workspace/scratch/bg5912-radiosims/magicsims_set04/sim_storage//inp//9.6//../../starshapes/ 
+echo =================== Enchantment Successfully Executed ===================
