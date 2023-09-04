@@ -91,7 +91,8 @@ class ShowerEvent:
                 height=self.origin_geoid[2])
         else:
             raise Exception("Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid")
-        self.grand_ref_frame = GRANDCS(location=origin_geoid)    # used to define antenna position.
+        self.grand_ref_frame = GRANDCS(arg=origin_geoid,location=origin_geoid)  
+    
         # define a shower core in GRANDCS. shower_core_pos are given in GRANDCS.
         self.core = GRANDCS(
             x=d_shower.shower_core_pos[0],
@@ -100,7 +101,8 @@ class ShowerEvent:
             location=origin_geoid)  #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
         # define a shower frame. DU positions and Xmax is defined wrt this frame.
         self.frame = LTP(
-            location=self.core,
+            arg=self.core,
+            location=self.core, # core is correct
             orientation="NWU",
             magnetic=True)          #RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.
 
