@@ -96,20 +96,30 @@ def CoreasToRawRoot(path):
   log_file = glob.glob(path + f"DAT{simID}.log")
 
   if len(log_file) == 0:
-    print("[WARNING] No log file found in this directory. Please check directory and try again.")
+    print("[WARNING] No log file found in this directory. Using dummy values for first interaction."\
+          "Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4."
+          )
+    first_interaction = 100 # height of first interaction - in m
+    hadr_interaction  = "Sibyll 2.3d"
+    coreas_version    = "Coreas V1.4"
   elif len(log_file) > 1:
     print("Found", available_inp_files)
     print("[WARNING] More than one log file found in directory. Only log file", log_file[0], "will be used.")
     log_file = log_file[0]
+    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
+    coreas_version    = read_coreas_version(log_file)
   else:
     print("Found", log_file)
     log_file = log_file[0]
     print("Extracting info from log file", log_file, "for GRANDroot.")
+    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
+    coreas_version    = read_coreas_version(log_file)
   print("*****************************************")
 
-  first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
-  hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
-  coreas_version    = read_coreas_version(log_file)
+
+  
 
   ###############################
   # Part B: Generate ROOT Trees #
@@ -151,11 +161,11 @@ def CoreasToRawRoot(path):
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
   else:
-    zenith = read_params(inp_input, "ShowerZenithAngle")
-    azimuth = read_params(inp_input, "ShowerAzimuthAngle")
+    zenith = read_params(inp_input, "THETAP")
+    azimuth = read_params(inp_input, "PHIP")
 
-    Energy = read_params(inp_input, "PrimaryParticleEnergy") # in GeV
-    Primary = read_params(inp_input, "PrimaryParticleType") # as defined in CORSIKA
+    Energy = read_params(inp_input, "ERANGE") # in GeV
+    Primary = read_params(inp_input, "PRMPAR") # as defined in CORSIKA
     print("[WARNING] DepthOfShowerMaximum, DistanceOfShowerMaximum hardcoded")
     print("[WARNING] FieldIntensity, FieldInclination, GeomagneticAngle hardcoded for Dunhuang")
     DepthOfShowerMaximum = -1
@@ -366,9 +376,9 @@ def CoreasToRawRoot(path):
   
   #****** info from input files: ******
 
-  # # TODO ASAP: find these values
-  # RefractionIndexModel = "model"
-  # RefractionIndexParameters = [1,2,3] # ? 
+  # TODO ASAP: find these values
+  RefractionIndexModel = "model"
+  RefractionIndexParameters = [1,1,1] # ? 
   
   TimeWindowMin = TimeLowerBoundary # from reas
   TimeWindowMax = TimeUpperBoundary # from reas
@@ -395,8 +405,8 @@ def CoreasToRawRoot(path):
   RawEfield.run_number = RunID
   RawEfield.event_number = EventID
 
-  # RawEfield.refractivity_model = RefractionIndexModel                                       
-  # RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
+  RawEfield.refractivity_model = RefractionIndexModel                                       
+  RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
         
   RawEfield.t_pre = TimeWindowMin
   RawEfield.t_post = TimeWindowMax
