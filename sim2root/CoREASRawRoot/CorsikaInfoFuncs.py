@@ -41,7 +41,6 @@ def find_input_vals_list(line):
 # read single values from SIM.reas or RUN.inp
 def read_params(input_file, param):
   # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
-  val = ""
   with open(input_file, "r") as datafile:
     for line in datafile:
       if param in line:
@@ -49,10 +48,9 @@ def read_params(input_file, param):
         if find_input_vals(line):
           val = find_input_vals(line).group()
           print(param, "=", val)
-          break 
+          return float(val)
           # this is a problem for AutomaticTimeBoundaries, because it also shows up in other comments
-          # therefore, just break after the first one is found. this can definitely be improved
-  return float(val)
+#   return float(val)
 
 
 
