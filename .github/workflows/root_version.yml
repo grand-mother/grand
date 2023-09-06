@@ -35,10 +35,16 @@ jobs:
     - name: get version
       run: echo "${{ steps.update-version.outputs.version}}"
 
+#    - name: Commit version
+#      uses: actions-js/push@master
+#      with:
+#        github_token: ${{ secrets.GITHUB_TOKEN }}
+#        branch: ${{ github.ref }}
+#        message: Automatic update to version "${{ steps.update-version.outputs.version}}"
+#        tags: true
     - name: Commit version
-      uses: actions-js/push@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
-        message: Automatic update to version "${{ steps.update-version.outputs.version}}"
-        tags: true
+      uses: stefanzweifel/git-auto-commit-action@v4
+      commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
+      branch: ${{ github.ref }}
+      tagging_message: 'v${{ steps.update-version.outputs.version}}'
+      push_options: --force
