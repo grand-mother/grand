@@ -41,3 +41,4 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ github.ref }}
         message: Automatic update to version "${{ steps.update-version.outputs.version}}"
+        tags: true
