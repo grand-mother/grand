@@ -44,7 +44,8 @@ jobs:
 #        tags: true
     - name: Commit version
       uses: stefanzweifel/git-auto-commit-action@v4
-      commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
-      branch: ${{ github.ref }}
-      tagging_message: 'v${{ steps.update-version.outputs.version}}'
-      push_options: --force
+      with:
+        commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
+        branch: ${{ github.ref }}
+        tagging_message: 'v${{ steps.update-version.outputs.version}}'
+        push_options: --force
