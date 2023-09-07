@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
-import sys
+import sys, os
 
 from os.path import exists
 versionfile = "/home/fleg/DEV/GRAND/hooktest"
@@ -27,17 +27,14 @@ f = open(versionfile, "w")
 
 
 print("toto")
+print(sys.argv)
+print(os.environ['GIT_AUTHOR_DATE'])
 import git
 repo = git.Repo('./')
-print(repo.git.status())
-(old, new, branch) = sys.stdin.read().split()
-print(old)
-f.write(old)
-
-print(new)
-f.write(new)
-
-print(branch)
-f.write(branch)
+#print(repo.git.status())
+#f.write(repo.git.status())
+filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
+for filename in filenames:
+    print(filename)
 
 f.close()
