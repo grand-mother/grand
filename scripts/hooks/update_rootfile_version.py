@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
+# Pre commit script which will update the version number in $versionfile when $watchedfile is commited
+# Fleg Sept 2023
 
-import subprocess
-import sys, os
 versionfile = "grand/dataio/version"
-watchedfile = "scripts/hooks/update_rootfile_version.py"
+watchedfile = "grand/dataio/root_trees.py"
 
 def update_version(repo):
     from os.path import exists
