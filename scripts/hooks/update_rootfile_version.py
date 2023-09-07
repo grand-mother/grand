@@ -34,7 +34,12 @@ repo = git.Repo('./')
 #print(repo.git.status())
 #f.write(repo.git.status())
 filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
+print(filenames)
 for filename in filenames:
     print(filename)
+    if filename=="grand/dataio/version":
+       print("ACTION")
+    else:
+        print("Nothing to do")
 
 f.close()
