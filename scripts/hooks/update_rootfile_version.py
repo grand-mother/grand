@@ -3,25 +3,26 @@
 import subprocess
 import sys, os
 
-from os.path import exists
-versionfile = "/home/fleg/DEV/GRAND/hooktest"
+def update_version(repo):
+    from os.path import exists
+    versionfile = "grand/dataio/version"
 
-#if not exists(versionfile):
-#    version = "0.0.0"
-#else:
-#    f = open(versionfile, "r")
-#    version = f.read()
-#    f.close()
+    if not exists(versionfile):
+        version = "0.0.0"
+    else:
+        f = open(versionfile, "r")
+        version = f.read()
+        f.close()
 
-#versions = version.split(".")
-#versions[len(versions) -1] = str(int(versions[len(versions) -1]) + 1)
-#version = '.'.join(versions)
+    versions = version.split(".")
+    versions[len(versions) -1] = str(int(versions[len(versions) -1]) + 1)
+    version = '.'.join(versions)
 
-f = open(versionfile, "w")
-#f.write(version)
-
-#print("version="+version)
-
+    f = open(versionfile, "w")
+    f.write(version)
+    print("version="+version)
+    f.close()
+    #repo.index.add(versionfile)
 
 
 
@@ -39,7 +40,7 @@ for filename in filenames:
     print(filename)
     if filename=="grand/dataio/version":
        print("ACTION")
+       update_version(repo)
     else:
         print("Nothing to do")
 
-f.close()
