@@ -24,7 +24,7 @@ def update_version(repo):
     f.write(version)
     print("version="+version)
     f.close()
-    repo.index.add([versionfile])
+    #repo.index.add([versionfile])
 
 
 
