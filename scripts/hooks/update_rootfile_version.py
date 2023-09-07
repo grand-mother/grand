@@ -3,8 +3,7 @@
 import subprocess
 import sys, os
 versionfile = "grand/dataio/version"
-watchedfile = "scripts/hooks/update_root_file_version.py"
-
+watchedfile = "scripts/hooks/update_rootfile_version.py"
 
 def update_version(repo):
     from os.path import exists
