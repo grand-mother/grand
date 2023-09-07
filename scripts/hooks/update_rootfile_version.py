@@ -2,10 +2,13 @@
 
 import subprocess
 import sys, os
+versionfile = "grand/dataio/version"
+watchedfile = "scripts/hooks/update_root_file_version.py"
+
 
 def update_version(repo):
     from os.path import exists
-    versionfile = "grand/dataio/version"
+
 
     if not exists(versionfile):
         version = "0.0.0"
@@ -22,7 +25,7 @@ def update_version(repo):
     f.write(version)
     print("version="+version)
     f.close()
-    #repo.index.add(versionfile)
+    repo.index.add([versionfile])
 
 
 
@@ -38,7 +41,7 @@ filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 print(filenames)
 for filename in filenames:
     print(filename)
-    if filename=="grand/dataio/version":
+    if filename==watchedfile:
        print("ACTION")
        update_version(repo)
     else:
