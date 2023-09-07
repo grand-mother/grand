@@ -8,7 +8,6 @@ watchedfile = "grand/dataio/root_trees.py"
 def update_version(repo):
     from os.path import exists
 
-
     if not exists(versionfile):
         version = "0.0.0"
     else:
@@ -25,8 +24,6 @@ def update_version(repo):
     print("version="+version)
     f.close()
     repo.index.add([versionfile])
-
-
 
 
 import git
