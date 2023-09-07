@@ -34,6 +34,8 @@ repo = git.Repo('./')
 
 filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 print(filenames)
+if watchedfile in filenames:
+    print("FILE " + watchedfile + "IS FOUND")
 for filename in filenames:
     print(filename)
     if filename==watchedfile:
