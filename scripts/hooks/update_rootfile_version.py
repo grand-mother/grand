@@ -29,13 +29,9 @@ def update_version(repo):
 
 
 
-print("toto")
-print(sys.argv)
-print(os.environ['GIT_AUTHOR_DATE'])
 import git
 repo = git.Repo('./')
-#print(repo.git.status())
-#f.write(repo.git.status())
+
 filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 print(filenames)
 for filename in filenames:
