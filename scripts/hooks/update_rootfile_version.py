@@ -23,8 +23,8 @@ def update_version(repo):
 
     f = open(versionfile, "w")
     f.write(version)
-    print("version="+version)
     f.close()
+    #Need to add versionfile to commit it !
     repo.index.add([versionfile])
 
 
@@ -32,11 +32,7 @@ import git
 repo = git.Repo('./')
 
 filenames = list(diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
-#if watchedfile in filenames:
 if any(item in watchedfile for item in filenames):
-    print(" updating " + versionfile)
     update_version(repo)
-else:
-    print("No version update required")
 
 
