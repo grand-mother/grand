@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Pre commit script which will update the version number in $versionfile when $watchedfile is commited
+# GitPython need to be installed.
+# This script has to be copied or linked in .git/hooks/pre-commit
 # Fleg Sept 2023
 
 versionfile = "grand/dataio/version"
@@ -30,6 +32,7 @@ import git
 repo = git.Repo('./')
 
 filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
+print(type(filenames))
 if watchedfile in filenames:
     print(watchedfile + " found, updating " + versionfile)
     update_version(repo)
