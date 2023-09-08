@@ -32,6 +32,7 @@ import git
 repo = git.Repo('./')
 
 filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
+print(filenames)
 print(type(filenames))
 if watchedfile in filenames:
     print(watchedfile + " found, updating " + versionfile)
