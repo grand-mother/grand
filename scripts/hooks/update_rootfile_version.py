@@ -34,7 +34,7 @@ repo = git.Repo('./')
 filenames = list(diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 #if watchedfile in filenames:
 if any(item in watchedfile for item in filenames):
-    print("updating " + versionfile)
+    print(" updating " + versionfile)
     update_version(repo)
 else:
     print("No version update required")
