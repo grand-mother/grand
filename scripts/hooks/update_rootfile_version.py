@@ -5,7 +5,7 @@
 # Fleg Sept 2023
 
 versionfile = "grand/dataio/version"
-watchedfile = "grand/dataio/root_trees.py"
+watchedfile = ["grand/dataio/root_trees.py"]
 
 def update_version(repo):
     from os.path import exists
@@ -34,7 +34,7 @@ repo = git.Repo('./')
 filenames = list(diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 #if watchedfile in filenames:
 if any(item in watchedfile for item in filenames):
-    print(watchedfile + " found, updating " + versionfile)
+    print("updating " + versionfile)
     update_version(repo)
 else:
     print("No version update required")
