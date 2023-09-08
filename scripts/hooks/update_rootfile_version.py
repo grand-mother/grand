@@ -9,7 +9,7 @@ watchedfile = "grand/dataio/root_trees.py"
 
 def update_version(repo):
     from os.path import exists
- 
+
     if not exists(versionfile):
         version = "0.0.0"
     else:
@@ -31,7 +31,7 @@ def update_version(repo):
 import git
 repo = git.Repo('./')
 
-filenames = (diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
+filenames = list(diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 print(filenames)
 print(type(filenames))
 if watchedfile in filenames:
