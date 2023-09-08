@@ -37,6 +37,6 @@ if any(item in watchedfile for item in filenames):
     print(watchedfile + " found, updating " + versionfile)
     update_version(repo)
 else:
-    print("No version update is required")
+    print("No version update required")
 
 
