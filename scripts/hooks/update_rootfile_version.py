@@ -9,7 +9,7 @@ watchedfile = "grand/dataio/root_trees.py"
 
 def update_version(repo):
     from os.path import exists
-
+ 
     if not exists(versionfile):
         version = "0.0.0"
     else:
