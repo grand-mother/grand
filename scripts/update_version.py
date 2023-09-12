@@ -5,7 +5,7 @@ if not exists(versionfile):
     version = "0.0.0"
 else:
     f = open(versionfile, "r")
-    version = f.read()
+    version = f.read() 
     f.close()
 
 versions = version.split(".")
