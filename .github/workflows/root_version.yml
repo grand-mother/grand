@@ -44,7 +44,7 @@ jobs:
 
     - name: Push Git Tag
       run: |
-        git tag 'root format v${{ steps.update-version.outputs.version}}'
+        git tag 'root_v${{ steps.update-version.outputs.version}}'
         git push
 
 
