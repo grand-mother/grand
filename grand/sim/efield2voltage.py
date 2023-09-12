@@ -162,6 +162,7 @@ class Efield2Voltage:
             z=self.du_pos[du_idx, 2], #self.du_pos[du_idx, 2],    # antenna position wrt local grand coordinate
             frame=self.evt_shower.grand_ref_frame
             )
+        print("antenna_location", antenna_location)
         antenna_frame = coord.LTP(
             arg=antenna_location,
             location=antenna_location, 
