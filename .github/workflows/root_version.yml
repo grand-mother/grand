@@ -5,7 +5,7 @@ name: Versioning test
 on:
   push:
     paths:
-      - grand/dataio/root_trees.pyY
+      - grand/dataio/root_trees.py
 
 
 jobs:
