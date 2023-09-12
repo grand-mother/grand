@@ -55,5 +55,5 @@ jobs:
       with:
         commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
         branch: ${{ github.ref }}
-        tagging_message: 'root format v${{ steps.update-version.outputs.version}}'
+        tagging_message: 'root_v${{ steps.update-version.outputs.version}}'
         push_options: --force
