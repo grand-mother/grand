@@ -24,28 +24,36 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Get version number
-      id: get-version
+#    - name: Get version number
+#      id: get-version
+#      env:
+#        USER_GIT: ${{github.actor}}
+#        SONAR_L: ${{ secrets.GITHUB_TOKEN }}
+#      run: |
+#        python scripts/get_version.py >> "$GITHUB_OUTPUT"
+
+    - name: Update version number
+      id: update-version
       env:
         USER_GIT: ${{github.actor}}
         SONAR_L: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        python scripts/get_version.py >> "$GITHUB_OUTPUT"
+        python scripts/update_version.py >> "$GITHUB_OUTPUT"
 
 
     - name: get version
       run: echo "${{ steps.get-version.outputs.version}}"
 
-    - name: Push Git Tag
-      run: |
-        git tag 'root format v${{ steps.update-version.outputs.version}}'
-        git push 
+#    - name: Push Git Tag
+#      run: |
+#        git tag 'root format v${{ steps.update-version.outputs.version}}'
+#        git push
 
 
-#    - name: Commit version
-#      uses: stefanzweifel/git-auto-commit-action@v4
-#      with:
-#        commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
-#        branch: ${{ github.ref }}
-#        tagging_message: 'root format v${{ steps.update-version.outputs.version}}'
-#        push_options: --force
+    - name: Commit version
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
+        branch: ${{ github.ref }}
+        tagging_message: 'root format v${{ steps.update-version.outputs.version}}'
+        push_options: --force
