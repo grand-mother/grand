@@ -42,16 +42,16 @@ jobs:
     - name: get version
       run: echo "${{ steps.get-version.outputs.version}}"
 
-    - name: Push Git Tag
-      run: |
-        git tag 'root_v${{ steps.update-version.outputs.version}}'
-        git push
+#    - name: Push Git Tag
+#      run: |
+#        git tag 'root_v${{ steps.update-version.outputs.version}}'
+#        git push
 
 
-#    - name: Commit version
-#      uses: stefanzweifel/git-auto-commit-action@v4
-#      with:
-#        commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
-#        branch: ${{ github.ref }}
-#        tagging_message: 'root_v${{ steps.update-version.outputs.version}}'
-#        push_options: --force
+    - name: Commit version
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
+        branch: ${{ github.ref }}
+        tagging_message: 'root_v${{ steps.update-version.outputs.version}}'
+        push_options: --force
