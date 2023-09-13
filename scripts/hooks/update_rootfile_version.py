@@ -29,7 +29,7 @@ def update_version(repo):
 
 
 import git
-repo = git.Rep('./')
+repo = git.Repo('./')
 
 filenames = list(diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
 if any(item in watchedfile for item in filenames):
