@@ -45,13 +45,4 @@ jobs:
     - name: Push Git Tag
       run: |
         git tag 'root_v'${{ steps.get-version.outputs.version}}
-        git push origin 'root_v'${{ steps.get-version.outputs.version}}
-
-
-#    - name: Commit version
-#      uses: stefanzweifel/git-auto-commit-action@v4
-#      with:
-#        commit_message: Automatic update to version "${{ steps.update-version.outputs.version}}"
-#        branch: ${{ github.ref }}
-#        tagging_message: 'root_v${{ steps.update-version.outputs.version}}'
-#        push_options: --force
+#        git push origin 'root_v'${{ steps.get-version.outputs.version}}
