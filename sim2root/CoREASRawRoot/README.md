@@ -1,6 +1,11 @@
 # Coreas to Raw Root Converter
-## How to run
+## How to run just CoreasToRawRoot
 python3 CoreasToRawRoot <directory with Coreas Sim>
+
+## How to run the whole CoreasToRawRoot + sim2root + efield2voltage
+python3 coreas_pipeline.py -d <directory with Coreas Sim>
+
+WARNING: Currently, this only works when there is one shower per directory.
 
 ## Overview
 ### CoreasToRawRoot.py
