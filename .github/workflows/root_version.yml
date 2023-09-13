@@ -45,4 +45,4 @@ jobs:
     - name: Push Git Tag
       run: |
         git tag 'root_v'${{ steps.get-version.outputs.version}}
-#        git push origin 'root_v'${{ steps.get-version.outputs.version}}
+        git push origin 'root_v'${{ steps.get-version.outputs.version}}
