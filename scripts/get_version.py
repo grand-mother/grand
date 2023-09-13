@@ -8,5 +8,4 @@ else:
     version = f.read()
     f.close()
 
-
 print("version="+version)
