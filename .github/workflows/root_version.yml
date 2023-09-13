@@ -30,18 +30,6 @@ jobs:
       run: |
         python scripts/get_version.py >> "$GITHUB_OUTPUT"
 
-#    - name: Update version number
-#      id: update-version
-#      env:
-#        USER_GIT: ${{github.actor}}
-#        SONAR_L: ${{ secrets.GITHUB_TOKEN }}
-#      run: |
-#        python scripts/update_version.py >> "$GITHUB_OUTPUT"
-
-
-    - name: get version
-      run: echo "${{ steps.get-version.outputs.version}}"
-
     - name: Push Git Tag
       run: |
         git tag 'root_v'${{ steps.get-version.outputs.version}}
