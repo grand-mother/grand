@@ -2,7 +2,10 @@
 # Pre commit script which will update the version number in $versionfile when $watchedfile is commited
 # GitPython need to be installed.
 # This script has to be copied or linked in .git/hooks/pre-commit
+# and need to be executable !
 # Fleg Sept 2023
+
+import git
 
 versionfile = "grand/dataio/version"
 watchedfile = ["grand/dataio/root_trees.py"]
@@ -28,7 +31,6 @@ def update_version(repo):
     repo.index.add([versionfile])
 
 
-import git
 repo = git.Repo('./')
 
 filenames = list(diff_obj.a_path for diff_obj in repo.index.diff('HEAD'))
