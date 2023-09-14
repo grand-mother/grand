@@ -2,7 +2,7 @@ name: Tests with docker
 on:
   push:
     paths:
-#    - grand/**
+    - grand/**
     - tests/**
 
 jobs:
