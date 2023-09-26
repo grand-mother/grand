@@ -155,6 +155,15 @@ class Efield2Voltage:
         :param du_idx: index of DU
         :    type du_idx: int
         """
+        if self.du_pos[du_idx, 0]>22000000:
+            raise ValueError("du_pos_x is too large for computing!")
+        elif self.du_pos[du_idx, 1]>22000000:
+            raise ValueError("du_pos_y is too large for computing!")
+        elif self.du_pos[du_idx, 2]>22000000:
+            raise ValueError("du_pos_z is too large for computing!")
+        else:
+            pass
+
 
         antenna_location = coord.LTP(
             x=self.du_pos[du_idx, 0], #self.du_pos[du_idx, 0],    # antenna position wrt local grand coordinate
@@ -162,12 +171,16 @@ class Efield2Voltage:
             z=self.du_pos[du_idx, 2], #self.du_pos[du_idx, 2],    # antenna position wrt local grand coordinate
             frame=self.evt_shower.grand_ref_frame
             )
-        logger.debug(antenna_location)
+        print("antenna_location", antenna_location)
+
         antenna_frame = coord.LTP(
+            arg=antenna_location,
             location=antenna_location, 
             orientation="NWU", 
             magnetic=True
             )
+        print("antenna_frame = " , antenna_frame)
+
         self.ant_leff_sn = AntennaProcessing(model_leff=self.ant_model.leff_sn, pos=antenna_frame)
         self.ant_leff_ew = AntennaProcessing(model_leff=self.ant_model.leff_ew, pos=antenna_frame)
         self.ant_leff_z  = AntennaProcessing(model_leff=self.ant_model.leff_z , pos=antenna_frame)
