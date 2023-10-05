@@ -426,7 +426,7 @@ def CoreasToRawRoot(path):
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
     efield = np.loadtxt(tracefile)
     
-    timestamp = efield[:,0]
+    timestamp = efield[:,0] * 10**9 #convert to ns 
     trace_x = efield[:,1]
     trace_y = efield[:,2]
     trace_z = efield[:,3]
