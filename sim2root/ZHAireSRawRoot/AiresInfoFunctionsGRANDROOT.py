@@ -1014,6 +1014,30 @@ def GetAtmosphericModelFromSry(sry_file,outmode="N/A"):
     return -1
 
 
+def GetRefractionIndexModelFromSry(sry_file,outmode="N/A"): #for aires 19.04.06
+  try:
+    datafile=open(sry_file,'r')
+    datfile.close()
+    with open(sry_file, "r") as datafile:
+      for line in datafile:
+        if 'Glasgow-Dale refraction index model' in line:
+          IndexModel="Glasgow-Dale"
+          return IndexModel
+        if 'Exponential refraction index model' in line:  
+          IndexModel="Exponential"
+          return IndexModel
+        if 'Constant refraction index model':
+          IndexModel="Constant"
+          return IndexModel  
+      try:
+        IndexModel
+      except NameError:
+        logging.error('warning Refraction Index Model not found')
+        return -1
+  except:
+    logging.error("GetRefractionIndexModelFromSry:file not found or invalid:"+sry_file)
+    raise
+    return -1    
 def GetSiteFromSry(sry_file,outmode="N/A"):
   try:
     datafile=open(sry_file,'r')
@@ -1142,6 +1166,146 @@ def GetEnergyFractionInNeutrinosFromSry(sry_file,outmode="N/A"):
     raise
     return -1
 
+def GetEnergyFractionDepositedFromSry(sry_file,outmode="N/A"):
+  try:
+    datafile=open(sry_file,'r')
+    with open(sry_file, "r") as datafile:
+      founditonce=0
+      for line in datafile:
+        if "PER SHOWER BALANCE OF ENERGY" in line: #we are in the correct section
+          founditonce=1
+        if founditonce==1 and 'Totals:' in line:
+          founditonce=2
+        if founditonce==2 and "Medium losses:" in line: 
+          line = line.lstrip()
+          stripedline=line.split('Medium losses:',-1)
+          stripedline=stripedline[1]
+          stripedline=stripedline.lstrip()
+          stripedline=stripedline.split(' ',-1)
+          energyf=float(stripedline[0])
+          return energyf
+      try:
+        energyf
+      except NameError:
+        logging.error('GetEnergyFractionDepositedFromSry: Deposited Energy Fraction not found')
+        return -1
+  except:
+    logging.error("GetEnergyFractionDepositedFromSry:file not found or invalid:"+sry_file)
+    raise
+    return -1    
+
+def GetEnergyFractionLostFromSry(sry_file,outmode="N/A"):
+  try:
+    datafile=open(sry_file,'r')
+    with open(sry_file, "r") as datafile:
+      founditonce=0
+      for line in datafile:
+        if "PER SHOWER BALANCE OF ENERGY" in line : #we are in the correct section
+          founditonce=1
+        if founditonce==1 and ('Totals:' in line) :
+          founditonce=2
+        if founditonce==2 and ("Particles lost:" in line):
+          line = line.lstrip()
+          stripedline=line.split('Particles lost:',-1)
+          stripedline=stripedline[1]
+          stripedline=stripedline.lstrip()
+          stripedline=stripedline.split(' ',-1)
+          energyf=float(stripedline[0])
+          return energyf
+      try:
+        energyf
+      except NameError:
+        logging.error('GetEnergyFractionLostFromSry: Lost Energy Fraction not found')
+        return -1
+  except:
+    logging.error("GetEnergyFractionLostFromSry:file not found or invalid:"+sry_file)
+    raise
+    return -1
+
+
+def GetEnergyFractionLowFromSry(sry_file,outmode="N/A"):
+  try:
+    datafile=open(sry_file,'r')
+    with open(sry_file, "r") as datafile:
+      founditonce=0
+      for line in datafile:
+        if "PER SHOWER BALANCE OF ENERGY" in line : #we are in the correct section
+          founditonce=1
+        if founditonce==1 and ('Totals:' in line) :
+          founditonce=2
+        if founditonce==2 and ("Low-E particles:" in line):
+          line = line.lstrip()
+          stripedline=line.split('Low-E particles:',-1)
+          stripedline=stripedline[1]
+          stripedline=stripedline.lstrip()
+          stripedline=stripedline.split(' ',-1)
+          energyf=float(stripedline[0])
+          return energyf
+      try:
+        energyf
+      except NameError:
+        logging.error('GetEnergyFractionLowFromSry: Low Energy Fraction not found')
+        return -1
+  except:
+    logging.error("GetEnergyFractionLowFromSry:file not found or invalid:"+sry_file)
+    raise
+    return -1
+
+def GetEnergyFractionGroundFromSry(sry_file,outmode="N/A"):
+  try:
+    datafile=open(sry_file,'r')
+    with open(sry_file, "r") as datafile:
+      founditonce=0
+      for line in datafile:
+        if "PER SHOWER BALANCE OF ENERGY" in line : #we are in the correct section
+          founditonce=1
+        if founditonce==1 and ('Totals:' in line) :
+          founditonce=2
+        if founditonce==2 and ("Pcles. that reached gnd.:" in line):
+          line = line.lstrip()
+          stripedline=line.split('Pcles. that reached gnd.:',-1)
+          stripedline=stripedline[1]
+          stripedline=stripedline.lstrip()
+          stripedline=stripedline.split(' ',-1)
+          energyf=float(stripedline[0])
+          return energyf
+      try:
+        energyf
+      except NameError:
+        logging.error('GetEnergyFractionGroundFromSry: Ground Energy Fraction not found')
+        return -1
+  except:
+    logging.error("GetEnergyFractionGroundFromSry:file not found or invalid:"+sry_file)
+    raise
+    return -1
+        
+def GetEnergyFractionUnphysFromSry(sry_file,outmode="N/A"):
+  try:
+    datafile=open(sry_file,'r')
+    with open(sry_file, "r") as datafile:
+      founditonce=0
+      for line in datafile:
+        if "PER SHOWER BALANCE OF ENERGY" in line : #we are in the correct section
+          founditonce=1
+        if founditonce==1 and ('Totals:' in line) :
+          founditonce=2
+        if founditonce==2 and ("Unphysical particles:" in line):
+          line = line.lstrip()
+          stripedline=line.split('Unphysical particles:',-1)
+          stripedline=stripedline[1]
+          stripedline=stripedline.lstrip()
+          stripedline=stripedline.split(' ',-1)
+          energyf=float(stripedline[0])
+          return energyf
+      try:
+        energyf
+      except NameError:
+        logging.error('GetEnergyFractionUnphysFromSry: Unphysical Energy Fraction not found')
+        return -1
+  except:
+    logging.error("GetEnergyFractionUnphysFromSry:file not found or invalid:"+sry_file)
+    raise
+    return -1
 def get_antenna_t0(xant,yant,hant, azimuthdeg, zenithdeg):
     #this code is copied from zhaires fieldinit
     #returns the t0 of the antenna in ns
@@ -1609,6 +1773,116 @@ def GetZHSEffectiveRefractionIndex(x0,y0,z0,xant=0,yant=0,zant=0,ns=325,kr=-0.12
       return n_eff
 #      end
 
+###########################################################################################################################################################################################
+def GetRefractionIndexFromDensityFunction(altitude,densityfunction,glasgowconstant):
+
+   return 1+1E-6*densityfunction(altitude)*glasgowconstant*1000 #glasgow constant  is input in m3/kg, but density in g/cm3
+
+#only glasgow implemented for now
+def GetSmartEffectiveRefractionIndexFromDensityFunction(r1,r2,densityfunction,depthfunction,glasgowconstant,groundz):
+#as implemented on ZHAireS 1.1 (but you also need the same depth and density function than in zhaires, wich is NOT exactly what you get by interpolating the table)
+#  
+#     Evaluating average density (in g/m.cm2) along a
+#     straight line that goes from point r1 to point r2.
+#
+#     The matter path is defined via
+#
+#                           point r2
+#          xpath/dr1r2 = INTEGRAL'  rho(zv) dl / dr1r2
+#                           point r1
+#
+#     where rho(zv) is the density of the medium, which is supposed to
+#     depend only on zv, the vertical altitude. The prime in the
+#     integral indicates that it is done along the specified axis.
+#
+#     Then, we multiply by the glasgowconstant, and we have the refractivity
+#
+#     Written by: S. J. Sciutto, La Plata 2020., M.J. Tueros, Paris 2020
+#
+#
+#     Arguments:
+#     =========
+#
+#     r1, r2.......... (input, double precision, array(3)) Coordinates
+#                      of the initial point.
+#     densityfunction  (input, function) a function returning the density (g/cm3) at a given altitude (m)
+#     depthpunction    (input, function) a function returning the vertical depth from the top of the atmosphere (g/cm2) at a given altitude (m)
+#     groundz          (input, double precision) ground altitude (m). Used to check
+#
+#     Output:
+#     ======
+#     rho12........... (output, double precision)  the average index of refraction.
+#
+      rho12 = 0
+      dr1r2 = 0
+#
+#     Straight line parameterization.
+#
+      rearth = 6370949.0
+      dr1r2 = 0.0
+      r1e=r1
+      uxp=r2-r1
+      dr1r2  = np.linalg.norm(uxp)
+#
+      if dr1r2 <= 0:
+       print("starting distance is 0,this is worrisome")
+       dr1r2=0.0
+       return
+#
+      r1e[2]  = r1e[2] + rearth
+#
+#     Determine number of steps
+#      
+      nint=int((dr1r2/20000)+1)      
+      ds=1.0/nint
+#
+#     Get altitude of starting point
+#      
+      zv1=np.linalg.norm(r1e)-rearth
+#      
+      if zv1<groundz:
+        print("starting point is underground, this is wrong")        
+        return -1       
+#
+#     get the depth at the starting point        
+#
+      x1=depthfunction(zv1)
+#      print("starting depth",x1,zv1)               
+#
+#     now the integral
+#         
+      suma=0.0      
+      for i in np.arange(1,nint+1):     
+         s=i*ds
+
+#        get altitude of next point
+          
+         zv2 = np.linalg.norm(r1e + uxp*s) - rearth
+#
+#         print("ending depth",zv2) 
+         if zv2 < groundz:
+           print("point is underground, shadow?",zv2)           
+           return -1        
+#          
+         if np.abs(zv1-zv2) > 0.1:
+           x2=depthfunction(zv2)
+           suma=suma+(x1-x2)/((zv2-zv1)*100) #put it in cm to get density in g/cm3
+#           print("vertical",suma,i,nint,zv1,zv2,(x1-x2)/(zv2-zv1))
+#           print("        ",(x1-x2),(zv2-zv1),zv1,zv2,x1,x2)               
+                 
+         else:
+           x2=x1
+           suma=suma+densityfunction(zv2)
+#           print("horizont",suma,i,nint,zv1,zv2,densityfunction(zv2))             
+#
+#        now switch x1 with x2
+         x1=x2
+         zv1=zv2 
+#
+      rho12=suma/nint
+#      print("sum0",suma,nint,dr1r2,rho12)
+#
+      return 1+1e-6*rho12*glasgowconstant*1000 #glasgow constant  is input in m3/kg, but density in g/cm3
 
 
 def ReadAiresSry(sry_file,outmode="N/A"):

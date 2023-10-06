@@ -445,7 +445,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
 
                 efield = np.loadtxt(antfile,dtype='f4') #we read the electric field as a numpy array
 
-                t_0= antt[ant_number]
+                t_0= antt[ant_number] + TimeWindowMin + TimeBinSize/2.0 #this is to make t0 equal to the first time in the trace. 
                 
                 DetectorID = IDs[ant_number]                                                
                 
