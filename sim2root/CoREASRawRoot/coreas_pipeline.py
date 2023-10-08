@@ -8,6 +8,9 @@ parser = OptionParser()
 parser.add_option("--directory", "--dir", "-d", type="str",
                   help="Specify the full path to the (inp) directory of the Coreas simulation set.\
                   ")
+parser.add_option("--output", "--out", "-o", type="str",
+                  help="Specify the where you want to store the converted simulation set.\
+                  ")
 
 (options, args) = parser.parse_args()
 
@@ -63,7 +66,7 @@ if __name__ == '__main__':
             # Run convert_efield2voltage.py
             sim2root = [
                 'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_Run_{runID}.root",\
-                f"-o efield_gr_Coreas_Run_{runID}.root"
+                f"-o {options.output}efield_gr_Coreas_Run_{runID}.root"
             ]
             subprocess.run(sim2root, check=True)
             print(f"Created efield_gr_Coreas_Run_{runID}.root")
