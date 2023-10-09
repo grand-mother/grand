@@ -1110,7 +1110,7 @@ class RawMetaTree(MotherEventTree):
         return self._tested_cores
         
     @tested_cores.setter
-    def long_pd_hadr(self, value):
+    def tested_cores(self, value):
         # A list was given  
         if (
             isinstance(value, list)
