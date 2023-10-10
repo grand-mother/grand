@@ -47,6 +47,7 @@ def main():
         for i in range(nentries):
             trawshower.get_entry(i)
             trawefield.get_entry(i)
+            trawmeta.get_entry(i)
 
             # For the first entry, fill the run trees
             if i==0:
@@ -68,10 +69,11 @@ def main():
 
             # Convert the RawShowerTree entries
             rawshower2grandroot(trawshower, gt)
+            # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
+            rawmeta2grandroot(trawmeta, gt)
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt)
-            # Convert the RawMetaTree entries
-            rawmeta2grandroot(trawmeta, gt)
+
 
             # Fill the event trees
             gt.tshower.fill()
@@ -344,15 +346,36 @@ def rawefield2grandroot(trawefield, gt):
     gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
 
     # Generate trigger times from t0s
-    gt.tefield.du_seconds = np.int64((trawefield.t_0 - trawefield.t_pre)/1e9)
-    gt.tefield.du_nanoseconds = np.int64((trawefield.t_0 - trawefield.t_pre)-np.array(gt.tefield.du_seconds)*1e9)
+    #gt.tefield.du_seconds = np.int64((trawefield.t_0 - trawefield.t_pre)/1e9)
+    #gt.tefield.du_nanoseconds = np.int64((trawefield.t_0 - trawefield.t_pre)-np.array(gt.tefield.du_seconds)*1e9)
+    print("this is what i have")
+
+    tempseconds=np.zeros((len(trawefield.t_0)), dtype=np.int64)
+    tempseconds[:]=gt.tshowersim.event_seconds
+    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0 - trawefield.t_pre)    
+    #rolling over the nanoseconds    
+    maskplus= gt.tshowersim.event_nanoseconds + trawefield.t_0 - trawefield.t_pre>=1e9
+    maskminus= gt.tshowersim.event_nanoseconds + trawefield.t_0 - trawefield.t_pre<0
+    tempnanoseconds[maskplus]-=np.int64(1e9)
+    tempseconds[maskplus]+=np.int64(1)   
+    tempnanoseconds[maskminus]+=np.int64(1e9)
+    tempseconds[maskminus]-=np.int64(1)
+    gt.tefield.du_nanoseconds=tempnanoseconds
+    gt.tefield.du_seconds=tempseconds
+    
 
 # Convert the RawMetaTree entries
 def rawmeta2grandroot(trawmeta, gt):
     gt.tshower.shower_core_pos = trawmeta.shower_core_pos
-
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
+    #event time    
+    gt.tshower.core_time_s = trawmeta.unix_second              #this will be filled by the reconstruction of the core position eventually?
+    gt.tshower.core_time_ns = trawmeta.unix_nanosecond         #this will be filled by the reconstruction of the core position eventually?
+    gt.tshowersim.event_seconds = trawmeta.unix_second
+    gt.tshowersim.event_nanoseconds = trawmeta.unix_nanosecond
+    
+    
 
 ## Get origin geoid
 def get_origin_geoid(clargs):
