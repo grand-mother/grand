@@ -615,6 +615,9 @@ class RawEfieldTree(MotherEventTree):
     
     
     ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
+    ## t0 for the antenna is the time at which a signal coming from the xmax position would arrive to the detector, traveling at the speed of light in the medium 
+    ## (so taking into account the average index of refraction from xmax to the antenna).
+    ## this time is measured in shower coordinates of course, that is, time is 0 when a particle traveling at the speed of light in vaccum hits the core position    
     _t_pre: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     _t_post: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     _t_bin_size: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))    
@@ -624,12 +627,10 @@ class RawEfieldTree(MotherEventTree):
     _du_name: StdVectorList = field(default_factory=lambda: StdVectorList("string"))  # Detector Name
     ## Number of detector units in the event - basically the antennas count
     _du_count: np.ndarray = field(default_factory=lambda: np.zeros(1, np.uint32))
-
-
-        
-    _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # Time window t0
-    _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("float"))  # peak 2 peak amplitudes (x,y,z,modulus)
-
+    # Time window t0        
+    _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float")) 
+    # peak 2 peak amplitudes (x,y,z,modulus) 
+    _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("float")) 
     ## X position in shower referential
     _du_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
     ## Y position in shower referential

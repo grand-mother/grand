@@ -346,16 +346,12 @@ def rawefield2grandroot(trawefield, gt):
     gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
 
     # Generate trigger times from t0s
-    #gt.tefield.du_seconds = np.int64((trawefield.t_0 - trawefield.t_pre)/1e9)
-    #gt.tefield.du_nanoseconds = np.int64((trawefield.t_0 - trawefield.t_pre)-np.array(gt.tefield.du_seconds)*1e9)
-    print("this is what i have")
-
     tempseconds=np.zeros((len(trawefield.t_0)), dtype=np.int64)
     tempseconds[:]=gt.tshowersim.event_seconds
-    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0 - trawefield.t_pre)    
+    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0)    
     #rolling over the nanoseconds    
-    maskplus= gt.tshowersim.event_nanoseconds + trawefield.t_0 - trawefield.t_pre>=1e9
-    maskminus= gt.tshowersim.event_nanoseconds + trawefield.t_0 - trawefield.t_pre<0
+    maskplus= gt.tshowersim.event_nanoseconds + trawefield.t_0 >=1e9
+    maskminus= gt.tshowersim.event_nanoseconds + trawefield.t_0 <0
     tempnanoseconds[maskplus]-=np.int64(1e9)
     tempseconds[maskplus]+=np.int64(1)   
     tempnanoseconds[maskminus]+=np.int64(1e9)
