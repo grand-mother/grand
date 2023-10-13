@@ -431,11 +431,20 @@ def CoreasToRawRoot(path):
     trace_y = efield[:,2]
     trace_z = efield[:,3]
     
+    # define time params:
+    t_length = len(timestamp)
+    t_0 = timestamp[0] + t_length/2
+    t_pre = -t_length/2
+    t_post = t_length/2
+
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_name.append(str(antenna))
     RawEfield.du_id.append(int(antenna_IDs[index]))
 
-    RawEfield.t_0.append(timestamp[0].astype(float))
+    # store time params:
+    RawEfield.t_0.append(t_0.astype(float))
+    RawEfield.t_pre.append(t_pre.astype(float))
+    RawEfield.t_post.append(t_post.astype(float))
 
     # Traces
     RawEfield.trace_x.append(trace_x.astype(float))
