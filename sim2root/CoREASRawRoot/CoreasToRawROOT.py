@@ -376,13 +376,10 @@ def CoreasToRawRoot(path):
   
   #****** info from input files: ******
 
-  # TODO ASAP: find these values
   RefractionIndexModel = "model"
   RefractionIndexParameters = [1,1,1] # ? 
   
-  TimeWindowMin = TimeLowerBoundary # from reas
-  TimeWindowMax = TimeUpperBoundary # from reas
-  TimeBinSize   = TimeResolution    # from reas
+  TimeBinSize   = AutomaticTimeBoundaries    # from reas
 
 
   #****** load traces ******
@@ -408,8 +405,6 @@ def CoreasToRawRoot(path):
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
         
-  RawEfield.t_pre = TimeWindowMin
-  RawEfield.t_post = TimeWindowMax
   RawEfield.t_bin_size = TimeBinSize
 
   #****** fill traces ******
@@ -436,6 +431,13 @@ def CoreasToRawRoot(path):
     t_0 = timestamp[0] + t_length/2
     t_pre = -t_length/2
     t_post = t_length/2
+
+    # # timewindow min and max vary for each trace
+    # TimeWindowMin = timestamp[0]
+    # TimeWindowMax = timestamp[:-1]
+
+    # RawEfield.TimeWindowMin.append(TimeWindowMin)
+    # RawEfield.TimeWindowMax.append(TimeWindowMax)
 
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_name.append(str(antenna))
@@ -466,7 +468,7 @@ def CoreasToRawRoot(path):
   #############################################################
   
   # store all leftover information here
-  SimCoreasShower.AutomaticTimeBoundaries = AutomaticTimeBoundaries
+  SimCoreasShower.TimeResolution = TimeResolution
   SimCoreasShower.ResolutionReductionScale = ResolutionReductionScale
   SimCoreasShower.GroundLevelRefractiveIndex = GroundLevelRefractiveIndex
   SimCoreasShower.GPSSecs = GPSSecs
