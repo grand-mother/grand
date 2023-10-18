@@ -134,7 +134,7 @@ def CoreasToRawRoot(path):
   CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") * 100 # convert to m
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
-  TimeResolution = read_params(reas_input, "TimeResolution")
+  TimeResolution = read_params(reas_input, "TimeResolution") * 10**9 #convert to ns
   # TODO: add a check here to see if timeboundaries are auto or not
   AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
   TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
