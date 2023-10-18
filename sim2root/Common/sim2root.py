@@ -171,7 +171,8 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.t_pre = trawefield.t_pre
     gt.trunefieldsim.t_post = trawefield.t_post
     # ToDo: shouldn't this and above be created for every DU in sims?
-    gt.trun.t_bin_size = [trawefield.t_bin_size*1e9]*len(du_ids)
+    # gt.trun.t_bin_size = [trawefield.t_bin_size*1e9]*len(du_ids)
+    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
 
 
 # Convert the RawShowerTree entries
