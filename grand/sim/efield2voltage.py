@@ -296,7 +296,7 @@ class Efield2Voltage:
         Note: Either event_idx, or both event_number and run_number must be provided.      
         """
         # update event. Provide either integer event_idx, or event_number and run_number.
-        self.get_event(event_idx, event_number, run_number) 
+        self.get_event(event_idx, event_number, run_number)
         for du_idx in range(self.nb_du):
             self.compute_voc_du(du_idx)
 
@@ -408,6 +408,11 @@ class Efield2Voltage:
             # default case: compute voltage for all DUs of all events and all runs provided in the input file.
             if (event_idx is None) and (event_number is None) and (run_number is None):
                 nb_events = len(self.events_list)
+                # If there are no events in the file, exit
+                if nb_events == 0:
+                    message = "There are no events in the file! Exiting."
+                    logger.error(message)
+                    raise Exception(message)
                 for evt_idx in range(nb_events):
                     self.compute_voltage_event(event_idx=evt_idx) # event_number and run_number is None
                     self.save_voltage(append_file)
