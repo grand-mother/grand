@@ -135,6 +135,7 @@ def CoreasToRawRoot(path):
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
   TimeResolution = read_params(reas_input, "TimeResolution")
+  # TODO: add a check here to see if timeboundaries are auto or not
   AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
   TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
   TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary") * 10**9 # convert to ns
@@ -379,7 +380,7 @@ def CoreasToRawRoot(path):
   RefractionIndexModel = "model"
   RefractionIndexParameters = [1,1,1] # ? 
   
-  TimeBinSize   = AutomaticTimeBoundaries    # from reas
+  TimeBinSize   = TimeResolution    # from reas
 
 
   #****** load traces ******
@@ -468,7 +469,7 @@ def CoreasToRawRoot(path):
   #############################################################
   
   # store all leftover information here
-  SimCoreasShower.TimeResolution = TimeResolution
+  SimCoreasShower.AutomaticTimeBoundaries = AutomaticTimeBoundaries
   SimCoreasShower.ResolutionReductionScale = ResolutionReductionScale
   SimCoreasShower.GroundLevelRefractiveIndex = GroundLevelRefractiveIndex
   SimCoreasShower.GPSSecs = GPSSecs
