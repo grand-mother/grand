@@ -443,8 +443,8 @@ def CoreasToRawRoot(path):
 
     # store time params:
     RawEfield.t_0.append(t_0.astype(float))
-    RawEfield.t_pre.append(t_pre.astype(float))
-    RawEfield.t_post.append(t_post.astype(float))
+    RawEfield.t_pre = t_pre
+    RawEfield.t_post = t_post
 
     # Traces
     RawEfield.trace_x.append(trace_x.astype(float))
