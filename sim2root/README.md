@@ -27,7 +27,7 @@ Here we have the scripts to produce _RawRoot_ files from CoREAS simulations.
 
 To run the script on the provided example event just go to the CoREASRawRoot/ directory and do
 
-`python3 CoreasToRawROOT.py 000004/`
+`python3 CoreasToRawROOT.py GP13_000004/`
 
 Alternatively, you can specify any other directory including a full CoREAS simulation.
 
