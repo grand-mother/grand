@@ -157,7 +157,7 @@ def CoreasToRawRoot(path):
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
     DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
     DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
-    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") # in Gauss -> TODO: change to mT
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10**-1 # convert from Gauss to mT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
