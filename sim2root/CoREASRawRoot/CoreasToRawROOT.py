@@ -135,10 +135,10 @@ def CoreasToRawRoot(path):
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
   TimeResolution = read_params(reas_input, "TimeResolution")
-  AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries")
-  TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary")
-  TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary")
-  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale")
+  AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
+  TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
+  TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary") * 10**9 # convert to ns
+  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale") * 100 # convert to m
 
   GroundLevelRefractiveIndex = read_params(reas_input, "GroundLevelRefractiveIndex") # refractive index at 0m asl
 
