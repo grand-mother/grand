@@ -1,11 +1,13 @@
+import time
 import psycopg2
 import psycopg2.extras
 from sshtunnel import SSHTunnelForwarder
 import numpy
-import grand.io.root_trees
+import grand.dataio.root_trees
 import re
 import granddb.rootdblib as rdb
 from sqlalchemy import create_engine
+from sqlalchemy import exc
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import func
@@ -13,7 +15,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects import postgresql
 import grand.manage_log as mlg
-
+import ROOT
 logger = mlg.get_logger_for_script(__name__)
 mlg.create_output_for_logger("debug", log_stdout=False)
 
@@ -32,7 +34,7 @@ def casttodb(value):
             value = value.item()
         else:
             value = value.tolist()
-    if isinstance(value, grand.io.root_trees.StdVectorList):
+    if isinstance(value, grand.dataio.root_trees.StdVectorList):
         value = [i for i in value]
     if isinstance(value, str):
         value = value.strip().strip('\t').strip('\n')
@@ -248,7 +250,6 @@ class Database:
                 idfk = int(getattr(container, 'id_' + table))
             else:
                 idfk = int(ret[0][0])
-
         return idfk
 
     ## @brief Function to register a repository (if necessary) in the database.
@@ -264,13 +265,13 @@ class Database:
                                                    ).filter_by(id_repository=id_repository,
                                                                id_protocol=id_protocol).first()
         if repo_access is not None:
-            if set(repo_access.path) == set(path):
+            if set(repo_access.paths) == set(path):
                 pass
             else:
-                repo_access.path = path
+                repo_access.paths = path
         else:
             repository_access = {'id_repository': id_repository, 'id_protocol': id_protocol, 'port': port,
-                                 'server_name': server, 'path': path}
+                                 'server_name': server, 'paths': path}
             container = self.tables()['repository_access'](**repository_access)
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
@@ -295,7 +296,7 @@ class Database:
             #file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
             #    id_repository=id_repository).first()
             file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
-                id_repository=id_repository,path=os.path.dirname(newfilename)).first()
+                id_repository=id_repository).first()
             if file_exist_here is None:
                 # file exists in different repo. We only need to register it in the current repo
                 register_file = True
@@ -309,225 +310,159 @@ class Database:
         if register_file:
             id_provider = self.get_or_create_key('provider', 'provider', provider)
             if isnewfile:
+                #rfile = ROOT.TFile(str(filename))
+                rfile = rdb.RootFile(str(filename))
+                rfile.dataset_name()
+                #rfile.file().GetSize()
                 container = self.tables()['file'](filename=os.path.basename(newfilename),
-                                                           description='ceci est un fichier',
-                                                           original_name=os.path.basename(filename),
-                                                           id_provider=id_provider)
+                                                        description='autodesc',
+                                                        original_name=os.path.basename(filename),
+                                                        id_provider=id_provider,
+                                                        file_size=rfile.file.GetSize()
+                                                  )
                 self.sqlalchemysession.add(container)
                 self.sqlalchemysession.flush()
                 idfile = container.id_file
-            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=os.path.dirname(newfilename))
+            #container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=os.path.dirname(newfilename))
+            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=newfilename, description="")
             self.sqlalchemysession.add(container)
-            self.sqlalchemysession.flush()
+            #self.sqlalchemysession.flush()
+
         return idfile, isnewfile
 
     ## @brief Function to register (if necessary) the content of a file into the database.
     # It will first read the file and walk along datas to determine what has to be registered
     def register_filecontent(self, file, idfile):
+        #We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
+        # Ugly but no other efficient way to do (checking in the DB before insertion is too time consuming).
+        eventlist = []
         # ttrees will be a dict of trees to add. key is the tree name and value is a dict with all values for the tree.
         ttrees = {}
         #tables = {}
         rfile = rdb.RootFile(str(file))
         # We iterate over all trees
         for treename in rfile.TreeList:
+            print(treename)
             treetype = treename.split('_', 1)[0]
-            table = getattr(rfile, treetype + "ToDB")['table']
-            ttrees[treename] = {}
+            #We register only known and identified trees defined in rootdblib
+            if hasattr(rfile, treetype + "ToDB"):
+                table = getattr(rfile, treetype + "ToDB").get('table')
+                #table = getattr(rfile, treetype + "ToDB")['table']
+                ttrees[treename] = {}
 
-            # Get metadata and add file_trees record
-            print("META")
-            metatree = {}
-            tablemeta = "file_trees"
-            metatree['id_file'] = idfile
-            for meta, field in rfile.metaToDB.items():
-                #try/except to avoid stopping when metadata is not present in root file
-                try:
-                    value = casttodb(getattr(rfile.TreeList[treename], meta))
-                    if field.find('id_') >= 0:
-                        value = self.get_or_create_fk(tablemeta, field, value)
-                    metatree[field] = value
-                    print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
-                except:
-                    pass
-            #Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
-            metatree['tree_name']=treename
-            container = self.tables()[tablemeta](**metatree)
-            self.sqlalchemysession.add(container)
-            self.sqlalchemysession.flush()
+                # Get metadata and add file_content record
+                metatree = {}
+                tablemeta = "file_content"
+                metatree['id_file'] = idfile
+                for meta, field in rfile.metaToDB.items():
+                    #try/except to avoid stopping when metadata is not present in root file
+                    try:
+                        value = casttodb(getattr(rfile.TreeList[treename], meta))
+                        if field.find('id_') >= 0:
+                            value = self.get_or_create_fk(tablemeta, field, value)
+                        if field == "comment":
+                            field = "comments"
+                        metatree[field] = value
+                        #print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
+                    except:
+                        pass
+                #Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
+                metatree['tree_name'] = treename
+                container = self.tables()[tablemeta](**metatree)
+                self.sqlalchemysession.add(container)
+                #self.sqlalchemysession.flush()
+                # If table not defined in rootdblib for this tree then no content to record.
+                st = time.time()
+                if table is not None:
+                    if treetype in rfile.EventTrees:
+                        # For events we iterates over event_number and run_number
+                        for event, run in rfile.TreeList[treename].get_list_of_events():
+                            #MOVE TEST eventlist her to avoid reading for nothing
 
-            if treetype in rfile.EventTrees:
+                            if ((table != "events") or ([run,event] not in eventlist)):
+                                if table == "events":
+                                    eventlist.append([run,event])
 
-                # For events we iterates over event_number and run_number
-                for event, run in rfile.TreeList[treename].get_list_of_events():
-                    if not (run, event) in ttrees[treename]:
-                        ttrees[treename][(run, event)] = {}
+                                if not (run, event) in ttrees[treename]:
+                                    ttrees[treename][(run, event)] = {}
+                                rfile.TreeList[treename].get_event(event, run)
+                                for param, field in getattr(rfile, treetype + "ToDB").items():
+                                    if param != "table":
+                                        value = casttodb(getattr(rfile.TreeList[treename], param))
+                                        # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
+                                        if field.startswith('id_') :
+                                            value = self.get_or_create_fk(table, field, value)
+                                        ttrees[treename][(run, event)][field] = value
+                                    else:
+                                        ttrees[treename][(run, event)]['id_file'] = idfile
+                                        ttrees[treename][(run, event)]['tree_name'] = treename
 
-                    rfile.TreeList[treename].get_event(event, run)
-                    for param, field in getattr(rfile, treetype + "ToDB").items():
-                        if param != "table":
-                            value = casttodb(getattr(rfile.TreeList[treename], param))
-                            # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
-                            if field.startswith('id_') :
-                                value = self.get_or_create_fk(table, field, value)
+                                container = self.tables()[table](**ttrees[treename][(run, event)])
+                                self.sqlalchemysession.add(container)
 
-                            ttrees[treename][(run, event)][field] = value
+                            #if table =="events":
+                            #    if [run,event] not in eventlist:
+                            #        eventlist.append([run,event])
+                            #        self.sqlalchemysession.add(container)
 
-                        else:
-                            ttrees[treename][(run, event)]['id_file'] = idfile
-                            ttrees[treename][(run, event)]['tree_name'] = treename
-
-                    container = self.tables()[table](**ttrees[treename][(run, event)])
-                    self.sqlalchemysession.add(container)
-                    self.sqlalchemysession.flush()
-
-            # For runs we iterates over run_number
-            elif treename in rfile.RunTrees:
-                for run in rfile.TreeList[treename].get_list_of_runs():
-                    if run not in ttrees[treename]:
-                        ttrees[treename][run] = {}
-
-                    rfile.TreeList[treename].get_run(run)
-                    for param, field in getattr(rfile, treename + "ToDB").items():
-                        if param != "table":
-                            try:
-                                value = casttodb(getattr(rfile.TreeList[treename], param))
-                                # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
-                                if field.startswith('id_') :
-                                    value = self.get_or_create_fk(table, field, value)
-
-                                ttrees[treename][run][field] = value
-
-                            except:
-                                logger.warning(f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
-                        else:
-                            ttrees[treename][run]['id_file'] = idfile
-                            ttrees[treename][run]['tree_name'] = treename
-
-                    container = self.tables()[table](**ttrees[treename][run])
-                    self.sqlalchemysession.add(container)
-                    self.sqlalchemysession.flush()
-
-
-
-#TODO: Get metadata and add file_trees
-    def old_register_filecontent(self, file, idfile):
-        tables = {}
-        rfile = rdb.RootFile(str(file))
-
-        for treename in rfile.TreeList:
-            table = getattr(rfile, treename + "ToDB")['table']
-            if table not in tables:
-                tables[table] = {}
-
-            # For events we iterates over event_number and run_number "teventshowerzhaires"-> pb: previously in event, but now in run !
-            if treename in ["teventefield", "teventshowersimdata",  "teventshower","teventvoltage",
-                            "tadc","trawvoltage","tvoltage","tefield","tshower","tshowersim"]:
-                for event, run in rfile.TreeList[treename].get_list_of_events():
-                    if not (run, event) in tables[table]:
-                        tables[table][(run, event)] = {}
-
-                    rfile.TreeList[treename].get_event(event, run)
-                    for param, field in getattr(rfile, treename + "ToDB").items():
-                        if param != "table":
-                            value = casttodb(getattr(rfile.TreeList[treename], param))
-                            if field.find('id_') >= 0:
-                                value = self.get_or_create_fk('event', field, value)
-
-                            tables[table][(run, event)][field] = value
-
-                            #if param == "du_id":
-                            #    print("run=" + str(run) + "event=" + str(event) + param + str(getattr(rfile.TreeList[treename], param)))
-                            #    tables[table][(run, event)].setdefault(field,[]).append(value)
                             #else:
-                            #    tables[table][(run, event)][field] = value
+                            #    self.sqlalchemysession.add(container)
 
-            # For runs we iterates over run_number
-            elif treename in ["trun", "trunefieldsimdata","trunvoltage","trunefieldsim","trunshowersim","trunnoise"]:
-                for run in rfile.TreeList[treename].get_list_of_runs():
-                    if run not in tables[table]:
-                        tables[table][run] = {}
-                    rfile.TreeList[treename].get_run(run)
-                    for param, field in getattr(rfile, treename + "ToDB").items():
-                        if param != "table":
-                            try:
-                                value = casttodb(getattr(rfile.TreeList[treename], param))
-                                if field.find('id_') >= 0:
-                                    value = self.get_or_create_fk('run', field, value)
-                                tables[table][run][field] = value
-                            except:
-                                logger.warning(f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
+                            #try:
+                            #    self.sqlalchemysession.add(container)
+                            #    self.sqlalchemysession.flush()
+                            #except :
+                            #    print("error 1")
 
-        # insert runs first, get id_run and update events before inserting event !
-        for r in tables['run']:
-            container = self.tables()['run'](**tables['run'][r])
-            self.sqlalchemysession.add(container)
-            self.sqlalchemysession.flush()
-            # update id_run in events
-            novalidevents = []
-            for e in tables['event']:
-                if e[0] == int(container.run_number):
-                    tables['event'][e]['id_run'] = container.id_run
-                else:
-                    # event has no run associated !
-                    # We will not register the event and have to remove this event from the list
-                    print("no valid")
-                    novalidevents.append(e)
-            # We will not register the events with no run and have to remove them from the list !
-            # But maybe better to let the program crash (thus comment the next two lines) !!!
-            # for e in novalidevents:
-            #    del tables['event'][e]
+                            #self.sqlalchemysession.add(container)
+                            #self.sqlalchemysession.flush()
+                            #filt = {}
+                            #filt["run_number"] = str(casttodb(run))
+                            #filt["event_number"] = str(casttodb(event))
+                            #filt["id_file"] = str(casttodb(idfile))
+                            #ret = self.sqlalchemysession.query(self._tables[table]).filter_by(**filt).exists()
+                            #if ret == 0 :
+                            #    self.sqlalchemysession.add(container)
+                            #else:
+                            #    print("UPDATE ?")
+                        #self.sqlalchemysession.flush()
+                        #print(container.id_treename)
+                        #idtree = "id_"+treename
 
-        for e in tables['event']:
-            container = self.tables()['event'](**tables['event'][e])
-            self.sqlalchemysession.add(container)
-            self.sqlalchemysession.flush()
-            tables['event'][e]['id_event'] = container.id_event
+                    # For runs we iterates over run_number
+                    elif treename in rfile.RunTrees:
+                        for run in rfile.TreeList[treename].get_list_of_runs():
+                            if run not in ttrees[treename]:
+                                ttrees[treename][run] = {}
 
-        ## Add file contains
-        for e in tables['event']:
-            container = self.tables()['file_contains'](id_file=idfile, id_run=tables['event'][e]['id_run'],
-                                                                id_event=tables['event'][e]['id_event'])
-            self.sqlalchemysession.add(container)
-            self.sqlalchemysession.flush()
+                            rfile.TreeList[treename].get_run(run)
+                            for param, field in getattr(rfile, treename + "ToDB").items():
+                                if param != "table":
+                                    try:
+                                        value = casttodb(getattr(rfile.TreeList[treename], param))
+                                        # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
+                                        if field.startswith('id_'):
+                                            value = self.get_or_create_fk(table, field, value)
+                                        ttrees[treename][run][field] = value
+                                    except:
+                                        logger.warning(f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
+                                else:
+                                    ttrees[treename][run]['id_file'] = idfile
+                                    ttrees[treename][run]['tree_name'] = treename
 
-        # What if runs without events ? Maybe we should add it to file_contains ? But id_event is primary_key !
-        # So the next lines cannot work !
-        # eventsruns = list(set(tup[0] for tup in [*tables['event']]))
-        # for r in tables['run']:
-        #    if tables['run'][r]['id_run'] not in eventsruns:
-        #        container = dm.database().tables()['file_contains'](id_file=idfile, id_run=tables['run'][r]['id_run'], id_event=None)
-        #        dm.database().sqlalchemysession.add(container)
-        #        dm.database().sqlalchemysession.flush()
+                            container = self.tables()[table](**ttrees[treename][run])
+                            self.sqlalchemysession.add(container)
+                        #self.sqlalchemysession.flush()
+
+                        #print(container.id_treename)
+                        #idtree = "id_"+treename
+                et = time.time()
+                elapsed_time = et - st
+                print('Execution time:', elapsed_time, 'seconds')
+
 
     def register_file(self, orgfilename, newfilename, id_repository, provider):
         idfile, read_file = self.register_filename(orgfilename, newfilename, id_repository, provider)
-
-        ## REMOVE ##
-        rfile = rdb.RootFile(str(orgfilename))
-        gfile = grand.io.root_trees.DataFile(str(orgfilename))
-        print("--- list")
-        print(str(gfile.list_of_trees))
-        print("--- dict")
-        print(str(gfile.dict_of_trees))
-        print("--- iterate list")
-        for tre in gfile.list_of_trees:
-            print(str(tre))
-
-        print("--- iterate dict")
-        for tre in gfile.dict_of_trees:
-            print(str(tre))
-            tretype = tre.split('_', 1)[0]
-            print(str(gfile.get_tree_info(tretype)))
-
-        #print(str(gfile.tree_types))
-        print("xx")
-        for key1 in gfile.tree_types['TRawVoltage'].keys():
-            print(str(key1))
-        print("---")
-        for treename in rfile.TreeList:
-            print(treename)
-        print("--- end ---")
-        ## END REMOVE ##
         if read_file:
             #We read the localfile and not the remote one
             self.register_filecontent(orgfilename,idfile)
