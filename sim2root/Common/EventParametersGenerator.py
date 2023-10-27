@@ -3,7 +3,7 @@ import numpy as np
 import raw_root_trees as RawTrees
       
 #Author: Matias Tueros, with ChatGP3 help for documentation and error handling. it was Mar 24th 2023 in Barracas, Buenos Aires, Argentina
-def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, CorePosition, ArrayName, EventWeight=1, EventUnixTime=0, EventUnixNanosecond=0, OutMode="a", TestedPositions="None"):
+def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, CorePosition, ArrayName, EventWeight=1, EventUnixTime=200854852, EventUnixNanosecond=0, OutMode="a", TestedPositions="None"):
     '''
     The function generates an event parameters file in a specific format for use in simulation programs. 
     The file includes information such as the event name, primary particle, energy, zenith and azimuth angles, core position, 
@@ -24,8 +24,8 @@ def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, Cor
     - CorePosition (tuple): The (x,y,z) coordinates of the core position in meters.
     - ArrayName (str): The name of the array used for the simulation.
     - EventWeight (float,optional): The statistical weight of the event. Default is 1
-    - EventUnixTime (unisgned int, optional): The event time in seconds since EPOCH. Default is 0
-    - EventUnixTime (unisgned int, optional): The nanoseconds in the event second since EPOCH. Default is 0    
+    - EventUnixTime (unisgned int, optional): The event time in seconds since EPOCH. Default is my birthday
+    - EventUnixNanosecond (unisgned int, optional): The nanoseconds in the event nanosecond since EPOCH. Default is 0    
     - OutMode (str, optional): The mode for opening the output file. Default is "a" for append mode.
     - TestedPositions (list of tuples, optional): A list of (x,y,z) tuples representing tested core positions.
     

@@ -349,7 +349,7 @@ def rawefield2grandroot(trawefield, gt):
     # Generate trigger times from t0s
     tempseconds=np.zeros((len(trawefield.t_0)), dtype=np.int64)
     tempseconds[:]=gt.tshowersim.event_seconds
-    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0)    
+    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0)
     #rolling over the nanoseconds    
     maskplus= gt.tshowersim.event_nanoseconds + trawefield.t_0 >=1e9
     maskminus= gt.tshowersim.event_nanoseconds + trawefield.t_0 <0
@@ -367,9 +367,13 @@ def rawmeta2grandroot(trawmeta, gt):
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
     #event time    
-    gt.tshower.core_time_s = trawmeta.unix_second              #this will be filled by the reconstruction of the core position eventually?
+    if(trawmeta.unix_second>0):
+      gt.tshower.core_time_s = trawmeta.unix_second              #this will be filled by the reconstruction of the core position eventually?
+      gt.tshowersim.event_seconds = trawmeta.unix_second
+    else:
+      gt.tshower.core_time_s = 200854852
+      gt.tshowersim.event_seconds = 200854852
     gt.tshower.core_time_ns = trawmeta.unix_nanosecond         #this will be filled by the reconstruction of the core position eventually?
-    gt.tshowersim.event_seconds = trawmeta.unix_second
     gt.tshowersim.event_nanoseconds = trawmeta.unix_nanosecond
     
     
