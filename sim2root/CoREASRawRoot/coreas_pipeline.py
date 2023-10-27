@@ -57,7 +57,7 @@ if __name__ == '__main__':
                 'python3', 'CoreasToRawROOT.py', '-d', str(options.directory)
             ]
             subprocess.run(CoreasToRawROOT, check=True)
-            print(f"Created Coreas_Run_{simID}.root")
+            print(f"Created Coreas_{simID}.root")
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting from RawRoot to GRANDroot format...")
@@ -65,10 +65,10 @@ if __name__ == '__main__':
             # Run sim2root.py
             print("executing sim2root.py")
             sim2root = [
-                'python3', '../Common/sim2root.py', f"Coreas_Run_{simID}.root"
+                'python3', '../Common/sim2root.py', f"Coreas_{simID}.root"
             ]
             subprocess.run(sim2root, check=True)
-            print(f"Created gr_Coreas_Run_{simID}.root")
+            print(f"Created gr_Coreas_{simID}.root")
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
@@ -76,11 +76,11 @@ if __name__ == '__main__':
             print("executing convert_efield2voltage.py")
             # Run convert_efield2voltage.py
             sim2root = [
-                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_Run_{simID}.root",\
-                f"-o {options.output}efield_gr_Coreas_Run_{simID}.root"
+                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_{simID}.root",\
+                f"-o {options.output}efield_gr_Coreas_{simID}.root"
             ]
             subprocess.run(sim2root, check=True)
-            print(f"Created efield_gr_Coreas_Run_{simID}.root")
+            print(f"Created efield_gr_Coreas_{simID}.root")
             print("********************************")
             pass
 
