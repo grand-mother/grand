@@ -4,6 +4,7 @@ from optparse import OptionParser
 import glob
 from CorsikaInfoFuncs import read_params
 import sys
+import re
 
 parser = OptionParser()
 parser.add_option("--directory", "--dir", "-d", type="str",
@@ -30,11 +31,16 @@ if __name__ == '__main__':
         # loop over all reas files
 
         for reas_file in available_reas_files:
+            shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
+            if shower_match:
+                simID = shower_match.group(1)
+                print(f"run number: {simID}")
+            else:
+                print(f"No simID found for {reas_file}. Please check your input and try again.")
+                sys.exit()
             print("********************************")
             print(f"Now analyzing {reas_file}")
-            # get run number from inp file:
-            simID = int(read_params(reas_file.split(".reas")[0] + ".inp", "RUNNR"))
-            print(f"run number: {simID}")
+            
             # get zenith from inp file:
             zenith = int(read_params(reas_file.split(".reas")[0] + ".inp", "THETAP"))
             print(f"Zenith: {zenith} degrees")
@@ -47,7 +53,7 @@ if __name__ == '__main__':
 
             # Run CoreasToRawROOT.py
             CoreasToRawROOT = [
-                'python3', 'CoreasToRawROOT.py', str(options.directory)
+                'python3', 'CoreasToRawROOT.py', '-d', str(options.directory)
             ]
             subprocess.run(CoreasToRawROOT, check=True)
             print(f"Created Coreas_Run_{simID}.root")
