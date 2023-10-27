@@ -3,6 +3,7 @@ import subprocess
 from optparse import OptionParser
 import glob
 from CorsikaInfoFuncs import read_params
+import sys
 
 parser = OptionParser()
 parser.add_option("--directory", "--dir", "-d", type="str",
@@ -16,25 +17,29 @@ parser.add_option("--output", "--out", "-o", type="str",
 
 if __name__ == '__main__':
     if options.directory:
-        print(f"Searching directory {options.directory} for .reas files")
-        # find .reas files with glob
-        reas_names = glob.glob(options.directory + "/SIM??????.reas")
-        # use ** if you want to go through all subdirectories, use * if you want to go only one level deeper
-        print(f"Found {len(reas_names)} shower(s)")
-        print(reas_names)
+        path = f"{options.directory}/"
+        # find reas files in directory
+        if glob.glob(path + "SIM??????.reas"):
+            available_reas_files = glob.glob(path + "SIM??????.reas")
+        else:
+            print("No showers found. Please check your input and try again.")
+            sys.exit()
+        
+        print(f"Found {len(available_reas_files)} shower(s)")
+        print(available_reas_files)
         # loop over all reas files
 
-        for reas_filename in reas_names:
+        for reas_file in available_reas_files:
             print("********************************")
-            print(f"Now analyzing {reas_filename}")
+            print(f"Now analyzing {reas_file}")
             # get run number from inp file:
-            simID = int(read_params(reas_filename.split(".reas")[0] + ".inp", "RUNNR"))
+            simID = int(read_params(reas_file.split(".reas")[0] + ".inp", "RUNNR"))
             print(f"run number: {simID}")
             # get zenith from inp file:
-            zenith = int(read_params(reas_filename.split(".reas")[0] + ".inp", "THETAP"))
+            zenith = int(read_params(reas_file.split(".reas")[0] + ".inp", "THETAP"))
             print(f"Zenith: {zenith} degrees")
             # get obslevel from reas file:
-            obslevel = int(read_params(reas_filename, "CoreCoordinateVertical")) / 100 # from cm to m
+            obslevel = int(read_params(reas_file, "CoreCoordinateVertical")) / 100 # from cm to m
             print(f"Observation level: {obslevel} meters")
             
             print("* - * - * - * - * - * - * - * - * - *")
