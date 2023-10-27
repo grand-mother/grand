@@ -52,6 +52,7 @@ if __name__ == '__main__':
             print(f"Converting Coreas Simulation {simID} to RawRoot format...")
 
             # Run CoreasToRawROOT.py
+            print("executing CoreasToRawROOT.py")
             CoreasToRawROOT = [
                 'python3', 'CoreasToRawROOT.py', '-d', str(options.directory)
             ]
@@ -62,6 +63,7 @@ if __name__ == '__main__':
             print(f"Converting from RawRoot to GRANDroot format...")
 
             # Run sim2root.py
+            print("executing sim2root.py")
             sim2root = [
                 'python3', '../Common/sim2root.py', f"Coreas_Run_{simID}.root"
             ]
@@ -71,6 +73,7 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
 
+            print("executing convert_efield2voltage.py")
             # Run convert_efield2voltage.py
             sim2root = [
                 'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_Run_{simID}.root",\
