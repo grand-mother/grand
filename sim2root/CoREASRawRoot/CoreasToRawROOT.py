@@ -119,8 +119,9 @@ def CoreasToRawRoot(file, simID=None):
 
   RunID = int(read_params(reas_input, "RunNumber"))
   EventID = int(read_params(reas_input, "EventNumber"))
-  GPSSecs = read_params(reas_input, "GPSSecs")
-  GPSNanoSecs = read_params(reas_input, "GPSNanoSecs")
+  print("[WARNING] dummy values for GPSSecs and GPSNanoSecs")
+  GPSSecs = 1996#read_params(reas_input, "GPSSecs")
+  GPSNanoSecs = 19961026#read_params(reas_input, "GPSNanoSecs")
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
   if read_params(reas_input, "ShowerZenithAngle"):
@@ -486,6 +487,7 @@ if __name__ == "__main__":
         shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
         if shower_match:
             simID = shower_match.group(1)
+            print(f"run number: {simID}")
         else:
             print(f"No simID found for {reas_file}. Please check your input and try again.")
             sys.exit()
