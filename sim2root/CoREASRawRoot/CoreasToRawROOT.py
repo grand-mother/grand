@@ -475,21 +475,21 @@ if __name__ == "__main__":
   if options.directory:
     path = f"{options.directory}/"
     # find reas files in directory
-    if glob.glob(path + "SIM??????-*.reas"):
-        available_reas_files = glob.glob(path + "SIM??????-*.reas") # these are from parallel runs - I will mostly have these
+    if glob.glob(path + "SIM??????.reas"):
+        available_reas_files = glob.glob(path + "SIM??????.reas")
     else:
-        available_reas_files = glob.glob(path + "SIM??????.reas") # these are from normal runs
+        print("No showers found. Please check your input and try again.")
+        sys.exit()
     
     # get simIDs from the found reas files
-    shower_match = re.search(r'SIM(\d{6})\.reas', available_reas_files)
-    if shower_match:
-      simID = shower_match.group(1)
-    else:
-      print("No showers found. Please check your input and try again.")
-      sys.exit()
-    # run the script
-    for file in available_reas_files:
-      CoreasToRawRoot(file, simID)
+    for reas_file in available_reas_files:
+        shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
+        if shower_match:
+            simID = shower_match.group(1)
+        else:
+            print(f"No simID found for {reas_file}. Please check your input and try again.")
+            sys.exit()
+        CoreasToRawRoot(reas_file, simID)
 
   # * # * # * # * # * # * # * # * # * # *
   # convert a single shower
