@@ -40,21 +40,29 @@ def CoreasToRawRoot(file, simID=None):
   # ********** load SIM.reas **********
   # load reas file
   reas_input = file
+  print(f"Found {file}")
 
   # ********** load RUN.inp **********
   # find inp file
   # inp files can be named with SIM or RUN, so we will search for both
   if glob.glob(f"{path}/SIM{simID}.inp"):
     inp_input = f"{path}/SIM{simID}.inp"
+    print(f"Found {inp_input}")
   elif glob.glob(f"{path}/RUN{simID}.inp"):
     inp_input = f"{path}/RUN{simID}.inp"
+    print(f"Found {inp_input}")
   else:
      sys.exit("No input file found. Please check path and filename and try again.")
 
   # ********** load traces **********
   print("Checking subdirectories for *.dat files (traces).")
-  available_traces = glob.glob("{path}/SIM{simID}_coreas/*.dat")
-  print("Found", len(available_traces), "*.dat files (traces).")
+  available_traces = glob.glob(f"{path}/SIM{simID}_coreas/*.dat")
+  if len(available_traces) == 0:
+    print("No traces found. Please check path and try again.")
+    sys.exit()
+  else:
+    print("Found", len(available_traces), "*.dat files (traces).")
+     
   print("*****************************************")
   # in each dat file:
   # time stamp and the north-, west-, and vertical component of the electric field
@@ -117,7 +125,7 @@ def CoreasToRawRoot(file, simID=None):
 
   GroundLevelRefractiveIndex = read_params(reas_input, "GroundLevelRefractiveIndex") # refractive index at 0m asl
 
-  RunID = int(read_params(reas_input, "RunNumber"))
+  RunID = simID
   EventID = int(read_params(reas_input, "EventNumber"))
   print("[WARNING] dummy values for GPSSecs and GPSNanoSecs")
   GPSSecs = 1996#read_params(reas_input, "GPSSecs")
@@ -229,11 +237,6 @@ def CoreasToRawRoot(file, simID=None):
   EnergyInNeutrinos = 1. # placeholder
   # + energy in all other particles
 
-  if EventID == 1:
-     FileName = "Run_" + str(RunID)   
-  else: 
-     FileName = "Event_" + str(EventID)
-
   AtmosphericModel = read_atmos(inp_input)
   Date = read_date(inp_input)
   t1 = time.strptime(Date.strip(),"%Y-%m-%d")
@@ -253,7 +256,7 @@ def CoreasToRawRoot(file, simID=None):
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + FileName +".root"
+  OutputFileName = "Coreas_" + RunID +".root"
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -264,7 +267,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.run_number = RunID
   RawShower.sim_name = coreas_version
   RawShower.event_number = EventID
-  RawShower.event_name = FileName
+  RawShower.event_name = RunID
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
 
@@ -464,9 +467,9 @@ def CoreasToRawRoot(file, simID=None):
   SimCoreasShower.write()
   #############################################################
 
-  print("### The event written is", FileName, "###")
+  print("### The event written is", RunID, "###")
   print("### The name of the file is ", OutputFileName, "###")
-  return FileName
+  return RunID
 
 
 
