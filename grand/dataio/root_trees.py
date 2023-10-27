@@ -128,33 +128,40 @@ class StdVectorList(MutableSequence):
 
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
-        # function modified by Jelena to fix the negative issue, use at own risk
-        if isinstance(value, (list, np.ndarray)):
-            # Use signed integer types to allow for negative values
-            signed_type = 'l' if self.basic_vec_type.split()[-1] == "int" else self.basic_vec_type
-            if self.ndim == 1:
-                value = array.array(signed_type, value)
-            if self.ndim == 2:
-                value = [array.array(signed_type, el) for el in value]
-            if self.ndim == 3:
-                value = [[array.array(signed_type, el1) for el1 in el] for el in value]
-        else:
-            value = list(value)
-
-        # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+    # function modified by Jelena to fix the negative issue, use at own risk
         try:
-            self._vector += value
-        except TypeError:
-            # Slow conversion to simple types. No better idea for now
-            if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+            if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
+                if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+            else:
+                value = list(value)
+
+            # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+            try:
+                self._vector += value
+            except TypeError:
+                # Slow conversion to simple types. No better idea for now
+                if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                    if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                    if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                    if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+
+                self._vector += value
+
+        except OverflowError:
+            # Handle the OverflowError here, e.g., by logging a message or taking an appropriate action.
+            if isinstance(value, (list, np.ndarray)):
+                # Use signed integer types to allow for negative values
+                signed_type = 'l' if self.basic_vec_type.split()[-1] == "int" else self.basic_vec_type
                 if self.ndim == 1:
                     value = array.array(signed_type, value)
                 if self.ndim == 2:
                     value = [array.array(signed_type, el) for el in value]
                 if self.ndim == 3:
                     value = [[array.array(signed_type, el1) for el1 in el] for el in value]
-
-            self._vector += value
+            else:
+                value = list(value)
 
         return self
 
