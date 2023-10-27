@@ -23,16 +23,13 @@ if __name__ == '__main__':
         print(f"Found {len(reas_names)} shower(s)")
         print(reas_names)
         # loop over all reas files
-        #! currently CoreasToRawROOT only takes one shower per directory
-        
-
 
         for reas_filename in reas_names:
             print("********************************")
             print(f"Now analyzing {reas_filename}")
             # get run number from inp file:
-            runID = int(read_params(reas_filename.split(".reas")[0] + ".inp", "RUNNR"))
-            print(f"run number: {runID}")
+            simID = int(read_params(reas_filename.split(".reas")[0] + ".inp", "RUNNR"))
+            print(f"run number: {simID}")
             # get zenith from inp file:
             zenith = int(read_params(reas_filename.split(".reas")[0] + ".inp", "THETAP"))
             print(f"Zenith: {zenith} degrees")
@@ -41,35 +38,35 @@ if __name__ == '__main__':
             print(f"Observation level: {obslevel} meters")
             
             print("* - * - * - * - * - * - * - * - * - *")
-            print(f"Converting Coreas Simulation {runID} to RawRoot format...")
+            print(f"Converting Coreas Simulation {simID} to RawRoot format...")
 
             # Run CoreasToRawROOT.py
             CoreasToRawROOT = [
                 'python3', 'CoreasToRawROOT.py', str(options.directory)
             ]
             subprocess.run(CoreasToRawROOT, check=True)
-            print(f"Created Coreas_Run_{runID}.root")
+            print(f"Created Coreas_Run_{simID}.root")
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting from RawRoot to GRANDroot format...")
 
             # Run sim2root.py
             sim2root = [
-                'python3', '../Common/sim2root.py', f"Coreas_Run_{runID}.root"
+                'python3', '../Common/sim2root.py', f"Coreas_Run_{simID}.root"
             ]
             subprocess.run(sim2root, check=True)
-            print(f"Created gr_Coreas_Run_{runID}.root")
+            print(f"Created gr_Coreas_Run_{simID}.root")
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
 
             # Run convert_efield2voltage.py
             sim2root = [
-                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_Run_{runID}.root",\
-                f"-o {options.output}efield_gr_Coreas_Run_{runID}.root"
+                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_Run_{simID}.root",\
+                f"-o {options.output}efield_gr_Coreas_Run_{simID}.root"
             ]
             subprocess.run(sim2root, check=True)
-            print(f"Created efield_gr_Coreas_Run_{runID}.root")
+            print(f"Created efield_gr_Coreas_Run_{simID}.root")
             print("********************************")
             pass
 
