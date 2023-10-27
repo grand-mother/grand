@@ -77,7 +77,7 @@ if __name__ == '__main__':
             # Run convert_efield2voltage.py
             sim2root = [
                 'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_{simID}.root",\
-                f"-o {options.output}efield_gr_Coreas_{simID}.root"
+                f"-o {options.output}/efield_gr_Coreas_{simID}.root"
             ]
             subprocess.run(sim2root, check=True)
             print(f"Created efield_gr_Coreas_{simID}.root")
