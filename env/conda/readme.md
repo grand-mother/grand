@@ -53,9 +53,11 @@ conda activate grandlib
 
 
 Initialize GRANDLIB package and GULL/TURTLE compilation, in 
-the root package, do 
+the root package, first clone the package grand
 
 ```
+git clone https://github.com/grand-mother/grand.git
+cd grand
 source env/setup.sh
 ```
 
