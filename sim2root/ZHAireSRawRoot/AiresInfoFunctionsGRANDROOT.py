@@ -35,6 +35,8 @@ import os
 import glob
 import logging
 
+logging.basicConfig(level=logging.DEBUG)
+
 #this function reads he Aires .sry file and tries to extract information from the simulation parameters
 #using the .sry file is preferred to using the .inp files because:
 #Output is standarized: you dont know what you can find in an .inp file (leading spaces, commented lines, repeated keywords, etc)
@@ -44,10 +46,10 @@ import logging
 #but it adds modularity, and closes the files when it does not use it any more.
 #If at some point we need speed, then we could input datafile, and make a wraper for opening the file
 
-AiresPath="/home/mjtueros/aires/bin"
-#AiresPath=os.environ["AIRESBINDIR"]
+#AiresPath="/home/mjtueros/aires/bin"
+AiresPath=os.environ["AIRESBINDIR"]
 #AiresPath="/home/mjtueros/AiresRepository/Dropbox/AiresBzr/Aires.19-04-04-ZHAireS-development/zhadl/bin"
-
+print("AiresPath:",AiresPath)
 def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
   try:
     datafile=open(sry_file,'r')
@@ -1467,7 +1469,8 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
         else:
             logging.error("unrecognized Slant value, please state either True/False")
             return -1
-        logging.debug("abut to run "+ cmd)         
+        logging.debug("abut to run "+ cmd)
+        print("1:",cmd)
         os.system(cmd)
         tablefile=glob.glob(Path+"/*.t"+TableNumber)
 
@@ -1487,7 +1490,7 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
         else:
             logging.error("unrecognized Slant value, please state either True/False")
             return -1
-
+        print("2:",cmd)
         os.system(cmd)
         tablefile=glob.glob("*.t"+TableNumber)
         logging.debug(tablefile)

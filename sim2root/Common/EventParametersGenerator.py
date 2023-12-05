@@ -229,7 +229,8 @@ def GetEventUnixTimeFromParametersFile(filename):
                 elif 'EventUnixNanosecond:' in line:
                     unix_ns = int(line.strip().split(':')[1])
             if( unix_time==0 and unix_ns==0):
-              print('Unix time not found in file,or was 0,0...defaulting to 0,0')            
+              print('Unix time not found in file,or was 0,0...defaulting to 200854920,0')
+              unix_time=200854920            
             return (unix_time, unix_ns)
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found")
