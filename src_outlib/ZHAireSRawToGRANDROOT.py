@@ -14,16 +14,25 @@ logging.basicConfig(level=logging.DEBUG)
 #I use this environment variable to let python know where to find it, but alternatively you just copy the AiresInfoFunctions.py file on the same dir you are using this.
 #ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
 #sys.path.append(ZHAIRESPYTHON)
+<<<<<<<< HEAD:examples/dataio/ZHAireSRawToGRANDROOT.py
+sys.path.append(".")
+import AiresInfoFunctionsGRANDROOT as AiresInfo
+import ZHAireSInputGenerator as ZHAireSGen
+from grand.dataio.root_trees import *
+#from root_trees import *
+========
 import src_outlib.AiresInfoFunctionsGRANDROOT as AiresInfo
 from grand.io.root.run import RunTree
 from grand.io.root.event.shower import *
+>>>>>>>> master:src_outlib/ZHAireSRawToGRANDROOT.py
 from copy import deepcopy
 logging.basicConfig(level=logging.INFO)	
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
-def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True):
+
+def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, EventName, InputFolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True):
     '''
-    This routine will read a ZHAireS simulation located in InputFlder and put it in the RootFileHandle. 
+    This routine will read a ZHAireS sim located in InputFlder and put it in the RootFileHandle.
     RunID is the ID of the run is going to be associated with, which should be already existing in the file.
     EventID is the ID of the Event
     
@@ -41,13 +50,13 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 	#TODO: Think about reference frame. My gut is to put everything in the SimShower and SimEfield section in shower coordinate frame. 
 	#      LWP: shouldn't it be in the Run then?. 
 	#      MJT: No...im talking about what coordinate system to use in the file.
-	# Becouse this is what was used in the input of the sims, and is what you would use if you want to
+	#      Becouse this is what was used in the input of the sims, and is what you would use if you want to
 	#      re-process the event to, for example, move it to a different site. The coordinates of things in GP300 frame should be in the RawData section and beyond. And its easier.
 	#      The conversion to "site frame" would be done at the RawEvent level or at the SimSignal level, the logic being that this requires more information than the simple input or output of ZHAIRES.
 
     logging.info("###")
     logging.info("###")
-    logging.info("### Starting with event in "+ InputFolder+" to add in "+FileName) 
+    logging.info("### Starting with event "+EventName+" in "+ InputFolder+" to add to "+FileName) 
 	
     #The function will write two main sections: ShowerSim and EfieldSim  . Shower Sim Can Optionale Store different tables.         
     SimShowerInfo=True
@@ -58,16 +67,31 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     #########################################################################################################
     #TODO: Handle when InputFolder Does not exist, or is invalid (.sry,.idf and .trace files does not exist)
  
-    idffile=glob.glob(InputFolder+"/*.idf")
+    #The directory should have 2 .sry files: one for the event run without radio to get Xmax, EventName.sry and a second one with the event with radio ArrayName_EventName.sry
+    #if everything went well, the two showers should be identical, and it makes no use to save both .idf files.
+    #it is usefull to have the 2 .sry files to check that the sims where identical.
+    #more things that could be checked: Xmax position, number of particles. 
 
-    if(len(idffile)!=1 and (NLongitudinal or ELongitudinal or NlowLongitudinal or ElowLongitudinal or EdepLongitudinal or LateralDistribution or EnergyDistribution)):
-        logging.critical("there should be one and only one idf file in the input directory!. cannot continue!")
+    sryfile=[InputFolder+"/"+EventName+".sry"]
+    
+    EventParametersFile=[InputFolder+"/"+EventName+".EventParameters"]
+
+    StoredEventName=AiresInfo.GetTaskNameFromSry(sryfile[0])
+        
+    if(EventName!=StoredEventName):
+        logging.critical("Input EventName should coincede with Aires TaskName! {} {}".format(EventName,StoredEventName))
         return -1
 
-    sryfile=glob.glob(InputFolder+"/*.sry")
+    ArrayName=ZHAireSGen.GetArrayNameFromParametersFile(EventParametersFile[0])
 
-    if(len(sryfile)!=1):
-        logging.critical("there should be one and only one sry file in the input directory!. cannot continue!")
+    idffile=[InputFolder+"/"+ArrayName+"_"+EventName+".idf"]
+    
+    sryfile=[InputFolder+"/"+ArrayName+"_"+EventName+".sry"]
+        
+    StoredEventName=AiresInfo.GetTaskNameFromSry(sryfile[0])
+
+    if(ArrayName+"_"+EventName!=StoredEventName):
+        logging.critical("Input EventName should coincede with Aires TaskName! {} {}".format(ArrayName+"_"+EventNameEventName,StoredEventName))
         return -1
 
     EventName=AiresInfo.GetTaskNameFromSry(sryfile[0])
@@ -93,12 +117,12 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     # f.SetCompressionLevel(0)
     
     # Check if the EventID is unique
-    # if not CheckIfEventIDIsUnique(EventID, f):
+    #if not CheckIfEventIDIsUnique(EventID, f):
     #     print(f"The provided EventID {EventID} is not unique. Please provide a unique one.")
     #     return -1
 
     #############################################################################################################################
-    # ShowerSimInfo (deals with the details for the simulation). This might be simulator-dependent (CoREAS has different parameters)
+    # ShowerSimInfo (deals with the details for the sim). This might be simulator-dependent (CoREAS has different parameters)
     #############################################################################################################################
     if(SimShowerInfo):
         #########################################################################################################################
@@ -119,10 +143,10 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # #print("simshower branches", SimShower)
 
         # The tree with whole Run information
-        Run = RunTree(FileName)
+        Run = TRun(FileName)
         print("NOW SIMSHOWER")
-        # The tree with general simulation-only information
-        SimShower = ShowerEventSimdataTree(FileName)
+        # The tree with general sim-only information
+        SimShower = TShowerSim(FileName)
         # The tree with ZHAireS only information
         SimZhairesShower = ShowerEventZHAireSTree(FileName)
         # print(Run.tree, SimShower.tree)
@@ -164,24 +188,20 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # Part I.1: Convert to GP300 coordinates (here is where customization comes, input specific conventions) (TODO) 
         ########################################################################################################################## 
         # I will asume X is local magnetic north. Azimuths and Zenith
-        # for sites big enough, local magnetic north can change over the array? Do we need to care for this
+        # for sites big enough, local magnetic north can change over the array? Do we need to care for this?
         
-        #TODO: Document how the core position needs to be stored in the .inp. 
+        #TODO: Document how the core position needs to be stored in the EventParametersFile. 
         #TODO  Decide coordinate system (site specific): Maybe store lat/lon and altitude of origin of coordinates, and put a cartesian there?
-        #      An incoming porblem is that zhaires on its simulations uses a fixed earth radius...so the simulation wont be 100% consistent with the "geoid" grand coordinates. 
+        #      An incoming porblem is that zhaires on its simulations uses a fixed earth radius...so the sim wont be 100% consistent with the "geoid" grand coordinates.
         # LWP: we could use Earth-centered coordinates for everything: MJT: dont really know how to handle that. Still need all the coordinate handle machinery to be developed.
 
-        if(inpfile[0]!=None):
-            CorePosition=AiresInfo.GetCorePositionFromInp(inpfile[0])
-        else:
-            CorePosition=(0,0,0)  
-        print("CorePosition:",CorePosition)
-
+        CorePosition=ZHAireSGen.GetCorePositionFromParametersFile(EventParametersFile[0])
+        
         FieldSimulator=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])
         # FieldSimulator="ZHAireS "+str(FieldSimulator)
 
         #TODO: These are ZHAireS specific parameters. Other simulators wont have these parameters, and might have others. How to handle this?
-        #Should we save the input and sry file inside the ROOT file? like a string? And parse simulation software specific parameters from there?
+        #Should we save the input and sry file inside the ROOT file? like a string? And parse sim software specific parameters from there?
         # LWP: perhaps we should have a separate tree for universal simulator parameters (that would not exist for a real experiment) and specific trees for specific simulators? But then we can forget about automatic parsing of such non-universal ttree. Perhaps some longish string in the universal simulator tree, to be parsed if anyone wants and knows how to, would be better?
         RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])
         WeightFactor=AiresInfo.GetWeightFactorFromSry(sryfile[0])
@@ -205,13 +225,13 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # _prim_inj_dir_shc: np.ndarray = np.zeros(3, np.float32)  # primary injection direction in Shower Coordinates  TODO: Support multiple primaries
         # _hadronic_model: StdVectorList("string") = StdVectorList("string")  # high energy hadronic model (and version) used TODO: standarize
         # _low_energy_model: StdVectorList("string") = StdVectorList("string")  # high energy model (and version) used TODO: standarize
-        # _cpu_time: np.ndarray = np.zeros(3, np.float32)  # Time it took for the simulation. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
+        # _cpu_time: np.ndarray = np.zeros(3, np.float32)  # Time it took for the sim. In the case shower and radio are simulated together, use TotalTime/(nant-1) as an approximation
 
         Run.run_number = RunID
         Run.site = Site
         Run.site_long = Long
         Run.site_lat = Lat
-        Run.data_source = "simulation"
+        Run.data_source = "sim"
         Run.data_generator = "ZHAireS"
         Run.data_generator_version = str(FieldSimulator)
 
@@ -252,12 +272,12 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         #TODO:gh_fit_param
         SimShower.hadronic_model = HadronicModel
         #TODO:low_energy_model
-        SimShower.cpu_time = CPUTime
+        SimShower.cpu_time = float(CPUTime)
 
-        print("Filling ShowerEventSimdataTree")
+        print("Filling TShowerSim")
         SimShower.fill()
         SimShower.write()
-        print("Wrote ShowerEventSimdataTree")
+        print("Wrote TShowerSim")
 
         # SimShower_tree.Fill()  #TODO:we might want to sumbit all the Fill Commands (or at least the Write comands) together at the end to ensure we write down to file complete records. # LWP: no problem for both. Also, there are options like AutoSave() etc., for writing, which we should consider
         # SimShower_tree.SetTreeIndex(ROOT.nullptr)
@@ -316,9 +336,9 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         # SimEfield=GRANDRoot.Setup_SimEfield_Branches(SimEfield_tree,create_branches)
         # SimEfield_Detector=GRANDRoot.Setup_SimEfieldDetector_Branches(SimEfield_tree,create_branches)      #TODO: Decide if this goes in a separate tree, or is kept inside SimEfield
 
-        Efield = EfieldEventTree(FileName)
+        Efield = TEfield(FileName)
         # Detectors = DetectorInfo(FileName)
-        EfieldRunSimdata = EfieldRunSimdataTree(FileName)
+        EfieldRunSimdata = TRunEfieldSim(FileName)
 
 	    #########################################################################################################################
         # Part I: get the information
@@ -339,7 +359,8 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         ##########################################################################################################################
         # Part I.1: Convert to GP300 coordinates (here is where customization comes, input specific conventions) (TODO) 
         ##########################################################################################################################
-        #Here Magnetic field might need to be converted to GRAND coordinates       
+        #Here Magnetic field might need to be converted to GRAND coordinates
+               
 
         ############################################################################################################################# 
         # Part II: Fill SimEfield TTree	
@@ -412,6 +433,10 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
             anty=np.array(anty, dtype=np.float32)
             antz=np.array(antz, dtype=np.float32)
             antt=np.array(antt, dtype=np.float32)
+            
+            #convert antenna positions from Core-Centered to Array-Centered. This needs carefull revision #TODO: review this
+            antx=antx+CorePosition[0]
+            anty=anty+CorePosition[1]
             #
    
            # Important remark. If we need to take into account round earth, then we will need to rotate the electric field components to go to a cartesian frame centered in the array                
@@ -431,7 +456,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
             # Find the earliest trace
             t0_min = np.min(antt)
 
-            # The start of the earliest trace: t0_min+tmin (as tmin is negative) should be the 0.0 time to which all the traces start times relate
+            # The start of the earliest trace: t0_min+tmin (as tmin is negative) should be the 0.0 time to which all the traces start times relate TODO:Check that Tmin is indeed negative!
             # Adding tmin, because it is negative
             trel = t0_min+tmin
 
@@ -501,7 +526,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
                 # ToDo: should SlopeA and SlopeB placeholders be added? Not sure, because perhaps this kind of constant geometry will be held somewhere else, as it's not measured. Unless acceleration from gps means that
 
 
-                # ToDo: at least some of the below should be filled in, but I don't know where are they stored in the simulation
+                # ToDo: at least some of the below should be filled in, but I don't know where are they stored in the sim
                 # _du_seconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
                 # ## Nanoseconds of the trigger for this DU
                 # _du_nanoseconds: StdVectorList("unsigned int") = StdVectorList("unsigned int")
@@ -579,37 +604,37 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
     if(NLongitudinal):
         #the gammas table
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteSlantDepth(HDF5handle, RunID, EventID, table.T[0])
         SimShower.SimShowerWriteNgammas(HDF5handle, RunID, EventID, table.T[1])
 
         #the eplusminus table, in vertical, to store also the vertical depth
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1205,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1205,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteVerticalDepth(HDF5handle, RunID, EventID, table.T[0])
         SimShower.SimShowerWriteNeplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the e plus (yes, the positrons)
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1006,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1006,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNeplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the mu plus mu minus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1207,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1207,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNmuplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the mu plus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1007,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1007,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNmuplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the pi plus pi munus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1211,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1211,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNpiplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the pi plus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1011,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1011,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNpiplus(HDF5handle, RunID, EventID, table.T[1])
 
         #and the all charged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1291,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1291,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNallcharged(HDF5handle, RunID, EventID, table.T[1])
 
 	##############################################################################################################################
@@ -617,51 +642,51 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 	##############################################################################################################################
     if(ELongitudinal):
         #the gammas
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1501,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1501,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEgammas(HDF5handle, RunID, EventID, table.T[1])
 
         #i call the eplusminus table, in vertical, to store also the vertical depth
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1705,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1705,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEeplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the mu plus mu minus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1707,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1707,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEmuplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the pi plus pi minus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1711,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1711,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEpiplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the k plus k minus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1713,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1713,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEkplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the neutrons
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1521,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1521,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEneutrons(HDF5handle, RunID, EventID, table.T[1])
 
         #the protons
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1522,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1522,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEprotons(HDF5handle, RunID, EventID, table.T[1])
 
         #the anti-protons
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1523,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1523,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEpbar(HDF5handle, RunID, EventID, table.T[1])
 
         #the nuclei
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1541,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1541,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEnuclei(HDF5handle, RunID, EventID, table.T[1])
 
         #the other charged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1591,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1591,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEother_charged(HDF5handle, RunID, EventID, table.T[1])
 
         #the other neutral
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1592,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1592,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEother_neutral(HDF5handle, RunID, EventID, table.T[1])
 
         #and the all
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1793,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,1793,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEall(HDF5handle, RunID, EventID, table.T[1])
 
     ################################################################################################################################
@@ -669,27 +694,27 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     #################################################################################################################################
     if(NlowLongitudinal):
         #the gammas
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7001,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7001,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNlowgammas(HDF5handle, RunID, EventID, table.T[1])
 
         #i call the eplusminus table, in vertical, to store also the vertical depth
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7005,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7005,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNloweplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the positrons (note that they will deposit twice their rest mass!)
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7006,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7006,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNloweplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the muons
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7207,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7207,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNlowmuons(HDF5handle, RunID, EventID, table.T[1])
 
         #Other Chaged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7091,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7091,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNlowother_charged(HDF5handle, RunID, EventID, table.T[1])
 
         #Other Neutral
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7092,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7092,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteNlowother_neutral(HDF5handle, RunID, EventID, table.T[1])
 
     ################################################################################################################################
@@ -697,27 +722,27 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     #################################################################################################################################
     if(ElowLongitudinal):
         #the gammas
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7501,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7501,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteElowgammas(HDF5handle, RunID, EventID, table.T[1])
 
         #i call the eplusminus table, in vertical, to store also the vertical depth
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7505,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7505,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEloweplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the positrons (note that they will deposit twice their rest mass!)
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7506,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7506,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEloweplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the muons
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7707,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7707,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteElowmuons(HDF5handle, RunID, EventID, table.T[1])
 
         #Other Chaged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7591,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7591,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteElowother_charged(HDF5handle, RunID, EventID, table.T[1])
 
         #Other Neutral
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7592,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7592,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteElowother_neutral(HDF5handle, RunID, EventID, table.T[1])
 
     ################################################################################################################################
@@ -725,27 +750,27 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     #################################################################################################################################
     if(EdepLongitudinal):
         #the gammas
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7801,Slant=True,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7801,Slant=True,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEdepgammas(HDF5handle, RunID, EventID, table.T[1])
 
         #i call the eplusminus table, in vertical, to store also the vertical depth
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7805,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7805,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEdepeplusminus(HDF5handle, RunID, EventID, table.T[1])
 
         #the positrons (note that they will deposit twice their rest mass!)
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7806,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7806,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEdepeplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the muons
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7907,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7907,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEdepmuons(HDF5handle, RunID, EventID, table.T[1])
 
         #Other Chaged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7891,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7891,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEdepother_charged(HDF5handle, RunID, EventID, table.T[1])
 
         #Other Neutral
-        table=AiresInfo.GetLongitudinalTable(InputFolder,7892,Slant=False,Precision="Simple")
+        table=AiresInfo.GetLongitudinalTable(InputFolder,7892,Slant=False,Precision="Simple",TaskName=StoredEventName)
         SimShower.SimShowerWriteEdepother_neutral(HDF5handle, RunID, EventID, table.T[1])
 
     ################################################################################################################################
@@ -841,29 +866,30 @@ def CheckIfEventIDIsUnique(EventID, f):
 
 if __name__ == '__main__':
 
-	if (len(sys.argv)>6 or len(sys.argv)<6) :
-		print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID and output filename...nothing more, nothing less!")
-		print("i.e ZHAiresRawToGRANDROOT ./MyshowerDir full RunID EventID MyFile.root")
+	if (len(sys.argv)>7 or len(sys.argv)<7) :
+		print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID, EventName and output filename...nothing more, nothing less!")
+		print("i.e ZHAiresRawToGRANDROOT ./MyshowerDir full RunID EventID EventName MyFile.root")
 		mode="exit"
 
-	elif len(sys.argv)==6 :
+	elif len(sys.argv)==7 :
 		inputfolder=sys.argv[1]
 		mode=sys.argv[2]
 		RunID=int(sys.argv[3])
 		EventID=int(sys.argv[4])
-		FileName=sys.argv[5]
+		EventName=sys.argv[5]
+		FileName=sys.argv[6]
 #		HDF5handle= h5py.File(FileName, 'a')
 
 	if(mode=="standard"):
-		ZHAiresRawToGRANDROOT(HDF5handle,RunID,EventID,inputfolder)
+		ZHAiresRawToGRANDROOT(FileName,RunID,EventID, EventName, inputfolder)
 
 	elif(mode=="full"):
 
-		ZHAiresRawToGRANDROOT(HDF5handle,RunID,EventID,inputfolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True)
+		ZHAiresRawToGRANDROOT(FileName,RunID,EventID, EventName, inputfolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True)
 
 	elif(mode=="minimal"):
 	
-		ZHAiresRawToGRANDROOT(FileName,RunID,EventID,inputfolder,	SimEfieldInfo=True, NLongitudinal=False, ELongitudinal=False, NlowLongitudinal=False, ElowLongitudinal=False, EdepLongitudinal=False, LateralDistribution=False, EnergyDistribution=False)
+		ZHAiresRawToGRANDROOT(FileName,RunID,EventID, EventName, inputfolder, SimEfieldInfo=True, NLongitudinal=False, ELongitudinal=False, NlowLongitudinal=False, ElowLongitudinal=False, EdepLongitudinal=False, LateralDistribution=False, EnergyDistribution=False)
 
 	else:
 

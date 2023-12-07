@@ -1,0 +1,33 @@
+RUNNR   006100
+EVTNR   1
+SEED    1006100    0    0
+SEED    1006101    0    0
+SEED    1006102    0    0
+SEED    1006103    0    0
+SEED    1006104    0    0
+SEED    1006105    0    0
+NSHOW   1
+PRMPAR  14
+ERANGE  1.00000000000E+08    1.00000000000E+08
+THETAP  55.0    55.0
+PHIP    302.15 302.15
+ECUTS   3.0E-01 1.0E-02 2.5E-04 2.5E-04
+PARALLEL 1E3 1.00000000000E+05 1 F
+ELMFLG  T    T
+THIN    1e-06 1.00000000000E+02 5.0E+03
+THINH   1.000E+00 1.000E+02
+STEPFC  1.0
+OBSLEV  156400.0
+ECTMAP  1.E+15
+MUMULT  T
+MUADDI  T
+MAXPRT  1
+MAGNET  26.860    49.687
+PAROUT  T  F
+LONGI   T   5.     T       T
+RADNKG  5.E+05
+ATMFILE /home/hk-project-radiohfi/bg5912/work/soft/corsika-77420/run//ATMOSPHERE_20170401120000_Dunhuang.DAT
+DIRECT  /hkfs/work/workspace/scratch/bg5912-mysims/starshapes/default_rings/sim_storage//inp//8.0/
+DATDIR  /home/hk-project-radiohfi/bg5912/work/soft/corsika-77420/run/
+USER    bg5912
+EXIT

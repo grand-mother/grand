@@ -8,7 +8,6 @@ grand/version.py
 __pycache__
 *.pyc
 *.pyo
-*.root
 
 # jupyterlab checkpoints
 .ipynb_checkpoints
@@ -68,3 +67,5 @@ docs/apidoc-only/sphinx/source/grand.*
 # mac 
 .DS_Store
 
+*.pyc
+sim2root/CoREASRawRoot/__pycache__/CorsikaInfoFuncs.cpython-310.pyc
