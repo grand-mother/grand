@@ -200,9 +200,9 @@ def get_antenna_position(pathAntennaList, antenna):
     # get antenna positions from file
     # file[:,0] and file[:,1] are useless (they are simply "AntennaPosition" and "=")
     # get the x, y and z positions
-    x = file[:,2].astype(float) * 100 # convert to m
-    y = file[:,3].astype(float) * 100 # convert to m
-    z = file[:,4].astype(float) * 100 # convert to m
+    x = file[:,2].astype(float) * 10**-2 # convert to m
+    y = file[:,3].astype(float) * 10**-2 # convert to m
+    z = file[:,4].astype(float) * 10**-2 # convert to m
     # get the names of the antennas
     name = file[:,5]
 
