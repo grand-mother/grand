@@ -290,7 +290,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.maximum_weight = Thin[1]
   RawShower.hadronic_thinning = ThinH[0]
   RawShower.hadronic_thinning_weight = ThinH[1]
-  RawShower.rmax = float(Thin[2]) * 100 #cm -> m
+  RawShower.rmax = float(Thin[2]) * 10**-2 #cm -> m
 
   # * CUTS *
   RawShower.lowe_cut_gamma = GammaEnergyCut
