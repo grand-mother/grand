@@ -53,7 +53,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     - 2) All the a##.trace files produced by ZHAireS with the electric field output (you have to have run your sims with CoREASOutput On)
     - 3) a TaskName.EventParameters file , where the event meta-ZHAireS data is stored (for example the core position used to  generate this particular event, the "ArrayName", the event weight, the event time and nanosecond etc.
     - 4) Optional: the necesary longitudinal tables file. If they dont exist, but the TaskName.idf file is present and  and Aires is installed in the system, AiresInfoFunctions will take care of it.
-    -  
+    - 5) In the input file, antenna names must be of the format A+number of antena, i.e., A1, A2....A100...etc 
 
     The script output is the shower reference frame: this means a cartesian coordinate system with the shower core at 0,0, GroundAltitude (masl).
     Electric fields are output on the X,Y and Z directions in this coordinate system.
@@ -484,7 +484,9 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 
                 ############################################################################################################################ 
-                RawEfield.du_id.append(int(AntennaN[ant_number]))          
+                
+                #RawEfield.du_id.append(int(AntennaN[ant_number]))
+                RawEfield.du_id.append(int(DetectorID[1:])) #assuming antena names are of the format A+number of antenna          
                 RawEfield.du_name.append(DetectorID)
                 RawEfield.t_0.append(t_0)            
 
