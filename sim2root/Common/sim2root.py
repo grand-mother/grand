@@ -10,13 +10,22 @@ from grand.dataio.root_trees import * # this is home/grand/grand (at least in do
 import raw_root_trees as RawTrees # this is here in Common
 
 
+#ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
 # Command line argument parsing
 clparser = argparse.ArgumentParser()
 clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw data TTrees")
+clparser.add_argument("-o ", "--outfilename", help="Filename for the GRANDRoot files output. Auto for GRAND conventions", default="Auto")
 clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
 clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
 clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
 clargs = clparser.parse_args()
+
+print("#################################################")
+print(clargs)
+print(clargs.altitude)
+print(clargs.latitude)
+print(clargs.outfilename)
+
 
 
 def main():
@@ -25,21 +34,31 @@ def main():
 
         # Output filename for GRAND Trees
         # ToDo: think how to replace the original better
-        out_filename = os.path.join(os.path.split(filename)[0], "gr_"+os.path.split(filename)[1])
+        # out_filename = os.path.join(os.path.split(filename)[0], "gr_"+os.path.split(filename)[1])
+        out_filename=clargs.outfilename
+      
 
         # Read the raw trees from the file
         trawshower = RawTrees.RawShowerTree(filename)
         trawefield = RawTrees.RawEfieldTree(filename)
         trawmeta = RawTrees.RawMetaTree(filename)
 
+
+        #ToDo: Here would go the logic for the automatic naming 
+
+        out_filename_trun=clargs.outfilename+".TRun"
+        out_filename_tshower=clargs.outfilename+".TShower"
+        out_filename_tefield=clargs.outfilename+".TEfield"
+
+
         # Create appropriate GRANDROOT trees
         gt = SimpleNamespace()
-        gt.trun = TRun(out_filename)
-        gt.trunshowersim = TRunShowerSim(out_filename)
-        gt.trunefieldsim = TRunEfieldSim(out_filename)
-        gt.tshower = TShower(out_filename)
-        gt.tshowersim = TShowerSim(out_filename)
-        gt.tefield = TEfield(out_filename)
+        gt.trun = TRun(out_filename_trun)
+        gt.trunshowersim = TRunShowerSim(out_filename_tshower)
+        gt.trunefieldsim = TRunEfieldSim(out_filename_tefield)
+        gt.tshower = TShower(out_filename_tshower)
+        gt.tshowersim = TShowerSim(out_filename_tshower)
+        gt.tefield = TEfield(out_filename_tefield)
 
         # Loop through entries - assuming same number of entries in each tree
         # ToDo: this should be a tree iterator through one tree and getting the other through friends. Need to make friends working...
@@ -55,6 +74,8 @@ def main():
                 rawshower2grandrootrun(trawshower, gt)
                 # Convert the RawEfield entries
                 rawefield2grandrootrun(trawefield, gt)
+
+                #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
 
                 # Set the origin geoid
                 gt.trun.origin_geoid = get_origin_geoid(clargs)
@@ -172,7 +193,7 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.t_post = trawefield.t_post
     # ToDo: shouldn't this and above be created for every DU in sims?
     # gt.trun.t_bin_size = [trawefield.t_bin_size*1e9]*len(du_ids)
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
+    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) #Matias Question: Why is this being mutiplied here?
 
 
 # Convert the RawShowerTree entries
