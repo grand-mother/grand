@@ -47,8 +47,8 @@ logging.basicConfig(level=logging.DEBUG)
 #If at some point we need speed, then we could input datafile, and make a wraper for opening the file
 
 #AiresPath="/home/mjtueros/aires/bin"
+#print(os.environ)
 AiresPath=os.environ["AIRESBINDIR"]
-#AiresPath="/home/mjtueros/AiresRepository/Dropbox/AiresBzr/Aires.19-04-04-ZHAireS-development/zhadl/bin"
 print("AiresPath:",AiresPath)
 def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
   try:
@@ -1457,7 +1457,7 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
           
 
     if(len(idffile)==1 and len(tablefile)==0):
-      logging.info("GetLongitudinalTable could not find the "+str(TableNumber)+" table, trying to get it from the idf")
+      logging.debug("GetLongitudinalTable could not find the "+str(TableNumber)+" table, trying to get it from the idf")
       base=os.path.basename(idffile[0])
       taskname=os.path.splitext(base)[0]
 
@@ -1470,12 +1470,12 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
             logging.error("unrecognized Slant value, please state either True/False")
             return -1
         logging.debug("abut to run "+ cmd)
-        print("1:",cmd)
+        #print("1:",cmd)
         os.system(cmd)
         tablefile=glob.glob(Path+"/*.t"+TableNumber)
 
         if(len(tablefile)==1):
-            logging.info("Table exported successfully")
+            logging.debug("Table exported successfully")
             deletefile=True
 
       elif(len(taskname)<60):
@@ -1490,13 +1490,13 @@ def GetLongitudinalTable(Path,TableNumber,Slant=True,Precision="Double",TaskName
         else:
             logging.error("unrecognized Slant value, please state either True/False")
             return -1
-        print("2:",cmd)
+        #print("2:",cmd)
         os.system(cmd)
         tablefile=glob.glob("*.t"+TableNumber)
         logging.debug(tablefile)
 
         if(len(tablefile)==1):#this means we are not wo
-            logging.info("Table exported successfully")
+            logging.debug("Table exported successfully")
             deletefile=True
             cmd="rm "+taskname+".idf"
             os.system(cmd)
@@ -1548,7 +1548,7 @@ def GetLateralTable(Path,TableNumber,Density=True,Precision="Double"):
       return -1
 
     if(len(idffile)==1 and len(tablefile)==0):
-      logging.info("LDF.could not find the table, trying to guess it from the idf")
+      logging.debug("LDF.could not find the table, trying to guess it from the idf")
       base=os.path.basename(idffile[0])
       taskname=os.path.splitext(base)[0]
 
