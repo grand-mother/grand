@@ -15,3 +15,8 @@ echo "=============================="
 export PYTHONPATH=$GRAND_ROOT:$PYTHONPATH
 echo "add grand to PYTHONPATH"
 echo "=============================="
+
+
+export AIRESBINDIR=${HOME}/aires/bin
+echo "add AIRESBINDIR"
+echo "============================="
