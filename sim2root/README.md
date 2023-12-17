@@ -38,11 +38,28 @@ Alternatively, you can specify any other directory including a full CoREAS simul
 ## 1.b) ZHAireSRawRoot/ZHAireSRawToRawROOT.py
 Here we have the scripts to produce _RawRoot_ files from ZHAireS simulations.
 
-To run the script on the provided example event just go to the `ZHAireSRawRoot/` directory and do
+To run the script on the provided example event just go to the `ZHAireSRawRoot/` directory and either do:
+
+`python3 ZHAireSRawToRawROOT.py InputDirectory Mode RunID EventID OutputFilename` (only standard mode is available)
+
+ i.e.
 
 `python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 1  GP10_192745211400_SD075V.root`
+
+or alternativelly
+
+`python3 ZHAireSRawToRawROOT.py InputDirectory`
+
+ i.e.
+
+`python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V`
+
+To let ZHAIRESRawToRawROOT make the choices for you. This is equivalent to running with RunID="SuitYourself", EventID="LookForIt", OutputFileName="GRANDConvention"	
 
 ## 2) Common/sim2root.py
 Inside `Common/` you can find the final converter, `sim2root.py`
 
 As input you need to give the ROOT file containing `GRANDRaw data TTrees`, as created with `CoreasToRawROOT` or `ZHAireSRawToRawROOT`.
+
+additional options are available on command line, see sim2root --help for mor information
+
