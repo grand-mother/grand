@@ -10,33 +10,35 @@ from grand.dataio.root_trees import * # this is home/grand/grand (at least in do
 import raw_root_trees as RawTrees # this is here in Common
 
 
-#ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
+#ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file. Site too.
 # Command line argument parsing
+
 clparser = argparse.ArgumentParser()
 clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw data TTrees")
-clparser.add_argument("-o ", "--outfilename", help="Filename for the GRANDRoot files output. Auto for GRAND conventions", default="Auto")
-clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
-clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
-clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
+clparser.add_argument("-o ", "--outfilename", help="Filename for the GRANDRoot files output. GRANDConvention for GRAND conventions", default="GRANDConvention")
+clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)   #TODO: include in rawroot
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247) #TODO: include in rawroot
+clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200) #TODO: include in rawroot
+clparser.add_argument("-si", "--site", help="Name of the Site for the filename",default="Xiaodushan") #TODO: include in rawroot
+clparser.add_argument("-ti", "--time", help="Event Time for the filename",default="1200")  #TODO: In the future it would be usefull to replace this by an override to event.second and event.nanosecond
+clparser.add_argument("-ex", "--extra", help="extra info for the filename", default="GP300")
+
 clargs = clparser.parse_args()
 
 print("#################################################")
-print(clargs)
-print(clargs.altitude)
-print(clargs.latitude)
-print(clargs.outfilename)
 
+def convert_date(date_str):
+    # Convert input string to a struct_time object
+    date_struct = time.strptime(date_str, "%Y-%m-%d")
+    # Format the struct_time object as a string in YYYYMMDD format
+    formatted_date = time.strftime("%Y%m%d", date_struct)
+    return formatted_date
 
 
 def main():
     # Loop through the files specified on command line
     for filename in clargs.filename:
 
-        # Output filename for GRAND Trees
-        # ToDo: think how to replace the original better
-        # out_filename = os.path.join(os.path.split(filename)[0], "gr_"+os.path.split(filename)[1])
-        out_filename=clargs.outfilename
-      
 
         # Read the raw trees from the file
         trawshower = RawTrees.RawShowerTree(filename)
@@ -44,12 +46,45 @@ def main():
         trawmeta = RawTrees.RawMetaTree(filename)
 
 
-        #ToDo: Here would go the logic for the automatic naming 
+        # Output filename for GRAND Trees
+        out_filename=clargs.outfilename
+        #provide advertised functionality for OutputFileName  
+        if out_filename=="GRANDConvention":
+        
+          trawshower.get_entry(0)
+          trawefield.get_entry(0)
+          trawmeta.get_entry(0)
+        
+          RunID=trawshower.run_number                     #TODO: THIS WILL FAIL IN EVENTS WITH MANY events per file with different runs...sorry future grander that gets to deal with this.
+          EventID=trawshower.event_number
+          HadronicModel=trawshower.hadronic_model
+          date=trawshower.event_date
+          
+          print(date)
+                    
+          date=convert_date(date)
+           
+          extra=clargs.extra
+          Site=clargs.site
+          time=clargs.time
+          
+          #directory format is: //[sim|exp|mod]_[site]_[date]_[time]_[run_number]_[mod]_[extra]_[serial]          
+          directory_path="sim_"+Site+"_"+date+"_"+time+"_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)          
+          if not os.path.exists(directory_path):
+            # If the directory doesn't exist, create it
+            os.makedirs(directory_path)
+          
 
-        out_filename_trun=clargs.outfilename+".TRun"
-        out_filename_tshower=clargs.outfilename+".TShower"
-        out_filename_tefield=clargs.outfilename+".TEfield"
+          OutputFileName=str(RunID)+"_L0_"+extra+"_"+str(EventID)+".root"
 
+          #name format is: [grouptreename]_[events]_L[analysis level]_[serial] + run.root describing the run, (THIS MAKES LITTLE SENSE)
+          #I WILL USE [grouptreename]_[runid]_L[analysis level]_[extra]_EventId + run.root describing the run
+        else:
+          directory_Path, OutputFileName = os.path.split(clargs.outfilename)
+          
+        out_filename_trun=directory_path+"/"+"TRun_"+OutputFileName
+        out_filename_tshower=directory_path+"/"+"TShower_"+OutputFileName
+        out_filename_tefield=directory_path+"/"+"TEfield_"+OutputFileName 
 
         # Create appropriate GRANDROOT trees
         gt = SimpleNamespace()
