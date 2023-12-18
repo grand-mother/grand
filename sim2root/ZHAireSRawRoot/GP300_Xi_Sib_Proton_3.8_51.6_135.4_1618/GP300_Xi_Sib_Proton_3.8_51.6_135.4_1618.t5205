@@ -1,0 +1,31 @@
+#
+#   AIRES Export file
+#
+#   DATE: 17/Dec/2023 23:50:13; AIRES version 19.04.08
+#   USER: ; HOST: organa
+#
+#   Task name         : GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618
+#
+#   Task starting date: 29/Apr/2023 17:55:49
+#   Number of showers :          1
+#
+#
+#   TABLE 5205: Number and energy of ground e+ and e- versus shower number.     
+#
+#   Units used:
+#
+#         Depth   --- g/cm2
+#         Length  --- m
+#         Time    --- ns
+#         Angle   --- deg
+#         Energy  --- GeV
+#
+#   Columns:
+#
+#         1 Shower #, 2, 3, ...: Number of pcles., Energy, Unweighted
+#                                particle entries.
+#
+#   >>>>>>>>
+#
+     1   2.007799E+08   1.966260E+07    56583.0    
+#

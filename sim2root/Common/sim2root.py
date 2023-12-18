@@ -68,10 +68,12 @@ def main():
           Site=clargs.site
           time=clargs.time
           
-          #directory format is: //[sim|exp|mod]_[site]_[date]_[time]_[run_number]_[mod]_[extra]_[serial]          
-          directory_path="sim_"+Site+"_"+date+"_"+time+"_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)          
+          #directory format is: //[sim|exp|mod]_[site]_[date]_[time]_[run_number]_[mod]_[extra]_[serial]
+          #directory_path, OutputFileName = os.path.split(filename)   
+          
+          directory_path="./sim_"+Site+"_"+date+"_"+time+"_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)          
           if not os.path.exists(directory_path):
-            # If the directory doesn't exist, create it
+          #  # If the directory doesn't exist, create it
             os.makedirs(directory_path)
           
 
@@ -80,7 +82,7 @@ def main():
           #name format is: [grouptreename]_[events]_L[analysis level]_[serial] + run.root describing the run, (THIS MAKES LITTLE SENSE)
           #I WILL USE [grouptreename]_[runid]_L[analysis level]_[extra]_EventId + run.root describing the run
         else:
-          directory_Path, OutputFileName = os.path.split(clargs.outfilename)
+          directory_path, OutputFileName = os.path.split(clargs.outfilename)
           
         out_filename_trun=directory_path+"/"+"TRun_"+OutputFileName
         out_filename_tshower=directory_path+"/"+"TShower_"+OutputFileName
