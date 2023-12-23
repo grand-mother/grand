@@ -132,7 +132,6 @@ def main():
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt)
 
-
             # Fill the event trees
             gt.tshower.fill()
             gt.tshowersim.fill()
@@ -147,7 +146,6 @@ def main():
 # Convert the RawShowerTree first entry to run values
 def rawshower2grandrootrun(trawshower, gt):
     gt.trunshowersim.run_number = trawshower.run_number
-
     ## Name and version of the shower simulator
     gt.trunshowersim.sim_name = trawshower.sim_name
 

@@ -48,13 +48,22 @@ class Efield2Voltage:
     """
 
     def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0):
-        self.f_input = f_input
+        
+        self.f_input = f_input       
+
+        directory_path, fname = os.path.split(f_input)
+                      
+        f_input_TShower=directory_path+"/TShower_"+ fname[8:]
+        f_input_TRun=directory_path+"/TRun_"+ fname[8:]
+        print(f_input_TShower)
+        print(f_input_TRun)
+        
         self.f_output = f_output
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
         self.padding_factor = padding_factor
         self.events = groot.TEfield(f_input)                # traces and du_pos are stored here
-        self.run = groot.TRun(f_input)                      # site_long, site_lat info is stored here. Used to define shower frame.
-        self.shower = groot.TShower(f_input)                # shower info (like energy, theta, phi, xmax etc) are stored here.
+        self.run = groot.TRun(f_input_TRun)                      # site_long, site_lat info is stored here. Used to define shower frame.
+        self.shower = groot.TShower(f_input_TShower)                # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
