@@ -512,7 +512,7 @@ class DataTree:
         for field in self.__dict__:
             if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
                 print("not set for", field)
-                
+
         self.__setattr__ = self.mod_setattr
 
     ## Return the iterable over self
@@ -939,6 +939,10 @@ class DataTree:
     def close_file(self):
         """Close the file associated to the tree"""
         self._file.Close()
+
+    def stop_using(self):
+        """Stop using this instance: remove it from the tree list"""
+        grand_tree_list.remove(self)
 
 
 ## A mother class for classes with Run values
