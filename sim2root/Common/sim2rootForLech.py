@@ -77,7 +77,7 @@ def main():
             os.makedirs(directory_path)
           
 
-          OutputFileName=str(RunID)+"_L0_"+extra+"_"+str(EventID)+".root"
+          OutputFileName=str(RunID)+"_L0_"+extra+"_"+str(EventID)+"ForLech.root"
 
           #name format is: [grouptreename]_[events]_L[analysis level]_[serial] + run.root describing the run, (THIS MAKES LITTLE SENSE)
           #I WILL USE [grouptreename]_[runid]_L[analysis level]_[extra]_EventId + run.root describing the run
@@ -85,19 +85,16 @@ def main():
           directory_path, OutputFileName = os.path.split(clargs.outfilename)
           
         out_filename_trun=directory_path+"/"+"TRun_"+OutputFileName
-        out_filename_trunefield=directory_path+"/"+"TRunEfieldSim_"+OutputFileName 
-        out_filename_trunshowersim=directory_path+"/"+"TRunShowerSim_"+OutputFileName 
-        out_filename_tefield=directory_path+"/"+"TEfield_"+OutputFileName 
-        out_filename_tshowersim=directory_path+"/"+"TShowerSim_"+OutputFileName
         out_filename_tshower=directory_path+"/"+"TShower_"+OutputFileName
-        
+        out_filename_tefield=directory_path+"/"+"TEfield_"+OutputFileName 
+
         # Create appropriate GRANDROOT trees
         gt = SimpleNamespace()
         gt.trun = TRun(out_filename_trun)
-        gt.trunshowersim = TRunShowerSim(out_filename_trunshowersim)
-        gt.trunefieldsim = TRunEfieldSim(out_filename_trunefield)
+        gt.trunshowersim = TRunShowerSim(out_filename_tshower)
+        gt.trunefieldsim = TRunEfieldSim(out_filename_tefield)
         gt.tshower = TShower(out_filename_tshower)
-        gt.tshowersim = TShowerSim(out_filename_tshowersim)
+        gt.tshowersim = TShowerSim(out_filename_tshower)
         gt.tefield = TEfield(out_filename_tefield)
 
         # Loop through entries - assuming same number of entries in each tree
@@ -144,7 +141,6 @@ def main():
         gt.tshower.write()
         gt.tshowersim.write()
         gt.tefield.write()
-        # gt.tshower.first_interaction = trawshower.first_interaction
 
 
 # Convert the RawShowerTree first entry to run values
@@ -375,6 +371,7 @@ def rawshower2grandroot(trawshower, gt):
     gt.tshowersim.long_ed_depth = trawshower.long_ed_depth
 
     # gt.tshower.first_interaction = trawshower.first_interaction
+
 
 # Convert the RawEfieldTree entries
 def rawefield2grandroot(trawefield, gt):
