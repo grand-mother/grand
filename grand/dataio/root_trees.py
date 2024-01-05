@@ -573,6 +573,9 @@ class DataTree:
                 logger.info(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
 
+        # Make the tree save itself in this file
+        self._tree.SetDirectory(self._file)
+
         self.assign_metadata()
 
         # Fill the runs/events numbers from the tree (important if it already existed)
