@@ -106,6 +106,18 @@ def manage_args():
         default=1.0,
         help="Increase size of signal with zero padding, with 1.2 the size is increased of 20%%. ",
     )
+    parser.add_argument(
+        "--target_duration_us",
+        type=float,
+        default=0,
+        help="Adujust (and override) padding factor in order to get a signal of the given duration, in us",
+    )    
+    parser.add_argument(
+        "--target_sampling_rate_mhz",
+        type=float,
+        default=0,
+        help="Target sampling rate of the data in Mhz",
+    )      
     # retrieve argument
     return parser.parse_args()
 
@@ -135,6 +147,8 @@ if __name__ == "__main__":
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
+    signal.params["resample_to_mhz"]=args.target_sampling_rate_mhz
+    signal.params["extend_to_us"]=args.target_duration_us
 
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)

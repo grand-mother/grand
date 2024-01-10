@@ -108,7 +108,7 @@ class AntennaProcessing:
         pre = PreComputeInterpol()
         pre.init_linear_interpol(freq_sampling_mhz, freq_out_mhz)
         cls.pre_cpt = pre
-        logger.debug(pre)
+        #logger.debug(pre)
 
     def set_out_freq_mhz(self, a_freq):
         """
@@ -161,7 +161,7 @@ class AntennaProcessing:
         direction_sphr = SphericalRepresentation(direction_cart)
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
-        logger.info(
+        logger.debug(
             f"Source direction (degree): azimuth={float(phi_efield):.1f}, zenith={float(theta_efield):.1f}"
         )
         # logger.debug(f"{theta_efield.r}")
@@ -191,7 +191,7 @@ class AntennaProcessing:
         # fft
         # logger.info(efield.e_xyz.info())
         e_xyz = efield.e_xyz
-        logger.debug(e_xyz.shape)
+        logger.debug(f"e_xyz.shape:{e_xyz.shape}")
         # Leff ref frequency  [Hz]
         freq_ref_hz = self.model_leff.frequency
         # frequency [Hz] with padding
@@ -269,25 +269,30 @@ class AntennaProcessing:
         :type frame:
         """
         # frame is shower frame. self.frame is antenna frame.
-        print("pos",self.pos)
+        logger.debug(f"pos {self.pos}")
         if (not np.all(np.isfinite(self.pos))) or (not np.all(np.isfinite(frame))): # which one
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input fft_leff and field are in shower frame.
         leff_f = self.effective_length(xmax, efield, frame)
-        logger.debug(leff_f.shape)
+        logger.debug(f"leff_f.shape {leff_f.shape}")
         # E is CartesianRepresentation
         fft_e = efield.get_fft(self.size_fft)
         logger.debug(f"size_fft leff={leff_f.shape}")
-        logger.debug(f"size_fft efield={leff_f.shape}")
+        logger.debug(f"size_fft efield={fft_e.shape}")
         # convol e_xyz field by Leff in Fourier space
         self.voc_f = (
             fft_e[0] * leff_f[0] + fft_e[1] * leff_f[1] + fft_e[2] * leff_f[2]
         )
         # inverse FFT and remove zero-padding
-        voc = sf.irfft(self.voc_f)[: efield.e_xyz.shape[1]]
-        # WARNING do not used : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])
-        t = efield.a_time
-        logger.debug(f"time : {t.dtype} {t.shape}")
+        #voc = sf.irfft(self.voc_f)[: efield.e_xyz.shape[1]]
+        voc = sf.irfft(self.voc_f) #we do not want to remove the zero padding any more. 
+        # WARNING do not use : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])
+        
+        dt= np.round(efield.get_delta_time_s(),decimals=15) #this is to remove floating point garbage that can eventually appear caused due to be working in seconds, very deep into the floar pecision. Should be good to femtoseconds
+        t=np.arange(0, len(voc)*dt, dt) + efield.a_time[0]
+        
+        
+        logger.debug(f"time : {t.dtype} {t.shape} {dt}")
         logger.debug(f"volt : {voc.dtype} {voc.shape}")
         return Voltage(t=t, V=voc)
