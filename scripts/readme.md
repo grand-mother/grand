@@ -1,44 +1,49 @@
 # convert_efield2voltage.py
 
-Calculation of DU response in Volt for first event in Efield input file.
+Calculation of DU response in microVolt for first event in Efield input file.
+
+(Efield input data file in GRANDROOT format. **Note that other files need to be present too, ie TRun, TShower and TEfield**)
 
 ## authors
 Ramesh ?    - @rkoirala\
 Jean-Marc ? - @jean-marc\
-(sorry if there are other authors im not aware of, pelase add yourself here!)\
-Matias Tueros, Instituto de Fisica La Plata - @mtueros (resampling and time extension)\
+(sorry if there are other authors im not aware of, pelase add yourself here!)
+Matias Tueros, Instituto de Fisica La Plata - @mtueros (resampling and time extension)
 
-## How this works (not necesarily in this order, but so its easier to understand):
+## How this works (broadly speaking, but so its easier to understand):
 
-1) Computes the closest magic number (a multiple of 2,3 or 5) of frequencies needed in the fft to give enough sampling points in the irfft to get to the TARGET_DURATION_US or comply with requested PADDING_FACTOR.
-Know that rfft is several hundred times faster if you use a multiple of 2,3 or 5, so this is very much worth it. However, this means that even if you set padding_factor=1 or dont specify a TARGET_DURATION_US (so the same duration as the source efield is used), it is still posible to have some padding added in order to have a multiple of 2,3 or 5.
-Note that if the padding factor is less than 1, or the TARGET_DURATION_US is less than the actual duration of the efield trace, the trace will be cropped (feature not tested). See [scipy.fft.rfft](https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfft.html).
-2) If requested, requests these magic frequencies to the galactic noise routine (that will interpolate from its internal parameterization). 
-3) If requested, requests these magic frequencies to the RF chain respones routine (that will interpolate from its internal parameterization). 
-4) Computes the rfft of the efield, with said number of frequencies. When the number of points in efield is more than the number of frequencies, the efield will be cropped. When it is less, efield will be zero-padded . 
+1) Computes the closest magic number of frequencies  (a multiple of 2,3 or 5) needed in the fft to give enough sampling points in the irfft to get to the TARGET_DURATION_US or to comply with requested PADDING_FACTOR.\
+Know that rfft is several hundred times faster if you use a multiple of 2,3 or 5, so this is very much worth it. However, this means that even if you set padding_factor=1 or dont specify a TARGET_DURATION_US (so the same duration as the source efield is used), it is still posible to have some padding added in order to have a multiple of 2,3 or 5.\
+**Note that if the padding factor is less than 1, or the TARGET_DURATION_US is less than the actual duration of the efield trace, the trace will be cropped (feature not tested)**. See [scipy.fft.rfft](https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfft.html).
+2) this magic number of frequencies is passed to the galactic noise routine (that will interpolate from its internal parameterization). 
+3) this magic number of frequencies is passed to the RF chain respones routine (that will interpolate from its internal parameterization). 
+4) Computes the rfft of the efield, with said number of frequencies. 
 5) If requested, adds the galactic noise to the rfft.
 6) If requested, convolves the rf chain to the rfft.
 7) Perform the ifft to get the trace in time domain (re-sampled if requested, using fourier interpolation, See [scipy.fft.ifft](https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.ifft.html)).
 8) trim the output to the originally requested TARGET_DURATION_US or PADDING FACTOR.
 
 
-CAVEATS:
-1) rfft assumes signals are periodic. This means efield must go towards 0 at the end of the trace, if not spectral leakage will occur.
-2) This is also true even if you zero-pad the efield. The sudden jump from nonzero to zero will create false frequency content. If your efield trace is not going down to 0, considering applying a window function (i.e. Hanning) to the efield and renormalize its amplitude  if needed to get the correct fft. 
-3) When you downsample you will reduce the bandwidth, and aliasing could ocurr. Formaly, the signal should be low-pass filtered before the downsampling. In our use case, we go usually from 2000Mhz Efield to 500Mhz Vrf sampling rate,  this means that bandwidth goes from 1000Mhz to 250Mhz. Our RF chain already acts as a filter (the transfer function is 0 above 250Mhz) so if we apply the RF chain, we are safe. If you are not appling the rf chain, aliasing will ocurr. 
-4) In the current state of affairs, the antenna response is non-causal. 
-5) All this caveats can result in weird behaviours specially in the borders of the trace (like ringing before the start of the peak, or at the start and end of the trace).
+## CAVEATS:
+0) **When the number of points in efield is more than the number of frequencies, the efield will be cropped. When it is less, efield will be zero-padded.** 
+1) **rfft assumes signals are periodic**. This means efield must go towards 0 at the start and the end of the trace, if not *spectral leakage will occur*.
+2) This is also true even if you zero-pad the efield. The sudden jump from nonzero to zero will create false frequency content. *If your efield trace is not going down to 0, considering applying a window function (i.e. Hanning) to the efield and renormalize its amplitude if needed to get the correct fft*. 
+3) **When you downsample you will reduce the bandwidth, and aliasing could ocurr**. Formaly, the signal should be low-pass filtered before the downsampling. In our use case, we go usually from 2000Mhz Efield to 500Mhz Vrf sampling rate,  this means that bandwidth goes from 1000Mhz to 250Mhz. Our RF chain already acts as a filter (the transfer function is 0 above 250Mhz) so if you apply the RF chain, we are safe. If you are not appling the rf chain, aliasing will ocurr. 
+4) **In the current state of affairs, the antenna response is non-causal.** 
+5) **All this caveats can result in weird behaviours** specially in the borders of the trace (like ringing before the start of the peak, and at the start and end of the trace).
 
 
 ## help
 
 ```bash
 # convert_efield2voltage.py -h
-usage: convert_efield2voltage.py [-h] [--no_noise] [--no_rf_chain] -o OUT_FILE [--verbose {debug,info,warning,error,critical}] [--seed SEED] [--lst LST] [--padding_factor PADDING_FACTOR] [--target_duration_us TARGET_DURATION_US]
+usage: convert_efield2voltage.py [-h] [--no_noise] [--no_rf_chain] -o OUT_FILE [--verbose {debug,info,warning,error,critical}]
+                                 [--seed SEED] [--lst LST] [--padding_factor PADDING_FACTOR]
+                                 [--target_duration_us TARGET_DURATION_US]
                                  [--target_sampling_rate_mhz TARGET_SAMPLING_RATE_MHZ]
                                  file
 
-Calculation of DU response in volt for first event in Efield input file.
+Calculation of DU response in microvolts for first event in Efield input file.
 
 positional arguments:
   file                  Efield input data file in GRANDROOT format (note that other files need to be present too, ie TRun, TShower and TEfield).
