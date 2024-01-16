@@ -16,12 +16,25 @@ clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw
 clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
 clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
 clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
+clparser.add_argument("-ru", "--run", help="Run number", default=0, const=None)
+clparser.add_argument("-se", "--start_event", help="Starting event number", default=0, const=None)
 clargs = clparser.parse_args()
 
 
 def main():
+    # Initialise the run number if specified
+    ext_run_number = None
+    if clargs.run is not None:
+        ext_run_number = int(clargs.run)
+
+    # Initialise the starting event number
+    ext_event_number = None
+    if clargs.start_event is not None:
+        ext_event_number = int(clargs.start_event)
+
+
     # Loop through the files specified on command line
-    for filename in clargs.filename:
+    for file_num, filename in enumerate(clargs.filename):
 
         # Output filename for GRAND Trees
         # ToDo: think how to replace the original better
@@ -49,8 +62,8 @@ def main():
             trawefield.get_entry(i)
             trawmeta.get_entry(i)
 
-            # For the first entry, fill the run trees
-            if i==0:
+            # If the first entry or (run number enforced and first file), fill the run trees
+            if (i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
                 # Convert the RawEfield entries
@@ -58,6 +71,12 @@ def main():
 
                 # Set the origin geoid
                 gt.trun.origin_geoid = get_origin_geoid(clargs)
+
+                # Overwrite the run number if specified on command line
+                if ext_run_number is not None:
+                    gt.trun.run_number = ext_run_number
+                    gt.trunshowersim.run_number = ext_run_number
+                    gt.trunefieldsim.run_number = ext_run_number
 
                 # Fill the run trees and write
                 gt.trun.fill()
@@ -74,6 +93,20 @@ def main():
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt)
 
+            # Overwrite the run number if specified on command line
+            if ext_run_number is not None:
+                gt.trun.run_number = ext_run_number
+                gt.trunshowersim.run_number = ext_run_number
+                gt.trunefieldsim.run_number = ext_run_number
+                gt.tshower.run_number = ext_run_number
+                gt.tshowersim.run_number = ext_run_number
+                gt.tefield.run_number = ext_run_number
+
+            # Overwrite the event number if specified on command line
+            if ext_event_number is not None:
+                gt.tshower.event_number = ext_event_number
+                gt.tshowersim.event_number = ext_event_number
+                gt.tefield.event_number = ext_event_number
 
             # Fill the event trees
             gt.tshower.fill()
@@ -84,6 +117,10 @@ def main():
         gt.tshower.write()
         gt.tshowersim.write()
         gt.tefield.write()
+
+        # Increment the event number if starting one specified on command line
+        if ext_event_number is not None:
+            ext_event_number += 1
 
 
 # Convert the RawShowerTree first entry to run values
