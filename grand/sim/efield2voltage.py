@@ -18,6 +18,8 @@ from .detector.rf_chain import RFChain
 from .shower.gen_shower import ShowerEvent
 from .noise.galaxy import galactic_noise
 
+from ADCconverter import voltage_to_adc, padding
+
 logger = getLogger(__name__)
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
@@ -58,7 +60,8 @@ class Efield2Voltage:
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True}
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, 
+                       "add_ADC_conversion": True, "add_downsampler_and_paddings": True}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -147,6 +150,15 @@ class Efield2Voltage:
         # compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.
         if self.params["add_rf_chain"]:
             self.rf_chain.compute_for_freqs(self.freqs_mhz)
+
+        # Add ADC conversion
+        if self.params["add_adc_conversion"]:
+            #! TODO: is self.traces what we want here?
+            downsampled_trace = self.voltage_to_adc(self.traces)
+
+        # Add downsampler and padding
+        if self.params["add_downsampler_and_padding"]:
+            self.padding(downsampled_trace)
 
     def get_leff(self, du_idx):
         """
@@ -332,6 +344,15 @@ class Efield2Voltage:
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
             self.vout_f[du_idx] *= self.rf_chain.get_tf()
+        
+        # ----- Add ADC conversion -----
+        if self.params["add_adc_conversion"]:
+            # Add ADC conversion
+            self.vout_f[du_idx] += self.voltage_to_adc
+
+        if self.params["add_downsampler_and_padding"]:
+            # Add downsampler and padding
+            self.vout_f[du_idx] += self.padding
 
         # Final voltage output for antenna with index du_idx
         if self.params["add_noise"] or self.params["add_rf_chain"]:
