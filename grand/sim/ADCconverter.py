@@ -93,12 +93,12 @@ def padding(trace, padding_value=800):
     # Return trace in ADC counts, with the ADC sampling rate, and peak in the center
     return trace
 
-# Example usage:
-# Assuming you have a trace
-your_trace = np.random.rand(1000)  # Replace this with your actual trace
+# # Example usage:
+# # Assuming you have a trace
+# your_trace = np.random.rand(1000)  # Replace this with your actual trace
 
-# Step 1: Sample reduction & conversion to ADC
-downsampled_trace = voltage_to_adc(your_trace)
+# # Step 1: Sample reduction & conversion to ADC
+# downsampled_trace = voltage_to_adc(your_trace)
 
-# Step 2: add padding
-final_trace = padding(downsampled_trace)
+# # Step 2: add padding
+# final_trace = padding(downsampled_trace)
