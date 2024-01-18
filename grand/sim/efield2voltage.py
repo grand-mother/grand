@@ -348,10 +348,12 @@ class Efield2Voltage:
         # ----- Add ADC conversion -----
         if self.params["add_adc_conversion"]:
             # Add ADC conversion
+            #! TODO: is += correct here?
             self.vout_f[du_idx] += self.voltage_to_adc
 
         if self.params["add_downsampler_and_padding"]:
             # Add downsampler and padding
+            #! TODO: is += correct here?
             self.vout_f[du_idx] += self.padding
 
         # Final voltage output for antenna with index du_idx
