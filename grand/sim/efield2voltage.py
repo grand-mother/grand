@@ -18,7 +18,7 @@ from .detector.rf_chain import RFChain
 from .shower.gen_shower import ShowerEvent
 from .noise.galaxy import galactic_noise
 
-from ADCconverter import voltage_to_adc, padding
+from .ADCconverter import voltage_to_adc, padding
 
 logger = getLogger(__name__)
 
