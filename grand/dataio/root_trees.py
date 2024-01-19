@@ -597,7 +597,7 @@ class DataTree:
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
         """Write the tree to the file"""
         # Add the tree friends to this tree
-        self.add_proper_friends()
+        # self.add_proper_friends()
 
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
