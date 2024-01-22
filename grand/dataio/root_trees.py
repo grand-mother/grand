@@ -2563,3 +2563,4 @@ class DataFile:
         # Add the tree to a dict for this tree class
         # Select the highest analysis level trees for each class and store these trees as main attributes
         pass
+
