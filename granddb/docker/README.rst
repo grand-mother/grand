@@ -1,6 +1,6 @@
 Grand Database
 ==============
-THIS SECTION IS NOT FUCTIONAL ANYMORE. PLEASE DO NOT USE YET (will be corrected soon).
+**THIS SECTION IS NOT FUCTIONAL ANYMORE. PLEASE DO NOT USE YET (will be corrected soon).**
 
 Principle
 ---------
