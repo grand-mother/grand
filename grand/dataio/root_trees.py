@@ -305,26 +305,35 @@ class DataTree:
     Mother class for GRAND Tree data classes
     """
 
-    # File handle
+    ## File handle
     _file: ROOT.TFile = None
-    # File name
+    """File handle"""
+    ## File name
     _file_name: str = None
-    # Tree object
+    """File name"""
+    ## Tree object
     _tree: ROOT.TTree = None
-    # Tree name
+    """Tree object"""
+    ## Tree name
     _tree_name: str = ""
-    # Tree type
+    """Tree name"""
+    ## Tree type
     _type: str = ""
-    # A list of run_numbers or (run_number, event_number) pairs in the Tree
+    """Tree type"""
+    ## A list of run_numbers or (run_number, event_number) pairs in the Tree
     _entry_list: list = field(default_factory=list)
-    # Comment - if needed, added by user
+    """A list of run_numbers or (run_number, event_number) pairs in the Tree"""
+    ## Comment - if needed, added by user
     _comment: str = ""
-    # TTree creation date/time in UTC - a naive time, without timezone set
+    """Comment - if needed, added by user"""
+    ## TTree creation date/time in UTC - a naive time, without timezone set
     _creation_datetime: datetime.datetime = None
-    # Modification history - JSON
+    """TTree creation date/time in UTC - a naive time, without timezone set"""
+    ## Modification history - JSON
     _modification_history: str = ""
+    """Modification history - JSON"""
 
-    # Fields that are not branches
+    ## Fields that are not branches
     _nonbranch_fields = [
         "_nonbranch_fields",
         "_type",
@@ -344,6 +353,7 @@ class DataTree:
         "_modification_history",
         "__setattr__"
     ]
+    """Fields that are not branches"""
 
     # def __setattr__(self, key, value):
     def mod_setattr(self, key, value):
@@ -495,6 +505,7 @@ class DataTree:
 
     ## Return the iterable over self
     def __iter__(self):
+        """Return the iterable over self"""
         # Always start the iteration with the first entry
         current_entry = 0
 
@@ -505,6 +516,7 @@ class DataTree:
 
     ## Set the tree's file
     def _set_file(self, f):
+        """Set the tree's file"""
         # If the ROOT TFile is given, just use it
         if isinstance(f, ROOT.TFile):
             self._file = f
@@ -527,6 +539,7 @@ class DataTree:
 
     ## Init/readout the tree from a file
     def _set_tree(self, t):
+        """Init/readout the tree from a file"""
         # If the ROOT TTree is given, just use it
         if isinstance(t, ROOT.TTree):
             self._tree = t
@@ -555,6 +568,7 @@ class DataTree:
 
     ## Create the tree
     def _create_tree(self, tree_name=""):
+        """Create the tree"""
         if tree_name != "":
             self._tree_name = tree_name
         self._tree = ROOT.TTree(self._tree_name, self._tree_name)
@@ -1009,14 +1023,18 @@ class MotherEventTree(DataTree):
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
-    # Unix creation datetime of the source tree; 0 s means no source
+    ## Unix creation datetime of the source tree; 0 s means no source
     _source_datetime: datetime.datetime = None
-    # The tool used to generate this tree's values from another tree
+    """Unix creation datetime of the source tree; 0 s means no source"""
+    ## The tool used to generate this tree's values from another tree
     _modification_software: str = ""
-    # The version of the tool used to generate this tree's values from another tree
+    """The tool used to generate this tree's values from another tree"""
+    ## The version of the tool used to generate this tree's values from another tree
     _modification_software_version: str = ""
-    # The analysis level of this tree
+    """The version of the tool used to generate this tree's values from another tree"""
+    ## The analysis level of this tree
     _analysis_level: int = 0
+    """The analysis level of this tree"""
 
     @property
     def source_datetime(self):
@@ -1369,52 +1387,74 @@ class TRun(MotherRunTree):
 
     ## Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment
     run_mode: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run mode - calibration/test/physics. ToDo: should get enum description for that, but I don't think it exists at the moment"""
     ## Run's first event
     first_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run's first event"""
     ## First event time
     first_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """First event time"""
     ## Run's last event
     last_event: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Run's last event"""
     ## Last event time
     last_event_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Last event time"""
 
     # These are not from the hardware
     ## Data source: detector, sim, other
     data_source: StdStringDesc = field(default=StdStringDesc("detector"))
+    """Data source: detector, sim, other"""
     ## Data generator: gtot (in this case)
     data_generator: StdStringDesc = field(default=StdStringDesc("GRANDlib"))
+    """Data generator: gtot (in this case)"""
     ## Generator version: gtot version (in this case)
     data_generator_version: StdStringDesc = field(default=StdStringDesc("0.1.0"))
+    """Generator version: gtot version (in this case)"""
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
     event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
     ## Event format version of the DAQ
     event_version: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Event format version of the DAQ"""
     ## Site name
     # _site: StdVectorList("string") = StdVectorList("string")
     site: StdStringDesc = field(default=StdStringDesc())
+    """Site name"""
     ## Site layout
     site_layout: StdStringDesc = field(default=StdStringDesc())
+    """Site layout"""
     ## Origin of the coordinate system used for the array
     origin_geoid: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
+    """Origin of the coordinate system used for the array"""
 
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Detector unit (antenna) (lat,lon,alt) position"""
     ## Detector unit (antenna) (x,y,z) position in site's referential
     du_xyz: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Detector unit (antenna) (x,y,z) position in site's referential"""
     ## Detector unit type
     du_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
+    """Detector unit type"""
     ## Detector unit (antenna) angular tilt
     du_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Detector unit (antenna) angular tilt"""
     ## Angular tilt of the ground at the antenna
     du_ground_tilt: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Angular tilt of the ground at the antenna"""
     ## Detector unit (antenna) nut ID
     du_nut: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    """Detector unit (antenna) nut ID"""
     ## Detector unit (antenna) FrontEnd Board ID
     du_feb: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    """Detector unit (antenna) FrontEnd Board ID"""
     ## Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)
     t_bin_size: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
 
     def __post_init__(self):
         super().__post_init__()
@@ -1438,38 +1478,55 @@ class TRunVoltage(MotherRunTree):
 
     ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual).
     digi_ctrl: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual)."""
     ## Firmware version
     firmware_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Firmware version"""
     ## Nominal trace length in units of samples
     trace_length: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Nominal trace length in units of samples"""
     ## Nominal trigger position in the trace in unit of samples
     trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Nominal trigger position in the trace in unit of samples"""
     ## ADC sampling frequency in MHz
     adc_sampling_frequency: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling frequency in MHz"""
     ## ADC sampling resolution in bits
     adc_sampling_resolution: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling resolution in bits"""
     ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
     adc_input_channels: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
     ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
     adc_enabled_channels: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
     ## Value of the Variable gain amplification on the board
     gain: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Value of the Variable gain amplification on the board"""
     ## Conversion factor from bits to V for ADC
     adc_conversion: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Conversion factor from bits to V for ADC"""
     ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
     digi_prepost_trig_windows: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
     ## Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?
     channel_properties_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?"""
     ## Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?
     channel_properties_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?"""
     ## Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?
     channel_properties_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?"""
     ## Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
     channel_trig_settings_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
     ## Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
     channel_trig_settings_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
     ## Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
     channel_trig_settings_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
 
     def __post_init__(self):
         super().__post_init__()
@@ -1493,55 +1550,79 @@ class TADC(MotherEventTree):
 
     ## Common for the whole event
     ## Event size
+    """Common for the whole event"""
     event_size: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## Event in the run number
     t3_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Event in the run number"""
     ## First detector unit that triggered in the event
     first_du: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """First detector unit that triggered in the event"""
     ## Unix time corresponding to the GPS seconds of the first triggered station
     time_seconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Unix time corresponding to the GPS seconds of the first triggered station"""
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     time_nanoseconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """GPS nanoseconds corresponding to the trigger of the first triggered station"""
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
     event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
     ## Event format version of the DAQ
     event_version: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Event format version of the DAQ"""
     ## Number of detector units in the event - basically the antennas count
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Number of detector units in the event - basically the antennas count"""
 
     ## Specific for each Detector Unit
     ## The T3 trigger number
     event_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """The T3 trigger number"""
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
-    # ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
+    """Nanoseconds of the trigger for this DU"""
+    ## Trigger position in the trace (trigger start = nanoseconds - 2*sample number)
     trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace (trigger start = nanoseconds - 2*sample number)"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Same as event_type, but event_type could consist of different triggered DUs"""
     ## Atmospheric temperature (read via I2C)
     atm_temperature: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Atmospheric temperature (read via I2C)"""
     ## Atmospheric pressure
     atm_pressure: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Atmospheric pressure"""
     ## Atmospheric humidity
     atm_humidity: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Atmospheric humidity"""
     ## Acceleration of the antenna in X
     acceleration_x: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Acceleration of the antenna in X"""
     ## Acceleration of the antenna in Y
     acceleration_y: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Acceleration of the antenna in Y"""
     ## Acceleration of the antenna in Z
     acceleration_z: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Acceleration of the antenna in Z"""
     ## Battery voltage
     battery_level: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Battery voltage"""
     ## Firmware version
     firmware_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Firmware version"""
     ## ADC sampling frequency in MHz
     adc_sampling_frequency: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling frequency in MHz"""
     ## ADC sampling resolution in bits
     adc_sampling_resolution: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling resolution in bits"""
 
     adc_input_channels_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     """ADC input channels"""
@@ -1562,40 +1643,55 @@ class TADC(MotherEventTree):
 
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     trigger_rate: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger rate - the number of triggers recorded in the second preceding the event"""
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
     clock_tick: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Clock tick at which the event was triggered (used to calculate the trigger time)"""
     ## Clock ticks per second
     clock_ticks_per_second: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Clock ticks per second"""
     ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
     gps_offset: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?"""
     ## GPS leap second
     gps_leap_second: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS leap second"""
     ## GPS status
     gps_status: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS status"""
     ## GPS alarms
     gps_alarms: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS alarms"""
     ## GPS warnings
     gps_warnings: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS warnings"""
     ## GPS time
     gps_time: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """GPS time"""
     ## Longitude
     gps_long: StdVectorListDesc = field(default=StdVectorListDesc("unsigned long long"))
+    """Longitude"""
     ## Latitude
     gps_lat: StdVectorListDesc = field(default=StdVectorListDesc("unsigned long long"))
+    """Latitude"""
     ## Altitude
     gps_alt: StdVectorListDesc = field(default=StdVectorListDesc("unsigned long long"))
+    """Altitude"""
     ## GPS temperature
     gps_temp: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """GPS temperature"""
 
-    # Digital control register
+    ## Digital control register
     enable_auto_reset_timeout: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Digital control register"""
     force_firmware_reset: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
     enable_filter_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
     enable_1PPS: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
     enable_DAQ: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
 
-    # Trigger enable mask register
+    ## Trigger enable mask register
     enable_trigger_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    """Trigger enable mask register"""
     enable_trigger_ch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
     enable_trigger_notch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
     enable_trigger_redch0_ch1: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
@@ -1604,16 +1700,19 @@ class TADC(MotherEventTree):
     enable_trigger_10s: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
     enable_trigger_external_test_pulse: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
 
-    # Test pulse rate divider and channel readout enable
+    ## Test pulse rate divider and channel readout enable
     enable_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<bool>"))
+    """Test pulse rate divider and channel readout enable"""
     fire_single_test_pulse: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
     test_pulse_rate_divider: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
 
-    # Common coincidence readout time window
+    ## Common coincidence readout time window
     common_coincidence_time: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Common coincidence readout time window"""
 
-    # Input selector for readout channel
+    ## Input selector for readout channel
     selector_readout_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    """Input selector for readout channel"""
 
     pre_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     post_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
@@ -1636,9 +1735,11 @@ class TADC(MotherEventTree):
 
     ## ?? What is it? Some kind of the adc trace offset?
     ioff: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """?? What is it? Some kind of the adc trace offset?"""
 
     ## ADC traces for channels (0,1,2,3)
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<short>>"))
+    """ADC traces for channels (0,1,2,3)"""
 
 
 @dataclass
@@ -1651,71 +1752,102 @@ class TRawVoltage(MotherEventTree):
     _tree_name: str = "trawvoltage"
     ## Common for the whole event
     ## Event size
+    """Common for the whole event"""
     event_size: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     ## First detector unit that triggered in the event
     first_du: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """First detector unit that triggered in the event"""
     ## Unix time corresponding to the GPS seconds of the trigger
     time_seconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Unix time corresponding to the GPS seconds of the trigger"""
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     time_nanoseconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """GPS nanoseconds corresponding to the trigger of the first triggered station"""
     ## Number of detector units in the event - basically the antennas count
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Number of detector units in the event - basically the antennas count"""
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Nanoseconds of the trigger for this DU"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Same as event_type, but event_type could consist of different triggered DUs"""
     ## Atmospheric temperature (read via I2C)
     atm_temperature: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Atmospheric temperature (read via I2C)"""
     ## Atmospheric pressure
     atm_pressure: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Atmospheric pressure"""
     ## Atmospheric humidity
     atm_humidity: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Atmospheric humidity"""
     ## Acceleration of the antenna in (x,y,z) in m/s2
     du_acceleration: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Acceleration of the antenna in (x,y,z) in m/s2"""
     ## Battery voltage
     battery_level: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Battery voltage"""
     ## ADC samples callected in channels (0,1,2,3)
     adc_samples_count_channel: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """ADC samples callected in channels (0,1,2,3)"""
     ## Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?
     trigger_pattern: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger pattern - which of the trigger sources (more than one may be present) fired to actually the trigger the digitizer - explained in the docs. ToDo: Decode this?"""
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     trigger_rate: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger rate - the number of triggers recorded in the second preceding the event"""
     ## Clock tick at which the event was triggered (used to calculate the trigger time)
     clock_tick: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Clock tick at which the event was triggered (used to calculate the trigger time)"""
     ## Clock ticks per second
     clock_ticks_per_second: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Clock ticks per second"""
     ## GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?
     gps_offset: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """GPS offset - offset between the PPS and the real second (in GPS). ToDo: is it already included in the time calculations?"""
     ## GPS leap second
     gps_leap_second: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS leap second"""
     ## GPS status
     gps_status: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS status"""
     ## GPS alarms
     gps_alarms: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS alarms"""
     ## GPS warnings
     gps_warnings: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS warnings"""
     ## GPS time
     gps_time: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """GPS time"""
     ## Longitude
     gps_long: StdVectorListDesc = field(default=StdVectorListDesc("double"))
+    """Longitude"""
     ## Latitude
     gps_lat: StdVectorListDesc = field(default=StdVectorListDesc("double"))
+    """Latitude"""
     ## Altitude
     gps_alt: StdVectorListDesc = field(default=StdVectorListDesc("double"))
+    """Altitude"""
     ## GPS temperature
     gps_temp: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """GPS temperature"""
 
     ## ?? What is it? Some kind of the adc trace offset?
     ioff: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """?? What is it? Some kind of the adc trace offset?"""
 
     ## Voltage traces for channels 1,2,3,4 in muV
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
+    """Voltage traces for channels 1,2,3,4 in muV"""
 
 
 @dataclass
@@ -1730,35 +1862,48 @@ class TVoltage(MotherEventTree):
     ## Common for the whole event
     ## First detector unit that triggered in the event
     first_du: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """First detector unit that triggered in the event"""
     ## Unix time corresponding to the GPS seconds of the trigger
     time_seconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Unix time corresponding to the GPS seconds of the trigger"""
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     time_nanoseconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """GPS nanoseconds corresponding to the trigger of the first triggered station"""
     ## Number of detector units in the event - basically the antennas count
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Number of detector units in the event - basically the antennas count"""
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Nanoseconds of the trigger for this DU"""
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Same as event_type, but event_type could consist of different triggered DUs"""
     ## Acceleration of the antenna in (x,y,z) in m/s2
     du_acceleration: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Acceleration of the antenna in (x,y,z) in m/s2"""
     ## Trigger rate - the number of triggers recorded in the second preceding the event
     trigger_rate: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger rate - the number of triggers recorded in the second preceding the event"""
 
     ## Voltage traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
+    """Voltage traces for antenna arms (x,y,z)"""
     # _trace: StdVectorList = field(default_factory=lambda: StdVectorList("vector<vector<Float32_t>>"))
 
     ## Peak2peak amplitude (muV)
     p2p: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Peak2peak amplitude (muV)"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """(Computed) peak time"""
 
 
 @dataclass
@@ -1773,34 +1918,47 @@ class TEfield(MotherEventTree):
     ## Common for the whole event
     ## Unix time corresponding to the GPS seconds of the trigger
     time_seconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Unix time corresponding to the GPS seconds of the trigger"""
     ## GPS nanoseconds corresponding to the trigger of the first triggered station
     time_nanoseconds: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """GPS nanoseconds corresponding to the trigger of the first triggered station"""
     ## Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower
     event_type: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Trigger type 0x1000 10 s trigger and 0x8000 random trigger, else shower"""
     ## Number of detector units in the event - basically the antennas count
     du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """Number of detector units in the event - basically the antennas count"""
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
     du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Unix time of the trigger for this DU"""
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Nanoseconds of the trigger for this DU"""
 
     ## Efield traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
+    """Efield traces for antenna arms (x,y,z)"""
     ## FFT magnitude for antenna arms (x,y,z)
     fft_mag: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
+    """FFT magnitude for antenna arms (x,y,z)"""
     ## FFT phase for antenna arms (x,y,z)
     fft_phase: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
+    """FFT phase for antenna arms (x,y,z)"""
 
     ## Peak-to-peak amplitudes for X, Y, Z (muV/m)
     p2p: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Peak-to-peak amplitudes for X, Y, Z (muV/m)"""
     ## Efield polarisation info
     pol: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Efield polarisation info"""
     ## (Computed) peak time
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """(Computed) peak time"""
 
 
 @dataclass
@@ -1812,38 +1970,54 @@ class TShower(MotherEventTree):
 
     _tree_name: str = "tshower"
 
-    # Shower primary type
+    ## Shower primary type
     primary_type: StdStringDesc = field(default=StdStringDesc(""))
-    # Energy from e+- (ie related to radio emission) (GeV)
+    """Shower primary type"""
+    ## Energy from e+- (ie related to radio emission) (GeV)
     energy_em: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Total energy of the primary (including muons, neutrinos, ...) (GeV)
+    """Energy from e+- (ie related to radio emission) (GeV)"""
+    ## Total energy of the primary (including muons, neutrinos, ...) (GeV)
     energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
+    """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
+    ## Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
     azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
+    """Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")"""
+    ## Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
+    """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
+    ## Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
     direction: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    # Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)
+    """Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref"""
+    ## Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)
     shower_core_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    # Atmospheric model name
+    """Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)"""
+    ## Atmospheric model name
     atmos_model: StdStringDesc = field(default=StdStringDesc(""))
-    # Atmospheric model parameters
+    """Atmospheric model name"""
+    ## Atmospheric model parameters
     atmos_model_param: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    # Magnetic field parameters: Inclination, Declination, modulus
+    """Atmospheric model parameters"""
+    ## Magnetic field parameters: Inclination, Declination, modulus
     magnetic_field: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    # Ground Altitude at core position (m asl)
+    """Magnetic field parameters: Inclination, Declination, modulus"""
+    ## Ground Altitude at core position (m asl)
     core_alt: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Shower Xmax depth  (g/cm2 along the shower axis)
+    """Ground Altitude at core position (m asl)"""
+    ## Shower Xmax depth  (g/cm2 along the shower axis)
     xmax_grams: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Shower Xmax position in GRAND detector ref
+    """Shower Xmax depth  (g/cm2 along the shower axis)"""
+    ## Shower Xmax position in GRAND detector ref
     xmax_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    # Shower Xmax position in shower coordinates
+    """Shower Xmax position in GRAND detector ref"""
+    ## Shower Xmax position in shower coordinates
     xmax_pos_shc: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    # Unix time when the shower was at the core position (seconds after epoch)
+    """Shower Xmax position in shower coordinates"""
+    ## Unix time when the shower was at the core position (seconds after epoch)
     core_time_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float64))
-    # Unix time when the shower was at the core position (seconds after epoch)
+    """Unix time when the shower was at the core position (seconds after epoch)"""
+    ## Unix time when the shower was at the core position (seconds after epoch)
     core_time_ns: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float64))
+    """Unix time when the shower was at the core position (seconds after epoch)"""
 
 
 @dataclass
@@ -1857,16 +2031,21 @@ class TRunEfieldSim(MotherRunTree):
 
     ## Name of the atmospheric index of refraction model
     refractivity_model: StdStringDesc = field(default=StdStringDesc())
+    """Name of the atmospheric index of refraction model"""
     refractivity_model_parameters: StdVectorListDesc = field(default=StdVectorListDesc("double"))
     ## Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)
     t_pre: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """Starting time of antenna data collection time window (because it can be a shorter trace then voltage trace, and thus these parameters can be different)"""
     ## Finishing time of antenna data collection time window
     t_post: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """Finishing time of antenna data collection time window"""
 
     ## Simulator name (aires/corsika, etc.)
     sim_name: StdStringDesc = field(default=StdStringDesc())
+    """Simulator name (aires/corsika, etc.)"""
     ## Simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
+    """Simulator version string"""
 
     def __post_init__(self):
         super().__post_init__()
@@ -1888,8 +2067,9 @@ class TRunShowerSim(MotherRunTree):
 
     _tree_name: str = "trunshowersim"
 
-    # relative thinning energy
+    ## relative thinning energy
     rel_thin: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """relative thinning energy"""
     # maximum_weight (weight factor)
     maximum_weight: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """the maximum weight, computed in zhaires as PrimaryEnergy*RelativeThinning*WeightFactor/14.0 (see aires manual section 3.3.6 and 2.3.2) to make it mean the same as Corsika Wmax"""
@@ -1899,22 +2079,30 @@ class TRunShowerSim(MotherRunTree):
     hadronic_thinning_weight: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """the ratio of electromagnetic to hadronic maximum weights"""
 
-    # low energy cut for electrons (GeV)
+    ## low energy cut for electrons (GeV)
     lowe_cut_e: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # low energy cut for gammas (GeV)
+    """low energy cut for electrons (GeV)"""
+    ## low energy cut for gammas (GeV)
     lowe_cut_gamma: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # low energy cut for muons (GeV)
+    """low energy cut for gammas (GeV)"""
+    ## low energy cut for muons (GeV)
     lowe_cut_mu: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # low energy cut for mesons (GeV)
+    """low energy cut for muons (GeV)"""
+    ## low energy cut for mesons (GeV)
     lowe_cut_meson: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # low energy cut for nuceleons (GeV)
+    """low energy cut for mesons (GeV)"""
+    ## low energy cut for nuceleons (GeV)
     lowe_cut_nucleon: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    # Site for wich the smulation was done
+    """low energy cut for nuceleons (GeV)"""
+    ## Site for wich the smulation was done
     site: StdStringDesc = field(default=StdStringDesc())
-    # Simulator name (aires/corsika, etc.)
+    """Site for wich the smulation was done"""
+    ## Simulator name (aires/corsika, etc.)
     sim_name: StdStringDesc = field(default=StdStringDesc())
-    # Simulator version string
+    """Simulator name (aires/corsika, etc.)"""
+    ## Simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
+    """Simulator version string"""
 
     def __post_init__(self):
         super().__post_init__()
@@ -1938,66 +2126,92 @@ class TShowerSim(MotherEventTree):
 
     ## File name in the simulator
     input_name: StdStringDesc = field(default=StdStringDesc())
+    """File name in the simulator"""
     ## The date for which we simulate the event (epoch)
     event_date: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    """The date for which we simulate the event (epoch)"""
     ## Random seed
     rnd_seed: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float64))
+    """Random seed"""
     ## Primary energy (GeV)
     # primary_energy: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Primary particle type
     # primary_type: StdVectorListDesc = field(default=StdVectorListDesc("string"))
     ## Primary injection point in Shower Coordinates
     primary_inj_point_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Primary injection point in Shower Coordinates"""
     ## Primary injection altitude in Shower Coordinates
     primary_inj_alt_shc: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Primary injection altitude in Shower Coordinates"""
     ## Primary injection direction in Shower Coordinates
     primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Primary injection direction in Shower Coordinates"""
 
     ## Table of air density [g/cm3] and vertical depth [g/cm2] versus altitude [m]
     atmos_altitude: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Table of air density [g/cm3] and vertical depth [g/cm2] versus altitude [m]"""
     atmos_density: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     atmos_depth: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
     ## High energy hadronic model (and version) used
     hadronic_model: StdStringDesc = field(default=StdStringDesc())
+    """High energy hadronic model (and version) used"""
     ## Energy model (and version) used
     low_energy_model: StdStringDesc = field(default=StdStringDesc())
+    """Energy model (and version) used"""
     ## Time it took for the sim
     cpu_time: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """Time it took for the sim"""
 
     ## Slant depth of the observing levels for longitudinal development tables
     long_depth: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Slant depth of the observing levels for longitudinal development tables"""
     long_pd_depth: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     ## Number of electrons
     long_pd_eminus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Number of electrons"""
     ## Number of positrons
     long_pd_eplus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Number of positrons"""
     ## Number of muons-
     long_pd_muminus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Number of muons-"""
     ## Number of muons+
     long_pd_muplus: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Number of muons+"""
     ## Number of gammas
     long_pd_gamma: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Number of gammas"""
     ## Number of pions, kaons, etc.
     long_pd_hadron: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Number of pions, kaons, etc."""
     ## Energy in low energy gammas
     long_gamma_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy in low energy gammas"""
     ## Energy in low energy e+/e-
     long_e_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy in low energy e+/e-"""
     ## Energy deposited by e+/e-
     long_e_edep: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy deposited by e+/e-"""
     ## Energy in low energy mu+/mu-
     long_mu_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy in low energy mu+/mu-"""
     ## Energy deposited by mu+/mu-
     long_mu_edep: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy deposited by mu+/mu-"""
     ## Energy in low energy hadrons
     long_hadron_elow: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy in low energy hadrons"""
     ## Energy deposited by hadrons
     long_hadron_edep: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy deposited by hadrons"""
     ## Energy in created neutrinos
     long_neutrino: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Energy in created neutrinos"""
     ## Core positions tested for that shower to generate the event (effective area study)
     tested_core_positions: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Core positions tested for that shower to generate the event (effective area study)"""
 
     event_weight: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
     """statistical weight given to the event"""
@@ -2016,10 +2230,13 @@ class TRunNoise(MotherRunTree):
 
     ## Info to retrieve the map of galactic noise
     gal_noise_map: StdStringDesc = field(default=StdStringDesc())
+    """Info to retrieve the map of galactic noise"""
     ## LST time when we generate the noise
     gal_noise_LST: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    """LST time when we generate the noise"""
     ## Noise std dev for each arm of each antenna
     gal_noise_sigma: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Noise std dev for each arm of each antenna"""
 
     def __post_init__(self):
         super().__post_init__()
@@ -2145,12 +2362,15 @@ class DataDirectory:
 class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
 
-    # Holds all the trees in the file, by tree name
+    ## Holds all the trees in the file, by tree name
     dict_of_trees = {}
-    # Holds the list of trees in the file, but just with maximal level
+    """Holds all the trees in the file, by tree name"""
+    ## Holds the list of trees in the file, but just with maximal level
     list_of_trees = []
-    # Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
+    """Holds the list of trees in the file, but just with maximal level"""
+    ## Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
     tree_types = defaultdict(dict)
+    """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
 
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""

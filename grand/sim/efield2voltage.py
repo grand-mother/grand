@@ -155,6 +155,15 @@ class Efield2Voltage:
         :param du_idx: index of DU
         :    type du_idx: int
         """
+        if self.du_pos[du_idx, 0]>22000000:
+            raise ValueError("du_pos_x is too large for computing!")
+        elif self.du_pos[du_idx, 1]>22000000:
+            raise ValueError("du_pos_y is too large for computing!")
+        elif self.du_pos[du_idx, 2]>22000000:
+            raise ValueError("du_pos_z is too large for computing!")
+        else:
+            pass
+
 
         antenna_location = coord.LTP(
             x=self.du_pos[du_idx, 0], #self.du_pos[du_idx, 0],    # antenna position wrt local grand coordinate
@@ -162,12 +171,16 @@ class Efield2Voltage:
             z=self.du_pos[du_idx, 2], #self.du_pos[du_idx, 2],    # antenna position wrt local grand coordinate
             frame=self.evt_shower.grand_ref_frame
             )
-        logger.debug(antenna_location)
+        print("antenna_location", antenna_location)
+
         antenna_frame = coord.LTP(
+            arg=antenna_location,
             location=antenna_location, 
             orientation="NWU", 
             magnetic=True
             )
+        print("antenna_frame = " , antenna_frame)
+
         self.ant_leff_sn = AntennaProcessing(model_leff=self.ant_model.leff_sn, pos=antenna_frame)
         self.ant_leff_ew = AntennaProcessing(model_leff=self.ant_model.leff_ew, pos=antenna_frame)
         self.ant_leff_z  = AntennaProcessing(model_leff=self.ant_model.leff_z , pos=antenna_frame)
@@ -283,7 +296,7 @@ class Efield2Voltage:
         Note: Either event_idx, or both event_number and run_number must be provided.      
         """
         # update event. Provide either integer event_idx, or event_number and run_number.
-        self.get_event(event_idx, event_number, run_number) 
+        self.get_event(event_idx, event_number, run_number)
         for du_idx in range(self.nb_du):
             self.compute_voc_du(du_idx)
 
@@ -395,6 +408,11 @@ class Efield2Voltage:
             # default case: compute voltage for all DUs of all events and all runs provided in the input file.
             if (event_idx is None) and (event_number is None) and (run_number is None):
                 nb_events = len(self.events_list)
+                # If there are no events in the file, exit
+                if nb_events == 0:
+                    message = "There are no events in the file! Exiting."
+                    logger.error(message)
+                    raise Exception(message)
                 for evt_idx in range(nb_events):
                     self.compute_voltage_event(event_idx=evt_idx) # event_number and run_number is None
                     self.save_voltage(append_file)

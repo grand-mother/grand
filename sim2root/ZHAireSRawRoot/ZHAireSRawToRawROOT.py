@@ -445,7 +445,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
 
                 efield = np.loadtxt(antfile,dtype='f4') #we read the electric field as a numpy array
 
-                t_0= antt[ant_number]
+                t_0= antt[ant_number]  
                 
                 DetectorID = IDs[ant_number]                                                
                 

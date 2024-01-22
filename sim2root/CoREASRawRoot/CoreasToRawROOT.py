@@ -1,23 +1,23 @@
 #!/usr/bin/python
 ## Conversion of Coreas simulations to GRANDRaw ROOT files
-## by Jelena Köhler
+## by Jelena Köhler, @jelenakhlr
 
 import sys
 import glob
-import datetime #to get the unix timestamp
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
 import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
-#from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand  #this is not needded becouse root_trees is imported on RawTrees
+
+"""
+run with
+python3 CoreasToRawRoot <directory with Coreas Sim>
+
+for more info, refer to the readme
+"""
+
 
 def CoreasToRawRoot(path):
-  """
-  put meaningful comments here - maybe after I clean up the structure of this file
-
-  """
-  #WARNING: output file name hardcoded in the root tree section
-
   print("-----------------------------------------")
   print("------ COREAS to RAWROOT converter ------")
   print("-----------------------------------------")
@@ -26,28 +26,29 @@ def CoreasToRawRoot(path):
   ###############################
 
   print("Checking", path, "for *.reas and *.inp files (shower info).")
-  # TODO: check if the IDs in SIM.reas and RUN.inp match
-  # TODO: maybe specify RUN number as input value - or as choice when there is more than one 
 
   # ********** load SIM.reas **********
   # find reas files
   if glob.glob(path + "SIM??????-*.reas"):
       available_reas_files = glob.glob(path + "SIM??????-*.reas") # these are from parallel runs - I will mostly have these
+
   else:
       available_reas_files = glob.glob(path + "SIM??????.reas") # these are from normal runs
-
+      
 
   # reas status messages
   if len(available_reas_files) == 0:
-    print("[ERROR] No reas file found in this directory. Please check directory and try again.")
-    quit()
+    sys.exit("[ERROR] No reas file found in this directory. Please check directory and try again.")
   elif len(available_reas_files) > 1:
     print("Found", available_reas_files)
     print("[WARNING] More than one reas file found in directory. Only reas file", available_reas_files[0], "will be used.")
     reas_input = available_reas_files[0]
+    simID = reas_input.split(path)[1][3:9]
+
   else:
     print("Found", available_reas_files)
     reas_input = available_reas_files[0]
+    simID = reas_input.split(path)[1][3:9] # use for sanity checks - make sure the files that are read in all belong to the same sim
     print("Converting reas file", reas_input, "to GRANDroot.")
   print("*****************************************")
 
@@ -55,10 +56,12 @@ def CoreasToRawRoot(path):
   # ********** load RUN.inp **********
   # find inp files
   # inp files can be named with SIM or RUN, so we will search for both
-  available_inp_files_sim = glob.glob(path + "SIM??????.inp")
-  available_inp_files_run = glob.glob(path + "RUN??????.inp")
-
-  available_inp_files = available_inp_files_sim + available_inp_files_run
+  if glob.glob(path + f"SIM{simID}.inp"):
+    available_inp_files = glob.glob(path + f"SIM{simID}.inp")
+  elif glob.glob(path + f"RUN{simID}.inp"):
+    available_inp_files = glob.glob(path + f"RUN{simID}.inp")
+  else:
+     sys.exit("No input file found. Please check path and filename and try again.")
 
 
   # inp status messages
@@ -77,7 +80,7 @@ def CoreasToRawRoot(path):
 
   # ********** load traces **********
   print("Checking subdirectories for *.dat files (traces).")
-  available_traces = glob.glob(path + "SIM??????_coreas/*.dat")
+  available_traces = glob.glob(path + f"SIM{simID}_coreas/*.dat")
   print("Found", len(available_traces), "*.dat files (traces).")
   print("*****************************************")
   # in each dat file:
@@ -90,22 +93,33 @@ def CoreasToRawRoot(path):
 
   For now, we just want this for the height the of first interaction.
   """
-  log_file = glob.glob(path + "*.log")
+  log_file = glob.glob(path + f"DAT{simID}.log")
 
   if len(log_file) == 0:
-    print("[ERROR] No log file found in this directory. Please check directory and try again.")
-    quit()
+    print("[WARNING] No log file found in this directory. Using dummy values for first interaction."\
+          "Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4."
+          )
+    first_interaction = 100 # height of first interaction - in m
+    hadr_interaction  = "Sibyll 2.3d"
+    coreas_version    = "Coreas V1.4"
   elif len(log_file) > 1:
     print("Found", available_inp_files)
     print("[WARNING] More than one log file found in directory. Only log file", log_file[0], "will be used.")
     log_file = log_file[0]
+    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
+    coreas_version    = read_coreas_version(log_file)
   else:
     print("Found", log_file)
     log_file = log_file[0]
     print("Extracting info from log file", log_file, "for GRANDroot.")
+    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
+    coreas_version    = read_coreas_version(log_file)
   print("*****************************************")
 
-  first_interaction = read_first_interaction(log_file) # height of first interaction
+
+  
 
   ###############################
   # Part B: Generate ROOT Trees #
@@ -120,31 +134,46 @@ def CoreasToRawRoot(path):
   CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") * 100 # convert to m
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
-  TimeResolution = read_params(reas_input, "TimeResolution")
-  AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries")
-  TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary")
-  TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary")
-  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale")
+  TimeResolution = read_params(reas_input, "TimeResolution") * 10**9 #convert to ns
+  # TODO: add a check here to see if timeboundaries are auto or not
+  AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
+  TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
+  TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary") * 10**9 # convert to ns
+  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale") * 100 # convert to m
 
   GroundLevelRefractiveIndex = read_params(reas_input, "GroundLevelRefractiveIndex") # refractive index at 0m asl
 
-  RunID = read_params(reas_input, "RunNumber")
-  EventID = read_params(reas_input, "EventNumber")
+  RunID = int(read_params(reas_input, "RunNumber"))
+  EventID = int(read_params(reas_input, "EventNumber"))
   GPSSecs = read_params(reas_input, "GPSSecs")
   GPSNanoSecs = read_params(reas_input, "GPSNanoSecs")
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
-  zenith = read_params(reas_input, "ShowerZenithAngle")
-  azimuth = read_params(reas_input, "ShowerAzimuthAngle")
+  if read_params(reas_input, "ShowerZenithAngle"):
+    zenith = read_params(reas_input, "ShowerZenithAngle")
+    azimuth = read_params(reas_input, "ShowerAzimuthAngle")
 
-  Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
-  Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA -> TODO: change to PDG system
-  DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
-  DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
-  FieldIntensity = read_params(reas_input, "MagneticFieldStrength") # in Gauss -> TODO: change to mT
-  FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
-  GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
+    Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
+    Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
+    DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
+    DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10**-1 # convert from Gauss to mT
+    FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
+    GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
+  else:
+    zenith = read_params(inp_input, "THETAP")
+    azimuth = read_params(inp_input, "PHIP")
+
+    Energy = read_params(inp_input, "ERANGE") # in GeV
+    Primary = read_params(inp_input, "PRMPAR") # as defined in CORSIKA
+    print("[WARNING] DepthOfShowerMaximum, DistanceOfShowerMaximum hardcoded")
+    print("[WARNING] FieldIntensity, FieldInclination, GeomagneticAngle hardcoded for Dunhuang")
+    DepthOfShowerMaximum = -1
+    DistanceOfShowerMaximum = -1
+    FieldIntensity = 0.5648236565
+    FieldInclination = 61.60505071
+    GeomagneticAngle = 93.82137564
 
   # from inp file
   nshow = read_params(inp_input, "NSHOW") # number of showers - should always be 1 for coreas, so maybe we dont need this parameter at all
@@ -153,14 +182,10 @@ def CoreasToRawRoot(path):
   radnkg = str(read_params(inp_input, "RADNKG"))
   print("*****************************************")
 
-  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  # fix these values! for now: placeholders
-  # TODO: read and store all seeds as a list
-  print("[WARNING] RandomSeed is hardcoded")
-  RandomSeed = [1,2,3,4,5,6]
-  
-  ecuts = [1,2,3,4] 
-  print("[WARNING] ecuts is hardcoded")
+
+  RandomSeed = read_params(inp_input, "SEED")
+
+  ecuts = read_list_of_params(inp_input, "ECUTS")
   # 0: hadrons & nuclei, 1: muons, 2: e-, 3: photons
   GammaEnergyCut    = ecuts[3]
   ElectronEnergyCut = ecuts[2]
@@ -169,8 +194,7 @@ def CoreasToRawRoot(path):
   NucleonEnergyCut  = ecuts[0]
   MesonEnergyCut    = HadronEnergyCut # mesons are hadronic, so this should be fine
 
-  parallel = [1,2] # COREAS-only
-  print("[WARNING] parallel is hardcoded")
+  parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
   ECTCUT = parallel[0]
   ECTMAX = parallel[1]
 
@@ -180,20 +204,16 @@ def CoreasToRawRoot(path):
   # MPIID: ID for mpi run (ignore for now)
   # T/F flag for extra output file (ignore for now)
 
-  # elmflg = ["T", "T"] # COREAS-only (ignore for now)
-
   # In Zhaires converter: RelativeThinning, WeightFactor
   # I have:
-  Thin  = [1,2,3] 
-  print("[WARNING] THIN is hardcoded")
+  Thin  = read_list_of_params(inp_input, "THIN")
   # THIN = [limit, weight, Rmax]
-  ThinH = [1,2] 
-  print("[WARNING] THINH is hardcoded")
+  ThinH = read_list_of_params(inp_input, "THINH")
   # THINH = [limit, weight] for hadrons
-
+  
   ##########################################
   # get all info from the long file
-  pathLongFile = glob.glob(path + "DAT??????.long")[0]
+  pathLongFile = glob.glob(path + f"DAT{simID}.long")[0]
 
   # the long file has an annoying setup, which I (very inelegantly) circumvent with this function:
   n_data, dE_data, hillas_parameter = read_long(pathLongFile)
@@ -234,43 +254,31 @@ def CoreasToRawRoot(path):
   EnergyInNeutrinos = 1. # placeholder
   # + energy in all other particles
 
-  # RawROOT addition
-  EventName = "Event_" + str(EventID)
+  if EventID == 1:
+     FileName = "Run_" + str(RunID)   
+  else: 
+     FileName = "Event_" + str(EventID)
 
   AtmosphericModel = read_atmos(inp_input)
-  Date = "2017-04-01" # from ATM file. TODO: unhardcode this
-  print("[WARNING] date is hardcoded")
+  Date = read_date(inp_input)
   t1 = time.strptime(Date.strip(),"%Y-%m-%d")
   UnixDate = int(time.mktime(t1))
 
 
   print("*****************************************")
-  HadronicModel = "sibyll" #TODO:Unhardcode this
-  print("[WARNING] hard-coded HadronicModel", HadronicModel) 
-  LowEnergyModel = "urqmd" #TODO:Unhardcode this
+  HadronicModel = hadr_interaction
+  LowEnergyModel = "urqmd" # might not be possible to get this info from mpi runs
   print("[WARNING] hard-coded LowEnergyModel", LowEnergyModel)
   print("*****************************************")
 
-  # TODO: add function for reading logs
-  # TODO: add CPU time
-  CPUTime = 1.
-  print("[WARNING] CPUTime is hardcoded")
   # TODO: find injection altitude in TPlotter.h/cpp
   InjectionAltitude = 100.
   print("[WARNING] InjectionAltitude is hardcoded")
 
-  ArrayName = "GP13" # TODO: unhardcode this - do we even use this?
-  # print("[WARNING] ArrayName is hardcoded")
-
-  # SlantXmax
-  # XmaxPosition
-  # XmaxDistance
-  # XmaxAltitude
-
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + EventName +".root"
+  OutputFileName = "Coreas_" + FileName +".root"
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -280,14 +288,13 @@ def CoreasToRawRoot(path):
 
   # ********** fill RawShower **********
   RawShower.run_number = RunID
-  RawShower.sim_name = "Coreas"  # TODO:Unhardcode this, add version, etc
+  RawShower.sim_name = coreas_version
   RawShower.event_number = EventID
-  RawShower.event_name = EventName
+  RawShower.event_name = FileName
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
 
-  RawShower.rnd_seed = RandomSeed[0] # TODO: figure out how to put the whole list here
-  # right now I get this error "ValueError: setting an array element with a sequence." if I try to pass just "RandomSeed"
+  RawShower.rnd_seed = RandomSeed
 
   RawShower.energy_in_neutrinos = EnergyInNeutrinos
   RawShower.energy_primary = [Energy]
@@ -298,20 +305,15 @@ def CoreasToRawRoot(path):
   RawShower.atmos_model = str(AtmosphericModel)
 
   RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
-  # RawShower.xmax_grams = SlantXmax
-  # RawShower.xmax_pos_shc = XmaxPosition
-  # RawShower.xmax_distance = XmaxDistance
-  # RawShower.xmax_alt = XmaxAltitude
   RawShower.hadronic_model = HadronicModel
   RawShower.low_energy_model = LowEnergyModel
-  RawShower.cpu_time = float(CPUTime)
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
   RawShower.maximum_weight = Thin[1]
   RawShower.hadronic_thinning = ThinH[0]
   RawShower.hadronic_thinning_weight = ThinH[1]
-  RawShower.rmax = Thin[2]*100 #cm -> m
+  RawShower.rmax = float(Thin[2]) * 100 #cm -> m
 
   # * CUTS *
   RawShower.lowe_cut_gamma = GammaEnergyCut
@@ -348,7 +350,6 @@ def CoreasToRawRoot(path):
   
   # gamma cut - I believe this was the same value as for another particle
   # for now: use hadron cut as placeholder
-  # TODO ASAP: check this
   RawShower.long_ed_gamma_cut = ed_hadron_cut
   
   RawShower.long_ed_gamma_ioniz = ed_gamma
@@ -376,12 +377,9 @@ def CoreasToRawRoot(path):
   
   #****** info from input files: ******
 
-  # TODO ASAP: find these values
   RefractionIndexModel = "model"
-  RefractionIndexParameters = [1,2,3] # ? 
+  RefractionIndexParameters = [1,1,1] # ? 
   
-  TimeWindowMin = TimeLowerBoundary # from reas
-  TimeWindowMax = TimeUpperBoundary # from reas
   TimeBinSize   = TimeResolution    # from reas
 
 
@@ -390,10 +388,10 @@ def CoreasToRawRoot(path):
 
   #****** load positions ******
   # the list file contains all antenna positions for each antenna ID
-  pathAntennaList = glob.glob(path + "*.list")[0]
+  pathAntennaList = glob.glob(path + f"SIM{simID}.list")[0]
   # store all antenna IDs in ant_IDs
-  ant_IDs = antenna_positions_dict(pathAntennaList)["ID"]
-
+  antenna_names = antenna_positions_dict(pathAntennaList)["name"]
+  antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
 
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
@@ -405,13 +403,9 @@ def CoreasToRawRoot(path):
   RawEfield.run_number = RunID
   RawEfield.event_number = EventID
 
-  RawEfield.efield_sim = "Coreas" # TODO: unhardcode this and add versions
-
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
         
-  RawEfield.t_pre = TimeWindowMin
-  RawEfield.t_post = TimeWindowMax
   RawEfield.t_bin_size = TimeBinSize
 
   #****** fill traces ******
@@ -420,50 +414,61 @@ def CoreasToRawRoot(path):
 
   # loop through polarizations and positions for each antenna
   print("******")
-  print("Antenna positions (x,y,z)")
-    
-  for antenna in ant_IDs:
-    tracefile = glob.glob(path + "SIM??????_coreas/raw_" + str(antenna) + ".dat")[0]
+  print("filling traces")
+  for index, antenna in enumerate(antenna_names): 
+    tracefile = glob.glob(path + f"SIM{simID}_coreas/raw_" + str(antenna) + ".dat")[0]
 
     # load the efield traces for this antenna
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
     efield = np.loadtxt(tracefile)
     
-    timestamp = efield[:,0]
+    timestamp = efield[:,0] * 10**9 #convert to ns 
     trace_x = efield[:,1]
     trace_y = efield[:,2]
     trace_z = efield[:,3]
     
-    
+    # define time params:
+    t_length = len(timestamp)
+    t_0 = timestamp[0] + t_length/2
+    t_pre = -t_length/2
+    t_post = t_length/2
+
+    # # timewindow min and max vary for each trace
+    # TimeWindowMin = timestamp[0]
+    # TimeWindowMax = timestamp[:-1]
+
+    # RawEfield.TimeWindowMin.append(TimeWindowMin)
+    # RawEfield.TimeWindowMax.append(TimeWindowMax)
+
     # in Zhaires converter: AntennaN[ant_ID]
-    RawEfield.du_id.append(int(antenna))
-    RawEfield.t_0.append(timestamp[0].astype(np.float32))
+    RawEfield.du_name.append(str(antenna))
+    RawEfield.du_id.append(int(antenna_IDs[index]))
+
+    # store time params:
+    RawEfield.t_0.append(t_0.astype(float))
+    RawEfield.t_pre = t_pre
+    RawEfield.t_post = t_post
 
     # Traces
-    RawEfield.trace_x.append(trace_x.astype(np.float32))
-    RawEfield.trace_y.append(trace_y.astype(np.float32))
-    RawEfield.trace_z.append(trace_z.astype(np.float32))
-
+    RawEfield.trace_x.append(trace_x.astype(float))
+    RawEfield.trace_y.append(trace_y.astype(float))
+    RawEfield.trace_z.append(trace_z.astype(float))
 
     # Antenna positions in showers's referential in [m]
     ant_position = get_antenna_position(pathAntennaList, antenna)
+    RawEfield.du_x.append(ant_position[0][index].astype(float))
+    RawEfield.du_y.append(ant_position[1][index].astype(float))
+    RawEfield.du_z.append(ant_position[2][index].astype(float))
     
-    print("for antenna number:", antenna)
-    print(ant_position)
-    
-    RawEfield.du_x.append(ant_position[0].astype(np.float32))
-    RawEfield.du_y.append(ant_position[1].astype(np.float32))
-    RawEfield.du_z.append(ant_position[2].astype(np.float32))
-  
   print("******")
   RawEfield.fill()
   RawEfield.write()
+
   #############################################################
   # fill SimCoreasShower with all leftover info               #
   #############################################################
   
   # store all leftover information here
-
   SimCoreasShower.AutomaticTimeBoundaries = AutomaticTimeBoundaries
   SimCoreasShower.ResolutionReductionScale = ResolutionReductionScale
   SimCoreasShower.GroundLevelRefractiveIndex = GroundLevelRefractiveIndex
@@ -478,16 +483,16 @@ def CoreasToRawRoot(path):
   SimCoreasShower.maxprt = maxprt
   SimCoreasShower.radnkg = radnkg
 
-  SimCoreasShower.parallel_ectcut = ECTCUT # = [ECTCUT, ECTMAX]
+  SimCoreasShower.parallel_ectcut = ECTCUT 
   SimCoreasShower.parallel_ectmax = ECTMAX
 
   SimCoreasShower.fill()
   SimCoreasShower.write()
   #############################################################
 
-  print("### The event written was ", EventName, "###")
+  print("### The event written is", FileName, "###")
   print("### The name of the file is ", OutputFileName, "###")
-  return EventName
+  return FileName
 
 
 

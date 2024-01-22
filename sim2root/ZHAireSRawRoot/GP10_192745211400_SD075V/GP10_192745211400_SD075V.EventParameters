@@ -7,7 +7,7 @@ Azimuth: 180.47 deg Magnetic
 Core Position: 6114472.520 -452068.509 1425.000
 ArrayName: GP10
 EventWeight: 3
-EventUnixTime: 1
+EventUnixTime: 200854852
 EventUnixNanosecond: 1
 #Core positions tested before generating the event ###########################################
 (6114172.520 -452168.509 1425.000)

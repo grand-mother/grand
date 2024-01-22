@@ -256,7 +256,7 @@ class AntennaProcessing:
 
     def compute_voltage(
         self,
-        xmax: LTP,
+        xmax: LTP, # local tangential plane
         efield: ElectricField,
         frame: Union[LTP, GRANDCS, None] = None,
     ) -> Voltage:
@@ -269,7 +269,8 @@ class AntennaProcessing:
         :type frame:
         """
         # frame is shower frame. self.frame is antenna frame.
-        if (self.pos is None) or (frame is None):
+        print("pos",self.pos)
+        if (not np.all(np.isfinite(self.pos))) or (not np.all(np.isfinite(frame))): # which one
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input fft_leff and field are in shower frame.

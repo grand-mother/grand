@@ -109,11 +109,11 @@ class AntennaModel:
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_Zarm_leff.npz")
             self.leff_z = tabulated_antenna_model(path_ant)
             
-        if du_type=='Horizon':
+        elif du_type=='Horizon':
             path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
             self.leff_ew = tabulated_antenna_model(path_ant)
             path_ant = grand_add_path_data("detector/HorizonAntenna_SNarm_leff_loaded.npy")
-            self.leff_sn = tabulated_antenna(path_ant)
+            self.leff_sn = tabulated_antenna_model(path_ant)
             path_ant = grand_add_path_data("detector/HorizonAntenna_Zarm_leff_loaded.npy")
             self.leff_z = tabulated_antenna_model(path_ant)
 

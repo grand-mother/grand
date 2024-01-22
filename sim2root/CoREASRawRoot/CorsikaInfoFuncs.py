@@ -1,21 +1,46 @@
 #!/usr/bin/python
 ## Extra functions used for conversion of Coreas simulations to GRANDRaw ROOT files
-## by Jelena Köhler
+## by Jelena Köhler, @jelenakhlr
 
+import re
 from re import search
 import io
 import numpy as np
+from datetime import datetime
 
 
-# read values from SIM.reas or RUN.inp
+# read single values from SIM.reas or RUN.inp
 def find_input_vals(line):
   return search(r'[-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?', line)
 
 
 
+# read a list of values from SIM.reas or RUN.inp
+def find_input_vals_list(line):
+  # basically search for up to four values with the same rules as in find_input_vals
+  match1 = search(r'[-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?', line)
+  match2 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  match3 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  match4 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  match5 = search(r'([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?) ([-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?)', line)
+  
+  if match5:
+    return [match5.group(1), match5.group(2), match5.group(3), match5.group(4), match5.group(5)]
+  elif match4:
+    return [match4.group(1), match4.group(2), match4.group(3), match4.group(4)]
+  elif match3:
+    return [match3.group(1), match3.group(2), match3.group(3)]
+  elif match2:
+    return [match2.group(1), match2.group(2)]
+  else:
+     return match1
+  
+
+
+
+# read single values from SIM.reas or RUN.inp
 def read_params(input_file, param):
   # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
-  val = "1111"
   with open(input_file, "r") as datafile:
     for line in datafile:
       if param in line:
@@ -23,10 +48,28 @@ def read_params(input_file, param):
         if find_input_vals(line):
           val = find_input_vals(line).group()
           print(param, "=", val)
-          break 
+          return float(val)
           # this is a problem for AutomaticTimeBoundaries, because it also shows up in other comments
-          # therefore, just break after the first one is found. this can definitely be improved
-  return float(val)
+#   return float(val)
+
+
+
+# read a list of values from SIM.reas or RUN.inp
+def read_list_of_params(input_file, param):
+    # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
+    with open(input_file, "r") as datafile:
+        for line in datafile:
+            if param in line:
+                line = line.lstrip()
+                if find_input_vals_list(line):
+                    list = find_input_vals_list(line)
+                    print(param, "=", list)
+                    break 
+                # this is a problem for AutomaticTimeBoundaries, because it also shows up in other comments
+                # therefore, just break after the first one is found. this can definitely be improved
+    return list
+
+
 
 
 
@@ -37,6 +80,20 @@ def read_atmos(input_file):
             if "ATMFILE" in line:
                 atmos = line.split("/")[-1]
     return atmos
+
+
+
+def read_date(input_file):
+    # RUN.inp only
+    with open(input_file, mode="r") as datafile:
+        for line in datafile:
+            if "ATMFILE" in line:
+                date_string = line.split("ATMOSPHERE_")[-1][:8]
+                # Parse the date string in the original format (YYYYMMDD)
+                date_obj = datetime.strptime(date_string, '%Y%m%d')
+                # Format the date with dashes (YYYY-MM-DD)
+                formatted_date = date_obj.strftime('%Y-%m-%d')
+    return formatted_date
 
 
 
@@ -69,6 +126,32 @@ def read_first_interaction(log_file):
 
 
 
+def read_HADRONIC_INTERACTION(log_file):
+    with open(log_file, mode="r") as datafile:
+        for line in datafile:
+            if "S I B Y L L  2.3d" in line:
+                hadr_interaction = "Sibyll 2.3d"
+                print("hadronic interaction model =", hadr_interaction)
+            else:
+                hadr_interaction = "n/a"
+                print("hadronic interaction model =", hadr_interaction)
+    return str(hadr_interaction)
+
+
+
+def read_coreas_version(log_file):
+    with open(log_file, mode="r") as datafile:
+        for line in datafile:
+            if "CoREAS V1.4" in line:
+                coreas_version = "CoREAS V1.4"
+                print("CoREAS version =", coreas_version)
+            else:
+                coreas_version = "n/a"
+                print("CoREAS version =", coreas_version)
+    return str(coreas_version)
+
+
+
 def antenna_positions_dict(pathAntennaList):
     """
     get antenna positions from SIM??????.list and store in a dictionary
@@ -82,29 +165,26 @@ def antenna_positions_dict(pathAntennaList):
     # file[:,0] and file[:,1] are useless (they are simply "AntennaPosition" and "=")
     
     # get the x, y and z positions
-    antennaInfo["x"] = file[:,2].astype(float) * 100 # convert to m
-    antennaInfo["y"] = file[:,3].astype(float) * 100 # convert to m
-    antennaInfo["z"] = file[:,4].astype(float) * 100 # convert to m
+    antennaInfo["x"] = file[:,2].astype(float) / 100 # convert to m
+    antennaInfo["y"] = file[:,3].astype(float) / 100 # convert to m
+    antennaInfo["z"] = file[:,4].astype(float) / 100 # convert to m
     # get the IDs of the antennas
-    antennaInfo["ID"] = file[:,5]
+    antennaInfo["name"] = file[:,5].astype(str)
 
     # Extract the IDs of the antennas from the names
-    antenna_ids = []
+    antennaInfo["ID"] = []
+    # Use a counter to give generic IDs to antennas with unknown names
+    generic_id_counter = 1
+
     for name in file[:, 5]:
-        match = search(r'gp_(\d+)', name)  # Extract digits after last underscore
-        if match:
-            antenna_ids.append(match.group())
-        else:
-            # Handle the generic IDs for antennas with complex names
-            generic_id_counter = 1
-            antennaInfo["ID"] = []
-            for antenna_id in antenna_ids:
-                if antenna_id is None:
-                    generic_id = f"antenna_{generic_id_counter}"
-                    antennaInfo["ID"].append(generic_id)
-                    generic_id_counter += 1
-                else:
-                    antennaInfo["ID"].append(antenna_id)
+        GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after last underscore
+
+        if GP_match: # match GP13
+            antennaInfo["ID"].append(int(GP_match.group(1))) # Group 1 contains the ID
+
+        else: # Give generic IDs to antennas with other names
+            antennaInfo["ID"].append(int(generic_id_counter))
+            generic_id_counter += 1
 
     return antennaInfo
 
