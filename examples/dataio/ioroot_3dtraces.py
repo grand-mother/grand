@@ -94,10 +94,11 @@ def main():
         o_tevent.plot_all_traces_as_image()
     if args.footprint:
         o_tevent.plot_footprint_val_max()
+        o_tevent.plot_footprint_4d_max()
     if args.time_val:
-        o_tevent.plot_footprint_val_max_inter()
+        o_tevent.plot_footprint_time_slider()
     if args.trace != -100:
-        if not args.trace in o_tevent.d_idxdu.keys():
+        if not args.trace in o_tevent.idt2idx.keys():
             logger.error(f"ERROR: unknown DU identifer")
             return
         o_tevent.plot_trace_du(args.trace)
@@ -105,10 +106,10 @@ def main():
     if args.list_ttree:
         print(get_ttree_in_file(args.file.name))
     if args.dump != -100:
-        if not args.dump in o_tevent.d_idxdu.keys():
+        if not args.dump in o_tevent.idt2idx.keys():
             logger.error(f"ERROR: unknown DU identifer")
             return
-        idx_du = o_tevent.d_idxdu[args.dump]
+        idx_du = o_tevent.idt2idx[args.dump]
         tr_du = o_tevent.traces[idx_du]
         t_tr = o_tevent.t_samples[idx_du]
         for idx in range(o_tevent.get_size_trace()):

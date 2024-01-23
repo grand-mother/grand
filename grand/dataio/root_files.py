@@ -1,5 +1,5 @@
 """
-Manage ROOT file of type Efield simulation, voltage ADCevent is experimental 
+Manage ROOT file of type Efield simulation, voltage
 """
 
 import os.path
@@ -163,6 +163,15 @@ class _FileEventBase:
         Return sampling frequency in MHz
         """
         return 1e3 / self.t_bin_size
+    
+    def get_du_nanosec_ordered(self):
+        """
+        return nanosecond between 0s to 2s max
+        """
+        du_s = np.array(self.tt_event.du_seconds)
+        min_sec = du_s.min()
+        du_ns =  np.array(self.tt_event.du_nanoseconds) + 1000000000*(du_s-min_sec)
+        return du_ns
 
     def get_obj_handling3dtraces(self):
         """
@@ -176,7 +185,7 @@ class _FileEventBase:
         o_tevent.init_traces(
             self.traces,
             du_id,
-            np.array(self.tt_event.du_nanoseconds),
+            self.get_du_nanosec_ordered(),
             self.get_sampling_freq_mhz(),
         )
         return o_tevent
@@ -223,8 +232,8 @@ class FileEfield(_FileEventBase):
         event = groot.TEfield(f_name)
         super().__init__(event)
         self.tt_efield = self.tt_event
-        self.tt_shower = groot.TShower(f_name)
-        self.tt_run = groot.TRun(f_name)
+        self.tt_shower = groot.TShower(f_name.replace('TEfield_', 'TShower_'))
+        self.tt_run = groot.TRun(f_name.replace('TEfield_', 'TRun_'))
         self.load_event_idx(0)
         self.f_name = f_name
 
