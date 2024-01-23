@@ -569,12 +569,14 @@ class DataTree:
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
                     self._create_tree()
+
+                # Make the tree save itself in this file
+                self._tree.SetDirectory(self._file)
+
             else:
                 logger.info(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
 
-        # Make the tree save itself in this file
-        self._tree.SetDirectory(self._file)
 
         self.assign_metadata()
 
