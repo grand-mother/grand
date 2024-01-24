@@ -2365,7 +2365,8 @@ class DataDirectory:
                         if max_analysis_level == -1:
                             max_anal_chain_name = el["name"]
 
-                    setattr(self, "t" + key, chains_dict[max_anal_chain_name])
+                    tree_class = getattr(thismodule, el["type"])
+                    setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
 
     def print(self, recursive=True):
         """Prints all the information about all the data"""
