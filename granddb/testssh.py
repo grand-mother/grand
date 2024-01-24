@@ -1,9 +1,9 @@
+print("toto")
 import granddatalib
 import psycopg2
 import psycopg2.extras
 
 import time
-
 # file = 'memo_Runner_step_radio.txt'
 #file = 'LyonAiresLibraryRun.ini'
 #file = 'granddatalib.py'
@@ -17,6 +17,7 @@ dm = granddatalib.DataManager('config.ini')
 
 
 file = 'Coarse3.root'
+file = 'GRAND.TEST-RAW.20230309203415.001.root'
 print("\nGet " + file)
 st = time.time()
 print("RESULTAT : " + str(dm.get(file)))
@@ -35,7 +36,7 @@ print((et-st)*1000)
 
 
 
-file = 'LyonAiresLibraryRun.ini'
+file = 'td002015_f0003.root'
 print("\nGet in localdir " + file)
 st = time.time()
 print("RESULTAT : " + str(dm.get(file, "localdir")))

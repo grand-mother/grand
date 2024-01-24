@@ -512,7 +512,7 @@ class DataTree:
         for field in self.__dict__:
             if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
                 print("not set for", field)
-                
+
         self.__setattr__ = self.mod_setattr
 
     ## Return the iterable over self
@@ -569,12 +569,14 @@ class DataTree:
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
                     self._create_tree()
+
+                # Make the tree save itself in this file
+                self._tree.SetDirectory(self._file)
+
             else:
                 logger.info(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
 
-        # Make the tree save itself in this file
-        self._tree.SetDirectory(self._file)
 
         self.assign_metadata()
 
@@ -597,7 +599,7 @@ class DataTree:
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
         """Write the tree to the file"""
         # Add the tree friends to this tree
-        self.add_proper_friends()
+        # self.add_proper_friends()
 
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
@@ -942,6 +944,10 @@ class DataTree:
     def close_file(self):
         """Close the file associated to the tree"""
         self._file.Close()
+
+    def stop_using(self):
+        """Stop using this instance: remove it from the tree list"""
+        grand_tree_list.remove(self)
 
 
 ## A mother class for classes with Run values
@@ -2359,7 +2365,8 @@ class DataDirectory:
                         if max_analysis_level == -1:
                             max_anal_chain_name = el["name"]
 
-                    setattr(self, "t" + key, chains_dict[max_anal_chain_name])
+                    tree_class = getattr(thismodule, el["type"])
+                    setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
 
     def print(self, recursive=True):
         """Prints all the information about all the data"""
@@ -2559,3 +2566,4 @@ class DataFile:
         # Add the tree to a dict for this tree class
         # Select the highest analysis level trees for each class and store these trees as main attributes
         pass
+
