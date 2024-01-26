@@ -599,7 +599,7 @@ class DataTree:
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
         """Write the tree to the file"""
         # Add the tree friends to this tree
-        # self.add_proper_friends()
+        self.add_proper_friends()
 
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
@@ -1180,6 +1180,8 @@ class MotherEventTree(DataTree):
         """Add proper friends to this tree"""
         # Create the indices
         self.build_index("run_number", "event_number")
+        # For now, do not add friends
+        return 0
 
         # Add the Run tree as a friend if exists already
         loc_vars = dict(locals())
