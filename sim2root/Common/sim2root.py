@@ -6,23 +6,27 @@ import os
 import argparse
 from types import SimpleNamespace
 import time
+from pathlib import Path
 from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 import raw_root_trees as RawTrees # this is here in Common
 
 
 #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file. Site too.
 # Command line argument parsing
-
-clparser = argparse.ArgumentParser()
+clparser = argparse.ArgumentParser(description="Convert simulation data in rawroot format into GRANDROOT format")
 clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw data TTrees")
-clparser.add_argument("-o ", "--outfilename", help="Filename for the GRANDRoot files output. GRANDConvention for GRAND conventions", default="GRANDConvention")
-clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)   #TODO: include in rawroot
-clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247) #TODO: include in rawroot
-clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200) #TODO: include in rawroot
-clparser.add_argument("-si", "--site", help="Name of the Site for the filename",default="Xiaodushan") #TODO: include in rawroot
-clparser.add_argument("-ti", "--time", help="Event Time for the filename",default="1200")  #TODO: In the future it would be usefull to replace this by an override to event.second and event.nanosecond
-clparser.add_argument("-ex", "--extra", help="extra info for the filename", default="GP300")
-
+clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
+clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
+clparser.add_argument("-s", "--site_name", help="The name of the site", default="nosite")
+clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
+clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
+clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
+# clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
+clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
+clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
+clparser.add_argument("-ru", "--run", help="Run number", default=0, const=None)
+clparser.add_argument("-se", "--start_event", help="Starting event number", default=0, const=None)
 clargs = clparser.parse_args()
 
 print("#################################################")
@@ -36,69 +40,50 @@ def convert_date(date_str):
 
 
 def main():
-    # Loop through the files specified on command line
-    for filename in clargs.filename:
+    # Initialise the run number if specified
+    ext_run_number = None
+    if clargs.run is not None:
+        ext_run_number = int(clargs.run)
 
+    # Initialise the starting event number
+    ext_event_number = None
+    if clargs.start_event is not None:
+        ext_event_number = int(clargs.start_event)
+
+    # Create the appropriate output directory
+    if clargs.forced_output_directory is None:
+        out_dir_name = form_directory_name(clargs)
+        print("Storing files in directory ", out_dir_name)
+        out_dir_name.mkdir()
+    # If another directory was forced as the output directory, create it
+    else:
+        out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
+        out_dir_name.mkdir(exist_ok=True)
+
+    start_event_number = 0
+
+    # Loop through the files specified on command line
+    for file_num, filename in enumerate(clargs.filename):
+
+        # Output filename for GRAND Trees
+        # if clargs.output_filename is None:
+        out_filename = os.path.join(os.path.split(filename)[0], "gr_"+os.path.split(filename)[1])
+        # else:
+        #     out_filename = clargs.output_filename
 
         # Read the raw trees from the file
         trawshower = RawTrees.RawShowerTree(filename)
         trawefield = RawTrees.RawEfieldTree(filename)
         trawmeta = RawTrees.RawMetaTree(filename)
 
-
-        # Output filename for GRAND Trees
-        out_filename=clargs.outfilename
-        #provide advertised functionality for OutputFileName  
-        if out_filename=="GRANDConvention":
-        
-          trawshower.get_entry(0)
-          trawefield.get_entry(0)
-          trawmeta.get_entry(0)
-        
-          RunID=trawshower.run_number                     #TODO: THIS WILL FAIL IN EVENTS WITH MANY events per file with different runs...sorry future grander that gets to deal with this.
-          EventID=trawshower.event_number
-          HadronicModel=trawshower.hadronic_model
-          date=trawshower.event_date
-          
-          print(date)
-                    
-          date=convert_date(date)
-           
-          extra=clargs.extra
-          Site=clargs.site
-          time=clargs.time
-          
-          #directory format is: //[sim|exp|mod]_[site]_[date]_[time]_[run_number]_[mod]_[extra]_[serial]
-          #directory_path, OutputFileName = os.path.split(filename)   
-          
-          directory_path="./sim_"+Site+"_"+date+"_"+time+"_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)          
-          if not os.path.exists(directory_path):
-          #  # If the directory doesn't exist, create it
-            os.makedirs(directory_path)
-          
-
-          OutputFileName=str(RunID)+"_L0_"+extra+"_"+str(EventID)+".root"
-
-          #name format is: [grouptreename]_[events]_L[analysis level]_[serial] + run.root describing the run, (THIS MAKES LITTLE SENSE)
-          #I WILL USE [grouptreename]_[runid]_L[analysis level]_[extra]_EventId + run.root describing the run
-        else:
-          directory_path, OutputFileName = os.path.split(clargs.outfilename)
-          
-        out_filename_trun=directory_path+"/"+"TRun_"+OutputFileName
-        out_filename_trunefield=directory_path+"/"+"TRunEfieldSim_"+OutputFileName 
-        out_filename_trunshowersim=directory_path+"/"+"TRunShowerSim_"+OutputFileName 
-        out_filename_tefield=directory_path+"/"+"TEfield_"+OutputFileName 
-        out_filename_tshowersim=directory_path+"/"+"TShowerSim_"+OutputFileName
-        out_filename_tshower=directory_path+"/"+"TShower_"+OutputFileName
-        
-        # Create appropriate GRANDROOT trees
+        # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
         gt = SimpleNamespace()
-        gt.trun = TRun(out_filename_trun)
-        gt.trunshowersim = TRunShowerSim(out_filename_trunshowersim)
-        gt.trunefieldsim = TRunEfieldSim(out_filename_trunefield)
-        gt.tshower = TShower(out_filename_tshower)
-        gt.tshowersim = TShowerSim(out_filename_tshowersim)
-        gt.tefield = TEfield(out_filename_tefield)
+        gt.trun = TRun((out_dir_name/"trun.root").as_posix())
+        gt.trunshowersim = TRunShowerSim((out_dir_name/"trunshowersim.root").as_posix())
+        gt.trunefieldsim = TRunEfieldSim((out_dir_name/"trunefieldsim.root").as_posix())
+        gt.tshower = TShower((out_dir_name/"tshower.root").as_posix())
+        gt.tshowersim = TShowerSim((out_dir_name/"tshowersim.root").as_posix())
+        gt.tefield = TEfield((out_dir_name/"tefield.root").as_posix())
 
         # Loop through entries - assuming same number of entries in each tree
         # ToDo: this should be a tree iterator through one tree and getting the other through friends. Need to make friends working...
@@ -108,8 +93,8 @@ def main():
             trawefield.get_entry(i)
             trawmeta.get_entry(i)
 
-            # For the first entry, fill the run trees
-            if i==0:
+            # If the first entry or (run number enforced and first file), fill the run trees
+            if (i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
                 # Convert the RawEfield entries
@@ -119,6 +104,12 @@ def main():
 
                 # Set the origin geoid
                 gt.trun.origin_geoid = get_origin_geoid(clargs)
+
+                # Overwrite the run number if specified on command line
+                if ext_run_number is not None:
+                    gt.trun.run_number = ext_run_number
+                    gt.trunshowersim.run_number = ext_run_number
+                    gt.trunefieldsim.run_number = ext_run_number
 
                 # Fill the run trees and write
                 gt.trun.fill()
@@ -135,6 +126,25 @@ def main():
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt)
 
+            # Overwrite the run number if specified on command line
+            if ext_run_number is not None:
+                gt.trun.run_number = ext_run_number
+                gt.trunshowersim.run_number = ext_run_number
+                gt.trunefieldsim.run_number = ext_run_number
+                gt.tshower.run_number = ext_run_number
+                gt.tshowersim.run_number = ext_run_number
+                gt.tefield.run_number = ext_run_number
+
+            # Overwrite the event number if specified on command line
+            if ext_event_number is not None:
+                gt.tshower.event_number = ext_event_number
+                gt.tshowersim.event_number = ext_event_number
+                gt.tefield.event_number = ext_event_number
+
+            # For the first file/iteration, store the event number
+            if file_num==0 and i==0:
+                start_event_number = gt.tshower.event_number
+
             # Fill the event trees
             gt.tshower.fill()
             gt.tshowersim.fill()
@@ -145,6 +155,15 @@ def main():
         gt.tshowersim.write()
         gt.tefield.write()
         # gt.tshower.first_interaction = trawshower.first_interaction
+
+        # Increment the event number if starting one specified on command line
+        if ext_event_number is not None:
+            ext_event_number += 1
+
+    # Rename the created files to appropriate names
+    end_event_number = gt.tshower.event_number
+    print("Renaming files to proper file names")
+    rename_files(clargs, out_dir_name, start_event_number, end_event_number)
 
 
 # Convert the RawShowerTree first entry to run values
@@ -292,7 +311,7 @@ def rawshower2grandroot(trawshower, gt):
     gt.tshowersim.atmos_depth = trawshower.atmos_depth
 
     ### Magnetic field parameters: Inclination, Declination, Fmodulus.: In shower coordinates. Declination
-    # The Earth’s magnetic field, B, is described by its strength, Fmodulus = ∥B∥; its inclination, I, defined
+    # The Earth's magnetic field, B, is described by its strength, Fmodulus = |B|; its inclination, I, defined
     # as the angle between the local horizontal plane and the field vector; and its declination, D, defined
     # as the angle between the horizontal component of B, H, and the geographical North (direction of
     # the local meridian). The angle I is positive when B points downwards and D is positive when H is
@@ -441,6 +460,41 @@ def rawmeta2grandroot(trawmeta, gt):
 def get_origin_geoid(clargs):
     origin_geoid = [clargs.latitude, clargs.longitude, clargs.altitude]
     return origin_geoid
+
+# Form the proper output directory name from command line arguments
+def form_directory_name(clargs):
+    # Change possible underscores in extra into -
+    extra = clargs.extra.replace("_", "-")
+
+    # Go through serial numbers in directory names to find a one that does not exist
+    for sn in range(1000):
+        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{clargs.sim_date}_{extra}_{sn:0>4}")
+        if not dir_name.exists():
+            break
+    # If directories with serial number up to 1000 already created
+    else:
+        print("All directories with serial number up to 1000 already exist. Please clean up some directories!")
+        exit(0)
+
+    return dir_name
+
+# Rename the created files to appropriate names
+def rename_files(clargs, path, start_event_number, end_event_number):
+    # Go through output files
+    for fn_start in ["trun", "trunshowersim", "trunefieldsim", "tshower", "tshowersim", "tefield"]:
+        # Go through serial numbers in directory names to find a one that does not exist
+        for sn in range(1000):
+            fn_in = Path(path, f"{fn_start}.root")
+            # Proper name of the file
+            fn_out = Path(path, f"{fn_start}_{start_event_number}-{end_event_number}_L{clargs.analysis_level}_{sn:0>4}.root")
+            # If the output file with the current serial number does not exist, rename to it
+            if not fn_out.exists():
+                fn_in.rename(fn_out)
+                break
+        else:
+            print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
+            exit(0)
+
 
 if __name__ == '__main__':
     main()

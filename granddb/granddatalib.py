@@ -277,6 +277,7 @@ class Datasource:
     _server: str
     _port: int
     _paths: list
+#    _path: str
     _credentials: Credentials
     _incoming: str
     id_repository: int
@@ -287,6 +288,7 @@ class Datasource:
         self._server = server
         self._port = port
         self._paths = [os.path.join(path, "") for path in paths]
+        #self._path = paths
         # By default no credentials
         self._credentials = Credentials(name, "", "")
         self._incoming = incoming
@@ -324,6 +326,8 @@ class Datasource:
     def paths(self):
         return self._paths
 
+    def path(self):
+        return self._paths[0]
     def credentials(self):
         return self._credentials
 
@@ -398,7 +402,7 @@ class DatasourceLocal(Datasource):
                     logger.debug(f"file {file} not found in localdir {path}")
 
         if not found_file is None:
-            logger.debug(f"file found in localdir {path}{file}")
+            logger.debug(f"file found in localdir {found_file}")
 
         return found_file
 
@@ -568,7 +572,8 @@ class DatasourceHttps(DatasourceHttp):
 
 
 def uniquename(filename):
-    return hashfile(filename) + ".root"
+    return os.path.basename(filename)
+#    return hashfile(filename) + ".root"
 
 ## @brief Function which return the hash of a file.
 # This hash will be used as unique name for the file.
