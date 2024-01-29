@@ -112,10 +112,10 @@ def main():
                     gt.trunefieldsim.run_number = ext_run_number
 
                 # Fill the run trees and write
-                gt.trun.fill()
+                # gt.trun.fill()
                 gt.trunshowersim.fill()
                 gt.trunefieldsim.fill()
-                gt.trun.write()
+                # gt.trun.write()
                 gt.trunshowersim.write()
                 gt.trunefieldsim.write()
 
@@ -150,6 +150,15 @@ def main():
             gt.tshowersim.fill()
             gt.tefield.fill()
 
+        # For the first file, get all the file's events du ids and pos
+        if file_num==0:
+            du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
+        # For other files, append du ids and pos to the ones already retrieved
+        else:
+            tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield)
+            du_ids = np.append(du_ids, tdu_ids)
+            du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
+
         # Write the event trees
         gt.tshower.write()
         gt.tshowersim.write()
@@ -159,6 +168,31 @@ def main():
         # Increment the event number if starting one specified on command line
         if ext_event_number is not None:
             ext_event_number += 1
+
+    # Fill the trun with antenna positions and ids from ALL the events
+    # ToDo: this should be done with TChain in one loop over all the files... maybe (which would be faster?)
+
+    # Get indices of the unique du_ids
+    unique_dus_idx = np.unique(du_ids, return_index=True)[1]
+    # Leave only the unique du_ids
+    du_ids = du_ids[unique_dus_idx]
+    # Sort the DUs
+    sorted_idx = np.argsort(du_ids)
+    du_ids = du_ids[sorted_idx]
+    # Stack x/y/z together and leave only the ones for unique du_ids, sort
+    du_xyzs = du_xyzs[unique_dus_idx][sorted_idx]
+
+    # Assign the du ids and positions to the trun tree
+    gt.trun.du_id = du_ids
+    gt.trun.du_xyz = du_xyzs
+
+    # ToDo: shouldn't this and above be created for every DU in sims?
+    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) #Matias Question: Why is this being mutiplied here?
+
+    # Fill and write the TRun
+    gt.trun.fill()
+    gt.trun.write()
+
 
     # Rename the created files to appropriate names
     end_event_number = gt.tshower.event_number
@@ -223,6 +257,15 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.refractivity_model = trawefield.refractivity_model
     gt.trunefieldsim.refractivity_model_parameters = trawefield.refractivity_model_parameters
 
+    # The TRun run number
+    gt.trun.run_number = trawefield.run_number
+
+    ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
+    gt.trunefieldsim.t_pre = trawefield.t_pre
+    gt.trunefieldsim.t_post = trawefield.t_post
+
+
+def get_tree_du_id_and_xyz(trawefield):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
@@ -239,19 +282,7 @@ def rawefield2grandrootrun(trawefield, gt):
     # Stack x/y/z together and leave only the ones for unique du_ids
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
-    # The TRun run number
-    gt.trun.run_number = trawefield.run_number
-
-    # Assign the du ids and positions to the trun tree
-    gt.trun.du_id = du_ids
-    gt.trun.du_xyz = du_xyzs
-
-    ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
-    gt.trunefieldsim.t_pre = trawefield.t_pre
-    gt.trunefieldsim.t_post = trawefield.t_post
-    # ToDo: shouldn't this and above be created for every DU in sims?
-    # gt.trun.t_bin_size = [trawefield.t_bin_size*1e9]*len(du_ids)
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) #Matias Question: Why is this being mutiplied here?
+    return np.asarray(du_ids), np.asarray(du_xyzs)
 
 
 # Convert the RawShowerTree entries
