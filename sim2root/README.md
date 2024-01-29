@@ -63,9 +63,27 @@ As input you need to give the ROOT file containing `RawRoot data TTrees`, as cre
 
 i.e.
 
-`python3 sim2root.py ../ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618/Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618.RawRoot`
+`python3 sim2root.py ../ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618/Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618.RawRoot -fo sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618`
 
 additional options are available on command line, see sim2root --help for more information
 
+# 3) Simulation Pipe example (note that this assumes one event per directoy, and is not working on files with more than 1 event)
+You will find two scripts illustrating how to use RawRoot files as starting point of a simulation pipe are in the "Common" directory. 
+Output File names are still not conforming to grand specifications. 
+
+The example shows how to use the example RawRoot file given in /grand/sim2root/ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618 to produce the grandroot files including 
+4 tvoltage files with the antenna response with and without the rf chain. You can use the RawRoot file of your liking.
+
+## 3a) GenerateGRANDRoot
+python /ProduceGRANDRoot.py InputDirectory OutputDirectory
+
+python ProduceGRANDRoot.py  <your path here>/grand/sim2root/ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618 <your path here>/grand/sim2root/Common/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618
+
+## 3b) GenerateVoltage
+python ProduceVoltage.py InputDirectory OutputDiectory
+
+python <your path here>/grand/sim2root/Common/ProduceVoltage/ProduceVoltage.py <your path here>/grand/sim2root/Common/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618 <your path here>/grand/sim2root/Common/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618
+
+Note that in this example we set the InputDiretory to be the same as the Outputdirectory to get all the files in the same place.
 
 
