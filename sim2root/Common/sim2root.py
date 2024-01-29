@@ -311,7 +311,7 @@ def rawshower2grandroot(trawshower, gt):
     gt.tshowersim.atmos_depth = trawshower.atmos_depth
 
     ### Magnetic field parameters: Inclination, Declination, Fmodulus.: In shower coordinates. Declination
-    # The Earth’s magnetic field, B, is described by its strength, Fmodulus = ∥B∥; its inclination, I, defined
+    # The Earth's magnetic field, B, is described by its strength, Fmodulus = |B|; its inclination, I, defined
     # as the angle between the local horizontal plane and the field vector; and its declination, D, defined
     # as the angle between the horizontal component of B, H, and the geographical North (direction of
     # the local meridian). The angle I is positive when B points downwards and D is positive when H is
