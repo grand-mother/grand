@@ -77,7 +77,7 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
 
-            # * - * - * - * - * - * - *
+            # * 1 * - * - * - * - * - * - *
             print("executing convert_efield2voltage.py")
             # Run convert_efield2voltage.py
             voltage = [
@@ -86,6 +86,25 @@ if __name__ == '__main__':
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}.root")
             print("********************************")
+            
+            # * 2 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_noise")
+            # Run convert_efield2voltage.py
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_noise.root")
+
+            # * 3 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_noise --no_rf_chain")
+            # Run convert_efield2voltage.py
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_noise_no_rfchain.root")
+            
             pass
 
         print(f"Finished analyzing files in {options.directory}")
