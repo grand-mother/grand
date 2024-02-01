@@ -41,13 +41,12 @@ class DetectorUnitNetwork:
         self.area_km2 = -1
 
     def init_pos_id(self, du_pos, du_id=None):
-        """
-        Init object with array position and identifier
+        """Init object with array DU position and identifier
 
         :param du_pos: position of DU
         :type du_pos: float[nb_DU, 3]
-        :param idx2idt: identifier of DU
-        :type idx2idt: int[nb_DU]
+        :param du_id: identifier of DU
+        :type du_id: list or array of string
         """
         if du_id is None:
             du_id = list(range(du_pos.shape[0]))
@@ -58,15 +57,18 @@ class DetectorUnitNetwork:
         assert du_pos.shape[0] == len(du_id)
         assert du_pos.shape[1] == 3
 
-    def reduce_l_index(self, l_idx):
+    def keep_only_du_with_index(self, l_idx):
+        """Keep DU at index defined in list <l_idx>
+
+        :param l_idx: list of index of DU
+        """
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
         self.du_pos = self.du_pos[l_idx]
         self.area_km2 = -1
 
     def reduce_nb_du(self, new_nb_du):
-        """
-        Feature to debug and reduce computation
+        """Feature to debug and reduce computation
 
         :param new_nb_du: keep only new_nb_du first DU
         :type new_nb_du: int
@@ -76,8 +78,7 @@ class DetectorUnitNetwork:
         self.area_km2 = -1
 
     def get_sub_network(self, l_id):
-        """
-        Reduce networh to DU in list l_id
+        """Reduce networh to DU in list <l_id>
 
         :param l_id: list of DU slected
         :type: int[nb_DU in l_id]
@@ -87,19 +88,11 @@ class DetectorUnitNetwork:
         return sub_net
 
     def get_nb_du(self):
+        """Return the number of DU"""
         return len(self.idx2idt)
 
-    def get_pos_id(self, l_id):
-        """
-        :param l_id:
-        :type l_id:
-        """
-        # TODO:
-        raise NotImplementedError
-
     def get_surface(self):
-        """
-        Return suface in km2
+        """Return suface in km2
 
         :return: [km2] surface of network envelop
         :rtype: float
@@ -119,14 +112,10 @@ class DetectorUnitNetwork:
         )
         a_area /= 2
         self.area_km2 = np.sum(a_area) / 1e6
-        # self.sigma_norm_area = a_area.std() / a_area.mean()
-        # plt.hist(a_area)
-        # print(a_area[:20])
-        # print(a_area.std())
         return self.area_km2
 
     def get_max_dist_du(self):
-        """
+        """TODO
         :return: [km] distance max between two DU of network
         :rtype: float
         """
@@ -136,9 +125,7 @@ class DetectorUnitNetwork:
     ### PLOT
 
     def plot_du_pos(self):  # pragma: no cover
-        """
-        plot DU position
-        """
+        """Plot DU position"""
         plt.figure()
         plt.title(f"{self.name}\nDU network")
         for du_idx in range(self.du_pos.shape[0]):
@@ -150,8 +137,7 @@ class DetectorUnitNetwork:
     def plot_footprint_1d(
         self, a_values, title="", traces=None, scale="log", unit=""
     ):  # pragma: no cover
-        """
-        Interactive footprint double click on DU draw trace associated and power spectrum
+        """Interactive footprint double click on DU draw trace associated and power spectrum
 
 
         :param a_values: intensity associated to DU
@@ -232,8 +218,7 @@ class DetectorUnitNetwork:
     def plot_footprint_4d(
         self, o_tr, v_plot, title="", same_scale=True, unit=""
     ):  # pragma: no cover
-        """
-        Plot footprint of time max by DU and value max by component
+        """Plot footprint of time max by DU and value max by component
 
         :param o_tr: object traces
         :type o_tr: Handling3dTraces
@@ -296,8 +281,7 @@ class DetectorUnitNetwork:
         fig.colorbar(ret_scat, label=unit)
 
     def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover
-        """
-        Interactive plot, footprint max value for time defined by user with slider widget
+        """Interactive plot, footprint max value for time defined by user with slider widget
 
         :param a_time: array of complet time of event
         :type a_time: float[nb_sample full event]

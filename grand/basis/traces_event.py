@@ -127,20 +127,20 @@ class Handling3dTraces:
     def init_network(self, du_pos):
         """
 
-        :param du_pos:
-        :type du_pos:
+        :param du_pos: position of DU in cartesian coordinate
+        :type du_pos: float(nb_du,3)
         """
         self.network.init_pos_id(du_pos, self.idx2idt)
 
     def set_unit_axis(self, str_unit="TBD", axis_name="idx", type_tr="Trace"):
         """
 
-        :param str_unit:
-        :type str_unit:
-        :param axis_name:
-        :type axis_name:
-        :param type:
-        :type type:
+        :param str_unit: define the unit of traces
+        :type str_unit: string
+        :param axis_name: define the type of axis, must in self._d_axis_val
+        :type axis_name: string
+        :param type_tr: define type of traces
+        :type type_tr: string
         """
         assert isinstance(str_unit, str)
         assert isinstance(axis_name, str)
@@ -150,6 +150,10 @@ class Handling3dTraces:
         self.axis_name = self._d_axis_val[axis_name]
 
     def set_periodogram(self, size):
+        """
+
+        :param size: size of periodogram
+        """
         assert size > 0
         self.nperseg = size
 
@@ -173,11 +177,21 @@ class Handling3dTraces:
             self.t_samples = t_trace.transpose()
             logger.info(f"shape t_samples =  {self.t_samples.shape}")
 
-    def reduce_l_ident(self, l_idt):
-        l_idx = [self.idt2idx[idt] for idt in l_idt]
-        self.reduce_l_index(l_idx)
+    def keep_only_trace_with_ident(self, l_idt):
+        """Keep trace with identifier defined in list <l_idt>
 
-    def reduce_l_index(self, l_idx):
+        :param l_idt: list of identifier of trace
+        :type l_idt: list int or string
+        """
+        l_idx = [self.idt2idx[idt] for idt in l_idt]
+        self.keep_only_trace_with_index(l_idx)
+
+    def keep_only_trace_with_index(self, l_idx):
+        """Keep trace at index defined in list <l_idx>
+
+        :param l_idx:list of index of trace
+        :type l_idt: list int
+        """
         print(self.idx2idt)
         print(type(self.idx2idt))
         print(type(l_idx))
@@ -192,11 +206,12 @@ class Handling3dTraces:
         if self.t_samples.shape[0] > 0:
             self.t_samples = self.t_samples[l_idx]
         self.network = copy.deepcopy(self.network)
-        self.network.reduce_l_index(l_idx)
+        self.network.keep_only_du_with_index(l_idx)
 
-    def reduce_nb_du(self, new_nb_du):
-        """
-        feature to reduce computation, for debugging
+    def reduce_nb_trace(self, new_nb_du):
+        """reduces the number of traces to the first <new_nb_du>
+
+        Feature to reduce computation, for debugging
 
         :param new_nb_du: keep only new_nb_du first DU
         :type new_nb_du: int
@@ -211,6 +226,11 @@ class Handling3dTraces:
         self.network.reduce_nb_du(new_nb_du)
 
     def downsize_sampling(self, fact):
+        """Downsampling with scipy decimate function
+
+        :param fact: the downsampling factor
+        :type fact: int
+        """
         # self.traces = self.traces[:, :, ::fact]
         self.traces = ssig.decimate(self.traces, fact)
         self.f_samp_mhz /= fact
@@ -218,19 +238,23 @@ class Handling3dTraces:
         self._define_t_samples()
         self.nperseg = np.min(np.array([self.traces.shape[2] // 2, self.nperseg]))
 
-    def remove_traces_low_signal(self, threshold):
+    def remove_trace_low_signal(self, threshold):
+        """Remove trace where the extremum of trace is lower than <threshold>
+
+        :param threshold: value > 0
+        :type threshold: number
+        """
         a_norm = np.max(np.max(np.abs(self.traces), axis=1), axis=1)
         l_idx_ok = []
         for idx in range(self.get_nb_du()):
             if a_norm[idx] >= threshold:
                 l_idx_ok.append(idx)
         print(l_idx_ok)
-        # l_idx_ok  = np.array(l_idx_ok)
-        self.reduce_l_index(l_idx_ok)
+        self.keep_only_trace_with_index(l_idx_ok)
         return l_idx_ok
 
     ### GETTER :
-    def get_copy(self, new_traces=None, deepcopy=False):
+    def get_copy(self, new_traces=None, deepcopy=True):
         """Return a copy of current object where traces can be modify
 
         The type of copy is copy with reference, not a deepcopy
@@ -243,7 +267,7 @@ class Handling3dTraces:
 
         :param new_traces: if array must be have the same shape
         :type new_traces: array/None/0
-        :return:
+        :return: Handling3dTraces instance
         """
         if deepcopy:
             my_copy = copy.deepcopy(self)
@@ -263,15 +287,12 @@ class Handling3dTraces:
         return my_copy
 
     def get_delta_t_ns(self):
-        """
-        Return sampling rate in ns
-        """
+        """Return sampling rate in ns"""
         ret = 1e3 / self.f_samp_mhz
         return ret
 
     def get_max_abs(self):
-        """
-        Find absolute maximal value in trace for each detector
+        """Find absolute maximal value in trace for each detector
 
         :return:  array max of abs value
         :rtype: float (nb_du,)
@@ -279,8 +300,7 @@ class Handling3dTraces:
         return np.max(np.abs(self.traces), axis=(1, 2))
 
     def get_max_norm(self):
-        """
-        Return array of maximal of 3D norm in trace for each detector
+        """Return array of maximal of 3D norm in trace for each detector
 
         :return: array norm of traces
         :rtype: float (nb_du,)
@@ -290,8 +310,7 @@ class Handling3dTraces:
         return np.max(np.linalg.norm(self.traces, axis=1), axis=1)
 
     def get_norm(self):
-        """
-        Return norm of traces for each time sample
+        """Return norm of traces for each time sample
 
         :return:  norm of traces for each time sample
         :rtype: float (nb_du, nb sample)
@@ -299,8 +318,7 @@ class Handling3dTraces:
         return np.linalg.norm(self.traces, axis=1)
 
     def get_tmax_vmax(self, hilbert=True, interpol="auto"):
-        """
-        Return time where norm of the amplitude of the Hilbert tranform  is max
+        """Return time where norm of the amplitude of the Hilbert tranform  is max
 
         :param hilbert: True for Hilbert envelop else norm L2
         :type hilbert: bool
@@ -343,29 +361,33 @@ class Handling3dTraces:
         return t_max, v_max
 
     def get_min_max_t_start(self):
-        """
+        """Return time interval of time start of trace
+
         :return: first and last time start
         :rtype: float, float
         """
         return self.t_start_ns.min(), self.t_start_ns.max()
 
-    def get_nb_du(self):
-        """
+    def get_nb_trace(self):
+        """Return the number of 3d traces
         :return: number of DU
         :rtype: int
         """
         return len(self.idx2idt)
 
     def get_size_trace(self):
-        """
+        """Return the number of sample in trace
+
         :return: number of sample in trace
         :rtype: int
         """
         return self.traces.shape[2]
 
     def get_extended_traces(self):
-        """
-        compute and return traces extended to the entire duration of the event with common time
+        """Return extended traces to time interval of event
+
+        Compute and return traces extended to the entire duration of
+        the event with common time
 
         :return: common time, extended traces
         :rtype: float (nb extended sample), float (nb_du, 3, nb extended sample)
@@ -386,8 +408,7 @@ class Handling3dTraces:
     ### PLOTS
 
     def plot_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
-        """
-        Draw 3 traces associated to DU with index idx
+        """Draw 3 traces associated to DU with index idx
 
         :param idx: index of DU to draw
         :type idx: int
@@ -422,8 +443,7 @@ class Handling3dTraces:
         plt.legend()
 
     def plot_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
-        """
-        Draw 3 traces associated to DU idx2idt
+        """Draw 3 traces associated to DU idx2idt
 
         :param idx: index of DU to draw
         :type idx: int
@@ -433,8 +453,7 @@ class Handling3dTraces:
         self.plot_trace_idx(self.idt2idx[du_id], to_draw)
 
     def plot_ps_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
-        """
-        Draw power spectrum for 3 traces associated to DU at index idx
+        """Draw power spectrum for 3 traces associated to DU at index idx
 
         :param idx: index of trace
         :type idx: int
@@ -469,8 +488,7 @@ class Handling3dTraces:
         self.welch_pxx_den = pxx_den
 
     def plot_ps_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
-        """
-        Draw power spectrum for 3 traces associated to DU idx2idt
+        """Draw power spectrum for 3 traces associated to DU idx2idt
 
         :param idx2idt: DU identifier
         :type idx2idt: int
@@ -480,8 +498,7 @@ class Handling3dTraces:
         self.plot_ps_trace_idx(self.idt2idx[du_id], to_draw)
 
     def plot_all_traces_as_image(self):  # pragma: no cover
-        """
-        Interactive image double click open traces associated
+        """Interactive image double click open traces associated
         """
         norm = self.get_norm()
         _ = plt.figure()
@@ -503,8 +520,7 @@ class Handling3dTraces:
         plt.connect("button_press_event", on_click)
 
     def plot_histo_t_start(self):  # pragma: no cover
-        """
-        Histogram of time start
+        """Histogram of time start
         """
         plt.figure()
         plt.title(rf"{self.name}\nTime start histogram")
@@ -513,30 +529,26 @@ class Handling3dTraces:
         plt.grid()
 
     def plot_footprint_4d_max(self):  # pragma: no cover
-        """
-        Plot time max and max value by component
+        """Plot time max and max value by component
         """
         v_max = np.max(np.abs(self.traces), axis=2)
         self.network.plot_footprint_4d(self, v_max, "3D", unit=self.unit_trace)
 
     def plot_footprint_val_max(self):  # pragma: no cover
-        """
-        Plot footprint max value
+        """Plot footprint max value
         """
         self.network.plot_footprint_1d(
             self.get_max_norm(), f"Max ||{self.type_trace}||", self, unit=self.unit_trace
         )
 
     def plot_footprint_time_max(self):  # pragma: no cover
-        """
-        Plot footprint time associated to max value
+        """Plot footprint time associated to max value
         """
         tmax, _ = self.get_tmax_vmax(False)
         self.network.plot_footprint_1d(tmax, "Time of max value", self, scale="lin", unit="ns")
 
     def plot_footprint_time_slider(self):  # pragma: no cover
-        """
-        Plot footprint max value
+        """Plot footprint max value
         """
         if self.network:
             a_time, a_values = self.get_extended_traces()
