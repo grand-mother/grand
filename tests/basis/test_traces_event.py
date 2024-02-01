@@ -7,12 +7,12 @@ from pathlib import Path
 from tests import TestCase
 import numpy as np
 
-from grand.basis.traces_event import Handling3dTracesOfEvent
+from grand.basis.traces_event import Handling3dTraces
 
 class EventTracesTest(TestCase):
     def __init__(self, *args):
         super().__init__(*args)
-        self.tr3d = Handling3dTracesOfEvent()
+        self.tr3d = Handling3dTraces()
         self.size_tot = 3 * 3 * 4
         self.traces = np.arange(self.size_tot, dtype=np.float32).reshape((3, 3, 4))
         self.du_id = np.arange(3)

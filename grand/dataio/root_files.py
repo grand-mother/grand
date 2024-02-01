@@ -1,16 +1,21 @@
 """
-Manage ROOT file of type Efield simulation, voltage
+Manage ROOT file of type event : Efield, voltage
+The main functionnalities of this module is 
+* to synchronize the relevant TTree (tshower , trun) on the same event
+* provide a numpy container of traces each a specific event, with method get_obj_handling3dtraces()
+
 """
 
 import os.path
 from logging import getLogger
 from typing import Optional
+import glob
 
 import numpy as np
 import ROOT
 
 import grand.dataio.root_trees as groot
-from grand.basis.traces_event import Handling3dTracesOfEvent
+from grand.basis.traces_event import Handling3dTraces
 
 logger = getLogger(__name__)
 
@@ -40,6 +45,47 @@ def check_ttree_in_file(f_root, ttree_name):
     return ttree_name in get_ttree_in_file(f_root)
 
 
+def get_file_event(f_name):
+    """
+    Factory for ROOT event file, Efield or voltage
+    """
+    if not os.path.exists(f_name):
+        logger.error(f"File {f_name} doesn't exist.")
+        raise FileNotFoundError
+    trees_list = get_ttree_in_file(f_name)
+    if "tefield" in trees_list:  # File with Efield info as input
+        return FileEfield(f_name)
+    if "tvoltage" in trees_list:  # File with voltage info as input
+        return FileVoltage(f_name)
+    logger.error(
+        f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
+    )
+    raise AssertionError
+
+
+def _get_root_file(f_name, prefix):
+    dir_root = os.path.dirname(f_name)
+    l_froot = glob.glob(dir_root + "/*root")
+    if len(l_froot) == 0:
+        logger.error("No ROOT file")
+        raise AssertionError
+    for n_file in l_froot:
+        ns_file = n_file.split("/")[-1]
+        if ns_file.find(prefix) == 0:
+            logger.info(f"{prefix} file is {n_file}")
+            return n_file
+    logger.error(f"No ROOT {prefix} file")
+    raise AssertionError
+
+
+def get_trun(f_name):
+    return _get_root_file(f_name, "trun_")
+
+
+def get_tshower(f_name):
+    return _get_root_file(f_name, "tshower_")
+
+
 class _FileEventBase:
 
     """
@@ -63,7 +109,7 @@ class _FileEventBase:
         * du_pos float(N,3): cartesian position of detector unit
     """
 
-    def __init__(self, tt_event):
+    def __init__(self, tt_event, f_name):
         """
         Constructor
         """
@@ -72,23 +118,20 @@ class _FileEventBase:
         self.traces: Optional[None, np.ndarray] = None
         self.sig_size: Optional[None, int] = None
         self.t_bin_size: Optional[float] = 0.5
-        self.du_id: Optional[None, np, ndarray, list] = None
+        self.du_id: Optional[None, np.ndarray, list] = None
         self.du_count: Optional[None, int] = None
         self.du_xyz: Optional[None, np.ndarray] = None
         self.f_name: Optional[str] = ""
         self.tag: Optional[str] = ""
-
         self.tt_event = tt_event
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
-        # self.delta_t_ns = -1
-        # self.evt_nb = -1
-        # self.run_nb = -1
-        # self.nb_du = 0
-        # self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)
-        self.f_name = ""
-
+        self.tt_shower = groot.TShower(get_tshower(f_name))
+        self.tt_run = groot.TRun(get_trun(f_name))
+        self.f_name = f_name
+        self.load_event_idx(0)
+    
     def load_event_idx(self, idx):
         """
         Load event/run with index idx in list return by get_list_of_events()
@@ -119,26 +162,15 @@ class _FileEventBase:
         :param run_number:
         """
         logger.info(f"load event: {event_number} of run  {run_number}")
-        # efield
         self.tt_event.get_event(event_number, run_number)
         self.du_id = self.tt_event.du_id
         self.du_count = self.tt_event.du_count
-
-        # trace_size = len(self.tt_event.trace_x[0])
-        trace_size = np.asarray(self.tt_event.trace).shape[-1]
-
-        # if trace_size != self.traces.shape[2]:
-        #    self.traces = np.empty((self.du_count, 3, trace_size), dtype=np.float32)
-        #    logger.info(f"resize numpy array trace to {self.traces.shape}")
+        self.tt_shower.get_event(event_number, run_number)
+        self.tt_run.get_run(run_number)
+        self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
+        self.du_xyz = np.asarray(self.tt_run.du_xyz)
         self.traces = np.asarray(self.tt_event.trace)
         self.sig_size = self.traces.shape[-1]
-        # self.traces[:, 0, :] = np.array(self.tt_event.trace_x, dtype=np.float32)
-        # self.traces[:, 1, :] = np.array(self.tt_event.trace_y, dtype=np.float32)
-        # self.traces[:, 2, :] = np.array(self.tt_event.trace_z, dtype=np.float32)
-        # self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)
-        # self.du_pos[:, 0] = np.array(self.tt_event.pos_x, dtype=np.float32)
-        # self.du_pos[:, 1] = np.array(self.tt_event.pos_y, dtype=np.float32)
-        # self.du_pos[:, 2] = np.array(self.tt_event.pos_z, dtype=np.float32)
 
     def get_du_count(self):
         """
@@ -163,24 +195,23 @@ class _FileEventBase:
         Return sampling frequency in MHz
         """
         return 1e3 / self.t_bin_size
-    
+
     def get_du_nanosec_ordered(self):
         """
         return nanosecond between 0s to 2s max
         """
         du_s = np.array(self.tt_event.du_seconds)
         min_sec = du_s.min()
-        du_ns =  np.array(self.tt_event.du_nanoseconds) + 1000000000*(du_s-min_sec)
+        du_ns = np.array(self.tt_event.du_nanoseconds) + 1000000000 * (du_s - min_sec)
         return du_ns
 
     def get_obj_handling3dtraces(self):
         """
-        Return a traces container IO independent Handling3dTracesOfEvent
+        Return a traces container IO independent Handling3dTraces
         """
-        o_tevent = Handling3dTracesOfEvent(
-            f"{self.f_name} evt={self.event_number} run={self.run_number}"
+        o_tevent = Handling3dTraces(
+            f"{self.f_name}\nevt_nb={self.event_number} run_nb={self.run_number}"
         )
-        # TODO: difference between du_id for all network and for specific event ?
         du_id = np.array(self.tt_event.du_id)
         o_tevent.init_traces(
             self.traces,
@@ -188,80 +219,38 @@ class _FileEventBase:
             self.get_du_nanosec_ordered(),
             self.get_sampling_freq_mhz(),
         )
+        o_tevent.init_network(self.du_xyz)
+        o_tevent.network.name = self.tt_run.site
+        shw = self.tt_shower
+        xmax = shw.xmax_pos_shc
+        dist_xmax = np.linalg.norm(xmax) / 1000
+        o_tevent.info_shower = f"||xmax_pos_shc||={dist_xmax:.1f} km;"
+        azi, zenith = shw.azimuth, shw.zenith
+        o_tevent.info_shower += f" (azi, zenith)=({azi:.0f}, {zenith:.0f}) deg;"
+        nrj = shw.energy_primary
+        o_tevent.info_shower += f" energy_primary={nrj:.1e} GeV"
         return o_tevent
 
 
 class FileEfield(_FileEventBase):
     """
-    File simulation of air shower with 4 TTree
-
-      * tefield
-      * trun
-      * trunefieldsim
-      * tshower
-
     Goals of the class:
 
-      * synchronize each TTree on same event/run
-      * add access to event by index not by identifier (event, run)
-      * initialize instance to the first event
-      * conversion io.root array to numpy if necessary
-
-    Public attributes:
-
-      * same as _FileEventBase class
-      * tt_efield object EfieldEventTree
-      * tt_shower object ShowerEventSimdataTree
-      * tt_run object RunTree
-
+      * Event type is Efield
     """
 
-    def __init__(self, f_name, check=True):
+    def __init__(self, f_name):
         """
-        Constructor
+        :param f_name: path to ROOT file Efield
         """
-        name_ttree = "tefield"
-        if check:
-            if not os.path.exists(f_name):
-                logger.error(f"File {f_name} doesn't exist.")
-                raise FileNotFoundError
-            if not check_ttree_in_file(f_name, name_ttree):
-                logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
-                raise AssertionError
-        logger.info(f"Events  in file {f_name}")
         event = groot.TEfield(f_name)
-        super().__init__(event)
+        super().__init__(event, f_name)
         self.tt_efield = self.tt_event
-        self.tt_shower = groot.TShower(f_name.replace('TEfield_', 'TShower_'))
-        self.tt_run = groot.TRun(f_name.replace('TEfield_', 'TRun_'))
-        self.load_event_idx(0)
-        self.f_name = f_name
-
-    def _load_event_identifier(self, event_number, run_number):
-        """
-        synchronize all event TTree with method get_event() in file.
-
-        :param event_number:
-        :param run_number:
-        """
-        super()._load_event_identifier(event_number, run_number)
-        # synchronize showerTree on same evt, run
-        logger.info(f"load tt_shower: {event_number} of run  {run_number}")
-        self.tt_shower.get_event(event_number, run_number)
-        # synchronize runTree on same run
-        self.tt_run.get_run(run_number)
-        # synchronize EfieldRunSimdataTree on same run
-        self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
-        self.du_xyz = np.asarray(self.tt_run.du_xyz)
-        
 
     def get_obj_handling3dtraces(self):
-        """
-        Return a traces container IO independent
-        """
         o_tevent = super().get_obj_handling3dtraces()
-        o_tevent.init_network(self.du_xyz)
         o_tevent.set_unit_axis(r"$\mu$V/m", "cart")
+        o_tevent.type_trace = "Efield"
         return o_tevent
 
 
@@ -269,56 +258,20 @@ class FileVoltage(_FileEventBase):
     """
     Goals of the class:
 
-      * add access to event by index not by identifier (event, run)
-      * initialize instance to the first event
-      * conversion io.root array to numpy if necessary
-
-    Public attributs:
-
-      * same as _FileEventBase class
+      * Event type is voltage
     """
 
-    def __init__(self, f_name, check=True):
+    def __init__(self, f_name):
         """
-        Constructor
+
+        :param f_name:  path to ROOT file volatge
         """
-        name_ttree = "tvoltage"
-        if check:
-            if not os.path.exists(f_name):
-                logger.error(f"File {f_name} doesn't exist.")
-                raise FileNotFoundError
-            if not check_ttree_in_file(f_name, name_ttree):
-                logger.error(f"File {f_name} doesn't content TTree {name_ttree}")
-                raise AssertionError
-        logger.info(f"Events  in file {f_name}")
         event = groot.TVoltage(f_name)
-        super().__init__(event)
-        self.load_event_idx(0)
-        self.f_name = f_name
+        super().__init__(event, f_name)
+        self.tt_volt = self.tt_event
 
     def get_obj_handling3dtraces(self):
-        """
-        Return a traces container IO independent
-        """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"$\mu$V", "dir")
+        o_tevent.type_trace = "Voltage"
         return o_tevent
-
-
-def get_file_event(f_name):
-    """
-    Factory for ROOT event file, return an instance of FileSimuEfield or FileVoltageEvent
-    """
-    if not os.path.exists(f_name):
-        print("File does not exist")
-        logger.error(f"File {f_name} doesn't exist.")
-        raise FileNotFoundError
-    trees_list = get_ttree_in_file(f_name)
-    if "tefield" in trees_list:  # File with Efield info as input
-        return FileEfield(f_name, False)
-    if "tvoltage" in trees_list:  # File with voltage info as input
-        return FileVoltage(f_name, False)
-    logger.error(
-        f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
-    )
-    raise AssertionError

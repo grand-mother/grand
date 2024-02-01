@@ -159,7 +159,7 @@ class DetectorUnitNetwork:
         :param title: title of figure
         :type title: str
         :param traces: object traces
-        :type traces: Handling3dTracesOfEvent
+        :type traces: Handling3dTraces
         :param scale: type of scale
         :type scale: str in ["log", "lin"]
 
@@ -190,7 +190,9 @@ class DetectorUnitNetwork:
                 plt.draw()
 
         fig, ax1 = plt.subplots(1, 1)
-        ax1.set_title(f"{title}\n{self.get_nb_du()} DUs, surface {int(self.get_surface())} km$^2$")
+        s_title = f"{title}\n{self.get_nb_du()} DUs; Surface {int(self.get_surface())} km$^2$"
+        s_title += f"; Name site: {self.name}"
+        ax1.set_title(s_title)
         vmin = np.nanmin(a_values)
         vmax = np.nanmax(a_values)
         norm_user = colors.LogNorm(vmin=vmin, vmax=vmax)
@@ -211,12 +213,12 @@ class DetectorUnitNetwork:
             cmap=my_cmaps,
         )
         fig.colorbar(scm, label=unit)
-        xlabel = "meters,          North =>"
-        xlabel += f"\n{self.name}"
+        xlabel = "North [m]  (azimuth=0°) =>"
         if traces is not None:
+            xlabel += f"\n{traces.info_shower}"
             xlabel += f"\n{traces.name}"
         plt.xlabel(xlabel)
-        plt.ylabel(rf"meters,          West (azimuth=90°) => ")
+        plt.ylabel(rf"West [m]  (azimuth=+90°) =>")
         ax1.grid()
         anch_du = AnchoredText("DU id", prop=dict(size=10), frameon=False, loc="upper left")
         anch_val = AnchoredText("Value", prop=dict(size=10), frameon=False, loc="upper right")
@@ -234,7 +236,7 @@ class DetectorUnitNetwork:
         Plot footprint of time max by DU and value max by component
 
         :param o_tr: object traces
-        :type o_tr: Handling3dTracesOfEvent
+        :type o_tr: Handling3dTraces
         :param title: title of plot
         :type title: str
         """
@@ -328,6 +330,7 @@ class DetectorUnitNetwork:
             cmap=cmap_b,
         )
         ax1.axis("equal")
+        ax1.grid()
         fig.colorbar(scat)
         plt.ylabel("meters,          West (azimuth=90°) =>")
         plt.xlabel("meters,          North =>")

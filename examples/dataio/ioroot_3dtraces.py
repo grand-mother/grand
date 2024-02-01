@@ -2,7 +2,7 @@
 
 import argparse
 from grand.dataio.root_files import get_file_event, get_ttree_in_file
-from grand.basis.traces_event import Handling3dTracesOfEvent
+from grand.basis.traces_event import Handling3dTraces
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
 
@@ -13,7 +13,7 @@ import matplotlib.pylab as plt
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("error", log_stdout=True)
+mlg.create_output_for_logger("info", log_stdout=True)
 
 
 def manage_args():
@@ -42,6 +42,12 @@ def manage_args():
         default=-100,
     )
     parser.add_argument(
+        "--idx_evt",
+        type=int,
+        help="Select event with index <idx_evt>, given by -i option, idx_evt is always > 0 or = 0",
+        default=-100,
+    )
+    parser.add_argument(
         "--trace_image",
         action="store_true",
         required=False,
@@ -64,14 +70,14 @@ def manage_args():
         type=int,
         default=-100,
         help="dump trace of DU",
-    )    # retrieve argument
+    )  # retrieve argument
     parser.add_argument(
         "-i",
         "--info",
         action="store_true",
         required=False,
         help="some information about the contents of the file",
-    )    # retrieve argument
+    )  # retrieve argument
     return parser.parse_args()
 
 
@@ -81,20 +87,30 @@ def main():
 
     args = manage_args()
     d_event = get_file_event(args.file.name)
+    if args.idx_evt != -100:
+        if args.id_evt < 0:
+            logger.error("index events must >= 0")
+            return
+        if args.id_evt >= d_event.get_nb_events():
+            logger.error(f"index events must < {d_event.get_nb_events()}")
+            return
+        d_event.load_event_idx(args.idx_evt)
     o_tevent = d_event.get_obj_handling3dtraces()
     if args.info:
-        print(f"Nb events     : {d_event.get_nb_events()}")
         print(f"Nb DU         : {d_event.get_du_count()}")
         print(f"Size trace    : {d_event.get_size_trace()}")
-        print(f"TTree         : {get_ttree_in_file(args.file.name)}")
-    assert isinstance(o_tevent, Handling3dTracesOfEvent)
+        print(f"Nb events     : {d_event.get_nb_events()}")
+        print("Idx\trun\tevent")
+        for idx, evt in enumerate(d_event.l_events):
+            print(f"{idx}\t{evt[1]}\t{evt[0]}")
+    assert isinstance(o_tevent, Handling3dTraces)
     if args.list_du:
         print(f"Identifier DU : {o_tevent.d_idxdu.keys()}")
     if args.trace_image:
         o_tevent.plot_all_traces_as_image()
     if args.footprint:
-        o_tevent.plot_footprint_val_max()
         o_tevent.plot_footprint_4d_max()
+        o_tevent.plot_footprint_val_max()
     if args.time_val:
         o_tevent.plot_footprint_time_slider()
     if args.trace != -100:
@@ -114,7 +130,7 @@ def main():
         t_tr = o_tevent.t_samples[idx_du]
         for idx in range(o_tevent.get_size_trace()):
             print(f"{t_tr[idx]} {tr_du[0,idx]} {tr_du[1,idx]} {tr_du[2,idx]}")
-        
+
 
 if __name__ == "__main__":
     logger.info(mlg.string_begin_script())

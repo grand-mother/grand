@@ -27,7 +27,7 @@ def get_psd(trace, f_samp_mhz, nperseg=0):
     return freq * 1e-6, pxx_den
 
 
-class Handling3dTracesOfEvent:
+class Handling3dTraces:
     """
     Handling a set of traces associated to one event observed on Detector Unit network
 
@@ -58,8 +58,9 @@ class Handling3dTracesOfEvent:
     """
 
     def __init__(self, name="NotDefined"):
-        logger.info(f"Create Handling3dTracesOfEvent with name {name}")
+        logger.info(f"Create Handling3dTraces with name {name}")
         self.name = name
+        self.info_shower = ""
         nb_du = 0
         nb_sample = 0
         self.nperseg = 512
@@ -84,7 +85,7 @@ class Handling3dTracesOfEvent:
         #  and the reverse of white (not visible on plot) is black
         self._color = ["k", "y", "b"]
         self.axis_name = self._d_axis_val["idx"]
-        self.network = DetectorUnitNetwork(self.name)
+        self.network = DetectorUnitNetwork()
 
     ### INTERNAL
 
@@ -99,8 +100,8 @@ class Handling3dTracesOfEvent:
         :type du_id: int (nb_du,)
         :param t_start_ns: array time start of trace
         :type t_start_ns: int (nb_du,)
-        :param f_samp_mhz: franquency sampling in MHz
-        :type f_samp_mhz: float
+        :param f_samp_mhz: frequency sampling in MHz
+        :type f_samp_mhz: float or array
         """
         assert isinstance(self.traces, np.ndarray)
         assert traces.ndim == 3
@@ -395,9 +396,10 @@ class Handling3dTracesOfEvent:
         """
         self._define_t_samples()
         plt.figure()
-        plt.title(
-            f"{self.type_trace}, DU {self.idx2idt[idx]} (idx={idx}) \n$F_{{sampling}}$={self.f_samp_mhz[idx]}MHz"
-        )
+        s_title = f"{self.type_trace}, DU {self.idx2idt[idx]} (idx={idx})"
+        s_title += f"\n$F_{{sampling}}$={self.f_samp_mhz[idx]}MHz"
+        s_title += f"; {self.get_size_trace()} samples"
+        plt.title(s_title)
         for idx_axis, axis in enumerate(self.axis_name):
             if str(idx_axis) in to_draw:
                 m_sig = np.std(self.traces[idx, idx_axis, :100])
