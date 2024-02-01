@@ -217,7 +217,7 @@ class Handling3dTraces:
         :type new_nb_du: int
         """
         assert new_nb_du > 0
-        assert new_nb_du <= self.get_nb_du()
+        assert new_nb_du <= self.get_nb_trace()
         self.idx2idt = self.idx2idt[:new_nb_du]
         self.traces = self.traces[:new_nb_du, :, :]
         self.t_start_ns = self.t_start_ns[:new_nb_du]
@@ -246,7 +246,7 @@ class Handling3dTraces:
         """
         a_norm = np.max(np.max(np.abs(self.traces), axis=1), axis=1)
         l_idx_ok = []
-        for idx in range(self.get_nb_du()):
+        for idx in range(self.get_nb_trace()):
             if a_norm[idx] >= threshold:
                 l_idx_ok.append(idx)
         print(l_idx_ok)
@@ -345,7 +345,7 @@ class Handling3dTraces:
             raise
         t_max = np.empty_like(tmax)
         v_max = np.empty_like(tmax)
-        for idx in range(self.get_nb_du()):
+        for idx in range(self.get_nb_trace()):
             logger.debug(f"{idx} {self.idx2idt[idx]} {idx_max[idx]}")
             if interpol == "parab":
                 t_max[idx], v_max[idx] = gds.find_max_with_parabola_interp_3pt(
@@ -397,10 +397,10 @@ class Handling3dTraces:
         delta = self.get_delta_t_ns()[0]
         nb_sample_mm = (t_max - t_min) / delta
         nb_sample = int(np.rint(nb_sample_mm) + size_tr)
-        extended_traces = np.zeros((self.get_nb_du(), 3, nb_sample), dtype=self.traces.dtype)
+        extended_traces = np.zeros((self.get_nb_trace(), 3, nb_sample), dtype=self.traces.dtype)
         # don't use np.uint64 else int+ int =float ??
         i_beg = np.rint((self.t_start_ns - t_min) / delta).astype(np.uint32)
-        for idx in range(self.get_nb_du()):
+        for idx in range(self.get_nb_trace()):
             extended_traces[idx, :, i_beg[idx] : i_beg[idx] + size_tr] = self.traces[idx]
         common_time = t_min + np.arange(nb_sample, dtype=np.float64) * delta
         return common_time, extended_traces
@@ -498,8 +498,7 @@ class Handling3dTraces:
         self.plot_ps_trace_idx(self.idt2idx[du_id], to_draw)
 
     def plot_all_traces_as_image(self):  # pragma: no cover
-        """Interactive image double click open traces associated
-        """
+        """Interactive image double click open traces associated"""
         norm = self.get_norm()
         _ = plt.figure()
         # fig.canvas.manager.set_window_title(f"{self.name}")
@@ -520,8 +519,7 @@ class Handling3dTraces:
         plt.connect("button_press_event", on_click)
 
     def plot_histo_t_start(self):  # pragma: no cover
-        """Histogram of time start
-        """
+        """Histogram of time start"""
         plt.figure()
         plt.title(rf"{self.name}\nTime start histogram")
         plt.hist(self.t_start_ns)
@@ -529,27 +527,23 @@ class Handling3dTraces:
         plt.grid()
 
     def plot_footprint_4d_max(self):  # pragma: no cover
-        """Plot time max and max value by component
-        """
+        """Plot time max and max value by component"""
         v_max = np.max(np.abs(self.traces), axis=2)
         self.network.plot_footprint_4d(self, v_max, "3D", unit=self.unit_trace)
 
     def plot_footprint_val_max(self):  # pragma: no cover
-        """Plot footprint max value
-        """
+        """Plot footprint max value"""
         self.network.plot_footprint_1d(
             self.get_max_norm(), f"Max ||{self.type_trace}||", self, unit=self.unit_trace
         )
 
     def plot_footprint_time_max(self):  # pragma: no cover
-        """Plot footprint time associated to max value
-        """
+        """Plot footprint time associated to max value"""
         tmax, _ = self.get_tmax_vmax(False)
         self.network.plot_footprint_1d(tmax, "Time of max value", self, scale="lin", unit="ns")
 
     def plot_footprint_time_slider(self):  # pragma: no cover
-        """Plot footprint max value
-        """
+        """Plot footprint max value"""
         if self.network:
             a_time, a_values = self.get_extended_traces()
             self.network.plot_footprint_time(a_time, a_values, "Max value")
