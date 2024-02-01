@@ -222,7 +222,7 @@ class Handling3dTraces:
         self.traces = self.traces[:new_nb_du, :, :]
         self.t_start_ns = self.t_start_ns[:new_nb_du]
         if self.t_samples.shape[0] > 0:
-            self.t_samples = self.t_samples[:new_nb_du, :, :]
+            self.t_samples = self.t_samples[:new_nb_du, :]
         self.network.reduce_nb_du(new_nb_du)
 
     def downsize_sampling(self, fact):
@@ -428,7 +428,7 @@ class Handling3dTraces:
                     self.t_samples[idx],
                     self.traces[idx, idx_axis],
                     self._color[idx_axis],
-                    label=axis + f", $\sigma=${m_sig:.2e}",
+                    label=axis + r", $\sigma=$" + f"{m_sig:.2e}",
                 )
         if hasattr(self, "t_max"):
             plt.plot(
