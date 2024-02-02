@@ -16,7 +16,7 @@ from scipy.spatial import Delaunay
 logger = getLogger(__name__)
 
 
-def closest_node(node, nodes):
+def closest_node(node, nodes): # pragma: no cover
     nodes = np.asarray(nodes)
     dist_2 = np.sum((nodes - node) ** 2, axis=1)
     return np.argmin(dist_2)
@@ -51,6 +51,7 @@ class DetectorUnitNetwork:
         if du_id is None:
             du_id = list(range(du_pos.shape[0]))
         self.du_pos = du_pos
+        self.area_km2 = -1
         self.idx2idt = du_id
         assert isinstance(self.du_pos, np.ndarray)
         assert isinstance(self.idx2idt, list) or isinstance(self.idx2idt, np.ndarray)
@@ -62,6 +63,7 @@ class DetectorUnitNetwork:
 
         :param l_idx: list of index of DU
         """
+        print('Network :', self.idx2idt)
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
         self.du_pos = self.du_pos[l_idx]

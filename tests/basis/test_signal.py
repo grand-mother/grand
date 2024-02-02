@@ -8,6 +8,7 @@ import numpy as np
 import grand.basis.signal as sig
 from grand import CartesianRepresentation
 
+# fmt: off
 t = np.array([-6.5e-08, -6.3e-08, -6.1e-08, -5.9e-08, -5.7e-08, -5.5e-08, 
     -5.3e-08, -5.1e-08, -4.9e-08, -4.7e-08, -4.5e-08, -4.3e-08, -4.1e-08, 
     -3.9e-08, -3.7e-08, -3.5e-08, -3.3e-08, -3.1e-08, -2.9e-08, -2.7e-08, 
@@ -133,24 +134,56 @@ Ez = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
      0.02905, -0.02465, 0.01798, -0.005557, -0.02162, -0.01465, 0.003988, -0.0005852, 
      0.003069, -0.004647, 0.02929])        
 E = CartesianRepresentation(x=Ex, y=Ey, z=Ez)
+# fmt: on
+
 
 class SignalTest(TestCase):
     """Unit tests for the signal module"""
 
-    Etrace = np.ones((96,3,len(Ex))) * E  # (xyz, traces) --> (du, xyz, traces)
-    time = np.ones((96,len(t))) * t # (traces) --> (du, traces)
-    shape = Etrace.shape # (du, xyz, traces)
+    Etrace = np.ones((96, 3, len(Ex))) * E  # (xyz, traces) --> (du, xyz, traces)
+    time = np.ones((96, len(t))) * t  # (traces) --> (du, traces)
+    shape = Etrace.shape  # (du, xyz, traces)
 
     def test_get_filter(self):
         filtered = sig.get_filter(time=t, trace=Ex, fr_min=30e6, fr_max=250e6)
         self.assertEqual(Ex.shape, filtered.shape)
 
     def test_get_peakamptime_norm_hilbert(self):
-        t_max, v_max, idx_max, norm_hilbert_amp = sig.get_peakamptime_norm_hilbert(self.time, self.Etrace)
+        t_max, v_max, idx_max, norm_hilbert_amp = sig.get_peakamptime_norm_hilbert(
+            self.time, self.Etrace
+        )
         self.assertEqual(len(t_max), self.shape[0])
         self.assertEqual(len(v_max), self.shape[0])
         self.assertEqual(len(idx_max), self.shape[0])
         self.assertEqual(norm_hilbert_amp.shape[0], self.shape[0])
+
+
+def test_get_fastest_size_fft():
+    f_in = 10
+    fastest_size_fft, freqs_mhz = sig.get_fastest_size_fft(2048, f_in, padding_fact=1.99)
+    assert fastest_size_fft == 4096
+    assert freqs_mhz[0] == 0
+    # delta freq
+    assert freqs_mhz[1] == f_in / fastest_size_fft
+    # Nyquist
+    assert freqs_mhz[-1] == f_in / 2
+
+
+def test_find_max_with_parabola_interp_3pt():
+    def parabole(v_x):
+        return -10 * v_x * v_x + 20 * v_x + 30
+
+    n_sig = 29
+    v_x = np.linspace(0, 3, n_sig)
+    epsilon = 0.001
+    v_y = parabole(v_x) + np.random.normal(0, epsilon, n_sig)
+    idx = np.argmax(v_y)
+    print(idx, v_y[idx])
+    x_max, y_max = sig.find_max_with_parabola_interp_3pt(v_x, v_y, idx)
+    print(x_max, y_max)
+    assert np.isclose(x_max, 1.0, atol=epsilon * 10)
+    assert np.isclose(y_max, 40.0, atol=epsilon * 10)
+
 
 if __name__ == "__main__":
     unittest.main()

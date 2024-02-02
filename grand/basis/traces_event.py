@@ -85,7 +85,7 @@ class Handling3dTraces:
         #  and the reverse of white (not visible on plot) is black
         self._color = ["k", "y", "b"]
         self.axis_name = self._d_axis_val["idx"]
-        self.network = DetectorUnitNetwork()
+        self.network = None
 
     ### INTERNAL
 
@@ -130,6 +130,7 @@ class Handling3dTraces:
         :param du_pos: position of DU in cartesian coordinate
         :type du_pos: float(nb_du,3)
         """
+        self.network= DetectorUnitNetwork()
         self.network.init_pos_id(du_pos, self.idx2idt)
 
     def set_unit_axis(self, str_unit="TBD", axis_name="idx", type_tr="Trace"):
@@ -205,8 +206,9 @@ class Handling3dTraces:
         self.t_start_ns = self.t_start_ns[l_idx]
         if self.t_samples.shape[0] > 0:
             self.t_samples = self.t_samples[l_idx]
-        self.network = copy.deepcopy(self.network)
-        self.network.keep_only_du_with_index(l_idx)
+        if self.network:
+            self.network = copy.deepcopy(self.network)
+            self.network.keep_only_du_with_index(l_idx)
 
     def reduce_nb_trace(self, new_nb_du):
         """reduces the number of traces to the first <new_nb_du>
@@ -238,20 +240,19 @@ class Handling3dTraces:
         self._define_t_samples()
         self.nperseg = np.min(np.array([self.traces.shape[2] // 2, self.nperseg]))
 
-    def remove_trace_low_signal(self, threshold):
-        """Remove trace where the extremum of trace is lower than <threshold>
+    def remove_trace_low_signal(self, threshold, norm_traces=None):
+        """Remove trace where <norm_traces> is lower than <threshold>
 
         :param threshold: value > 0
         :type threshold: number
         """
-        a_norm = np.max(np.max(np.abs(self.traces), axis=1), axis=1)
-        l_idx_ok = []
-        for idx in range(self.get_nb_trace()):
-            if a_norm[idx] >= threshold:
-                l_idx_ok.append(idx)
-        print(l_idx_ok)
-        self.keep_only_trace_with_index(l_idx_ok)
-        return l_idx_ok
+        if norm_traces is None:
+            norm_traces = self.get_max_norm()
+        else:
+            assert norm_traces.shape[0] == self.get_nb_trace()
+        idx_ok = np.squeeze(np.argwhere(norm_traces > threshold))
+        self.keep_only_trace_with_index(idx_ok)
+        return idx_ok
 
     ### GETTER :
     def get_copy(self, new_traces=None, deepcopy=True):
