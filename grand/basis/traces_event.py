@@ -130,7 +130,7 @@ class Handling3dTraces:
         :param du_pos: position of DU in cartesian coordinate
         :type du_pos: float(nb_du,3)
         """
-        self.network= DetectorUnitNetwork()
+        self.network = DetectorUnitNetwork()
         self.network.init_pos_id(du_pos, self.idx2idt)
 
     def set_unit_axis(self, str_unit="TBD", axis_name="idx", type_tr="Trace"):

@@ -46,14 +46,12 @@ def test_get_surface():
     area_km2 = dun.get_surface()
     assert area_km2 == 1.5
 
+
 def test_keep_only_du_with_index():
     dun = DetectorUnitNetwork()
     du_pos = np.array([[0, 0, 0], [1000, 0, 0], [0, 1000, 0], [1000, 1000, 0], [2000, 0, 0]])
     dun.init_pos_id(du_pos)
-    dun.keep_only_du_with_index([0,2,4])
+    dun.keep_only_du_with_index([0, 2, 4])
     assert dun.get_nb_du() == 3
     area_km2 = dun.get_surface()
     assert area_km2 == 1
-   
-    
-    

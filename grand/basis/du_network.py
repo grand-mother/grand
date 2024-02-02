@@ -16,7 +16,7 @@ from scipy.spatial import Delaunay
 logger = getLogger(__name__)
 
 
-def closest_node(node, nodes): # pragma: no cover
+def closest_node(node, nodes):  # pragma: no cover
     nodes = np.asarray(nodes)
     dist_2 = np.sum((nodes - node) ** 2, axis=1)
     return np.argmin(dist_2)
@@ -63,7 +63,7 @@ class DetectorUnitNetwork:
 
         :param l_idx: list of index of DU
         """
-        print('Network :', self.idx2idt)
+        print("Network :", self.idx2idt)
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
         self.du_pos = self.du_pos[l_idx]

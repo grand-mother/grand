@@ -4,9 +4,11 @@ Unit test for basis/traces_event.py
 
 from grand.basis.traces_event import *
 
+
 def parabole(v_x):
-        return -10 * v_x * v_x + 20 * v_x + 30
-    
+    return -10 * v_x * v_x + 20 * v_x + 30
+
+
 def get_tr3d(nb_sample=4):
     tr3d = Handling3dTraces()
     size_tot = 3 * 3 * nb_sample
@@ -143,7 +145,7 @@ def test_get_tmax_vmax_1():
     v_y = parabole(v_x) + np.random.normal(0, epsilon, n_sig)
     idx = np.argmax(v_y)
     print(idx, v_y[idx])
-    
+
     tmax, vmax = tr3d.get_tmax_vmax(False)
     t_tmax = np.array(
         [
@@ -155,7 +157,7 @@ def test_get_tmax_vmax_1():
     assert np.allclose(tmax, t_tmax)
     t_vmax = np.array([3.0, 5.0, 7.0])
     assert np.allclose(vmax, t_vmax)
-    
+
 
 def test_get_max_abs():
     tr3d = get_tr3d()
@@ -220,7 +222,7 @@ def test_get_copy():
 
 
 def test_remove_trace_low_signal():
-    tr3d = get_tr3d_du(5,20)  
+    tr3d = get_tr3d_du(5, 20)
     tr3d.traces[0] = 1
     tr3d.traces[1] = 10
     tr3d.traces[2] = 0.5
@@ -234,28 +236,27 @@ def test_remove_trace_low_signal():
     tr3d.remove_trace_low_signal(5, norm)
     assert tr3d.get_nb_trace() == 2
     tr3d = ori_tr3d.get_copy()
-    noise = np.random.normal(0,1, tr3d.traces.size).reshape(tr3d.traces.shape)
+    noise = np.random.normal(0, 1, tr3d.traces.size).reshape(tr3d.traces.shape)
     tr3d.traces += noise
-    #print( tr3d.traces)
-    tm, norm = tr3d.get_tmax_vmax(False,"no")
-    #print(norm)
+    # print( tr3d.traces)
+    tm, norm = tr3d.get_tmax_vmax(False, "no")
+    # print(norm)
     l_idx = tr3d.remove_trace_low_signal(5, norm)
     assert tr3d.get_nb_trace() == 2
-    assert np.allclose(l_idx, [1,3])
-    
+    assert np.allclose(l_idx, [1, 3])
+
+
 def notest_downsize_sampling():
-    n_size= 128
-    tr3d = get_tr3d_du(3,128)
-    tr3d.trace = np.random.normal(0,1, tr3d.traces.size).reshape(tr3d.traces.shape)
+    n_size = 128
+    tr3d = get_tr3d_du(3, 128)
+    tr3d.trace = np.random.normal(0, 1, tr3d.traces.size).reshape(tr3d.traces.shape)
     ori = tr3d.get_copy()
     tr3d.downsize_sampling(2)
-    assert tr3d.get_size_trace() == n_size/2
+    assert tr3d.get_size_trace() == n_size / 2
     print()
-    print(tr3d.traces[0,0,:10])
+    print(tr3d.traces[0, 0, :10])
     print()
-    print(ori.trace[0,0,:20])
-    assert np.allclose(tr3d.traces[0], ori.trace[0,:,::2])
-    assert np.allclose(tr3d.traces[1], ori.trace[1,:,::2])
-    assert np.allclose(tr3d.traces[2], ori.trace[2,:,::2])
-    
-
+    print(ori.trace[0, 0, :20])
+    assert np.allclose(tr3d.traces[0], ori.trace[0, :, ::2])
+    assert np.allclose(tr3d.traces[1], ori.trace[1, :, ::2])
+    assert np.allclose(tr3d.traces[2], ori.trace[2, :, ::2])
