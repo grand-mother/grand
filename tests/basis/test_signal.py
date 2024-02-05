@@ -4,7 +4,6 @@ import scipy as scp
 
 G_debug = True
 
-
 def test_get_peakamptime_norm_hilbert():
     '''
     sinus apodisé, 0 est au milieu, et vaut 0
