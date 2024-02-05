@@ -67,7 +67,5 @@ docs/apidoc-only/sphinx/source/grand.*
 # mac 
 .DS_Store
 
-*.pyc
-sim2root/CoREASRawRoot/__pycache__/CorsikaInfoFuncs.cpython-310.pyc
-*.pyc
+
 
