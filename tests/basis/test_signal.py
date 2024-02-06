@@ -2,12 +2,13 @@ from grand.basis.signal import *
 import grand.basis.traces_event as tre
 import scipy as scp
 
-G_debug = True
+G_FlagPlot = False
 
 def test_get_peakamptime_norm_hilbert():
     '''
+    Test :
     sinus apodisé, 0 est au milieu, et vaut 0
-    par contre hilbert est maximum au milieu
+    par contre sa transformé d'Hilbert est maximum au milieu
     '''
     tr3d = tre.Handling3dTraces()
     nb_s = 1024
@@ -26,12 +27,12 @@ def test_get_peakamptime_norm_hilbert():
         tr3d.t_samples, tr3d.traces
     )
     zero_pos_in_trace = (20 / step) * tr3d.t_samples[1, 1]
-    if G_debug:
+    if G_FlagPlot:
         # tr3d.plot_trace_du(0)
         tr3d.plot_trace_du(1)
         tre.plt.vlines(zero_pos_in_trace, -5, 5)
         tre.plt.plot(tr3d.t_samples[1], norm_hilbert_amp[1])
-    print(t_max, zero_pos_in_trace, idx_max, v_max)
+        print(t_max, zero_pos_in_trace, idx_max, v_max)
     true_t_max = zero_pos_in_trace
     delta_t = tr3d.t_samples[1, 1]
     # sin*window is close to zero à t_max
@@ -66,7 +67,7 @@ def test_find_max_with_parabola_interp_3pt():
     epsilon = 0.001
     v_y = parabole(v_x) + np.random.normal(0, epsilon, n_sig)
     idx = np.argmax(v_y)
-    print(idx, v_y[idx])
+    #print(idx, v_y[idx])
     x_max, y_max = find_max_with_parabola_interp_3pt(v_x, v_y, idx)
     print(x_max, y_max)
     assert np.isclose(x_max, 1.0, atol=epsilon * 10)
