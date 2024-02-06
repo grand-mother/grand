@@ -20,8 +20,12 @@ from grand.basis.traces_event import Handling3dTraces
 
 logger = getLogger(__name__)
 
+#
+# internal function
+#
 
-def get_ttree_in_file(f_root):
+
+def _get_ttree_in_file(f_root):
     """
     Return all TTree name in ROOT file
 
@@ -34,51 +38,21 @@ def get_ttree_in_file(f_root):
     return l_name_ttree
 
 
-def check_ttree_in_file(f_root, ttree_name):
-    """
-    Return True if f_root contents ttree_name
-
-    :param f_root:
-    :type f_root:
-    :param ttree_name:
-    :type ttree_name:
-    """
-    return ttree_name in get_ttree_in_file(f_root)
-
-
-def get_file_event(f_name):
-    """
-    Factory for ROOT event file, Efield or voltage
-    """
-    if not os.path.exists(f_name):
-        logger.error(f"File {f_name} doesn't exist.")
-        raise FileNotFoundError
-    trees_list = get_ttree_in_file(f_name)
-    if "tefield" in trees_list:  # File with Efield info as input
-        return FileEfield(f_name)
-    if "tvoltage" in trees_list:  # File with voltage info as input
-        return FileVoltage(f_name)
-    logger.error(
-        f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
-    )
-    raise AssertionError
-
-
 @lru_cache(maxsize=16)
-def get_all_root_files(dir_root):
+def _get_all_root_files(dir_root):
     l_froot = glob.glob(dir_root + "/*.root")
     return l_froot
 
 
-def get_first_root_file(f_name, prefix):
-    '''Return the name of first ROOT with TTree <prefix> in the same
+def _get_first_root_file(f_name, prefix):
+    """Return the name of first ROOT with TTree <prefix> in the same
     directory of file <f_name>
-    
+
     :param f_name: path to  file
     :param prefix: TTree GRANDROOT file, no check
-    '''
+    """
     dir_root = os.path.dirname(f_name)
-    l_froot = get_all_root_files(dir_root)
+    l_froot = _get_all_root_files(dir_root)
     for n_file in l_froot:
         ns_file = n_file.split("/")[-1]
         if ns_file.find(prefix) == 0:
@@ -86,14 +60,6 @@ def get_first_root_file(f_name, prefix):
             return n_file
     logger.error(f"No ROOT {prefix} file")
     raise AssertionError
-
-
-def get_trun(f_name):
-    return get_first_root_file(f_name, "trun_")
-
-
-def get_tshower(f_name):
-    return get_first_root_file(f_name, "tshower_")
 
 
 class _FileEventBase:
@@ -137,8 +103,8 @@ class _FileEventBase:
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
-        self.tt_shower = groot.TShower(get_tshower(f_name))
-        self.tt_run = groot.TRun(get_trun(f_name))
+        self.tt_shower = groot.TShower(get_name_tshower(f_name))
+        self.tt_run = groot.TRun(get_name_trun(f_name))
         self.f_name = f_name
         self.load_event_idx(0)
 
@@ -242,6 +208,81 @@ class _FileEventBase:
         nrj = shw.energy_primary
         o_tevent.info_shower += f" energy_primary={nrj:.1e} GeV"
         return o_tevent
+
+
+#
+# public function class
+#
+
+
+@lru_cache(maxsize=16)
+def get_file_event(f_name):
+    """Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event
+    """
+    if not os.path.exists(f_name):
+        logger.error(f"File {f_name} doesn't exist.")
+        raise FileNotFoundError
+    trees_list = _get_ttree_in_file(f_name)
+    if "tefield" in trees_list:  # File with Efield info as input
+        return FileEfield(f_name)
+    if "tvoltage" in trees_list:  # File with voltage info as input
+        return FileVoltage(f_name)
+    logger.error(
+        f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
+    )
+    raise AssertionError
+
+
+def get_handling3dtraces(f_name, idx_evt=0):
+    """Return a traces containers from ROOT file <f_name> for event with index <idx_evt>
+    
+    Handling3dTraces class is the traces containers
+    
+    :param f_name:  string ROOT path/file_name
+    :param idx_evt: integer
+    :return: object Handling3dTraces
+    """
+    event_files = get_file_event(f_name)
+    event_files.load_event_idx(idx_evt)
+    return event_files.get_obj_handling3dtraces()
+
+def get_name_trun(f_name):
+    '''Return name of first ROOT file with type Trun in directory <f_name> 
+    
+    :param f_name: string
+    '''
+    return _get_first_root_file(f_name, "trun_")
+
+
+def get_name_tshower(f_name):
+    '''Return name of first ROOT file with type Tshower in directory <f_name> 
+    
+    :param f_name: string
+    '''
+    return _get_first_root_file(f_name, "tshower_")
+
+
+def get_simu_parameters(f_name, idx_evt=0):
+    """Return dictionary of simulation parameters
+
+    Parameters returned from TRun (same name) without transformation
+      * xmax_pos_shc
+      * azimuth
+      * zenith
+      * energy_primary
+
+    :param f_name: string ROOT path/file_name
+    :param idx_evt: integer
+    :return: dictionary with some raw value of simulation parameters
+    """
+    event_files = get_file_event(f_name)
+    event_files.load_event_idx(idx_evt)
+    d_simu = {}
+    d_simu["xmax_pos_shc"] = event_files.tt_shower.xmax_pos_shc
+    d_simu["azimuth"] = event_files.tt_shower.azimuth
+    d_simu["zenith"] = event_files.tt_shower.zenith
+    d_simu["energy_primary"] = event_files.tt_shower.energy_primary
+    return d_simu
 
 
 class FileEfield(_FileEventBase):

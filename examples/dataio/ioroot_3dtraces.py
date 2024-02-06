@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
-from grand.dataio.root_files import get_file_event, get_ttree_in_file
+from grand.dataio.root_files import get_file_event, _get_ttree_in_file
 from grand.basis.traces_event import Handling3dTraces
 import grand.manage_log as mlg
 import matplotlib.pylab as plt
@@ -120,7 +120,7 @@ def main():
         o_tevent.plot_trace_du(args.trace)
         o_tevent.plot_ps_trace_du(args.trace)
     if args.list_ttree:
-        print(get_ttree_in_file(args.file.name))
+        print(_get_ttree_in_file(args.file.name))
     if args.dump != -100:
         if not args.dump in o_tevent.idt2idx.keys():
             logger.error(f"ERROR: unknown DU identifer")
