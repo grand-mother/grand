@@ -159,6 +159,23 @@ class Handling3dTraces:
         self.nperseg = size
 
     ### OPERATIONS
+    
+    def apply_passband(self, fr_min, fr_max, causal=True):
+        """
+        band filter with butterfly window
+
+        :return: filtered trace in time domain
+        """
+        low = fr_min * 1e6
+        high = fr_max * 1e6
+        f_hz = self.f_samp_mhz[0] * 1e6
+        order = 9
+        coeff_b, coeff_a = ssig.butter(order, [low, high], btype="bandpass", fs=f_hz)
+        if causal:
+            filtered = ssig.lfilter(coeff_b, coeff_a, self.traces)
+        else:
+            filtered = ssig.filtfilt(coeff_b, coeff_a, self.traces)
+        self.traces = filtered.real
 
     def _define_t_samples(self):
         """
@@ -422,21 +439,26 @@ class Handling3dTraces:
         s_title += f"\n$F_{{sampling}}$={self.f_samp_mhz[idx]}MHz"
         s_title += f"; {self.get_size_trace()} samples"
         plt.title(s_title)
+        a_sigma = np.zeros(3, dtype=np.float32)
         for idx_axis, axis in enumerate(self.axis_name):
             if str(idx_axis) in to_draw:
-                m_sig = np.std(self.traces[idx, idx_axis, :100])
+                m_sig = np.std(self.traces[idx, idx_axis, -100:])
+                a_sigma[idx_axis] = m_sig
                 plt.plot(
                     self.t_samples[idx],
                     self.traces[idx, idx_axis],
                     self._color[idx_axis],
-                    label=axis + r", $\sigma=$" + f"{m_sig:.2e}",
+                    label=axis + r", $\sigma_{noise}\approx$" + f"{m_sig:.1e}",
                 )
         if hasattr(self, "t_max"):
+            snr = self.v_max[idx] / a_sigma.max()
             plt.plot(
                 self.t_max[idx],
                 self.v_max[idx],
                 "d",
-                label=f"max {self.v_max[idx]:e}",
+                label=f"Max {self.v_max[idx]:.4e} {self.unit_trace}\n"
+                + r"$SNR\approx$"
+                + f"{snr:.0f}",
             )
         plt.ylabel(f"{self.unit_trace}")
         plt.xlabel(f"ns\n{self.name}")
