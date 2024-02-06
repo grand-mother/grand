@@ -2,7 +2,7 @@
 Manage ROOT file of type event : Efield, voltage
 The main functionnalities of this module is 
 * to synchronize the relevant TTree (tshower , trun) on the same event
-* provide a numpy container of traces each a specific event, with method get_obj_handling3dtraces()
+* provide a numpy container of traces by event, with method get_obj_handling3dtraces()
 
 """
 
@@ -10,6 +10,7 @@ import os.path
 from logging import getLogger
 from typing import Optional
 import glob
+from functools import lru_cache
 
 import numpy as np
 import ROOT
@@ -63,12 +64,21 @@ def get_file_event(f_name):
     raise AssertionError
 
 
-def _get_root_file(f_name, prefix):
+@lru_cache(maxsize=16)
+def get_all_root_files(dir_root):
+    l_froot = glob.glob(dir_root + "/*.root")
+    return l_froot
+
+
+def get_first_root_file(f_name, prefix):
+    '''Return the name of first ROOT with TTree <prefix> in the same
+    directory of file <f_name>
+    
+    :param f_name: path to  file
+    :param prefix: TTree GRANDROOT file, no check
+    '''
     dir_root = os.path.dirname(f_name)
-    l_froot = glob.glob(dir_root + "/*root")
-    if len(l_froot) == 0:
-        logger.error("No ROOT file")
-        raise AssertionError
+    l_froot = get_all_root_files(dir_root)
     for n_file in l_froot:
         ns_file = n_file.split("/")[-1]
         if ns_file.find(prefix) == 0:
@@ -79,11 +89,11 @@ def _get_root_file(f_name, prefix):
 
 
 def get_trun(f_name):
-    return _get_root_file(f_name, "trun_")
+    return get_first_root_file(f_name, "trun_")
 
 
 def get_tshower(f_name):
-    return _get_root_file(f_name, "tshower_")
+    return get_first_root_file(f_name, "tshower_")
 
 
 class _FileEventBase:
@@ -131,7 +141,7 @@ class _FileEventBase:
         self.tt_run = groot.TRun(get_trun(f_name))
         self.f_name = f_name
         self.load_event_idx(0)
-    
+
     def load_event_idx(self, idx):
         """
         Load event/run with index idx in list return by get_list_of_events()
@@ -209,8 +219,10 @@ class _FileEventBase:
         """
         Return a traces container IO independent Handling3dTraces
         """
+        s_file = os.path.basename(self.f_name)
+        s_path = os.path.dirname(self.f_name)
         o_tevent = Handling3dTraces(
-            f"{self.f_name}\nevt_nb={self.event_number} run_nb={self.run_number}"
+            f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}\n{s_path}"
         )
         du_id = np.array(self.tt_event.du_id)
         o_tevent.init_traces(
