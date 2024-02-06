@@ -67,7 +67,7 @@ if __name__ == '__main__':
             print("executing sim2root.py")
             # Run sim2root.py
             sim2root = [
-                "python3", f"../Common/sim2root.py", f"Coreas_{simID}.root", "-o", f"{str(options.directory)}", "-se", f"{simID}"
+                "python3", f"../Common/sim2root.py", f"Coreas_{simID}.root", "-o", f"{str(options.directory)}"
             ]
             subprocess.run(sim2root, check=True)
             print(f"Created grandroot trees in {str(options.directory)}")
