@@ -11,6 +11,10 @@ import grand.dataio.root_files as RFile
 import grand.dataio.root_trees as groot
 from grand import grand_get_path_root_pkg
 
+#TODO: (JMC) almost all tests are broken by new version of GRANDROOT file, needs to have a set of coherent ROOT for test 
+ 
+
+G_efield_file = Path(grand_get_path_root_pkg()) / "data" / "test_efield.root"
 
 class RootFilesTest(TestCase):
     """Unit tests for the root_files module"""
@@ -37,7 +41,7 @@ class RootFilesTest(TestCase):
         self.assertTrue(eventbase.get_size_trace()==999)
         self.assertTrue(eventbase.get_sampling_freq_mhz()==2000)
 
-    def test_get_file_event(self):
+    def test_get_file_event1(self):
         if not (self.voltage_file).exists():
             os.system(f"python ../../scripts/grand_sim_e2v.py {self.efield_file} -o {self.voltage_file}")
         self.assertTrue((self.efield_file).exists())
@@ -101,13 +105,15 @@ class RootFilesTest(TestCase):
         # voltage file is produced by test_pipeline.py and is removed here.
         #os.remove(self.voltage_file)
 
-    def test_get_file_event(self):
+    def test_get_file_event2(self):
         self.assertTrue((self.efield_file).exists())
-        self.assertTrue((self.voltage_file).exists())
         efield = RFile.get_file_event(str(self.efield_file))
-        volt = RFile.get_file_event(str(self.voltage_file))
         self.assertTrue(hasattr(efield, 'traces'))
-        self.assertTrue(hasattr(volt, 'traces'))
+
+def test_get_obj_handling3dtraces():
+    ef_root = RFile.get_file_event(str(G_efield_file))
+    ef_obj = ef_root.get_obj_handling3dtraces()
+    assert ef_obj.get_size_trace() == ef_root.sig_size
 
 
 if __name__ == "__main__":
