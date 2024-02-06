@@ -3,6 +3,7 @@ Handling a set of 3D traces
 """
 from logging import getLogger
 import copy
+from functools import lru_cache
 
 import numpy as np
 import scipy.signal as ssig
@@ -159,7 +160,7 @@ class Handling3dTraces:
         self.nperseg = size
 
     ### OPERATIONS
-    
+
     def apply_passband(self, fr_min, fr_max, causal=True):
         """
         band filter with butterfly window
@@ -335,6 +336,7 @@ class Handling3dTraces:
         """
         return np.linalg.norm(self.traces, axis=1)
 
+    @lru_cache(maxsize=10)
     def get_tmax_vmax(self, hilbert=True, interpol="auto"):
         """Return time where norm of the amplitude of the Hilbert tranform  is max
 
@@ -400,6 +402,20 @@ class Handling3dTraces:
         :rtype: int
         """
         return self.traces.shape[2]
+
+    def get_snr_and_noise(self):
+        """Return a crude estimation of SNR and noise level
+        
+        Crude estimation because:
+           * noise is estimated at the end of trace
+           * max value has different estimator.
+
+        :return: snr float(nb_trace,), noise(nb_trace,)
+        """
+        size_noise = np.min([100, int(self.get_size_trace()/20)])
+        noise = np.max(np.std(self.traces[:, :, -size_noise:], axis=-1), axis=-1)
+        _, v_max = self.get_tmax_vmax(hilbert=True, interpol="auto")
+        return v_max / noise, v_max, noise
 
     def get_extended_traces(self):
         """Return extended traces to time interval of event
