@@ -62,6 +62,15 @@ def main():
 
     start_event_number = 0
 
+    # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
+    gt = SimpleNamespace()
+    gt.trun = TRun((out_dir_name / "trun.root").as_posix())
+    gt.trunshowersim = TRunShowerSim((out_dir_name / "trunshowersim.root").as_posix())
+    gt.trunefieldsim = TRunEfieldSim((out_dir_name / "trunefieldsim.root").as_posix())
+    gt.tshower = TShower((out_dir_name / "tshower.root").as_posix())
+    gt.tshowersim = TShowerSim((out_dir_name / "tshowersim.root").as_posix())
+    gt.tefield = TEfield((out_dir_name / "tefield.root").as_posix())
+
     # Loop through the files specified on command line
     for file_num, filename in enumerate(clargs.filename):
 
@@ -75,15 +84,6 @@ def main():
         trawshower = RawTrees.RawShowerTree(filename)
         trawefield = RawTrees.RawEfieldTree(filename)
         trawmeta = RawTrees.RawMetaTree(filename)
-
-        # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
-        gt = SimpleNamespace()
-        gt.trun = TRun((out_dir_name/"trun.root").as_posix())
-        gt.trunshowersim = TRunShowerSim((out_dir_name/"trunshowersim.root").as_posix())
-        gt.trunefieldsim = TRunEfieldSim((out_dir_name/"trunefieldsim.root").as_posix())
-        gt.tshower = TShower((out_dir_name/"tshower.root").as_posix())
-        gt.tshowersim = TShowerSim((out_dir_name/"tshowersim.root").as_posix())
-        gt.tefield = TEfield((out_dir_name/"tefield.root").as_posix())
 
         # Loop through entries - assuming same number of entries in each tree
         # ToDo: this should be a tree iterator through one tree and getting the other through friends. Need to make friends working...
