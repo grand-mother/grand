@@ -13,7 +13,7 @@ import matplotlib.pylab as plt
 logger = mlg.get_logger_for_script(__file__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("info", log_stdout=True)
+mlg.create_output_for_logger("error", log_stdout=True)
 
 
 def manage_args():
