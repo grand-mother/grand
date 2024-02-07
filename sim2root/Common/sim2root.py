@@ -534,7 +534,7 @@ def form_directory_name(clargs, date, time, run_number):
 # Rename the created files to appropriate names
 def rename_files(clargs, path, start_event_number, end_event_number):
     # Go through output files
-    for fn_start in ["shower", "showersim", "efield"]:
+    for fn_start in ["runshowersim", "runefieldsim", "shower", "showersim", "efield"]:
         # Go through serial numbers in directory names to find a one that does not exist
         for sn in range(1000):
             fn_in = Path(path, f"{fn_start}.root")
