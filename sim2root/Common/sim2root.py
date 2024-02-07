@@ -19,6 +19,7 @@ clparser.add_argument("-o", "--output_parent_directory", help="Output parent dir
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
 clparser.add_argument("-s", "--site_name", help="The name of the site", default="nosite")
 clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
+clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default="000000")
 clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
 clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
 # clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
@@ -50,26 +51,10 @@ def main():
     if clargs.start_event is not None:
         ext_event_number = int(clargs.start_event)
 
-    # Create the appropriate output directory
-    if clargs.forced_output_directory is None:
-        out_dir_name = form_directory_name(clargs)
-        print("Storing files in directory ", out_dir_name)
-        out_dir_name.mkdir()
-    # If another directory was forced as the output directory, create it
-    else:
-        out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
-        out_dir_name.mkdir(exist_ok=True)
-
     start_event_number = 0
 
-    # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
+    # Namespace for holding output trees
     gt = SimpleNamespace()
-    gt.trun = TRun((out_dir_name / "trun.root").as_posix())
-    gt.trunshowersim = TRunShowerSim((out_dir_name / "trunshowersim.root").as_posix())
-    gt.trunefieldsim = TRunEfieldSim((out_dir_name / "trunefieldsim.root").as_posix())
-    gt.tshower = TShower((out_dir_name / "tshower.root").as_posix())
-    gt.tshowersim = TShowerSim((out_dir_name / "tshowersim.root").as_posix())
-    gt.tefield = TEfield((out_dir_name / "tefield.root").as_posix())
 
     # Loop through the files specified on command line
     for file_num, filename in enumerate(clargs.filename):
@@ -95,6 +80,13 @@ def main():
 
             # If the first entry or (run number enforced and first file), fill the run trees
             if (i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
+
+                # Overwrite the run number if specified on command line
+                run_number = ext_run_number if ext_run_number is not None else gt.trun.run_number
+
+                # Init output trees in the proper directory
+                out_dir_name = init_trees(clargs, run_number, gt)
+
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
                 # Convert the RawEfield entries
@@ -105,11 +97,9 @@ def main():
                 # Set the origin geoid
                 gt.trun.origin_geoid = get_origin_geoid(clargs)
 
-                # Overwrite the run number if specified on command line
-                if ext_run_number is not None:
-                    gt.trun.run_number = ext_run_number
-                    gt.trunshowersim.run_number = ext_run_number
-                    gt.trunefieldsim.run_number = ext_run_number
+                gt.trun.run_number = run_number
+                gt.trunshowersim.run_number = run_number
+                gt.trunefieldsim.run_number = run_number
 
                 # Fill the run trees and write
                 # gt.trun.fill()
@@ -198,6 +188,29 @@ def main():
     end_event_number = gt.tshower.event_number
     print("Renaming files to proper file names")
     rename_files(clargs, out_dir_name, start_event_number, end_event_number)
+
+# Initialise output trees and their directory
+def init_trees(clargs, run_number, gt):
+
+    # Create the appropriate output directory
+    if clargs.forced_output_directory is None:
+        out_dir_name = form_directory_name(clargs, run_number)
+        print("Storing files in directory ", out_dir_name)
+        out_dir_name.mkdir()
+    # If another directory was forced as the output directory, create it
+    else:
+        out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
+        out_dir_name.mkdir(exist_ok=True)
+
+    # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
+    gt.trun = TRun((out_dir_name / "trun.root").as_posix())
+    gt.trunshowersim = TRunShowerSim((out_dir_name / "trunshowersim.root").as_posix())
+    gt.trunefieldsim = TRunEfieldSim((out_dir_name / "trunefieldsim.root").as_posix())
+    gt.tshower = TShower((out_dir_name / "tshower.root").as_posix())
+    gt.tshowersim = TShowerSim((out_dir_name / "tshowersim.root").as_posix())
+    gt.tefield = TEfield((out_dir_name / "tefield.root").as_posix())
+
+    return out_dir_name
 
 
 # Convert the RawShowerTree first entry to run values
@@ -493,13 +506,13 @@ def get_origin_geoid(clargs):
     return origin_geoid
 
 # Form the proper output directory name from command line arguments
-def form_directory_name(clargs):
+def form_directory_name(clargs, run_number):
     # Change possible underscores in extra into -
     extra = clargs.extra.replace("_", "-")
 
     # Go through serial numbers in directory names to find a one that does not exist
     for sn in range(1000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{clargs.sim_date}_{extra}_{sn:0>4}")
+        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{clargs.sim_date}_{clargs.sim_time}_RUN{run_number:0>4}_CD_{extra}_{sn:0>4}")
         if not dir_name.exists():
             break
     # If directories with serial number up to 1000 already created
