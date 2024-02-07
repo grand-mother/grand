@@ -14,7 +14,7 @@ import raw_root_trees as RawTrees # this is here in Common
 #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file. Site too.
 # Command line argument parsing
 clparser = argparse.ArgumentParser(description="Convert simulation data in rawroot format into GRANDROOT format")
-clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw data TTrees")
+clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GRANDRaw data TTrees or a directory with GRANDraw files")
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
 clparser.add_argument("-s", "--site_name", help="The name of the site", default="nosite")
@@ -58,8 +58,15 @@ def main():
     # Namespace for holding output trees
     gt = SimpleNamespace()
 
+    # Check if a directory was given as input
+    if Path(clargs.file_dir_name[0]).is_dir():
+        file_list = glob.glob(clargs.file_dir_name[0]+"/*.RawRoot")
+    else:
+        file_list = clargs.file_dir_name
+
     # Loop through the files specified on command line
-    for file_num, filename in enumerate(clargs.filename):
+    # for file_num, filename in enumerate(clargs.filename):
+    for file_num, filename in enumerate(file_list):
 
         # Output filename for GRAND Trees
         # if clargs.output_filename is None:
