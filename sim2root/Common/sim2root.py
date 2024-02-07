@@ -18,8 +18,10 @@ clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
 clparser.add_argument("-s", "--site_name", help="The name of the site", default="nosite")
-clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
-clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default="000000")
+clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
+clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default=None)
+# clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
+# clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default="000000")
 clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
 clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
 # clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
@@ -85,7 +87,7 @@ def main():
                 run_number = ext_run_number if ext_run_number is not None else gt.trun.run_number
 
                 # Init output trees in the proper directory
-                out_dir_name = init_trees(clargs, run_number, gt)
+                out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, gt)
 
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
@@ -190,11 +192,18 @@ def main():
     rename_files(clargs, out_dir_name, start_event_number, end_event_number)
 
 # Initialise output trees and their directory
-def init_trees(clargs, run_number, gt):
+def init_trees(clargs, unix_date, run_number, gt):
+
+    # Use date/time from command line argument if specified, otherwise the unix time
+    date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
+    if clargs.sim_date is not None:
+        date = clargs.sim_date
+    if clargs.sim_time is not None:
+        time = clargs.sim_time
 
     # Create the appropriate output directory
     if clargs.forced_output_directory is None:
-        out_dir_name = form_directory_name(clargs, run_number)
+        out_dir_name = form_directory_name(clargs, date, time, run_number)
         print("Storing files in directory ", out_dir_name)
         out_dir_name.mkdir()
     # If another directory was forced as the output directory, create it
@@ -506,13 +515,13 @@ def get_origin_geoid(clargs):
     return origin_geoid
 
 # Form the proper output directory name from command line arguments
-def form_directory_name(clargs, run_number):
+def form_directory_name(clargs, date, time, run_number):
     # Change possible underscores in extra into -
     extra = clargs.extra.replace("_", "-")
 
     # Go through serial numbers in directory names to find a one that does not exist
     for sn in range(1000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{clargs.sim_date}_{clargs.sim_time}_RUN{run_number:0>4}_CD_{extra}_{sn:0>4}")
+        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{date}_{time}_RUN{run_number:0>4}_CD_{extra}_{sn:0>4}")
         if not dir_name.exists():
             break
     # If directories with serial number up to 1000 already created
