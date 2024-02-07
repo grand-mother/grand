@@ -212,12 +212,12 @@ def init_trees(clargs, unix_date, run_number, gt):
         out_dir_name.mkdir(exist_ok=True)
 
     # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
-    gt.trun = TRun((out_dir_name / "trun.root").as_posix())
-    gt.trunshowersim = TRunShowerSim((out_dir_name / "trunshowersim.root").as_posix())
-    gt.trunefieldsim = TRunEfieldSim((out_dir_name / "trunefieldsim.root").as_posix())
-    gt.tshower = TShower((out_dir_name / "tshower.root").as_posix())
-    gt.tshowersim = TShowerSim((out_dir_name / "tshowersim.root").as_posix())
-    gt.tefield = TEfield((out_dir_name / "tefield.root").as_posix())
+    gt.trun = TRun((out_dir_name / "run.root").as_posix())
+    gt.trunshowersim = TRunShowerSim((out_dir_name / "runshowersim.root").as_posix())
+    gt.trunefieldsim = TRunEfieldSim((out_dir_name / "runefieldsim.root").as_posix())
+    gt.tshower = TShower((out_dir_name / "shower.root").as_posix())
+    gt.tshowersim = TShowerSim((out_dir_name / "showersim.root").as_posix())
+    gt.tefield = TEfield((out_dir_name / "efield.root").as_posix())
 
     return out_dir_name
 
@@ -534,7 +534,7 @@ def form_directory_name(clargs, date, time, run_number):
 # Rename the created files to appropriate names
 def rename_files(clargs, path, start_event_number, end_event_number):
     # Go through output files
-    for fn_start in ["trun", "trunshowersim", "trunefieldsim", "tshower", "tshowersim", "tefield"]:
+    for fn_start in ["shower", "showersim", "efield"]:
         # Go through serial numbers in directory names to find a one that does not exist
         for sn in range(1000):
             fn_in = Path(path, f"{fn_start}.root")
