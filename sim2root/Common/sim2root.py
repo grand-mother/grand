@@ -521,7 +521,7 @@ def form_directory_name(clargs, date, time, run_number):
 
     # Go through serial numbers in directory names to find a one that does not exist
     for sn in range(1000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{date}_{time}_RUN{run_number:0>4}_CD_{extra}_{sn:0>4}")
+        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
         if not dir_name.exists():
             break
     # If directories with serial number up to 1000 already created
