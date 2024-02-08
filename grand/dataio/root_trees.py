@@ -1398,6 +1398,11 @@ class MotherEventTree(DataTree):
         else:
             return None
 
+    def get_dus_indices_in_run(self, trun):
+        """Gets an array of the indices of DUs of the current event in the TRun tree"""
+
+        return np.nonzero(np.isin(np.asarray(trun.du_id), np.asarray(self.du_id)))[0]
+
 
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass

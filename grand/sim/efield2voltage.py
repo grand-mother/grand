@@ -117,10 +117,12 @@ class Efield2Voltage:
         # stack efield traces
         trace_shape = np.asarray(self.events.trace).shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
+        self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
         self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
-        self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
+        # self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
+        self.du_pos = np.asarray(self.run.du_xyz)[self.event_dus_indices] # (nb_du, 3) antenna position wrt local grand coordinate
 
         # shower information like theta, phi, xmax etc for one event.
         shower = ShowerEvent()
@@ -129,7 +131,8 @@ class Efield2Voltage:
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
 
-        self.dt_ns = np.asarray(self.run.t_bin_size) # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
+        # self.dt_ns = np.asarray(self.run.t_bin_size) # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
+        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
         self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             #MATIAS: this gets casted too!
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)
