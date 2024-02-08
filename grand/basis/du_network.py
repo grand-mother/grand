@@ -63,7 +63,6 @@ class DetectorUnitNetwork:
 
         :param l_idx: list of index of DU
         """
-        print("Network :", self.idx2idt)
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
         self.du_pos = self.du_pos[l_idx]

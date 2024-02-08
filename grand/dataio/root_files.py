@@ -38,7 +38,6 @@ def _get_ttree_in_file(f_root):
     return l_name_ttree
 
 
-@lru_cache(maxsize=16)
 def _get_all_root_files(dir_root):
     l_froot = glob.glob(dir_root + "/*.root")
     return l_froot
@@ -186,9 +185,8 @@ class _FileEventBase:
         Return a traces container IO independent Handling3dTraces
         """
         s_file = os.path.basename(self.f_name)
-        s_path = os.path.dirname(self.f_name)
         o_tevent = Handling3dTraces(
-            f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}\n{s_path}"
+            f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
         )
         du_id = np.array(self.tt_event.du_id)
         o_tevent.init_traces(
@@ -215,10 +213,8 @@ class _FileEventBase:
 #
 
 
-@lru_cache(maxsize=16)
 def get_file_event(f_name):
-    """Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event
-    """
+    """Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event"""
     if not os.path.exists(f_name):
         logger.error(f"File {f_name} doesn't exist.")
         raise FileNotFoundError
@@ -235,9 +231,9 @@ def get_file_event(f_name):
 
 def get_handling3dtraces(f_name, idx_evt=0):
     """Return a traces containers from ROOT file <f_name> for event with index <idx_evt>
-    
+
     Handling3dTraces class is the traces containers
-    
+
     :param f_name:  string ROOT path/file_name
     :param idx_evt: integer
     :return: object Handling3dTraces
@@ -246,19 +242,20 @@ def get_handling3dtraces(f_name, idx_evt=0):
     event_files.load_event_idx(idx_evt)
     return event_files.get_obj_handling3dtraces()
 
+
 def get_name_trun(f_name):
-    '''Return name of first ROOT file with type Trun in directory <f_name> 
-    
+    """Return name of first ROOT file with type Trun in directory <f_name>
+
     :param f_name: string
-    '''
+    """
     return _get_first_root_file(f_name, "trun_")
 
 
 def get_name_tshower(f_name):
-    '''Return name of first ROOT file with type Tshower in directory <f_name> 
-    
+    """Return name of first ROOT file with type Tshower in directory <f_name>
+
     :param f_name: string
-    '''
+    """
     return _get_first_root_file(f_name, "tshower_")
 
 

@@ -177,6 +177,12 @@ class Handling3dTraces:
         else:
             filtered = ssig.filtfilt(coeff_b, coeff_a, self.traces)
         self.traces = filtered.real
+        try:
+            delattr(self, "t_max")
+            delattr(self, "v_max")
+        except:
+            pass
+        
 
     def _define_t_samples(self):
         """
@@ -211,15 +217,11 @@ class Handling3dTraces:
         :param l_idx:list of index of trace
         :type l_idt: list int
         """
-        print(self.idx2idt)
-        print(type(self.idx2idt))
-        print(type(l_idx))
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
         self.idt2idx = {}
         for idx, ident in enumerate(self.idx2idt):
             self.idt2idx[ident] = idx
-        print(self.idx2idt)
         self.traces = self.traces[l_idx]
         self.t_start_ns = self.t_start_ns[l_idx]
         if self.t_samples.shape[0] > 0:
@@ -227,6 +229,11 @@ class Handling3dTraces:
         if self.network:
             self.network = copy.deepcopy(self.network)
             self.network.keep_only_du_with_index(l_idx)
+        try:
+            delattr(self, "t_max")
+            delattr(self, "v_max")
+        except:
+            pass
 
     def reduce_nb_trace(self, new_nb_du):
         """reduces the number of traces to the first <new_nb_du>
@@ -273,7 +280,7 @@ class Handling3dTraces:
         return idx_ok
 
     ### GETTER :
-    def get_copy(self, new_traces=None, deepcopy=True):
+    def copy(self, new_traces=None, deepcopy=True):
         """Return a copy of current object where traces can be modify
 
         The type of copy is copy with reference, not a deepcopy
@@ -336,7 +343,6 @@ class Handling3dTraces:
         """
         return np.linalg.norm(self.traces, axis=1)
 
-    @lru_cache(maxsize=10)
     def get_tmax_vmax(self, hilbert=True, interpol="auto"):
         """Return time where norm of the amplitude of the Hilbert tranform  is max
 
@@ -405,14 +411,14 @@ class Handling3dTraces:
 
     def get_snr_and_noise(self):
         """Return a crude estimation of SNR and noise level
-        
+
         Crude estimation because:
            * noise is estimated at the end of trace
            * max value has different estimator.
 
         :return: snr float(nb_trace,), noise(nb_trace,)
         """
-        size_noise = np.min([100, int(self.get_size_trace()/20)])
+        size_noise = np.min([100, int(self.get_size_trace() / 20)])
         noise = np.max(np.std(self.traces[:, :, -size_noise:], axis=-1), axis=-1)
         _, v_max = self.get_tmax_vmax(hilbert=True, interpol="auto")
         return v_max / noise, v_max, noise

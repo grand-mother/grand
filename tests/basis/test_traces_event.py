@@ -203,21 +203,21 @@ def test_get_copy():
     # new_traces
     new_traces = np.ones(G_tr3d.traces.shape, dtype=np.float32)
     new_traces[1, 1, 1] = 321
-    my_tr3d = G_tr3d.get_copy(new_traces)
+    my_tr3d = G_tr3d.copy(new_traces)
     val = 123
     my_tr3d.traces[0, 0, 0] = val
     assert G_tr3d.traces[0, 0, 0] != val
     assert my_tr3d.traces[1, 1, 1] == 321
     assert my_tr3d.traces[1, 1, 0] == 1
     # no new_traces
-    my_tr3d = G_tr3d.get_copy()
+    my_tr3d = G_tr3d.copy()
     assert np.allclose(G_tr3d.traces, my_tr3d.traces)
     val = 123
     ori_val = G_tr3d.traces[1, 1, 1]
     my_tr3d.traces[1, 1, 1] = 321
     assert G_tr3d.traces[1, 1, 1] == ori_val
     # no new_traces, rza traces
-    my_tr3d = G_tr3d.get_copy(0)
+    my_tr3d = G_tr3d.copy(0)
     assert np.allclose(my_tr3d.traces, np.zeros(my_tr3d.traces.shape))
 
 
@@ -228,14 +228,14 @@ def test_remove_trace_low_signal():
     tr3d.traces[2] = 0.5
     tr3d.traces[3] = 11
     tr3d.traces[4] = 1
-    ori_tr3d = tr3d.get_copy()
+    ori_tr3d = tr3d.copy()
     tr3d.remove_trace_low_signal(5)
     assert tr3d.get_nb_trace() == 2
-    tr3d = ori_tr3d.get_copy()
+    tr3d = ori_tr3d.copy()
     norm = tr3d.get_max_norm()
     tr3d.remove_trace_low_signal(5, norm)
     assert tr3d.get_nb_trace() == 2
-    tr3d = ori_tr3d.get_copy()
+    tr3d = ori_tr3d.copy()
     noise = np.random.normal(0, 1, tr3d.traces.size).reshape(tr3d.traces.shape)
     tr3d.traces += noise
     # print( tr3d.traces)
@@ -250,7 +250,7 @@ def notest_downsize_sampling():
     n_size = 128
     tr3d = get_tr3d_du(3, 128)
     tr3d.trace = np.random.normal(0, 1, tr3d.traces.size).reshape(tr3d.traces.shape)
-    ori = tr3d.get_copy()
+    ori = tr3d.copy()
     tr3d.downsize_sampling(2)
     assert tr3d.get_size_trace() == n_size / 2
     print()
