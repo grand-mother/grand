@@ -43,13 +43,27 @@ def CreateGRANDRoot(InputDirectory, OutputDirectory):
   #p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   #stdout,stderr=p.communicate()
 
-  rawfile=glob.glob(InputDirectory+"/*.RawRoot")[0]
+  try:
+    rawfile=glob.glob(InputDirectory+"/*.RawRoot")
+  except:
+    if (len(rawfile)!=1) :
+      print("Could not find any RawRoot files in "+InputDirectory+" or we found too many")         
 
-  if (len(rawfile) <= 4) :
-    print("Could not find any RawRoot files in "+InputDirectory+" or we found too many:",rawfile) 
-    return -1
+  try:
+    rawfile=glob.glob(InputDirectory+"/*.rawroot")
+  except:
+    if (len(rawfile)!=1) :
+      print("Could not find any rawroot files in "+InputDirectory+" or we found too many") 
 
+  if(len(rawfile)>1):
+    sys.exit()   
 
+  try:  
+    rawfile=rawfile[0]
+  except:
+    print("Could not find any rawroot or RawRoot file in "+InputDirectory) 
+     sys.exit() 
+    
   head,tail=os.path.split(rawfile)
 
   InputJobName=os.path.splitext(tail)[0]
@@ -81,15 +95,32 @@ def main():
         """)
         sys.exit(0)
 
-    inputdirectory = sys.argv[1]
+    InputDirectory = sys.argv[1]
     outputdirectory = sys.argv[2]
 
-    rawfile=glob.glob(inputdirectory+"/*.RawRoot")[0]
+    try:
+      rawfile=glob.glob(InputDirectory+"/*.RawRoot")
+    except:
+      if (len(rawfile)!=1) :
+        print("Could not find any RawRoot files in "+InputDirectory+" or we found too many")         
+
+    try:
+      rawfile=glob.glob(InputDirectory+"/*.rawroot")
+    except:
+      if (len(rawfile)!=1) :
+        print("Could not find any rawroot files in "+InputDirectory+" or we found too many") 
+    if(len(rawfile)>1):
+      sys.exit()   
+    try:  
+      rawfile=rawfile[0]
+    except:
+      print("Could not find any rawroot or RawRoot file in "+InputDirectory)
+       sys.exit()   
 
     logging.info("About to create GRANDRoot file from "+rawfile)
     logging.debug("output file will be i:"+outputdirectory)
 
-    CreateGRANDRoot(inputdirectory, outputdirectory)
+    CreateGRANDRoot(InputDirectory, outputdirectory)
 
 if __name__ == '__main__':
   main()

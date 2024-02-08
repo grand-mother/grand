@@ -46,7 +46,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
 
   #regular
   OutputFile1=OutputFile+"_with-rf_with-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + EventNumber +" --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -57,7 +57,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
 
   #no-noise
   OutputFile1=OutputFile+"_with-rf_no-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --no_noise --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + EventNumber +" --no_noise --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -69,7 +69,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
 
   #no-rf
   OutputFile1=OutputFile+"_no-rf_with-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + EventNumber +" --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -82,7 +82,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
   
   #no-rf  -no-noise
   OutputFile1=OutputFile+"_no-rf_no-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --no_noise --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + EventNumber +" --no_noise --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()

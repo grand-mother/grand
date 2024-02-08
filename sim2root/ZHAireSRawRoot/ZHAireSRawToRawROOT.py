@@ -486,7 +486,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 ############################################################################################################################ 
                 
                 #RawEfield.du_id.append(int(AntennaN[ant_number]))
-                RawEfield.du_id.append(int(DetectorID[1:])) #assuming antena names are of the format A+number of antenna          
+                RawEfield.du_id.append(int(DetectorID[1:])) #TODO:assuming antena names are of the format A+number of antenna! This is a quick fix          
                 RawEfield.du_name.append(DetectorID)
                 RawEfield.t_0.append(t_0)            
 
