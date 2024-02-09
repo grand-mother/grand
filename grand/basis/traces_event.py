@@ -19,6 +19,12 @@ logger = getLogger(__name__)
 
 
 def get_psd(trace, f_samp_mhz, nperseg=0):
+    """Estimate power spectrum density by Welch method
+
+    :param trace: floatX(nb_sample,)
+    :param f_samp_mhz: frequency sampling
+    :param nperseg: number of sample by periodogram
+    """
     if nperseg == 0:
         nperseg = trace.shape[0] // 2
 
@@ -52,7 +58,7 @@ class Handling3dTraces:
         * idx2idt int(nb_du): array of identifier of DU
         * t_start_ns float(nb_du): [ns] time of first sample of trace
         * t_samples float(nb_du, nb_dim, nb_sample): [ns]
-        * f_samp_mhz float: [MHz] frequency sampling
+        * f_samp_mhz float(nb_du,): [MHz] frequency sampling
         * idt2idx dict: for each identifier return the index in array
         * unit_trace str: string unit of trace
         * network object: content position network
@@ -161,7 +167,7 @@ class Handling3dTraces:
 
     ### OPERATIONS
 
-    def apply_passband(self, fr_min, fr_max, causal=True):
+    def apply_bandpass(self, fr_min, fr_max, causal=True):
         """
         band filter with butterfly window
 
@@ -182,7 +188,6 @@ class Handling3dTraces:
             delattr(self, "v_max")
         except:
             pass
-        
 
     def _define_t_samples(self):
         """
@@ -313,7 +318,10 @@ class Handling3dTraces:
         return my_copy
 
     def get_delta_t_ns(self):
-        """Return sampling rate in ns"""
+        """Return sampling rate in ns
+        
+        :return: float(nb_3dtrace,)
+        """
         ret = 1e3 / self.f_samp_mhz
         return ret
 
@@ -458,7 +466,7 @@ class Handling3dTraces:
         self._define_t_samples()
         plt.figure()
         s_title = f"{self.type_trace}, DU {self.idx2idt[idx]} (idx={idx})"
-        s_title += f"\n$F_{{sampling}}$={self.f_samp_mhz[idx]}MHz"
+        s_title += f"\n$F_{{sampling}}$={self.f_samp_mhz[idx]} MHz"
         s_title += f"; {self.get_size_trace()} samples"
         plt.title(s_title)
         a_sigma = np.zeros(3, dtype=np.float32)
@@ -497,7 +505,7 @@ class Handling3dTraces:
         """
         self.plot_trace_idx(self.idt2idx[du_id], to_draw)
 
-    def plot_ps_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
+    def plot_psd_trace_idx(self, idx, to_draw="012"):  # pragma: no cover
         """Draw power spectrum for 3 traces associated to DU at index idx
 
         :param idx: index of trace
@@ -522,7 +530,7 @@ class Handling3dTraces:
                 plt.semilogy(freq[2:] * 1e-6, pxx_den[2:], self._color[idx_axis], label=axis)
                 # plt.plot(freq[2:] * 1e-6, pxx_den[2:], self._color[idx_axis], label=axis)
         m_title = f"Power spectrum density of {self.type_trace}, DU {self.idx2idt[idx]} (idx={idx})"
-        m_title += f"\nPeriodogram have {self.nperseg} samples, delta freq {freq[1]*1e-6:.2f}MHz"
+        m_title += f"\nPeriodogram has {self.nperseg} samples, delta freq {freq[1]*1e-6:.2f}MHz"
         plt.title(m_title)
         plt.ylabel(rf"({self.unit_trace})$^2$/Hz")
         plt.xlabel(f"MHz\n{self.name}")
@@ -532,7 +540,7 @@ class Handling3dTraces:
         self.welch_freq = freq
         self.welch_pxx_den = pxx_den
 
-    def plot_ps_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
+    def plot_psd_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
         """Draw power spectrum for 3 traces associated to DU idx2idt
 
         :param idx2idt: DU identifier
@@ -540,7 +548,7 @@ class Handling3dTraces:
         :param to_draw: select components to draw
         :type to_draw: enum str ["0", "1", "2"] not exclusive
         """
-        self.plot_ps_trace_idx(self.idt2idx[du_id], to_draw)
+        self.plot_psd_trace_idx(self.idt2idx[du_id], to_draw)
 
     def plot_all_traces_as_image(self):  # pragma: no cover
         """Interactive image double click open traces associated"""
@@ -558,7 +566,7 @@ class Handling3dTraces:
             if event.button is MouseButton.LEFT and event.dblclick:
                 idx = int(event.ydata + 0.5)
                 self.plot_trace_idx(idx)
-                self.plot_ps_trace_idx(idx)
+                self.plot_psd_trace_idx(idx)
                 plt.show()
 
         plt.connect("button_press_event", on_click)

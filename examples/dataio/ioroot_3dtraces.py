@@ -118,7 +118,7 @@ def main():
             logger.error(f"ERROR: unknown DU identifer")
             return
         o_tevent.plot_trace_du(args.trace)
-        o_tevent.plot_ps_trace_du(args.trace)
+        o_tevent.plot_psd_trace_du(args.trace)
     if args.list_ttree:
         print(_get_ttree_in_file(args.file.name))
     if args.dump != -100:

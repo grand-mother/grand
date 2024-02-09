@@ -172,7 +172,7 @@ class DetectorUnitNetwork:
                 # logger.info(f"on_click {event.xdata}, {event.ydata}")
                 if traces:
                     traces.plot_trace_idx(cur_idx_plot)
-                    traces.plot_ps_trace_idx(cur_idx_plot)
+                    traces.plot_psd_trace_idx(cur_idx_plot)
                     plt.show()
                 plt.draw()
 
