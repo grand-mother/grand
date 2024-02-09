@@ -54,14 +54,15 @@ class Efield2Voltage:
 
         directory_path, fname = os.path.split(f_input)
         
-        f_input_TRun=directory_path+"/trun_"+ fname[8:]              
-        f_input_TShower=directory_path+"/tshower_"+ fname[8:]
+        #f_input_TRun=directory_path+"/run_"+ fname[7:]
+        f_input_TRun=directory_path+"/run.root"              
+        f_input_TShower=directory_path+"/shower_"+ fname[7:]
 
         #f_input_TRunShowerSim=directory_path+"/TRunShowerSim_"+ fname[8:]         
         #f_input_TShowerSim=directory_path+"/TShowerSim_"+ fname[8:]
         
         #f_input_TRunEfieldSim=directory_path+"/TRunEfieldSim_"+ fname[8:] 
-        f_input_TEfield=directory_path+"/tefield_"+ fname[8:] 
+        f_input_TEfield=directory_path+"/efield_"+ fname[7:] 
 
         #print(f_input_TShower)
         #print(f_input_TRun)
