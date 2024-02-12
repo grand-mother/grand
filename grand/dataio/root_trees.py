@@ -8,6 +8,7 @@ from logging import getLogger
 import sys
 import datetime
 import os
+from pathlib import Path
 
 import ROOT
 import numpy as np
@@ -2302,11 +2303,14 @@ def set_vector_of_vectors(value, vec_type, variable, variable_name):
 class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
-    def __init__(self, dir_name: str, recursive: bool = False):
+    def __init__(self, dir_name: str, recursive: bool = False, analysis_level: int = -1, sim2root_structure: bool = True):
         """
         @param dir_name: the name of the directory to be scanned
         @param recursive: if to scan the directory recursively
+        @param analysis_level: which analysis level files to read. -1 means max
         """
+
+        self.analysis_level = analysis_level
 
         # Make the path absolute
         self.dir_name = os.path.abspath(dir_name)
@@ -2317,8 +2321,13 @@ class DataDirectory:
         # Get the file handle list
         self.file_handle_list = self.get_list_of_files_handles()
 
+        if sim2root_structure:
+            self.init_sim2root_structure()
+        else:
+            print("Sorry, non sim2root directories not supported yet")
+
         # Create chains and set them as attributes
-        self.create_chains()
+        # self.create_chains()
 
     def get_list_of_files(self, recursive: bool = False):
         """Gets list of files in the directory"""
@@ -2332,6 +2341,77 @@ class DataDirectory:
             file_handle_list.append(DataFile(filename))
 
         return file_handle_list
+
+    # Init the instance with sim2root structure files
+    def init_sim2root_structure(self):
+
+        # Loop through groups of files with tree types expected in the directory
+        for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims"]:
+            # For the event files/trees, possibility of many files with specific type
+            if "run" not in flistname:
+                # Assign the list of files with specific tree type to the class instance
+                setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+                max_level = -1
+                for (l, f) in getattr(self, flistname).items():
+                    # Assign the file with the tree with the specific analysis level to the class instance
+                    setattr(self, f"{flistname[:-1]}_l{l}", f)
+                    # Assign the tree with the specific analysis level to the class instance
+                    setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
+                    if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
+                        max_level = l
+                        # Assign the file with the highest or requested analysis level as default to the class instance
+                        # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
+                        setattr(self, f"{flistname[-1]}", f)
+                        # Assign the tree with the highest or requested analysis level as default to the class instance
+                        setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
+            # For the run trees, expecting only single file per each type
+            else:
+                fh = [f for f in self.file_handle_list if flistname[2:-1] in f.filename][0]
+                # Assign the file with the tree with the specific run tree type to the class instance
+                setattr(self, f"{flistname[:-1]}", fh)
+                # Assign the run tree with the specific type to the class instance
+                setattr(self, f"{flistname[1:-1]}", getattr(fh, f"{flistname[1:-1]}"))
+
+        # tree_types = set()
+        # # Loop through the list of file handles
+        # for i, f in enumerate(self.file_handle_list):
+        #
+        #
+        #     # Collect the tree types
+        #     tree_types.update(*f.tree_types.keys())
+        #
+        #     # Select the highest analysis level trees for each class and store these trees as main attributes
+        #     for key in f.tree_types:
+        #         if key == "run":
+        #             setattr(self, "trun", f.dict_of_trees["trun"])
+        #         else:
+        #             setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
+        #             if self.analysis_level>-1:
+        #
+        #
+        #
+        #             max_analysis_level = -1
+        #             for key1 in f.tree_types[key].keys():
+        #                 el = f.tree_types[key][key1]
+        #                 chain_name = el["name"]
+        #                 if "analysis_level" in el:
+        #                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
+        #                         max_analysis_level = el["analysis_level"]
+        #                         max_anal_chain_name = chain_name
+        #
+        #                         setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
+        #
+        #                 if chain_name not in chains_dict:
+        #                     chains_dict[chain_name] = ROOT.TChain(chain_name)
+        #                 chains_dict[chain_name].Add(self.file_list[i])
+        #
+        #                 # In case there is no analysis level info in the tree (old trees), just take the last one
+        #                 if max_analysis_level == -1:
+        #                     max_anal_chain_name = el["name"]
+        #
+        #             tree_class = getattr(thismodule, el["type"])
+        #             setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
+
 
     def create_chains(self):
         chains_dict = {}
@@ -2396,12 +2476,20 @@ class DataFile:
 
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""
+
+        # Need to init here, so that different instances do not share the same data
+        self.dict_of_trees = {}
+        self.list_of_trees = []
+        self.tree_types = defaultdict(dict)
+
         # If a string given, open the file
         if type(filename) is str:
             f = ROOT.TFile(filename)
             self.f = f
+            self.filename = filename
         elif type(filename) is ROOT.TFile:
             self.f = filename
+            self.filename = self.f.GetName()
         else:
             raise TypeError(f"Unsupported type {type(filename)} as a filename")
 
@@ -2438,7 +2526,7 @@ class DataFile:
                             max_analysis_level = el["analysis_level"]
                             max_anal_tree_name = el["name"]
                             max_anal_tree_type = el["type"]
-                        setattr(self, tree_class.get_default_tree_name() + "_" + str(el["analysis_level"]), tree_instance)
+                        setattr(self, tree_class.get_default_tree_name() + "_l" + str(el["analysis_level"]), tree_instance)
                     # In case there is no analysis level info in the tree (old trees), just take the last one
                     elif max_analysis_level == -1:
                         max_anal_tree_name = el["name"]
