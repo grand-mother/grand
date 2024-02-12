@@ -81,7 +81,7 @@ if __name__ == '__main__':
             print("executing convert_efield2voltage.py")
             # Run convert_efield2voltage.py
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "-o", f"{options.directory}/voltage_Coreas_{simID}.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", " --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}.root")
@@ -91,7 +91,7 @@ if __name__ == '__main__':
             print("executing convert_efield2voltage.py --no_noise")
             # Run convert_efield2voltage.py
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", " --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}_no_noise.root")
@@ -100,7 +100,7 @@ if __name__ == '__main__':
             print("executing convert_efield2voltage.py --no_noise --no_rf_chain")
             # Run convert_efield2voltage.py
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", " --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}_no_noise_no_rfchain.root")
