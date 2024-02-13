@@ -2329,6 +2329,14 @@ class DataDirectory:
         # Create chains and set them as attributes
         # self.create_chains()
 
+    def __getattr__(self, name):
+        """For non-existing tree files or tree parameters, return None instead of rising an exception"""
+        trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
+        if any(s in name for s in trees_to_check):
+            return None
+        else:
+            raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
+
     def get_list_of_files(self, recursive: bool = False):
         """Gets list of files in the directory"""
         return sorted(glob.glob(os.path.join(self.dir_name, "*.root"), recursive=recursive))
