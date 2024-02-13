@@ -88,10 +88,10 @@ def main():
     args = manage_args()
     d_event = get_file_event(args.file.name)
     if args.idx_evt != -100:
-        if args.id_evt < 0:
+        if args.idx_evt < 0:
             logger.error("index events must >= 0")
             return
-        if args.id_evt >= d_event.get_nb_events():
+        if args.idx_evt >= d_event.get_nb_events():
             logger.error(f"index events must < {d_event.get_nb_events()}")
             return
         d_event.load_event_idx(args.idx_evt)

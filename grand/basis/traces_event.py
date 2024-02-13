@@ -119,8 +119,7 @@ class Handling3dTraces:
         if t_start_ns is None:
             t_start_ns = np.zeros(traces.shape[0], dtype=np.float32)
         self.idx2idt = du_id
-        for idx, ident in enumerate(self.idx2idt):
-            self.idt2idx[ident] = idx
+        self.idt2idx = {idt: idx for idx, idt in enumerate(self.idx2idt)}
         self.t_start_ns = t_start_ns
         if isinstance(f_samp_mhz, int) or isinstance(f_samp_mhz, float):
             self.f_samp_mhz = np.ones(len(du_id)) * f_samp_mhz
@@ -319,7 +318,7 @@ class Handling3dTraces:
 
     def get_delta_t_ns(self):
         """Return sampling rate in ns
-        
+
         :return: float(nb_3dtrace,)
         """
         ret = 1e3 / self.f_samp_mhz

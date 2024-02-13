@@ -102,8 +102,11 @@ class _FileEventBase:
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
-        self.tt_shower = groot.TShower(get_name_tshower(f_name))
-        self.tt_run = groot.TRun(get_name_trun(f_name))
+        f_tshower = get_name_tshower(f_name)
+        self.tt_shower = groot.TShower(f_tshower)
+        f_trun = get_name_trun(f_name)
+        self.tt_run = groot.TRun(f_trun)
+        logger.info(f"file trun: {f_trun}\nfile tshower: {f_tshower}")
         self.f_name = f_name
         self.load_event_idx(0)
 
@@ -142,6 +145,7 @@ class _FileEventBase:
         self.du_count = self.tt_event.du_count
         self.tt_shower.get_event(event_number, run_number)
         self.tt_run.get_run(run_number)
+        self.idt2idx = {idt: idx for idx, idt in enumerate(self.tt_run.du_id)}
         self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
         self.traces = np.asarray(self.tt_event.trace)
@@ -193,9 +197,10 @@ class _FileEventBase:
             self.traces,
             du_id,
             self.get_du_nanosec_ordered(),
-            self.get_sampling_freq_mhz(),
+            self.get_sampling_freq_mhz()[0],
         )
-        o_tevent.init_network(self.du_xyz)
+        l_idx = [self.idt2idx[idt] for idt in self.du_id]
+        o_tevent.init_network(self.du_xyz[l_idx])
         o_tevent.network.name = self.tt_run.site
         shw = self.tt_shower
         xmax = shw.xmax_pos_shc
@@ -248,7 +253,7 @@ def get_name_trun(f_name):
 
     :param f_name: string
     """
-    return _get_first_root_file(f_name, "trun_")
+    return _get_first_root_file(f_name, "run.root")
 
 
 def get_name_tshower(f_name):
@@ -256,7 +261,7 @@ def get_name_tshower(f_name):
 
     :param f_name: string
     """
-    return _get_first_root_file(f_name, "tshower_")
+    return _get_first_root_file(f_name, "shower_")
 
 
 def get_simu_parameters(f_name, idx_evt=0):
