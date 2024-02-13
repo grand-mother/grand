@@ -219,8 +219,11 @@ class Event:
     """A class for holding an event"""
 
     # ToDo: this should allow for multiple files holding different TTrees and TChains in the future
-    file: ROOT.TFile = None
-    """The instance of the file with TTrees containing the event. """
+    _file: ROOT.TFile = None
+    """The instance of the file with TTrees containing the event."""
+
+    _directory: DataDirectory = None
+    """The instance of the directory with files with TTrees containing the event."""
 
     event_number: int = None
     """The current event in the file number"""
@@ -247,7 +250,7 @@ class Event:
     """Reconstructed shower"""
 
     simshower: Shower() = None
-    """Simualted shower for simulations"""
+    """Simulated shower for simulations"""
 
     ## ToDo: what is it?
     L: int = 0
@@ -331,6 +334,23 @@ class Event:
     tsimshower: TShower = None
     """DOI's TShower tree containing simulated shower information"""
 
+    # Tree files
+
+    file_trun: ROOT.TFile = None
+    """TRun file"""
+
+    file_tvoltage: ROOT.TFile = None
+    """TVoltage file"""
+
+    file_tefield: ROOT.TFile = None
+    """TEfield file"""
+
+    file_tshower: ROOT.TFile = None
+    """TShower file"""
+
+    file_tsimshower: ROOT.TFile = None
+    """TSimShower file"""
+
     # Options
 
     auto_file_close: bool = True
@@ -341,6 +361,52 @@ class Event:
         # If the file name was given, init the Event from trees
         if self.file:
             self.fill_event_from_trees()
+
+    @property
+    def file(self):
+        """A single file that contains all the TTrees"""
+        return str(self._file)
+
+    @file.setter
+    def file(self, value):
+        """A single file that contains all the TTrees"""
+
+        # If the _file is not yet TFile, make it so
+        if not isinstance(value, ROOT.TFile):
+            self._file = ROOT.TFile(value, "read")
+        else:
+            self._file = value
+
+        # Set all the tree files as this file
+        self.file_trun = self._file
+        self.file_tvoltage = self._file
+        self.file_tefield = self._file
+        self.file_tshower = self._file
+        self.file_tsimshower = self._file
+
+    @property
+    def directory(self):
+        """A single file that contains all the TTrees"""
+        return self._directory
+
+    @directory.setter
+    def directory(self, value):
+        """A directory that contains all the files with TTrees"""
+
+        # If the _file is not yet TFile, make it so
+        if not isinstance(value, DataDirectory):
+            self._directory = DataDirectory(value)
+        else:
+            self._directory = value
+
+        print(dir(self._directory))
+
+        # Set all the tree files as this file
+        self.file_trun = self.directory.ftrun.f
+        if self.directory.ftvoltages: self.file_tvoltage = self.directory.ftvoltage.f
+        if self.directory.ftefield: self.file_tefield = self.directory.ftefield.f
+        if self.directory.ftshower_l1: self.file_tshower = self.directory.ftshower_l1.f
+        if self.directory.ftshower_l0: self.file_tsimshower = self.directory.ftshower_l0.f
 
     @property
     def origin_geoid(self):
@@ -354,17 +420,13 @@ class Event:
     ## Fill this event from trees
     def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2]):
         """Fill this event from trees
-        :param simshower: how to treat the TShower existing in the file, as sim values  or reconstructed values
+        :param simshower: how to treat the TShower existing in the file, as sim values or reconstructed values
         :type simshower: bool
         """
-        # Check if the file exist
-        if not self.file:
-            print("No file provided to init from. Aborting.")
+        # Check if any of the files exist
+        if not self._file and not self.file_trun and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
+            print("No files provided to init from. Aborting.")
             return False
-
-        # If the _file is not yet TFile, make it so
-        if not isinstance(self.file, ROOT.TFile):
-            self.file = ROOT.TFile(self.file, "read")
 
         # *** Set the run/event/entry number if requested.
 
@@ -391,7 +453,7 @@ class Event:
         # *** Check what TTrees are available and fill according to their availability
 
         # Check the Run tree existence
-        if trun := self.file.Get("trun"):
+        if trun := self.file_trun.Get("trun"):
             self.trun = TRun(_tree=trun)
             # Fill part of the event from trun
             ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
@@ -405,7 +467,7 @@ class Event:
         # Use standard voltage tree
         if not use_trawvoltage:
             # Check the Voltage tree existence
-            if tvoltage := self.file.Get("tvoltage"):
+            if tvoltage := self.file_tvoltage.Get("tvoltage"):
                 self.tvoltage = TVoltage(_tree=tvoltage)
                 # Fill part of the event from tvoltage
                 ret = self.fill_event_from_voltage_tree()
@@ -421,7 +483,7 @@ class Event:
         # Use trawvoltage tree
         else:
             # Check the Voltage tree existence
-            if tvoltage := self.file.Get("trawvoltage"):
+            if tvoltage := self.file_tvoltage.Get("trawvoltage"):
                 self.tvoltage = TRawVoltage(_tree=tvoltage)
                 # Fill part of the event from tvoltage
                 ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
@@ -437,7 +499,7 @@ class Event:
 
 
         # Check the Efield tree existence
-        if tefield := self.file.Get("tefield"):
+        if tefield := self.file_tefield.Get("tefield"):
             self.tefield = TEfield(_tree=tefield)
             # Fill part of the event from tefield
             ret = self.fill_event_from_efield_tree()
@@ -452,7 +514,7 @@ class Event:
             self.tefield = None
 
         # Check the Shower tree existence
-        if tshower := self.file.Get("tshower"):
+        if tshower := self.file_tshower.Get("tshower"):
             if simshower:
                 self.tsimshower = TShower(_tree=tshower)
             else:
@@ -474,6 +536,21 @@ class Event:
                 self.tsimshower = None
             else:
                 self.tshower = None
+
+        # Check the SimShower tree existence
+        if tsimshower := self.file_tsimshower.Get("tshower"):
+            self.tsimshower = TShower(_tree=tsimshower)
+            # Fill part of the event from tshower
+            ret = self.fill_event_from_shower_tree(True)
+            if ret: print("Simulated shower information loaded.")
+            else:
+                print("No Simulated shower tree. Simulated shower information will not be available.")
+                # Make tsimshower really None
+                self.tsimshower = None
+        else:
+            print("No Simulated Shower tree. Simulated Shower information will not be available.")
+            # Make tsimshower really None
+            self.tsimshower = None
 
 
     ## Fill part of the event from the Run tree
@@ -899,15 +976,31 @@ class EventList:
 
     ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
     file: ROOT.TFile = None
+    """The instance of the file with TTrees containing the event."""
 
-    def __init__(self, file_name, **kwargs):
+    directory: DataDirectory = None
+    """The instance of the directory with files with TTrees containing the event."""
+
+    def __init__(self, inp_name, **kwargs):
         # If TFile was given
-        if isinstance(file_name, ROOT.TFile):
-            self.file_name = file_name.GetName()
-            self.file = file_name
-        # String with file name was given
-        elif isinstance(file_name, str):
-            self.file = ROOT.TFile(file_name, "read")
+        if isinstance(inp_name, ROOT.TFile):
+            self.file_name = inp_name.GetName()
+            self.file = inp_name
+        # If DataDirectory was given
+        elif isinstance(inp_name, DataDirectory):
+            self.directory_name = inp_name.dir_name
+            self.directory = inp_name
+        # String with file name or directory name was given
+        elif isinstance(inp_name, str):
+            # If file name was given
+            if Path(inp_name).is_file():
+                self.file = ROOT.TFile(inp_name, "read")
+            # If directory name was given
+            elif Path(inp_name).is_dir():
+                self.directory = DataDirectory(inp_name)
+            else:
+                print("Please provide proper file or directory name.")
+                exit()
 
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
@@ -921,7 +1014,13 @@ class EventList:
             return None
 
         e = Event()
-        e.file = self.file
+        if self.file is not None:
+            e.file = self.file
+        elif self.directory is not None:
+            e.directory = self.directory
+        else:
+            print("No directory or file provided!")
+            exit()
 
         # If entry/event/run number not specified, take the first entry
         run_entry_number = None
