@@ -2331,7 +2331,7 @@ class DataDirectory:
 
     def __getattr__(self, name):
         """For non-existing tree files or tree parameters, return None instead of rising an exception"""
-        trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
+        trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
         if any(s in name for s in trees_to_check):
             return None
         else:
@@ -2369,7 +2369,7 @@ class DataDirectory:
                         max_level = l
                         # Assign the file with the highest or requested analysis level as default to the class instance
                         # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
-                        setattr(self, f"{flistname[-1]}", f)
+                        setattr(self, f"{flistname[:-1]}", f)
                         # Assign the tree with the highest or requested analysis level as default to the class instance
                         setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
             # For the run trees, expecting only single file per each type
