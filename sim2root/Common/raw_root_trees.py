@@ -429,7 +429,18 @@ class RawShowerTree(MotherEventTree):
     @property
     def site_name(self):
         """Simulation Site TODO:standarize"""
-        return str(self._atmos_model)
+        return str(self._site_name)
+
+    @site_name.setter
+    def site_name(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        self._site_name.string.assign(value)
+
 
 
     @property

@@ -44,7 +44,8 @@ To run the script on the provided example event just go to the `ZHAireSRawRoot/`
 
  i.e.
 
-`python3 ZHAireSRawToRawROOT.py ./GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618 standard 0 1  GP300_1618.root`
+`python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618 standard 1 1618  GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618.rawroot`
+`python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.87_79.4_310.0_13790 standard 1 13790  GP300_Xi_Sib_Proton_3.8_51.6_135.4_13790.rawroot`
 
 or alternativelly
 
@@ -55,6 +56,8 @@ or alternativelly
 `python3 ZHAireSRawToRawROOT.py GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618`
 
 To let ZHAIRESRawToRawROOT make the choices for you. This is equivalent to running with RunID="SuitYourself", EventID="LookForIt", OutputFileName="GRANDConvention"	
+
+Look inside of the script for more inforation
 
 ## 2) Common/sim2root.py
 Inside `Common/` you can find the final converter, `sim2root.py`
