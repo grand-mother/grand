@@ -24,16 +24,20 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matp
 #TODO ASAP: Get Refractivity Model parameters from the sry (unfortunatelly these are not reported in the sry, this will have to wait to the next version of zhaires hopefully after ICRC 2023)
 #Maybe move them to the function call for now, and remove the unused Longitudinal switches?
 
-def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="LookForIt", EventName="UseTaskName"): 
+def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName"): 
     '''
     This routine will read a ZHAireS simulation located in InputFolder and put it in the Desired OutputFileName. 
     
-    RunID is the ID of the run the event is going to be associated with.
+    RunID is the ID of the run the event is going to be associated with. If RunID is "SuitYourself" it will try to divide EventID by 1000 and pick the floor number.
     
-    EventID is the ID of the Event is going to be associated with.
+    EventID is the ID of the Event is going to be associated with. If EventID is "LookForIt" it will asume that the event ID is the last digits of the .sry file,  after the _ and before the .sry extension
     
     TaskName is what ZHAireS uses to name all the output files. And it generally the same as the "EventName". If you want to change the Name of the event when you store it, you can use the "EventName" optional parameter
     If you dont specify a TaskName, it will look for any .sry file in the directory. There should be only one .sry file on the folder for the script to work correctly
+    
+    OutputFileName is where you want to save the RawRootFile. If you select "GRANDConvention" it will attempt to apply the GRAND data storage convention.
+    
+    [site]_[date]_[time]_[run_number]_[mod]_[extra], taking the data from the sry and its file name, asuming it is extra_*.sry,  
     
     The routine is designed for events simulated with ZHAireS 1.0.30a or later.
     
@@ -49,7 +53,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
     - 2) All the a##.trace files produced by ZHAireS with the electric field output (you have to have run your sims with CoREASOutput On)
     - 3) a TaskName.EventParameters file , where the event meta-ZHAireS data is stored (for example the core position used to  generate this particular event, the "ArrayName", the event weight, the event time and nanosecond etc.
     - 4) Optional: the necesary longitudinal tables file. If they dont exist, but the TaskName.idf file is present and  and Aires is installed in the system, AiresInfoFunctions will take care of it.
-    -  
+    - 5) In the input file, antenna names must be of the format A+number of antena, i.e., A1, A2....A100...etc 
 
     The script output is the shower reference frame: this means a cartesian coordinate system with the shower core at 0,0, GroundAltitude (masl).
     Electric fields are output on the X,Y and Z directions in this coordinate system.
@@ -113,17 +117,39 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         return -1
    
     TaskName=AiresInfo.GetTaskNameFromSry(sryfile[0])
-   
+    Date=AiresInfo.GetDateFromSry(sryfile[0]).strip()                   #used  
+    Site=AiresInfo.GetSiteFromSry(sryfile[0]).strip()      #strip is for removing white spaces and carriage returns before and after             #used
+    HadronicModel=AiresInfo.GetHadronicModelFromSry(sryfile[0]).strip()         #Used       
+    
     #TODO:idf file is optional in principle, so i dont check for it for now. I should check for the existance of all the required table files and if anyone is missing, check for the existance of the idf file
     idffile=[InputFolder+"/"+EventName+".idf"]
 
     #provide the advertised functionality for TaskName
     if EventName=="UseTaskName":
       EventName=TaskName
+
+    #provide the advertised funcionality for for EventID
+    if EventID=="LookForIt":
+      EventID=extract_event_number(sryfile[0])    
+    
+    #provide the advertised funcionality for for RunID
+    if RunID=="SuitYourself":
+      RunID=int(EventID)//1000
+      
+    #provide advertised functionality for OutputFileName  
+    if OutputFileName=="GRANDConvention":
+      extra=extract_extra(sryfile[0])
+      date=convert_date(Date)
+      OutputFileName=Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)+".RawRoot"
+      directory_path="sim_"+Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)
+      OutputFileName=directory_path+"/"+OutputFileName
+      if not os.path.exists(directory_path):
+        # If the directory doesn't exist, create it
+        os.makedirs(directory_path)
     
     logging.info("###")
     logging.info("###")
-    logging.info("### Starting with event "+EventName+" in "+ InputFolder+" to add to "+OutputFileName) 
+    logging.info("### Starting with event "+EventName+" in "+ InputFolder+" to add to "+OutputFileName +" as Event " + str(EventID) + " of Run " + str(RunID) ) 
 	
 	###########################################################################################################	
     #Root Sanity Checks 
@@ -154,13 +180,12 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         XmaxPosition= [float(XmaxX)*1000.0, float(XmaxY)*1000.0, float(XmaxZ)*1000.0]
         SlantXmax=AiresInfo.GetSlantXmaxFromSry(sryfile[0])                 #Used        
         InjectionAltitude=AiresInfo.GetInjectionAltitudeFromSry(sryfile[0]) #Used                         
-        Date=AiresInfo.GetDateFromSry(sryfile[0])                           #Used
+        
         t1=time.strptime(Date.strip(),"%d/%b/%Y")
         Date = time.strftime("%Y-%m-%d",t1) #adapted to iso
         UnixDate = int(time.mktime(t1))                                     #Used
         FieldIntensity,FieldInclination,FieldDeclination=AiresInfo.GetMagneticFieldFromSry(sryfile[0]) #Used
         AtmosphericModel=AiresInfo.GetAtmosphericModelFromSry(sryfile[0])                              #Used
-        HadronicModel=AiresInfo.GetHadronicModelFromSry(sryfile[0])                                    #Used
         LowEnergyModel="Aires-Geisha"		                                                           #Used  #TODO eventualy: Unhardcode This
         EnergyInNeutrinos=AiresInfo.GetEnergyFractionInNeutrinosFromSry(sryfile[0])                    #Used
         EnergyInNeutrinos=EnergyInNeutrinos*Energy #to Convert to GeV
@@ -170,8 +195,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         #These might be "run parameters"
         Lat,Long=AiresInfo.GetLatLongFromSry(sryfile[0])                                               # 
         GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #
-        GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])
-        Site=AiresInfo.GetSiteFromSry(sryfile[0])                                                      #   
+        GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])                                                     #   
         ShowerSimulator=AiresInfo.GetAiresVersionFromSry(sryfile[0])                                   # 
         ShowerSimulator="Aires "+ShowerSimulator                                                       #
   
@@ -222,6 +246,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         AngleB=np.deg2rad(180-np.rad2deg(AngleA)-np.rad2deg(AngleC))
         sideb=sidec*np.sin(AngleB)/np.sin(AngleC)       
         RawShower.primary_inj_point_shc = [(sideb*np.sin(np.deg2rad(Zenith))*np.cos(np.deg2rad(Azimuth)),sideb*np.sin(np.deg2rad(Zenith))*np.sin(np.deg2rad(Azimuth)),sideb*np.cos(np.deg2rad(Zenith)))]  #TODO: test multiple primaries        
+        RawShower.site_name = str(Site) #TODO: Standarize
         RawShower.atmos_model = str(AtmosphericModel) #TODO: Standarize
         #TODO:atmos_model_param  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
         RawShower.atmos_density.append(Atmosdensity)
@@ -458,7 +483,9 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 
                 ############################################################################################################################ 
-                RawEfield.du_id.append(int(AntennaN[ant_number]))          
+                
+                #RawEfield.du_id.append(int(AntennaN[ant_number]))
+                RawEfield.du_id.append(int(DetectorID[1:])) #TODO:assuming antena names are of the format A+number of antenna! This is a quick fix          
                 RawEfield.du_name.append(DetectorID)
                 RawEfield.t_0.append(t_0)            
 
@@ -763,24 +790,66 @@ def CheckIfEventIDIsUnique(EventID, f):
     return True
 
 
+def extract_event_number(file_path):
+    # Get the base name of the file without the extension
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
 
+    # Split the file name using underscores
+    parts = file_name.split('_')
+
+    # The EventNumber is the last part of the split
+    event_number = parts[-1]
+
+    return event_number
+
+def extract_extra(file_path):
+    # Get the base name of the file without the extension
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+
+    # Split the file name using underscores
+    parts = file_name.split('_')
+
+    # The extra is the first part of the split
+    extra = parts[0]
+
+    return extra
+
+def convert_date(date_str):
+    # Convert input string to a struct_time object
+    date_struct = time.strptime(date_str, "%d/%b/%Y")
+
+    # Format the struct_time object as a string in YYYYMMDD format
+    formatted_date = time.strftime("%Y%m%d", date_struct)
+
+    return formatted_date
+    
+    
 if __name__ == '__main__':
 
-	if (len(sys.argv)>6 or len(sys.argv)<6) :
-		print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID and output filename...nothing more, nothing less!")
-		print("i.e ZHAiresRawToRawROOT ./MyshowerDir standard RunID EventID MyFile.root")
-		print("i.e. python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 3  GP10_192745211400_SD075V.root")
-		mode="exit"
+    if len(sys.argv)==6 :
+        InputFolder=sys.argv[1]
+        mode=sys.argv[2]
+        RunID=int(sys.argv[3])
+        EventID=int(sys.argv[4])
+        OutputFileName=sys.argv[5]
+	    
+    elif len(sys.argv)==2:
+        InputFolder=sys.argv[1]
+        mode="standard"
+        RunID="SuitYourself"
+        EventID="LookForIt"
+        OutputFileName="GRANDConvention"	
+    else:
+        print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID and output filename...nothing more, nothing less!")
+        print("i.e ZHAiresRawToRawROOT ./MyshowerDir standard RunID EventID MyFile.root")
+        print("i.e. python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 3  GP10_192745211400_SD075V.root")
+        print("or point me to a directory and i will take care of the rest automatically as i see fit.")
+        mode="exit"
 
-	elif len(sys.argv)==6 :
-		InputFolder=sys.argv[1]
-		mode=sys.argv[2]
-		RunID=int(sys.argv[3])
-		EventID=int(sys.argv[4])
-		OutputFileName=sys.argv[5]
 
-	if(mode=="standard"): 
-		ZHAireSRawToRawROOT(OutputFileName,RunID,EventID, InputFolder)
+
+    if(mode=="standard"): 
+        ZHAireSRawToRawROOT(InputFolder, OutputFileName, RunID, EventID)
 
 	#elif(mode=="full"):
 
@@ -790,9 +859,9 @@ if __name__ == '__main__':
 	
 	#	ZHAireSRawToRawROOT(OutputFileName,RunID,EventID, InputFolder, SimEfieldInfo=True, NLongitudinal=False, ELongitudinal=False, NlowLongitudinal=False, ElowLongitudinal=False, EdepLongitudinal=False, LateralDistribution=False, EnergyDistribution=False)
 
-	else:
+    else:
 
-		print("please enter the mode: standard (full or minimal still not implemented")
+        print("please enter the mode: standard (full or minimal still not implemented")
 	
  
 

@@ -600,7 +600,7 @@ class DataTree:
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
         """Write the tree to the file"""
         # Add the tree friends to this tree
-        # self.add_proper_friends()
+        self.add_proper_friends()
 
         # If string is ending with ".root" given as a first argument, create the TFile
         # ToDo: Handle TFile if added as the argument
@@ -1181,6 +1181,8 @@ class MotherEventTree(DataTree):
         """Add proper friends to this tree"""
         # Create the indices
         self.build_index("run_number", "event_number")
+        # For now, do not add friends
+        return 0
 
         # Add the Run tree as a friend if exists already
         loc_vars = dict(locals())
@@ -1396,6 +1398,11 @@ class MotherEventTree(DataTree):
             return np.unique(np.array(dus).flatten()).tolist()
         else:
             return None
+
+    def get_dus_indices_in_run(self, trun):
+        """Gets an array of the indices of DUs of the current event in the TRun tree"""
+
+        return np.nonzero(np.isin(np.asarray(trun.du_id), np.asarray(self.du_id)))[0]
 
 
 ## A class wrapping around a TTree holding values common for the whole run

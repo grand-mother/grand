@@ -51,10 +51,11 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting Coreas Simulation {simID} to RawRoot format...")
 
+            # * - * - * - * - * - * - *
             # Run CoreasToRawROOT.py
             print("executing CoreasToRawROOT.py")
             CoreasToRawROOT = [
-                'python3', 'CoreasToRawROOT.py', '-d', str(options.directory)
+                "python3", "CoreasToRawROOT.py", "-d", f"{str(options.directory)}"
             ]
             subprocess.run(CoreasToRawROOT, check=True)
             print(f"Created Coreas_{simID}.root")
@@ -62,26 +63,48 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting from RawRoot to GRANDroot format...")
 
-            # Run sim2root.py
+            # * - * - * - * - * - * - *
             print("executing sim2root.py")
+            # Run sim2root.py
             sim2root = [
-                'python3', '../Common/sim2root.py', f"Coreas_{simID}.root"
+                "python3", f"../Common/sim2root.py", f"Coreas_{simID}.root", "-o", f"{str(options.directory)}"
             ]
             subprocess.run(sim2root, check=True)
-            print(f"Created gr_Coreas_{simID}.root")
+            print(f"Created grandroot trees in {str(options.directory)}")
+            #! currently sim2root creates separate root files for each tree, so we need this for now:
+            sim2root_out = glob.glob(str(options.directory)+"/sim_*/tefield*")[0]
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
 
+            # * 1 * - * - * - * - * - * - *
             print("executing convert_efield2voltage.py")
             # Run convert_efield2voltage.py
-            sim2root = [
-                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_{simID}.root",\
-                f"-o {options.output}/efield_gr_Coreas_{simID}.root"
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "-o", f"{options.directory}/voltage_Coreas_{simID}.root"
             ]
-            subprocess.run(sim2root, check=True)
+            subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}.root")
             print("********************************")
+            
+            # * 2 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_noise")
+            # Run convert_efield2voltage.py
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_noise.root")
+
+            # * 3 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_noise --no_rf_chain")
+            # Run convert_efield2voltage.py
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_noise_no_rfchain.root")
+            
             pass
 
         print(f"Finished analyzing files in {options.directory}")
