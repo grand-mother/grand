@@ -117,12 +117,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         return -1
    
     TaskName=AiresInfo.GetTaskNameFromSry(sryfile[0])
-    Date=AiresInfo.GetDateFromSry(sryfile[0])
-    Date=Date[1:-1] #to remove the space before and the carriage return after                           #Used
-    Site=AiresInfo.GetSiteFromSry(sryfile[0])
-    Site=Site[1:-1]
-    HadronicModel=AiresInfo.GetHadronicModelFromSry(sryfile[0])         #Used       
-    HadronicModel=HadronicModel[1:-1]
+    Date=AiresInfo.GetDateFromSry(sryfile[0]).strip()                   #used  
+    Site=AiresInfo.GetSiteFromSry(sryfile[0]).strip()      #strip is for removing white spaces and carriage returns before and after             #used
+    HadronicModel=AiresInfo.GetHadronicModelFromSry(sryfile[0]).strip()         #Used       
+    
     #TODO:idf file is optional in principle, so i dont check for it for now. I should check for the existance of all the required table files and if anyone is missing, check for the existance of the idf file
     idffile=[InputFolder+"/"+EventName+".idf"]
 
@@ -248,6 +246,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         AngleB=np.deg2rad(180-np.rad2deg(AngleA)-np.rad2deg(AngleC))
         sideb=sidec*np.sin(AngleB)/np.sin(AngleC)       
         RawShower.primary_inj_point_shc = [(sideb*np.sin(np.deg2rad(Zenith))*np.cos(np.deg2rad(Azimuth)),sideb*np.sin(np.deg2rad(Zenith))*np.sin(np.deg2rad(Azimuth)),sideb*np.cos(np.deg2rad(Zenith)))]  #TODO: test multiple primaries        
+        RawShower.site_name = str(Site) #TODO: Standarize
         RawShower.atmos_model = str(AtmosphericModel) #TODO: Standarize
         #TODO:atmos_model_param  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
         RawShower.atmos_density.append(Atmosdensity)

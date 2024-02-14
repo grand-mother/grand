@@ -86,6 +86,9 @@ class RawShowerTree(MotherEventTree):
     # primary injection direction in Shower Coordinates
     primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
+    ### Simulation site TODO:standardize
+    _site_name: StdString = StdString("")    
+        
     ### Atmospheric model name TODO:standardize
     _atmos_model: StdString = StdString("")
 
@@ -422,6 +425,11 @@ class RawShowerTree(MotherEventTree):
     def zenith(self, value):
         self._zenith[0] = value
 
+
+    @property
+    def site_name(self):
+        """Simulation Site TODO:standarize"""
+        return str(self._atmos_model)
 
 
     @property
