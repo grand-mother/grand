@@ -688,15 +688,15 @@ class Event:
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
-            v.trace.y = self.tefield.trace[0][i]
-            v.trace.z = self.tefield.trace[0][i]
+            v.trace.y = self.tefield.trace[i][1]
+            v.trace.z = self.tefield.trace[i][2]
+
+            # Generate the time array
+            v.calculate_t_vector(min_t0)
 
             v.du_id = self.tefield.du_id[i]
 
             self.efields.append(v)
-
-            # Generate the time array
-            v.calculate_t_vector(min_t0)
 
         return ret
 
