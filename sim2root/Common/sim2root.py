@@ -184,6 +184,7 @@ def main():
     # Assign the du ids and positions to the trun tree
     gt.trun.du_id = du_ids
     gt.trun.du_xyz = du_xyzs
+    gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
 
     # ToDo: shouldn't this and above be created for every DU in sims?
     gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) #Matias Question: Why is this being mutiplied here?
