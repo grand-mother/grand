@@ -359,7 +359,7 @@ class Event:
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
-        if self.file:
+        if self._file:
             self.fill_event_from_trees()
 
     @property
@@ -398,8 +398,6 @@ class Event:
             self._directory = DataDirectory(value)
         else:
             self._directory = value
-
-        print(dir(self._directory))
 
         # Set all the tree files as this file
         self.file_trun = self.directory.ftrun.f
@@ -1019,6 +1017,8 @@ class EventList:
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
 
+        self.event = Event()
+
     def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
         """Get specified event from the event list"""
 
@@ -1027,7 +1027,8 @@ class EventList:
             print("Please provide only entry_number or event/run_number!")
             return None
 
-        e = Event()
+        e = self.event
+
         if self.file is not None:
             e.file = self.file
         elif self.directory is not None:
