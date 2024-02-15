@@ -109,7 +109,7 @@ if __name__ == '__main__':
             print("executing convert_efield2voltage.py --no_rf_chain")
             # Run convert_efield2voltage.py with noise but no rf chain
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_rf_chain", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096",  "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_rf_chain", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096",  "-o", f"{options.directory}/voltage_Coreas_{simID}_no_rfchain.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}_no_rfchain.root")
