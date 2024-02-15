@@ -400,9 +400,13 @@ def CoreasToRawRoot(file, simID=None):
     efield = np.loadtxt(tracefile)
     
     timestamp = efield[:,0] * 10**9 #convert to ns 
-    trace_x = efield[:,1]
-    trace_y = efield[:,2]
-    trace_z = efield[:,3]
+    # coreas uses cgs units, so voltage is in statvolt
+    # 1 statV * 299.792458 V/statV = 1 V
+    # 1 statV * 299.792458 * 1e6 V/statV = 1 microV
+    trace_x = efield[:,1]* 299.792458 * 1e6 # convert to micro Volts
+    trace_y = efield[:,2]* 299.792458 * 1e6 # convert to micro Volts
+    trace_z = efield[:,3]* 299.792458 * 1e6 # convert to micro Volts
+    
     
     # define time params:
     t_length = len(timestamp)
