@@ -2528,6 +2528,7 @@ class DataFile:
         for key in self.tree_types:
             if key == "run":
                 setattr(self, "trun", self.dict_of_trees["trun"])
+                self.dict_of_trees["trun"].file = self.f
             else:
                 max_analysis_level = -1
                 # Loop through trees in the current tree type
@@ -2535,6 +2536,7 @@ class DataFile:
                     el = self.tree_types[key][key1]
                     tree_class = getattr(thismodule, el["type"])
                     tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
+                    tree_instance.file = self.f
                     # If there is analysis level info in the tree, attribute each level and max level
                     if "analysis_level" in el:
                         if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
@@ -2559,6 +2561,7 @@ class DataFile:
 
                 tree_class = getattr(thismodule, max_anal_tree_type)
                 tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+                tree_instance.file = self.f
                 setattr(self, tree_class.get_default_tree_name(), tree_instance)
                 self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
