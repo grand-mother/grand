@@ -95,10 +95,12 @@ def main():
 
                 # Check if site name was not given as input, use the one from the trawshower
                 if not clargs.site_name:
-                    clargs.site_name = trawshower.site
+                    site = trawshower.site
+                else:
+                    site = clargs.site_name
 
                 # Init output trees in the proper directory
-                out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, gt)
+                out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, site, gt)
 
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
@@ -114,7 +116,7 @@ def main():
                 gt.trunshowersim.run_number = run_number
                 gt.trunefieldsim.run_number = run_number
 
-                gt.trun.site = trawshower.site
+                gt.trun.site = site
 
                 # Fill the run trees and write
                 # gt.trun.fill()
@@ -206,7 +208,7 @@ def main():
     rename_files(clargs, out_dir_name, start_event_number, end_event_number)
 
 # Initialise output trees and their directory
-def init_trees(clargs, unix_date, run_number, gt):
+def init_trees(clargs, unix_date, run_number, site, gt):
 
     # Use date/time from command line argument if specified, otherwise the unix time
     date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
@@ -217,7 +219,7 @@ def init_trees(clargs, unix_date, run_number, gt):
 
     # Create the appropriate output directory
     if clargs.forced_output_directory is None:
-        out_dir_name = form_directory_name(clargs, date, time, run_number)
+        out_dir_name = form_directory_name(clargs, date, time, run_number, site)
         print("Storing files in directory ", out_dir_name)
         out_dir_name.mkdir()
     # If another directory was forced as the output directory, create it
@@ -529,13 +531,13 @@ def get_origin_geoid(clargs):
     return origin_geoid
 
 # Form the proper output directory name from command line arguments
-def form_directory_name(clargs, date, time, run_number):
+def form_directory_name(clargs, date, time, run_number, site):
     # Change possible underscores in extra into -
     extra = clargs.extra.replace("_", "-")
 
     # Go through serial numbers in directory names to find a one that does not exist
     for sn in range(1000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
+        dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
         if not dir_name.exists():
             break
     # If directories with serial number up to 1000 already created
