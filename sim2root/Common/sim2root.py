@@ -17,7 +17,7 @@ clparser = argparse.ArgumentParser(description="Convert simulation data in rawro
 clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GRANDRaw data TTrees or a directory with GRANDraw files")
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
-clparser.add_argument("-s", "--site_name", help="The name of the site", default="nosite")
+clparser.add_argument("-s", "--site_name", help="The name of the site", default=None)
 clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
 clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default=None)
 # clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
@@ -93,6 +93,10 @@ def main():
                 # Overwrite the run number if specified on command line
                 run_number = ext_run_number if ext_run_number is not None else gt.trun.run_number
 
+                # Check if site name was not given as input, use the one from the trawshower
+                if not clargs.site_name:
+                    clargs.site_name = trawshower.site
+
                 # Init output trees in the proper directory
                 out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, gt)
 
@@ -109,6 +113,8 @@ def main():
                 gt.trun.run_number = run_number
                 gt.trunshowersim.run_number = run_number
                 gt.trunefieldsim.run_number = run_number
+
+                gt.trun.site = trawshower.site
 
                 # Fill the run trees and write
                 # gt.trun.fill()
