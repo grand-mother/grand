@@ -4,9 +4,10 @@ Script to compute voltage from electric field.
 Electric field traces are provided in a ROOT file.
 
 To Run:
-    python convert_efield2voltage.py <efield.root> -o <output.root> # RF chain and noise added automatically.
-    python convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 --lst 10
-    convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --no_rf_chain
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> # RF chain and noise added automatically.
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 --lst 10
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --no_rf_chain
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --du_type GP300_nec (or GP300 or GP300_mat)
 
 In this file:
     signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
@@ -33,7 +34,7 @@ In this file:
 
 
 Computing voltage with your own function to compute Voc.
-    signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
+    signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor, du_type='GP300')
     my_volt = my_function(....)
     signal.voc = my_volt.voc
     signal.voc_f = my_volt.voc_f
@@ -44,6 +45,7 @@ Computing voltage with your own function to compute Voc.
     signal.multiply(rf_chain)  # make sure shape of rf_chain broadcasts with the shape of signal.vout_f.
 
 June 2023, JM and RK.
+Feb 2024 modified by SN to add antenna model selection.
 """
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
@@ -73,6 +75,14 @@ def manage_args():
         default=True,
         help="don't add RF chain.",
     )
+    
+    parser.add_argument(
+        "--rf_chain_nut",
+        action="store_true",
+        default=False,
+        help="add RF chain in antenna nut",
+    )
+    
     parser.add_argument(
         "-o",
         "--out_file",
@@ -106,6 +116,12 @@ def manage_args():
         default=1.0,
         help="Increase size of signal with zero padding, with 1.2 the size is increased of 20%%. ",
     )
+    parser.add_argument(
+        "--du_type",
+        type=str,
+        default='GP300',
+        help="Choose between 4 different antenna models, GP300 -using hfss simulations, GP300_nec -using nec simulations, GP300_mat -using matlab simulations, Horizon",
+    )
     # retrieve argument
     return parser.parse_args()
 
@@ -131,7 +147,7 @@ if __name__ == "__main__":
     seed = None if args.seed==-1 else args.seed
     logger.info(f"seed used for random number generator is {seed}.")
 
-    signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
+    signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst

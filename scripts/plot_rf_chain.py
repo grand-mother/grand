@@ -9,7 +9,8 @@ import numpy as np
 import h5py
 import scipy.fft as sf
 
-import grand.sim.detector.rf_chain as grfc
+#import grand.sim.detector.rf_chain as grfc
+import grand.sim.detector.rf_chain2 as grfc
 from grand import grand_add_path_data
 import grand.manage_log as mlg
 
@@ -274,6 +275,241 @@ def plot(args="lna", savefig=False, **kwargs):
         if savefig:
             plt.savefig("lna_sparams.png", bbox_inches='tight')
         plt.show()
+
+    if args=='matching_network':
+
+        print("Parameters of Matching Network")
+
+        mnet = grfc.MatchingNetwork()
+        mnet.compute_for_freqs(freq_MHz)
+
+        """
+        plot of matching_network S11
+        """
+        plt.figure(figsize=(8, 12))
+        plt.subplot(3, 1, 1)
+        plt.title(r"Matching Network S$_{11}$ [Interpolated]")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s11[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s11[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s11[2]), "b")
+        plt.ylabel(r"Real(S$_{11}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        # ----
+        plt.subplot(3, 1, 2)
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s11[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s11[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s11[2]), "b")
+        plt.ylabel(r"Imag(S$_{11}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 3)
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s11[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s11[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s11[2]), "b")
+        plt.ylabel(r"abs(S$_{11}$)")
+        plt.xlabel(f"Frequency [MHz]")
+        plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("matching_network_s11.png", bbox_inches='tight')
+        plt.show()
+
+        """
+        plot of matching_network S21
+        """
+        plt.figure(figsize=(8, 12))
+        plt.subplot(3, 1, 1)
+        plt.title(r"Matching Network S$_{21}$ [Interpolated]")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s21[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s21[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s21[2]), "b")
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.ylabel(r"Real(S$_{21}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 2)
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s21[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s21[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s21[2]), "b")
+        plt.ylabel(r"Imag(S$_{21}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 3)
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s21[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s21[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s21[2]), "b")
+        plt.ylabel(r"abs(S$_{21}$)")
+        plt.xlabel(f"Frequency [MHz]")
+        plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("matching_network_s21.png", bbox_inches='tight')
+        plt.show()
+
+        """
+        plot of matching_network S12
+        """
+        plt.figure(figsize=(8, 12))
+        plt.subplot(3, 1, 1)
+        plt.title(r"Matching_Network S$_{12}$ [Interpolated]")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s12[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s12[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s12[2]), "b")
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.ylabel(r"Real(S$_{12}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 2)
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s12[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s12[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s12[2]), "b")
+        plt.ylabel(r"Imag(S$_{12}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 3)
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s12[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s12[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s12[2]), "b")
+        plt.ylabel(r"abs(S$_{12}$)")
+        plt.xlabel(f"Frequency [MHz]")
+        plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("matching_network_s12.png", bbox_inches='tight')
+        plt.show()
+
+        """
+        plot of matching_network S22
+        """
+        plt.figure(figsize=(8, 12))
+        plt.subplot(3, 1, 1)
+        plt.title(r"Matching Network S$_{22}$ [Interpolated]")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s22[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s22[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.real(mnet.s22[2]), "b")
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.ylabel(r"Real(S$_{22}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 2)
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s22[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s22[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.imag(mnet.s22[2]), "b")
+        plt.ylabel(r"Imag(S$_{22}$)")
+        plt.xticks(visible=False)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(3, 1, 3)
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s22[0]), "k")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s22[1]), "y")
+        plt.plot(mnet.freqs_mhz, np.abs(mnet.s22[2]), "b")
+        plt.ylabel(r"abs(S$_{22}$)")
+        plt.xlabel(f"Frequency [MHz]")
+        plt.grid(ls='--', alpha=0.3)
+        if savefig:
+            plt.savefig("matching_network_s22.png", bbox_inches='tight')
+        plt.show()
+
+        """
+        plot of matching_network S-parameters in dB
+        """
+        plt.figure(figsize=(8, 12))
+        plt.subplot(4, 1, 1)
+        for port in range(3):
+            plt.plot(mnet.sparams[port][:, 0]/1e6, mnet.sparams[port][:, 1], l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xticks(visible=False)
+        plt.ylabel(r"S$_{11}$ [dB]", fontsize=15)
+        #plt.xlim(30, 250)
+        plt.title("matching_network S-parameters [dB]")
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(4, 1, 2)
+        for port in range(3):
+            plt.plot(mnet.sparams[port][:, 0]/1e6, mnet.sparams[port][:, 3], l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xticks(visible=False)
+        plt.ylabel(r"S$_{21}$ [dB]", fontsize=15)
+        #plt.xlim(30, 250)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(4, 1, 3)
+        for port in range(3):
+            plt.plot(mnet.sparams[port][:, 0]/1e6, mnet.sparams[port][:, 5], l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xticks(visible=False)
+        plt.ylabel(r"S$_{12}$ [dB]", fontsize=15)
+        #plt.xlim(30, 250)
+        plt.grid(ls='--', alpha=0.3)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+        # ----
+        plt.subplot(4, 1, 4)
+        for port in range(3):
+            plt.plot(mnet.sparams[port][:, 0]/1e6, mnet.sparams[port][:, 7], l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xlabel("Frequency(MHz)")
+        plt.ylabel(r"S$_{22}$ [dB]", fontsize=15)
+        #plt.xlim(30, 250)
+        plt.grid(ls='--', alpha=0.3)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("matching_network_sparams_dB.png", bbox_inches='tight')
+        plt.show()
+
+        """
+        plot of all matching_network S-parameters
+        """
+        plt.figure(figsize=(8, 12))
+        plt.subplot(4, 1, 1)
+        for port in range(3):
+            plt.plot(mnet.freqs_mhz, np.abs(mnet.s11[port]), l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xticks(visible=False)
+        plt.ylabel(r"abs(S$_{11}$)", fontsize=15)
+        plt.xlim(30, 250)
+        plt.title("matching_network S-parameters [Interpolated]")
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(4, 1, 2)
+        for port in range(3):
+            plt.plot(mnet.freqs_mhz, np.abs(mnet.s21[port]), l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xticks(visible=False)
+        plt.ylabel(r"abs(S$_{21}$)", fontsize=15)
+        plt.xlim(30, 250)
+        plt.grid(ls='--', alpha=0.3)
+        # ----
+        plt.subplot(4, 1, 3)
+        for port in range(3):
+            plt.plot(mnet.freqs_mhz, np.abs(mnet.s12[port]), l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xticks(visible=False)
+        plt.ylabel(r"abs(S$_{12}$)", fontsize=15)
+        plt.xlim(30, 250)
+        plt.grid(ls='--', alpha=0.3)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+        # ----
+        plt.subplot(4, 1, 4)
+        for port in range(3):
+            plt.plot(mnet.freqs_mhz, np.abs(mnet.s22[port]), l_col[port])
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xlabel("Frequency(MHz)")
+        plt.ylabel(r"abs(S$_{22}$)", fontsize=15)
+        plt.xlim(30, 250)
+        plt.grid(ls='--', alpha=0.3)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+        if savefig:
+            plt.savefig("matching_network_sparams.png", bbox_inches='tight')
+        plt.show()        
 
     if args=="balun_after_lna":
 
@@ -1217,7 +1453,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Parser to select which noise quantity to plot. \
         To Run: ./plot_rf_chain.py <plot_option>. \
-        <plot_option>: lna, balun_after_lna, vga, cable, balun_before_adc, rf_chain \
+        <plot_option>: matching_network, lna, balun_after_lna, vga, cable, balun_before_adc, rf_chain \
         example: ./plot_rf_chain.py lna --savefig"
         )
     parser.add_argument(
@@ -1233,7 +1469,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    options_list = ["lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain"]
+    options_list = ["matching_network", "lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain"]
 
     if args.plot_option in options_list:
         plot(args.plot_option, savefig=args.savefig)
