@@ -79,9 +79,9 @@ if __name__ == '__main__':
 
             # * 1 * - * - * - * - * - * - *
             print("executing convert_efield2voltage.py")
-            # Run convert_efield2voltage.py
+            # Run convert_efield2voltage.py with noise + rf chain
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "-o", f"{options.directory}/voltage_Coreas_{simID}.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}.root")
@@ -89,21 +89,30 @@ if __name__ == '__main__':
             
             # * 2 * - * - * - * - * - * - *
             print("executing convert_efield2voltage.py --no_noise")
-            # Run convert_efield2voltage.py
+            # Run convert_efield2voltage.py with rf chain but no noise
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}_no_noise.root")
 
             # * 3 * - * - * - * - * - * - *
             print("executing convert_efield2voltage.py --no_noise --no_rf_chain")
-            # Run convert_efield2voltage.py
+            # Run convert_efield2voltage.py no rf chain and no noise
             voltage = [
-                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096",  "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
             ]
             subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}_no_noise_no_rfchain.root")
+
+            # * 4 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_rf_chain")
+            # Run convert_efield2voltage.py with noise but no rf chain
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_rf_chain", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096",  "-o", f"{options.directory}/voltage_Coreas_{simID}_no_rfchain.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_rfchain.root")
             
             pass
 
