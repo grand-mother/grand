@@ -111,18 +111,18 @@ def main():
     inputdirectory = sys.argv[1]
     outputdirectory = sys.argv[2]
 
-    rawfile=glob.glob(inputdirectory+"/efield_*.root")[0]
+    efieldfile=glob.glob(inputdirectory+"/efield_*.root")[0]
 
-    head,tail=os.path.split(rawfile)
+    head,tail=os.path.split(efieldfile)
 
     InputJobName=os.path.splitext(tail)[0]
 
     OutFileName=outputdirectory+"/"+"voltage_"+InputJobName[8:]
 
-    logging.info("About to produce voltage for GRANDRoot file from "+rawfile)
+    logging.info("About to produce voltage for GRANDRoot file from "+inputdirectory)
     logging.debug("output file will be in:"+OutFileName)
 
-    VoltGRANDRoot(rawfile, OutFileName)
+    VoltGRANDRoot(inputdirectory, OutFileName)
 
 
 

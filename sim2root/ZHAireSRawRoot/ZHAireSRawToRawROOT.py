@@ -140,7 +140,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     if OutputFileName=="GRANDConvention":
       extra=extract_extra(sryfile[0])
       date=convert_date(Date)
-      OutputFileName=Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)+".RawRoot"
+      OutputFileName=Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)+".rawroot"
       directory_path="sim_"+Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)
       OutputFileName=directory_path+"/"+OutputFileName
       if not os.path.exists(directory_path):

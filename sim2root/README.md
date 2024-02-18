@@ -66,7 +66,7 @@ As input you need to give the ROOT file containing `rawroot data TTrees`, as cre
 
 i.e.
 
-`python3 python  ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -s Xiaodushan -d 20221026 -t 180000 -e DC2Alpha
+`python3 python  ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -d 20221026 -t 180000 -e DC2Alpha
 
 
 
@@ -78,10 +78,10 @@ The example shows how to use the two example rawroot file given in /grand/sim2ro
 
 You can use the rawroot file of your liking. Now sim2root supports multiple events on the command line, so you just can make
 
-python  ../grand/sim2root/Common/sim2root.py */*.rawroot -s Xiaodushan -d 20221026 -t 180000 -e DC2Alpha
+python  ../grand/sim2root/Common/sim2root.py */*.rawroot -d 20221026 -t 180000 -e DC2Alpha
 
 
-python ../grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_180000_RUN0_CD_DC2Alpha_0000/efield_0-1_L0_0000.root -o ./OutputFile-no_rf_chain.root --no_rf_chain --verbose=info
+python ../grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_180000_RUN0_CD_DC2Alpha_0000 -o ./OutputFile-no_rf_chain.root --no_rf_chain --verbose=info
 
 
 see the –help of convert_efiedl2voltage to see how that works.
