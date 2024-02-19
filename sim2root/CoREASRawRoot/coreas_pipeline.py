@@ -71,9 +71,12 @@ if __name__ == '__main__':
             ]
             subprocess.run(sim2root, check=True)
             print(f"Created grandroot trees in {str(options.directory)}")
-            #! currently sim2root creates separate root files for each tree, so we need this for now:
-            sim2root_out = glob.glob(str(options.directory)+"/sim_*/efield*")[0]
 
+            # get the path to the efield.root file
+            sim2root_file = glob.glob(str(options.directory)+"/sim_*/efield*")[0]
+            # get the path to the directory 
+            sim2root_out  = os.path.dirname(sim2root_file)
+          
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
 
