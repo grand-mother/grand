@@ -28,8 +28,8 @@ clparser.add_argument("-av", "--analysis_level", help="Analysis level of the dat
 clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
 clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
 clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
-clparser.add_argument("-ru", "--run", help="Run number", default=0, const=None)
-clparser.add_argument("-se", "--start_event", help="Starting event number", default=0, const=None)
+clparser.add_argument("-ru", "--run", help="Run number", default=None)
+clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
 clargs = clparser.parse_args()
 
 print("#################################################")
@@ -60,7 +60,7 @@ def main():
 
     # Check if a directory was given as input
     if Path(clargs.file_dir_name[0]).is_dir():
-        file_list = glob.glob(clargs.file_dir_name[0]+"/*.RawRoot")
+        file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.RawRoot"))
     else:
         file_list = clargs.file_dir_name
 
@@ -88,10 +88,10 @@ def main():
             trawmeta.get_entry(i)
 
             # If the first entry or (run number enforced and first file), fill the run trees
-            if (i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
+            if (file_num==0 and i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
 
                 # Overwrite the run number if specified on command line
-                run_number = ext_run_number if ext_run_number is not None else gt.trun.run_number
+                run_number = ext_run_number if ext_run_number is not None else trawshower.run_number
 
                 # Check if site name was not given as input, use the one from the trawshower
                 if not clargs.site_name:
