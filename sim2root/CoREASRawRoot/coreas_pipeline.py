@@ -5,6 +5,7 @@ import glob
 from CorsikaInfoFuncs import read_params
 import sys
 import re
+import os
 
 parser = OptionParser()
 parser.add_option("--directory", "--dir", "-d", type="str",
