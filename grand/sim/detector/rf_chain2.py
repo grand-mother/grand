@@ -850,10 +850,13 @@ class RFChain(GenericProcessingDU):
         #MM2 = matmul(MM1, self.lna.ABCD_matrix)
         #MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         #self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-
+        
+        #self.total_ABCD_matrix[:] = matmul(matmul(matmul(matmul(matmul(self.balun1.ABCD_matrix,self.matcnet.ABCD_matrix),self.lna.ABCD_matrix),self.cable.ABCD_matrix),self.vgaf.ABCD_matrix),self.balun2.ABCD_matrix)
+        
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
+        #self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
         
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
         self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
