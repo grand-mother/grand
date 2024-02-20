@@ -48,7 +48,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 #AiresPath="/home/mjtueros/aires/bin"
 #print(os.environ)
-AiresPath=os.environ["AIRESBINDIR"]
+try:
+  AiresPath=os.environ["AIRESBINDIR"]
+except:
+  AiresPath="."
+
 print("AiresPath:",AiresPath)
 def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
   try:

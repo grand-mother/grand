@@ -42,11 +42,11 @@ def VoltGRANDRoot(InputFile, OutputFile):
   #stdout,stderr=p.communicate()
   
   #Use event number as seed
-  EventNumber=OutputFile.split("/")[-2][-4:] #the directory name has the event number at the end
+  Seed= str(int(time.clock_gettime(1)))
 
   #regular
   OutputFile1=OutputFile+"_with-rf_with-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + Seed +" --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -57,7 +57,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
 
   #no-noise
   OutputFile1=OutputFile+"_with-rf_no-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --no_noise --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + Seed +" --no_noise --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -69,7 +69,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
 
   #no-rf
   OutputFile1=OutputFile+"_no-rf_with-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + Seed +" --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -82,7 +82,7 @@ def VoltGRANDRoot(InputFile, OutputFile):
   
   #no-rf  -no-noise
   OutputFile1=OutputFile+"_no-rf_no-noise.root"
-  cmd=Python + " " + efield2volt + " " + InputFile +" -o " +  OutputFile + " --seed " + EventNumber +" --no_noise --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
+  cmd=Python + " " + efield2volt + " " + InputFile + " --seed " + Seed +" --no_noise --no_rf_chain --verbose error --target_sampling_rate_mhz=500 --target_duration_us=4.096" + " -o " + OutputFile1
   print("About to run:"+ cmd)
   p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
   stdout,stderr=p.communicate()
@@ -111,18 +111,18 @@ def main():
     inputdirectory = sys.argv[1]
     outputdirectory = sys.argv[2]
 
-    rawfile=glob.glob(inputdirectory+"/tefield_*.root")[0]
+    efieldfile=glob.glob(inputdirectory+"/efield_*.root")[0]
 
-    head,tail=os.path.split(rawfile)
+    head,tail=os.path.split(efieldfile)
 
     InputJobName=os.path.splitext(tail)[0]
 
-    OutFileName=outputdirectory+"/"+"tvoltage_"+InputJobName[8:]
+    OutFileName=outputdirectory+"/"+"voltage_"+InputJobName[8:]
 
-    logging.info("About to produce voltage for GRANDRoot file from "+rawfile)
+    logging.info("About to produce voltage for GRANDRoot file from "+inputdirectory)
     logging.debug("output file will be in:"+OutFileName)
 
-    VoltGRANDRoot(rawfile, OutFileName)
+    VoltGRANDRoot(inputdirectory, OutFileName)
 
 
 

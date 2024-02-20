@@ -1,4 +1,4 @@
-# Welcome to Sim2Root
+﻿# Welcome to Sim2Root
 originally developed as GrandRawRoot in https://github.com/jelenakhlr/GrandRawRoot
 
 ## authors
@@ -16,7 +16,7 @@ Common files are stored in the Common/ directory, Zharies specifics can be found
 # How to run Sim2Root
 If you want to convert an air shower simulation to the _GRANDRoot_ file format, follow these steps:
 
-*step 1:* convert air shower simulation to the _RawRoot_ file format\
+*step 1:* convert air shower simulation to the _rawroot_ file format\
 For CoREAS follow the instructions under *1.a)*, for ZHAireS follow the instructions under *1.b)*.
 
 *step 2:* convert your newly created _RawRoot_ file to the _GRANDRoot_ file format
@@ -44,7 +44,8 @@ To run the script on the provided example event just go to the `ZHAireSRawRoot/`
 
  i.e.
 
-`python3 ZHAireSRawToRawROOT.py ./GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618 standard 0 1  GP300_1618.root`
+`python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618 standard 1 1618  GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618.rawroot`
+`python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.87_79.4_310.0_13790 standard 1 13790  GP300_Xi_Sib_Proton_3.8_51.6_135.4_13790.rawroot`
 
 or alternativelly
 
@@ -56,34 +57,31 @@ or alternativelly
 
 To let ZHAIRESRawToRawROOT make the choices for you. This is equivalent to running with RunID="SuitYourself", EventID="LookForIt", OutputFileName="GRANDConvention"	
 
+Look inside of the script for more inforation
+
 ## 2) Common/sim2root.py
 Inside `Common/` you can find the final converter, `sim2root.py`
 
-As input you need to give the ROOT file containing `RawRoot data TTrees`, as created with `CoreasToRawROOT` or `ZHAireSRawToRawROOT`.
+As input you need to give the ROOT file containing `rawroot data TTrees`, as created with `CoreasToRawROOT` or `ZHAireSRawToRawROOT`.
 
 i.e.
 
-`python3 sim2root.py ../ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618/Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618.RawRoot -fo sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618`
+`python3 python  ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -d 20221026 -t 180000 -e DC2Alpha
+
+
 
 additional options are available on command line, see sim2root --help for more information
 
-# 3) Simulation Pipe example (note that this assumes one event per directoy, and is not working on files with more than 1 event)
-You will find two scripts illustrating how to use RawRoot files as starting point of a simulation pipe are in the "Common" directory. 
-Output File names are still not conforming to grand specifications. 
+# 3) Simulation Pipe example 
 
-The example shows how to use the example RawRoot file given in /grand/sim2root/ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618 to produce the grandroot files including 
-4 tvoltage files with the antenna response with and without the rf chain. You can use the RawRoot file of your liking.
+The example shows how to use the two example rawroot file given in /grand/sim2root/ZHAireSRawRoot/
 
-## 3a) GenerateGRANDRoot
-python /ProduceGRANDRoot.py InputDirectory OutputDirectory
+You can use the rawroot file of your liking. Now sim2root supports multiple events on the command line, so you just can make
 
-python ProduceGRANDRoot.py  <your path here>/grand/sim2root/ZHAireSRawRoot/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618 <your path here>/grand/sim2root/Common/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618
-
-## 3b) GenerateVoltage
-python ProduceVoltage.py InputDirectory OutputDiectory
-
-python <your path here>/grand/sim2root/Common/ProduceVoltage/ProduceVoltage.py <your path here>/grand/sim2root/Common/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618 <your path here>/grand/sim2root/Common/sim_Xiaodushan_20221026_1200_1_SIBYLL23d_GP300_1618
-
-Note that in this example we set the InputDiretory to be the same as the Outputdirectory to get all the files in the same place.
+python  ../grand/sim2root/Common/sim2root.py */*.rawroot -d 20221026 -t 180000 -e DC2Alpha
 
 
+python ../grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_180000_RUN0_CD_DC2Alpha_0000 -o ./OutputFile-no_rf_chain.root --no_rf_chain --verbose=info
+
+
+see the –help of convert_efiedl2voltage to see how that works.

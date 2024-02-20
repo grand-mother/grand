@@ -5,6 +5,7 @@ import glob
 from CorsikaInfoFuncs import read_params
 import sys
 import re
+import os
 
 parser = OptionParser()
 parser.add_option("--directory", "--dir", "-d", type="str",
@@ -51,10 +52,11 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting Coreas Simulation {simID} to RawRoot format...")
 
+            # * - * - * - * - * - * - *
             # Run CoreasToRawROOT.py
             print("executing CoreasToRawROOT.py")
             CoreasToRawROOT = [
-                'python3', 'CoreasToRawROOT.py', '-d', str(options.directory)
+                "python3", "CoreasToRawROOT.py", "-d", f"{str(options.directory)}"
             ]
             subprocess.run(CoreasToRawROOT, check=True)
             print(f"Created Coreas_{simID}.root")
@@ -62,26 +64,60 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting from RawRoot to GRANDroot format...")
 
-            # Run sim2root.py
+            # * - * - * - * - * - * - *
             print("executing sim2root.py")
+            # Run sim2root.py
             sim2root = [
-                'python3', '../Common/sim2root.py', f"Coreas_{simID}.root"
+                "python3", f"../Common/sim2root.py", f"Coreas_{simID}.root", "-o", f"{str(options.directory)}"
             ]
             subprocess.run(sim2root, check=True)
-            print(f"Created gr_Coreas_{simID}.root")
+            print(f"Created grandroot trees in {str(options.directory)}")
 
+            # get the path to the efield.root file
+            sim2root_file = glob.glob(str(options.directory)+"/sim_*/efield*")[0]
+            # get the path to the directory 
+            sim2root_out  = os.path.dirname(sim2root_file)
+          
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting traces from efield to voltage...")
 
+            # * 1 * - * - * - * - * - * - *
             print("executing convert_efield2voltage.py")
-            # Run convert_efield2voltage.py
-            sim2root = [
-                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_{simID}.root",\
-                f"-o {options.output}/efield_gr_Coreas_{simID}.root"
+            # Run convert_efield2voltage.py with noise + rf chain
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}.root"
             ]
-            subprocess.run(sim2root, check=True)
+            subprocess.run(voltage, check=True)
             print(f"Created efield_gr_Coreas_{simID}.root")
             print("********************************")
+            
+            # * 2 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_noise")
+            # Run convert_efield2voltage.py with rf chain but no noise
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096", "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_noise.root")
+
+            # * 3 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_noise --no_rf_chain")
+            # Run convert_efield2voltage.py no rf chain and no noise
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_noise", "--no_rf_chain", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096",  "-o", f"{options.directory}/voltage_Coreas_{simID}_no_noise_no_rfchain.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_noise_no_rfchain.root")
+
+            # * 4 * - * - * - * - * - * - *
+            print("executing convert_efield2voltage.py --no_rf_chain")
+            # Run convert_efield2voltage.py with noise but no rf chain
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--no_rf_chain", "--target_sampling_rate_mhz=500", "--target_duration_us=4.096",  "-o", f"{options.directory}/voltage_Coreas_{simID}_no_rfchain.root"
+            ]
+            subprocess.run(voltage, check=True)
+            print(f"Created efield_gr_Coreas_{simID}_no_rfchain.root")
+            
             pass
 
         print(f"Finished analyzing files in {options.directory}")

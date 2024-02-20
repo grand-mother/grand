@@ -86,6 +86,9 @@ class RawShowerTree(MotherEventTree):
     # primary injection direction in Shower Coordinates
     primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
+    ### Simulation site name TODO:standardize
+    _site: StdString = StdString("nosite")
+        
     ### Atmospheric model name TODO:standardize
     _atmos_model: StdString = StdString("")
 
@@ -421,6 +424,22 @@ class RawShowerTree(MotherEventTree):
     @zenith.setter
     def zenith(self, value):
         self._zenith[0] = value
+
+
+    @property
+    def site(self):
+        """Simulation Site TODO:standarize"""
+        return str(self._site)
+
+    @site.setter
+    def site(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        self._site.string.assign(value)
 
 
 

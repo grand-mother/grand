@@ -7,6 +7,7 @@ from logging import getLogger
 import time
 import numpy as np
 import scipy.fft as sf
+from pathlib import Path
 
 import grand.geo.coordinates as coord
 import grand.dataio.root_trees as groot
@@ -48,30 +49,46 @@ class Efield2Voltage:
       * Save output in ROOT format
     """
 
-    def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0):
-        
-        self.f_input = f_input       
+    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0):
 
-        directory_path, fname = os.path.split(f_input)
+        self.d_input = groot.DataDirectory(d_input)
+
+        # directory_path, fname = os.path.split(f_input)
         
-        f_input_TRun=directory_path+"/trun_"+ fname[8:]              
-        f_input_TShower=directory_path+"/tshower_"+ fname[8:]
+        #f_input_TRun=directory_path+"/run_"+ fname[7:]
+        # f_input_TRun=directory_path+"/run.root"
+        # f_input_TShower=directory_path+"/shower_"+ fname[7:]
 
         #f_input_TRunShowerSim=directory_path+"/TRunShowerSim_"+ fname[8:]         
         #f_input_TShowerSim=directory_path+"/TShowerSim_"+ fname[8:]
         
         #f_input_TRunEfieldSim=directory_path+"/TRunEfieldSim_"+ fname[8:] 
-        f_input_TEfield=directory_path+"/tefield_"+ fname[8:] 
+        # f_input_TEfield=directory_path+"/efield_"+ fname[7:]
+
+        f_input_TRun = self.d_input.trun
+        f_input_TShower = self.d_input.tshower
+        f_input_TEfield = self.d_input.tefield
 
         #print(f_input_TShower)
         #print(f_input_TRun)
-                
-        self.f_output = f_output
+
+        # If output filename given, use it
+        if f_output:
+            self.f_output = f_output
+        # Otherwise, generate it from tefield filename
+        else:
+            self.f_output = self.d_input.ftefield.filename.replace("efield", "voltage")
+
+        # If output directory given, use it
+        if output_directory:
+            self.f_output = output_directory + "/" + Path(self.f_output).name
+
+
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
         self.padding_factor = padding_factor               # 
-        self.events = groot.TEfield(f_input_TEfield)        # traces and du_pos are stored here
-        self.run = groot.TRun(f_input_TRun)                 # site_long, site_lat info is stored here. Used to define shower frame.
-        self.shower = groot.TShower(f_input_TShower)        # shower info (like energy, theta, phi, xmax etc) are stored here.
+        self.events = f_input_TEfield        # traces and du_pos are stored here
+        self.run = f_input_TRun                 # site_long, site_lat info is stored here. Used to define shower frame.
+        self.shower = f_input_TShower        # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
@@ -117,10 +134,12 @@ class Efield2Voltage:
         # stack efield traces
         trace_shape = np.asarray(self.events.trace).shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
+        self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
         self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
-        self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
+        # self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
+        self.du_pos = np.asarray(self.run.du_xyz)[self.event_dus_indices] # (nb_du, 3) antenna position wrt local grand coordinate
 
         # shower information like theta, phi, xmax etc for one event.
         shower = ShowerEvent()
@@ -129,7 +148,8 @@ class Efield2Voltage:
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
 
-        self.dt_ns = np.asarray(self.run.t_bin_size) # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
+        # self.dt_ns = np.asarray(self.run.t_bin_size) # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
+        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
         self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             #MATIAS: this gets casted too!
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)
