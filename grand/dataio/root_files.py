@@ -71,14 +71,15 @@ class _FileEventBase:
         self.t_bin_size: Optional[float] = 0.5
         self.du_id: Optional[None, np.ndarray, list] = None
         self.du_count: Optional[None, int] = None
-        self.du_xyz: Optional[None, np.ndarray] = None
-        self.f_name: Optional[str] = ""
+        self.du_xyz: Optional[None, np.ndarray] = None        
         self.tag: Optional[str] = ""
+        #
+        self.f_name = f_name
         self.tt_event = tt_event
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
-        data_dir = groot.DataDirectory(os.path.dirname(f_name))  
+        data_dir = groot.DataDirectory(os.path.dirname(f_name))
         self.tt_shower = data_dir.tshower
         self.tt_run = data_dir.trun
         logger.info(f"file trun: {self.tt_run.file_name}\nfile tshower: {self.tt_shower.file_name}")

@@ -98,13 +98,14 @@ def main():
     o_tevent = d_event.get_obj_handling3dtraces()
     if args.info:
         print(f"Nb events     : {d_event.get_nb_events()}")
+        print("Idx\trun_nb\tevent_nb")
         for idx, evt in enumerate(d_event.l_events):
             print(f"{idx}\t{evt[1]}\t{evt[0]}")
         print(f"Select event index: {d_event.idx_event}")
         print("===================")
         print(f"Nb DU         : {d_event.get_du_count()}")
         print(f"Size trace    : {d_event.get_size_trace()}")
-        print("Idx\trun\tevent")
+      
     assert isinstance(o_tevent, Handling3dTraces)
     if args.list_du:
         print(f"Identifier DU : {o_tevent.idx2idt}")
