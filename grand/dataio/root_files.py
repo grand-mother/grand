@@ -10,7 +10,6 @@ import os.path
 from logging import getLogger
 from typing import Optional
 import glob
-from functools import lru_cache
 
 import numpy as np
 import ROOT
@@ -36,29 +35,6 @@ def _get_ttree_in_file(f_root):
     l_ttree = tfile.GetListOfKeys()
     l_name_ttree = [ttree.GetName() for ttree in l_ttree]
     return l_name_ttree
-
-
-def _get_all_root_files(dir_root):
-    l_froot = glob.glob(dir_root + "/*.root")
-    return l_froot
-
-
-def _get_first_root_file(f_name, prefix):
-    """Return the name of first ROOT with TTree <prefix> in the same
-    directory of file <f_name>
-
-    :param f_name: path to  file
-    :param prefix: TTree GRANDROOT file, no check
-    """
-    dir_root = os.path.dirname(f_name)
-    l_froot = _get_all_root_files(dir_root)
-    for n_file in l_froot:
-        ns_file = n_file.split("/")[-1]
-        if ns_file.find(prefix) == 0:
-            logger.info(f"{prefix} file is {n_file}")
-            return n_file
-    logger.error(f"No ROOT {prefix} file")
-    raise AssertionError
 
 
 class _FileEventBase:
@@ -102,12 +78,10 @@ class _FileEventBase:
         self.l_events = self.tt_event.get_list_of_events()
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
-        f_tshower = get_name_tshower(f_name)
-        self.tt_shower = groot.TShower(f_tshower)
-        f_trun = get_name_trun(f_name)
-        self.tt_run = groot.TRun(f_trun)
-        logger.info(f"file trun: {f_trun}\nfile tshower: {f_tshower}")
-        self.f_name = f_name
+        data_dir = groot.DataDirectory(os.path.dirname(f_name))  
+        self.tt_shower = data_dir.tshower
+        self.tt_run = data_dir.trun
+        logger.info(f"file trun: {self.tt_run.file_name}\nfile tshower: {self.tt_shower.file_name}")
         self.load_event_idx(0)
 
     def load_event_idx(self, idx):
@@ -246,22 +220,6 @@ def get_handling3dtraces(f_name, idx_evt=0):
     event_files = get_file_event(f_name)
     event_files.load_event_idx(idx_evt)
     return event_files.get_obj_handling3dtraces()
-
-
-def get_name_trun(f_name):
-    """Return name of first ROOT file with type Trun in directory <f_name>
-
-    :param f_name: string
-    """
-    return _get_first_root_file(f_name, "run.root")
-
-
-def get_name_tshower(f_name):
-    """Return name of first ROOT file with type Tshower in directory <f_name>
-
-    :param f_name: string
-    """
-    return _get_first_root_file(f_name, "shower_")
 
 
 def get_simu_parameters(f_name, idx_evt=0):
