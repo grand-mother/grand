@@ -424,13 +424,7 @@ def CoreasToRawRoot(file, simID=None):
     Emax = max(Etotal)
     t_0 = efield[(efield.Etotal == Emax)].time
 
-    # # timewindow min and max vary for each trace
-    # TimeWindowMin = timestamp[0]
-    # TimeWindowMax = timestamp[:-1]
-
-    # RawEfield.TimeWindowMin.append(TimeWindowMin)
-    # RawEfield.TimeWindowMax.append(TimeWindowMax)
-
+    # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_name.append(str(antenna))
     RawEfield.du_id.append(int(antenna_IDs[index]))
