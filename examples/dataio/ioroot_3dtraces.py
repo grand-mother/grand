@@ -97,15 +97,17 @@ def main():
         d_event.load_event_idx(args.idx_evt)
     o_tevent = d_event.get_obj_handling3dtraces()
     if args.info:
-        print(f"Nb DU         : {d_event.get_du_count()}")
-        print(f"Size trace    : {d_event.get_size_trace()}")
         print(f"Nb events     : {d_event.get_nb_events()}")
-        print("Idx\trun\tevent")
         for idx, evt in enumerate(d_event.l_events):
             print(f"{idx}\t{evt[1]}\t{evt[0]}")
+        print(f"Select event index: {d_event.idx_event}")
+        print("===================")
+        print(f"Nb DU         : {d_event.get_du_count()}")
+        print(f"Size trace    : {d_event.get_size_trace()}")
+        print("Idx\trun\tevent")
     assert isinstance(o_tevent, Handling3dTraces)
     if args.list_du:
-        print(f"Identifier DU : {o_tevent.d_idxdu.keys()}")
+        print(f"Identifier DU : {o_tevent.idx2idt}")
     if args.trace_image:
         o_tevent.plot_all_traces_as_image()
     if args.footprint:
