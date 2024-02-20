@@ -10,6 +10,7 @@ from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
 import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 from optparse import OptionParser
+import pandas as pd
 
 """
 run with
@@ -397,23 +398,31 @@ def CoreasToRawRoot(file, simID=None):
 
     # load the efield traces for this antenna
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
-    efield = np.loadtxt(tracefile)
+    names = ['time', 'x', 'y', 'z']
+    efield = pd.read_csv(tracefile, delimiter='\t', usecols=[0,1,2,3], names=names)
     
-    timestamp = efield[:,0] * 10**9 #convert to ns 
+    timestamp = efield['time'] * 10**9 #convert to ns 
     # coreas uses cgs units, so voltage is in statvolt
     # efield in statvolt / cm
     # 1 statV * 299.792458 V/statV = 1 V
     # 1 statV * 299.792458 * 1e6 V/statV = 1 microV
-    trace_x = efield[:,1]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
-    trace_y = efield[:,2]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
-    trace_z = efield[:,3]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
-    
-    
+    trace_x = efield['x']* 299.792458 * 1e6 * 100 # convert to micro Volts / m
+    trace_y = efield['y']* 299.792458 * 1e6 * 100 # convert to micro Volts / m
+    trace_z = efield['z']* 299.792458 * 1e6 * 100 # convert to micro Volts / m
+
     # define time params:
     t_length = len(timestamp)
-    t_0 = timestamp[0] + t_length/2
-    t_pre = -t_length/2
-    t_post = t_length/2
+    t_pre  = 800 #ns 
+    t_post = t_length - t_pre
+
+    # calculate Etotal and add to the efield dataframe
+    Etotal = np.sqrt(trace_x**2 + trace_y**2 + trace_z**2)
+    efield.loc[:, "Etotal"] = Etotal  
+
+    # calculate t_0
+    # we want the pulse max to be at 800, so essentially t_0 = t(Emax)
+    Emax = max(Etotal)
+    t_0 = efield[(efield.Etotal == Emax)].time
 
     # # timewindow min and max vary for each trace
     # TimeWindowMin = timestamp[0]
