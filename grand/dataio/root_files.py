@@ -9,7 +9,6 @@ The main functionnalities of this module is
 import os.path
 from logging import getLogger
 from typing import Optional
-import glob
 
 import numpy as np
 import ROOT
@@ -71,7 +70,7 @@ class _FileEventBase:
         self.t_bin_size: Optional[float] = 0.5
         self.du_id: Optional[None, np.ndarray, list] = None
         self.du_count: Optional[None, int] = None
-        self.du_xyz: Optional[None, np.ndarray] = None        
+        self.du_xyz: Optional[None, np.ndarray] = None
         self.tag: Optional[str] = ""
         #
         self.f_name = f_name
@@ -204,7 +203,8 @@ def get_file_event(f_name):
     if "tvoltage" in trees_list:  # File with voltage info as input
         return FileVoltage(f_name)
     logger.error(
-        f"File {f_name} doesn't content TTree teventefield or teventvoltage. It contains {trees_list}."
+        f"File {f_name} doesn't content TTree teventefield or teventvoltage."
+        " It contains {trees_list}."
     )
     raise AssertionError
 

@@ -17,6 +17,11 @@ logger = getLogger(__name__)
 
 
 def closest_node(node, nodes):  # pragma: no cover
+    """Simple computation of distance mouse DU
+
+    :param node:
+    :param nodes:
+    """
     nodes = np.asarray(nodes)
     dist_2 = np.sum((nodes - node) ** 2, axis=1)
     return np.argmin(dist_2)
@@ -54,7 +59,7 @@ class DetectorUnitNetwork:
         self.area_km2 = -1
         self.idx2idt = du_id
         assert isinstance(self.du_pos, np.ndarray)
-        assert isinstance(self.idx2idt, list) or isinstance(self.idx2idt, np.ndarray)
+        assert isinstance(self.idx2idt, (list, np.ndarray))
         assert du_pos.shape[0] == len(du_id)
         assert du_pos.shape[1] == 3
 
@@ -230,10 +235,9 @@ class DetectorUnitNetwork:
         def subplot(plt_axis, a_values, cpnt="", scale="log"):
             ax1 = plt_axis
             size_circle = 80
-            cur_idx_plot = -1
 
             ax1.set_title(cpnt)
-            if type(scale) is str:
+            if isinstance(scale, str):
                 my_cmaps = "Blues"
                 vmin = np.nanmin(a_values)
                 vmax = np.nanmax(a_values)
@@ -262,10 +266,10 @@ class DetectorUnitNetwork:
             # plt.xlabel("[m]")
             return scm
 
-        fig, ax = plt.subplots(2, 2)
+        fig, ax2 = plt.subplots(2, 2)
 
         t_max, _ = o_tr.get_tmax_vmax()
-        ret_scat = subplot(ax[0, 0], t_max, cpnt="Time of max value", scale="lin")
+        ret_scat = subplot(ax2[0, 0], t_max, cpnt="Time of max value", scale="lin")
         fig.colorbar(ret_scat, label="ns")
         # same scale for
         if same_scale:
@@ -274,11 +278,11 @@ class DetectorUnitNetwork:
             norm_user = colors.Normalize(vmin=vmin, vmax=vmax)
         else:
             norm_user = "lin"
-        ret_scat = subplot(ax[1, 0], v_plot[:, 0], f"{title} {o_tr.axis_name[0]}", norm_user)
+        ret_scat = subplot(ax2[1, 0], v_plot[:, 0], f"{title} {o_tr.axis_name[0]}", norm_user)
         fig.colorbar(ret_scat, label=unit)
-        ret_scat = subplot(ax[0, 1], v_plot[:, 1], f"{title} {o_tr.axis_name[1]}", norm_user)
+        ret_scat = subplot(ax2[0, 1], v_plot[:, 1], f"{title} {o_tr.axis_name[1]}", norm_user)
         fig.colorbar(ret_scat, label=unit)
-        ret_scat = subplot(ax[1, 1], v_plot[:, 2], f"{title} {o_tr.axis_name[2]}", norm_user)
+        ret_scat = subplot(ax2[1, 1], v_plot[:, 2], f"{title} {o_tr.axis_name[2]}", norm_user)
         fig.colorbar(ret_scat, label=unit)
 
     def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover

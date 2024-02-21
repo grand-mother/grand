@@ -108,23 +108,22 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.8):
     logger.debug(f"{x_trace[b_idx]}\t{x_trace[e_idx]}")
     if (e_idx - b_idx) <= 2:
         return find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max)
-    else:
-        logger.debug(f"Parabola interp: mode hill")
-        # mode hill
-        y_hill = y_trace[b_idx : e_idx + 1] - y_trace[b_idx]
-        x_hill = x_trace[b_idx : e_idx + 1] - x_trace[b_idx]
-        mat = np.empty((x_hill.shape[0], 3), dtype=np.float32)
-        mat[:, 2] = 1
-        mat[:, 1] = x_hill
-        mat[:, 0] = x_hill * x_hill
-        sol = np.linalg.lstsq(mat, y_hill, rcond=None)[0]
-        if -1e-5 < sol[0] and sol[0] < 1e-5:
-            # very flat case
-            return x_trace[idx_max], y_trace[idx_max]
-        x_m = -sol[1] / (2 * sol[0])
-        x_max = x_trace[b_idx] + x_m
-        y_max = y_trace[b_idx] + x_m * sol[1] / 2 + sol[2]
-        return x_max, y_max
+    logger.debug(f"Parabola interp: mode hill")
+    # mode hill
+    y_hill = y_trace[b_idx : e_idx + 1] - y_trace[b_idx]
+    x_hill = x_trace[b_idx : e_idx + 1] - x_trace[b_idx]
+    mat = np.empty((x_hill.shape[0], 3), dtype=np.float32)
+    mat[:, 2] = 1
+    mat[:, 1] = x_hill
+    mat[:, 0] = x_hill * x_hill
+    sol = np.linalg.lstsq(mat, y_hill, rcond=None)[0]
+    if -1e-5 < sol[0] and sol[0] < 1e-5:
+        # very flat case
+        return x_trace[idx_max], y_trace[idx_max]
+    x_m = -sol[1] / (2 * sol[0])
+    x_max = x_trace[b_idx] + x_m
+    y_max = y_trace[b_idx] + x_m * sol[1] / 2 + sol[2]
+    return x_max, y_max
 
 
 def get_filter(time, trace, fr_min, fr_max):

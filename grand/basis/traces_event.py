@@ -3,7 +3,6 @@ Handling a set of 3D traces
 """
 from logging import getLogger
 import copy
-from functools import lru_cache
 
 import numpy as np
 import scipy.signal as ssig
@@ -19,7 +18,7 @@ logger = getLogger(__name__)
 
 
 def get_psd(trace, f_samp_mhz, nperseg=0):
-    """Estimate power spectrum density by Welch method
+    """Reference estimation of power spectrum density by Welch's method
 
     :param trace: floatX(nb_sample,)
     :param f_samp_mhz: frequency sampling
@@ -93,6 +92,9 @@ class Handling3dTraces:
         self._color = ["k", "y", "b"]
         self.axis_name = self._d_axis_val["idx"]
         self.network = None
+        # computing by user and store in object
+        self.t_max = None
+        self.v_max = None
 
     ### INTERNAL
 
@@ -121,7 +123,7 @@ class Handling3dTraces:
         self.idx2idt = du_id
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.idx2idt)}
         self.t_start_ns = t_start_ns
-        if isinstance(f_samp_mhz, int) or isinstance(f_samp_mhz, float):
+        if isinstance(f_samp_mhz, (int, float)):
             self.f_samp_mhz = np.ones(len(du_id)) * f_samp_mhz
         else:
             self.f_samp_mhz = f_samp_mhz
@@ -182,11 +184,8 @@ class Handling3dTraces:
         else:
             filtered = ssig.filtfilt(coeff_b, coeff_a, self.traces)
         self.traces = filtered.real
-        try:
-            delattr(self, "t_max")
-            delattr(self, "v_max")
-        except:
-            pass
+        self.t_max = None
+        self.v_max = None
 
     def _define_t_samples(self):
         """
@@ -233,11 +232,8 @@ class Handling3dTraces:
         if self.network:
             self.network = copy.deepcopy(self.network)
             self.network.keep_only_du_with_index(l_idx)
-        try:
-            delattr(self, "t_max")
-            delattr(self, "v_max")
-        except:
-            pass
+        self.t_max = None
+        self.v_max = None
 
     def reduce_nb_trace(self, new_nb_du):
         """reduces the number of traces to the first <new_nb_du>
@@ -309,11 +305,8 @@ class Handling3dTraces:
             elif new_traces == 0:
                 new_traces = np.zeros_like(self.traces)
             my_copy.traces = new_traces
-            try:
-                delattr(self, "t_max")
-                delattr(self, "v_max")
-            except:
-                pass
+            self.t_max = None
+            self.v_max = None
         return my_copy
 
     def get_delta_t_ns(self):
@@ -374,7 +367,7 @@ class Handling3dTraces:
             self.t_max = tmax
             self.v_max = vmax
             return tmax, vmax
-        if not interpol in ["parab", "auto"]:
+        if interpol not in ["parab", "auto"]:
             raise
         t_max = np.empty_like(tmax)
         v_max = np.empty_like(tmax)
@@ -479,7 +472,7 @@ class Handling3dTraces:
                     self._color[idx_axis],
                     label=axis + r", $\sigma_{noise}\approx$" + f"{m_sig:.1e}",
                 )
-        if hasattr(self, "t_max"):
+        if self.t_max is not None:
             snr = self.v_max[idx] / a_sigma.max()
             plt.plot(
                 self.t_max[idx],
@@ -516,17 +509,10 @@ class Handling3dTraces:
         plt.figure()
         for idx_axis, axis in enumerate(self.axis_name):
             if str(idx_axis) in to_draw:
-                if True:
-                    freq, pxx_den = ssig.welch(
-                        self.traces[idx, idx_axis],
-                        self.f_samp_mhz[idx] * 1e6,
-                        nperseg=self.nperseg,
-                        window="bartlett",
-                        scaling="density",
-                    )
-                else:
-                    freq, pxx_den = get_psd(self.traces[idx, idx_axis], self.f_samp_mhz)
-                plt.semilogy(freq[2:] * 1e-6, pxx_den[2:], self._color[idx_axis], label=axis)
+                freq, pxx_den = get_psd(
+                    self.traces[idx, idx_axis], self.f_samp_mhz[idx], self.nperseg
+                )
+                plt.semilogy(freq[2:], pxx_den[2:], self._color[idx_axis], label=axis)
                 # plt.plot(freq[2:] * 1e-6, pxx_den[2:], self._color[idx_axis], label=axis)
         m_title = f"Power spectrum density of {self.type_trace}, DU {self.idx2idt[idx]} (idx={idx})"
         m_title += f"\nPeriodogram has {self.nperseg} samples, delta freq {freq[1]*1e-6:.2f}MHz"
@@ -536,8 +522,6 @@ class Handling3dTraces:
         plt.xlim([0, 400])
         plt.grid()
         plt.legend()
-        self.welch_freq = freq
-        self.welch_pxx_den = pxx_den
 
     def plot_psd_trace_du(self, du_id, to_draw="012"):  # pragma: no cover
         """Draw power spectrum for 3 traces associated to DU idx2idt
