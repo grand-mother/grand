@@ -411,7 +411,7 @@ def CoreasToRawRoot(file, simID=None):
 
     # define time params:
     t_length = len(timestamp)
-    t_pre  = 800 #ns 
+    t_pre  = 800 * 10**9 #ns 
     t_post = t_length - t_pre
 
     # calculate Etotal
@@ -422,6 +422,11 @@ def CoreasToRawRoot(file, simID=None):
     Emax = max(Etotal)
     t_0_indices = np.where(Etotal == Emax)[0]
     t_0 = timestamp[t_0_indices[0]] if len(t_0_indices) > 0 else None
+
+    # for postprocessing: 
+    # shift pulse to 800ns
+    # shift_timestamp = t_pre - t_0
+    # timestamp = timestamp + shift_timestamp
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
