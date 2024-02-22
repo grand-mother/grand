@@ -298,7 +298,7 @@ def rawefield2grandrootrun(trawefield, gt):
     # The TRun run number
     gt.trun.run_number = trawefield.run_number
 
-    ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
+    ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0-t_pre (thus t_pre should be positive) and ends on t0+post
     gt.trunefieldsim.t_pre = trawefield.t_pre
     gt.trunefieldsim.t_post = trawefield.t_post
 
