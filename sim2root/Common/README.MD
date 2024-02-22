@@ -886,7 +886,7 @@ refractivity for each altitude at atmos_altiude table
 def t_pre()
 ```
 
-Starting time of antenna data collection time window. The window starts at t0+t_pre, thus t_pre is usually negative.
+Starting time of antenna data collection time window. The window starts at t0-t_pre, thus t_pre is usually positive.
 
 <a id="raw_root_trees.RawEfieldTree.t_post"></a>
 

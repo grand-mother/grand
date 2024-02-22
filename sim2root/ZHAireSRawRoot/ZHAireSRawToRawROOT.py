@@ -435,7 +435,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
          
         RawEfield.atmos_refractivity.append(Atmosrefractivity)                                 
         
-        RawEfield.t_pre = TimeWindowMin                                                           
+        RawEfield.t_pre = -TimeWindowMin                                                           
         RawEfield.t_post = TimeWindowMax                                                          
         RawEfield.t_bin_size = TimeBinSize                                                              
         
