@@ -96,7 +96,7 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.8):
     e_idx = idx_max + 1
     nb_out = 0
     last_idx = e_idx
-    while e_idx < nb_sple and nb_out < out_lim:
+    while e_idx < (nb_sple-1) and nb_out < out_lim:
         if y_trace[e_idx] < y_lim:
             nb_out += 1
         else:
@@ -104,6 +104,8 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.8):
             last_idx = e_idx
         e_idx += 1
     e_idx = last_idx
+    if e_idx >= nb_sple:
+        e_idx = nb_sple -1
     logger.debug(f"border around idx max {idx_max} is {b_idx}, {e_idx}")
     logger.debug(f"{x_trace[b_idx]}\t{x_trace[e_idx]}")
     if (e_idx - b_idx) <= 2:
