@@ -424,10 +424,14 @@ def CoreasToRawRoot(file, simID=None):
     t_0_indices = np.where(Etotal == Emax)[0]
     t_0 = timestamp[t_0_indices[0]] if len(t_0_indices) > 0 else None
 
-    # for postprocessing: 
-    # shift pulse to 800ns
-    # shift_timestamp = t_pre - t_0
-    # timestamp = timestamp + shift_timestamp
+    # shift pulse to 800ns by padding the traces
+    padding_before = t_pre - t_0  # how much padding needed before the pulse
+
+    # update the traces so that the peaks are always at 800ns
+    trace_x = np.pad(trace_x, (padding_before, 0), 'constant')
+    trace_y = np.pad(trace_y, (padding_before, 0), 'constant')
+    trace_z = np.pad(trace_z, (padding_before, 0), 'constant')
+
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
