@@ -50,16 +50,10 @@ def manage_args():
         # type=argparse.FileType("r"),
     )
     parser.add_argument(
-        "--no_noise",
+        "--no_filter",
         action="store_false",
         default=True,
-        help="don't add galactic noise.",
-    )
-    parser.add_argument(
-        "--filter",
-        action="store_false",
-        default=True,
-        help="don't add the filter.",
+        help="remove the filter on the GRAND bandwidth. (50-200Mhz, band-pass elliptic causal filter)",
     )
     parser.add_argument(
         "-o",
@@ -86,22 +80,22 @@ def manage_args():
         help="Fix the random seed to reproduce same galactic noise, must be positive integer",
     )
     parser.add_argument(
-        "--lst",
-        type=check_float_day_hour,
-        default=18.0,
-        help="lst for Local Sideral Time, galactic noise is variable with LST and maximal for 18h for the EW arm.",
+        "--add_noise_uVm",
+        type=float,
+        default=0,
+        help="level of gaussian noise (uv/m) to add to the trace before filtering",
     )
     parser.add_argument(
-        "--padding_factor",
+        "--add_jitter_ns",
         type=float,
-        default=1.0,
-        help="Increase size of signal with zero padding, with 1.2 the size is increased of 20%%. ",
+        default=0,
+        help="level of gaussian jitter (ns) to add to the trigger times",
     )
     parser.add_argument(
         "--target_duration_us",
         type=float,
         default=0,
-        help="Adujust (and override) padding factor in order to get a signal of the given duration, in us",
+        help="Adjust (and override) padding factor in order to get a signal of the given duration, in us",
     )    
     parser.add_argument(
         "--target_sampling_rate_mhz",
@@ -111,23 +105,6 @@ def manage_args():
     )      
     # retrieve argument
     return parser.parse_args()
-
-
-def get_time_samples(tefield,nb_du,sig_size): #note that gets the time from t0, you have to substract t_pre to get the actual time
-    """
-    Define time sample in ns for the duration of the trace
-    t_samples.shape  = (nb_du, sig_size)
-    t_start_ns.shape = (nb_du,)
-    """
-    t_start_ns = np.asarray(tefield.du_nanoseconds)[...,np.newaxis]   # shape = (nb_du, 1)
-    t_samples = (
-        np.outer(
-            dt_ns * np.ones(nb_du), np.arange(0, sig_size, dtype=np.float64)
-            ) + t_start_ns )     
-    logger.debug(f"shape du_nanoseconds and t_samples =  {t_start_ns.shape}, {t_samples.shape}")
-
-    return t_samples
-
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     """
@@ -140,9 +117,9 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     dt_s      = 1e-6 / f_samp_mhz
     fast_size = sf.next_fast_len(int(padding_factor * sig_size + 0.5))
     # ToDo: this function (or something higher) should properly handle different time bin for each trace
-    freqs_mhz = sf.rfftfreq(fast_size, dt_s[0]) * 1e-6
-    #print(f"padding_factor {padding_factor} sig_size {sig_size} ({padding_factor * sig_size +0.5}) fast size {fast_size} freqs_mhz size {len(freqs_mhz)}")
-    return fast_size, freqs_mhz
+    fast_freqs_mhz = sf.rfftfreq(fast_size, dt_s[0]) * 1e-6
+    #print(f"padding_factor {padding_factor} sig_size {sig_size} ({padding_factor * sig_size +0.5}) fast size {fast_size} fast_freqs_mhz size {len(fast_freqs_mhz)}")
+    return fast_size, fast_freqs_mhz
 
 
 # Function to depict magnitude 
@@ -239,6 +216,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt    
 
     ################# Manage logger and input arguments ######################################
+    PLOT=False #enable/disable plots when running.
     
     logger = mlg.get_logger_for_script(__name__)
     args = manage_args()
@@ -251,24 +229,33 @@ if __name__ == "__main__":
     if args.out_directory is None:
         args.out_directory = args.directory
 
-    seed = None if args.seed==-1 else args.seed
+    seed = args.seed
     logger.info(f"seed used for random number generator is {seed}.")
 
-    no_noise = args.no_noise
-    filter = args.filter
-    f_output=args.out_file
-    output_directory=args.out_directory
+    noise = args.add_noise_uVm
+    assert noise >=0    
+    if(noise>0):
+      logger.info(f"We are going to apply gaussian noise of {noise} uV/m.")   
+ 
+    jitter= args.add_jitter_ns
+    assert jitter >=0
+    if(jitter>0):
+      logger.info(f"We are going to apply a gaussian time jitter of {jitter} ns")   
+ 
+ 
+ 
     padding_factor=1
-
+    assert padding_factor >=1
     target_sampling_rate_mhz = args.target_sampling_rate_mhz     
     assert  target_sampling_rate_mhz >= 0
-
     target_duration_us = args.target_duration_us       # if different from 0, will adjust padding factor to get a trace of this lenght in us        
     assert target_duration_us >= 0
-
+    
+    filter = args.no_filter
+    f_output=args.out_file
+    output_directory=args.out_directory
     #############################################################################################
-
-
+    #############################################################################################
     #Open file
     d_input = groot.DataDirectory(args.directory)
     
@@ -302,8 +289,10 @@ if __name__ == "__main__":
       message = "There are no events in the file! Exiting."
       logger.error(message)
 
-    previous_run=None
-    
+    ####################################################################################
+    # start looping over the events
+    ####################################################################################
+    previous_run=None    
     for event_idx in range(nb_events):
        
        event_number = events_list[event_idx][0]
@@ -314,11 +303,10 @@ if __name__ == "__main__":
        
        tefield.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
        tshower.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
-       if previous_run != run_number:                      # load only for new run.
+       if previous_run != run_number:                        # load only for new run.
             trun.get_run(run_number)                         # update run info to get site latitude and longitude.
             previous_run = run_number
-       
-       
+              
         # stack efield traces
        trace_shape = np.asarray(tefield.trace).shape  # (nb_du, 3, tbins of a trace)
        du_id = np.asarray(tefield.du_id)         # used for printing info and saving in voltage tree.
@@ -327,157 +315,208 @@ if __name__ == "__main__":
        sig_size = trace_shape[-1]
        traces = np.asarray(tefield.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
 
-       
-       
-       
+                    
        dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
-       f_samp_mhz = 1e3/dt_ns                                 # MHz                                             #MATIAS: this gets casted too!
-       # comupte time samples in ns for all antennas in event with index event_idx.
-       time_samples = get_time_samples(tefield,nb_du,sig_size)  # t_samples.shape = (nb_du, sig_size)
-
-       target_sampling_rate_mhz = args.target_sampling_rate_mhz     
-       target_duration_us = args.target_duration_us           # if different from 0, will adjust padding factor to get a trace of this lenght in us        
+       f_samp_mhz = 1e3/dt_ns                                 # MHz                                             #MATIAS: this gets casted too!      
        
+       #i recover the original values becouse this variables are rewriten (poor programing here on my side)
+       target_sampling_rate_mhz = args.target_sampling_rate_mhz     
+       target_duration_us = args.target_duration_us           # if different from 0, will adjust padding factor to get a trace of this lenght in us 
+              
        if(target_duration_us>0):     
           target_lenght= int(target_duration_us*f_samp_mhz[0]) 
           padding_factor=target_lenght/sig_size 
-          logger.debug(f"padding factor adjusted to {padding_factor} to reach a duration of {target_duration_us} us, {f_samp_mhz[0]} , {target_lenght}")                   
+          logger.debug(f"padding factor adjusted to {padding_factor} to reach a duration of {target_duration_us} us at {f_samp_mhz[0]} Mhz -> {target_lenght} samples")                   
        else:
           target_lenght=int(padding_factor * sig_size + 0.5) #add 0.5 to avoid any rounding error for the int conversion
           target_duration_us = target_lenght/f_samp_mhz[0]
-       
-       print(padding_factor)   
+ 
        assert padding_factor >= 1  
 
 
-       # common frequencies for all processing in Fourier domain.
-       fft_size, freqs_mhz = get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor)
-
+       # common frequencies for all processing in Fourier domain. Fourier transform algorithms work better if the lenght of the trace is a multiple of 2,3 or 5
+       fast_fft_size, fast_freqs_mhz = get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor)
        
-       logger.info(f"Electric field lenght is {sig_size} samples at {f_samp_mhz[0]}, spanning {sig_size/f_samp_mhz[0]} us.")
-       logger.info(f"With a padding factor of {padding_factor} we will take it to {target_lenght} samples, spanning {target_lenght/f_samp_mhz[0]} us.")
-       logger.info(f"However, optimal number of frequency bins to do a fast fft is {len(freqs_mhz)} giving traces of {fft_size} samples.")
-       logger.info(f"With this we will obtain traces spanning {fft_size/f_samp_mhz[0]} us, that we will then truncate if needed to get the requested trace duration.")       
+       logger.debug(f"Electric field lenght is {sig_size} samples at {f_samp_mhz[0]}Mhz, spanning {sig_size/f_samp_mhz[0]} us.")
+       logger.debug(f"Applying a padding factor of {padding_factor} we will take it to {target_lenght} samples, spanning {target_lenght/f_samp_mhz[0]} us.")
+       logger.debug(f"The optimal number of frequency bins to do a fast fft is {len(fast_freqs_mhz)} giving traces of {fast_fft_size} samples.")
+       logger.debug(f"With this we will obtain traces spanning {fast_fft_size/f_samp_mhz[0]} us, that we will then truncate if needed to get the requested trace duration.")
+              
        
        # container to collect computed Voc and the final voltage in time domain for one event.
-       vout = np.zeros((trace_shape[0], trace_shape[1], fft_size), dtype=float) # time domain      
-       vout_f = np.zeros((trace_shape[0], trace_shape[1], len(freqs_mhz)), dtype=np.complex64) # frequency domain
+       vout = np.zeros((trace_shape[0], trace_shape[1], fast_fft_size), dtype=float) # time domain      
+       vout_f = np.zeros((trace_shape[0], trace_shape[1], len(fast_freqs_mhz)), dtype=np.complex64) # frequency domain
 
+       #####################################################
+       # Prepare the filter.  The idea was to filter in the frequency domain, buti cant get it working properly for now, so i do it in the time domain
+       ######################################################
+       if(filter):
+           # Sampling frequency in Hz
+           Fs = f_samp_mhz[0]*1e6             
+           # Pass band frequency in Hz
+           fp = np.array([50e6, 200e6])         
+           # Stop band frequency in Hz
+           fs = np.array([30e6, 250e6])         
+           # Pass band ripple in dB
+           Ap = 0.4         
+           # Stop band attenuation in dB
+           As = 50             
+           # Compute pass band and stop band edge frequencies w.r.t. Nyquist rate
+           # Normalized passband edge frequencies 
+           wp = fp/(Fs/2)
+           # Normalized stopband edge frequencies
+           ws = fs/(Fs/2)
+           # Compute order of the elliptic filter 
+           N, wc = ss.ellipord(wp, ws, Ap, As)
+           # Design digital elliptic bandpass filter 
+           sos = ss.ellip(N, Ap, As, wc, 'bandpass',output="sos")
+           #plot filter response
+           if(PLOT):
+            b, a = ss.ellip(N, Ap, As, wc, 'bandpass')
+            mfreqz(b, a, Fs)
+            impz(b, a)
+           logger.info(f"We are going to apply a band-passs elliptic filter of order {N} between {fp[0]/1e6} and {fp[1]/1e6} Mhz.")
 
-       #here it would go the filtering. The idea was to filter in the frequency domain, buti cant get it working properly for now, so i do it in the time domain
-       # Sampling frequency in Hz
-       Fs = f_samp_mhz[0]*1e6             
-       # Pass band frequency in Hz
-       fp = np.array([50e6, 200e6])         
-       # Stop band frequency in Hz
-       fs = np.array([30e6, 250e6])         
-       # Pass band ripple in dB
-       Ap = 0.4         
-       # Stop band attenuation in dB
-       As = 50
-         
-       # Compute pass band and stop band edge frequencies w.r.t. Nyquist rate
-       # Normalized passband edge frequencies 
-       wp = fp/(Fs/2)
-       # Normalized stopband edge frequencies
-       ws = fs/(Fs/2)
-         
-       # Compute order of the elliptic filter 
-       # using signal.ellipord
-       N, wc = ss.ellipord(wp, ws, Ap, As)
-         
-       # Print the order of the filter and cutoff frequencies
-       print('Order of the filter=', N)
-       print('Cut-off frequency=', wc,fs,Fs)
-         
-       # Design digital elliptic bandpass filter 
-       # using signal.ellip() function
-       sos = ss.ellip(N, Ap, As, wc, 'bandpass',output="sos")
-       #plot filter response
-       #b, a = ss.ellip(N, Ap, As, wc, 'bandpass')
-       #mfreqz(b, a, Fs)
-       #impz(b, a)
+      
+       # we initialize the random seed 
+       if(seed>0):             
+         np.random.seed(seed*(event_idx+1))
        
-       np.random.seed(seed)
        for du_idx in range(nb_du):
        
-            #this is  to use the fft capabailites of the Efield object in grandlib, but actually i could just do the fft myself here. Its more code.
-            e_trace = coord.CartesianRepresentation(
-            x=ss.sosfilt(sos,traces[du_idx, 0]+np.random.normal(0,22,size=2*np.shape(traces[du_idx,0]))),
-            y=ss.sosfilt(sos,traces[du_idx, 1]+np.random.normal(0,22,size=2*np.shape(traces[du_idx,1]))),
-            z=ss.sosfilt(sos,traces[du_idx, 2]+np.random.normal(0,22,size=2*np.shape(traces[du_idx,2]))),
-            )
+            #MATIAS: TODO:Each of this steps should be made a capability of the Efield trace class . Im sure this can be done withouth the loop.
+            #this could also be done all in the same line, but for clarity i will put it step by step
             
-            if(event_idx==0 and du_idx==6):
-                plt.plot(traces[du_idx, 0],label="original")
-                plt.plot(e_trace[0],label="noise+filtered")
-                #plt.plot(time_samples[du_idx],traces[du_idx, 0]+np.random.normal(0,22,size=np.shape(traces[du_idx,0])),label="original + noise")
-                
+            #extend the trace to the fast fft size
+            tracex=np.pad(traces[du_idx,0],(0,fast_fft_size-len(traces[du_idx,0])),'constant')
+            tracey=np.pad(traces[du_idx,1],(0,fast_fft_size-len(traces[du_idx,1])),'constant')
+            tracez=np.pad(traces[du_idx,2],(0,fast_fft_size-len(traces[du_idx,1])),'constant')
+
+            if(event_idx==0 and du_idx==6 and PLOT):
+              plt.plot(traces[du_idx, 0],label="original",linewidth=5)
+              plt.plot(tracex,label="paded")
+
+            #add noise
+            if(noise>0):
+                tracex=tracex + np.random.normal(0,noise,size=np.shape(tracex))
+                tracey=tracey + np.random.normal(0,noise,size=np.shape(tracey))
+                tracez=tracez + np.random.normal(0,noise,size=np.shape(tracez))
+
+            if(event_idx==0 and du_idx==6 and PLOT):
+              plt.plot(tracex,label="noised")
             
-        
-            efield_idx = ElectricField(time_samples[du_idx] * 1e-9, e_trace)
-            fft_e = efield_idx.get_fft(fft_size)
+            #filter
+            if(filter):
+                tracex=ss.sosfilt(sos,tracex)
+                tracey=ss.sosfilt(sos,tracey)
+                tracez=ss.sosfilt(sos,tracez)
+
+                if(event_idx==0 and du_idx==6):
+                  plt.plot(tracex,label="filtered",linewidth=3)
+
+            
+            #now, we compute the fourier transforms to use them in the resampling
+            e_trace = coord.CartesianRepresentation( x=tracex, y=tracey, z=tracez,)
+
+            efield_idx = ElectricField(np.arange(0,len(e_trace.x)) * 1e-9, e_trace)
+            fft_e = efield_idx.get_fft(fast_fft_size)
             
             vout_f[du_idx, 0]=fft_e[0]
             vout_f[du_idx, 1]=fft_e[1]
             vout_f[du_idx, 2]=fft_e[2]
+            
+            
+            """
+            #This is another way of cutting and decimating the trace. However, np.decimate aplies a filter and the result is not exactly the same.
+            #this is just to test if np.decimate does a good job  
+            #cut to the target lenght
+                        
+            if(target_lenght<len(tracex)):
+              tracex=tracex[0:target_lenght]
+            if(target_lenght<len(tracey)):
+              tracey=tracey[0:target_lenght]
+            if(target_lenght<len(tracez)):
+              tracez=tracez[0:target_lenght]
+            
+            #if(event_idx==0 and du_idx==6):  
+              #plt.plot(tracex,label="shortened")
 
-   
+            #decimate
+            ratio=(f_samp_mhz[0]/target_sampling_rate_mhz) 
+            print(ratio)
+            assert ratio%1==0
+            
+            tracex=ss.decimate(tracex,int(ratio))
+            tracey=ss.decimate(tracey,int(ratio))
+            tracez=ss.decimate(tracez,int(ratio))
+            
+            if(event_idx==0 and du_idx==6):
+              plt.scatter(np.arange(0,len(tracex))*ratio,tracex,label="decimated")
+            """      
 
        #here we do the resampling. #MATIAS: TODO This should be a funtion part of ElectricField class. We should be able to call ElectricField.Resample(new_sampling_rate) 
        if(target_sampling_rate_mhz>0): #if we need to resample
             #compute new number of points
             ratio=(target_sampling_rate_mhz/f_samp_mhz[0])        
-            m=int(fft_size*ratio)
+            m=int(fast_fft_size*ratio)
             #now, since we resampled,  we have a new target_lenght
             target_lenght= int(target_duration_us*target_sampling_rate_mhz)                                
-            logger.info(f"resampling the efield from {f_samp_mhz[0]} to {target_sampling_rate_mhz} MHz, new trace lenght is {target_lenght} samples")                         
-            #we use fourier interpolation, becouse its easy!
-            vout = sf.irfft(vout_f, m)*ratio #renormalize the amplitudes
+            logger.info(f"resampling the efield from {f_samp_mhz[0]} to {target_sampling_rate_mhz} MHz, new trace lenght is {target_lenght} samples")                                     
             #MATIAS: TODO: now, we are missing a place to store the new sampling rate!
-            if(event_idx==0):
-              plt.scatter(np.arange(0,target_lenght)/ratio,vout[6][0],label="sampled")
-            
+       else:
+          m=fast_fft_size
+          ratio=1
+       
+       #to resample we use fourier interpolation, becouse it seems to be better than scipy.decimate (points are closer to the original trace)
+       vout = sf.irfft(vout_f, m)*ratio #renormalize the amplitudes     
+       if(event_idx==0):
+         plt.scatter(np.arange(0,len(vout[6][0]))/ratio,vout[6][0],label="sampled",c="red")
+
             
        #here we do the truncation #MATIAS: TODO This should be a funtion part of ElectricField class. We should be able to call ElectricField.Resize(new_size)          
        if(target_lenght<np.shape(vout)[2]):           
-            logger.info(f"truncating output to {target_lenght} samples") 
-            vout=vout[..., :target_lenght] 
-            if(event_idx==0):
-              plt.scatter(np.range(0,target_lenght)/ratio,vout[6][0],label="sampled and shortened")            
-      
-       plt.show()
+            logger.debug(f"truncating output to {target_lenght} samples") 
+            vout=vout[..., :target_lenght]
+            if(event_idx==0 and PLOT):
+               plt.scatter(np.arange(0,len(vout[6][0]))/ratio,vout[6][0],label="sampled and shortened",c="green")  
        
-
+       if(event_idx==0 and PLOT):           
+         plt.legend()
+         plt.show() 
+       
        #here i shuffle the time
        du_nanoseconds=np.asarray(tefield.du_nanoseconds)
        du_seconds=np.asarray(tefield.du_seconds)
-       np.random.seed(seed)
-       delays=np.round(np.random.normal(0,5000,size=np.shape(du_nanoseconds)).astype(int))
-       du_nanoseconds=du_nanoseconds+delays
-       #print("delays",delays)
-       #print("delay test",du_nanoseconds-np.asarray(tefield.du_nanoseconds))
-       #print("before nano",du_nanoseconds)
-       #print("before sec",du_seconds)
-       #now we have to roll the seconds
-       maskplus= du_nanoseconds >=1e9
-       maskminus= du_nanoseconds <0
-       du_nanoseconds[maskplus]-=int(1e9)
-       du_seconds[maskplus]+=int(1)   
-       du_nanoseconds[maskminus]+=int(1e9)
-       du_seconds[maskminus]-=int(1)     
-       #print("after",du_nanoseconds)
-       #print("after",du_seconds)
+       
+       if(jitter>0):
+           logger.info(f"adding {jitter} ns of time jitter to the trigger times.")     
+           #reinitialize the random number
+           if(seed>0): 
+             np.random.seed(seed*(event_idx+1))
+           delays=np.round(np.random.normal(0,jitter,size=np.shape(du_nanoseconds)).astype(int))
+           du_nanoseconds=du_nanoseconds+delays
 
-       #here we save to a file
-       #MATIAS: TODO: There shoudl be a way of coping all the field from tefield, and then modifing only what i want 
+           #now we have to roll the seconds
+           maskplus= du_nanoseconds >=1e9
+           maskminus= du_nanoseconds <0
+           du_nanoseconds[maskplus]-=int(1e9)
+           du_seconds[maskplus]+=int(1)   
+           du_nanoseconds[maskminus]+=int(1e9)
+           du_seconds[maskminus]-=int(1)     
+           
+           if(PLOT):
+             plt.plot(delays)
+             plt.show()
 
+       #Finally we save to a file
+       #MATIAS: TODO: There shoudl be a way of coping all the field from tefield, and then modifing only what i want. There is, but it blows up in segfault 
+       #out_tefield.copy_contents(tefield)
+       
        out_tefield.run_number = tefield.run_number
        out_tefield.event_number = tefield.event_number
        out_tefield.du_id = tefield.du_id
        
-       out_tefield.trace=vout
-              
+       #out_tefield.trace=vout              
        out_tefield.du_nanoseconds=du_nanoseconds
        out_tefield.du_seconds=du_seconds
 
