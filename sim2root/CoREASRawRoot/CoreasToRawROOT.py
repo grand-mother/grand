@@ -145,7 +145,8 @@ def CoreasToRawRoot(file, simID=None):
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
   else:
-    zenith = read_params(inp_input, "THETAP")
+    #theta_GRAND = 180-theta_Corsika
+    zenith = 180 - read_params(inp_input, "THETAP")
     azimuth = read_params(inp_input, "PHIP")
 
     Energy = read_params(inp_input, "ERANGE") # in GeV
