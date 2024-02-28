@@ -31,7 +31,7 @@ TO RUN:
 '''
 
 
-#####-#####-#####-FUNCTIONS-#####-######-######
+###-###-###-###-###-###-###- FUNCTIONS -###-###-###-###-###-###-###
 
 def get_noise_trace(data_dir,
                     n_traces,
@@ -162,12 +162,12 @@ def manage_args():
     return parser.parse_args()
 
 
-#####-#####-#####-MAIN SCRIPT-#####-######-######
+###-###-###-###-###-###-###- MAIN SCRIPT -###-###-###-###-###-###-###
 
 if __name__ == '__main__':
     logger = manage_log.get_logger_for_script(__file__)
 
-    # Get parser arguments
+    #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
     f_input   = args.in_file
     f_output  = args.out_file
@@ -180,23 +180,23 @@ if __name__ == '__main__':
 
     manage_log.create_output_for_logger(args.verbose,log_stdout=True)
     logger.info( manage_log.string_begin_script() )
-    # ==========================================================================
+    #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
     logger.info(f'Converting voltage traces from {f_input} to ADC traces')
 
-    # Load TVoltage
+    #-#-#- Load TVoltage -#-#-#
     df       = rt.DataFile(f_input)
     tvoltage = df.tvoltage
     entries  = tvoltage.get_number_of_entries()
 
-    # Prepare TADC; remove existing file if it already exists
+    #-#-#- Prepare TADC -#-#-#
     if os.path.exists(f_output):
-        logger.info(f"Overwriting {f_output}")
+        logger.info(f"Overwriting {f_output}") # remove existing file if it already exists
         os.remove(f_output)
         time.sleep(1)
     tadc = rt.TADC(f_output)
     
-    # Initiate ADC object and RNG
+    #-#-#- Initiate ADC object and RNG -#-#-#
     adc = ADC()
     rng = np.random.default_rng(args.seed)
     if noise_dir is not None:
@@ -204,24 +204,24 @@ if __name__ == '__main__':
         logger.info(f'Adding random measured noise traces from data files in {noise_dir}')
     
 
-    # Perform the conversion for all entries in TVoltage file
+    #-#-#- Perform the conversion for all entries in TVoltage file -#-#-#
     for entry in range(entries):
         logger.info(f'Converting voltage to ADC for entry {entry+1}/{entries}')
         tvoltage.get_entry(entry)
         voltage_trace = np.array(tvoltage.trace)
 
-        # Get noise trace if requested
+        #-#-#- Get noise trace if requested -#-#-#
         if noise_dir is not None:
             noise_trace = get_noise_trace(noise_dir,
                                           voltage_trace.shape[0],
                                           n_samples=voltage_trace.shape[2],
                                           rng=rng)
 
-        # Convert voltage trace to adc trace
+        #-#-#- Convert voltage trace to adc trace -#-#-#
         adc_trace = adc.process(voltage_trace,
                                 noise_trace=noise_trace)
 
-        # Save adc trace to TADC file
+        #-#-#- Save adc trace to TADC file -#-#-#
         tadc.copy_contents(tvoltage)
         tadc.trace_ch = adc_trace
         tadc.fill()
@@ -230,5 +230,5 @@ if __name__ == '__main__':
 
     logger.info(f'Succesfully saved TADC to {f_output}')
 
-    # ==========================================================================
+    #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
     logger.info( manage_log.string_end_script() )
