@@ -1,18 +1,4 @@
 #! /usr/bin/env python3
-
-import glob
-import os
-import time
-import argparse
-import logging
-
-import numpy as np
-
-from grand import ADC, manage_log
-import grand.dataio.root_trees as rt
-
-logger = logging.getLogger(__name__)
-
 '''
 Script to convert voltage traces to ADC traces.
 Its main purpose is to create simulation files that resemble measured data.
@@ -29,6 +15,21 @@ NOTE: if noise is added from measured data, the input voltage trace should NOT i
 TO RUN:
     python convert_voltage2adc.py <voltage.root> -o <adc.root> --add_noise_from <noise_dir> -s <seed>
 '''
+
+###-###-###-###-###-###-###- IMPORTS -###-###-###-###-###-###-###
+
+import glob
+import os
+import time
+import argparse
+import logging
+
+import numpy as np
+
+from grand import ADC, manage_log
+import grand.dataio.root_trees as rt
+
+logger = logging.getLogger(__name__)
 
 
 ###-###-###-###-###-###-###- FUNCTIONS -###-###-###-###-###-###-###
