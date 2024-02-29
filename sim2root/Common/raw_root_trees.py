@@ -88,6 +88,13 @@ class RawShowerTree(MotherEventTree):
 
     ### Simulation site name TODO:standardize
     _site: StdString = StdString("nosite")
+    ### Simulation site latitude (deg)
+    _site_lat = lambda: np.zeros(1, np.float32)
+    ### Simulation site longitude (deg)
+    _site_lon = lambda: np.zeros(1, np.float32)
+    ### Simulation site altitude (deg)
+    _site_alt = lambda: np.zeros(1, np.float32)
+    
         
     ### Atmospheric model name TODO:standardize
     _atmos_model: StdString = StdString("")
