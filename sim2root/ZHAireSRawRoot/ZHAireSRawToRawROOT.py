@@ -280,6 +280,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 
         
         #METAZHAireS (I propose to pass this to a separate tree and section) @TODO: This is repeated in RawMeta, and should be only there.
+        EventParametersFile= InputFolder+"/"+TaskName+".EventParameters"
+        
+        CorePosition=EParGen.GetCorePositionFromParametersFile(EventParametersFile)
+
         RawShower.shower_core_pos=np.array(CorePosition) # shower core position 
 
         #Fill the tables
@@ -834,7 +838,11 @@ if __name__ == '__main__':
         InputFolder=sys.argv[1]
         mode=sys.argv[2]
         RunID=int(sys.argv[3])
-        EventID=int(sys.argv[4])
+        try:
+         EventID=int(sys.argv[4])
+        except:
+         EventID=sys.argv[4]  
+        
         OutputFileName=sys.argv[5]
 	    
     elif len(sys.argv)==2:

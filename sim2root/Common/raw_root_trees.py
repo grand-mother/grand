@@ -89,12 +89,11 @@ class RawShowerTree(MotherEventTree):
     ### Simulation site name TODO:standardize
     _site: StdString = StdString("nosite")
     ### Simulation site latitude (deg)
-    _site_lat = lambda: np.zeros(1, np.float32)
+    _site_lat : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ### Simulation site longitude (deg)
-    _site_lon = lambda: np.zeros(1, np.float32)
+    _site_lon : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ### Simulation site altitude (deg)
-    _site_alt = lambda: np.zeros(1, np.float32)
-    
+    _site_alt : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
         
     ### Atmospheric model name TODO:standardize
     _atmos_model: StdString = StdString("")
@@ -448,13 +447,22 @@ class RawShowerTree(MotherEventTree):
         self._site.string.assign(value)
 
 
-    @property
-    def site_long(self):
-        return self._site_long[0]
 
-    @site_long.setter
-    def site_long(self, value):
-        self._site_long[0] = value
+    @property
+    def site_alt(self):
+        return self._site_alt[0]
+
+    @site_alt.setter
+    def site_alt(self, value):
+        self._site_alt[0] = value
+
+    @property
+    def site_lon(self):
+        return self._site_lon[0]
+
+    @site_lon.setter
+    def site_lon(self, value):
+        self._site_lon[0] = value
 
 
     @property

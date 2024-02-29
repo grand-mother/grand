@@ -46,6 +46,7 @@
     * [prim\_inj\_alt\_shc](#raw_root_trees.RawShowerTree.primary_inj_alt_shc)
     * [prim\_inj\_dir\_shc](#raw_root_trees.RawShowerTree.primary_inj_dir_shc)
     * [site](#raw_root_trees.RawShowerTree.site)
+    * [site_alt](#raw_root_trees.RawShowerTree.site_alt)
     * [site_lon](#raw_root_trees.RawShowerTree.site_lon)
     * [site_lat](#raw_root_trees.RawShowerTree.site_lat)
     * [atmos\_model](#raw_root_trees.RawShowerTree.atmos_model)
