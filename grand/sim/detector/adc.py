@@ -2,7 +2,9 @@
 Master module for the ADC in GRAND
 """
 import numpy as np
+import logging
 
+logger = logging.getLogger(__name__)
 
 class ADC:
     '''
@@ -39,7 +41,7 @@ class ADC:
         `adc_trace`
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
-        description : The digitized array of voltage traces, with shape (N_du,3,N_samples)
+        description : The digitized array of ADC traces, with shape (N_du,3,N_samples)
         '''
         
         # Convert voltage to ADC
@@ -115,6 +117,7 @@ class ADC:
             assert noise_trace.shape == adc_trace.shape
             assert noise_trace.dtype == adc_trace.dtype
             adc_trace += noise_trace
+            logger.info('Noise added to ADC trace')
 
         # Make sure the saturation occurs AFTER adding noise
         adc_trace = self._saturate(adc_trace)
