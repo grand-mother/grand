@@ -404,6 +404,27 @@ if __name__ == "__main__":
 
             if(event_idx==0 and du_idx==6 and PLOT):
               plt.plot(tracex,label="noised")
+
+           # test squarefilter for tim, this code can be removed if you are reading this after 2025
+           # if(event_idx==0 and du_idx==6 and PLOT):
+           #   #now, we compute the fourier transforms to use them in the resampling
+           #   e_trace = coord.CartesianRepresentation( x=tracex, y=tracey, z=tracez,)
+           # 
+           #   efield_idx = ElectricField(np.arange(0,len(e_trace.x)) * 1e-9, e_trace)
+           #   fft_e = efield_idx.get_fft(fast_fft_size)
+           # 
+           #   vout_f[du_idx, 0]=fft_e[0]
+           #   vout_f[du_idx, 1]=fft_e[1]
+           #
+           #   mask=(fast_freqs_mhz>50) & (fast_freqs_mhz<200)
+           #   vout_square=vout_f
+           #   vout_square[:,:,~mask]=0
+           #
+           #   vout_f[du_idx, 2]=fft_e[2]
+           # 
+           #   vout_square = sf.irfft(vout_square) 
+           #      
+           #   plt.plot(vout_square[6][0],label="squarefilter") 
             
             #filter
             if(filter):
@@ -428,7 +449,7 @@ if __name__ == "__main__":
             
             """
             #This is another way of cutting and decimating the trace. However, np.decimate aplies a filter and the result is not exactly the same.
-            #this is just to test if np.decimate does a good job  
+            #this is just to test if np.decimate does a good job. You can remove this code if you are reading this in 2025  
             #cut to the target lenght
                         
             if(target_lenght<len(tracex)):
@@ -466,9 +487,10 @@ if __name__ == "__main__":
        else:
           m=fast_fft_size
           ratio=1
-       
+
        #to resample we use fourier interpolation, becouse it seems to be better than scipy.decimate (points are closer to the original trace)
-       vout = sf.irfft(vout_f, m)*ratio #renormalize the amplitudes     
+       vout = sf.irfft(vout_f, m)*ratio #renormalize the amplitudes
+       
        if(event_idx==0):
          plt.scatter(np.arange(0,len(vout[6][0]))/ratio,vout[6][0],label="sampled",c="red")
 

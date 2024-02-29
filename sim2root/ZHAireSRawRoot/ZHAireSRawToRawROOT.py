@@ -195,7 +195,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         #These might be "run parameters"
         Lat,Long=AiresInfo.GetLatLongFromSry(sryfile[0])                                               # 
         GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #
-        GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])                                                     #   
+        GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])                                        #   
         ShowerSimulator=AiresInfo.GetAiresVersionFromSry(sryfile[0])                                   # 
         ShowerSimulator="Aires "+ShowerSimulator                                                       #
   
@@ -247,6 +247,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         sideb=sidec*np.sin(AngleB)/np.sin(AngleC)       
         RawShower.primary_inj_point_shc = [(sideb*np.sin(np.deg2rad(Zenith))*np.cos(np.deg2rad(Azimuth)),sideb*np.sin(np.deg2rad(Zenith))*np.sin(np.deg2rad(Azimuth)),sideb*np.cos(np.deg2rad(Zenith)))]  #TODO: test multiple primaries        
         RawShower.site = str(Site) #TODO: Standarize
+        RawShower.site_alt=GroundAltitude   #TODO: For now this will do, but we will have a problem when sims take into account round earth influence on zenith, and maybe topography.
+        RawShower.site_lat=Lat              #TODO: For now this will do, but we will have a problem when sims take into account very big sites (when the simulation magnetic field depends on core position for example).
+        RawShower.site_lon=Long             #TODO: For now this will do, but we will have a problem when sims take into account very big sites.
+        
         RawShower.atmos_model = str(AtmosphericModel) #TODO: Standarize
         #TODO:atmos_model_param  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
         RawShower.atmos_density.append(Atmosdensity)
@@ -275,8 +279,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         RawShower.lowe_cut_nucleon = NucleonEnergyCut              
 
         
-        #METAZHAireS (I propose to pass this to a separate tree and section
-        #RawShower.shower_core_pos=np.array(CorePosition) # shower core position 
+        #METAZHAireS (I propose to pass this to a separate tree and section) @TODO: This is repeated in RawMeta, and should be only there.
+        RawShower.shower_core_pos=np.array(CorePosition) # shower core position 
 
         #Fill the tables
         table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=False,Precision="Simple",TaskName=TaskName)               
