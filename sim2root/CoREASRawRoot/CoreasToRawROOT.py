@@ -408,11 +408,10 @@ def CoreasToRawRoot(file, simID=None):
     trace_x = efield[:,1]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
     trace_y = efield[:,2]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
     trace_z = efield[:,3]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
-    
 
     # define time params:
     t_length = len(timestamp)
-    t_pre  = 800 * 10**9 #ns 
+    t_pre  = 800#ns 
     t_post = t_length - t_pre
 
     # calculate Etotal
@@ -424,14 +423,43 @@ def CoreasToRawRoot(file, simID=None):
     t_0_indices = np.where(Etotal == Emax)[0]
     t_0 = timestamp[t_0_indices[0]] if len(t_0_indices) > 0 else None
 
-    # shift pulse to 800ns by padding the traces
-    padding_before = t_pre - t_0  # how much padding needed before the pulse
+    # determine where to shift the peaks
+    padding_factor = int(t_pre - t_0)
+    if padding_factor <=0: #i.e. t_0 > 800ns, so needs to be shifted to the left
+      print("shifting peak to the left")
+      # Calculate number of elements to cut (positive value)
+      num_elements_to_cut = abs(int(padding_factor / (timestamp[1] - timestamp[0])))
 
-    # update the traces so that the peaks are always at 800ns
-    trace_x = np.pad(trace_x, (padding_before, 0), 'constant')
-    trace_y = np.pad(trace_y, (padding_before, 0), 'constant')
-    trace_z = np.pad(trace_z, (padding_before, 0), 'constant')
+      # Cut the required number of elements from the beginning of arrays
+      timestamp_new = timestamp[num_elements_to_cut:]
+      trace_x_new = trace_x[num_elements_to_cut:]
+      trace_y_new = trace_y[num_elements_to_cut:]
+      trace_z_new = trace_z[num_elements_to_cut:]
 
+    else: # i.e. t_0 < 800ns, so needs to be shifted to the right
+      print("shifting peak to the right")
+      print("padding with zeros")
+      # Create an array of zeros for padding
+      padding_zeros = np.zeros(padding_factor)
+
+      # Append zeros and original data for both timestamp and trace_x
+      timestamp_new = np.append(padding_zeros, timestamp)
+      trace_x_new = np.append(padding_zeros, trace_x)
+      trace_y_new = np.append(padding_zeros, trace_y)
+      trace_z_new = np.append(padding_zeros, trace_z)
+
+      # Print the lengths and data for verification
+      print("Original lengths:", len(timestamp), len(trace_x))
+      print("Padded lengths:", len(timestamp_new), len(trace_x_new))
+      
+      # updating values for future use
+      timestamp = timestamp_new
+      trace_x = trace_x_new
+      trace_y = trace_y_new
+      trace_z = trace_z_new
+
+    data = np.column_stack((timestamp, trace_x, trace_y, trace_z))  # Combine data into a 2D array
+    np.savetxt(f"testtrace_{antenna}.csv", data, delimiter=",", header="timestamp,trace_x,trace_y,trace_z")  # Save with headers
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
