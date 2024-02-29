@@ -422,7 +422,6 @@ class RawShowerTree(MotherEventTree):
         self._azimuth[0] = value
 
 
-
     @property
     def zenith(self):
         """Shower zenith TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth"""
@@ -448,6 +447,23 @@ class RawShowerTree(MotherEventTree):
 
         self._site.string.assign(value)
 
+
+    @property
+    def site_long(self):
+        return self._site_long[0]
+
+    @site_long.setter
+    def site_long(self, value):
+        self._site_long[0] = value
+
+
+    @property
+    def site_lat(self):
+        return self._site_lat[0]
+
+    @site_lat.setter
+    def site_lat(self, value):
+        self._site_lat[0] = value
 
 
     @property
