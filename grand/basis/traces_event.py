@@ -515,7 +515,7 @@ class Handling3dTraces:
                 plt.semilogy(freq[2:], pxx_den[2:], self._color[idx_axis], label=axis)
                 # plt.plot(freq[2:] * 1e-6, pxx_den[2:], self._color[idx_axis], label=axis)
         m_title = f"Power spectrum density of {self.type_trace}, DU {self.idx2idt[idx]} (idx={idx})"
-        m_title += f"\nPeriodogram has {self.nperseg} samples, delta freq {freq[1]*1e-6:.2f}MHz"
+        m_title += f"\nPeriodogram has {self.nperseg} samples, delta freq {freq[1]:.2f}MHz"
         plt.title(m_title)
         plt.ylabel(rf"({self.unit_trace})$^2$/Hz")
         plt.xlabel(f"MHz\n{self.name}")
