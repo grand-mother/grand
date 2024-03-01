@@ -145,7 +145,8 @@ def CoreasToRawRoot(file, simID=None):
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
   else:
-    zenith = read_params(inp_input, "THETAP")
+    #theta_GRAND = 180-theta_Corsika
+    zenith = 180 - read_params(inp_input, "THETAP")
     azimuth = read_params(inp_input, "PHIP")
 
     Energy = read_params(inp_input, "ERANGE") # in GeV
@@ -407,11 +408,10 @@ def CoreasToRawRoot(file, simID=None):
     trace_x = efield[:,1]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
     trace_y = efield[:,2]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
     trace_z = efield[:,3]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
-    
 
     # define time params:
     t_length = len(timestamp)
-    t_pre  = 800 * 10**9 #ns 
+    t_pre  = 800#ns 
     t_post = t_length - t_pre
 
     # calculate Etotal
@@ -420,13 +420,42 @@ def CoreasToRawRoot(file, simID=None):
     # calculate t_0
     # we want the pulse max to be at 800, so essentially t_0 = t(Emax)
     Emax = max(Etotal)
+    #! TODO: why is t_0_indices a vector even though I take the [0]?
+    # maybe because of double maximums?
     t_0_indices = np.where(Etotal == Emax)[0]
-    t_0 = timestamp[t_0_indices[0]] if len(t_0_indices) > 0 else None
+    t_0 = timestamp[t_0_indices[0]]
+    shift = (t_0_indices[0] - int(len(Etotal)/2))
+    print("antenna", )
+    print(t_pre, t_0, t_0_indices, shift, len(Etotal))
+    
+    trace_x_new = np.zeros_like(trace_x)
+    trace_y_new = np.zeros_like(trace_y)
+    trace_z_new = np.zeros_like(trace_z)
 
-    # for postprocessing: 
-    # shift pulse to 800ns
-    # shift_timestamp = t_pre - t_0
-    # timestamp = timestamp + shift_timestamp
+
+    if shift > 0:
+      # for positiive shift
+      trace_x_new[0: -shift] = trace_x[shift:]
+      trace_y_new[0: -shift] = trace_y[shift:]
+      trace_z_new[0: -shift] = trace_z[shift:]
+    
+    elif shift < 0:
+      # for negative shift
+      shift = np.abs(shift)
+      trace_x_new[shift:] = trace_x[0:-shift]
+      trace_y_new[shift:] = trace_y[0:-shift]
+      trace_z_new[shift:] = trace_z[0:-shift]
+
+    else:
+      pass
+
+    # updating values for future use
+    trace_x = trace_x_new
+    trace_y = trace_y_new
+    trace_z = trace_z_new
+
+    data = np.column_stack((trace_x, trace_y, trace_z))  # Combine data into a 2D array
+    np.savetxt(f"testtrace_{antenna}.csv", data, delimiter=",", header="trace_x,trace_y,trace_z")  # Save with headers
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
