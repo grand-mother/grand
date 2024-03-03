@@ -25,9 +25,9 @@ clparser.add_argument("-t", "--sim_time", help="The time of the simulation", def
 clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
 clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
 # clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
-clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
-clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
-clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
+clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=None)
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=None)
+clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=None)
 clparser.add_argument("-ru", "--run", help="Run number", default=None)
 clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
 clargs = clparser.parse_args()
@@ -110,7 +110,7 @@ def main():
                 #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
 
                 # Set the origin geoid
-                gt.trun.origin_geoid = get_origin_geoid(clargs)
+                gt.trun.origin_geoid = get_origin_geoid(clargs, trawshower)
 
                 gt.trun.run_number = run_number
                 gt.trunshowersim.run_number = run_number
@@ -533,9 +533,12 @@ def rawmeta2grandroot(trawmeta, gt):
     
 
 ## Get origin geoid
-def get_origin_geoid(clargs):
-    origin_geoid = [clargs.latitude, clargs.longitude, clargs.altitude]
-    return origin_geoid
+def get_origin_geoid(clargs, trawshower):
+    lat = clargs.latitude if clargs.latitude else trawshower.site_lat
+    lon = clargs.longitude if clargs.longitude else trawshower.site_lon
+    alt = clargs.altitude if clargs.altitude else trawshower.site_alt
+
+    return [lat, lon, alt]
 
 # Form the proper output directory name from command line arguments
 def form_directory_name(clargs, date, time, run_number, site):
