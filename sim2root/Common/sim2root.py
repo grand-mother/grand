@@ -54,13 +54,13 @@ def main():
         ext_event_number = int(clargs.start_event)
 
     start_event_number = 0
-
+    end_event_number = 0
     # Namespace for holding output trees
     gt = SimpleNamespace()
 
     # Check if a directory was given as input
     if Path(clargs.file_dir_name[0]).is_dir():
-        file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.RawRoot"))
+        file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.rawroot"))
     else:
         file_list = clargs.file_dir_name
 
@@ -148,15 +148,23 @@ def main():
                 gt.tshowersim.event_number = ext_event_number
                 gt.tefield.event_number = ext_event_number
 
-            # For the first file/iteration, store the event number
+            # store temporarily the first event number
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
+            
+            # Correct the first/last event number for file naming
+            if(gt.tshower.event_number<start_event_number):
+                start_event_number = gt.tshower.event_number
+ 
+            if(gt.tshower.event_number>end_event_number):
+                end_event_number = gt.tshower.event_number
 
             # Fill the event trees
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
-
+        
+        
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
             du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
@@ -202,8 +210,7 @@ def main():
     gt.trun.write()
 
 
-    # Rename the created files to appropriate names
-    end_event_number = gt.tshower.event_number
+    # Rename the created files to appropriate names   
     print("Renaming files to proper file names")
     rename_files(clargs, out_dir_name, start_event_number, end_event_number)
 

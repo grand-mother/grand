@@ -24,7 +24,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matp
 #TODO ASAP: Get Refractivity Model parameters from the sry (unfortunatelly these are not reported in the sry, this will have to wait to the next version of zhaires hopefully after ICRC 2023)
 #Maybe move them to the function call for now, and remove the unused Longitudinal switches?
 
-def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName"): 
+def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=500,ForcedTPost=2000): 
     '''
     This routine will read a ZHAireS simulation located in InputFolder and put it in the Desired OutputFileName. 
     
@@ -38,6 +38,12 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     OutputFileName is where you want to save the RawRootFile. If you select "GRANDConvention" it will attempt to apply the GRAND data storage convention.
     
     [site]_[date]_[time]_[run_number]_[mod]_[extra], taking the data from the sry and its file name, asuming it is extra_*.sry,  
+    
+    ForcedTPre forces the tpre of the trace to be the given number in ns, by adding or 0 or removing bins at the start of the trace when necessary
+    ForcedTPost forces the tpost of the trace to be the given number in ns, by adding or 0 or removing bins at the end of the trace when necessary
+    
+    Note that TPre is -TimeWindowMin from ZHAireS (so its usually positive)
+    
     
     The routine is designed for events simulated with ZHAireS 1.0.30a or later.
     
@@ -442,9 +448,17 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
          
         RawEfield.atmos_refractivity.append(Atmosrefractivity)                                 
+               
+        if ForcedTPre!=0:
+          RawEfield.t_pre = ForcedTPre
+        else:
+          RawEfield.t_pre = -TimeWindowMin                                                           
         
-        RawEfield.t_pre = -TimeWindowMin                                                           
-        RawEfield.t_post = TimeWindowMax                                                          
+        if ForcedTPost!=0:
+          RawEfield.t_post = ForcedTPost
+        else:
+          RawEfield.t_post = TimeWindowMax                                                          
+        
         RawEfield.t_bin_size = TimeBinSize                                                              
         
         ############################################################################################################################ 
@@ -487,6 +501,39 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 if(int(AntennaN[ant_number])!=ant_number+1):
                   logging.critical("Warning, check antenna numbers and ids, it seems there is a problem "+str(AntennaN)+" "+str(ant_number+1))
                 
+                ############################################################################################################################
+                # adjust the trace lenght to force the requested tpre and tpost
+                ###########################################################################################################################
+                print("before:",np.shape(efield),-TimeWindowMin,TimeWindowMax, (-TimeWindowMin+TimeWindowMax)/RawEfield.t_bin_size)
+                
+                if ForcedTPre!=0:
+                  DeltaTimePre=ForcedTPre+TimeWindowMin
+                  DeltaBinsPre=int(np.round(DeltaTimePre/RawEfield.t_bin_size))
+                else:
+                  DeltaBinsPre=0                    
+                  
+                if ForcedTPost!=0:
+                  DeltaTimePost=ForcedTPost-TimeWindowMax
+                  DeltaBinsPost=int(np.round(DeltaTimePost/RawEfield.t_bin_size))
+                else:
+                  DeltaBinsPost=0  
+                               
+                if DeltaBinsPre<0 :
+                  efield=efield[-DeltaBinsPre:]
+                  DeltaBinsPre=0
+                  logging.info("We have to remove "+str(-DeltaBinsPre)+" bins at the start of efield")
+                if DeltaBinsPost<0 :
+                  efield=efield[:DeltaBinsPost]   
+                  logging.info("We have to remove "+str(-DeltaBinsPost)+" bins at the end of efield")
+               
+                if DeltaBinsPost>0 or DeltaBinsPre>0:
+                  npad = ((DeltaBinsPre, DeltaBinsPost), (0 , 0))
+                  efield=np.pad(efield, npad, 'constant') 
+                  logging.info("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
+                  logging.info("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
+                
+                print("after:",np.shape(efield),ForcedTPre,ForcedTPost,(ForcedTPre+ForcedTPost)/RawEfield.t_bin_size)
+
 
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 
