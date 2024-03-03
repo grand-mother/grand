@@ -420,9 +420,10 @@ def CoreasToRawRoot(file, simID=None):
     # calculate t_0
     # we want the pulse max to be at 800, so essentially t_0 = t(Emax)
     Emax = max(Etotal)
-    #! TODO: why is t_0_indices a vector even though I take the [0]?
+    # TODO: why is t_0_indices a vector even though I take the [0]?
     # maybe because of double maximums?
     t_0_indices = np.where(Etotal == Emax)[0] # the bin of t_0
+    #! TODO: figure out what happens here
     t_0 = timestamp[t_0_indices[0]] # something's weird here - this is supposed to be the value of t_0
 
     # shift t_0 to 800ns
@@ -431,10 +432,6 @@ def CoreasToRawRoot(file, simID=None):
     shift = int((t_pre - t_0_indices)/TimeBinSize)
     
     final_length = int(4096 / TimeBinSize) # 4096 bins
-
-
-    print("antenna", antenna)
-    print(t_pre, t_0, t_0_indices, shift, len(Etotal))
 
     trace_x_new = np.zeros(final_length)
     trace_y_new = np.zeros(final_length)
@@ -460,7 +457,7 @@ def CoreasToRawRoot(file, simID=None):
         pass
     
     elif shift < 0:
-      # for negative shift
+      # for negative shift replace shift value by 700ns
       shift = 700
       # Ensure valid slicing by checking if the slice goes beyond the array boundary
       if padding_left + len(trace_x) <= final_length:
@@ -474,13 +471,15 @@ def CoreasToRawRoot(file, simID=None):
     else:
       pass
 
-    # updating values for future use
+    # update values for future use
     trace_x = trace_x_new
     trace_y = trace_y_new
     trace_z = trace_z_new
 
+    # TODO: get rid of this once we are done testing traces :)
     data = np.column_stack((trace_x, trace_y, trace_z))  # Combine data into a 2D array
     np.savetxt(f"testtrace_{antenna}.csv", data, delimiter=",", header="trace_x,trace_y,trace_z")  # Save with headers
+
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
