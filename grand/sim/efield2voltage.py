@@ -148,13 +148,15 @@ class Efield2Voltage:
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
 
-        # self.dt_ns = np.asarray(self.run.t_bin_size) # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
-        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
-        self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             #MATIAS: this gets casted too!
+        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
+        self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)
 
         self.target_sampling_rate_mhz = self.params["resample_to_mhz"]  # if differetn from 0, will resample the output to the required sampling rate in mhz        
+        if self.f_samp_mhz[0]==self.target_sampling_rate_mhz :
+          self.target_sampling_rate_mhz=0  #no resampling needed
+           
         assert  self.target_sampling_rate_mhz >= 0
 
         self.target_duration_us = self.params["extend_to_us"]        # if different from 0, will adjust padding factor to get a trace of this lenght in us        

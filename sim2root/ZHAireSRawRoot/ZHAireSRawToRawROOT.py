@@ -504,7 +504,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 ############################################################################################################################
                 # adjust the trace lenght to force the requested tpre and tpost
                 ###########################################################################################################################
-                print("before:",np.shape(efield),-TimeWindowMin,TimeWindowMax, (-TimeWindowMin+TimeWindowMax)/RawEfield.t_bin_size)
+                #print("before:",np.shape(efield),-TimeWindowMin,TimeWindowMax, (-TimeWindowMin+TimeWindowMax)/RawEfield.t_bin_size)
                 
                 if ForcedTPre!=0:
                   DeltaTimePre=ForcedTPre+TimeWindowMin
@@ -521,18 +521,18 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 if DeltaBinsPre<0 :
                   efield=efield[-DeltaBinsPre:]
                   DeltaBinsPre=0
-                  logging.info("We have to remove "+str(-DeltaBinsPre)+" bins at the start of efield")
+                  logging.debug("We have to remove "+str(-DeltaBinsPre)+" bins at the start of efield")
                 if DeltaBinsPost<0 :
                   efield=efield[:DeltaBinsPost]   
-                  logging.info("We have to remove "+str(-DeltaBinsPost)+" bins at the end of efield")
+                  logging.debug("We have to remove "+str(-DeltaBinsPost)+" bins at the end of efield")
                
                 if DeltaBinsPost>0 or DeltaBinsPre>0:
                   npad = ((DeltaBinsPre, DeltaBinsPost), (0 , 0))
                   efield=np.pad(efield, npad, 'constant') 
-                  logging.info("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
-                  logging.info("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
+                  logging.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
+                  logging.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
                 
-                print("after:",np.shape(efield),ForcedTPre,ForcedTPost,(ForcedTPre+ForcedTPost)/RawEfield.t_bin_size)
+                #print("after:",np.shape(efield),ForcedTPre,ForcedTPost,(ForcedTPre+ForcedTPost)/RawEfield.t_bin_size)
 
 
                 ############################################################################################################################# 

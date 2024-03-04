@@ -253,7 +253,7 @@ if __name__ == "__main__":
  
     padding_factor=1
     assert padding_factor >=1
-    target_sampling_rate_mhz = args.target_sampling_rate_mhz     
+    target_sampling_rate_mhz = args.target_sampling_rate_mhz   # if different from 0, will resample  
     assert  target_sampling_rate_mhz >= 0
     target_duration_us = args.target_duration_us       # if different from 0, will adjust padding factor to get a trace of this lenght in us        
     assert target_duration_us >= 0
@@ -328,6 +328,11 @@ if __name__ == "__main__":
        
        #i recover the original values becouse this variables are rewriten (poor programing here on my side) 
        target_duration_us = args.target_duration_us           # if different from 0, will adjust padding factor to get a trace of this lenght in us 
+       target_sampling_rate_mhz = args.target_sampling_rate_mhz 
+
+       if target_sampling_rate_mhz==f_samp_mhz[0]:
+         target_sampling_rate_mhz=0 #no need to resample
+
               
        if(target_duration_us>0):                              #MATIAS: TODO: Here we lost the capability to use different sampling rates on different antennas!.
           target_lenght= int(target_duration_us*f_samp_mhz[0]) 
@@ -401,9 +406,9 @@ if __name__ == "__main__":
             #add the calibration noise
             if(calsigma>0):
               calfactor=np.random.normal(1,calsigma)
-              #tracex=tracex*calfactor
-              #tracey=tracey*calfactor
-              #tracez=tracez*calfactor
+              tracex=tracex*calfactor
+              tracey=tracey*calfactor
+              tracez=tracez*calfactor
               logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")              
 
             if(event_idx==0 and du_idx==6 and PLOT):
