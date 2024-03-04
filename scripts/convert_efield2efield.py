@@ -271,7 +271,7 @@ if __name__ == "__main__":
        f_output = f_output
     # Otherwise, generate it from tefield filename
     else:                          #Matias: TODO: this will change from L0 to L1 when sim2root and the datadirectory can support it
-       f_output = d_input.ftefield.filename.replace("efield", "DC2efield")
+       f_output = d_input.ftefield.filename.replace("L0", "L1")
 
     # If output directory given, use it
     if output_directory:
@@ -566,7 +566,7 @@ if __name__ == "__main__":
 
     #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
-    outrun = groot.TRun(args.directory + "/run_DC2.root")    
+    outrun = groot.TRun(args.directory + "/run_L1.root")    
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
       outrun.t_bin_size = [1e3/target_sampling_rate_mhz]*len(outrun.t_bin_size) 
