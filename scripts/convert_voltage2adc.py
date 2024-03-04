@@ -175,7 +175,7 @@ if __name__ == '__main__':
     noise_dir = args.noise_dir
 
     if f_output == None:
-        f_output = f_input.replace('.root','_converted_to_ADC.root')
+        f_output = f_input.replace('voltage','adc')
     if noise_dir == None:
         noise_trace = None
 

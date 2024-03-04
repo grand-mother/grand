@@ -182,10 +182,10 @@ class Efield2Voltage:
         # in our use case, we go from 2000Mhz to 500Mhz sampling rate, this means that bandwidth goes from 1000Mhz to 250Mhz.  a (causal and zero phase adusted!) Low pass filter should be aplied.
         # our RF chain already acts as a filter (the transfer function is 0 at 250Mhz) so if we apply the RF chain, we are safe. If you are not appling the rf chain, aliasing will ocurr. 
          
-        logger.info(f"Electric field lenght is {self.sig_size} samples at {self.f_samp_mhz[0]}, spanning {self.sig_size/self.f_samp_mhz[0]} us.")
-        logger.info(f"With a padding factor of {self.padding_factor} we will take it to {self.target_lenght} samples, spanning {self.target_lenght/self.f_samp_mhz[0]} us.")
-        logger.info(f"However, optimal number of frequency bins to do a fast fft is {len(self.freqs_mhz)} giving traces of {self.fft_size} samples.")
-        logger.info(f"With this we will obtain traces spanning {self.fft_size/self.f_samp_mhz[0]} us, that we will then truncate if needed to get the requested trace duration.")
+        logger.debug(f"Electric field lenght is {self.sig_size} samples at {self.f_samp_mhz[0]}, spanning {self.sig_size/self.f_samp_mhz[0]} us.")
+        logger.debug(f"With a padding factor of {self.padding_factor} we will take it to {self.target_lenght} samples, spanning {self.target_lenght/self.f_samp_mhz[0]} us.")
+        logger.debug(f"However, optimal number of frequency bins to do a fast fft is {len(self.freqs_mhz)} giving traces of {self.fft_size} samples.")
+        logger.debug(f"With this we will obtain traces spanning {self.fft_size/self.f_samp_mhz[0]} us, that we will then truncate if needed to get the requested trace duration.")
 
 
         # container to collect computed Voc and the final voltage in time domain for one event.
@@ -266,7 +266,7 @@ class Efield2Voltage:
             np.outer(
                 self.dt_ns * np.ones(self.nb_du), np.arange(0, self.sig_size, dtype=np.float64)
                 ) + t_start_ns )
-        logger.info(f"shape du_nanoseconds and t_samples =  {t_start_ns.shape}, {t_samples.shape}")
+        logger.debug(f"shape du_nanoseconds and t_samples =  {t_start_ns.shape}, {t_samples.shape}")
 
         return t_samples
 
@@ -331,7 +331,7 @@ class Efield2Voltage:
         :param du_idx: index of DU in array traces
         :    type du_idx: int
         """
-        logger.info(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
+        logger.debug(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
         assert isinstance(du_idx, int)
 
         self.get_leff(du_idx)

@@ -203,7 +203,7 @@ def main():
     gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
 
     # ToDo: shouldn't this and above be created for every DU in sims?
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) #Matias Question: Why is this being mutiplied here?
+    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) 
 
     # Fill and write the TRun
     gt.trun.fill()

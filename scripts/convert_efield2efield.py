@@ -2,44 +2,41 @@
 """
 Script to compute a "hardwarelike" efield from electric field.
 Electric field traces are provided in a ROOT file.
+   
+usage: convert_efield2efield.py [-h] [--no_filter] [-o OUT_FILE] [-od OUT_DIRECTORY] [--verbose {debug,info,warning,error,critical}] [--seed SEED] [--add_noise_uVm ADD_NOISE_UVM] [--add_jitter_ns ADD_JITTER_NS]
+                                [--calibration_smearing_sigma CALIBRATION_SMEARING_SIGMA] [--target_duration_us TARGET_DURATION_US] [--target_sampling_rate_mhz TARGET_SAMPLING_RATE_MHZ]
+                                directory
 
-To Run:
-    python convert_efield2voltage.py <efield.root> -o <output.root> # RF chain and noise added automatically.
-    python convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 
-    convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --filter
+Calculation of Hardware-like Efield input file.
 
-In this file:
+positional arguments:
+  directory             Simulation output data directory in GRANDROOT format.
 
-    Options that can be given to compute_voltage() depending on what you want to compute.
-        Compute/simulate voltage for any or all DUs for any or all events in input file.
+optional arguments:
+  -h, --help            show this help message and exit
+  --no_filter           remove the filter on the GRAND bandwidth. (50-200Mhz, band-pass elliptic causal filter)
+  -o OUT_FILE, --out_file OUT_FILE
+                        output file in GRANDROOT format. If the file exists it is overwritten.
+  -od OUT_DIRECTORY, --out_directory OUT_DIRECTORY
+                        output directory in GRANDROOT format. If not given, is it the same as input directory
+  --verbose {debug,info,warning,error,critical}
+                        logger verbosity.
+  --seed SEED           Fix the random seed to reproduce same galactic noise, must be positive integer
+  --add_noise_uVm ADD_NOISE_UVM
+                        level of gaussian noise (uv/m) to add to the trace before filtering
+  --add_jitter_ns ADD_JITTER_NS
+                        level of gaussian jitter (ns) to add to the trigger times
+  --calibration_smearing_sigma CALIBRATION_SMEARING_SIGMA
+                        Smear the stations amplitude calibrations with a gaussian centered in 1 and this input sigma
+  --target_duration_us TARGET_DURATION_US
+                        Adjust (and override) padding factor in order to get a signal of the given duration, in us
+  --target_sampling_rate_mhz TARGET_SAMPLING_RATE_MHZ
+                        Target sampling rate of the data in Mhz
 
-        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)). If None, all events in an input file is used.
-        :    type: int, list, np.ndarray
-        :param du_idx: index of DU for which voltage is computed. If None, all DUs of an event is used. du_idx can be used for only one event.
-        :    type: int, list, np.ndarray
-        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
-        :    type: int, list, np.ndarray
-        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
-        :    type: int, list, np.ndarray  
-
-        Note: Either event_idx, or both event_number and run_number must be provided, or all three must be None.      
-              if du_idx is provided, voltage of the given DU of the given event is computed. 
-              du_idx can be an integer or list/np.ndarray. du_idx can be used for only one event.
-              If improper event_idx or (event_number and run_number) is used, an error is generated when self.get_event() is called.
-              Selective events with either event_idx or both event_number and run_number can be given.
-              If list/np.ndarray is provided, length of event_number and run_number must be equal.    
 
 
-
-Feb 2024, M Tueros
+March 2024, M Tueros. It was a shitty winter in Paris.
 """
-def check_float_day_hour(s_hour):
-    f_hour = float(s_hour)
-    if f_hour < 0 or f_hour > 24:
-        raise argparse.ArgumentTypeError(f"lts must be > 0h and < 24h.")
-    return f_hour
-
-
 def manage_args():
     parser = argparse.ArgumentParser(
         description="Calculation of Hardware-like Efield input file."
@@ -91,6 +88,12 @@ def manage_args():
         default=0,
         help="level of gaussian jitter (ns) to add to the trigger times",
     )
+    parser.add_argument(
+        "--calibration_smearing_sigma",
+        type=float,
+        default=0,
+        help="Smear the stations amplitude calibrations with a gaussian centered in 1 and this input sigma",
+    )    
     parser.add_argument(
         "--target_duration_us",
         type=float,
@@ -242,7 +245,11 @@ if __name__ == "__main__":
     if(jitter>0):
       logger.info(f"We are going to apply a gaussian time jitter of {jitter} ns")   
  
- 
+    calsigma=args.calibration_smearing_sigma
+    assert calsigma>= 0
+    if(calsigma>0):
+      logger.info(f"We are going to apply a gaussian calibration error of {calsigma} ")   
+    
  
     padding_factor=1
     assert padding_factor >=1
@@ -263,7 +270,7 @@ if __name__ == "__main__":
     if f_output:
        f_output = f_output
     # Otherwise, generate it from tefield filename
-    else:
+    else:                          #Matias: TODO: this will change from L0 to L1 when sim2root and the datadirectory can support it
        f_output = d_input.ftefield.filename.replace("efield", "DC2efield")
 
     # If output directory given, use it
@@ -316,14 +323,13 @@ if __name__ == "__main__":
        traces = np.asarray(tefield.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
 
                     
-       dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
-       f_samp_mhz = 1e3/dt_ns                                 # MHz                                             #MATIAS: this gets casted too!      
+       dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
+       f_samp_mhz = 1e3/dt_ns                                 # MHz                                                   
        
-       #i recover the original values becouse this variables are rewriten (poor programing here on my side)
-       target_sampling_rate_mhz = args.target_sampling_rate_mhz     
+       #i recover the original values becouse this variables are rewriten (poor programing here on my side) 
        target_duration_us = args.target_duration_us           # if different from 0, will adjust padding factor to get a trace of this lenght in us 
               
-       if(target_duration_us>0):     
+       if(target_duration_us>0):                              #MATIAS: TODO: Here we lost the capability to use different sampling rates on different antennas!.
           target_lenght= int(target_duration_us*f_samp_mhz[0]) 
           padding_factor=target_lenght/sig_size 
           logger.debug(f"padding factor adjusted to {padding_factor} to reach a duration of {target_duration_us} us at {f_samp_mhz[0]} Mhz -> {target_lenght} samples")                   
@@ -391,6 +397,14 @@ if __name__ == "__main__":
             tracex=np.pad(traces[du_idx,0],(0,fast_fft_size-len(traces[du_idx,0])),'constant')
             tracey=np.pad(traces[du_idx,1],(0,fast_fft_size-len(traces[du_idx,1])),'constant')
             tracez=np.pad(traces[du_idx,2],(0,fast_fft_size-len(traces[du_idx,1])),'constant')
+            
+            #add the calibration noise
+            if(calsigma>0):
+              calfactor=np.random.normal(1,calsigma)
+              #tracex=tracex*calfactor
+              #tracey=tracey*calfactor
+              #tracez=tracez*calfactor
+              logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")              
 
             if(event_idx==0 and du_idx==6 and PLOT):
               plt.plot(traces[du_idx, 0],label="original",linewidth=5)
@@ -538,13 +552,23 @@ if __name__ == "__main__":
        out_tefield.event_number = tefield.event_number
        out_tefield.du_id = tefield.du_id
        
-       #out_tefield.trace=vout              
+       out_tefield.trace=vout              
        out_tefield.du_nanoseconds=du_nanoseconds
        out_tefield.du_seconds=du_seconds
-
       
        out_tefield.fill()
        out_tefield.write()
+
+    #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
+    #f_output = d_input.ftefield.filename.replace("L0", "L1")
+    outrun = groot.TRun(args.directory + "/run_DC2.root")    
+    outrun.copy_contents(trun)
+    if(target_sampling_rate_mhz>0):
+      outrun.t_bin_size = [1e3/target_sampling_rate_mhz]*len(outrun.t_bin_size) 
+         
+    outrun.fill()
+    outrun.write()
+
 
 
     # =============================================
