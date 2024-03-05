@@ -51,6 +51,7 @@ class Efield2Voltage:
 
     def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0, du_type='GP300'):
         # du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
+        self.du_type = du_type
         self.f_input = f_input
         self.f_output = f_output
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
@@ -147,7 +148,8 @@ class Efield2Voltage:
                 self.fft_size,
                 self.freqs_mhz,
                 self.nb_du,
-                seed=self.seed
+                seed=self.seed,
+                du_type=self.du_type
             )
         # compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.
         if self.params["add_rf_chain"]:
