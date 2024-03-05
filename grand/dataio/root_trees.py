@@ -346,6 +346,20 @@ class DataTree:
     _modification_history: str = ""
     """Modification history - JSON"""
 
+    ## Unix creation datetime of the source tree; 0 s means no source
+    _source_datetime: datetime.datetime = None
+    """Unix creation datetime of the source tree; 0 s means no source"""
+    ## The tool used to generate this tree's values from another tree
+    _modification_software: str = ""
+    """The tool used to generate this tree's values from another tree"""
+    ## The version of the tool used to generate this tree's values from another tree
+    _modification_software_version: str = ""
+    """The version of the tool used to generate this tree's values from another tree"""
+    ## The analysis level of this tree
+    _analysis_level: int = 0
+    """The analysis level of this tree"""
+
+
     ## Fields that are not branches
     _nonbranch_fields = [
         "_nonbranch_fields",
@@ -483,6 +497,85 @@ class DataTree:
 
         # Update the property
         self._modification_history = val
+
+    @property
+    def source_datetime(self):
+        """Unix creation datetime of the source tree; 0 s means no source"""
+        # Convert from ROOT's TDatime into Python's datetime object
+        # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
+        return self._source_datetime
+
+    @source_datetime.setter
+    def source_datetime(self, val: datetime.datetime) -> None:
+        # Remove the existing datetime
+        self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
+
+        # If datetime was given
+        if type(val) == datetime.datetime:
+            val = int(val.timestamp())
+            val_dt = val
+        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        elif type(val) == int:
+            val_dt = datetime.datetime.fromtimestamp(val)
+        else:
+            raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
+
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._source_datetime = val_dt
+
+    @property
+    def modification_software(self):
+        """The tool used to generate this tree's values from another tree"""
+        return self._modification_software
+
+    @modification_software.setter
+    def modification_software(self, val: str) -> None:
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
+        self._modification_software = val
+
+    @property
+    def modification_software_version(self):
+        """The tool used to generate this tree's values from another tree"""
+        return self._modification_software_version
+
+    @modification_software_version.setter
+    def modification_software_version(self, val: str) -> None:
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
+        self._modification_software_version = val
+
+    @property
+    def analysis_level(self):
+        """The analysis level of this tree"""
+        return self._analysis_level
+
+    @analysis_level.setter
+    def analysis_level(self, val: int) -> None:
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._analysis_level = val
 
     @classmethod
     def get_default_tree_name(cls):
@@ -851,6 +944,11 @@ class DataTree:
         self.comment = ""
         self.creation_datetime = datetime.datetime.utcnow()
         self.modification_history = ""
+        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        self.source_datetime = datetime.datetime.fromtimestamp(0)
+        self.modification_software = ""
+        self.modification_software_version = ""
+        self.analysis_level = 0
 
     ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree
     def assign_metadata(self):
@@ -1045,98 +1143,6 @@ class MotherEventTree(DataTree):
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
-    ## Unix creation datetime of the source tree; 0 s means no source
-    _source_datetime: datetime.datetime = None
-    """Unix creation datetime of the source tree; 0 s means no source"""
-    ## The tool used to generate this tree's values from another tree
-    _modification_software: str = ""
-    """The tool used to generate this tree's values from another tree"""
-    ## The version of the tool used to generate this tree's values from another tree
-    _modification_software_version: str = ""
-    """The version of the tool used to generate this tree's values from another tree"""
-    ## The analysis level of this tree
-    _analysis_level: int = 0
-    """The analysis level of this tree"""
-
-    @property
-    def source_datetime(self):
-        """Unix creation datetime of the source tree; 0 s means no source"""
-        # Convert from ROOT's TDatime into Python's datetime object
-        # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
-        return self._source_datetime
-
-    @source_datetime.setter
-    def source_datetime(self, val: datetime.datetime) -> None:
-        # Remove the existing datetime
-        self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
-
-        # If datetime was given
-        if type(val) == datetime.datetime:
-            val = int(val.timestamp())
-            val_dt = val
-        # If timestamp was given - this happens when initialising with self.assign_metadata()
-        elif type(val) == int:
-            val_dt = datetime.datetime.fromtimestamp(val)
-        else:
-            raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
-
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
-        # The meta field exists, change the value
-        else:
-            el.SetVal(val)
-
-        self._source_datetime = val_dt
-
-    @property
-    def modification_software(self):
-        """The tool used to generate this tree's values from another tree"""
-        return self._modification_software
-
-    @modification_software.setter
-    def modification_software(self, val: str) -> None:
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
-        # The meta field exists, change the value
-        else:
-            el.SetTitle(val)
-
-        self._modification_software = val
-
-    @property
-    def modification_software_version(self):
-        """The tool used to generate this tree's values from another tree"""
-        return self._modification_software_version
-
-    @modification_software_version.setter
-    def modification_software_version(self, val: str) -> None:
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
-        # The meta field exists, change the value
-        else:
-            el.SetTitle(val)
-
-        self._modification_software_version = val
-
-    @property
-    def analysis_level(self):
-        """The analysis level of this tree"""
-        return self._analysis_level
-
-    @analysis_level.setter
-    def analysis_level(self, val: int) -> None:
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
-        # The meta field exists, change the value
-        else:
-            el.SetVal(val)
-
-        self._analysis_level = val
-
     def __post_init__(self):
         super().__post_init__()
 
@@ -1147,16 +1153,16 @@ class MotherEventTree(DataTree):
 
         self.create_branches()
 
-    ## Create metadata for the tree
-    def create_metadata(self):
-        """Create metadata for the tree"""
-        # First add the medatata of the mother class
-        super().create_metadata()
-        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
-        self.source_datetime = datetime.datetime.fromtimestamp(0)
-        self.modification_software = ""
-        self.modification_software_version = ""
-        self.analysis_level = 0
+    # ## Create metadata for the tree
+    # def create_metadata(self):
+    #     """Create metadata for the tree"""
+    #     # First add the medatata of the mother class
+    #     super().create_metadata()
+    #     # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+    #     self.source_datetime = datetime.datetime.fromtimestamp(0)
+    #     self.modification_software = ""
+    #     self.modification_software_version = ""
+    #     self.analysis_level = 0
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
@@ -2361,31 +2367,22 @@ class DataDirectory:
     def init_sim2root_structure(self):
 
         # Loop through groups of files with tree types expected in the directory
-        for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims"]:
-            # For the event files/trees, possibility of many files with specific type
-            if "run" not in flistname:
-                # Assign the list of files with specific tree type to the class instance
-                setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
-                max_level = -1
-                for (l, f) in getattr(self, flistname).items():
-                    # Assign the file with the tree with the specific analysis level to the class instance
-                    setattr(self, f"{flistname[:-1]}_l{l}", f)
-                    # Assign the tree with the specific analysis level to the class instance
-                    setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
-                    if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
-                        max_level = l
-                        # Assign the file with the highest or requested analysis level as default to the class instance
-                        # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
-                        setattr(self, f"{flistname[:-1]}", f)
-                        # Assign the tree with the highest or requested analysis level as default to the class instance
-                        setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
-            # For the run trees, expecting only single file per each type
-            else:
-                fh = [f for f in self.file_handle_list if flistname[2:-1] in f.filename][0]
-                # Assign the file with the tree with the specific run tree type to the class instance
-                setattr(self, f"{flistname[:-1]}", fh)
-                # Assign the run tree with the specific type to the class instance
-                setattr(self, f"{flistname[1:-1]}", getattr(fh, f"{flistname[1:-1]}"))
+        for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
+            # Assign the list of files with specific tree type to the class instance
+            setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            max_level = -1
+            for (l, f) in getattr(self, flistname).items():
+                # Assign the file with the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[:-1]}_l{l}", f)
+                # Assign the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
+                if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
+                    max_level = l
+                    # Assign the file with the highest or requested analysis level as default to the class instance
+                    # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
+                    setattr(self, f"{flistname[:-1]}", f)
+                    # Assign the tree with the highest or requested analysis level as default to the class instance
+                    setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
         # tree_types = set()
         # # Loop through the list of file handles
@@ -2526,38 +2523,34 @@ class DataFile:
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
         for key in self.tree_types:
-            if key == "run":
-                setattr(self, "trun", self.dict_of_trees["trun"])
-                self.dict_of_trees["trun"].file = self.f
-            else:
-                max_analysis_level = -1
-                # Loop through trees in the current tree type
-                for key1 in self.tree_types[key].keys():
-                    el = self.tree_types[key][key1]
-                    tree_class = getattr(thismodule, el["type"])
-                    tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
-                    tree_instance.file = self.f
-                    # If there is analysis level info in the tree, attribute each level and max level
-                    if "analysis_level" in el:
-                        if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-                            max_analysis_level = el["analysis_level"]
-                            max_anal_tree_name = el["name"]
-                            max_anal_tree_type = el["type"]
-                        setattr(self, tree_class.get_default_tree_name() + "_l" + str(el["analysis_level"]), tree_instance)
-                    # In case there is no analysis level info in the tree (old trees), just take the last one
-                    elif max_analysis_level == -1:
+            max_analysis_level = -1
+            # Loop through trees in the current tree type
+            for key1 in self.tree_types[key].keys():
+                el = self.tree_types[key][key1]
+                tree_class = getattr(thismodule, el["type"])
+                tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
+                tree_instance.file = self.f
+                # If there is analysis level info in the tree, attribute each level and max level
+                if "analysis_level" in el:
+                    if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
+                        max_analysis_level = el["analysis_level"]
                         max_anal_tree_name = el["name"]
                         max_anal_tree_type = el["type"]
+                    setattr(self, tree_class.get_default_tree_name() + "_l" + str(el["analysis_level"]), tree_instance)
+                # In case there is no analysis level info in the tree (old trees), just take the last one
+                elif max_analysis_level == -1:
+                    max_anal_tree_name = el["name"]
+                    max_anal_tree_type = el["type"]
 
-                    traces_lenghts = self._get_traces_lengths(tree_instance)
-                    if traces_lenghts is not None:
-                        el["traces_lengths"] = traces_lenghts
+                traces_lenghts = self._get_traces_lengths(tree_instance)
+                if traces_lenghts is not None:
+                    el["traces_lengths"] = traces_lenghts
 
-                    dus = self._get_list_of_all_used_dus(tree_instance)
-                    if dus is not None:
-                        el["dus"] = dus
+                dus = self._get_list_of_all_used_dus(tree_instance)
+                if dus is not None:
+                    el["dus"] = dus
 
-                    el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
+                el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
                 tree_class = getattr(thismodule, max_anal_tree_type)
                 tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])

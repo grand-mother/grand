@@ -55,6 +55,7 @@ def main():
 
     start_event_number = 0
     end_event_number = 0
+    run_number = 0
     # Namespace for holding output trees
     gt = SimpleNamespace()
 
@@ -63,6 +64,10 @@ def main():
         file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.rawroot"))
     else:
         file_list = clargs.file_dir_name
+
+    if len(file_list)==0:
+        print("No RawRoot files found in the input directory. Exiting.")
+        exit(0)
 
     # Loop through the files specified on command line
     # for file_num, filename in enumerate(clargs.filename):
@@ -212,7 +217,7 @@ def main():
 
     # Rename the created files to appropriate names   
     print("Renaming files to proper file names")
-    rename_files(clargs, out_dir_name, start_event_number, end_event_number)
+    rename_files(clargs, out_dir_name, start_event_number, end_event_number, run_number)
 
 # Initialise output trees and their directory
 def init_trees(clargs, unix_date, run_number, site, gt):
@@ -558,9 +563,26 @@ def form_directory_name(clargs, date, time, run_number, site):
     return dir_name
 
 # Rename the created files to appropriate names
-def rename_files(clargs, path, start_event_number, end_event_number):
-    # Go through output files
-    for fn_start in ["runshowersim", "runefieldsim", "shower", "showersim", "efield"]:
+def rename_files(clargs, path, start_event_number, end_event_number, run_number):
+
+    # Go through run output files
+    for fn_start in ["run", "runshowersim", "runefieldsim"]:
+        # Go through serial numbers in directory names to find a one that does not exist
+        for sn in range(1000):
+            fn_in = Path(path, f"{fn_start}.root")
+            # Proper name of the file
+            fn_out = Path(path, f"{fn_start}_{run_number}_L{clargs.analysis_level}_{sn:0>4}.root")
+            # If the output file with the current serial number does not exist, rename to it
+            if not fn_out.exists():
+                fn_in.rename(fn_out)
+                break
+        else:
+            print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
+            exit(0)
+
+
+    # Go through event output files
+    for fn_start in ["shower", "showersim", "efield"]:
         # Go through serial numbers in directory names to find a one that does not exist
         for sn in range(1000):
             fn_in = Path(path, f"{fn_start}.root")
