@@ -258,7 +258,7 @@ def CoreasToRawRoot(file, simID=None):
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + RunID +".root"
+  OutputFileName = "Coreas_" + RunID +".rawroot"
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -421,9 +421,9 @@ def CoreasToRawRoot(file, simID=None):
     # calculate t_0
     # we want the pulse max to be at 800, so essentially t_0 = t(Emax)
     Emax = max(Etotal)
-    # TODO: why is t_0_indices a vector even though I take the [0]?
+    # TODO: why is t_0_indices a vector even though I take the [0]? #MATIAS commenting here. Looking at the documentation of np.where, what you get is always an array. you might want to use numpy.argmax for this 
     # maybe because of double maximums?
-    t_0_indices = np.where(Etotal == Emax)[0] # the bin of t_0
+    t_0_indices = np.where(Etotal == Emax)[0] # the bin of t_0  
     #! TODO: figure out what happens here
     t_0 = timestamp[t_0_indices[0]] # something's weird here - this is supposed to be the value of t_0
 

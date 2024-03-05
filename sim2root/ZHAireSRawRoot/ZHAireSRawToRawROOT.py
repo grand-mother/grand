@@ -6,6 +6,8 @@ import logging
 import numpy as np
 #import datetime #to get the unix timestamp
 import time #to get the unix timestamp
+import matplotlib.pyplot as plt
+from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
 
 
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +26,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matp
 #TODO ASAP: Get Refractivity Model parameters from the sry (unfortunatelly these are not reported in the sry, this will have to wait to the next version of zhaires hopefully after ICRC 2023)
 #Maybe move them to the function call for now, and remove the unused Longitudinal switches?
 
-def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=500,ForcedTPost=2000): 
+def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=800,ForcedTPost=2000, TriggerSim=True): 
     '''
     This routine will read a ZHAireS simulation located in InputFolder and put it in the Desired OutputFileName. 
     
@@ -41,6 +43,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     
     ForcedTPre forces the tpre of the trace to be the given number in ns, by adding or 0 or removing bins at the start of the trace when necessary
     ForcedTPost forces the tpost of the trace to be the given number in ns, by adding or 0 or removing bins at the end of the trace when necessary
+    
+    TriggerSim modifies the time window so that the t0 indicates the position of the maximum of the electric field vector, and this is exactly after the desired TPre (ore -TimeWindowMin) time
     
     Note that TPre is -TimeWindowMin from ZHAireS (so its usually positive)
     
@@ -528,13 +532,46 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                
                 if DeltaBinsPost>0 or DeltaBinsPre>0:
                   npad = ((DeltaBinsPre, DeltaBinsPost), (0 , 0))
-                  efield=np.pad(efield, npad, 'constant') 
+                  efield=np.pad(efield, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
                   logging.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
                   logging.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
+                 
+                #At this point, the traces are ensued to have a length between  ForcedTpost and a ForcedTpre, and RawEfield.t_pre has the correct time before the nominal t0
+               
+                #now lets process a "trigger" algorithm that will modify where the trace is located. 
+                if(TriggerSim):
                 
-                #print("after:",np.shape(efield),ForcedTPre,ForcedTPost,(ForcedTPre+ForcedTPost)/RawEfield.t_bin_size)
-
-
+                  Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus
+                  trigger_index = np.argmax(Etotal)                    #look where the maximum happens
+                  trigger_time=trigger_index*TimeBinSize
+                  
+                  if(trigger_time!=RawEfield.t_pre):
+                     #plt.plot(Etotal,label="Original")
+                     
+                     DeltaT=ForcedTPre - trigger_time       
+                     ShiftBins=int(DeltaT/TimeBinSize)
+                     #print("we need to shift the trace "+ str(DeltaT)+" ns or "+str(ShiftBins)+" Time bins")
+                     
+                     #this is to assure that, if the maximum is found too late in the trace, we dont move too much outside of the time window (normally, peaks are late in the time window, if you set the time window correctly). 
+                     if(ShiftBins < -RawEfield.t_pre):
+                       ShiftBins= -RawEfield.t_pre
+                       
+                     #we could use roll, but roll makes appear the end of the trace at the begining if we roll to much
+                     #efield=np.roll(efield,-ShiftBins,axis=0)
+                     #Etotal=np.roll(Etotal,-ShiftBins,axis=0)  
+                     #so we use scipy shift, that lets you state what value to put for the places you roll
+                     
+                     efield=shift(efield,(ShiftBins,0),cval=0)
+                     Etotal=shift(Etotal,ShiftBins,cval=0)
+                 
+                     #plt.plot(np.array(efield[:,1]))
+                     #plt.plot(np.array(efield[:,2]))
+                     #plt.plot(np.array(efield[:,3]))
+                     plt.plot(Etotal,label="Shifted")
+                     plt.axvline(ForcedTPre/TimeBinSize)
+                     plt.legend()
+                     plt.show()
+                
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 
                 ############################################################################################################################ 
