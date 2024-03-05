@@ -2367,31 +2367,22 @@ class DataDirectory:
     def init_sim2root_structure(self):
 
         # Loop through groups of files with tree types expected in the directory
-        for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims"]:
-            # For the event files/trees, possibility of many files with specific type
-            if "dasdasrun" not in flistname:
-                # Assign the list of files with specific tree type to the class instance
-                setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
-                max_level = -1
-                for (l, f) in getattr(self, flistname).items():
-                    # Assign the file with the tree with the specific analysis level to the class instance
-                    setattr(self, f"{flistname[:-1]}_l{l}", f)
-                    # Assign the tree with the specific analysis level to the class instance
-                    setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
-                    if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
-                        max_level = l
-                        # Assign the file with the highest or requested analysis level as default to the class instance
-                        # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
-                        setattr(self, f"{flistname[:-1]}", f)
-                        # Assign the tree with the highest or requested analysis level as default to the class instance
-                        setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
-            # For the run trees, expecting only single file per each type
-            else:
-                fh = [f for f in self.file_handle_list if flistname[2:-1] in f.filename][0]
-                # Assign the file with the tree with the specific run tree type to the class instance
-                setattr(self, f"{flistname[:-1]}", fh)
-                # Assign the run tree with the specific type to the class instance
-                setattr(self, f"{flistname[1:-1]}", getattr(fh, f"{flistname[1:-1]}"))
+        for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
+            # Assign the list of files with specific tree type to the class instance
+            setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            max_level = -1
+            for (l, f) in getattr(self, flistname).items():
+                # Assign the file with the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[:-1]}_l{l}", f)
+                # Assign the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
+                if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
+                    max_level = l
+                    # Assign the file with the highest or requested analysis level as default to the class instance
+                    # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
+                    setattr(self, f"{flistname[:-1]}", f)
+                    # Assign the tree with the highest or requested analysis level as default to the class instance
+                    setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
         # tree_types = set()
         # # Loop through the list of file handles
