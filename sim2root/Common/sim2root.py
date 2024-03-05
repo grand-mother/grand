@@ -170,13 +170,10 @@ def main():
         
         
         # For the first file, get all the file's events du ids and pos
-        print("sp")
         if file_num==0:
             du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
-            print("a1")
         # For other files, append du ids and pos to the ones already retrieved
         else:
-            print("a2")
             tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield)
             du_ids = np.append(du_ids, tdu_ids)
             du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
@@ -195,7 +192,6 @@ def main():
     # ToDo: this should be done with TChain in one loop over all the files... maybe (which would be faster?)
 
     # Get indices of the unique du_ids
-    print("aaa")
     unique_dus_idx = np.unique(du_ids, return_index=True)[1]
     # Leave only the unique du_ids
     du_ids = du_ids[unique_dus_idx]
