@@ -58,10 +58,13 @@ OUTPUTFILE=glob.glob(INPUTDIR+"/*efield_*L0*.root")
 OUTPUTFILE=OUTPUTFILE[0].replace("efield", "voltage")
 OUTPUTFILE=OUTPUTFILE[:-5]
 
-#python /home/mjtueros/TrabajoTemporario/docker/grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_1200_13_SIBYLL23d_GP300_13790/TEfield_13_L0_GP300_13790.root -o ./Prueba-no_rf_chain.root --no_rf_chain --verbose=info
-#python /home/mjtueros/TrabajoTemporario/docker/grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_1200_13_SIBYLL23d_GP300_13790/TEfield_13_L0_GP300_13790.root -o ./Prueba-no_rf_chain-no_noise.root --no_rf_chain --no_noise --verbose=info
-#python /home/mjtueros/TrabajoTemporario/docker/grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_1200_13_SIBYLL23d_GP300_13790/TEfield_13_L0_GP300_13790.root -o ./Prueba-no_noise.root --no_noise --verbose=info
-#python /home/mjtueros/TrabajoTemporario/docker/grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_1200_13_SIBYLL23d_GP300_13790/TEfield_13_L0_GP300_13790.root -o ./Prueba.root --verbose=info
+#no noise and no chain
+#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain-no_noise.root --no_rf_chain --no_noise"
+#no noise
+#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_noise.root --no_noise"
+#no chain
+#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain.root --no_rf_chain" 
+#the real thing
 cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+".root"
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
