@@ -216,7 +216,8 @@ if __name__ == "__main__":
     from grand.basis.type_trace import ElectricField        
     import scipy.fft as sf
     import scipy.signal as ss
-    import matplotlib.pyplot as plt    
+    import matplotlib.pyplot as plt  
+    import glob  
 
     ################# Manage logger and input arguments ######################################
     PLOT=False #enable/disable plots when running.
@@ -566,7 +567,9 @@ if __name__ == "__main__":
 
     #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
-    outrun = groot.TRun(args.directory + "/run_L1.root")    
+    filename=glob.glob(args.directory+ "/run_*L0*.root")[0]
+    filename=filename.replace("L0", "L1")
+    outrun = groot.TRun(filename)    
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
       outrun.t_bin_size = [1e3/target_sampling_rate_mhz]*len(outrun.t_bin_size) 
