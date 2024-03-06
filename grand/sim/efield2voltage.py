@@ -18,7 +18,6 @@ from .detector.process_ant import AntennaProcessing
 from .detector.rf_chain import RFChain
 from .shower.gen_shower import ShowerEvent
 from .noise.galaxy import galactic_noise
-import matplotlib.pyplot as plt
 
 logger = getLogger(__name__)
 
@@ -340,11 +339,22 @@ class Efield2Voltage:
         self.get_leff(du_idx)
         #logger.debug(self.ant_leff_sn.model_leff)
         # define E field at antenna position
+        
+                    #add the calibration noise
+        if(self.params["calibration_smearing_sigma"]>0):
+          calfactor=np.random.normal(1,self.params["calibration_smearing_sigma"])
+          logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")  
+        else:
+          calfactor=1.0
+        
         e_trace = coord.CartesianRepresentation(
-            x=self.traces[du_idx, 0],
-            y=self.traces[du_idx, 1],
-            z=self.traces[du_idx, 2],
+            x=calfactor*self.traces[du_idx, 0],
+            y=calfactor*self.traces[du_idx, 1],
+            z=calfactor*self.traces[du_idx, 2],
         )
+        
+        
+        
         efield_idx = ElectricField(self.time_samples[du_idx] * 1e-9, e_trace)
 
         # ----- antenna responses -----
