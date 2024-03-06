@@ -475,10 +475,6 @@ def CoreasToRawRoot(file, simID=None):
     trace_y = trace_y_new
     trace_z = trace_z_new
 
-    # TODO: get rid of this once we are done testing traces :)
-    data = np.column_stack((trace_x, trace_y, trace_z))  # Combine data into a 2D array
-    np.savetxt(f"testtrace_{antenna}.csv", data, delimiter=",", header="trace_x,trace_y,trace_z")  # Save with headers
-
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
