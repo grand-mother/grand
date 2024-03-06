@@ -18,6 +18,7 @@ from .detector.process_ant import AntennaProcessing
 from .detector.rf_chain import RFChain
 from .shower.gen_shower import ShowerEvent
 from .noise.galaxy import galactic_noise
+import matplotlib.pyplot as plt
 
 logger = getLogger(__name__)
 
@@ -92,7 +93,7 @@ class Efield2Voltage:
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0}
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0,"calibration_smearing_sigma":0,"add_jitter_ns":0}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -590,6 +591,36 @@ class Efield2Voltage:
         self.tt_volt.first_du         = self.du_id[0]
         self.tt_volt.time_seconds     = self.events.time_seconds
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
+        
+        #apply time jitter
+        jitter= self.params["add_jitter_ns"]
+        assert jitter >=0
+
+        if(jitter>0):
+           logger.info(f"adding {jitter} ns of time jitter to the trigger times.")     
+           #reinitialize the random number
+           if(self.seed>0): 
+             np.random.seed(self.seed*(self.events.event_number+1))
+           
+           delays=np.round(np.random.normal(0,jitter,size=np.shape(self.events.du_nanoseconds)).astype(int))
+           
+           du_nanoseconds=np.asarray(self.events.du_nanoseconds)
+           du_seconds=np.asarray(self.events.du_seconds)
+           du_nanoseconds=self.events.du_nanoseconds+delays
+
+           #now we have to roll the seconds
+           maskplus= du_nanoseconds >=1e9
+           maskminus= du_nanoseconds < 0
+           du_nanoseconds[maskplus]-=int(1e9)
+           du_seconds[maskplus]+=int(1)   
+           du_nanoseconds[maskminus]+=int(1e9)
+           du_seconds[maskminus]-=int(1)
+           
+           self.events.du_nanoseconds=du_nanoseconds
+           self.events.du_seconds=du_seconds  
+
+
+        
         self.tt_volt.du_nanoseconds = self.events.du_nanoseconds
         self.tt_volt.du_seconds = self.events.du_seconds
         self.tt_volt.du_id = self.du_id
