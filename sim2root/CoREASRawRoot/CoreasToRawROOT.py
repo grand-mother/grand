@@ -442,9 +442,7 @@ def CoreasToRawRoot(file, simID=None):
     # padding_right = max(0, final_length - len(trace_x) - shift)
 
     # Create a new array with zeros and appropriate padding
-    print(trace_x.shape)
     trace_x_new = np.zeros(final_length)
-    print(trace_x_new[padding_left:padding_left + len(trace_x)].shape)
 
     if shift > 0:
       # for positive shift
