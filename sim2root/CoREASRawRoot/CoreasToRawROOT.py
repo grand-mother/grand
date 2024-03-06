@@ -442,9 +442,7 @@ def CoreasToRawRoot(file, simID=None):
     # padding_right = max(0, final_length - len(trace_x) - shift)
 
     # Create a new array with zeros and appropriate padding
-    print(trace_x.shape)
     trace_x_new = np.zeros(final_length)
-    print(trace_x_new[padding_left:padding_left + len(trace_x)].shape)
 
     if shift > 0:
       # for positive shift
@@ -476,10 +474,6 @@ def CoreasToRawRoot(file, simID=None):
     trace_x = trace_x_new
     trace_y = trace_y_new
     trace_z = trace_z_new
-
-    # TODO: get rid of this once we are done testing traces :)
-    data = np.column_stack((trace_x, trace_y, trace_z))  # Combine data into a 2D array
-    np.savetxt(f"testtrace_{antenna}.csv", data, delimiter=",", header="trace_x,trace_y,trace_z")  # Save with headers
 
 
     # add to ROOT tree
