@@ -561,6 +561,8 @@ if __name__ == "__main__":
        out_tefield.trace=vout              
        out_tefield.du_nanoseconds=du_nanoseconds
        out_tefield.du_seconds=du_seconds
+
+       out_tefield.analysis_level = tefield.analysis_level+1
       
        out_tefield.fill()
        out_tefield.write()
@@ -573,7 +575,9 @@ if __name__ == "__main__":
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
       outrun.t_bin_size = [1e3/target_sampling_rate_mhz]*len(outrun.t_bin_size) 
-         
+
+    outrun.analysis_level = trun.analysis_level+1
+
     outrun.fill()
     outrun.write()
 
