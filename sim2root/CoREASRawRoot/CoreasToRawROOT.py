@@ -255,6 +255,9 @@ def CoreasToRawRoot(file, simID=None):
   InjectionAltitude = 100.
   print("[WARNING] InjectionAltitude is hardcoded")
 
+  site = read_site(inp_input)
+  latitude, longitude, altitude = read_lat_long_alt(site)
+
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
@@ -282,10 +285,16 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.primary_type = [str(Primary)]
   RawShower.primary_inj_alt_shc = [InjectionAltitude]
   RawShower.atmos_model = str(AtmosphericModel)
-
+  RawShower.site = site
   RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
   RawShower.hadronic_model = HadronicModel
   RawShower.low_energy_model = LowEnergyModel
+
+  #* site specs *
+  RawShower.site = site
+  RawShower.latitude = latitude
+  RawShower.longitude = longitude
+  RawShower.altitude = altitude
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
