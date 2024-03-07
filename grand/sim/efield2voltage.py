@@ -92,7 +92,7 @@ class Efield2Voltage:
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
         self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
         self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0}
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0,"calibration_smearing_sigma":0,"add_jitter_ns":0}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -148,13 +148,15 @@ class Efield2Voltage:
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
 
-        # self.dt_ns = np.asarray(self.run.t_bin_size) # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
-        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. #MATIAS: Why cast this to an array if it is a constant?
-        self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             #MATIAS: this gets casted too!
+        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
+        self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)
 
         self.target_sampling_rate_mhz = self.params["resample_to_mhz"]  # if differetn from 0, will resample the output to the required sampling rate in mhz        
+        if self.f_samp_mhz[0]==self.target_sampling_rate_mhz :
+          self.target_sampling_rate_mhz=0  #no resampling needed
+           
         assert  self.target_sampling_rate_mhz >= 0
 
         self.target_duration_us = self.params["extend_to_us"]        # if different from 0, will adjust padding factor to get a trace of this lenght in us        
@@ -182,10 +184,10 @@ class Efield2Voltage:
         # in our use case, we go from 2000Mhz to 500Mhz sampling rate, this means that bandwidth goes from 1000Mhz to 250Mhz.  a (causal and zero phase adusted!) Low pass filter should be aplied.
         # our RF chain already acts as a filter (the transfer function is 0 at 250Mhz) so if we apply the RF chain, we are safe. If you are not appling the rf chain, aliasing will ocurr. 
          
-        logger.info(f"Electric field lenght is {self.sig_size} samples at {self.f_samp_mhz[0]}, spanning {self.sig_size/self.f_samp_mhz[0]} us.")
-        logger.info(f"With a padding factor of {self.padding_factor} we will take it to {self.target_lenght} samples, spanning {self.target_lenght/self.f_samp_mhz[0]} us.")
-        logger.info(f"However, optimal number of frequency bins to do a fast fft is {len(self.freqs_mhz)} giving traces of {self.fft_size} samples.")
-        logger.info(f"With this we will obtain traces spanning {self.fft_size/self.f_samp_mhz[0]} us, that we will then truncate if needed to get the requested trace duration.")
+        logger.debug(f"Electric field lenght is {self.sig_size} samples at {self.f_samp_mhz[0]}, spanning {self.sig_size/self.f_samp_mhz[0]} us.")
+        logger.debug(f"With a padding factor of {self.padding_factor} we will take it to {self.target_lenght} samples, spanning {self.target_lenght/self.f_samp_mhz[0]} us.")
+        logger.debug(f"However, optimal number of frequency bins to do a fast fft is {len(self.freqs_mhz)} giving traces of {self.fft_size} samples.")
+        logger.debug(f"With this we will obtain traces spanning {self.fft_size/self.f_samp_mhz[0]} us, that we will then truncate if needed to get the requested trace duration.")
 
 
         # container to collect computed Voc and the final voltage in time domain for one event.
@@ -266,7 +268,7 @@ class Efield2Voltage:
             np.outer(
                 self.dt_ns * np.ones(self.nb_du), np.arange(0, self.sig_size, dtype=np.float64)
                 ) + t_start_ns )
-        logger.info(f"shape du_nanoseconds and t_samples =  {t_start_ns.shape}, {t_samples.shape}")
+        logger.debug(f"shape du_nanoseconds and t_samples =  {t_start_ns.shape}, {t_samples.shape}")
 
         return t_samples
 
@@ -331,17 +333,28 @@ class Efield2Voltage:
         :param du_idx: index of DU in array traces
         :    type du_idx: int
         """
-        logger.info(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
+        logger.debug(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
         assert isinstance(du_idx, int)
 
         self.get_leff(du_idx)
         #logger.debug(self.ant_leff_sn.model_leff)
         # define E field at antenna position
+        
+                    #add the calibration noise
+        if(self.params["calibration_smearing_sigma"]>0):
+          calfactor=np.random.normal(1,self.params["calibration_smearing_sigma"])
+          logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")  
+        else:
+          calfactor=1.0
+        
         e_trace = coord.CartesianRepresentation(
-            x=self.traces[du_idx, 0],
-            y=self.traces[du_idx, 1],
-            z=self.traces[du_idx, 2],
+            x=calfactor*self.traces[du_idx, 0],
+            y=calfactor*self.traces[du_idx, 1],
+            z=calfactor*self.traces[du_idx, 2],
         )
+        
+        
+        
         efield_idx = ElectricField(self.time_samples[du_idx] * 1e-9, e_trace)
 
         # ----- antenna responses -----
@@ -588,6 +601,36 @@ class Efield2Voltage:
         self.tt_volt.first_du         = self.du_id[0]
         self.tt_volt.time_seconds     = self.events.time_seconds
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
+        
+        #apply time jitter
+        jitter= self.params["add_jitter_ns"]
+        assert jitter >=0
+
+        if(jitter>0):
+           logger.info(f"adding {jitter} ns of time jitter to the trigger times.")     
+           #reinitialize the random number
+           if(self.seed>0): 
+             np.random.seed(self.seed*(self.events.event_number+1))
+           
+           delays=np.round(np.random.normal(0,jitter,size=np.shape(self.events.du_nanoseconds)).astype(int))
+           
+           du_nanoseconds=np.asarray(self.events.du_nanoseconds)
+           du_seconds=np.asarray(self.events.du_seconds)
+           du_nanoseconds=self.events.du_nanoseconds+delays
+
+           #now we have to roll the seconds
+           maskplus= du_nanoseconds >=1e9
+           maskminus= du_nanoseconds < 0
+           du_nanoseconds[maskplus]-=int(1e9)
+           du_seconds[maskplus]+=int(1)   
+           du_nanoseconds[maskminus]+=int(1e9)
+           du_seconds[maskminus]-=int(1)
+           
+           self.events.du_nanoseconds=du_nanoseconds
+           self.events.du_seconds=du_seconds  
+
+
+        
         self.tt_volt.du_nanoseconds = self.events.du_nanoseconds
         self.tt_volt.du_seconds = self.events.du_seconds
         self.tt_volt.du_id = self.du_id

@@ -25,9 +25,9 @@ clparser.add_argument("-t", "--sim_time", help="The time of the simulation", def
 clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
 clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
 # clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
-clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
-clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
-clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
+clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=None)
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=None)
+clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=None)
 clparser.add_argument("-ru", "--run", help="Run number", default=None)
 clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
 clargs = clparser.parse_args()
@@ -54,15 +54,20 @@ def main():
         ext_event_number = int(clargs.start_event)
 
     start_event_number = 0
-
+    end_event_number = 0
+    run_number = 0
     # Namespace for holding output trees
     gt = SimpleNamespace()
 
     # Check if a directory was given as input
     if Path(clargs.file_dir_name[0]).is_dir():
-        file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.RawRoot"))
+        file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.rawroot"))
     else:
         file_list = clargs.file_dir_name
+
+    if len(file_list)==0:
+        print("No RawRoot files found in the input directory. Exiting.")
+        exit(0)
 
     # Loop through the files specified on command line
     # for file_num, filename in enumerate(clargs.filename):
@@ -110,7 +115,7 @@ def main():
                 #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
 
                 # Set the origin geoid
-                gt.trun.origin_geoid = get_origin_geoid(clargs)
+                gt.trun.origin_geoid = get_origin_geoid(clargs, trawshower)
 
                 gt.trun.run_number = run_number
                 gt.trunshowersim.run_number = run_number
@@ -148,15 +153,23 @@ def main():
                 gt.tshowersim.event_number = ext_event_number
                 gt.tefield.event_number = ext_event_number
 
-            # For the first file/iteration, store the event number
+            # store temporarily the first event number
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
+            
+            # Correct the first/last event number for file naming
+            if(gt.tshower.event_number<start_event_number):
+                start_event_number = gt.tshower.event_number
+ 
+            if(gt.tshower.event_number>end_event_number):
+                end_event_number = gt.tshower.event_number
 
             # Fill the event trees
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
-
+        
+        
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
             du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
@@ -195,17 +208,16 @@ def main():
     gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
 
     # ToDo: shouldn't this and above be created for every DU in sims?
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) #Matias Question: Why is this being mutiplied here?
+    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) 
 
     # Fill and write the TRun
     gt.trun.fill()
     gt.trun.write()
 
 
-    # Rename the created files to appropriate names
-    end_event_number = gt.tshower.event_number
+    # Rename the created files to appropriate names   
     print("Renaming files to proper file names")
-    rename_files(clargs, out_dir_name, start_event_number, end_event_number)
+    rename_files(clargs, out_dir_name, start_event_number, end_event_number, run_number)
 
 # Initialise output trees and their directory
 def init_trees(clargs, unix_date, run_number, site, gt):
@@ -526,9 +538,12 @@ def rawmeta2grandroot(trawmeta, gt):
     
 
 ## Get origin geoid
-def get_origin_geoid(clargs):
-    origin_geoid = [clargs.latitude, clargs.longitude, clargs.altitude]
-    return origin_geoid
+def get_origin_geoid(clargs, trawshower):
+    lat = clargs.latitude if clargs.latitude else trawshower.site_lat
+    lon = clargs.longitude if clargs.longitude else trawshower.site_lon
+    alt = clargs.altitude if clargs.altitude else trawshower.site_alt
+
+    return [lat, lon, alt]
 
 # Form the proper output directory name from command line arguments
 def form_directory_name(clargs, date, time, run_number, site):
@@ -548,9 +563,26 @@ def form_directory_name(clargs, date, time, run_number, site):
     return dir_name
 
 # Rename the created files to appropriate names
-def rename_files(clargs, path, start_event_number, end_event_number):
-    # Go through output files
-    for fn_start in ["runshowersim", "runefieldsim", "shower", "showersim", "efield"]:
+def rename_files(clargs, path, start_event_number, end_event_number, run_number):
+
+    # Go through run output files
+    for fn_start in ["run", "runshowersim", "runefieldsim"]:
+        # Go through serial numbers in directory names to find a one that does not exist
+        for sn in range(1000):
+            fn_in = Path(path, f"{fn_start}.root")
+            # Proper name of the file
+            fn_out = Path(path, f"{fn_start}_{run_number}_L{clargs.analysis_level}_{sn:0>4}.root")
+            # If the output file with the current serial number does not exist, rename to it
+            if not fn_out.exists():
+                fn_in.rename(fn_out)
+                break
+        else:
+            print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
+            exit(0)
+
+
+    # Go through event output files
+    for fn_start in ["shower", "showersim", "efield"]:
         # Go through serial numbers in directory names to find a one that does not exist
         for sn in range(1000):
             fn_in = Path(path, f"{fn_start}.root")

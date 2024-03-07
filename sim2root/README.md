@@ -45,7 +45,7 @@ To run the script on the provided example event just go to the `ZHAireSRawRoot/`
  i.e.
 
 `python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618 standard 1 1618  GP300_Xi_Sib_Proton_3.8_51.6_135.4_1618.rawroot`
-`python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.87_79.4_310.0_13790 standard 1 13790  GP300_Xi_Sib_Proton_3.8_51.6_135.4_13790.rawroot`
+`python3 ZHAireSRawToRawROOT.py  ./GP300_Xi_Sib_Proton_3.87_79.4_310.0_13790 standard 1 13790  GP300_Xi_Sib_Proton_3.87_79.4_310.0_13790.rawroot`
 
 or alternativelly
 
@@ -66,22 +66,26 @@ As input you need to give the ROOT file containing `rawroot data TTrees`, as cre
 
 i.e.
 
-`python3 python  ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -d 20221026 -t 180000 -e DC2Alpha
-
-
+`python3 python  ../grand/sim2root/Common/sim2root.py <your path>*/*.rawroot -d 20221026 -t 180000 -e DC2Alpha`
 
 additional options are available on command line, see sim2root --help for more information
 
-# 3) Simulation Pipe example 
+## 3) Simulation Pipe example 
 
 The example shows how to use the two example rawroot file given in /grand/sim2root/ZHAireSRawRoot/
 
-You can use the rawroot file of your liking. Now sim2root supports multiple events on the command line, so you just can make
+You can use the rawroot file of your liking. 
 
-python  ../grand/sim2root/Common/sim2root.py */*.rawroot -d 20221026 -t 180000 -e DC2Alpha
+python  ../grand/sim2root/Common/RunSimPipe InputDirectory
 
+Note that you have to edit the fields inside the script to the appropiate paths if you are running in a different directory
 
-python ../grand/scripts/convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./sim_Xiaodushan_20221026_180000_RUN0_CD_DC2Alpha_0000 -o ./OutputFile-no_rf_chain.root --no_rf_chain --verbose=info
-
-
-see the –help of convert_efiedl2voltage to see how that works.
+This will run
+1) rawroot 2 grandroot
+python ./sim2root.py ../ZHAireSRawRoot -e GP300
+2) compute voltage
+python ../../scripts/convert_efield2voltage.py sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/ --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/voltage_1618-13790_L0_0000.root
+3) compute adc
+python ../../scripts/convert_voltage2adc.py sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/voltage_1618-13790_L0_0000.root
+4) compute DC2 efield
+python ../../scripts/convert_efield2efield.py sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500

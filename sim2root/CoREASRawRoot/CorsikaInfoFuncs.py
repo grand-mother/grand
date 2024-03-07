@@ -108,6 +108,16 @@ def read_site(input_file):
         site = atmos
     return site
 
+def read_lat_long_alt(site):
+    #from site param only
+    if site == "Dunhuang":
+        latitude, longitude, altitude = [40.142132, 94.661880, 114200] # alt in cm
+    elif site == "Lenghu":
+        latitude, longitude, altitude = [38.7348, 93.3306, 280000] # alt in cm
+    else:
+        latitude, longitude, altitude = []
+    return latitude, longitude, altitude
+
 
 
 def read_first_interaction(log_file):

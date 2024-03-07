@@ -59,7 +59,7 @@ if __name__ == '__main__':
                 "python3", "CoreasToRawROOT.py", "-d", f"{str(options.directory)}"
             ]
             subprocess.run(CoreasToRawROOT, check=True)
-            print(f"Created Coreas_{simID}.root")
+            print(f"Created Coreas_{simID}.rawroot")
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting from RawRoot to GRANDroot format...")
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             print("executing sim2root.py")
             # Run sim2root.py
             sim2root = [
-                "python3", f"../Common/sim2root.py", f"Coreas_{simID}.root", "-o", f"{str(options.directory)}"
+                "python3", f"../Common/sim2root.py", f"Coreas_{simID}.rawroot", "-o", f"{str(options.directory)}"
             ]
             subprocess.run(sim2root, check=True)
             print(f"Created grandroot trees in {str(options.directory)}")

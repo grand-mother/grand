@@ -145,9 +145,10 @@ def CoreasToRawRoot(file, simID=None):
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
   else:
-    #theta_GRAND = 180-theta_Corsika
-    zenith = 180 - read_params(inp_input, "THETAP")
-    azimuth = read_params(inp_input, "PHIP")
+    #theta_GRAND = theta_Corsika
+    zenith = read_params(inp_input, "THETAP")
+    #azimuth_GRAND = 180 - azimuth_Corsika
+    azimuth = 180 - read_params(inp_input, "PHIP")
 
     Energy = read_params(inp_input, "ERANGE") # in GeV
     Primary = read_params(inp_input, "PRMPAR") # as defined in CORSIKA
@@ -254,10 +255,13 @@ def CoreasToRawRoot(file, simID=None):
   InjectionAltitude = 100.
   print("[WARNING] InjectionAltitude is hardcoded")
 
+  site = read_site(inp_input)
+  latitude, longitude, altitude = read_lat_long_alt(site)
+
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + RunID +".root"
+  OutputFileName = "Coreas_" + RunID +".rawroot"
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -265,9 +269,9 @@ def CoreasToRawRoot(file, simID=None):
   SimCoreasShower = RawTrees.RawCoreasTree(OutputFileName)
 
   # ********** fill RawShower **********
-  RawShower.run_number = RunID
+  RawShower.run_number = EventID
   RawShower.sim_name = coreas_version
-  RawShower.event_number = EventID
+  RawShower.event_number = RunID
   RawShower.event_name = RunID
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
@@ -281,10 +285,16 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.primary_type = [str(Primary)]
   RawShower.primary_inj_alt_shc = [InjectionAltitude]
   RawShower.atmos_model = str(AtmosphericModel)
-
+  RawShower.site = site
   RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
   RawShower.hadronic_model = HadronicModel
   RawShower.low_energy_model = LowEnergyModel
+
+  #* site specs *
+  RawShower.site = site
+  RawShower.site_lat = latitude
+  RawShower.site_lon = longitude
+  RawShower.site_alt = altitude
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
@@ -378,8 +388,8 @@ def CoreasToRawRoot(file, simID=None):
   #****** fill shower info ******
   RawEfield = RawTrees.RawEfieldTree(OutputFileName)
 
-  RawEfield.run_number = RunID
-  RawEfield.event_number = EventID
+  RawEfield.run_number = EventID
+  RawEfield.event_number = RunID
 
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
@@ -420,42 +430,60 @@ def CoreasToRawRoot(file, simID=None):
     # calculate t_0
     # we want the pulse max to be at 800, so essentially t_0 = t(Emax)
     Emax = max(Etotal)
-    #! TODO: why is t_0_indices a vector even though I take the [0]?
+    # TODO: why is t_0_indices a vector even though I take the [0]? #MATIAS commenting here. Looking at the documentation of np.where, what you get is always an array. you might want to use numpy.argmax for this 
     # maybe because of double maximums?
-    t_0_indices = np.where(Etotal == Emax)[0]
-    t_0 = timestamp[t_0_indices[0]]
-    shift = (t_0_indices[0] - int(len(Etotal)/2))
-    print("antenna", )
-    print(t_pre, t_0, t_0_indices, shift, len(Etotal))
-    
-    trace_x_new = np.zeros_like(trace_x)
-    trace_y_new = np.zeros_like(trace_y)
-    trace_z_new = np.zeros_like(trace_z)
+    t_0_indices = np.where(Etotal == Emax)[0] # the bin of t_0  
+    #! TODO: figure out what happens here
+    t_0 = timestamp[t_0_indices[0]] # something's weird here - this is supposed to be the value of t_0
 
+    # shift t_0 to 800ns
+    # calculate shift in bins:
+    # shift = (t_pre - t_0) ns = (t_pre - t_0)/TimeBinSize bins
+    shift = int((t_pre - t_0_indices)/TimeBinSize)
+    
+    final_length = int(4096 / TimeBinSize) # 4096 bins
+
+    trace_x_new = np.zeros(final_length)
+    trace_y_new = np.zeros(final_length)
+    trace_z_new = np.zeros(final_length)
+
+    padding_left = max(0, shift)
+    # padding_right = max(0, final_length - len(trace_x) - shift)
+
+    # Create a new array with zeros and appropriate padding
+    trace_x_new = np.zeros(final_length)
 
     if shift > 0:
-      # for positiive shift
-      trace_x_new[0: -shift] = trace_x[shift:]
-      trace_y_new[0: -shift] = trace_y[shift:]
-      trace_z_new[0: -shift] = trace_z[shift:]
+      # for positive shift
+      # Ensure valid slicing by checking if the slice goes beyond the array boundary
+      if padding_left + len(trace_x) <= final_length:
+        # Place the original data within the new array after padding
+        trace_x_new[padding_left:padding_left + len(trace_x)] = trace_x
+        trace_y_new[padding_left:padding_left + len(trace_y)] = trace_y
+        trace_z_new[padding_left:padding_left + len(trace_z)] = trace_z
+      else:
+        pass
     
     elif shift < 0:
-      # for negative shift
-      shift = np.abs(shift)
-      trace_x_new[shift:] = trace_x[0:-shift]
-      trace_y_new[shift:] = trace_y[0:-shift]
-      trace_z_new[shift:] = trace_z[0:-shift]
+      # for negative shift replace shift value by 700ns
+      shift = 700
+      # Ensure valid slicing by checking if the slice goes beyond the array boundary
+      if padding_left + len(trace_x) <= final_length:
+        # Place the original data within the new array after padding
+        trace_x_new[padding_left:padding_left + len(trace_x)] = trace_x
+        trace_y_new[padding_left:padding_left + len(trace_y)] = trace_y
+        trace_z_new[padding_left:padding_left + len(trace_z)] = trace_z
+      else:
+        pass
 
     else:
       pass
 
-    # updating values for future use
+    # update values for future use
     trace_x = trace_x_new
     trace_y = trace_y_new
     trace_z = trace_z_new
 
-    data = np.column_stack((trace_x, trace_y, trace_z))  # Combine data into a 2D array
-    np.savetxt(f"testtrace_{antenna}.csv", data, delimiter=",", header="trace_x,trace_y,trace_z")  # Save with headers
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]

@@ -128,6 +128,18 @@ def manage_args():
         type=float,
         default=0,
         help="Target sampling rate of the data in Mhz",
+    ) 
+    parser.add_argument(
+        "--add_jitter_ns",
+        type=float,
+        default=0,
+        help="level of gaussian jitter (ns) to add to the trigger times",
+    )
+    parser.add_argument(
+        "--calibration_smearing_sigma",
+        type=float,
+        default=0,
+        help="Smear the stations amplitude calibrations with a gaussian centered in 1 and this input sigma",    
     )      
     # retrieve argument
     return parser.parse_args()
@@ -166,7 +178,8 @@ if __name__ == "__main__":
     signal.params["lst"]          = args.lst
     signal.params["resample_to_mhz"]=args.target_sampling_rate_mhz
     signal.params["extend_to_us"]=args.target_duration_us
-
+    signal.params["calibration_smearing_sigma"]=args.calibration_smearing_sigma
+    signal.params["add_jitter_ns"]=args.add_jitter_ns
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
     signal.compute_voltage()    # saves automatically
