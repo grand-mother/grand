@@ -31,7 +31,7 @@ first_transfer='20240302'
 
 # Create database if not exists
 sqlite3 $dbfile "create table if not exists  gfiles (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, file TEXT, date INT, success BOOLEAN, UNIQUE (directory,file));"
-sqlite3 $dbfile "create table if not exists  transfer (id, date_transfer DATETIME, success BOOLEAN, comment TEXTE);"
+sqlite3 $dbfile "create table if not exists  transfer (id, tag INTEGER, date_transfer DATETIME, success BOOLEAN, comment TEXTE);"
 
 
 # Define some useful stuff
@@ -40,12 +40,13 @@ sqlite3 $dbfile "create table if not exists  transfer (id, date_transfer DATETIM
 last_transfer=$(sqlite3 $dbfile "select max(date) from gfiles;")
 last_transfer=$(( last_transfer > first_transfer ? last_transfer : first_transfer ))
 
+#tag to identify files treated in the current run
+tag=$(date +'%Y%m%d%H%M%S')
+
 # Colors
 Default='\033[0m'	# Text Reset
 Red='\033[0;31m'	# Red
 Green='\033[0;32m'	# Green
-
-scriptname=$(basename "$0")
 
 #List of files to be inserted into the db by bunchs of 500 (larger should produce errors)
 declare -A toins=([1]="")
@@ -98,12 +99,12 @@ do
 	if [ "$?" -eq "0" ]
 	then
 		#Transfer successful : store info to update database at the end
-		translog[$i]+=";UPDATE gfiles SET success=true WHERE id=${fileinfo[4]};INSERT INTO transfer (id,success,date_transfer,comment) VALUES (${fileinfo[4]},true,datetime('now','utc'),'${trans}')"
+		translog[$i]+=";UPDATE gfiles SET success=true WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]},${tag}, true,datetime('now','utc'),'${trans}')"
 		printf "${Green}Ok${Default}"
 
 	else
 		#Transfer failed : just log errors
-		translog[$i]+=";INSERT INTO transfer (id,success,date_transfer,comment) VALUES (${fileinfo[4]},false,datetime('now','utc'),'${trans}')"
+		translog[$i]+=";INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]}, ${tag}, false,datetime('now','utc'),'${trans}')"
 		printf "${Red}ERROR:${Default} \n ${trans} "
 	fi
 
@@ -132,7 +133,7 @@ done
 
 #finally also rsync the database
 #rsync -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${dbfile}_$(date +'%Y%m%d-%H%M%S')
-rsync -e "ssh -o 'ControlPath=$HOME/.ssh/ctl/%L-%r@%h:%p'" -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${dbfile}_$(date +'%Y%m%d-%H%M%S')
+rsync -e "ssh -o 'ControlPath=$HOME/.ssh/ctl/%L-%r@%h:%p'" -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${tag}_${dbfile}
 
 #close ssh connection
 ssh -O exit -o ControlPath="$HOME/.ssh/ctl/%L-%r@%h:%p" ${remote_account}@${remote_server}
