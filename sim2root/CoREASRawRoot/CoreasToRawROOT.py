@@ -292,9 +292,9 @@ def CoreasToRawRoot(file, simID=None):
 
   #* site specs *
   RawShower.site = site
-  RawShower.latitude = latitude
-  RawShower.longitude = longitude
-  RawShower.altitude = altitude
+  RawShower.site_lat = latitude
+  RawShower.site_lon = longitude
+  RawShower.site_alt = altitude
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
