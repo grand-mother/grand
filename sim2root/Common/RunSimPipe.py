@@ -21,7 +21,7 @@ PRODUCEADC="../../scripts/convert_voltage2adc.py"
 PRODUCEDC2Efield="../../scripts/convert_efield2efield.py"
 
 INPUTDIR="../ZHAireSRawRoot"
-EXTRA="GP300"
+EXTRA="ZHAireS"
 
 #No command line parameters for now.
 """ 
@@ -59,30 +59,25 @@ OUTPUTFILE=OUTPUTFILE[0].replace("efield", "voltage")
 OUTPUTFILE=OUTPUTFILE[:-5]
 
 #no noise and no chain
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain-no_noise.root --no_rf_chain --no_noise"
+#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --target_duration_us=4.096 --add_jitter_ns  5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain-no_noise.root --no_rf_chain --no_noise"
 #no noise
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_noise.root --no_noise"
+#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --target_duration_us=4.096 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+"-no_noise.root --no_noise"
 #no chain
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain.root --no_rf_chain" 
+#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --target_duration_us=4.096 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain.root --no_rf_chain" 
 #the real thing
-cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+".root"
+cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_duration_us=4.096 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+".root"
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes.
 #print(stdout)
 print(stderr)
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain-no_noise.root --no_rf_chain --no_noise"
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_noise.root --no_noise"
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain.root --no_rf_chain" 
 
 
 #########################################################################################################################################################
 # ADC
 #####################################################################################################################################################
 logging.debug(" Trying to produce ADCs")
-#python /home/mjtueros/TrabajoTemporario/docker/grand/scripts/convert_voltage2adc.py ./sim_Xiaodushan_20221026_000000_RUN0_CD_GP300_0000/voltage_5388-23832_L0_0000.root
-Inputfile=glob.glob(INPUTDIR+"/voltage_*L0*.root")[0]
-cmd=PYTHONINTERPRETER+" "+PRODUCEADC+" "+Inputfile
+cmd=PYTHONINTERPRETER+" "+PRODUCEADC+" "+INPUTDIR
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes.

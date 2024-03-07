@@ -183,6 +183,7 @@ if __name__ == '__main__':
 
     if f_output == None:
         f_output = f_input_file.replace('voltage','adc')
+        f_output = f_output.replace('L0','L1')
     if noise_dir == None:
         noise_trace = None
 
@@ -232,26 +233,28 @@ if __name__ == '__main__':
         if( input_sampling_rate_mhz != adc.sampling_rate):         
            voltage_trace=adc.downsample(voltage_trace,input_sampling_rate_mhz)
 
-         
         #-#-#- Get noise trace if requested -#-#-#
         if noise_dir is not None:
             noise_trace = get_noise_trace(noise_dir,
                                           voltage_trace.shape[0],
                                           n_samples=voltage_trace.shape[2],
                                           rng=rng)
-
         #-#-#- Convert voltage trace to adc trace -#-#-#
         adc_trace = adc.process(voltage_trace,
                                 noise_trace=noise_trace)
 
         #-#-#- Save adc trace to TADC file -#-#-#
         tadc.copy_contents(tvoltage)
+        entries  = tadc.get_number_of_entries()
+        print("entries",entries)
         tadc.trace_ch = adc_trace
+        print(np.shape(np.asarray(tadc.trace_ch)))
         tadc.fill()
         tadc.write()
         logger.debug(f'ADC trace for (run,event) = {tvoltage.run_number, tvoltage.event_number} written to TADC')
 
+    tadc.analysis_level = tadc.analysis_level+1
+    print("al",tadc.analysis_level)
     logger.info(f'Succesfully saved TADC to {f_output}')
-
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
     logger.info( manage_log.string_end_script() )

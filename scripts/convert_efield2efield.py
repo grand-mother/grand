@@ -286,7 +286,8 @@ if __name__ == "__main__":
     trun = d_input.trun
     tshower = d_input.tshower
     tefield = d_input.tefield
-
+    
+    
     #get the list of events
     events_list=tefield.get_list_of_events()
 
@@ -567,6 +568,7 @@ if __name__ == "__main__":
        out_tefield.fill()
        out_tefield.write()
 
+    #TODO ask lech how to do this correctly, so that all runs get the correct sampling rate.
     #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
     filename=glob.glob(args.directory+ "/run_*L0*.root")[0]
@@ -575,11 +577,16 @@ if __name__ == "__main__":
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
       outrun.t_bin_size = [1e3/target_sampling_rate_mhz]*len(outrun.t_bin_size) 
-
     outrun.analysis_level = trun.analysis_level+1
-
     outrun.fill()
     outrun.write()
+
+    #now, we copy trunefieldsim and change tpost (filename to be changed when sim2root changes)
+    #f_output = d_input.ftefield.filename.replace("L0", "L1")
+    filename=glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0]
+    filename=filename.replace("L0", "L1")
+    
+    #TODO ask lech how to do this correctly, so that all runs get tpost.
 
 
 
