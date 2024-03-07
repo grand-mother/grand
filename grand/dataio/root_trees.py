@@ -2522,6 +2522,9 @@ class DataFile:
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
+        tree_instances = []
+        # ToDo: make sure that this is for the instance, not the class
+        self.max_tree_instance = None
         for key in self.tree_types:
             max_analysis_level = -1
             # Loop through trees in the current tree type
@@ -2530,12 +2533,14 @@ class DataFile:
                 tree_class = getattr(thismodule, el["type"])
                 tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
                 tree_instance.file = self.f
+                tree_instances.append(tree_instance)
                 # If there is analysis level info in the tree, attribute each level and max level
                 if "analysis_level" in el:
                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
                         max_analysis_level = el["analysis_level"]
                         max_anal_tree_name = el["name"]
                         max_anal_tree_type = el["type"]
+                        self.max_tree_instance = tree_instance
                     setattr(self, tree_class.get_default_tree_name() + "_l" + str(el["analysis_level"]), tree_instance)
                 # In case there is no analysis level info in the tree (old trees), just take the last one
                 elif max_analysis_level == -1:
@@ -2552,11 +2557,13 @@ class DataFile:
 
                 el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
-                tree_class = getattr(thismodule, max_anal_tree_type)
-                tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
-                tree_instance.file = self.f
-                setattr(self, tree_class.get_default_tree_name(), tree_instance)
-                self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+        # tree_class = getattr(thismodule, max_anal_tree_type)
+        # tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+        # tree_instance.file = self.f
+        # setattr(self, tree_class.get_default_tree_name(), tree_instance)
+        setattr(self, tree_class.get_default_tree_name(), self.max_tree_instance)
+        # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
+        self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def print(self):
         """Prints the information about the TTrees in the file"""
