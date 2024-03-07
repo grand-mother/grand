@@ -3,6 +3,7 @@ Master module for the ADC in GRAND
 """
 import numpy as np
 import logging
+import scipy.fft as sf
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,39 @@ class ADC:
         self.max_bit_value = 8192 # 14 bit ADC;  2 x 2^13 bits for negative and positive ADC values
         self.max_voltage   = 9e5  # [µV]; saturation voltage of ADC (absolute value)
 
+
+    def downsample(self,
+                  voltage_trace,input_sampling_rate_mhz):
+        '''
+        downsamples the voltage trace to the target sampling rate
+        
+        Arguments
+        ---------
+        `voltage_trace`
+        type        : np.ndarray[double]
+        units       : uV 
+        description : Array of voltage traces, with shape (N_du,3,N_samples)
+                                    
+        Returns
+        -------
+        `downsampled_voltage_trace`
+        type        : np.ndarray[double]
+        units       : uV
+        description : Array of downsamplef voltage traces, with shape (N_du,3,N_samples)
+        '''
+        if self.sampling_rate != input_sampling_rate_mhz : 
+          #compute the fft
+          voltage_trace_f=sf.rfft(voltage_trace)
+          #compute new number of points
+          ratio=(self.sampling_rate/input_sampling_rate_mhz)        
+          m=int(np.shape(voltage_trace)[2]*ratio)
+          logger.info(f"resampling the voltage from {input_sampling_rate_mhz} to an ADC of {self.sampling_rate} MHz")        
+          downsampled_voltage_trace=sf.irfft(voltage_trace,m)*ratio
+        else:
+          downsampled_voltage_trace=voltage_trace
+        
+        return downsampled_voltage_trace
+        
     
     def _digitize(self,
                   voltage_trace):
@@ -51,7 +85,6 @@ class ADC:
         adc_trace = np.trunc(adc_trace).astype(int)
 
         return adc_trace
-    
 
     def _saturate(self,
                   adc_trace):
@@ -79,7 +112,6 @@ class ADC:
 
         return saturated_adc_trace
     
-
     def process(self,
                 voltage_trace,
                 noise_trace=None):
@@ -107,7 +139,8 @@ class ADC:
         description : Array of ADC traces with shape (N_du,3,N_samples)
         '''
 
-        assert isinstance(voltage_trace,np.ndarray)
+        assert isinstance(voltage_trace,np.ndarray)       
+          
 
         adc_trace = self._digitize(voltage_trace)
 

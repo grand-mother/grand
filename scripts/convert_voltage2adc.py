@@ -147,7 +147,12 @@ def manage_args():
                         type=str,
                         default=None,
                         help='Path to directory containing files with measured noise in GrandRoot format (TADC). Default adds no noise.')
-    
+    parser.add_argument(
+                        "--target_sampling_rate_mhz",
+                        type=float,
+                        default=0,
+                        help="Target sampling rate of the data in Mhz",
+    )       
     parser.add_argument('-s',
                         '--seed',
                         type=int,
@@ -170,12 +175,14 @@ if __name__ == '__main__':
 
     #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
-    f_input   = args.in_file
+    f_input_dir   = args.in_file
     f_output  = args.out_file
     noise_dir = args.noise_dir
 
+    f_input_file=glob.glob(f_input_dir+"/voltage_*_L0_*.root")[0]
+
     if f_output == None:
-        f_output = f_input.replace('voltage','adc')
+        f_output = f_input_file.replace('voltage','adc')
     if noise_dir == None:
         noise_trace = None
 
@@ -183,12 +190,13 @@ if __name__ == '__main__':
     logger.info( manage_log.string_begin_script() )
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
-    logger.info(f'Converting voltage traces from {f_input} to ADC traces')
+    logger.info(f'Converting voltage traces from {f_input_file} to ADC traces')
 
     #-#-#- Load TVoltage -#-#-#
-    df       = rt.DataFile(f_input)
+    df       = rt.DataDirectory(f_input_dir)
     tvoltage = df.tvoltage
     entries  = tvoltage.get_number_of_entries()
+    trun = df.trun
 
     #-#-#- Prepare TADC -#-#-#
     if os.path.exists(f_output):
@@ -199,6 +207,7 @@ if __name__ == '__main__':
     
     #-#-#- Initiate ADC object and RNG -#-#-#
     adc = ADC()
+    
     rng = np.random.default_rng(args.seed)
     if noise_dir is not None:
         logger.info(f'Set RNG seed to {args.seed}')
@@ -211,6 +220,19 @@ if __name__ == '__main__':
         tvoltage.get_entry(entry)
         voltage_trace = np.array(tvoltage.trace)
 
+        event_number = tvoltage.event_number
+        run_number = tvoltage.run_number
+        trun.get_run(run_number)
+        event_dus_indices = tvoltage.get_dus_indices_in_run(trun)
+        dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
+        f_samp_mhz = 1e3/dt_ns                                 # MHz  
+        input_sampling_rate_mhz = f_samp_mhz[0]                # and here we asume all sampling rates are the same!. In any case, we are asuming all the ADCs are the same...        
+
+        #-#-#- Downsample if needed -#-#-# (this could be added to the "process" method to hide it from the public, and add input_sampling_rate as input to process.
+        if( input_sampling_rate_mhz != adc.sampling_rate):         
+           voltage_trace=adc.downsample(voltage_trace,input_sampling_rate_mhz)
+
+         
         #-#-#- Get noise trace if requested -#-#-#
         if noise_dir is not None:
             noise_trace = get_noise_trace(noise_dir,
