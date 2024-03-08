@@ -269,9 +269,9 @@ def CoreasToRawRoot(file, simID=None):
   SimCoreasShower = RawTrees.RawCoreasTree(OutputFileName)
 
   # ********** fill RawShower **********
-  RawShower.run_number = RunID
+  RawShower.run_number = EventID
   RawShower.sim_name = coreas_version
-  RawShower.event_number = EventID
+  RawShower.event_number = RunID
   RawShower.event_name = RunID
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
@@ -292,9 +292,9 @@ def CoreasToRawRoot(file, simID=None):
 
   #* site specs *
   RawShower.site = site
-  RawShower.latitude = latitude
-  RawShower.longitude = longitude
-  RawShower.altitude = altitude
+  RawShower.site_lat = latitude
+  RawShower.site_lon = longitude
+  RawShower.site_alt = altitude
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
@@ -388,8 +388,8 @@ def CoreasToRawRoot(file, simID=None):
   #****** fill shower info ******
   RawEfield = RawTrees.RawEfieldTree(OutputFileName)
 
-  RawEfield.run_number = RunID
-  RawEfield.event_number = EventID
+  RawEfield.run_number = EventID
+  RawEfield.event_number = RunID
 
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
