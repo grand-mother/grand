@@ -246,14 +246,11 @@ if __name__ == "__main__":
          atracet=np.arange(0,len(atracez))*dt_ns_l1[du_idx] #+300*dt_ns_l1[du_idx]
          #print("adc",len(atracez))
 
-
          rtracex=rtrace[du_idx,0]*10
          rtracey=rtrace[du_idx,1]*10
          rtracez=rtrace[du_idx,2]*10
          rtracet=np.arange(0,len(rtracez))*dt_ns_l1[du_idx] #+300*dt_ns_l1[du_idx]          
          #print("refield",len(rtracez))
-    
-   
-         
+                
          fig,ax=plotfigure(time1=tracet,signal1=tracex,srate1=1/dt_ns_l0[du_idx],time2=vtracet,signal2=vtracex,srate2=1/dt_ns_l0[du_idx],time3=atracet,signal3=atracex,srate3=1/dt_ns_l1[du_idx],time4=rtracet,signal4=rtracex,srate4=1/dt_ns_l1[du_idx],label1="efield_l0 x10",label2="voltage_l0",label3="adc_l1 x110",label4="efield_l1 x10",Freqlimit=0.5)
          plt.show()     
