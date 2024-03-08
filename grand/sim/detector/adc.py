@@ -4,7 +4,7 @@ Master module for the ADC in GRAND
 import numpy as np
 import logging
 import scipy.fft as sf
-
+import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 class ADC:
@@ -49,7 +49,10 @@ class ADC:
           ratio=(self.sampling_rate/input_sampling_rate_mhz)        
           m=int(np.shape(voltage_trace)[2]*ratio)
           logger.info(f"resampling the voltage from {input_sampling_rate_mhz} to an ADC of {self.sampling_rate} MHz")        
-          downsampled_voltage_trace=sf.irfft(voltage_trace,m)*ratio
+          downsampled_voltage_trace=sf.irfft(voltage_trace_f,m)*ratio
+          #plt.plot(np.arange(0,len(downsampled_voltage_trace[0][0]))/ratio,downsampled_voltage_trace[0][0])
+          #plt.plot(np.arange(0,len(voltage_trace[0][0])),voltage_trace[0][0])
+          #plt.show()
         else:
           downsampled_voltage_trace=voltage_trace
         

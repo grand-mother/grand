@@ -221,6 +221,7 @@ if __name__ == "__main__":
 
     ################# Manage logger and input arguments ######################################
     PLOT=False #enable/disable plots when running.
+    PlotAnt=3
     
     logger = mlg.get_logger_for_script(__name__)
     args = manage_args()
@@ -413,7 +414,7 @@ if __name__ == "__main__":
               tracez=tracez*calfactor
               logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")              
 
-            if(event_idx==0 and du_idx==6 and PLOT):
+            if(event_idx==0 and du_idx==PlotAnt and PLOT):
               plt.plot(traces[du_idx, 0],label="original",linewidth=5)
               plt.plot(tracex,label="paded")
 
@@ -423,11 +424,11 @@ if __name__ == "__main__":
                 tracey=tracey + np.random.normal(0,noise,size=np.shape(tracey))
                 tracez=tracez + np.random.normal(0,noise,size=np.shape(tracez))
 
-            if(event_idx==0 and du_idx==6 and PLOT):
+            if(event_idx==0 and du_idx==PlotAnt and PLOT):
               plt.plot(tracex,label="noised")
 
            # test squarefilter for tim, this code can be removed if you are reading this after 2025
-           # if(event_idx==0 and du_idx==6 and PLOT):
+           # if(event_idx==0 and du_idx==PlotAnt and PLOT):
            #   #now, we compute the fourier transforms to use them in the resampling
            #   e_trace = coord.CartesianRepresentation( x=tracex, y=tracey, z=tracez,)
            # 
@@ -445,7 +446,7 @@ if __name__ == "__main__":
            # 
            #   vout_square = sf.irfft(vout_square) 
            #      
-           #   plt.plot(vout_square[6][0],label="squarefilter") 
+           #   plt.plot(vout_square[PlotAnt][0],label="squarefilter") 
             
             #filter
             if(filter):
@@ -453,7 +454,7 @@ if __name__ == "__main__":
                 tracey=ss.sosfilt(sos,tracey)
                 tracez=ss.sosfilt(sos,tracez)
 
-                if(event_idx==0 and du_idx==6):
+                if(event_idx==0 and du_idx==PlotAnt):
                   plt.plot(tracex,label="filtered",linewidth=3)
 
             
@@ -480,7 +481,7 @@ if __name__ == "__main__":
             if(target_lenght<len(tracez)):
               tracez=tracez[0:target_lenght]
             
-            #if(event_idx==0 and du_idx==6):  
+            #if(event_idx==0 and du_idx==PlotAnt):  
               #plt.plot(tracex,label="shortened")
 
             #decimate
@@ -492,28 +493,28 @@ if __name__ == "__main__":
             tracey=ss.decimate(tracey,int(ratio))
             tracez=ss.decimate(tracez,int(ratio))
             
-            if(event_idx==0 and du_idx==6):
+            if(event_idx==0 and du_idx==PlotAnt):
               plt.scatter(np.arange(0,len(tracex))*ratio,tracex,label="decimated")
             """      
 
        #here we do the resampling. #MATIAS: TODO This should be a funtion part of ElectricField class. We should be able to call ElectricField.Resample(new_sampling_rate) 
        if(target_sampling_rate_mhz>0): #if we need to resample
             #compute new number of points
-            ratio=(target_sampling_rate_mhz/f_samp_mhz[0])        
+            ratio=(target_sampling_rate_mhz/f_samp_mhz[0])          
             m=int(fast_fft_size*ratio)
-            #now, since we resampled,  we have a new target_lenght
+            #now, since we resampled,  we have a new target_lenght  
             target_lenght= int(target_duration_us*target_sampling_rate_mhz)                                
-            logger.info(f"resampling the efield from {f_samp_mhz[0]} to {target_sampling_rate_mhz} MHz, new trace lenght is {target_lenght} samples")                                     
+            logger.info(f"resampling the efield from {f_samp_mhz[0]} to {target_sampling_rate_mhz} MHz, new trace lenght is {target_lenght} samples, ratio is {ratio}")                                     
             #MATIAS: TODO: now, we are missing a place to store the new sampling rate!
        else:
           m=fast_fft_size
           ratio=1
 
        #to resample we use fourier interpolation, becouse it seems to be better than scipy.decimate (points are closer to the original trace)
-       vout = sf.irfft(vout_f, m)*ratio #renormalize the amplitudes
+       vout = sf.irfft(vout_f, m)*ratio*padding_factor #renormalize the amplitudes. We have two effects we changed the sampling rate but we also have enlarged the trace, so the frequency content is diluted
        
        if(event_idx==0 and PLOT):
-         plt.scatter(np.arange(0,len(vout[6][0]))/ratio,vout[6][0],label="sampled",c="red")
+         plt.scatter(np.arange(0,len(vout[PlotAnt][0]))/ratio,vout[PlotAnt][0],label="sampled",c="red")
 
             
        #here we do the truncation #MATIAS: TODO This should be a funtion part of ElectricField class. We should be able to call ElectricField.Resize(new_size)          
@@ -521,7 +522,7 @@ if __name__ == "__main__":
             logger.debug(f"truncating output to {target_lenght} samples") 
             vout=vout[..., :target_lenght]
             if(event_idx==0 and PLOT):
-               plt.scatter(np.arange(0,len(vout[6][0]))/ratio,vout[6][0],label="sampled and shortened",c="green")  
+               plt.scatter(np.arange(0,len(vout[PlotAnt][0]))/ratio,vout[PlotAnt][0],label="sampled and shortened",c="green")  
        
        if(event_idx==0 and PLOT):           
          plt.legend()

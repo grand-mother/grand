@@ -25,6 +25,7 @@ import argparse
 import logging
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from grand import ADC, manage_log
 import grand.dataio.root_trees as rt
@@ -228,11 +229,12 @@ if __name__ == '__main__':
         dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
         f_samp_mhz = 1e3/dt_ns                                 # MHz  
         input_sampling_rate_mhz = f_samp_mhz[0]                # and here we asume all sampling rates are the same!. In any case, we are asuming all the ADCs are the same...        
-
+        #print("input samplinf",input_sampling_rate_mhz)
         #-#-#- Downsample if needed -#-#-# (this could be added to the "process" method to hide it from the public, and add input_sampling_rate as input to process.
+        #plt.plot(voltage_trace[1][1],label="in")
         if( input_sampling_rate_mhz != adc.sampling_rate):         
            voltage_trace=adc.downsample(voltage_trace,input_sampling_rate_mhz)
-
+           #plt.plot(voltage_trace[1][1],label="downsampled")
         #-#-#- Get noise trace if requested -#-#-#
         if noise_dir is not None:
             noise_trace = get_noise_trace(noise_dir,
@@ -243,17 +245,21 @@ if __name__ == '__main__':
         adc_trace = adc.process(voltage_trace,
                                 noise_trace=noise_trace)
 
+        #plt.plot(adc_trace[1][1],label="adc")
+        #plt.show()
         #-#-#- Save adc trace to TADC file -#-#-#
         tadc.copy_contents(tvoltage)
         entries  = tadc.get_number_of_entries()
-        print("entries",entries)
+        #print("entries",entries)
         tadc.trace_ch = adc_trace
-        print(np.shape(np.asarray(tadc.trace_ch)))
+        #print(np.shape(np.asarray(tadc.trace_ch)))
         tadc.fill()
-        tadc.write()
         logger.debug(f'ADC trace for (run,event) = {tvoltage.run_number, tvoltage.event_number} written to TADC')
+    
 
     tadc.analysis_level = tadc.analysis_level+1
+    tadc.write()
+
     print("al",tadc.analysis_level)
     logger.info(f'Succesfully saved TADC to {f_output}')
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
