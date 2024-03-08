@@ -567,10 +567,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                      #plt.plot(np.array(efield[:,1]))
                      #plt.plot(np.array(efield[:,2]))
                      #plt.plot(np.array(efield[:,3]))
-                     plt.plot(Etotal,label="Shifted")
-                     plt.axvline(ForcedTPre/TimeBinSize)
-                     plt.legend()
-                     plt.show()
+                     #plt.plot(Etotal,label="Shifted")
+                     #plt.axvline(ForcedTPre/TimeBinSize)
+                     #plt.legend()
+                     #plt.show()
                 
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 

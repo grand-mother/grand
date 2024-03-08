@@ -76,16 +76,57 @@ The example shows how to use the two example rawroot file given in /grand/sim2ro
 
 You can use the rawroot file of your liking. 
 
-python  ../grand/sim2root/Common/RunSimPipe InputDirectory
+python  ../grand/sim2root/Common/RunSimPipe InputDirectory Extra
+
+where "Extra" is the additional field that you can use in the directory name to make your directory cooler.
 
 Note that you have to edit the fields inside the script to the appropiate paths if you are running in a different directory
 
+For example, if you run here (and the two zhaires example rawroot files are there!)
+
+python RunSimPipe.py ../ZHAireSRawRoot ZHAireS
+
 This will run
 1) rawroot 2 grandroot
-python ./sim2root.py ../ZHAireSRawRoot -e GP300
+python ./sim2root.py ../ZHAireSRawRoot/ -e ZHAireS
 2) compute voltage
-python ../../scripts/convert_efield2voltage.py sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/ --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 --verbose=info -o sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/voltage_1618-13790_L0_0000.root
+python ../../scripts/convert_efield2voltage.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/ --seed 1234 --target_duration_us=4.096 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/voltage_1618-13790_L0_0000.root
 3) compute adc
-python ../../scripts/convert_voltage2adc.py sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/voltage_1618-13790_L0_0000.root
+python ../../scripts/convert_voltage2adc.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/
 4) compute DC2 efield
-python ../../scripts/convert_efield2efield.py sim_Xiaodushan_20221026_000000_RUN1_CD_GP300_0000/  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500
+python ../../scripts/convert_efield2efield.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500
+
+## 3) Simulation Pipe WITHOUT NOISE example 
+
+The example shows how to use the example rawroot file given in /grand/sim2root/CoREASRawRoot/
+
+You can use the rawroot file of your liking. 
+
+python  ../grand/sim2root/Common/RunSimPipeNoJitter.py InputDirectory Extra
+
+where "Extra" is the additional field that you can use in the directory name to make your directory cooler.
+
+Note that you have to edit the fields inside the script to the appropiate paths if you are running in a different directory
+
+For example, if you run here (and the two zhaires example rawroot files are there!)
+
+python RunSimPipeNoJitter.py ../CoREASRawRoot CoREAS-NJ
+
+This will run
+1) rawroot 2 grandroot
+python ./sim2root.py ../CoREASRawRoot/ -e CoREAS-NJ
+2) compute voltage
+python ../../scripts/convert_efield2voltage.py sim_Dunhuang_20170401_000000_RUN1_CD_CoREAS-NJ_0000/ --seed 1234 --target_duration_us=4.096 --verbose=info --no_noise -o sim_Dunhuang_20170401_000000_RUN1_CD_CoREAS-NJ_0000/voltage_4100-4100_L0_0000.root
+3) compute adc
+python ../../scripts/convert_voltage2adc.py sim_Dunhuang_20170401_000000_RUN1_CD_CoREAS-NJ_0000/
+4) compute DC2 efield
+python ../../scripts/convert_efield2efield.py sim_Dunhuang_20170401_000000_RUN1_CD_CoREAS-NJ_0000/  --target_duration_us 4.096 --target_sampling_rate_mhz 500
+
+
+
+
+# 4) Look at the results
+python IllustrateSimPipe.py ./sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000
+
+
+

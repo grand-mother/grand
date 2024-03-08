@@ -20,19 +20,23 @@ PRODUCEVOLTAGE="../../scripts/convert_efield2voltage.py"
 PRODUCEADC="../../scripts/convert_voltage2adc.py"
 PRODUCEDC2Efield="../../scripts/convert_efield2efield.py"
 
-INPUTDIR="../ZHAireSRawRoot"
-EXTRA="ZHAireS"
-
-#No command line parameters for now.
-""" 
 parser = argparse.ArgumentParser(description='A script to run the simulation pipe on a directory containing rawroot files')
 parser.add_argument('InputDir', #name of the parameter
                     metavar="InputDir", #name of the parameter value in the help
-                    help='Input Directory, where the rawroot files are') # help message for this parameter
+                    default=None,
+                    help='Input Directory, where the rawroot files are',) # help message for this parameter
 parser.add_argument('Extra', #name of the parameter
                     metavar="Extra", #name of the parameter value in the help
-                    help='Extra info you want to append at the end of the directory name in the output') # help message for this parameter
-"""
+                    default=None,
+                    help='Extra info you want to append at the end of the directory name in the output',) # help message for this parameter
+
+args=parser.parse_args()
+
+if args.InputDir is not None:
+        INPUTDIR=args.InputDir
+
+if args.Extra is not None:
+        EXTRA=args.Extra
 
 #########################################################################################################################################################
 # Grandroot
