@@ -227,30 +227,42 @@ if __name__ == "__main__":
          #unstack the trace
         
          #I only plot the first quarter of the trace becouse that is where the peak is, and adding the long tail just puts a lot of noise on the fft,
+         first=600
+         last=1200
          
-         tracex=trace[du_idx,0]*10
-         tracey=trace[du_idx,1]*10
-         tracez=trace[du_idx,2]*10
-         tracet=np.arange(0,len(tracez))*dt_ns_l0[du_idx] #+1200*dt_ns_l0[du_idx]
-         #print("efield",len(tracez))
+         first_l0=int(first/dt_ns_l0[du_idx])
+         first_l1=int(first/dt_ns_l1[du_idx])
+         last_l0=int(last/dt_ns_l0[du_idx])
+         last_l1=int(last/dt_ns_l1[du_idx])
 
-         vtracex=vtrace[du_idx,0]
-         vtracey=vtrace[du_idx,1]
-         vtracez=vtrace[du_idx,2]
-         vtracet=np.arange(0,len(vtracez))*dt_ns_l0[du_idx] #+1200*dt_ns_l0[du_idx]
-         #print("voltage",len(vtracez))
 
-         atracex=atrace[du_idx,0]*109.86      #this number comes from doing 0.9V/8192, the maximum of ADC divided by 13bits
-         atracey=atrace[du_idx,1]*109.86
-         atracez=atrace[du_idx,2]*109.86
-         atracet=np.arange(0,len(atracez))*dt_ns_l1[du_idx] #+300*dt_ns_l1[du_idx]
-         #print("adc",len(atracez))
 
-         rtracex=rtrace[du_idx,0]*10
-         rtracey=rtrace[du_idx,1]*10
-         rtracez=rtrace[du_idx,2]*10
-         rtracet=np.arange(0,len(rtracez))*dt_ns_l1[du_idx] #+300*dt_ns_l1[du_idx]          
-         #print("refield",len(rtracez))
+         tracex=trace[du_idx,0][first_l0:last_l0]*10
+         tracey=trace[du_idx,1][first_l0:last_l0]*10
+         tracez=trace[du_idx,2][first_l0:last_l0]*10
+         tracet=np.arange(0,len(tracez))*dt_ns_l0[du_idx]+first
+         print("efield",len(tracez))
+
+         vtracex=vtrace[du_idx,0][first_l0:last_l0]
+         vtracey=vtrace[du_idx,1][first_l0:last_l0]
+         vtracez=vtrace[du_idx,2][first_l0:last_l0]
+         vtracet=np.arange(0,len(vtracez))*dt_ns_l0[du_idx]+first
+         print("voltage",len(vtracez))
+
+
+         atracex=atrace[du_idx,0][first_l1:last_l1]*109.86      #this number comes from doing 0.9V/8192, the maximum of ADC divided by 13bits
+         atracey=atrace[du_idx,1][first_l1:last_l1]*109.86
+         atracez=atrace[du_idx,2][first_l1:last_l1]*109.86
+         atracet=np.arange(0,len(atracez))*dt_ns_l1[du_idx]+first
+         print("adc",len(atracez))
+
+
+         rtracex=rtrace[du_idx,0][first_l1:last_l1]*10
+         rtracey=rtrace[du_idx,1][first_l1:last_l1]*10
+         rtracez=rtrace[du_idx,2][first_l1:last_l1]*10
+         rtracet=np.arange(0,len(rtracez))*dt_ns_l1[du_idx]+first          
+         print("refield",len(rtracez))
                 
          fig,ax=plotfigure(time1=tracet,signal1=tracex,srate1=1/dt_ns_l0[du_idx],time2=vtracet,signal2=vtracex,srate2=1/dt_ns_l0[du_idx],time3=atracet,signal3=atracex,srate3=1/dt_ns_l1[du_idx],time4=rtracet,signal4=rtracex,srate4=1/dt_ns_l1[du_idx],label1="efield_l0 x10",label2="voltage_l0",label3="adc_l1 x110",label4="efield_l1 x10",Freqlimit=0.5)
+         #plt.savefig(args.directory+"IllustrateSimPipe"+str(du_idx)+".png")
          plt.show()     

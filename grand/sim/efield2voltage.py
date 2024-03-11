@@ -314,7 +314,7 @@ class Efield2Voltage:
             self.target_lenght= int(self.target_duration_us*self.target_sampling_rate_mhz)                                
             logger.info(f"resampling the voltage from {self.f_samp_mhz[0]} to {self.target_sampling_rate_mhz} MHz, new trace lenght is {self.target_lenght} samples")                         
             #we use fourier interpolation, becouse its easy!
-            self.vout = sf.irfft(self.vout_f, m)*ratio*self.padding_factor #renormalize the amplitudes
+            self.vout = sf.irfft(self.vout_f, m)*ratio #renormalize the amplitudes
             #MATIAS: TODO: now, we are missing a place to store the new sampling rate!
         elif(self.params["add_noise"] or self.params["add_rf_chain"]): #we know we dont need to resample, but we might need to reproces the Voc (curently stored in vout by compute_voc_event) to take into acount the noise or the chain
             self.vout[:] = sf.irfft(self.vout_f) 

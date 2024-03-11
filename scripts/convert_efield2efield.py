@@ -511,7 +511,7 @@ if __name__ == "__main__":
           ratio=1
 
        #to resample we use fourier interpolation, becouse it seems to be better than scipy.decimate (points are closer to the original trace)
-       vout = sf.irfft(vout_f, m)*ratio*padding_factor #renormalize the amplitudes. We have two effects we changed the sampling rate but we also have enlarged the trace, so the frequency content is diluted
+       vout = sf.irfft(vout_f, m)*ratio #renormalize the amplitudes. 
        
        if(event_idx==0 and PLOT):
          plt.scatter(np.arange(0,len(vout[PlotAnt][0]))/ratio,vout[PlotAnt][0],label="sampled",c="red")
