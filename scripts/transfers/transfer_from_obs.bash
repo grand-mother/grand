@@ -27,6 +27,13 @@ remotedatadir='/data/tmp/'  #'/sps/grand/data/gp13/raw'
 # Start date for transfer (all files older than this date will be skipped
 first_transfer='20240302'
 
+# Local script to be launched before run
+#pre_run_script="setup_network_auger.bash -init"
+
+# Local script to be launched after run
+#post_run_script='setup_network_auger.bash -close'
+
+
 ##### End of Configuration section (do not modify below) #####
 
 # Create database if not exists
@@ -47,6 +54,17 @@ tag=$(date +'%Y%m%d%H%M%S')
 Default='\033[0m'	# Text Reset
 Red='\033[0;31m'	# Red
 Green='\033[0;32m'	# Green
+
+# run pre script
+if [ -n "$pre_run_script" ]
+then
+  pre=$($pre_run_script)
+  ret=$?
+  if [ "$ret" -ne "0" ]; then
+    printf "Error ${ret} in pre run script : ${pre} \n"
+    exit ${ret}
+  fi
+fi
 
 #List of files to be inserted into the db by bunchs of 500 (larger should produce errors)
 declare -A toins=([1]="")
@@ -139,4 +157,8 @@ rsync -e "ssh -o 'ControlPath=$HOME/.ssh/ctl/%L-%r@%h:%p'" -au $dbfile ${remote_
 ssh -O exit -o ControlPath="$HOME/.ssh/ctl/%L-%r@%h:%p" ${remote_account}@${remote_server}
 rm -rf ~/.ssh/ctl
 
-
+# run post script
+if [ -n "$post_run_script" ]
+then
+  eval $post_run_script
+fi
