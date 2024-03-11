@@ -31,7 +31,7 @@ first_transfer='20240302'
 #pre_run_script="setup_network_auger.bash -init"
 
 # Local script to be launched after run
-#post_run_script='setup_network_auger.bash -close'
+post_run_script='setup_network_auger.bash -close'
 
 
 ##### End of Configuration section (do not modify below) #####
@@ -160,5 +160,10 @@ rm -rf ~/.ssh/ctl
 # run post script
 if [ -n "$post_run_script" ]
 then
-  eval $post_run_script
+  post=$($post_run_script)
+  ret=$?
+  if [ "$ret" -ne "0" ]; then
+    printf "Error ${ret} in post run script : ${post} \n"
+    exit ${ret}
+  fi
 fi

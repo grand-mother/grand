@@ -29,7 +29,9 @@ up_wwan() {
 
 down_wwan() {
   nmcli c down $wwan_con
+  status=$?
   sleep $sleep_delay
+  return $status
 }
 
 in2p3_route_claro() {
@@ -81,9 +83,10 @@ else
                 switch_on
         elif [ "$1" = "-close" ]; then
                 down_wwan
+                exit $?
         else
                 echo "Bad option"
-		exit 2
+                exit 2
         fi
 fi
 
