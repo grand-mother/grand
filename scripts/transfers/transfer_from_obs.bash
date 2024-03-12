@@ -21,18 +21,20 @@ remote_server='lpnws5131.in2p3.fr' # 'cca.in2p3.fr'
 # Account on remote server
 remote_account='fleg' # 'prod_grand'
 
+#ssh key
+ssh_key="/pbs/home/l/legrand/.ssh/id_rsa" # "/root/.ssh/id_ed25519-nopw"
+
 # Target directory on remote server
 remotedatadir='/data/tmp/'  #'/sps/grand/data/gp13/raw'
 
 # Start date for transfer (all files older than this date will be skipped
-first_transfer='20240302'
+first_transfer='20240301'
 
 # Local script to be launched before run
-#pre_run_script="setup_network_auger.bash -init"
+pre_run_script='' #'setup_network_auger.bash -init'
 
 # Local script to be launched after run
-post_run_script='setup_network_auger.bash -close'
-
+post_run_script='' # 'setup_network_auger.bash -close'
 
 ##### End of Configuration section (do not modify below) #####
 
@@ -40,8 +42,13 @@ post_run_script='setup_network_auger.bash -close'
 sqlite3 $dbfile "create table if not exists  gfiles (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, file TEXT, date INT, success BOOLEAN, UNIQUE (directory,file));"
 sqlite3 $dbfile "create table if not exists  transfer (id, tag INTEGER, date_transfer DATETIME, success BOOLEAN, comment TEXTE);"
 
-
 # Define some useful stuff
+
+#ssh options
+ssh_options="-o ControlPath=\"$HOME/.ssh/ctl/%L-%r@%h:%p\""
+if [ -n "$ssh_key" ]; then
+  ssh_options+=" -i ${ssh_key}"
+fi
 
 # Last date of files already registered
 last_transfer=$(sqlite3 $dbfile "select max(date) from gfiles;")
@@ -71,20 +78,24 @@ declare -A toins=([1]="")
 i=1
 j=0
 #find all files in localdatadir corresponding to datas (i.e. name starting by site) and add them to the database if not here already
+
 for file in $(find $localdatadir -type f -newermt $last_transfer| grep /${site}_ |sort)
 do
-	filename=$(basename $file)
-	tmp=${filename#${site}_}
-	dateobs=${tmp:0:8}
-	#Add file to be registered to the list (and start new list if more than 500 to avoid request limit in insert below)
-	if [ $j -ge 500 ];
-	then
-		i=$((i + 1))
-		toins+=([$i]="")
-		j=0
-	fi
-	toins[$i]+=",('$(dirname $file)', '$(basename $file)', ${dateobs}, false)"
-	j=$((j + 1))
+  # skip opened files
+  if [ !$(fuser "$file" &> /dev/null) ]; then
+    filename=$(basename $file)
+    tmp=${filename#${site}_}
+    dateobs=${tmp:0:8}
+    #Add file to be registered to the list (and start new list if more than 500 to avoid request limit in insert below)
+    if [ $j -ge 500 ];
+    then
+      i=$((i + 1))
+      toins+=([$i]="")
+      j=0
+    fi
+    toins[$i]+=",('$(dirname $file)', '$(basename $file)', ${dateobs}, false)"
+    j=$((j + 1))
+  fi
 done
 
 #Add all files at a time (10x faster that adding them individually)
@@ -99,9 +110,8 @@ for key in "${!toins[@]}"; do
 done
 
 # Open a ssh connection that will be used for all transfers (avoid to reopen rsync tunnel for each file)
-mkdir ~/.ssh/ctl
-ssh -nNf -o ControlMaster=yes -o ControlPath="$HOME/.ssh/ctl/%L-%r@%h:%p" ${remote_account}@${remote_server}
-
+mkdir ~/.ssh/ctl >/dev/null 2>&1
+ssh -nNf -o ControlMaster=yes ${ssh_options} ${remote_account}@${remote_server}
 declare -A translog=([1]="")
 i=1
 j=0
@@ -112,7 +122,7 @@ do
 	fileinfo=(${file//|/ })
 	#Transfer files (one by one to get info on each transfer)
 	printf "\nSending ${fileinfo[1]} "
-	trans=$(rsync -e "ssh -o 'ControlPath=$HOME/.ssh/ctl/%L-%r@%h:%p'" --out-format="%t %b %n" -au --rsync-path="mkdir -p $remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
+	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b %n" -au --rsync-path="mkdir -p $remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
 
 	if [ "$?" -eq "0" ]
 	then
@@ -150,11 +160,10 @@ for key in "${!translog[@]}"; do
 done
 
 #finally also rsync the database
-#rsync -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${dbfile}_$(date +'%Y%m%d-%H%M%S')
-rsync -e "ssh -o 'ControlPath=$HOME/.ssh/ctl/%L-%r@%h:%p'" -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${tag}_${dbfile}
+rsync -e "ssh ${ssh_options}" -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${tag}_${dbfile}
 
 #close ssh connection
-ssh -O exit -o ControlPath="$HOME/.ssh/ctl/%L-%r@%h:%p" ${remote_account}@${remote_server}
+ssh -O exit $ssh_options ${remote_account}@${remote_server}
 rm -rf ~/.ssh/ctl
 
 # run post script
