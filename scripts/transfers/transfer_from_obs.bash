@@ -28,13 +28,16 @@ ssh_key="/pbs/home/l/legrand/.ssh/id_rsa" # "/root/.ssh/id_ed25519-nopw"
 remotedatadir='/data/tmp/'  #'/sps/grand/data/gp13/raw'
 
 # Start date for transfer (all files older than this date will be skipped
-first_transfer='20240301'
+first_transfer='20240311'
 
 # Local script to be launched before run
 pre_run_script='' #'setup_network_auger.bash -init'
 
 # Local script to be launched after run
 post_run_script='' # 'setup_network_auger.bash -close'
+
+# rsync_options : a to keep the creation time of files, z to compress if bandwidth is limited (but it's ~5 times slower). Please keep the "a" option  !
+rsync_options="-az"
 
 ##### End of Configuration section (do not modify below) #####
 
@@ -122,7 +125,7 @@ do
 	fileinfo=(${file//|/ })
 	#Transfer files (one by one to get info on each transfer)
 	printf "\nSending ${fileinfo[1]} "
-	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b %n" -au --rsync-path="mkdir -p $remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
+	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b %n"  ${rsync_options} --rsync-path="mkdir -p $remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
 
 	if [ "$?" -eq "0" ]
 	then
@@ -160,7 +163,7 @@ for key in "${!translog[@]}"; do
 done
 
 #finally also rsync the database
-rsync -e "ssh ${ssh_options}" -au $dbfile ${remote_account}@${remote_server}:$remotedatadir/${tag}_${dbfile}
+rsync -e "ssh ${ssh_options}" ${rsync_options} $dbfile ${remote_account}@${remote_server}:$remotedatadir/${tag}_${dbfile}
 
 #close ssh connection
 ssh -O exit $ssh_options ${remote_account}@${remote_server}
