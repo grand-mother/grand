@@ -16,16 +16,16 @@ localdatadir='/sps/grand/data/gp13/raw/2024/'
 site='GP13'
 
 # Remote server to transfer
-remote_server='lpnws5131.in2p3.fr' # 'cca.in2p3.fr'
+remote_server='cca.in2p3.fr'
 
 # Account on remote server
-remote_account='fleg' # 'prod_grand'
+remote_account='prod_grand' # 'prod_grand'
 
 #ssh key
-ssh_key="/pbs/home/l/legrand/.ssh/id_rsa" # "/root/.ssh/id_ed25519-nopw"
+ssh_key="/pbs/home/p/prod_grand/.ssh/id_ed25519" # "/root/.ssh/id_ed25519-nopw"
 
 # Target directory on remote server
-remotedatadir='/data/tmp/'  #'/sps/grand/data/gp13/raw'
+remotedatadir='/sps/grand/prod_grand/tests'  #'/sps/grand/data/gp13/raw'
 
 # Start date for transfer (all files older than this date will be skipped
 first_transfer='20240311'
@@ -37,12 +37,12 @@ pre_run_script='' #'setup_network_auger.bash -init'
 post_run_script='' # 'setup_network_auger.bash -close'
 
 # rsync_options : a to keep the creation time of files, z to compress if bandwidth is limited (but it's ~5 times slower). Please keep the "a" option  !
-rsync_options="-az"
+rsync_options="-a"
 
 ##### End of Configuration section (do not modify below) #####
 
 # Create database if not exists
-sqlite3 $dbfile "create table if not exists  gfiles (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, file TEXT, date INT, success BOOLEAN, UNIQUE (directory,file));"
+sqlite3 $dbfile "create table if not exists  gfiles (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, file TEXT, date INT, success BOOLEAN, md5sum VARCHAR(35), UNIQUE (directory,file));"
 sqlite3 $dbfile "create table if not exists  transfer (id, tag INTEGER, date_transfer DATETIME, success BOOLEAN, comment TEXTE);"
 
 # Define some useful stuff
@@ -81,12 +81,12 @@ declare -A toins=([1]="")
 i=1
 j=0
 #find all files in localdatadir corresponding to datas (i.e. name starting by site) and add them to the database if not here already
-
 for file in $(find $localdatadir -type f -newermt $last_transfer| grep /${site}_ |sort)
 do
   # skip opened files
   if [ !$(fuser "$file" &> /dev/null) ]; then
     filename=$(basename $file)
+    md5=$(md5sum ${file}| awk '{print $1}')
     tmp=${filename#${site}_}
     dateobs=${tmp:0:8}
     #Add file to be registered to the list (and start new list if more than 500 to avoid request limit in insert below)
@@ -96,7 +96,7 @@ do
       toins+=([$i]="")
       j=0
     fi
-    toins[$i]+=",('$(dirname $file)', '$(basename $file)', ${dateobs}, false)"
+    toins[$i]+=",('$(dirname $file)', '$(basename $file)', ${dateobs}, 0, '${md5}')"
     j=$((j + 1))
   fi
 done
@@ -107,9 +107,8 @@ for key in "${!toins[@]}"; do
 	value=${toins[${key}]}
 	if [ -n "$value" ];
 	then
-		res=$(sqlite3 $dbfile "INSERT OR IGNORE INTO gfiles (directory,file,date,success) values ${value:1}")
+		res=$(sqlite3 $dbfile "INSERT OR IGNORE INTO gfiles (directory,file,date,success,md5sum) values ${value:1}")
 	fi
-
 done
 
 # Open a ssh connection that will be used for all transfers (avoid to reopen rsync tunnel for each file)
@@ -119,7 +118,7 @@ declare -A translog=([1]="")
 i=1
 j=0
 #select files not transfered successfully
-for file in $(sqlite3 $dbfile "select directory, file, date, success, id from gfiles where success=false ORDER BY file;")
+for file in $(sqlite3 $dbfile "select directory, file, date, success, id from gfiles where success=0 ORDER BY file;")
 do
 	#transform result into array (more easy to manipulate)
 	fileinfo=(${file//|/ })
@@ -130,12 +129,12 @@ do
 	if [ "$?" -eq "0" ]
 	then
 		#Transfer successful : store info to update database at the end
-		translog[$i]+=";UPDATE gfiles SET success=true WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]},${tag}, true,datetime('now','utc'),'${trans}')"
+		translog[$i]+=";UPDATE gfiles SET success=1 WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'),'${trans}')"
 		printf "${Green}Ok${Default}"
 
 	else
 		#Transfer failed : just log errors
-		translog[$i]+=";INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]}, ${tag}, false,datetime('now','utc'),'${trans}')"
+		translog[$i]+=";INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]}, ${tag}, 0,datetime('now','utc'),'${trans}')"
 		printf "${Red}ERROR:${Default} \n ${trans} "
 	fi
 
@@ -159,7 +158,6 @@ for key in "${!translog[@]}"; do
         then
                 res=$(sqlite3 $dbfile "${value:1}")
         fi
-
 done
 
 #finally also rsync the database
