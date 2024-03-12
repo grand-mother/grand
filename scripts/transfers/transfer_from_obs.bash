@@ -80,13 +80,13 @@ fi
 declare -A toins=([1]="")
 i=1
 j=0
+md5="0"
 #find all files in localdatadir corresponding to datas (i.e. name starting by site) and add them to the database if not here already
 for file in $(find $localdatadir -type f -newermt $last_transfer| grep /${site}_ |sort)
 do
   # skip opened files
   if [ !$(fuser "$file" &> /dev/null) ]; then
     filename=$(basename $file)
-    md5=$(md5sum ${file}| awk '{print $1}')
     tmp=${filename#${site}_}
     dateobs=${tmp:0:8}
     #Add file to be registered to the list (and start new list if more than 500 to avoid request limit in insert below)
@@ -124,15 +124,17 @@ do
 	fileinfo=(${file//|/ })
 	#Transfer files (one by one to get info on each transfer)
 	printf "\nSending ${fileinfo[1]} "
-	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b %n"  ${rsync_options} --rsync-path="mkdir -p $remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
-
+	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b %n md5:%C"  ${rsync_options} --rsync-path="mkdir -p $remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
 	if [ "$?" -eq "0" ]
 	then
+	  md5=${trans#*md5:}
+	  #echo $md52
 		#Transfer successful : store info to update database at the end
-		translog[$i]+=";UPDATE gfiles SET success=1 WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'),'${trans}')"
+		translog[$i]+=";UPDATE gfiles SET success=1, md5sum='${md5}' WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'),'${trans}')"
 		printf "${Green}Ok${Default}"
 
 	else
+	  md5=$(echo ${trans}|awk -F"md5:" '{print $2}')
 		#Transfer failed : just log errors
 		translog[$i]+=";INSERT INTO transfer (id, tag, success,date_transfer,comment) VALUES (${fileinfo[4]}, ${tag}, 0,datetime('now','utc'),'${trans}')"
 		printf "${Red}ERROR:${Default} \n ${trans} "
