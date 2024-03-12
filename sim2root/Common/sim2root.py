@@ -34,43 +34,6 @@ clargs = clparser.parse_args()
 
 print("#################################################")
 
-def forcetimewindow(trace, t_bin_size, CurrentTPre,CurrentTPost,DesiredTPre=0,DesiredTPost=0):
-    ############################################################################################################################
-    # adjust the trace lenght to force the requested tpre and tpost
-    ###########################################################################################################################
-    #print("before:",np.shape(efield),CurrentTPre,CurrentTPost, (CurrentTPre+CurrentTPost)/RawEfield.t_bin_size)
-
-    if ForcedTPre!=0:
-      DeltaTimePre=ForcedTPre-CurrentTPre
-      DeltaBinsPre=int(np.round(DeltaTimePre/t_bin_size))
-    else:
-      DeltaBinsPre=0                    
-
-    if ForcedTPost!=0:
-      DeltaTimePost=ForcedTPost-CurrentTPost
-      DeltaBinsPost=int(np.round(DeltaTimePost/t_bin_size))
-    else:
-      DeltaBinsPost=0  
-           
-    if DeltaBinsPre<0 :
-      efield=efield[-DeltaBinsPre:]
-      DeltaBinsPre=0
-      print("We have to remove "+str(-DeltaBinsPre)+" bins at the start of the trace")
-    if DeltaBinsPost<0 :
-      efield=efield[:DeltaBinsPost]   
-      print("We have to remove "+str(-DeltaBinsPost)+" bins at the end of the trace")
-
-    if DeltaBinsPost>0 or DeltaBinsPre>0:
-      npad = ((DeltaBinsPre, DeltaBinsPost), (0 , 0))
-      trace=np.pad(trace, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
-      print("We have to add "+str(DeltaBinsPre)+" bins at the start of the trace")
-      print("We have to add "+str(DeltaBinsPost)+" bins at the end of the trace")
-
-     #At this point, the traces are ensued to have a length between  ForcedTpost and a Forced
-
-
-
-
 def convert_date(date_str):
     # Convert input string to a struct_time object
     date_struct = time.strptime(date_str, "%Y-%m-%d")

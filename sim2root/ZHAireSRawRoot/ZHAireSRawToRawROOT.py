@@ -4,7 +4,7 @@ import os
 import glob
 import logging
 import numpy as np
-#import datetime #to get the unix timestamp
+import datetime #to get the unix timestamp
 import time #to get the unix timestamp
 import matplotlib.pyplot as plt
 from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
@@ -72,6 +72,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     #Nice to have Feature: If EventID is decideded to be just a number, get the next correlative EventID (with respect to the last inside the file) if no EventID is specified
 	
     #The function will write three main sections: ShowerSim, EfieldSim and MetaInfo. 
+    DoPlot=False
+    
     #
     SimShowerInfo=True
     SimEfieldInfo=True 
@@ -504,7 +506,17 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 
                 if(int(AntennaN[ant_number])!=ant_number+1):
                   logging.critical("Warning, check antenna numbers and ids, it seems there is a problem "+str(AntennaN)+" "+str(ant_number+1))
-                
+
+
+                #Just for plotting
+                if(DoPlot):
+                    Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
+                    mytime=np.arange(t_0+TimeWindowMin,t_0+TimeWindowMax-1,TimeBinSize)
+                    if(len(mytime)!=len(Etotal)):
+                       mytime=mytime[0:len(Etotal)]
+                    plt.plot(mytime,Etotal,label="Original Trace",linewidth=6)
+                    plt.axvline(t_0,label="Original Trigger Time",color="blue")
+
                 ############################################################################################################################
                 # adjust the trace lenght to force the requested tpre and tpost
                 ###########################################################################################################################
@@ -526,6 +538,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                   efield=efield[-DeltaBinsPre:]
                   DeltaBinsPre=0
                   logging.debug("We have to remove "+str(-DeltaBinsPre)+" bins at the start of efield")
+                  
                 if DeltaBinsPost<0 :
                   efield=efield[:DeltaBinsPost]   
                   logging.debug("We have to remove "+str(-DeltaBinsPost)+" bins at the end of efield")
@@ -535,42 +548,56 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                   efield=np.pad(efield, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
                   logging.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
                   logging.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
-                 
-                #At this point, the traces are ensued to have a length between  ForcedTpost and a ForcedTpre, and RawEfield.t_pre has the correct time before the nominal t0
+                ####################################   
+                #At this point, the traces are ensued to have a length between ForcedTpost and a ForcedTpre, and RawEfield.t_pre has the correct time before the nominal t0
+                ####################################
+                #this is just for plotting
+                if(DoPlot):
+                    Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
+                    mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post-TimeBinSize,TimeBinSize)
+                    plt.plot(mytime,Etotal,label="Extended Trace",linewidth=4)
+                    plt.axvline(t_0,label="Extended Trigger Time",color="orange")
                
                 #now lets process a "trigger" algorithm that will modify where the trace is located. 
                 if(TriggerSim):
                 
-                  Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus
+                  Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
                   trigger_index = np.argmax(Etotal)                    #look where the maximum happens
                   trigger_time=trigger_index*TimeBinSize
                   
-                  if(trigger_time!=RawEfield.t_pre):
-                     #plt.plot(Etotal,label="Original")
+                  #If we need to shift the trigger time (the trigger time needs to be equal to tpre
+                  if(trigger_time!=ForcedTPre):
                      
-                     DeltaT=ForcedTPre - trigger_time       
+                     DeltaT=RawEfield.t_pre - trigger_time       
                      ShiftBins=int(DeltaT/TimeBinSize)
                      #print("we need to shift the trace "+ str(DeltaT)+" ns or "+str(ShiftBins)+" Time bins")
                      
-                     #this is to assure that, if the maximum is found too late in the trace, we dont move too much outside of the time window (normally, peaks are late in the time window, if you set the time window correctly). 
+                     #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly). 
                      if(ShiftBins < -RawEfield.t_pre):
                        ShiftBins= -RawEfield.t_pre
-                       
+                     
                      #we could use roll, but roll makes appear the end of the trace at the begining if we roll to much
                      #efield=np.roll(efield,-ShiftBins,axis=0)
                      #Etotal=np.roll(Etotal,-ShiftBins,axis=0)  
                      #so we use scipy shift, that lets you state what value to put for the places you roll
                      
-                     efield=shift(efield,(ShiftBins,0),cval=0)
-                     Etotal=shift(Etotal,ShiftBins,cval=0)
-                 
-                     #plt.plot(np.array(efield[:,1]))
-                     #plt.plot(np.array(efield[:,2]))
-                     #plt.plot(np.array(efield[:,3]))
-                     #plt.plot(Etotal,label="Shifted")
-                     #plt.axvline(ForcedTPre/TimeBinSize)
-                     #plt.legend()
-                     #plt.show()
+                     efield=shift(efield,(ShiftBins,0),cval=0)                     
+                     t_0=t_0-ShiftBins*TimeBinSize
+                     
+                     #this is just for plotting
+                     if(DoPlot):  
+                         Etotal=shift(Etotal,ShiftBins,cval=0)
+                         mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post-TimeBinSize,TimeBinSize)
+                         #plt.plot(np.array(efield[:,1]))
+                         #plt.plot(np.array(efield[:,2]))
+                         #plt.plot(np.array(efield[:,3]))
+                         plt.plot(mytime, Etotal,label="Shifted Trace")
+                         plt.axvline(t_0,label="Shifted TriggerTime",color="green",linewidth=5)
+                         plt.axvline(mytime[int(800/TimeBinSize)],color="red",label="Required TriggerTime")
+                         plt.legend()
+
+                  if(DoPlot):
+                    plt.show()  
                 
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 
