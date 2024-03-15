@@ -26,7 +26,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matp
 #TODO ASAP: Get Refractivity Model parameters from the sry (unfortunatelly these are not reported in the sry, this will have to wait to the next version of zhaires hopefully after ICRC 2023)
 #Maybe move them to the function call for now, and remove the unused Longitudinal switches?
 
-def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=800,ForcedTPost=2000, TriggerSim=True): 
+def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=0,ForcedTPost=0, TriggerSim=False): 
     '''
     This routine will read a ZHAireS simulation located in InputFolder and put it in the Desired OutputFileName. 
     
@@ -72,7 +72,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     #Nice to have Feature: If EventID is decideded to be just a number, get the next correlative EventID (with respect to the last inside the file) if no EventID is specified
 	
     #The function will write three main sections: ShowerSim, EfieldSim and MetaInfo. 
-    DoPlot=False
+    DoPlot=True
     
     #
     SimShowerInfo=True
@@ -407,7 +407,6 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     #ZHAIRES DEPENDENT
     ending_e = "/a*.trace"
     tracefiles=glob.glob(InputFolder+ending_e)
-    #print(tracefiles)
     tracefiles=sorted(tracefiles, key=lambda x:int(x.split(".trace")[0].split("/a")[-1]))
         
     if(SimEfieldInfo and len(tracefiles)>0):
@@ -512,8 +511,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 if(DoPlot):
                     Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
                     mytime=np.arange(t_0+TimeWindowMin,t_0+TimeWindowMax-1,TimeBinSize)
-                    if(len(mytime)!=len(Etotal)):
+                    if(len(mytime)>len(Etotal)):
                        mytime=mytime[0:len(Etotal)]
+                    else:
+                       Etotal=Etotal[0:len(mytime)]   
                     plt.plot(mytime,Etotal,label="Original Trace",linewidth=6)
                     plt.axvline(t_0,label="Original Trigger Time",color="blue")
 
@@ -536,25 +537,44 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                                
                 if DeltaBinsPre<0 :
                   efield=efield[-DeltaBinsPre:]
-                  DeltaBinsPre=0
                   logging.debug("We have to remove "+str(-DeltaBinsPre)+" bins at the start of efield")
+                  DeltaBinsPre=0
                   
                 if DeltaBinsPost<0 :
                   efield=efield[:DeltaBinsPost]   
                   logging.debug("We have to remove "+str(-DeltaBinsPost)+" bins at the end of efield")
+                  DeltaBinsPost=0
                
                 if DeltaBinsPost>0 or DeltaBinsPre>0:
                   npad = ((DeltaBinsPre, DeltaBinsPost), (0 , 0))
                   efield=np.pad(efield, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
                   logging.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
                   logging.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
+                  
+                #Check that we achieved the correct length (rounding errors can leave us one bin short or long (TODO:we lack a definition of what to do if the times are not a multiple of tbinsize.)
+                DesiredTraceLenght=int((RawEfield.t_pre+RawEfield.t_post)/TimeBinSize)
+                
+                if(len(efield[:,1])>DesiredTraceLenght):
+                  efield=efield[:DesiredTraceLenght,:]
+                if(len(efield[:,1])<DesiredTraceLenght):
+                  delta=DesiredTraceLenght-len(efield[:,1])
+                  #print("delta",delta)
+                  efield=np.pad(efield, ((0,delta),(0,0)), 'constant')
+                  
+                #print("after:",np.shape(efield),ForcedTPre,ForcedTPost, (ForcedTPre+ForcedTPost)/TimeBinSize)  
+
                 ####################################   
-                #At this point, the traces are ensued to have a length between ForcedTpost and a ForcedTpre, and RawEfield.t_pre has the correct time before the nominal t0
+                #At this point, the traces are ensued to have a length between ForcedTpost and a ForcedTpre, and RawEfield.t_pre has the correct time before the original t0
                 ####################################
+
                 #this is just for plotting
                 if(DoPlot):
                     Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
-                    mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post-TimeBinSize,TimeBinSize)
+                    mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post,TimeBinSize)
+                    if(len(mytime)>len(Etotal)):
+                       mytime=mytime[0:len(Etotal)]
+                    else:
+                       Etotal=Etotal[0:len(mytime)]   
                     plt.plot(mytime,Etotal,label="Extended Trace",linewidth=4)
                     plt.axvline(t_0,label="Extended Trigger Time",color="orange")
                
@@ -573,8 +593,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                      #print("we need to shift the trace "+ str(DeltaT)+" ns or "+str(ShiftBins)+" Time bins")
                      
                      #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly). 
-                     if(ShiftBins < -RawEfield.t_pre):
-                       ShiftBins= -RawEfield.t_pre
+                     if(ShiftBins < -RawEfield.t_pre/TimeBinSize):
+                       ShiftBins= int(-RawEfield.t_pre/TimeBinSize)
                      
                      #we could use roll, but roll makes appear the end of the trace at the begining if we roll to much
                      #efield=np.roll(efield,-ShiftBins,axis=0)
@@ -587,10 +607,14 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                      #this is just for plotting
                      if(DoPlot):  
                          Etotal=shift(Etotal,ShiftBins,cval=0)
-                         mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post-TimeBinSize,TimeBinSize)
+                         mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post,TimeBinSize)
                          #plt.plot(np.array(efield[:,1]))
                          #plt.plot(np.array(efield[:,2]))
                          #plt.plot(np.array(efield[:,3]))
+                         if(len(mytime)>len(Etotal)):
+                            mytime=mytime[0:len(Etotal)]
+                         else:
+                            Etotal=Etotal[0:len(mytime)] 
                          plt.plot(mytime, Etotal,label="Shifted Trace")
                          plt.axvline(t_0,label="Shifted TriggerTime",color="green",linewidth=5)
                          plt.axvline(mytime[int(800/TimeBinSize)],color="red",label="Required TriggerTime")
@@ -871,10 +895,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         SimShower.SimShowerWriteEnergyDist_allcharged(HDF5handle, RunID, EventID, table.T[1])
 
     logging.info("### The event written was " + EventName)
-
-    # f.Close()
-    # print("****************CLOSED!")
-    
+   
     if(CompressedInput==True):
       logging.info("Hopefully deleting the uncompressed files " + EventName)
       ZC.ZHAireSCompressEvent(InputFolder,"delete")

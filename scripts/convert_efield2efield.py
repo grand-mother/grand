@@ -225,7 +225,6 @@ if __name__ == "__main__":
     
     logger = mlg.get_logger_for_script(__name__)
     args = manage_args()
-    print(args.verbose) 
     mlg.create_output_for_logger(args.verbose, log_stdout=True)
     logger.info(mlg.string_begin_script())
     logger.info("Computing electric field from the input electric field.")

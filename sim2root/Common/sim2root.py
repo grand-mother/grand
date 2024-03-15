@@ -9,6 +9,13 @@ import time
 from pathlib import Path
 from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 import raw_root_trees as RawTrees # this is here in Common
+import grand.manage_log as mlg
+import matplotlib.pyplot as plt
+from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
+
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__file__)
+logger.info("Converting rawroot to grandlib file")
 
 
 #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file. Site too.
@@ -30,9 +37,127 @@ clparser.add_argument("-lo", "--longitude", help="Longitude of the site", defaul
 clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=None)
 clparser.add_argument("-ru", "--run", help="Run number", default=None)
 clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
+clparser.add_argument("--target_duration_us",type=float,default=None,help="Adujust the trace lenght to the given duration, in us") 
+clparser.add_argument("--trigger_time_ns",type=float,default=None,help="Adujust the trace so that the maximum is at given ns from the begining of the trace")
+clparser.add_argument("--verbose", choices=["debug", "info", "warning", "error", "critical"],default="info", help="logger verbosity.")    
 clargs = clparser.parse_args()
 
-print("#################################################")
+mlg.create_output_for_logger(clargs.verbose, log_stdout=True)
+
+logger.info("#################################################")
+
+############################################################################################################################
+# adjust the trace lenght to force the requested tpre and tpost  TODO:This should be properly codede into a tool on grandlib tools for trace manipulation
+###########################################################################################################################
+def adjust_trace(trace, t0s, CurrentTpre,CurrentTpost, DesiredTpre, DesiredTpost,TimeBinSize):
+
+    #trace holds a list, needs to be converted into a numpy array
+    trace=np.asarray(trace)
+    #t0s is a vector with all the du's t0s
+
+    #TODO: assert that the times are multiples of TimeBinSize, as we are not ready to handle fractional time bins
+        
+    logger.info("Adjusting trace so that t_pre is "+str(DesiredTpre)+" and t_post is "+str(DesiredTpost)+".Trace lenght will be "+str(DesiredTpre+DesiredTpost))
+    logger.debug("Original t_pre is "+str(CurrentTpre)+" and t_post is "+str(CurrentTpost)+" .t_bin_size is "+str(TimeBinSize))
+    #plt.plot(trace[1,1],label="before",linewidth=5)
+    trace=adjust_trace_lenght(trace, DesiredTpre, DesiredTpost, CurrentTpre, CurrentTpost,TimeBinSize)
+    #plt.plot(trace[1,1],label="after",linewidth=3)
+    #plt.axvline(DesiredTpre/TimeBinSize,label="RequestedTriggerPosition",color="orange")
+    #plt.axvline(CurrentTpre/TimeBinSize,label="OriginalTriggerPosition",color="blue")
+    t0s,trace=adjust_trigger(trace, t0s, DesiredTpre, TimeBinSize)
+    #plt.plot(trace[1,1],label="corrected t0")
+    #plt.legend()
+    #plt.show()    
+    return t0s,trace
+  
+
+def adjust_trace_lenght(trace, DesiredTpre, DesiredTpost, CurrentTpre, CurrentTpost,TimeBinSize): 
+    #we will assume that, on input, all traces have the same tpre and tpost
+    #everything is in ns.
+    #time window is defined as starting at t0-tpre and finishing at t0+tpost
+    #If the DesiredTpre or DesiredTpost are, 0, the original value is kept
+    #TimeBinSize is the size of the time bin
+    #trace is a vector with shape   (n_du, 3,ntimebins)
+    
+    #TODO: assert that the times are multiples of TimeBinSize, as we are not ready to handle fractional time bins   
+    if DesiredTpre!=0:
+      DeltaTimePre=DesiredTpre-CurrentTpre
+      DeltaBinsPre=int(np.round(DeltaTimePre/TimeBinSize))
+    else:
+      DeltaBinsPre=0                    
+      DesiredTpre=CurrentTpre
+      
+    if DesiredTpost!=0:
+      DeltaTimePost=DesiredTpost-CurrentTpost
+      DeltaBinsPost=int(np.round(DeltaTimePost/TimeBinSize))
+    else:
+      DeltaBinsPost=0 
+      DesiredTpost=CurrentTpost 
+
+    #if the current value is larger than what we desire, we just remove the bins.                
+    if DeltaBinsPre<0:
+      trace=trace[:,:,-DeltaBinsPre:]
+      logger.debug("We had to remove "+str(-DeltaBinsPre)+" bins at the start of trace")
+      DeltaBinsPre=0
+     
+    if DeltaBinsPost<0 :
+      trace=trace[:,:,:DeltaBinsPost]   
+      logger.debug("We had to remove "+str(-DeltaBinsPost)+" bins at the end of trace")
+      DeltaBinsPost=0
+   
+    #if the desired value is larger, we have to pad.
+    if DeltaBinsPost>0 or DeltaBinsPre>0:
+      npad = ((0,0),(0,0),(DeltaBinsPre, DeltaBinsPost))
+      trace=np.pad(trace, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
+      logger.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of the trace")
+      logger.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of the trace")
+
+    #Check that we achieved the correct length (rounding errors can leave us one bin short or long (TODO:we lack a definition of what to do if the times are not a multiple of tbinsize.)
+    DesiredTraceLenght=int((DesiredTpre+DesiredTpost)/TimeBinSize)
+
+    if(len(trace[0,0])>DesiredTraceLenght):      
+      trace=trace[:,:,DesiredTraceLenght]
+    if(len(trace[0,0])<DesiredTraceLenght):
+      delta=DesiredTraceLenght-len(trace[0,0])
+      trace=np.pad(trace, ((0,0),(0,0),(0,delta)), 'constant')
+      
+    #now, we have traces that meet the desired tpre and tpost. No changes to t0 are needed (TODO: maybe changes to t0 are needed if we have a non-integer number of bins between the t_pre and the t_post)     
+    return trace
+
+
+def adjust_trigger(trace, CurrentT0s, TPre, TimeBinSize):
+  #now lets process a "trigger" algorithm that will modify where the trace is located.
+  #we asume trace is windowed between CurrentT0-Tpre and CurrentT0+tpost
+  #trace will have dim (du,3 or 4,tbins)
+                 
+  #totl will have dim du,tbins 
+  ttotal = np.linalg.norm(trace, axis=1) #make the modulus (the 1 is to remove the time)   
+  #trigger_index will have dim du
+  trigger_index = np.argmax(ttotal,axis=1)                    #look where the maximum happens
+   
+  #this definition of the trigger times makes the trigger be at the begining of the bin where the maximum is, becouse the index starts at 0. This is compatible with the definition of the window that we give.
+  trigger_time=trigger_index*TimeBinSize               
+  #If we need to shift the trigger time (the trigger time needs to be equal to tpre
+  DeltaT=TPre - trigger_time       
+  ShiftBins=(DeltaT/TimeBinSize).astype(int,copy=False)
+
+  #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly). 
+  mask=ShiftBins < -TPre/TimeBinSize
+  if mask.any():
+    logger.error("some elements needed to be shifted only up to the limt, tpre was too small")
+    ShiftBins[mask]= int(-TPre/TimeBinSize)
+                 
+  #we cannot use use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
+  #we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
+  
+  #TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.  
+  for du_idx in range(trace.shape[0]):     
+    trace[du_idx]=shift(trace[du_idx],(0,ShiftBins[du_idx]),cval=0)
+  
+  #we get the correct t0
+  T0s=CurrentT0s-ShiftBins*TimeBinSize
+
+  return T0s,trace
 
 def convert_date(date_str):
     # Convert input string to a struct_time object
@@ -91,9 +216,27 @@ def main():
             trawshower.get_entry(i)
             trawefield.get_entry(i)
             trawmeta.get_entry(i)
+            
+            OriginalTpre=trawefield.t_pre
+            OriginalTpost=trawefield.t_post
+            DesiredTpre=trawefield.t_pre
+            DesiredTpost=trawefield.t_post
 
-            # If the first entry or (run number enforced and first file), fill the run trees
-            if (file_num==0 and i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
+            if clargs.trigger_time_ns is not None:
+              DesiredTpre=clargs.trigger_time_ns
+              assert DesiredTpre > 0
+              OriginalDuration= OriginalTpre+OriginalTpost
+              DesiredTpost= OriginalDuration-DesiredTpre
+                          
+            if clargs.target_duration_us is not None:
+              DesiredTpost=clargs.target_duration_us*1000-DesiredTpre            
+            #we modify this becouse it needs to be stored in the run file on the first event.
+            trawefield.t_pre=DesiredTpre
+            trawefield.t_post=DesiredTpost
+            
+
+            # If the first entry on the first file
+            if (file_num==0 and i==0):
 
                 # Overwrite the run number if specified on command line
                 run_number = ext_run_number if ext_run_number is not None else trawshower.run_number
@@ -135,9 +278,18 @@ def main():
             rawshower2grandroot(trawshower, gt)
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
             rawmeta2grandroot(trawmeta, gt)
+            
+            # Change the trace lenght as specified in the comand line                                     
+            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)              
+            trawefield.t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
+
+            trawefield.trace_x=trace[:,0,:]
+            trawefield.trace_y=trace[:,1,:]
+            trawefield.trace_z=trace[:,2,:]
+
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt)
-
+        
             # Overwrite the run number if specified on command line
             if ext_run_number is not None:
                 gt.trun.run_number = ext_run_number
@@ -542,7 +694,6 @@ def get_origin_geoid(clargs, trawshower):
     lat = clargs.latitude if clargs.latitude else trawshower.site_lat
     lon = clargs.longitude if clargs.longitude else trawshower.site_lon
     alt = clargs.altitude if clargs.altitude else trawshower.site_alt
-
     return [lat, lon, alt]
 
 # Form the proper output directory name from command line arguments
