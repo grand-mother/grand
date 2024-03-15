@@ -419,11 +419,16 @@ def CoreasToRawRoot(file, simID=None):
     trace_y = efield[:,2]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
     trace_z = efield[:,3]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
 
+
+
     # define time params:
     t_length = len(timestamp)
-    t_pre  = 800#ns 
-    t_post = t_length - t_pre
-
+    t_0 = timestamp[0] + t_length/2
+    t_pre  = 800#ns
+    t_pre = t_length/2 
+    t_post = t_length/2
+    
+    '''
     # calculate Etotal
     Etotal = np.sqrt(trace_x**2 + trace_y**2 + trace_z**2)
 
@@ -483,7 +488,7 @@ def CoreasToRawRoot(file, simID=None):
     trace_x = trace_x_new
     trace_y = trace_y_new
     trace_z = trace_z_new
-
+    '''
 
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
