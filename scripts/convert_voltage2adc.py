@@ -72,14 +72,6 @@ def get_noise_trace(data_dir,
     units       : ADC counts (least significant bits)
     description : The selected array of noise traces, with shape (N_du,3,N_samples).
     '''
-<<<<<<< HEAD
-=======
-    
-    # This part might be patched with rt.DataDirectory() once compatible
-    data_files = glob.glob(data_dir+'/*.root')
-    if n_files == None:
-        n_files    = len(data_files)
->>>>>>> 3718cbf3916b6e0f26b8f3b2824ab787baee9f4c
 
     # Select n_files random data files from directory
     data_files = sorted( glob.glob(data_dir+'*.root') ) # sort to get rid of additional randomness of glob
