@@ -128,21 +128,23 @@ for file in $(sqlite3 $dbfile "select directory, file, date, success, id from gf
 do
 	#transform result into array (more easy to manipulate)
 	fileinfo=(${file//|/ })
+	# Ensure extension is .bin
+  finalname="${fileinfo[1]%.*}.bin"
 	#Transfer files (one by one to get info on each transfer)
 	printf "\nSending ${fileinfo[1]} "
-	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b md5:%C"  ${rsync_options} --rsync-path="mkdir -p $remotedatadir/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/ 2>&1)
+	trans=$(rsync -e "ssh ${ssh_options}" --out-format="%t %b md5:%C"  ${rsync_options} --rsync-path="mkdir -p $remotedatadir/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2} && rsync" ${fileinfo[0]}/${fileinfo[1]}  ${remote_account}@${remote_server}:$remotedatadir/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname} 2>&1)
 	if [ "$?" -eq "0" ]
 	then
 	  md5=${trans#*md5:}
 	  #echo $md52
 		#Transfer successful : store info to update database at the end
-		translog[$i]+=";UPDATE gfiles SET success=1, md5sum='${md5}' WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,target,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'), \"${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${fileinfo[1]}\", '${trans}')"
+		translog[$i]+=";UPDATE gfiles SET success=1, md5sum='${md5}' WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,target,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'), \"${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}\", '${trans}')"
 		printf "${Green}Ok${Default}"
 
 	else
 	  md5=$(echo ${trans}|awk -F"md5:" '{print $2}')
 		#Transfer failed : just log errors
-		translog[$i]+=";INSERT INTO transfer (id, tag, success, date_transfer, target, comment) VALUES (${fileinfo[4]}, ${tag}, 0,datetime('now','utc'), '${remotedatadir}', '${trans}')"
+		translog[$i]+=";INSERT INTO transfer (id, tag, success, date_transfer, target, comment) VALUES (${fileinfo[4]}, ${tag}, 0,datetime('now','utc'), '${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}', '${trans}')"
 		printf "${Red}ERROR:${Default} \n ${trans} "
 	fi
 
