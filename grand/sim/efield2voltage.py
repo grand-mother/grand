@@ -53,24 +53,9 @@ class Efield2Voltage:
 
         self.d_input = groot.DataDirectory(d_input)
 
-        # directory_path, fname = os.path.split(f_input)
-        
-        #f_input_TRun=directory_path+"/run_"+ fname[7:]
-        # f_input_TRun=directory_path+"/run.root"
-        # f_input_TShower=directory_path+"/shower_"+ fname[7:]
-
-        #f_input_TRunShowerSim=directory_path+"/TRunShowerSim_"+ fname[8:]         
-        #f_input_TShowerSim=directory_path+"/TShowerSim_"+ fname[8:]
-        
-        #f_input_TRunEfieldSim=directory_path+"/TRunEfieldSim_"+ fname[8:] 
-        # f_input_TEfield=directory_path+"/efield_"+ fname[7:]
-
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
-
-        #print(f_input_TShower)
-        #print(f_input_TRun)
 
         # If output filename given, use it
         if f_output:
@@ -132,12 +117,13 @@ class Efield2Voltage:
             self.previous_run = self.run_number
 
         # stack efield traces
-        trace_shape = np.asarray(self.events.trace).shape  # (nb_du, 3, tbins of a trace)
+        self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        trace_shape = self.traces.shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
-        self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        
         # self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
         self.du_pos = np.asarray(self.run.du_xyz)[self.event_dus_indices] # (nb_du, 3) antenna position wrt local grand coordinate
 

@@ -72,6 +72,14 @@ def get_noise_trace(data_dir,
     units       : ADC counts (least significant bits)
     description : The selected array of noise traces, with shape (N_du,3,N_samples).
     '''
+<<<<<<< HEAD
+=======
+    
+    # This part might be patched with rt.DataDirectory() once compatible
+    data_files = glob.glob(data_dir+'/*.root')
+    if n_files == None:
+        n_files    = len(data_files)
+>>>>>>> 3718cbf3916b6e0f26b8f3b2824ab787baee9f4c
 
     # Select n_files random data files from directory
     data_files = sorted( glob.glob(data_dir+'*.root') ) # sort to get rid of additional randomness of glob
@@ -194,7 +202,7 @@ def manage_args():
                         "--target_sampling_rate_mhz",
                         type=float,
                         default=0,
-                        help="Target sampling rate of the data in Mhz",
+                        help="Target sampling rate of the data in Mhz (not implemented, currently hard coded to 500Mhz)",
     )       
     parser.add_argument('-s',
                         '--seed',
@@ -271,7 +279,7 @@ if __name__ == '__main__':
         dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
         f_samp_mhz = 1e3/dt_ns                                 # MHz  
         input_sampling_rate_mhz = f_samp_mhz[0]                # and here we asume all sampling rates are the same!. In any case, we are asuming all the ADCs are the same...        
-        #print("input samplinf",input_sampling_rate_mhz)
+
         #-#-#- Downsample if needed -#-#-# (this could be added to the "process" method to hide it from the public, and add input_sampling_rate as input to process.
         #plt.plot(voltage_trace[1][1],label="in")
         if( input_sampling_rate_mhz != adc.sampling_rate):         
@@ -292,17 +300,13 @@ if __name__ == '__main__':
         #-#-#- Save adc trace to TADC file -#-#-#
         tadc.copy_contents(tvoltage)
         entries  = tadc.get_number_of_entries()
-        #print("entries",entries)
         tadc.trace_ch = adc_trace
-        #print(np.shape(np.asarray(tadc.trace_ch)))
         tadc.fill()
         logger.debug(f'ADC trace for (run,event) = {tvoltage.run_number, tvoltage.event_number} written to TADC')
     
 
     tadc.analysis_level = tadc.analysis_level+1
     tadc.write()
-
-    print("al",tadc.analysis_level)
     logger.info(f'Succesfully saved TADC to {f_output}')
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
     logger.info( manage_log.string_end_script() )

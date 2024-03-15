@@ -419,72 +419,15 @@ def CoreasToRawRoot(file, simID=None):
     trace_y = efield[:,2]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
     trace_z = efield[:,3]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
 
+
+
     # define time params:
     t_length = len(timestamp)
-    t_pre  = 800#ns 
-    t_post = t_length - t_pre
-
-    # calculate Etotal
-    Etotal = np.sqrt(trace_x**2 + trace_y**2 + trace_z**2)
-
-    # calculate t_0
-    # we want the pulse max to be at 800, so essentially t_0 = t(Emax)
-    Emax = max(Etotal)
-    # TODO: why is t_0_indices a vector even though I take the [0]? #MATIAS commenting here. Looking at the documentation of np.where, what you get is always an array. you might want to use numpy.argmax for this 
-    # maybe because of double maximums?
-    t_0_indices = np.where(Etotal == Emax)[0] # the bin of t_0  
-    #! TODO: figure out what happens here
-    t_0 = timestamp[t_0_indices[0]] # something's weird here - this is supposed to be the value of t_0
-
-    # shift t_0 to 800ns
-    # calculate shift in bins:
-    # shift = (t_pre - t_0) ns = (t_pre - t_0)/TimeBinSize bins
-    shift = int((t_pre - t_0_indices)/TimeBinSize)
+    t_0 = timestamp[0] + t_length/2
+    t_pre  = 800#ns
+    t_pre = t_length/2 
+    t_post = t_length/2
     
-    final_length = int(4096 / TimeBinSize) # 4096 bins
-
-    trace_x_new = np.zeros(final_length)
-    trace_y_new = np.zeros(final_length)
-    trace_z_new = np.zeros(final_length)
-
-    padding_left = max(0, shift)
-    # padding_right = max(0, final_length - len(trace_x) - shift)
-
-    # Create a new array with zeros and appropriate padding
-    trace_x_new = np.zeros(final_length)
-
-    if shift > 0:
-      # for positive shift
-      # Ensure valid slicing by checking if the slice goes beyond the array boundary
-      if padding_left + len(trace_x) <= final_length:
-        # Place the original data within the new array after padding
-        trace_x_new[padding_left:padding_left + len(trace_x)] = trace_x
-        trace_y_new[padding_left:padding_left + len(trace_y)] = trace_y
-        trace_z_new[padding_left:padding_left + len(trace_z)] = trace_z
-      else:
-        pass
-    
-    elif shift < 0:
-      # for negative shift replace shift value by 700ns
-      shift = 700
-      # Ensure valid slicing by checking if the slice goes beyond the array boundary
-      if padding_left + len(trace_x) <= final_length:
-        # Place the original data within the new array after padding
-        trace_x_new[padding_left:padding_left + len(trace_x)] = trace_x
-        trace_y_new[padding_left:padding_left + len(trace_y)] = trace_y
-        trace_z_new[padding_left:padding_left + len(trace_z)] = trace_z
-      else:
-        pass
-
-    else:
-      pass
-
-    # update values for future use
-    trace_x = trace_x_new
-    trace_y = trace_y_new
-    trace_z = trace_z_new
-
-
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_name.append(str(antenna))
