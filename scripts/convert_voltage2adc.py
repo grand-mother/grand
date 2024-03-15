@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 def get_noise_trace(data_dir,
                     n_traces,
-                    n_files=None,
+                    n_files=10,
                     n_samples=2048,
                     rng=np.random.default_rng()):
     '''
@@ -55,7 +55,7 @@ def get_noise_trace(data_dir,
 
     `n_files` (optional)
     type        : int
-    description : Number of data files to consider for the selection. Default takes all files.
+    description : Number of data files to consider for the selection.
 
     `n_samples` (optional)
     type        : int
@@ -72,22 +72,24 @@ def get_noise_trace(data_dir,
     units       : ADC counts (least significant bits)
     description : The selected array of noise traces, with shape (N_du,3,N_samples).
     '''
-    
-    # This part might be patched with rt.DataDirectory() once compatible
-    data_files = glob.glob(data_dir+'*.root')
-    if n_files == None:
-        n_files    = len(data_files)
+
+    # Select n_files random data files from directory
+    data_files = sorted( glob.glob(data_dir+'*.root') ) # sort to get rid of additional randomness of glob
+    assert n_files <= len(data_files), f'There are {len(data_files)} in {data_dir} - requested {n_files}'
+    idx_files = rng.choice( range( len(data_files) ), n_files, replace=False )
+    data_files = [data_files[i] for i in idx_files]
 
     logger.info(f'Fetching {n_traces} random noise traces of 3 x {n_samples} samples from {n_files} data files in {data_dir}')
 
-    quotient  = n_traces // n_files
-    remainder = n_traces % n_files
-
     # Reduce files to open if n_traces < n_files
+    quotient  = n_files // n_traces
+    remainder = n_files % n_traces
+
     if quotient == 0:
         data_files = data_files[:remainder]
         logger.debug(f'Only need to open {remainder} < {n_traces} data files')
 
+    # Get noise traces from data files
     noise_trace = np.empty( (n_traces,3,n_samples),dtype=int )
     trace_idx = 0
 
@@ -98,28 +100,68 @@ def get_noise_trace(data_dir,
         # Check that data traces contain requested number of samples
         tadc.get_entry(0)
         n_samples_data = tadc.adc_samples_count_ch[0][1]
-        assert n_samples_data >= n_samples, f'Data trace contains less samples than requested: {n_samples_data} < {n_samples}'
+
+        if n_samples_data == n_samples/2:
+            extend_noise_trace = True
+            logger.info(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
+            print(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
+        else:
+            extend_noise_trace = False
+            assert n_samples_data >= n_samples, f'Data trace contains less samples than requested: {n_samples_data} < {n_samples}'
 
         # Select random entries from TADC
         # NOTE: assumed that each entry corresponds to a single DU with ADC channels (0,1,2)=(X,Y,Z)
         n_entries_tot = tadc.get_number_of_entries()
         
-        if i < remainder:
-            n_entries_sel = quotient + 1
+        if i < n_traces % n_files:
+            n_entries_sel = n_traces // n_files + 1
         else:
-            n_entries_sel = quotient
+            n_entries_sel = n_traces // n_files
         
         entries_sel = rng.integers(0,high=n_entries_tot,size=n_entries_sel)
         logger.debug(f'Selected {n_entries_sel} random traces from {data_file}')
-
+        
         for entry in entries_sel:
             tadc.get_entry(entry)
+            trace = np.array(tadc.trace_ch)[0,:,:n_samples]
 
-            # NOTE: important that a possible floating channel is NOT included here.
-            # This would be done when creating dedicated noise files to add to simulations.
-            # For code-testing with GP13 data, you have to remove channel 0 (= float channel)
-            trace = np.array(tadc.trace_ch)[:,:,:n_samples]      
-            #trace = np.array(tadc.trace_ch)[:,1:,:n_samples]        
+            #-- START OF ADDITION TO EXTEND NOISE TRACES --#
+            # This can be removed once we take data that is 2048 samples instead of 1024
+
+            if extend_noise_trace:
+                rms  = np.sqrt( np.mean( trace**2,axis=1 ) )
+                mean = np.mean( trace,axis=1 )
+                extend_condition = False
+
+                # Only extend with data from same DU
+                du_id = tadc.du_id[0] 
+
+                # Only extend the original trace with a new trace
+                # if the relative RMS difference between them is <10%
+                # and if the baseline difference between them is <10%
+                # in both X and Y channels
+                entry_ext = entry
+                while not extend_condition:
+                    entry_ext = (entry_ext + 1) % n_entries_tot
+                    tadc.get_entry(entry_ext)
+
+                    if tadc.du_id[0] != du_id:
+                        continue
+
+                    trace_ext = np.array(tadc.trace_ch)[0,:,:n_samples]
+                    rms_ext   = np.sqrt( np.mean( trace_ext**2,axis=1 ) )
+                    mean_ext  = np.mean( trace_ext,axis=1 )
+
+                    rms_diff  = np.abs(rms_ext-rms)/rms
+                    mean_diff = np.abs(mean_ext-mean)/mean
+
+                    if np.all( rms_diff[:2] < 0.05) and np.all( mean_diff[:2] < 0.1):
+                        extend_condition = True
+
+                trace = np.append(trace,trace_ext,axis=1)
+
+            #-- END OF ADDITION TO EXTEND NOISE TRACES --#
+
             noise_trace[trace_idx] = trace
             trace_idx += 1
 
