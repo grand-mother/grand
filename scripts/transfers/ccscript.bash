@@ -78,3 +78,9 @@ do
 	((i++))
 done
 
+# finally submit last files if needed
+if [ -n "$listoffiles" ];then
+    echo "#!/bin/bash" > $outfile
+    echo "$bin2root -g '$gtot_option' -d $root_dest $listoffiles" >> $outfile
+    sbatch -t 0-08:30 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
+fi
