@@ -47,40 +47,30 @@ if [ ! -d $submit_dir ];then
 fi
 
 
-i=1
-j=1
-listoffiles=""
-
-echo "loop"
+i=0
+j=0
+declare -A listoffiles
 for file in $(sqlite3 $db "select target from transfer,gfiles where gfiles.id=transfer.id and tag='${tag}' and transfer.success=1;")
 do
-	echo $file
-	#define the submission and log files
-	outfile="${submit_dir}/${submit_base_name}-${j}.bash"
-	logfile="${submit_dir}/${submit_base_name}-${j}.log"
-	
+  if [ "$((i % nbfiles))" -eq "0" ]; then
+    ((j++))
+  fi
+
 	#add file to the list of files to be treated
-	listoffiles+=" ${file}"
-	
-	# When reach the number of files to treat in a run then write the submission file and submit it
-	if [ "$i" -eq "${nbfiles}" ];then
-		echo "#!/bin/bash" > $outfile
-		# add conversion from bin to Grandroot
-		echo "$bin2root -g '$gtot_option' -d $root_dest $listoffiles" >> $outfile
-		
-		#submit script
-		sbatch -t 0-08:30 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
-		# reset iterators and list of files
-		i=0
-                ((j++))
-		listoffiles=""
-	fi
-	((i++))
+	listoffiles[$j]+=" ${file}"
+
+  ((i++))
 done
 
-# finally submit last files if needed
-if [ -n "$listoffiles" ];then
-    echo "#!/bin/bash" > $outfile
-    echo "$bin2root -g '$gtot_option' -d $root_dest $listoffiles" >> $outfile
-    sbatch -t 0-08:30 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
-fi
+for j in  "${!listoffiles[@]}"
+do
+  outfile="${submit_dir}/${submit_base_name}-${j}.bash"
+	logfile="${submit_dir}/${submit_base_name}-${j}.log"
+	echo "#!/bin/bash" > $outfile
+	echo "$bin2root -g '$gtot_option' -d $root_dest ${listoffiles[$j]}" >> $outfile
+	#submit script
+	echo "submit  $outfile"
+	sbatch -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
+done
+
+
