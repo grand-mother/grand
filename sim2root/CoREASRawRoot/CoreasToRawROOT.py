@@ -134,7 +134,7 @@ def CoreasToRawRoot(file, simID=None):
 
   if read_params(reas_input, "ShowerZenithAngle"):
     zenith = read_params(reas_input, "ShowerZenithAngle")
-    azimuth = read_params(reas_input, "ShowerAzimuthAngle")
+    azimuth = read_params(reas_input, "ShowerAzimuthAngle") + 180 #shift to GRAND conventions
 
     Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
