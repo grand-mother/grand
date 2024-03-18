@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 import grand.manage_log as mlg
 import ROOT
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("debug", log_stdout=False)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 
 
@@ -79,7 +79,8 @@ class Database:
                 (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),
                 ssh_pkey=self._cred.keyfile(),
-                remote_bind_address=(self._host, self._port)
+                remote_bind_address=(self._host, self._port),
+                allow_agent=True
             )
             self.server.start()
             local_port = str(self.server.local_bind_port)
@@ -94,7 +95,9 @@ class Database:
 
         Base.prepare(engine, reflect=True)
         self.sqlalchemysession = Session(engine)
-        for table in engine.table_names():
+        inspection = inspect(engine)
+        for table in inspection.get_table_names():
+        #for table in engine.table_names(): #this is obsolete
             self._tables[table] = getattr(Base.classes, table)
 
     def __del__(self):
@@ -342,7 +345,7 @@ class Database:
         rfile = rdb.RootFile(str(file))
         # We iterate over all trees
         for treename in rfile.TreeList:
-            print(treename)
+            logger.debug(f" Debug reading tree {treename}")
             treetype = treename.split('_', 1)[0]
             #We register only known and identified trees defined in rootdblib
             if hasattr(rfile, treetype + "ToDB"):
@@ -458,7 +461,8 @@ class Database:
                         #idtree = "id_"+treename
                 et = time.time()
                 elapsed_time = et - st
-                print('Execution time:', elapsed_time, 'seconds')
+                #print('Execution time:', elapsed_time, 'seconds')
+                logger.debug(f"execution time {elapsed_time} seconds")
 
 
     def register_file(self, orgfilename, newfilename, id_repository, provider):
@@ -467,4 +471,6 @@ class Database:
             #We read the localfile and not the remote one
             self.register_filecontent(orgfilename,idfile)
             #self.register_filecontent(newfilename,idfile)
+        else:
+            logger.info(f"file {orgfilename} already registered.")
         self.sqlalchemysession.commit()

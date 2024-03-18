@@ -1,6 +1,8 @@
 import ROOT
 import grand.dataio.root_trees as groot
-
+import grand.manage_log as mlg
+logger = mlg.get_logger_for_script(__name__)
+#mlg.create_output_for_logger("debug", log_stdout=True)
 
 class RootFile:
     # Use dict to associate rootfile ttree class to root_tree classe
@@ -319,7 +321,9 @@ class RootFile:
             if ttype in self.TreeToClass:
                 self.TreeList[tname] = self.TreeToClass[ttype](f_name)
             else:
-                print(ttype + " is unknown")
+                logger.warning(f"{ttype} is unknown")
+
+
 
 
     def copy_content_to(self, file):
@@ -350,7 +354,7 @@ class RootFile:
             extra = ""
             serial = "1"
             name = source+"_"+site+"_"+mydate+"_"+mytime+"_"+extra+"_"+serial
-            print(name)
+            #print(name)
             #We use only first run
             break
         return name
