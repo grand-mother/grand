@@ -10,7 +10,7 @@
 dbfile='grand_transfer.db'
 
 # Local directory where are stored the data to be transfered (will be explored recursively)
-localdatadir='/home/mapx/mapx/DunhuangData/Rawdata/20dB/2024/03/14/' #/sps/grand/data/gp13/raw/2024/'
+localdatadir='/home/mapx/mapx/DunhuangData/Rawdata/20dB/2024/' #/sps/grand/data/gp13/raw/2024/'
 
 # Site name prefix in filenames
 site='GP13'
