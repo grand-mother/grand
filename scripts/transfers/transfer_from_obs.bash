@@ -10,7 +10,7 @@
 dbfile='grand_transfer.db'
 
 # Local directory where are stored the data to be transfered (will be explored recursively)
-localdatadir='/sps/grand/data/gp13/raw/2024/'
+localdatadir='/home/mapx/mapx/DunhuangData/Rawdata/20dB/2024/03/14/' #/sps/grand/data/gp13/raw/2024/'
 
 # Site name prefix in filenames
 site='GP13'
@@ -19,19 +19,19 @@ site='GP13'
 remote_server='cca.in2p3.fr'
 
 # Account on remote server
-remote_account='prod_grand' # 'prod_grand'
+remote_account='pma'#prod_grand' # 'prod_grand'
 
 #ssh key for rsync
-ssh_key_rsync="/pbs/home/p/prod_grand/.ssh/id_ed25519" # "/root/.ssh/id_ed25519-nopw"
+ssh_key_rsync="/home/mapx/.ssh/id_ed25519"#/pbs/home/p/prod_grand/.ssh/id_ed25519" # "/root/.ssh/id_ed25519-nopw"
 
 #ssh key for exec remote scripts
-ssh_key_exec="/pbs/home/p/prod_grand/.ssh/id_ed25519" # "/root/.ssh/id_ed25519-nopw"
+ssh_key_exec="/home/mapx/.ssh/id_ed25519" #"/pbs/home/p/prod_grand/.ssh/id_ed25519" # "/root/.ssh/id_ed25519-nopw"
 
 # Target directory on remote server
-remotedatadir='/sps/grand/prod_grand/tests'  #'/sps/grand/data/gp13'
+remotedatadir='/sps/grand/data/gp13/test'#'/sps/grand/prod_grand/tests'  #'/sps/grand/data/gp13'
 
 # Start date for transfer (all files older than this date will be skipped
-first_transfer='20240312'
+first_transfer='20240314'
 
 # Local script to be launched before run
 pre_run_script='' #'setup_network_auger.bash -init'
@@ -43,7 +43,7 @@ post_run_script='' # 'setup_network_auger.bash -close'
 rsync_options="-a"
 
 # treatment scripts location @CCIN2P3
-ccscripts='/pbs/home/p/prod_grand/scripts/transfers/ccscript_GP13.bash'
+ccscripts=''#/pbs/home/p/prod_grand/scripts/transfers/ccscript_GP13.bash'
 
 ##### End of Configuration section (do not modify below) #####
 
