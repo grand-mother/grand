@@ -70,7 +70,7 @@ i.e.
 
 additional options are available on command line, see sim2root --help for more information
 
-## 3) Simulation Pipe example 
+## 3) Simulation Pipe example (in the Common directory)
 
 The example shows how to use the two example rawroot file given in /grand/sim2root/ZHAireSRawRoot/
 
@@ -96,7 +96,7 @@ python ../../scripts/convert_voltage2adc.py sim_Xiaodushan_20221026_000000_RUN1_
 4) compute DC2 efield
 python ../../scripts/convert_efield2efield.py sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500
 
-## 3) Simulation Pipe WITHOUT NOISE example 
+## 3) Simulation Pipe WITHOUT NOISE example (in the Common directory)
 
 The example shows how to use the example rawroot file given in /grand/sim2root/CoREASRawRoot/
 
@@ -125,8 +125,10 @@ python ../../scripts/convert_efield2efield.py sim_Dunhuang_20170401_000000_RUN1_
 
 
 
-# 4) Look at the results
+# 4) Look at the results (in the Common directory)
 python IllustrateSimPipe.py ./sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000
+
+additional options are available on command line, doing IllustrateSimPipe.py -h
 
 
 

@@ -32,6 +32,12 @@ def manage_args():
         default="info",
         help="logger verbosity.",
     )    
+    parser.add_argument(
+        "--savefig",
+        action="store_true",
+        default=False,
+        help="save figures to files insted of displaying them.",
+    )
     # retrieve argument
     return parser.parse_args()
 
@@ -265,4 +271,7 @@ if __name__ == "__main__":
                 
          fig,ax=plotfigure(time1=tracet,signal1=tracex,srate1=1/dt_ns_l0[du_idx],time2=vtracet,signal2=vtracex,srate2=1/dt_ns_l0[du_idx],time3=atracet,signal3=atracex,srate3=1/dt_ns_l1[du_idx],time4=rtracet,signal4=rtracex,srate4=1/dt_ns_l1[du_idx],label1="efield_l0 x10",label2="voltage_l0",label3="adc_l1 x110",label4="efield_l1 x10",Freqlimit=0.5)
          #plt.savefig(args.directory+"IllustrateSimPipe"+str(du_idx)+".png")
-         plt.show()     
+         if(args.savefig):
+           plt.savefig(args.directory+"IllustrateSimPipe"+"_"+str(run_number)+"_"+str(event_number)+"_"+str(du_idx)+".png")
+         else: 
+           plt.show()     
