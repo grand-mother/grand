@@ -581,7 +581,8 @@ class Event:
         # self.site_long = self.trun.site_long
         # self.site_lat = self.trun.site_lat
         self.origin_geoid = self.trun.origin_geoid
-        self._t_bin_size = self.trun.t_bin_size
+        # ToDo: This assumes uniform t_bin_size (to avoid current mismatch in number of bins for different trees coming from sim2root)
+        self._t_bin_size = self.trun.t_bin_size[0]
 
         self.antennas = []
 
