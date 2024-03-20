@@ -45,7 +45,6 @@ if args.Extra is not None:
 ########################################################################################################################################################
 logging.debug(" Trying to make GrandRoot file")
 #line to make file
-# python  /home/mjtueros/TrabajoTemporario/docker/grand/sim2root/Common/sim2root.py /home/mjtueros/TrabajoTemporario/docker/simpipe/DC2Outbox/rawrootfiles -e GP300
 cmd=PYTHONINTERPRETER+" "+PRODUCEGRANDROOT+" "+INPUTDIR+" --target_duration_us=4.096 --trigger_time_ns 800 -e "+EXTRA
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
@@ -63,14 +62,8 @@ OUTPUTFILE=glob.glob(INPUTDIR+"/*efield_*L0*.root")
 OUTPUTFILE=OUTPUTFILE[0].replace("efield", "voltage")
 OUTPUTFILE=OUTPUTFILE[:-5]
 
-#no noise and no chain
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --add_jitter_ns  5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain-no_noise.root --no_rf_chain --no_noise"
 #no noise
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+"-no_noise.root --no_noise"
-#no chain
-#cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --verbose=info -o " + OUTPUTFILE+"-no_rf_chain.root --no_rf_chain" 
-#the real thing
-cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234  --verbose=info --no_noise -o " + OUTPUTFILE+".root"
+cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --verbose=info --no_noise -o " + OUTPUTFILE+".root"
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes.
@@ -92,7 +85,6 @@ print(stderr)
 # DC2Efields
 #####################################################################################################################################################
 logging.debug(" Trying to produce DC2efields") 
-# python /home/mjtueros/TrabajoTemporario/docker/grand/scripts/convert_efield2efield.py ./sim_Xiaodushan_20221026_000000_RUN0_CD_GP300_0000 --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500
 cmd=PYTHONINTERPRETER+" "+PRODUCEDC2Efield+" "+INPUTDIR+"  --target_duration_us 4.096 --target_sampling_rate_mhz 500"
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
