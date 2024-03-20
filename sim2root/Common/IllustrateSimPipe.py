@@ -52,9 +52,8 @@ def manage_args():
     "--savefig",
     action="store_true",
     default=False,
-    help="save figures to files insted of displaying them.",
+    help="save figures to files insted of displaying them."
     )
-
     # retrieve argument
     return parser.parse_args()
 
@@ -135,6 +134,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
       # MT: antenna positions in shc? coordinates (TODO: Shouldnt this be in grand coordinates?)
       # JK: yes, everything should be in grand coordinates and conventions.
       
+
       # loop over all stations.          
       for du_idx in range(nb_du):
         print(f"Running DU number {du_idx}")
@@ -215,7 +215,8 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         ax4.set_title(f"efield L1, antenna {du_idx}")
         ax4.set_xlabel("time in ns")
         ax4.set_ylabel("efield in uV/m")
-        
+
+
         if t_0_shift == True:
           ax1.axvline(800+t0_voltage_L0[du_idx], label="800 ns + t0")
           ax2.axvline(800+t0_adc_L1[du_idx], label="800 ns + t0")
@@ -240,6 +241,128 @@ def plot_traces_all_levels(directory, t_0_shift=True):
            plt.show()
             
 
+
+def plot_time_map(directory):
+  d_input = groot.DataDirectory(directory)
+
+  #Get the trees L0
+  trun_l0 = d_input.trun_l0
+  tshower_l0 = d_input.tshower_l0
+  tefield_l0 = d_input.tefield_l0
+  tvoltage_l0 = d_input.tvoltage_l0           
+  #Get the trees L1
+  tefield_l1 = d_input.tefield_l1
+  tadc_l1 = d_input.tadc_l1
+  trun_l1 = d_input.trun_l1
+
+  #get the list of events
+  events_list = tefield_l1.get_list_of_events()
+  nb_events = len(events_list)
+
+  # If there are no events in the file, exit
+  if nb_events == 0:
+    sys.exit("There are no events in the file! Exiting.")
+  
+  ####################################################################################
+  # start looping over the events
+  ####################################################################################
+  previous_run = None    
+  for event_number,run_number in events_list:
+      assert isinstance(event_number, int)
+      assert isinstance(run_number, int)
+      logger.info(f"Running event_number: {event_number}, run_number: {run_number}")
+      
+      tefield_l0.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
+      tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
+      tefield_l1.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
+      tvoltage_l0.get_event(event_number, run_number)
+      tadc_l1.get_event(event_number, run_number)
+      
+      #TODO: WRITE AN ISSUE. Ask Lech Would it be posible that get_run automatically does nothing if you ask for the run its currently being pointed to?
+      if previous_run != run_number:                          # load only for new run.
+        trun_l0.get_run(run_number)                         # update run info to get site latitude and longitude.
+        trun_l1.get_run(run_number)                         # update run info to get site latitude and longitude.            
+        previous_run = run_number
+      
+      
+      trace_efield_L0 = np.asarray(tefield_l0.trace, dtype=np.float32)   # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+      du_id = np.asarray(tefield_l0.du_id) # MT: used for printing info and saving in voltage tree.
+      # JK: du_id is currently unused - TODO
+
+
+      # t0 calculations
+      event_second = tshower_l0.core_time_s
+      event_nano = tshower_l0.core_time_ns
+      t0_efield_L1 = (tefield_l1.du_seconds-event_second)*1e9  - event_nano + tefield_l1.du_nanoseconds 
+      t0_efield_L0 = (tefield_l0.du_seconds-event_second)*1e9  - event_nano + tefield_l0.du_nanoseconds
+      t0_adc_L1 = (tadc_l1.du_seconds-event_second)*1e9  - event_nano + tadc_l1.du_nanoseconds
+      t0_voltage_L0 = (tvoltage_l0.du_seconds-event_second)*1e9  - event_nano + tvoltage_l0.du_nanoseconds 
+
+      #TODO: this forces a homogeneous antenna array.
+      trace_shape = trace_efield_L0.shape  # (nb_du, 3, tbins of a trace)
+      nb_du = trace_shape[0]
+      sig_size = trace_shape[-1]
+      logger.info(f"Event has {nb_du} DUs, with a signal size of: {sig_size}")
+      
+      #this gives the indices of the antennas of the array participating in this event
+      event_dus_indices = tefield_l0.get_dus_indices_in_run(trun_l0)
+
+      du_xyzs= np.asarray(trun_l0.du_xyz)[event_dus_indices] 
+      # MT: antenna positions in shc? coordinates (TODO: Shouldnt this be in grand coordinates?)
+      # JK: yes, everything should be in grand coordinates and conventions.
+      
+      
+      # Plot arrival time distribution
+      # Create a figure with subplots to match the other plot 
+      fig, axs = plt.subplots(2,2, figsize=(8, 6))
+      plt.suptitle(f"arrival time distribution, event {event_number}, run {run_number}")
+
+      # Plot voltage traces on the first subplot
+      ax1=axs[0,0]
+      map = ax1.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_voltage_L0, marker='o', s=20)
+      ax1.set_title(f"voltage")
+      cbar = plt.colorbar(map, ax=ax1)
+      cbar.set_label("arrival time")
+
+      # adc traces
+      ax2=axs[0,1]
+      map = ax2.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_adc_L1, marker='o', s=20)
+      ax2.set_title(f"adc")
+      cbar = plt.colorbar(map, ax=ax2)
+      cbar.set_label("arrival time")
+
+      # Plot electric field L1
+      ax3=axs[1,0]
+      map = ax3.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_efield_L0, marker='o', s=20)
+      ax3.set_title(f"efield L0")
+      cbar = plt.colorbar(map, ax=ax3)
+      cbar.set_label("arrival time")
+
+
+      # Plot electric field L2
+      ax4=axs[1,1]
+      map = ax4.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_efield_L1, marker='o', s=20)
+      ax4.set_title(f"efield L1")
+      cbar = plt.colorbar(map, ax=ax4)
+      cbar.set_label("arrival time")
+
+
+      # Add common vertical line (assuming same time axis)
+      for ax in [ax1, ax2, ax3, ax4]:
+        ax.set_xlabel("antenna position X")
+        ax.set_ylabel("antenna position Y")
+        ax.axis('equal')
+
+      plt.tight_layout()
+      if(args.savefig):
+        plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+        plt.close(fig)
+      else: 
+        plt.show()
+    
+
+
+
 if __name__ == "__main__":
   args = manage_args()
   mlg.create_output_for_logger(args.verbose, log_stdout=True)
@@ -248,3 +371,4 @@ if __name__ == "__main__":
 
   directory = args.directory
   plot_traces_all_levels(directory)
+  plot_time_map(directory)
