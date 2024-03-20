@@ -186,7 +186,6 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         ax1.plot(trace_voltage_time, trace_voltage_x, alpha=0.5, label="polarization N")
         ax1.plot(trace_voltage_time, trace_voltage_y, alpha=0.5, label="polarization E")
         ax1.plot(trace_voltage_time, trace_voltage_z, alpha=0.5, label="polarization v")
-        ax1.set_title(f"voltage antenna {du_idx}")
         ax1.set_xlabel("time in ns")
         ax1.set_ylabel("voltage in uV")
 
@@ -216,11 +215,21 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         ax4.set_title(f"efield L1, antenna {du_idx}")
         ax4.set_xlabel("time in ns")
         ax4.set_ylabel("efield in uV/m")
+        
+        if t_0_shift == True:
+          ax1.axvline(800+t0_voltage_L0[du_idx], label="800 ns + t0")
+          ax2.axvline(800+t0_adc_L1[du_idx], label="800 ns + t0")
+          ax3.axvline(800+t0_efield_L0[du_idx], label="800 ns + t0")
+          ax4.axvline(800+t0_efield_L1[du_idx], label="800 ns + t0")
+        else:
+          ax1.axvline(800, label="800 ns")
+          ax2.axvline(800, label="800 ns")
+          ax3.axvline(800, label="800 ns")
+          ax4.axvline(800, label="800 ns")
 
         # Add common vertical line (assuming same time axis)
         for ax in [ax1, ax2, ax3, ax4]:
-            ax.axvline(800, color="springgreen", label="800 ns")
-            ax.legend(loc="upper right")
+          ax.legend(loc="upper right")
 
         # Adjust layout and save the plot
         if(args.savefig):
