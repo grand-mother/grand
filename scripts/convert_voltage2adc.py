@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 def get_noise_trace(data_dir,
                     n_traces,
-                    n_files=10,
+                    n_files=None,
                     n_samples=2048,
                     rng=np.random.default_rng()):
     '''
@@ -55,7 +55,7 @@ def get_noise_trace(data_dir,
 
     `n_files` (optional)
     type        : int
-    description : Number of data files to consider for the selection.
+    description : Number of data files to consider for the selection. Default selects all files.
 
     `n_samples` (optional)
     type        : int
@@ -75,6 +75,10 @@ def get_noise_trace(data_dir,
 
     # Select n_files random data files from directory
     data_files = sorted( glob.glob(data_dir+'*.root') ) # sort to get rid of additional randomness of glob
+
+    if n_files is None:
+        n_files = len(data_files)
+
     assert n_files <= len(data_files), f'There are {len(data_files)} in {data_dir} - requested {n_files}'
     idx_files = rng.choice( range( len(data_files) ), n_files, replace=False )
     data_files = [data_files[i] for i in idx_files]
@@ -103,8 +107,8 @@ def get_noise_trace(data_dir,
 
         if n_samples_data == n_samples/2:
             extend_noise_trace = True
-            logger.info(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
-            print(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
+            logger.warning(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
+            logger.warning(f'This is SLOW! Suggest to merge traces first. See e.g. `/pbs/home/p/pcorrea/grand/dc2/scripts/merge_noise_trace.py`')
         else:
             extend_noise_trace = False
             assert n_samples_data >= n_samples, f'Data trace contains less samples than requested: {n_samples_data} < {n_samples}'
