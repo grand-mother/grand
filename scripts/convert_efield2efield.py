@@ -284,6 +284,7 @@ if __name__ == "__main__":
     
     #Get the trees
     trun = d_input.trun
+    trunefieldsim = d_input.trunefieldsim
     tshower = d_input.tshower
     tefield = d_input.tefield
     
@@ -568,7 +569,8 @@ if __name__ == "__main__":
        out_tefield.fill()
        out_tefield.write()
 
-    #TODO ask lech how to do this correctly, so that all runs get the correct sampling rate.
+
+    #TODO: Ask Lech how to do this for files with multiple runs.
     #now, we copy trun and change the sampling rate (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
     filename=glob.glob(args.directory+ "/run_*L0*.root")[0]
@@ -581,12 +583,17 @@ if __name__ == "__main__":
     outrun.fill()
     outrun.write()
 
+
+    #TODO: if we changed the trace lenght this needs to update t_post acordingly.        
     #now, we copy trunefieldsim and change tpost (filename to be changed when sim2root changes)
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
     filename=glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0]
     filename=filename.replace("L0", "L1")
-    
-    #TODO ask lech how to do this correctly, so that all runs get tpost.
+    outrunefieldsim = groot.TRun(filename)    
+    outrunefieldsim.copy_contents(trunefieldsim)
+    outrunefieldsim.analysis_level = trunefieldsim.analysis_level+1
+    outrunefieldsim.fill()
+    outrunefieldsim.write()
 
 
 
