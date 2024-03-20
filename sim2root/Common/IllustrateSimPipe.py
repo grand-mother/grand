@@ -47,16 +47,16 @@ def manage_args():
         choices=["debug", "info", "warning", "error", "critical"],
         default="info",
         help="logger verbosity."
-    )    
-    # retrieve argument
-    return parser.parse_args()
-	
+    )
     parser.add_argument(
     "--savefig",
     action="store_true",
     default=False,
     help="save figures to files insted of displaying them.",
-)
+    )
+
+    # retrieve argument
+    return parser.parse_args()
 
 
 def plot_traces_all_levels(directory, t_0_shift=True):
@@ -169,11 +169,17 @@ def plot_traces_all_levels(directory, t_0_shift=True):
           trace_voltage_time += t0_voltage_L0[du_idx]
           trace_ADC_L1_time += t0_adc_L1[du_idx]
           trace_efield_L1_time += t0_efield_L1[du_idx]
+        else:
+           continue
 
         # time for plotting!
         # Create a figure with subplots
         fig, axs = plt.subplots(2,2, figsize=(8, 6))
-        # plt.suptitle(fr"$\phi$={azimuth}, $\theta$={zenith}, antenna {du_idx}")
+        if t_0_shift == True:
+          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - WITH t0 SHIFT")
+        else:
+          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - NO t0 SHIFT")
+           
 
         # Plot voltage traces on the first subplot
         ax1=axs[0,0]
@@ -217,14 +223,12 @@ def plot_traces_all_levels(directory, t_0_shift=True):
             ax.legend(loc="upper right")
 
         # Adjust layout and save the plot
-        fig.tight_layout()
         if(args.savefig):
            plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}.png")
            plt.close(fig)
         else: 
-           plt.show()         
-        
-
+           plt.show()
+            
 
 if __name__ == "__main__":
   args = manage_args()
