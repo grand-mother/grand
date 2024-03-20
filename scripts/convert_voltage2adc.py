@@ -78,7 +78,7 @@ def get_noise_trace(data_dir,
 
     if n_files is None:
         n_files = len(data_files)
-        
+
     assert n_files <= len(data_files), f'There are {len(data_files)} in {data_dir} - requested {n_files}'
     idx_files = rng.choice( range( len(data_files) ), n_files, replace=False )
     data_files = [data_files[i] for i in idx_files]
@@ -107,8 +107,8 @@ def get_noise_trace(data_dir,
 
         if n_samples_data == n_samples/2:
             extend_noise_trace = True
-            logger.info(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
-            print(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
+            logger.warning(f'Two random data traces of {n_samples_data} samples will be concatenated to obtain noise traces of {n_samples} samples')
+            logger.warning(f'This is SLOW! Suggest to merge traces first. See e.g. `/pbs/home/p/pcorrea/grand/dc2/scripts/merge_noise_trace.py`')
         else:
             extend_noise_trace = False
             assert n_samples_data >= n_samples, f'Data trace contains less samples than requested: {n_samples_data} < {n_samples}'
@@ -131,7 +131,6 @@ def get_noise_trace(data_dir,
 
             #-- START OF ADDITION TO EXTEND NOISE TRACES --#
             # This can be removed once we take data that is 2048 samples instead of 1024
-            logger.warning(f'Extending noise trace. This can be slow!')
 
             if extend_noise_trace:
                 rms  = np.sqrt( np.mean( trace**2,axis=1 ) )
