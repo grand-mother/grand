@@ -231,6 +231,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         for ax in [ax1, ax2, ax3, ax4]:
           ax.legend(loc="upper right")
 
+        plt.tight_layout()
         # Adjust layout and save the plot
         if(args.savefig):
            plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}.png")
