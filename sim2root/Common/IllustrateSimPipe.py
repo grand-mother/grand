@@ -20,9 +20,12 @@ March 2024
 import grand.dataio.root_trees as groot 
 # import the rest of the guardians of the galaxy:
 import grand.manage_log as mlg
+import raw_root_trees as RawTrees # this is here in Common
+from sim2root import get_tree_du_id_and_xyz
 import sys
 import argparse
 import numpy as np
+import glob
 import matplotlib.pyplot as plt
 
 # better plots
@@ -362,6 +365,46 @@ def plot_time_map(directory):
     
 
 
+def plot_raws(directory):
+  # this glob is not perfect yet, but it's good enough for now
+  # TODO: glob by EventID or something
+  files = glob.glob(f"{directory}/../*.rawroot")
+  if len(files) == 1:
+    filename = files[0]
+    print(f"Found rawroot file {filename}")
+  else:
+    print(f"Found rawroot files {files}")
+    sys.exit("Please make sure there's only one .rawroot file in the directory above the one you specified.")
+
+  trawefield = RawTrees.RawEfieldTree(filename)
+  nentries = trawefield.get_entries()
+  for i in range(nentries):
+    trawefield.get_entry(i)
+    du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
+    # this counting method is terrible, but somehow trawefield.trace_x[du] won't work
+    count = 0
+    for du in du_ids:
+      print(f"Plotting raw trace of antenna {du}")
+      trace_x = trawefield.trace_x[count]
+      trace_y = trawefield.trace_y[count]
+      trace_z = trawefield.trace_z[count]
+
+      plt.title(f"raw trace {du}")
+      plt.plot(trace_x, label="x")
+      plt.plot(trace_y, label="y")
+      plt.plot(trace_z, label="z")
+      plt.xlabel("time in bins")
+      plt.ylabel("efield in uV/m")
+      plt.legend()
+      
+      if(args.savefig):
+        plt.savefig(f"{directory}/rawtrace_{du}.png")
+        plt.close()
+      else: 
+        plt.show()
+      count += 1
+
+
 
 if __name__ == "__main__":
   args = manage_args()
@@ -372,3 +415,4 @@ if __name__ == "__main__":
   directory = args.directory
   plot_traces_all_levels(directory)
   plot_time_map(directory)
+  plot_raws(directory)
