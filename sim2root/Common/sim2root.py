@@ -256,7 +256,8 @@ def main():
                 rawefield2grandrootrun(trawefield, gt)
 
                 #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
-
+                # JK: also available in Coreas!
+                
                 # Set the origin geoid
                 gt.trun.origin_geoid = get_origin_geoid(clargs, trawshower)
 
