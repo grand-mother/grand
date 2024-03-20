@@ -294,9 +294,12 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         #METAZHAireS (I propose to pass this to a separate tree and section) @TODO: This is repeated in RawMeta, and should be only there.
         EventParametersFile= InputFolder+"/"+TaskName+".EventParameters"
         
-        CorePosition=EParGen.GetCorePositionFromParametersFile(EventParametersFile)
+        CorePosition=np.array(EParGen.GetCorePositionFromParametersFile(EventParametersFile))
+        print(CorePosition,GroundAltitude)
+        #Move core position so its relative to the earth surface
+        CorePosition[2]=CorePosition[2]+GroundAltitude
 
-        RawShower.shower_core_pos=np.array(CorePosition) # shower core position 
+        RawShower.shower_core_pos=CorePosition # shower core position 
 
         #Fill the tables
         table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=False,Precision="Simple",TaskName=TaskName)               

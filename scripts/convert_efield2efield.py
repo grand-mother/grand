@@ -589,7 +589,7 @@ if __name__ == "__main__":
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
     filename=glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0]
     filename=filename.replace("L0", "L1")
-    outrunefieldsim = groot.TRun(filename)    
+    outrunefieldsim = groot.TRunEfieldSim(filename)    
     outrunefieldsim.copy_contents(trunefieldsim)
     outrunefieldsim.analysis_level = trunefieldsim.analysis_level+1
     outrunefieldsim.fill()

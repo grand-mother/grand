@@ -325,10 +325,10 @@ def main():
         
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
-            du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
+            du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
         # For other files, append du ids and pos to the ones already retrieved
         else:
-            tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield)
+            tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
             du_ids = np.append(du_ids, tdu_ids)
             du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
 
@@ -468,7 +468,7 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.t_post = trawefield.t_post
 
 
-def get_tree_du_id_and_xyz(trawefield):
+def get_tree_du_id_and_xyz(trawefield,shower_core):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
@@ -476,6 +476,15 @@ def get_tree_du_id_and_xyz(trawefield):
     du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
     du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
+    
+
+    #trawefield has the antenna positions in shc, and we need to put them in array coordinates, or this is all messed up.
+    #TODO: This is a flat earth approximation that asumes shower core is in xc,yc,zc of flat cordinate system centered in the array, origin at ground.
+    # and that du_xs are given in a flat shower coordinate system , with origin in the core, but at sea level (in this system the core coordinates are 0,0,groundaltitude)
+    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
+    du_xs = du_xs + shower_core[0]
+    du_ys = du_ys + shower_core[1]
+    du_zs = du_zs
 
     # Get indices of the unique du_ids
     # ToDo: sort?

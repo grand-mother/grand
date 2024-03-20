@@ -177,7 +177,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
 
         # time for plotting!
         # Create a figure with subplots
-        fig, axs = plt.subplots(2,2, figsize=(8, 6))
+        fig, axs = plt.subplots(2,2, figsize=(8, 6),sharex=True)
         if t_0_shift == True:
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - WITH t0 SHIFT")
         else:
