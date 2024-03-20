@@ -109,6 +109,16 @@ def plot_traces_all_levels(directory, t_0_shift=True):
       du_id = np.asarray(tefield_l0.du_id) # MT: used for printing info and saving in voltage tree.
       # JK: du_id is currently unused - TODO
 
+
+      # t0 calculations
+      event_second = tshower_l0.core_time_s
+      event_nano = tshower_l0.core_time_ns
+      t0_efield_L1 = (tefield_l1.du_seconds-event_second)*1e9  - event_nano + tefield_l1.du_nanoseconds 
+      t0_efield_L0 = (tefield_l0.du_seconds-event_second)*1e9  - event_nano + tefield_l0.du_nanoseconds
+      t0_adc_L1 = (tadc_l1.du_seconds-event_second)*1e9  - event_nano + tadc_l1.du_nanoseconds
+      t0_voltage_L0 = (tvoltage_l0.du_seconds-event_second)*1e9  - event_nano + tvoltage_l0.du_nanoseconds 
+
+
       #TODO: this forces a homogeneous antenna array.
       trace_shape = trace_efield_L0.shape  # (nb_du, 3, tbins of a trace)
       nb_du = trace_shape[0]
@@ -152,23 +162,13 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         trace_efield_L1_y = trace_efield_L1[du_idx,1]
         trace_efield_L1_z = trace_efield_L1[du_idx,2]
         trace_efield_L1_time = np.arange(0,len(trace_efield_L1_z)) * dt_ns_l1[du_idx]
-        
 
-        # t0 calculations
-        event_second = tshower_l0.core_time_s
-        event_nano = tshower_l0.core_time_ns
         
-        t0_efield_L1 = (tefield_l1.du_seconds-event_second)*1e9  - event_nano + tefield_l1.du_nanoseconds 
-        t0_efield_L0 = (tefield_l0.du_seconds-event_second)*1e9  - event_nano + tefield_l0.du_nanoseconds
-        t0_adc_L1 = (tadc_l1.du_seconds-event_second)*1e9  - event_nano + tadc_l1.du_nanoseconds
-        t0_voltage_L0 = (tvoltage_l0.du_seconds-event_second)*1e9  - event_nano + tvoltage_l0.du_nanoseconds 
-
         if t_0_shift == True:
-          trace_efield_L0_time += t0_efield_L0
-          trace_voltage_time += t0_voltage_L0
-          trace_ADC_L1_time += t0_adc_L1
-          trace_efield_L1_time += t0_efield_L1
-
+          trace_efield_L0_time += t0_efield_L0[du_idx]
+          trace_voltage_time += t0_voltage_L0[du_idx]
+          trace_ADC_L1_time += t0_adc_L1[du_idx]
+          trace_efield_L1_time += t0_efield_L1[du_idx]
 
         # time for plotting!
         # Create a figure with subplots
