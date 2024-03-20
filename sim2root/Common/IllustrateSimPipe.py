@@ -50,7 +50,13 @@ def manage_args():
     )    
     # retrieve argument
     return parser.parse_args()
-
+	
+    parser.add_argument(
+    "--savefig",
+    action="store_true",
+    default=False,
+    help="save figures to files insted of displaying them.",
+)
 
 
 def plot_traces_all_levels(directory):
@@ -196,8 +202,12 @@ def plot_traces_all_levels(directory):
 
         # Adjust layout and save the plot
         fig.tight_layout()
-        plt.savefig(f"{directory}/IllustrateSimPipe_{du_idx}.png")
-        plt.close(fig)
+        if(args.savefig):
+           plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}.png")
+           plt.close(fig)
+        else: 
+           plt.show()         
+        
 
 
 if __name__ == "__main__":
