@@ -79,8 +79,15 @@ class _FileEventBase:
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
         data_dir = groot.DataDirectory(os.path.dirname(f_name))
-        self.tt_shower = data_dir.tshower
-        self.tt_run = data_dir.trun
+        if f_name.find('_L0_') > 0:
+            self.tt_shower = data_dir.tshower_l0
+            self.tt_run = data_dir.trun_l0
+        elif f_name.find('_L1_') > 0:
+            self.tt_shower = data_dir.tshower
+            self.tt_run = data_dir.trun  
+        else:
+            logger.exception("I don't know which version of trun/tshower is associated to event.")
+            raise         
         logger.info(f"file trun: {self.tt_run.file_name}\nfile tshower: {self.tt_shower.file_name}")
         self.load_event_idx(0)
 
