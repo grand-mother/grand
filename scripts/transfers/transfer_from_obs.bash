@@ -62,12 +62,10 @@ post_run_script=''
 # rsync_options : a to keep the creation time of files, z to compress if bandwidth is limited (but it's ~5 times slower). Please keep the "a" option  !
 rsync_options="-az --mkpath"
 
-# treatment scripts location @CCIN2P3
-# '/pbs/home/p/prod_grand/scripts/transfers/ccscript_GP13.bash' for gp13
-# '/pbs/home/p/prod_grand/scripts/transfers/ccscript_gaa.bash' for gaa
-ccscripts='/pbs/home/p/prod_grand/scripts/transfers/ccscript.bash'
-
 ##### End of Configuration section (do not modify below) #####
+
+# treatment scripts location @CCIN2P3
+ccscripts='/pbs/home/p/prod_grand/scripts/transfers/ccscript.bash'
 
 # Create database if not exists
 sqlite3 $dbfile "create table if not exists  gfiles (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, file TEXT, date INT, success BOOLEAN, md5sum VARCHAR(35), UNIQUE (directory,file));"
