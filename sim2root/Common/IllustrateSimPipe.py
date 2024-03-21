@@ -51,12 +51,12 @@ def manage_args():
         default="info",
         help="logger verbosity."
     )
-    parser.add_argument(
-    "--savefig",
-    action="store_true",
-    default=False,
-    help="save figures to files insted of displaying them."
-    )
+    # parser.add_argument(
+    # "--savefig",
+    # action="store_true",
+    # default=False,
+    # help="save figures to files insted of displaying them."
+    # )
     # retrieve argument
     return parser.parse_args()
 
@@ -177,12 +177,13 @@ def plot_traces_all_levels(directory, t_0_shift=True):
 
         # time for plotting!
         # Create a figure with subplots
-        fig, axs = plt.subplots(2,2, figsize=(8, 6),sharex=True)
+        fig, axs = plt.subplots(2,2, figsize=(8, 6))
         if t_0_shift == True:
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - WITH t0 SHIFT")
+          savelabel = "with_to_shift"
         else:
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - NO t0 SHIFT")
-           
+          savelabel = "no_to_shift"
 
         # Plot voltage traces on the first subplot
         ax1=axs[0,0]
@@ -237,11 +238,13 @@ def plot_traces_all_levels(directory, t_0_shift=True):
 
         plt.tight_layout()
         # Adjust layout and save the plot
-        if(args.savefig):
-           plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}.png")
-           plt.close(fig)
-        else: 
-           plt.show()
+        plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+        plt.close(fig)
+        # if(args.savefig):
+        #    plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+        #    plt.close(fig)
+        # else: 
+        #    plt.show()
             
 
 
@@ -357,11 +360,13 @@ def plot_time_map(directory):
         ax.axis('equal')
 
       plt.tight_layout()
-      if(args.savefig):
-        plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
-        plt.close(fig)
-      else: 
-        plt.show()
+      plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+      plt.close(fig)
+      # if(args.savefig):
+      #   plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+      #   plt.close(fig)
+      # else: 
+      #   plt.show()
     
 
 
@@ -377,10 +382,11 @@ def plot_raws(directory):
     sys.exit("Please make sure there's only one .rawroot file in the directory above the one you specified.")
 
   trawefield = RawTrees.RawEfieldTree(filename)
+  trawshower = RawTrees.RawShowerTree(filename)
   nentries = trawefield.get_entries()
   for i in range(nentries):
     trawefield.get_entry(i)
-    du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield)
+    du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
     # this counting method is terrible, but somehow trawefield.trace_x[du] won't work
     count = 0
     for du in du_ids:
@@ -397,11 +403,13 @@ def plot_raws(directory):
       plt.ylabel("efield in uV/m")
       plt.legend()
       
-      if(args.savefig):
-        plt.savefig(f"{directory}/rawtrace_{du}.png")
-        plt.close()
-      else: 
-        plt.show()
+      plt.savefig(f"{directory}/rawtrace_{du}.png")
+      plt.close()
+      # if(args.savefig):
+      #   plt.savefig(f"{directory}/rawtrace_{du}.png")
+      #   plt.close()
+      # else: 
+      #   plt.show()
       count += 1
 
 
