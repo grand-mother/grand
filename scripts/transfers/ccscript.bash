@@ -2,28 +2,53 @@
 # path to bin2root file
 bin2root='/pbs/home/p/prod_grand/scripts/transfers/bintoroot.bash'
 
-# gtot options for convertion
+
+# gtot options for convertion -g1 for gp13 -f2 for gaa
 gtot_option="-g1"
 
 # number of files to group in same submission
 nbfiles=3
 
+# manage call from remote restricted ssh command (extracr opt parameters)
+# default args
+fullscriptpath=${BASH_SOURCE[0]}
+args="$*"
+case $SSH_ORIGINAL_COMMAND in
+    "$fullscriptpath "*)
+        args=$(echo "${SSH_ORIGINAL_COMMAND}" | sed -e "s,^${fullscriptpath} ,,")
+        ;;
+    *)
+        echo "Permission denied."
+        exit 1
+        ;;
+esac
 
 # Get tag and database file to use
-while getopts ":t:d:" option; do
+while getopts ":t:d:s:" option ${args}; do
    case $option in
       t) 
          tag=${OPTARG};;
       d) 
          db=${OPTARG};;
+      s)
+        site=${OPTARG};;
       :) 
          printf "option -${OPTARG} need an argument\n"
-	 exit 1;;	
+         exit 1;;
       ?) # Invalid option
          printf "Error: Invalid option -${OPTARG}\n"
          exit 1;;
    esac
 done
+
+case $site in
+  gp13)
+    gtot_option="-g1";;
+  gaa)
+    gtot_option="-v2";;
+  ?)
+    gtot_option="-g1";;
+esac
 
 
 #test dbfile exists and tag is set
@@ -35,9 +60,9 @@ elif [ ! -f $db ];then
 	exit 1
 fi
 
-# Determine root_dri from database path
-root_dest=${db%/database*}/GrandRoot/
-submit_dir=${db%/database*}/logs/
+# Determine root_dir from database path
+root_dest=${db%/logs*}/GrandRoot/
+submit_dir=$(dirname db)
 submit_base_name=submit_${tag}
 if [ ! -d $root_dest ];then
         	mkdir -p $root_dest >/dev/null 2>&1

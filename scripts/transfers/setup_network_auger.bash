@@ -7,6 +7,7 @@
 claro_hop="claro.net.ar";               # 4G operator tracepath hop
 auger_hop="auger.org.ar";               # auger network tracepath hop
 wwan_con="netplan-cdc-wdm0";            # NetworkManager wwan connection name
+in2p3_machine="cca.in2p3.fr";           # CCIN2P3 ssh machine
 max_hop=5;                              # max hop for tracepath test
 sleep_delay=2;                          # sleep delay to wait after NetworkManager (de)activation calls
 verbose=false;                           # true or false
