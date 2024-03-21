@@ -166,24 +166,23 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         trace_efield_L1_z = trace_efield_L1[du_idx,2]
         trace_efield_L1_time = np.arange(0,len(trace_efield_L1_z)) * dt_ns_l1[du_idx]
 
-        
-        if t_0_shift == True:
-          trace_efield_L0_time += t0_efield_L0[du_idx]
-          trace_voltage_time += t0_voltage_L0[du_idx]
-          trace_ADC_L1_time += t0_adc_L1[du_idx]
-          trace_efield_L1_time += t0_efield_L1[du_idx]
-        else:
-           continue
-
         # time for plotting!
         # Create a figure with subplots
         fig, axs = plt.subplots(2,2, figsize=(8, 6))
         if t_0_shift == True:
+          print("shifting by t0")
+          trace_efield_L0_time += t0_efield_L0[du_idx]
+          trace_voltage_time += t0_voltage_L0[du_idx]
+          trace_ADC_L1_time += t0_adc_L1[du_idx]
+          trace_efield_L1_time += t0_efield_L1[du_idx]
+
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - WITH t0 SHIFT")
-          savelabel = "with_to_shift"
+          savelabel = "with_t0_shift"
         else:
+          print("NOT shifting by t0")
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - NO t0 SHIFT")
-          savelabel = "no_to_shift"
+          savelabel = "no_t0s_shift"
+          
 
         # Plot voltage traces on the first subplot
         ax1=axs[0,0]
@@ -425,6 +424,6 @@ if __name__ == "__main__":
   logger.info("Saving event plots to source directory "+args.directory)
 
   directory = args.directory
-  plot_traces_all_levels(directory)
+  plot_traces_all_levels(directory, t_0_shift=True)
   plot_time_map(directory)
   plot_raws(directory)
