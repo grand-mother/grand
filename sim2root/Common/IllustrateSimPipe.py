@@ -190,6 +190,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         ax1.plot(trace_voltage_time, trace_voltage_x, alpha=0.5, label="polarization N")
         ax1.plot(trace_voltage_time, trace_voltage_y, alpha=0.5, label="polarization E")
         ax1.plot(trace_voltage_time, trace_voltage_z, alpha=0.5, label="polarization v")
+        ax1.set_title(f"voltage antenna {du_idx}")
         ax1.set_xlabel("time in ns")
         ax1.set_ylabel("voltage in uV")
 
