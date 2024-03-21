@@ -79,17 +79,16 @@ class _FileEventBase:
         self.traces = np.empty((0, 3, 0), dtype=np.float32)
         self.idx_event = -1
         data_dir = groot.DataDirectory(os.path.dirname(f_name))
-        if f_name.find('_L0_') > 0:
+        if f_name.find("_L0_") > 0:
             self.tt_shower = data_dir.tshower_l0
             self.tt_run = data_dir.trun_l0
-        elif f_name.find('_L1_') > 0:
+        elif f_name.find("_L1_") > 0:
             self.tt_shower = data_dir.tshower
-            self.tt_run = data_dir.trun  
+            self.tt_run = data_dir.trun
         else:
             logger.exception("I don't know which version of trun/tshower is associated to event.")
-            raise         
+            raise
         logger.info(f"file trun: {self.tt_run.file_name}\nfile tshower: {self.tt_shower.file_name}")
-        self.load_event_idx(0)
 
     def load_event_idx(self, idx):
         """
@@ -200,7 +199,10 @@ class _FileEventBase:
 
 
 def get_file_event(f_name):
-    """Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event"""
+    """Event factory
+
+    Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event
+    """
     if not os.path.exists(f_name):
         logger.error(f"File {f_name} doesn't exist.")
         raise FileNotFoundError
@@ -209,8 +211,10 @@ def get_file_event(f_name):
         return FileEfield(f_name)
     if "tvoltage" in trees_list:  # File with voltage info as input
         return FileVoltage(f_name)
+    if "tadc" in trees_list:  # File with voltage info as input
+        return FileAdc(f_name)
     logger.error(
-        f"File {f_name} doesn't content TTree teventefield or teventvoltage."
+        f"File {f_name} doesn't content TTree teventefield, teventvoltage, tadc"
         " It contains {trees_list}."
     )
     raise AssertionError
@@ -267,6 +271,7 @@ class FileEfield(_FileEventBase):
         event = groot.TEfield(f_name)
         super().__init__(event, f_name)
         self.tt_efield = self.tt_event
+        self.load_event_idx(0)
 
     def get_obj_handling3dtraces(self):
         o_tevent = super().get_obj_handling3dtraces()
@@ -290,9 +295,35 @@ class FileVoltage(_FileEventBase):
         event = groot.TVoltage(f_name)
         super().__init__(event, f_name)
         self.tt_volt = self.tt_event
+        self.load_event_idx(0)
 
     def get_obj_handling3dtraces(self):
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"$\mu$V", "dir")
         o_tevent.type_trace = "Voltage"
+        return o_tevent
+
+
+class FileAdc(_FileEventBase):
+    """
+    Goals of the class:
+
+      * Event type is voltage
+    """
+
+    def __init__(self, f_name):
+        """
+
+        :param f_name:  path to ROOT file volatge
+        """
+        event = groot.TADC(f_name)
+        super().__init__(event, f_name)
+        self.tt_adc = self.tt_event
+        self.tt_event.trace = event.trace_ch
+        self.load_event_idx(0)
+
+    def get_obj_handling3dtraces(self):
+        o_tevent = super().get_obj_handling3dtraces()
+        o_tevent.set_unit_axis(r"ADU", "dir")
+        o_tevent.type_trace = "volt ADC"
         return o_tevent
