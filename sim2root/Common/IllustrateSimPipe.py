@@ -245,11 +245,11 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
         plt.show()
         plt.close(fig)
-        # if(args.savefig):
-        #    plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
-        #    plt.close(fig)
-        # else: 
-        #    plt.show()
+        if(args.savefig):
+            plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+            plt.close(fig)
+         else: 
+            plt.show()
             
 
 
@@ -441,11 +441,11 @@ def plot_raws(directory):
       plt.savefig(f"{directory}/rawtrace_{du}.png")
       plt.show()
       plt.close()
-      # if(args.savefig):
-      #   plt.savefig(f"{directory}/rawtrace_{du}.png")
-      #   plt.close()
-      # else: 
-      #   plt.show()
+      if(args.savefig):
+         plt.savefig(f"{directory}/rawtrace_{du}.png")
+         plt.close()
+       else: 
+         plt.show()
       count += 1
 
 
