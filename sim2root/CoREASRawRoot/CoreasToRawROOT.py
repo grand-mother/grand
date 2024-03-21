@@ -111,9 +111,9 @@ def CoreasToRawRoot(file, simID=None):
   # Part B.I.i: get the information from Coreas input files
   #########################################################################################################################   
   # from reas file
-  CoreCoordinateNorth = read_params(reas_input, "CoreCoordinateNorth") * 100 # convert to m
-  CoreCoordinateWest = read_params(reas_input, "CoreCoordinateWest") * 100 # convert to m
-  CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") * 100 # convert to m
+  CoreCoordinateNorth = read_params(reas_input, "CoreCoordinateNorth") * 10**-2 # convert to m
+  CoreCoordinateWest = read_params(reas_input, "CoreCoordinateWest") * 10**-2 # convert to m
+  CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") * 10**-2 # convert to m
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
   TimeResolution = read_params(reas_input, "TimeResolution") * 10**9 #convert to ns
@@ -294,7 +294,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.site = site
   RawShower.site_lat = latitude
   RawShower.site_lon = longitude
-  RawShower.site_alt = altitude
+  RawShower.site_alt = altitude * 10**-2 #cm->m
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
@@ -311,7 +311,6 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.lowe_cut_nucleon = NucleonEnergyCut # same as meson and hadron cut
 
   RawShower.shower_core_pos = np.array(CorePosition)
-
 
   """
   In the next steps, fill the longitudinal profile, 
