@@ -60,7 +60,26 @@ def manage_args():
     return parser.parse_args()
 
 
-def plot_traces_all_levels(directory, t_0_shift=True):
+def get_angles(directory):
+  # this glob is not perfect yet, but it's good enough for now
+  # TODO: glob by EventID or something
+  files = glob.glob(f"{directory}/../*.rawroot")
+  if len(files) == 1:
+    filename = files[0]
+    print(f"Found rawroot file {filename}")
+  else:
+    print(f"Found rawroot files {files}")
+    sys.exit("Please make sure there's only one .rawroot file in the directory above the one you specified.")
+
+  trawshower = RawTrees.RawShowerTree(filename)
+  azimuth = trawshower.azimuth
+  zenith  = trawshower.zenith
+
+  return azimuth, zenith
+
+
+
+def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
 
   #Get the trees L0
@@ -183,7 +202,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - WITH t0 SHIFT")
           savelabel = "with_t0_shift"
         else:
-          print("NOT shifting by t0")
+          print("NOT shifting by t0 - peaks should be at 800ns")
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - NO t0 SHIFT")
           savelabel = "no_t0s_shift"
           
@@ -241,19 +260,15 @@ def plot_traces_all_levels(directory, t_0_shift=True):
           ax.legend(loc="upper right")
 
         plt.tight_layout()
-        # Adjust layout and save the plot
-        plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
-        plt.show()
-        plt.close(fig)
         if(args.savefig):
-            plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
-            plt.close(fig)
-         else: 
-            plt.show()
+          plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+          plt.close(fig)
+        else: 
+          plt.show()
             
 
 
-def plot_time_map(directory):
+def plot_time_map(directory, label_angles=False):
   d_input = groot.DataDirectory(directory)
 
   #Get the trees L0
@@ -322,11 +337,16 @@ def plot_time_map(directory):
       # MT: antenna positions in shc? coordinates (TODO: Shouldnt this be in grand coordinates?)
       # JK: yes, everything should be in grand coordinates and conventions.
       
+      if label_angles==True:
+        zenith  = str(get_angles(directory)[0])
+        azimuth = str(get_angles(directory)[1])
+      else:
+        zenith, azimuth = ["n/a", "n/a"]
       
       # Plot arrival time distribution
       # Create a figure with subplots to match the other plot 
       fig, axs = plt.subplots(2,2, figsize=(8, 6))
-      plt.suptitle(f"arrival time distribution, event {event_number}, run {run_number}")
+      plt.suptitle(f"arrival time distribution, event {event_number}, run {run_number}, azimuth {azimuth}°, zenith {zenith}°")
 
       # Plot voltage traces on the first subplot
       ax1=axs[0,0]
@@ -365,15 +385,14 @@ def plot_time_map(directory):
         ax.axis('equal')
 
       plt.tight_layout()
-      plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
-      plt.show()
-      plt.close(fig)
       if(args.savefig):
         plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
         plt.close(fig)
       else: 
          plt.show()
     
+
+
 def get_tree_du_id_and_xyz(trawefield,shower_core):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
@@ -401,7 +420,6 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
     return np.asarray(du_ids), np.asarray(du_xyzs)    
-    
     
 
 
@@ -438,14 +456,13 @@ def plot_raws(directory):
       plt.ylabel("efield in uV/m")
       plt.legend()
       
-      plt.savefig(f"{directory}/rawtrace_{du}.png")
-      plt.show()
-      plt.close()
+      plt.tight_layout()
       if(args.savefig):
          plt.savefig(f"{directory}/rawtrace_{du}.png")
          plt.close()
-       else: 
+      else: 
          plt.show()
+
       count += 1
 
 
@@ -454,9 +471,10 @@ if __name__ == "__main__":
   args = manage_args()
   mlg.create_output_for_logger(args.verbose, log_stdout=True)
   logger.info(mlg.string_begin_script())
-  logger.info("Saving event plots to source directory "+args.directory)
+  logger.info("Creating event plots in source directory "+args.directory)
 
   directory = args.directory
-  plot_traces_all_levels(directory, t_0_shift=True)
-  plot_time_map(directory)
+  plot_traces_all_levels(directory, t_0_shift=False)
+  plot_time_map(directory, label_angles=True)
   plot_raws(directory)
+
