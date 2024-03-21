@@ -239,6 +239,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         plt.tight_layout()
         # Adjust layout and save the plot
         plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+        plt.show()
         plt.close(fig)
         # if(args.savefig):
         #    plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
@@ -361,6 +362,7 @@ def plot_time_map(directory):
 
       plt.tight_layout()
       plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+      plt.show()
       plt.close(fig)
       # if(args.savefig):
       #   plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
@@ -404,6 +406,7 @@ def plot_raws(directory):
       plt.legend()
       
       plt.savefig(f"{directory}/rawtrace_{du}.png")
+      plt.show()
       plt.close()
       # if(args.savefig):
       #   plt.savefig(f"{directory}/rawtrace_{du}.png")
