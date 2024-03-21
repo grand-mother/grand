@@ -88,14 +88,14 @@ def CoreasToRawRoot(file, simID=None):
     print("Found", log_file)
     print("[WARNING] More than one log file found in directory. Only log file", log_file[0], "will be used.")
     log_file = log_file[0]
-    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    first_interaction = read_first_interaction(log_file) / 100 # height of first interaction - in m
     hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
     coreas_version    = read_coreas_version(log_file)
   else:
     print("Found", log_file)
     log_file = log_file[0]
     print("Extracting info from log file", log_file, "for GRANDroot.")
-    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    first_interaction = read_first_interaction(log_file) / 100 # height of first interaction - in m
     hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
     coreas_version    = read_coreas_version(log_file)
   print("*****************************************")
@@ -111,9 +111,9 @@ def CoreasToRawRoot(file, simID=None):
   # Part B.I.i: get the information from Coreas input files
   #########################################################################################################################   
   # from reas file
-  CoreCoordinateNorth = read_params(reas_input, "CoreCoordinateNorth") * 100 # convert to m
-  CoreCoordinateWest = read_params(reas_input, "CoreCoordinateWest") * 100 # convert to m
-  CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") * 100 # convert to m
+  CoreCoordinateNorth = read_params(reas_input, "CoreCoordinateNorth") / 100 # convert to m
+  CoreCoordinateWest = read_params(reas_input, "CoreCoordinateWest") / 100 # convert to m
+  CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") / 100 # convert to m
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
   TimeResolution = read_params(reas_input, "TimeResolution") * 10**9 #convert to ns
@@ -121,7 +121,7 @@ def CoreasToRawRoot(file, simID=None):
   AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
   TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
   TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary") * 10**9 # convert to ns
-  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale") * 100 # convert to m
+  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale") / 100 # convert to m
 
   GroundLevelRefractiveIndex = read_params(reas_input, "GroundLevelRefractiveIndex") # refractive index at 0m asl
 
@@ -139,7 +139,7 @@ def CoreasToRawRoot(file, simID=None):
     Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
     DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
-    DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
+    DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") / 100 # geometrical distance of shower maximum from core in m
     FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10**-1 # convert from Gauss to mT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
