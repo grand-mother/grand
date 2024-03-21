@@ -21,7 +21,6 @@ import grand.dataio.root_trees as groot
 # import the rest of the guardians of the galaxy:
 import grand.manage_log as mlg
 import raw_root_trees as RawTrees # this is here in Common
-from sim2root import get_tree_du_id_and_xyz
 import sys
 import argparse
 import numpy as np
@@ -51,12 +50,12 @@ def manage_args():
         default="info",
         help="logger verbosity."
     )
-    # parser.add_argument(
-    # "--savefig",
-    # action="store_true",
-    # default=False,
-    # help="save figures to files insted of displaying them."
-    # )
+    parser.add_argument(
+     "--savefig",
+     action="store_true",
+     default=False,
+     help="save figures to files insted of displaying them."
+     )
     # retrieve argument
     return parser.parse_args()
 
@@ -66,6 +65,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
 
   #Get the trees L0
   trun_l0 = d_input.trun_l0
+  trunefieldsim_l0=d_input.trunefieldsim_l0  
   tshower_l0 = d_input.tshower_l0
   tefield_l0 = d_input.tefield_l0
   tvoltage_l0 = d_input.tvoltage_l0           
@@ -73,6 +73,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
   tefield_l1 = d_input.tefield_l1
   tadc_l1 = d_input.tadc_l1
   trun_l1 = d_input.trun_l1
+  trunefieldsim_l1=d_input.trunefieldsim_l1
 
   #get the list of events
   events_list = tefield_l1.get_list_of_events()
@@ -101,6 +102,8 @@ def plot_traces_all_levels(directory, t_0_shift=True):
       if previous_run != run_number:                          # load only for new run.
         trun_l0.get_run(run_number)                         # update run info to get site latitude and longitude.
         trun_l1.get_run(run_number)                         # update run info to get site latitude and longitude.            
+        trunefieldsim_l0.get_run(run_number)
+        trunefieldsim_l1.get_run(run_number)        
         previous_run = run_number
       
       
@@ -120,6 +123,9 @@ def plot_traces_all_levels(directory, t_0_shift=True):
       t0_adc_L1 = (tadc_l1.du_seconds-event_second)*1e9  - event_nano + tadc_l1.du_nanoseconds
       t0_voltage_L0 = (tvoltage_l0.du_seconds-event_second)*1e9  - event_nano + tvoltage_l0.du_nanoseconds 
 
+      #time window parameters. time windows go from t0-t_pre to t0+t_post
+      t_pre_L0=trunefieldsim_l0.t_pre
+      t_pre_L1=t_pre_L0 #TODO: we are having a problem storing t_pre in L1, but they are the same in the simpipe so this works for now
 
       #TODO: this forces a homogeneous antenna array.
       trace_shape = trace_efield_L0.shape  # (nb_du, 3, tbins of a trace)
@@ -134,9 +140,7 @@ def plot_traces_all_levels(directory, t_0_shift=True):
       dt_ns_l1 = np.asarray(trun_l1.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
       
       du_xyzs= np.asarray(trun_l0.du_xyz)[event_dus_indices] 
-      # MT: antenna positions in shc? coordinates (TODO: Shouldnt this be in grand coordinates?)
-      # JK: yes, everything should be in grand coordinates and conventions.
-      
+     
 
       # loop over all stations.          
       for du_idx in range(nb_du):
@@ -146,25 +150,25 @@ def plot_traces_all_levels(directory, t_0_shift=True):
         trace_efield_L0_x = trace_efield_L0[du_idx,0]
         trace_efield_L0_y = trace_efield_L0[du_idx,1]
         trace_efield_L0_z = trace_efield_L0[du_idx,2]
-        trace_efield_L0_time = np.arange(0,len(trace_efield_L0_z)) * dt_ns_l0[du_idx]
+        trace_efield_L0_time = np.arange(0,len(trace_efield_L0_z)) * dt_ns_l0[du_idx] + t_pre_L0
         
         # voltage trace
         trace_voltage_x = trace_voltage[du_idx,0]
         trace_voltage_y = trace_voltage[du_idx,1]
         trace_voltage_z = trace_voltage[du_idx,2]
-        trace_voltage_time = np.arange(0,len(trace_voltage_z)) * dt_ns_l0[du_idx]
+        trace_voltage_time = np.arange(0,len(trace_voltage_z)) * dt_ns_l0[du_idx] + t_pre_L0
 
         # adc trace
         trace_ADC_L1_x = trace_ADC_L1[du_idx,0]
         trace_ADC_L1_y = trace_ADC_L1[du_idx,1]
         trace_ADC_L1_z = trace_ADC_L1[du_idx,2]
-        trace_ADC_L1_time = np.arange(0,len(trace_ADC_L1_z)) * dt_ns_l1[du_idx]
+        trace_ADC_L1_time = np.arange(0,len(trace_ADC_L1_z)) * dt_ns_l1[du_idx] + t_pre_L1
         
         # efield trace L1
         trace_efield_L1_x = trace_efield_L1[du_idx,0]
         trace_efield_L1_y = trace_efield_L1[du_idx,1]
         trace_efield_L1_z = trace_efield_L1[du_idx,2]
-        trace_efield_L1_time = np.arange(0,len(trace_efield_L1_z)) * dt_ns_l1[du_idx]
+        trace_efield_L1_time = np.arange(0,len(trace_efield_L1_z)) * dt_ns_l1[du_idx] + t_pre_L1
 
         # time for plotting!
         # Create a figure with subplots
@@ -364,11 +368,40 @@ def plot_time_map(directory):
       plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
       plt.show()
       plt.close(fig)
-      # if(args.savefig):
-      #   plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
-      #   plt.close(fig)
-      # else: 
-      #   plt.show()
+      if(args.savefig):
+        plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+        plt.close(fig)
+      else: 
+         plt.show()
+    
+def get_tree_du_id_and_xyz(trawefield,shower_core):
+    # *** Store the DU's to run - they needed to be collected from all events ***
+    # Get the ids and positions from all the events
+    count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
+    du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(int)
+    du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
+    du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
+    du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
+    
+
+    #trawefield has the antenna positions in shc, and we need to put them in array coordinates, or this is all messed up.
+    #TODO: This is a flat earth approximation that asumes shower core is in xc,yc,zc of flat cordinate system centered in the array, origin at ground.
+    # and that du_xs are given in a flat shower coordinate system , with origin in the core, but at sea level (in this system the core coordinates are 0,0,groundaltitude)
+    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
+    du_xs = du_xs + shower_core[0]
+    du_ys = du_ys + shower_core[1]
+    du_zs = du_zs
+
+    # Get indices of the unique du_ids
+    # ToDo: sort?
+    unique_dus_idx = np.unique(du_ids, return_index=True)[1]
+    # Leave only the unique du_ids
+    du_ids = du_ids[unique_dus_idx]
+    # Stack x/y/z together and leave only the ones for unique du_ids
+    du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
+
+    return np.asarray(du_ids), np.asarray(du_xyzs)    
+    
     
 
 
