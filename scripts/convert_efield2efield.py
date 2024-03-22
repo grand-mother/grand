@@ -283,10 +283,10 @@ if __name__ == "__main__":
 
     
     #Get the trees
-    trun = d_input.trun
-    trunefieldsim = d_input.trunefieldsim
-    tshower = d_input.tshower
-    tefield = d_input.tefield
+    trun = d_input.trun_l0
+    trunefieldsim = d_input.trunefieldsim_l0
+    tshower = d_input.tshower_l0
+    tefield = d_input.tefield_l0
     
     
     #get the list of events
@@ -315,6 +315,7 @@ if __name__ == "__main__":
        tshower.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
        if previous_run != run_number:                        # load only for new run.
             trun.get_run(run_number)                         # update run info to get site latitude and longitude.
+            trunefieldsim.get_run(run_number)
             previous_run = run_number
               
         # stack efield traces
@@ -592,6 +593,7 @@ if __name__ == "__main__":
     outrunefieldsim = groot.TRunEfieldSim(filename)    
     outrunefieldsim.copy_contents(trunefieldsim)
     outrunefieldsim.analysis_level = trunefieldsim.analysis_level+1
+    
     outrunefieldsim.fill()
     outrunefieldsim.write()
 

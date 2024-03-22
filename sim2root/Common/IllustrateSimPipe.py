@@ -144,7 +144,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
       #time window parameters. time windows go from t0-t_pre to t0+t_post
       t_pre_L0=trunefieldsim_l0.t_pre
-      t_pre_L1=t_pre_L0 #TODO: we are having a problem storing t_pre in L1, but they are the same in the simpipe so this works for now
+      t_pre_L1=trunefieldsim_l1.t_pre
 
       #TODO: this forces a homogeneous antenna array.
       trace_shape = trace_efield_L0.shape  # (nb_du, 3, tbins of a trace)
@@ -169,29 +169,32 @@ def plot_traces_all_levels(directory, t_0_shift=False):
         trace_efield_L0_x = trace_efield_L0[du_idx,0]
         trace_efield_L0_y = trace_efield_L0[du_idx,1]
         trace_efield_L0_z = trace_efield_L0[du_idx,2]
-        trace_efield_L0_time = np.arange(0,len(trace_efield_L0_z)) * dt_ns_l0[du_idx] + t_pre_L0
+        trace_efield_L0_time = np.arange(0,len(trace_efield_L0_z)) * dt_ns_l0[du_idx] - t_pre_L0
         
         # voltage trace
         trace_voltage_x = trace_voltage[du_idx,0]
         trace_voltage_y = trace_voltage[du_idx,1]
         trace_voltage_z = trace_voltage[du_idx,2]
-        trace_voltage_time = np.arange(0,len(trace_voltage_z)) * dt_ns_l0[du_idx] + t_pre_L0
+        trace_voltage_time = np.arange(0,len(trace_voltage_z)) * dt_ns_l0[du_idx] - t_pre_L0
 
         # adc trace
         trace_ADC_L1_x = trace_ADC_L1[du_idx,0]
         trace_ADC_L1_y = trace_ADC_L1[du_idx,1]
         trace_ADC_L1_z = trace_ADC_L1[du_idx,2]
-        trace_ADC_L1_time = np.arange(0,len(trace_ADC_L1_z)) * dt_ns_l1[du_idx] + t_pre_L1
+        trace_ADC_L1_time = np.arange(0,len(trace_ADC_L1_z)) * dt_ns_l1[du_idx] - t_pre_L1
         
         # efield trace L1
         trace_efield_L1_x = trace_efield_L1[du_idx,0]
         trace_efield_L1_y = trace_efield_L1[du_idx,1]
         trace_efield_L1_z = trace_efield_L1[du_idx,2]
-        trace_efield_L1_time = np.arange(0,len(trace_efield_L1_z)) * dt_ns_l1[du_idx] + t_pre_L1
+        trace_efield_L1_time = np.arange(0,len(trace_efield_L1_z)) * dt_ns_l1[du_idx] - t_pre_L1
 
         # time for plotting!
         # Create a figure with subplots
-        fig, axs = plt.subplots(2,2, figsize=(8, 6))
+        if(args.savefig):
+          fig, axs = plt.subplots(2,2, figsize=(8, 6))
+        else:
+          fig, axs = plt.subplots(2,2, figsize=(8, 6), sharex=True)
         if t_0_shift == True:
           print("shifting by t0")
           trace_efield_L0_time += t0_efield_L0[du_idx]
@@ -199,11 +202,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
           trace_ADC_L1_time += t0_adc_L1[du_idx]
           trace_efield_L1_time += t0_efield_L1[du_idx]
 
-          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - WITH t0 SHIFT")
+          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Shower Time")
           savelabel = "with_t0_shift"
         else:
-          print("NOT shifting by t0 - peaks should be at 800ns")
-          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - NO t0 SHIFT")
+          print(f"NOT shifting by t0 - peaks should be at 0ns")
+          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Trigger Time")
           savelabel = "no_t0s_shift"
           
 
@@ -225,7 +228,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
         ax2.set_xlabel("time in ns")
         ax2.set_ylabel("counts")
 
-        # Plot electric field L1
+        # Plot electric field L0
         ax3=axs[1,0]
         ax3.plot(trace_efield_L0_time, trace_efield_L0_x, alpha=0.5, label="polarization N")
         ax3.plot(trace_efield_L0_time, trace_efield_L0_y, alpha=0.5, label="polarization E")
@@ -234,7 +237,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
         ax3.set_xlabel("time in ns")
         ax3.set_ylabel("efield in uV/m")
 
-        # Plot electric field L2
+        # Plot electric field L1
         ax4=axs[1,1]
         ax4.plot(trace_efield_L1_time, trace_efield_L1_x, alpha=0.5, label="polarization N")
         ax4.plot(trace_efield_L1_time, trace_efield_L1_y, alpha=0.5, label="polarization E")
@@ -245,15 +248,15 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
 
         if t_0_shift == True:
-          ax1.axvline(800+t0_voltage_L0[du_idx], label="800 ns + t0")
-          ax2.axvline(800+t0_adc_L1[du_idx], label="800 ns + t0")
-          ax3.axvline(800+t0_efield_L0[du_idx], label="800 ns + t0")
-          ax4.axvline(800+t0_efield_L1[du_idx], label="800 ns + t0")
+          ax1.axvline(t0_voltage_L0[du_idx], label="t0 Trigger")
+          ax2.axvline(t0_adc_L1[du_idx], label="t0 Trigger")
+          ax3.axvline(t0_efield_L0[du_idx], label="t0 Trigger")
+          ax4.axvline(t0_efield_L1[du_idx], label="t0 Trigger")
         else:
-          ax1.axvline(800, label="800 ns")
-          ax2.axvline(800, label="800 ns")
-          ax3.axvline(800, label="800 ns")
-          ax4.axvline(800, label="800 ns")
+          ax1.axvline(0, label="t0 Trigger")
+          ax2.axvline(0, label="t0 Trigger")
+          ax3.axvline(0, label="t0 Trigger")
+          ax4.axvline(0, label="t0 Trigger")
 
         # Add common vertical line (assuming same time axis)
         for ax in [ax1, ax2, ax3, ax4]:
@@ -474,7 +477,7 @@ if __name__ == "__main__":
   logger.info("Creating event plots in source directory "+args.directory)
 
   directory = args.directory
-  plot_traces_all_levels(directory, t_0_shift=False)
+  plot_traces_all_levels(directory, t_0_shift=True)
   plot_time_map(directory, label_angles=True)
-  plot_raws(directory)
+  #plot_raws(directory)
 
