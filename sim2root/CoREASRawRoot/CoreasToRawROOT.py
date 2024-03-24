@@ -17,6 +17,7 @@ python3 CoreasToRawRoot <directory with Coreas Sim>
 
 for more info, refer to the readme
 """
+# TODO: add check for shift core vs shift array
 
 # add option parser to allow for reading either a single file or a full directory
 parser = OptionParser()

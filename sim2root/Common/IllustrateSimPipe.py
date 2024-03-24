@@ -60,24 +60,6 @@ def manage_args():
     return parser.parse_args()
 
 
-def get_angles(directory):
-  # this glob is not perfect yet, but it's good enough for now
-  # TODO: glob by EventID or something
-  files = glob.glob(f"{directory}/../*.rawroot")
-  if len(files) == 1:
-    filename = files[0]
-    print(f"Found rawroot file {filename}")
-  else:
-    print(f"Found rawroot files {files}")
-    sys.exit("Please make sure there's only one .rawroot file in the directory above the one you specified.")
-
-  trawshower = RawTrees.RawShowerTree(filename)
-  azimuth = trawshower.azimuth
-  zenith  = trawshower.zenith
-
-  return azimuth, zenith
-
-
 
 def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -268,10 +250,10 @@ def plot_traces_all_levels(directory, t_0_shift=False):
           plt.close(fig)
         else: 
           plt.show()
-            
 
 
-def plot_time_map(directory, label_angles=False):
+
+def plot_time_map(directory):
   d_input = groot.DataDirectory(directory)
 
   #Get the trees L0
@@ -340,11 +322,8 @@ def plot_time_map(directory, label_angles=False):
       # MT: antenna positions in shc? coordinates (TODO: Shouldnt this be in grand coordinates?)
       # JK: yes, everything should be in grand coordinates and conventions.
       
-      if label_angles==True:
-        zenith  = str(get_angles(directory)[0])
-        azimuth = str(get_angles(directory)[1])
-      else:
-        zenith, azimuth = ["n/a", "n/a"]
+      zenith  = tshower_l0.zenith
+      azimuth = tshower_l0.azimuth
       
       # Plot arrival time distribution
       # Create a figure with subplots to match the other plot 
@@ -478,6 +457,6 @@ if __name__ == "__main__":
 
   directory = args.directory
   plot_traces_all_levels(directory, t_0_shift=True)
-  plot_time_map(directory, label_angles=True)
-  #plot_raws(directory)
+  plot_time_map(directory)
+  plot_raws(directory)
 
