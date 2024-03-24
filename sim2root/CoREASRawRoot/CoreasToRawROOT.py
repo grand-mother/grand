@@ -253,7 +253,7 @@ def CoreasToRawRoot(file, simID=None):
   print("*****************************************")
 
   # TODO: find injection altitude in TPlotter.h/cpp
-  InjectionAltitude = 100.
+  InjectionAltitude = 1.
   print("[WARNING] InjectionAltitude is hardcoded")
 
   site = read_site(inp_input)
