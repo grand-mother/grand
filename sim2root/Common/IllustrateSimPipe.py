@@ -476,6 +476,6 @@ if __name__ == "__main__":
 
   directory = args.directory
   plot_time_map(directory, simulator=args.sim)
-  # plot_traces_all_levels(directory, t_0_shift=True)
-  # plot_raws(directory)
+  plot_traces_all_levels(directory, t_0_shift=False)
+  plot_raws(directory)
 
