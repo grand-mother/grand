@@ -56,6 +56,11 @@ def manage_args():
      default=False,
      help="save figures to files insted of displaying them."
      )
+    parser.add_argument(
+     "--sim",
+     default="None",
+     help="specify simulator: Coreas vs. Zhaires"
+     )
     # retrieve argument
     return parser.parse_args()
 
@@ -253,7 +258,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
 
 
-def plot_time_map(directory):
+def plot_time_map(directory, simulator=None):
   d_input = groot.DataDirectory(directory)
 
   #Get the trees L0
@@ -324,47 +329,61 @@ def plot_time_map(directory):
       
       zenith  = tshower_l0.zenith
       azimuth = tshower_l0.azimuth
-      
+
+      if simulator == "Coreas":
+        print("loading Coreas axis layout...")
+        # rotate x and y by 90° -> x = North, y = West
+        x, y = du_xyzs[:,1], du_xyzs[:,0]
+      else:
+        # keep x and y as is
+        x, y = du_xyzs[:,0], du_xyzs[:,1]
+
       # Plot arrival time distribution
       # Create a figure with subplots to match the other plot 
       fig, axs = plt.subplots(2,2, figsize=(8, 6))
-      plt.suptitle(f"arrival time distribution, event {event_number}, run {run_number}, azimuth {azimuth}°, zenith {zenith}°")
+      plt.suptitle(f"arrival time distribution, event {event_number}, run {run_number},\n azimuth {azimuth}°, zenith {zenith}°")
 
       # Plot voltage traces on the first subplot
       ax1=axs[0,0]
-      map = ax1.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_voltage_L0, marker='o', s=20)
+      map = ax1.scatter(x, y, c=t0_voltage_L0, marker='o', s=20)
       ax1.set_title(f"voltage")
       cbar = plt.colorbar(map, ax=ax1)
-      cbar.set_label("arrival time")
+      cbar.set_label("arrival time in ns")
 
       # adc traces
       ax2=axs[0,1]
-      map = ax2.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_adc_L1, marker='o', s=20)
+      map = ax2.scatter(x, y, c=t0_adc_L1, marker='o', s=20)
       ax2.set_title(f"adc")
       cbar = plt.colorbar(map, ax=ax2)
-      cbar.set_label("arrival time")
+      cbar.set_label("arrival time in ns")
 
       # Plot electric field L1
       ax3=axs[1,0]
-      map = ax3.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_efield_L0, marker='o', s=20)
+      map = ax3.scatter(x, y, c=t0_efield_L0, marker='o', s=20)
       ax3.set_title(f"efield L0")
       cbar = plt.colorbar(map, ax=ax3)
-      cbar.set_label("arrival time")
+      cbar.set_label("arrival time in ns")
 
 
       # Plot electric field L2
       ax4=axs[1,1]
-      map = ax4.scatter(du_xyzs[:,0], du_xyzs[:,1], c=t0_efield_L1, marker='o', s=20)
+      map = ax4.scatter(x, y, c=t0_efield_L1, marker='o', s=20)
       ax4.set_title(f"efield L1")
       cbar = plt.colorbar(map, ax=ax4)
-      cbar.set_label("arrival time")
+      cbar.set_label("arrival time in ns")
 
 
       # Add common vertical line (assuming same time axis)
-      for ax in [ax1, ax2, ax3, ax4]:
-        ax.set_xlabel("antenna position X")
-        ax.set_ylabel("antenna position Y")
-        ax.axis('equal')
+      if simulator == "Coreas":
+        for ax in [ax1, ax2, ax3, ax4]:
+          ax.set_xlabel("West in m")
+          ax.set_ylabel("North in m")
+          ax.axis('equal')
+      else:
+        for ax in [ax1, ax2, ax3, ax4]:
+          ax.set_xlabel("antenna position X in m")
+          ax.set_ylabel("antenna position Y in m")
+          ax.axis('equal')
 
       plt.tight_layout()
       if(args.savefig):
@@ -456,7 +475,7 @@ if __name__ == "__main__":
   logger.info("Creating event plots in source directory "+args.directory)
 
   directory = args.directory
-  plot_traces_all_levels(directory, t_0_shift=True)
-  plot_time_map(directory)
-  plot_raws(directory)
+  plot_time_map(directory, simulator=args.sim)
+  # plot_traces_all_levels(directory, t_0_shift=True)
+  # plot_raws(directory)
 
