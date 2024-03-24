@@ -64,6 +64,7 @@ fi
 root_dest=${db%/logs*}/GrandRoot/
 submit_dir=$(dirname "${db}")
 submit_base_name=submit_${tag}
+
 if [ ! -d $root_dest ];then
         	mkdir -p $root_dest >/dev/null 2>&1
 fi
