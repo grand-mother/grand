@@ -26,6 +26,7 @@ import argparse
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+import re
 
 # better plots
 from matplotlib import rc
@@ -330,7 +331,8 @@ def plot_time_map(directory, simulator=None):
       zenith  = tshower_l0.zenith
       azimuth = tshower_l0.azimuth
 
-      if simulator == "Coreas":
+      if simulator == re.match(r"^coreas$", simulator, flags=re.IGNORECASE):
+        # use this re check so it's not case sensitive
         print("loading Coreas axis layout...")
         # rotate x and y by 90° -> x = North, y = West
         x, y = du_xyzs[:,1], du_xyzs[:,0]
