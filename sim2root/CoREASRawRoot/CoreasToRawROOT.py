@@ -80,8 +80,8 @@ def CoreasToRawRoot(file, simID=None):
   if len(log_file) == 0:
     print("[WARNING] No log file found in this directory. Using dummy values for first interaction.")
 
-    first_interaction = 100 # height of first interaction - in m
-    print("Assuming first interaction at 100m.")
+    first_interaction = 1 # height of first interaction - in m
+    print("[WARNING] Assuming first interaction at 1m.")
     hadr_interaction  = "Sibyll 2.3d"
     coreas_version    = "Coreas V1.4"
     print("Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4.")
@@ -202,8 +202,10 @@ def CoreasToRawRoot(file, simID=None):
   pathLongFile = f"{path}/DAT{simID}.long"
 
   # the long file has an annoying setup, which I (very inelegantly) circumvent with this function:
-  n_data, dE_data, hillas_parameter = read_long(pathLongFile)
-  # there's an issue with the hillas_parameter in read_long, but also there seems to be a general issue with the hillas parameter in these files
+  n_data, dE_data, hillas_parameters = read_long(pathLongFile)
+  
+  Xmax = hillas_parameters[0] # Coreas & GRAND: g/cm^2
+  Chi_hillas = hillas_parameters[1]
 
   #**** particle distribution
   particle_dist = n_data
@@ -322,6 +324,7 @@ def CoreasToRawRoot(file, simID=None):
   Some fields will be missing here and some fields will be missing for ZhaireS.
   
   """
+  RawShower.xmax_grams = Xmax
 
   RawShower.long_pd_gamma = pd_gammas
   RawShower.long_pd_eminus = pd_electrons

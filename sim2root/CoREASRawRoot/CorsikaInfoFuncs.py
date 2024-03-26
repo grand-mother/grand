@@ -265,13 +265,19 @@ def read_long(pathLongFile):
     dE_data = np.genfromtxt(dE_data_str)
 
     # read out hillas fit
-    hillas_parameter = []
-    # for line in lines:
-    #     if bool(search("PARAMETERS", line)):
-    #         hillas_parameter = [float(x) for x in line.split()[2:]]
-    #     if bool(search("CHI", line)):
-    #         hillas_parameter.append(float(line.split()[2]))
-
-
+    hillas_parameters = []
+    for line in lines:
+        if bool(search("PARAMETERS", line)):
+            parts = re.split(r"\s+", line)
+            param1, param2, xmax, param4, param5, param6 = parts[2], parts[3], parts[4], parts[5], parts[6], parts[7]
+            hillas_parameters.append(xmax)
+        if bool(search("CHI", line)):
+            chi = float(line.split()[2])
+            hillas_parameters.append(chi)
+    print("Hillas parameters have been stored.")
+    print("Xmax: ", hillas_parameters[0])
+    print("Chi: ", hillas_parameters[1])
     print("The file", pathLongFile, "has been separated into energy deposit and particle distribution.")
-    return n_data, dE_data, hillas_parameter
+
+    return n_data, dE_data, hillas_parameters
+
