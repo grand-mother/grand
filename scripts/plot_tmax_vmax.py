@@ -1,3 +1,8 @@
+#! /usr/bin/env python3
+
+"""
+JM Colley CNRS/IN2P3/LPNHE
+"""
 import grand.dataio.root_files as froot
 import matplotlib.pyplot as plt
 import numpy as np
