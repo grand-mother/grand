@@ -1,7 +1,12 @@
 #!/bin/bash
+# Script triggered after transfering data from a GRAND observatory to CCIN2P3 (or to any site)
+# It will launch the jobs to convert binary files into GrandRoot and register the results of the transfers and convertions into the database
+# Fleg & Fred: 03/2024
+# Copyright : Grand Observatory 2024
+
 # path to bin2root file
 bin2root='/pbs/home/p/prod_grand/scripts/transfers/bintoroot.bash'
-
+register_transfers='/pbs/home/p/prod_grand/scripts/transfers/register_transfers.py'
 
 # gtot options for convertion -g1 for gp13 -f2 for gaa
 gtot_option="-g1"
@@ -99,4 +104,7 @@ do
 	sbatch -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
 done
 
+outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
+echo "python3 $register_transfers -d $db -t $tag" >> $outfile
+sbatch -t 0-01:00 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/slurm-${submit_base_name}-register-transfer --mem 8G $outfile
 
