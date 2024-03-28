@@ -109,7 +109,7 @@ do
 	echo "$bin2root -g '$gtot_option' -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	sbatch --dependency=afterok:${jregid} -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
+	sbatch --dependency=after:${jregid} -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
 done
 
 
