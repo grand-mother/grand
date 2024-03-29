@@ -192,6 +192,7 @@ class DataManager:
                 logger.warning(f"path given in filename ({os.path.dirname(file)}) and in repository path ({path}) are different ! The path {os.path.dirname(file)} from file will be used !")
             path = os.path.dirname(file)
             file = os.path.basename(file)
+
         # if repository is given we get file directly from this repo
         if not (repository is None):
             rep = self.getrepo(repository)
@@ -229,9 +230,9 @@ class DataManager:
 
 
     ##Function to register a file into the database. Returns the path to the file in the repository where the file was registered.
-    def register_file(self,filename):
+    def register_file(self,filename, repository=None, path=None):
         newfilename = None
-        file = self.get(filename)
+        file = self.get(filename,repository,path)
         if file is not None:
             # If filename in referer repository then keep it
             #print(os.path.basename(filename)+" "+self.referer().name()+" "+os.path.dirname(filename))

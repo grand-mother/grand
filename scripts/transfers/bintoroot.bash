@@ -2,7 +2,11 @@
 
 # path to gtot
 gtot_path='/pbs/home/p/prod_grand/softs/gtot/cmake-build-release/gtot'
-register_path='/pbs/home/p/prod_grand/scripts/transfers/register_convert.py'
+# path to script to register convertion results
+register_convertion='/pbs/home/p/prod_grand/scripts/transfers/register_convert.py'
+# path to script to register root file into the DB
+register_root='/pbs/home/p/prod_grand/softs/grand/granddb/register_file_in_db.py'
+config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
 # Get tag and database file to use
 while getopts ":d:g:" option; do
   case $option in
@@ -49,6 +53,8 @@ do
 	conv_status=$?
 	echo $conv_status >> ${logfile}
 	# Register conversion result into the database
-	python3 ${register_path} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
+	python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
+	# Register root file into db
+	python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root
 done
 
