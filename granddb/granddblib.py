@@ -16,10 +16,9 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects import postgresql
 import grand.manage_log as mlg
 import ROOT
+
 logger = mlg.get_logger_for_script(__name__)
 mlg.create_output_for_logger("debug", log_stdout=True)
-
-
 
 
 def casttodb(value):
@@ -74,7 +73,7 @@ class Database:
         self._cred = cred
 
         if self._sshserv != "" and self._cred is not None:
-            #TODO: Check credentials for ssh tunnel and ask for passwds
+            # TODO: Check credentials for ssh tunnel and ask for passwds
             self.server = SSHTunnelForwarder(
                 (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),
@@ -87,17 +86,18 @@ class Database:
             self._host = "127.0.0.1"
             self._port = local_port
 
-        #self.connect()
+        # self.connect()
 
         engine = create_engine(
-            'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + str(self.port()) + '/' + self._dbname)
+            'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + str(
+                self.port()) + '/' + self._dbname)
         Base = automap_base()
 
         Base.prepare(engine, reflect=True)
         self.sqlalchemysession = Session(engine)
         inspection = inspect(engine)
         for table in inspection.get_table_names():
-        #for table in engine.table_names(): #this is obsolete
+            # for table in engine.table_names(): #this is obsolete
             self._tables[table] = getattr(Base.classes, table)
 
     def __del__(self):
@@ -155,31 +155,43 @@ class Database:
             logger.error(f"Error {e}")
         return record
 
-#    def insert(self, query):
-#        record = []
-#        try:
-#            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-#            cursor.execute(query)
-#            print(cursor.statusmessage)
-#            self.dbconnection.commit()
-#            record.append(cursor.fetchone()[0])
-#            cursor.close()
-#        except psycopg2.DatabaseError as e:
-#            print(f'Error {e}')
-#        return record
-#
-#    def insert2(self, query, values):
-#        record = []
-#        try:
-#            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-#            cursor.execute(query, values)
-#            print(cursor.statusmessage)
-#            self.dbconnection.commit()
-#            record.append(cursor.fetchone()[0])
-#            cursor.close()
-#        except psycopg2.DatabaseError as e:
-#            print(f'Error {e}')
-#        return record
+    def execute_sql(self, query):
+        try:
+            res = True
+            self.connect()
+            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute(query)
+            cursor.close()
+        except psycopg2.DatabaseError as e:
+            logger.error(f"Error {e}")
+            res = False
+        return res
+
+    #    def insert(self, query):
+    #        record = []
+    #        try:
+    #            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    #            cursor.execute(query)
+    #            print(cursor.statusmessage)
+    #            self.dbconnection.commit()
+    #            record.append(cursor.fetchone()[0])
+    #            cursor.close()
+    #        except psycopg2.DatabaseError as e:
+    #            print(f'Error {e}')
+    #        return record
+    #
+    #    def insert2(self, query, values):
+    #        record = []
+    #        try:
+    #            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    #            cursor.execute(query, values)
+    #            print(cursor.statusmessage)
+    #            self.dbconnection.commit()
+    #            record.append(cursor.fetchone()[0])
+    #            cursor.close()
+    #        except psycopg2.DatabaseError as e:
+    #            print(f'Error {e}')
+    #        return record
 
     ## @brief Method to get the list of the repositories defined in the database.
     # Returns a dictionary with
@@ -201,19 +213,25 @@ class Database:
     # returns the filename and the different locations for it
     def SearchFile(self, filename):
         result = []
-        file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'], self.tables()['repository'])\
-            .join(self.tables()['file_location'], self.tables()['file_location'].id_file==self.tables()['file'].id_file) \
-            .join(self.tables()['repository'],self.tables()['repository'].id_repository==self.tables()['file_location'].id_repository) \
-            .filter(self.tables()['file'].filename == filename)\
-            .order_by(self.tables()['repository'].id_repository)\
+        file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'],
+                                            self.tables()['repository']) \
+            .join(self.tables()['file_location'],
+                  self.tables()['file_location'].id_file == self.tables()['file'].id_file) \
+            .join(self.tables()['repository'],
+                  self.tables()['repository'].id_repository == self.tables()['file_location'].id_repository) \
+            .filter(self.tables()['file'].filename == filename) \
+            .order_by(self.tables()['repository'].id_repository) \
             .all()
 
         if len(file) == 0:
-            file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'], self.tables()['repository'])\
-                .join(self.tables()['file_location'], self.tables()['file_location'].id_file==self.tables()['file'].id_file) \
-                .join(self.tables()['repository'],self.tables()['repository'].id_repository==self.tables()['file_location'].id_repository) \
-                .filter(self.tables()['file'].original_name == filename)\
-                .order_by(self.tables()['repository'].id_repository)\
+            file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'],
+                                                self.tables()['repository']) \
+                .join(self.tables()['file_location'],
+                      self.tables()['file_location'].id_file == self.tables()['file'].id_file) \
+                .join(self.tables()['repository'],
+                      self.tables()['repository'].id_repository == self.tables()['file_location'].id_repository) \
+                .filter(self.tables()['file'].original_name == filename) \
+                .order_by(self.tables()['repository'].id_repository) \
                 .all()
 
         for record in file:
@@ -296,7 +314,7 @@ class Database:
         file_exist = self.sqlalchemysession.query(self.tables()['file']).filter_by(
             filename=os.path.basename(newfilename)).first()
         if file_exist is not None:
-            #file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
+            # file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
             #    id_repository=id_repository).first()
             file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
                 id_repository=id_repository).first()
@@ -313,44 +331,45 @@ class Database:
         if register_file:
             id_provider = self.get_or_create_key('provider', 'provider', provider)
             if isnewfile:
-                #rfile = ROOT.TFile(str(filename))
+                # rfile = ROOT.TFile(str(filename))
                 rfile = rdb.RootFile(str(filename))
                 rfile.dataset_name()
-                #rfile.file().GetSize()
+                # rfile.file().GetSize()
                 container = self.tables()['file'](filename=os.path.basename(newfilename),
-                                                        description='autodesc',
-                                                        original_name=os.path.basename(filename),
-                                                        id_provider=id_provider,
-                                                        file_size=rfile.file.GetSize()
+                                                  description='autodesc',
+                                                  original_name=os.path.basename(filename),
+                                                  id_provider=id_provider,
+                                                  file_size=rfile.file.GetSize()
                                                   )
                 self.sqlalchemysession.add(container)
                 self.sqlalchemysession.flush()
                 idfile = container.id_file
-            #container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=os.path.dirname(newfilename))
-            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=newfilename, description="")
+            # container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=os.path.dirname(newfilename))
+            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=newfilename,
+                                                       description="")
             self.sqlalchemysession.add(container)
-            #self.sqlalchemysession.flush()
+            # self.sqlalchemysession.flush()
 
         return idfile, isnewfile
 
     ## @brief Function to register (if necessary) the content of a file into the database.
     # It will first read the file and walk along datas to determine what has to be registered
     def register_filecontent(self, file, idfile):
-        #We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
+        # We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
         # Ugly but no other efficient way to do (checking in the DB before insertion is too time consuming).
         eventlist = []
         # ttrees will be a dict of trees to add. key is the tree name and value is a dict with all values for the tree.
         ttrees = {}
-        #tables = {}
+        # tables = {}
         rfile = rdb.RootFile(str(file))
         # We iterate over all trees
         for treename in rfile.TreeList:
             logger.debug(f" Debug reading tree {treename}")
             treetype = treename.split('_', 1)[0]
-            #We register only known and identified trees defined in rootdblib
+            # We register only known and identified trees defined in rootdblib
             if hasattr(rfile, treetype + "ToDB"):
                 table = getattr(rfile, treetype + "ToDB").get('table')
-                #table = getattr(rfile, treetype + "ToDB")['table']
+                # table = getattr(rfile, treetype + "ToDB")['table']
                 ttrees[treename] = {}
 
                 # Get metadata and add file_content record
@@ -358,7 +377,7 @@ class Database:
                 tablemeta = "file_content"
                 metatree['id_file'] = idfile
                 for meta, field in rfile.metaToDB.items():
-                    #try/except to avoid stopping when metadata is not present in root file
+                    # try/except to avoid stopping when metadata is not present in root file
                     try:
                         value = casttodb(getattr(rfile.TreeList[treename], meta))
                         if field.find('id_') >= 0:
@@ -366,25 +385,25 @@ class Database:
                         if field == "comment":
                             field = "comments"
                         metatree[field] = value
-                        #print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
+                        # print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
                     except:
                         pass
-                #Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
+                # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
                 metatree['tree_name'] = treename
                 container = self.tables()[tablemeta](**metatree)
                 self.sqlalchemysession.add(container)
-                #self.sqlalchemysession.flush()
+                # self.sqlalchemysession.flush()
                 # If table not defined in rootdblib for this tree then no content to record.
                 st = time.time()
                 if table is not None:
                     if treetype in rfile.EventTrees:
                         # For events we iterates over event_number and run_number
                         for event, run in rfile.TreeList[treename].get_list_of_events():
-                            #MOVE TEST eventlist her to avoid reading for nothing
+                            # MOVE TEST eventlist her to avoid reading for nothing
 
-                            if ((table != "events") or ([run,event] not in eventlist)):
+                            if ((table != "events") or ([run, event] not in eventlist)):
                                 if table == "events":
-                                    eventlist.append([run,event])
+                                    eventlist.append([run, event])
 
                                 if not (run, event) in ttrees[treename]:
                                     ttrees[treename][(run, event)] = {}
@@ -393,7 +412,7 @@ class Database:
                                     if param != "table":
                                         value = casttodb(getattr(rfile.TreeList[treename], param))
                                         # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
-                                        if field.startswith('id_') :
+                                        if field.startswith('id_'):
                                             value = self.get_or_create_fk(table, field, value)
                                         ttrees[treename][(run, event)][field] = value
                                     else:
@@ -403,34 +422,34 @@ class Database:
                                 container = self.tables()[table](**ttrees[treename][(run, event)])
                                 self.sqlalchemysession.add(container)
 
-                            #if table =="events":
+                            # if table =="events":
                             #    if [run,event] not in eventlist:
                             #        eventlist.append([run,event])
                             #        self.sqlalchemysession.add(container)
 
-                            #else:
+                            # else:
                             #    self.sqlalchemysession.add(container)
 
-                            #try:
+                            # try:
                             #    self.sqlalchemysession.add(container)
                             #    self.sqlalchemysession.flush()
-                            #except :
+                            # except :
                             #    print("error 1")
 
-                            #self.sqlalchemysession.add(container)
-                            #self.sqlalchemysession.flush()
-                            #filt = {}
-                            #filt["run_number"] = str(casttodb(run))
-                            #filt["event_number"] = str(casttodb(event))
-                            #filt["id_file"] = str(casttodb(idfile))
-                            #ret = self.sqlalchemysession.query(self._tables[table]).filter_by(**filt).exists()
-                            #if ret == 0 :
+                            # self.sqlalchemysession.add(container)
+                            # self.sqlalchemysession.flush()
+                            # filt = {}
+                            # filt["run_number"] = str(casttodb(run))
+                            # filt["event_number"] = str(casttodb(event))
+                            # filt["id_file"] = str(casttodb(idfile))
+                            # ret = self.sqlalchemysession.query(self._tables[table]).filter_by(**filt).exists()
+                            # if ret == 0 :
                             #    self.sqlalchemysession.add(container)
-                            #else:
+                            # else:
                             #    print("UPDATE ?")
-                        #self.sqlalchemysession.flush()
-                        #print(container.id_treename)
-                        #idtree = "id_"+treename
+                        # self.sqlalchemysession.flush()
+                        # print(container.id_treename)
+                        # idtree = "id_"+treename
 
                     # For runs we iterates over run_number
                     elif treename in rfile.RunTrees:
@@ -448,29 +467,29 @@ class Database:
                                             value = self.get_or_create_fk(table, field, value)
                                         ttrees[treename][run][field] = value
                                     except:
-                                        logger.warning(f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
+                                        logger.warning(
+                                            f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
                                 else:
                                     ttrees[treename][run]['id_file'] = idfile
                                     ttrees[treename][run]['tree_name'] = treename
 
                             container = self.tables()[table](**ttrees[treename][run])
                             self.sqlalchemysession.add(container)
-                        #self.sqlalchemysession.flush()
+                        # self.sqlalchemysession.flush()
 
-                        #print(container.id_treename)
-                        #idtree = "id_"+treename
+                        # print(container.id_treename)
+                        # idtree = "id_"+treename
                 et = time.time()
                 elapsed_time = et - st
-                #print('Execution time:', elapsed_time, 'seconds')
+                # print('Execution time:', elapsed_time, 'seconds')
                 logger.debug(f"execution time {elapsed_time} seconds")
-
 
     def register_file(self, orgfilename, newfilename, id_repository, provider):
         idfile, read_file = self.register_filename(orgfilename, newfilename, id_repository, provider)
         if read_file:
-            #We read the localfile and not the remote one
-            self.register_filecontent(orgfilename,idfile)
-            #self.register_filecontent(newfilename,idfile)
+            # We read the localfile and not the remote one
+            self.register_filecontent(orgfilename, idfile)
+            # self.register_filecontent(newfilename,idfile)
         else:
             logger.info(f"file {orgfilename} already registered.")
         self.sqlalchemysession.commit()
