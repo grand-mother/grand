@@ -7,7 +7,7 @@
 # path to bin2root file
 bin2root='/pbs/home/p/prod_grand/scripts/transfers/bintoroot.bash'
 register_transfers='/pbs/home/p/prod_grand/scripts/transfers/register_transfer.bash'
-
+refresh_mat_script='/pbs/home/p/prod_grand/scripts/transfers/refresh_mat_views.bash'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
 gtot_option="-g1"
 
@@ -100,6 +100,7 @@ do
   ((i++))
 done
 
+convjobs=""
 # Launch convertion of files (but after the registration has finished)
 for j in  "${!listoffiles[@]}"
 do
@@ -109,7 +110,15 @@ do
 	echo "$bin2root -g '$gtot_option' -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	sbatch --dependency=afterany:${jregid} -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G $outfile
+	jid=$(sbatch --dependency=afterany:${jregid} -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G ${outfile})
+  jid=$(echo $jid |awk '{print $NF}')
+  convjobs=$convjobs":"$jid
 done
 
-
+if [ "$convjobs" -eq "" ]; then
+  dep=""
+else
+  dep="--dependency=afterany${convjobs}"
+fi
+#finally refresh the materialized views in the database
+sbatch ${dep} -t 0-01:00 -n 1 -J refresh_mat -o ${submit_dir}/slurm-refresh_mat --mem 1G ${refresh_mat_script}

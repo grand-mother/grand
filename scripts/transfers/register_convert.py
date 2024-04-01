@@ -18,7 +18,7 @@ print(args.file)
 print(args.status)
 myfile = dm.database().sqlalchemysession.query(dm.database().tables()['rawfile']).filter_by(filename=args.file).first()
 if not myfile:
-    print("Error file not registerd")
+    print("Error file not registered")
     exit(0)
 else:
     id_raw_file = myfile.id_raw_file

@@ -161,6 +161,7 @@ class Database:
             self.connect()
             cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute(query)
+            self.dbconnection.commit()
             cursor.close()
         except psycopg2.DatabaseError as e:
             logger.error(f"Error {e}")
