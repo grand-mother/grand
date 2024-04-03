@@ -201,22 +201,33 @@ def antenna_positions_dict(pathAntennaList):
 
 
 def get_antenna_position(pathAntennaList, antenna):
-    """
-    get the position for one antenna from SIM??????.list
-    .list files are structured like "AntennaPosition = x y z name"
+  """
+  Get the position (x, y, z) for a specific antenna from SIM??????.list
 
-    """
-    file = np.genfromtxt(pathAntennaList, dtype = "str")
-    # get antenna positions from file
-    # file[:,0] and file[:,1] are useless (they are simply "AntennaPosition" and "=")
-    # get the x, y and z positions
-    x = file[:,2].astype(float) * 10**-2 # convert to m
-    y = file[:,3].astype(float) * 10**-2 # convert to m
-    z = file[:,4].astype(float) * 10**-2 # convert to m
-    # get the names of the antennas
-    name = file[:,5]
+  Args:
+      pathAntennaList: Path to the ".list" file containing antenna positions.
+      antenna: Name of the antenna for which to retrieve the position.
 
-    return x, y, z
+  Returns:
+      A tuple containing (x, y, z) coordinates for the specified antenna, 
+      or None if the antenna is not found.
+  """
+  file = np.genfromtxt(pathAntennaList, dtype="str")
+
+  # Filter data based on antenna name
+  filtered_data = file[file[:, 5] == antenna]  # Select rows where name matches
+
+  if len(filtered_data) == 0:
+    # Antenna not found
+    return None
+
+  # Extract x, y, z positions (assuming correct indexing)
+  x = filtered_data[0][2].astype(float) * 10**-2
+  y = filtered_data[0][3].astype(float) * 10**-2
+  z = filtered_data[0][4].astype(float) * 10**-2
+
+  return x, y, z
+
 
 
 
