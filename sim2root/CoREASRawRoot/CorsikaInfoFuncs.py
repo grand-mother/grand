@@ -201,42 +201,63 @@ def antenna_positions_dict(pathAntennaList):
 
 
 def get_antenna_position(pathAntennaList, antenna):
-  """
-  Get the position (x, y, z) for a specific antenna from SIM??????.list, 
-  considering a potential offset from a reference file (GP300.list).
+    """
+    Get the position (x, y, z) for a specific antenna from SIM??????.list
 
-  Args:
-      pathAntennaList: Path to the ".list" file containing antenna positions.
-      antenna: Name of the antenna for which to retrieve the position.
+    Args:
+        pathAntennaList: Path to the ".list" file containing antenna positions.
+        antenna: Name of the antenna for which to retrieve the position.
 
-  Returns:
-      A tuple containing (x, y, z, shift), where:
-          - x, y, z: Coordinates for the specified antenna (in meters).
-          - shift: A tuple representing the offset between the two files 
-                    (shift_x, shift_y, shift_z) in meters.
-          - None is returned if the antenna is not found in either file.
-  """
-  # Load data from both files
-  sim_data = np.genfromtxt(pathAntennaList, dtype="str")
-  gp300_data = np.genfromtxt("GP300.list", dtype="str")
+    Returns:
+        A tuple containing (x, y, z) coordinates for the specified antenna, 
+        or None if the antenna is not found.
+    """
+    file = np.genfromtxt(pathAntennaList, dtype="str")
+    gp300_data = np.genfromtxt("GP300.list", dtype="str")
 
-  # Filter data based on antenna name for both files
-  sim_filtered = sim_data[sim_data[:, 5] == antenna]
-  gp300_filtered = gp300_data[gp300_data[:, 5] == antenna]
+    # Filter data based on antenna name
+    filtered_data = file[file[:, 5] == antenna]  # Select rows where name matches
+    gp300_filtered = gp300_data[gp300_data[:, 5] == antenna]
 
-  if len(sim_filtered) == 0 or len(gp300_filtered) == 0:
-    # Antenna not found in either file
-    return None
+    if len(filtered_data) == 0 or len(gp300_filtered) == 0:
+        # Antenna not found in either file
+        return None
 
-  # Extract positions from filtered data (assuming correct indexing)
-  sim_pos = sim_filtered[0][2:5].astype(float) * 10**-2
-  gp300_pos = gp300_filtered[0][2:5].astype(float) * 10**-2
+    # Replace x, y, z positions with the original positions
+    x = gp300_filtered[0][2].astype(float) * 10**-2
+    y = gp300_filtered[0][3].astype(float) * 10**-2
+    z = gp300_filtered[0][4].astype(float) * 10**-2
 
-  # Calculate offset (assuming data has the same structure)
-  shift = gp300_pos - sim_pos
+    return x, y, z
 
-  return gp300_filtered[0], gp300_filtered[1], gp300_filtered[2], shift
 
+
+def calculate_array_shift(pathAntennaList):
+    """
+    Calculates the average shift between two antenna position arrays.
+
+    Args:
+        sim_data: A NumPy array containing antenna positions from the SIM file.
+        gp300_data: A NumPy array containing antenna positions from the GP300 file.
+
+    Returns:
+        A tuple (shift_x, shift_y) representing the average offset between 
+        the two arrays in meters for x and y coordinates, respectively.
+        If the arrays have different shapes, returns None.
+    """
+    sim_data = np.genfromtxt(pathAntennaList, dtype="str")
+    gp300_data = np.genfromtxt("GP300.list", dtype="str")
+
+    # Check if data shapes are compatible
+    if sim_data.shape != gp300_data.shape:
+        print("Sim data shape is not compatible with GP300 layout!")
+        return None
+
+    # Calculate average shift for x and y coordinates
+    shift_x = np.mean(gp300_data[:, 2].astype(float) * 10**-2 - sim_data[:, 2].astype(float) * 10**-2)
+    shift_y = np.mean(gp300_data[:, 3].astype(float) * 10**-2 - sim_data[:, 3].astype(float) * 10**-2)
+
+    return shift_x, shift_y
 
 
 

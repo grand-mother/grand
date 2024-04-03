@@ -313,7 +313,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.lowe_cut_meson = MesonEnergyCut # and hadrons
   RawShower.lowe_cut_nucleon = NucleonEnergyCut # same as meson and hadron cut
 
-  RawShower.shower_core_pos = np.array(CorePosition) + shift
+  
 
 
   """
@@ -356,6 +356,9 @@ def CoreasToRawRoot(file, simID=None):
   
   RawShower.first_interaction = first_interaction
 
+  pathAntennaList = f"{path}/SIM{simID}.list"
+  core_shift_x, core_shift_y = calculate_array_shift(pathAntennaList)
+  RawShower.shower_core_pos = np.array(CorePosition) + np.array(core_shift_x, core_shift_y)
   RawShower.fill()
   RawShower.write()
 
@@ -448,7 +451,7 @@ def CoreasToRawRoot(file, simID=None):
     RawEfield.trace_z.append(trace_z.astype(float))
 
     # Antenna positions in showers's referential in [m]
-    ant_position_x, ant_position_y, ant_position_z, shift = get_antenna_position(pathAntennaList, antenna)
+    ant_position_x, ant_position_y, ant_position_z = get_antenna_position(pathAntennaList, antenna)
     RawEfield.du_x.append(ant_position_x.astype(float))
     RawEfield.du_y.append(ant_position_y.astype(float))
     RawEfield.du_z.append(ant_position_z.astype(float))
