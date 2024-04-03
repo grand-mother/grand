@@ -118,7 +118,7 @@ md5="0"
 for file in $(find $localdatadir -type f -newermt $last_transfer| grep /${site}_ |sort)
 do
   # skip opened files
-  if [ !$(fuser "$file" &> /dev/null) ]; then
+  if  ! $(fuser "$file" &> /dev/null) ; then
     filename=$(basename $file)
     tmp=${filename#${site}_}
     dateobs=${tmp:0:8}
