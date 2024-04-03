@@ -358,7 +358,8 @@ def CoreasToRawRoot(file, simID=None):
 
   pathAntennaList = f"{path}/SIM{simID}.list"
   core_shift_x, core_shift_y = calculate_array_shift(pathAntennaList)
-  RawShower.shower_core_pos = np.array(CorePosition) + np.array(core_shift_x, core_shift_y)
+  RawShower.shower_core_pos = np.array(CorePosition) + np.array([core_shift_x, core_shift_y, 0])
+  print("SHOWER CORE POS:", np.array(CorePosition) + np.array([core_shift_x, core_shift_y, 0]))
   RawShower.fill()
   RawShower.write()
 
