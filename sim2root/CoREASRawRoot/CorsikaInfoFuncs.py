@@ -202,31 +202,41 @@ def antenna_positions_dict(pathAntennaList):
 
 def get_antenna_position(pathAntennaList, antenna):
   """
-  Get the position (x, y, z) for a specific antenna from SIM??????.list
+  Get the position (x, y, z) for a specific antenna from SIM??????.list, 
+  considering a potential offset from a reference file (GP300.list).
 
   Args:
       pathAntennaList: Path to the ".list" file containing antenna positions.
       antenna: Name of the antenna for which to retrieve the position.
 
   Returns:
-      A tuple containing (x, y, z) coordinates for the specified antenna, 
-      or None if the antenna is not found.
+      A tuple containing (x, y, z, shift), where:
+          - x, y, z: Coordinates for the specified antenna (in meters).
+          - shift: A tuple representing the offset between the two files 
+                    (shift_x, shift_y, shift_z) in meters.
+          - None is returned if the antenna is not found in either file.
   """
-  file = np.genfromtxt(pathAntennaList, dtype="str")
+  # Load data from both files
+  sim_data = np.genfromtxt(pathAntennaList, dtype="str")
+  gp300_data = np.genfromtxt("GP300.list", dtype="str")
 
-  # Filter data based on antenna name
-  filtered_data = file[file[:, 5] == antenna]  # Select rows where name matches
+  # Filter data based on antenna name for both files
+  sim_filtered = sim_data[sim_data[:, 5] == antenna]
+  gp300_filtered = gp300_data[gp300_data[:, 5] == antenna]
 
-  if len(filtered_data) == 0:
-    # Antenna not found
+  if len(sim_filtered) == 0 or len(gp300_filtered) == 0:
+    # Antenna not found in either file
     return None
 
-  # Extract x, y, z positions (assuming correct indexing)
-  x = filtered_data[0][2].astype(float) * 10**-2
-  y = filtered_data[0][3].astype(float) * 10**-2
-  z = filtered_data[0][4].astype(float) * 10**-2
+  # Extract positions from filtered data (assuming correct indexing)
+  sim_pos = sim_filtered[0][2:5].astype(float) * 10**-2
+  gp300_pos = gp300_filtered[0][2:5].astype(float) * 10**-2
 
-  return x, y, z
+  # Calculate offset (assuming data has the same structure)
+  shift = gp300_pos - sim_pos
+
+  return gp300_filtered[0], gp300_filtered[1], gp300_filtered[2], shift
+
 
 
 
