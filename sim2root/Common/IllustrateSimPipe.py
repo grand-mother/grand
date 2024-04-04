@@ -67,6 +67,44 @@ def manage_args():
 
 
 
+def plot_core_positions(directory, t_0_shift=False):
+  d_input = groot.DataDirectory(directory)
+
+  #Get the trees L0
+  tshower_l0 = d_input.tshower_l0
+
+  #get the list of events
+  events_list = tshower_l0.get_list_of_events()
+  nb_events = len(events_list)
+
+  # If there are no events in the file, exit
+  if nb_events == 0:
+    sys.exit("There are no events in the file! Exiting.")
+  
+  corex=np.zeros(nb_events)
+  corey=np.zeros(nb_events)
+  corez=np.zeros(nb_events)    
+  ####################################################################################
+  # start looping over the events
+  ####################################################################################
+  previous_run = None    
+  i=0
+  for event_number,run_number in events_list:
+      assert isinstance(event_number, int)
+      assert isinstance(run_number, int)
+      logger.info(f"Running event_number: {event_number}, run_number: {run_number}")
+      
+      tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
+      
+      corex[i]=tshower_l0.shower_core_pos[0]
+      corey[i]=tshower_l0.shower_core_pos[1]
+      corez[i]=tshower_l0.shower_core_pos[2]
+            
+      i=i+1   
+
+  plt.scatter(corex,corey)
+  plt.show()
+
 def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
 
@@ -482,7 +520,8 @@ if __name__ == "__main__":
   logger.info("Creating event plots in source directory "+args.directory)
 
   directory = args.directory
+  plot_core_positions(directory)
   plot_time_map(directory, simulator=args.sim)
   plot_traces_all_levels(directory, t_0_shift=False)
-  plot_raws(directory)
+  #plot_raws(directory)
 
