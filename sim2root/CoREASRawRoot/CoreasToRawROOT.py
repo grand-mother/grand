@@ -358,13 +358,38 @@ def CoreasToRawRoot(file, simID=None):
 
   pathAntennaList = f"{path}/SIM{simID}.list"
   core_shift_x, core_shift_y = calculate_array_shift(pathAntennaList)
-  RawShower.shower_core_pos = np.array(CorePosition) + np.array([core_shift_x, core_shift_y, 0])
-  print("SHOWER CORE POS:", np.array(CorePosition) + np.array([core_shift_x, core_shift_y, 0]))
+  
+  #the array coordinate system has its origin at ground level
+  print("[WARNING] antenna altitude is hard coded to 0")
+  RawShower.shower_core_pos = np.array(CorePosition) + np.array([core_shift_x, core_shift_y,-CorePosition[2]])
+  print("SHOWER CORE POS:", RawShower.shower_core_pos)
   RawShower.fill()
   RawShower.write()
 
 
   # *** fill MetaShower *** 
+  ###########################################################################################################################
+  # Part B.II.iii: Create and fill the RawMetaEfield Tree
+  ############################################################################################################################
+  #There are facilities in Common to build an EventParameters file with all this info and then read the info from the file
+  #It will come handy in the future if you test several core positions before running the sim, for storing the tested core positions
+  #and giving a weight to the event.
+  print("***RawMeta***")
+    
+  RawMeta = RawTrees.RawMetaTree(OutputFileName)
+  RawMeta.run_number = RunID
+  RawMeta.event_number = EventID
+
+  print("[WARNING] array_name is hardcoded")
+  RawMeta.array_name = "GP300"
+  RawMeta.shower_core_pos=RawShower.shower_core_pos  #MT this is twice in the file, i have the idea it should only be here (for me the core position is "meta" to the shower sim, but it looks like is an input for coreas, so i keep both)
+  RawMeta.unix_second=GPSSecs
+  RawMeta.unix_nanosecond=GPSNanoSecs
+  print("[WARNING] event_weight is hardcoded")  
+  RawMeta.event_weight=1 
+  print("******")
+  RawMeta.fill()
+  RawMeta.write()  
 
 
   #########################################################################################################################
@@ -461,10 +486,12 @@ def CoreasToRawRoot(file, simID=None):
   RawEfield.fill()
   RawEfield.write()
 
+
+  
+
   #############################################################
   # fill SimCoreasShower with all leftover info               #
-  #############################################################
-  
+  #############################################################    
   # store all leftover information here
   SimCoreasShower.AutomaticTimeBoundaries = AutomaticTimeBoundaries
   SimCoreasShower.ResolutionReductionScale = ResolutionReductionScale

@@ -581,6 +581,7 @@ def rawshower2grandroot(trawshower, gt):
     ### Core position with respect to the antenna array (undefined for neutrinos)
     ## ToDo: conversion?
     gt.tshower.shower_core_pos = trawshower.shower_core_pos
+    print("THI IS THE CORE",gt.tshower.shower_core_pos,trawshower.shower_core_pos)
 
     ### Longitudinal Pofiles (those compatible between Coreas/ZHAires)
 
@@ -681,7 +682,7 @@ def rawefield2grandroot(trawefield, gt):
 
 # Convert the RawMetaTree entries
 def rawmeta2grandroot(trawmeta, gt):
-    gt.tshower.shower_core_pos = trawmeta.shower_core_pos
+    #gt.tshower.shower_core_pos = trawmeta.shower_core_pos this is duplicated, using ithe one in shower for compatibility
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
     #event time    
