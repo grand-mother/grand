@@ -83,27 +83,44 @@ def plot_core_positions(directory, t_0_shift=False):
   
   corex=np.zeros(nb_events)
   corey=np.zeros(nb_events)
-  corez=np.zeros(nb_events)    
+  corez=np.zeros(nb_events)   
+
+   
   ####################################################################################
   # start looping over the events
   ####################################################################################
   previous_run = None    
   i=0
+  myrun=0
   for event_number,run_number in events_list:
       assert isinstance(event_number, int)
       assert isinstance(run_number, int)
-      logger.info(f"Running event_number: {event_number}, run_number: {run_number}")
+      logger.debug(f"Running event_number: {event_number}, run_number: {run_number}")
       
       tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
       
       corex[i]=tshower_l0.shower_core_pos[0]
       corey[i]=tshower_l0.shower_core_pos[1]
       corez[i]=tshower_l0.shower_core_pos[2]
-            
+      myrun=run_number      
       i=i+1   
 
-  plt.scatter(corex,corey)
-  plt.show()
+  # Plot arrival time distribution
+  # Create a figure with subplots to match the other plot 
+  fig, ax1 = plt.subplots(1,1, figsize=(8, 6))
+  
+  map = ax1.scatter(corex, corey, marker='o', s=20)
+  ax1.set_title(f"core positions")
+  ax1.set_xlabel("X (northing) (m)")
+  ax1.set_ylabel("Y (westing)(m)")  
+  plt.tight_layout()
+  if(args.savefig):
+    plt.savefig(f"{directory}/CorePositions_{myrun}.png")
+    plt.close(fig)
+  else: 
+    plt.show()
+
+
 
 def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -135,7 +152,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
   for event_number,run_number in events_list:
       assert isinstance(event_number, int)
       assert isinstance(run_number, int)
-      logger.info(f"Running event_number: {event_number}, run_number: {run_number}")
+      logger.debug(f"Running event_number: {event_number}, run_number: {run_number}")
       
       tefield_l0.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
       tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
@@ -194,7 +211,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
       # loop over all stations.          
       for du_idx in range(nb_du):
-        print(f"Running DU number {du_idx}")
+        logger.debug(f"Running DU number {du_idx}")
 
         # efield trace L0
         trace_efield_L0_x = trace_efield_L0[du_idx,0]
@@ -227,7 +244,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
         else:
           fig, axs = plt.subplots(2,2, figsize=(8, 6), sharex=True)
         if t_0_shift == True:
-          print("shifting by t0")
+          logger.debug(f"shifting by t0")
           trace_efield_L0_time += t0_efield_L0[du_idx]
           trace_voltage_time += t0_voltage_L0[du_idx]
           trace_ADC_L1_time += t0_adc_L1[du_idx]
@@ -236,7 +253,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Shower Time")
           savelabel = "with_t0_shift"
         else:
-          print(f"NOT shifting by t0 - peaks should be at 0ns")
+          logger.debug(f"NOT shifting by t0 - peaks should be at 0ns")
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Trigger Time")
           savelabel = "no_t0s_shift"
           
@@ -448,14 +465,6 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
     
-
-    #trawefield has the antenna positions in shc, and we need to put them in array coordinates, or this is all messed up.
-    #TODO: This is a flat earth approximation that asumes shower core is in xc,yc,zc of flat cordinate system centered in the array, origin at ground.
-    # and that du_xs are given in a flat shower coordinate system , with origin in the core, but at sea level (in this system the core coordinates are 0,0,groundaltitude)
-    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
-    du_xs = du_xs + shower_core[0]
-    du_ys = du_ys + shower_core[1]
-    du_zs = du_zs
 
     # Get indices of the unique du_ids
     # ToDo: sort?
