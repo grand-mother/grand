@@ -50,7 +50,7 @@ case $site in
   gp13)
     gtot_option="-g1";;
   gaa)
-    gtot_option="-v2";;
+    gtot_option="-f2";;
   ?)
     gtot_option="-g1";;
 esac
@@ -115,7 +115,7 @@ do
   convjobs=$convjobs":"$jid
 done
 
-if [ "$convjobs" -eq "" ]; then
+if [ "$convjobs" = "" ]; then
   dep=""
 else
   dep="--dependency=afterany${convjobs}"
