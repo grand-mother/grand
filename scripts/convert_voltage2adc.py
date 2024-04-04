@@ -297,6 +297,18 @@ if __name__ == '__main__':
         tadc.copy_contents(tvoltage)
         entries  = tadc.get_number_of_entries()
         tadc.trace_ch = adc_trace
+        
+
+        #modify the trigger position if needed. TODO: This will have at some point to be replaced by a real trigger algorithm
+        if(input_sampling_rate_mhz != adc.sampling_rate):
+          originalsampling=input_sampling_rate_mhz
+          newsampling=adc.sampling_rate
+          ratio=originalsampling/newsampling
+        else:
+          ratio=1.0   
+        
+        tadc.trigger_position=np.ushort(np.asarray(tvoltage.trigger_position)/ratio)
+
         tadc.fill()
         logger.debug(f'ADC trace for (run,event) = {tvoltage.run_number, tvoltage.event_number} written to TADC')
     

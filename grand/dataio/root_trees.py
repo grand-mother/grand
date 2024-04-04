@@ -1520,9 +1520,6 @@ class TRunVoltage(MotherRunTree):
     ## Nominal trace length in units of samples
     trace_length: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
     """Nominal trace length in units of samples"""
-    ## Nominal trigger position in the trace in unit of samples
-    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
-    """Nominal trigger position in the trace in unit of samples"""
     ## ADC sampling frequency in MHz
     adc_sampling_frequency: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """ADC sampling frequency in MHz"""
@@ -1921,6 +1918,9 @@ class TVoltage(MotherEventTree):
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Same as event_type, but event_type could consist of different triggered DUs"""
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""    
+    
     ## Acceleration of the antenna in (x,y,z) in m/s2
     du_acceleration: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """Acceleration of the antenna in (x,y,z) in m/s2"""
@@ -1974,6 +1974,10 @@ class TEfield(MotherEventTree):
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Nanoseconds of the trigger for this DU"""
+
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""
+
 
     ## Efield traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))

@@ -294,10 +294,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         #METAZHAireS (I propose to pass this to a separate tree and section) @TODO: This is repeated in RawMeta, and should be only there.
         EventParametersFile= InputFolder+"/"+TaskName+".EventParameters"
         
-        CorePosition=np.array(EParGen.GetCorePositionFromParametersFile(EventParametersFile))
-        print(CorePosition,GroundAltitude)
-        #Move core position so its relative to the earth surface
-        CorePosition[2]=CorePosition[2]+GroundAltitude
+        CorePosition=np.array(EParGen.GetCorePositionFromParametersFile(EventParametersFile))       
+        
+        ##Move core position so its relative to the earth surface
+        #!CorePosition[2]=CorePosition[2]+GroundAltitude         #we decided array coordinates origin are at ground level
 
         RawShower.shower_core_pos=CorePosition # shower core position 
 
@@ -479,9 +479,9 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         else:		
 
             #convert to 32 bits so it takes less space 
-            antx=np.array(antx, dtype=np.float32)
-            anty=np.array(anty, dtype=np.float32)
-            antz=np.array(antz, dtype=np.float32)
+            antx=np.array(antx, dtype=np.float32)+CorePosition[0]    #convertto array cs
+            anty=np.array(anty, dtype=np.float32)+CorePosition[1]    #convert to array cs
+            antz=np.array(antz, dtype=np.float32)-GroundAltitude     #array coorinate system origin is at ground level
             antt=np.array(antt, dtype=np.float32)
    
             #TODO: check that the number of trace files found is coincidient with the number of antennas found from the sry  

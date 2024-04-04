@@ -555,6 +555,7 @@ if __name__ == "__main__":
 
        #Finally we save to a file
        #MATIAS: TODO: There shoudl be a way of coping all the field from tefield, and then modifing only what i want. There is, but it blows up in segfault 
+       #see issue #81 https://github.com/grand-mother/grand/issues/81
        #out_tefield.copy_contents(tefield)
        
        out_tefield.run_number = tefield.run_number
@@ -566,7 +567,17 @@ if __name__ == "__main__":
        out_tefield.du_seconds=du_seconds
 
        out_tefield.analysis_level = tefield.analysis_level+1
-      
+
+        #modify the trigger position if needed
+       if(target_sampling_rate_mhz>0):
+          originalsampling=f_samp_mhz[0]
+          newsampling=target_sampling_rate_mhz
+          ratio=originalsampling/newsampling
+       else:
+          ratio=1.0          
+
+       out_tefield.trigger_position=np.ushort(np.asarray(tefield.trigger_position)/ratio)
+
        out_tefield.fill()
        out_tefield.write()
 
@@ -583,6 +594,8 @@ if __name__ == "__main__":
     outrun.analysis_level = trun.analysis_level+1
     outrun.fill()
     outrun.write()
+
+
 
 
     #TODO: if we changed the trace lenght this needs to update t_post acordingly.        

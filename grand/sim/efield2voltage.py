@@ -588,6 +588,19 @@ class Efield2Voltage:
         self.tt_volt.time_seconds     = self.events.time_seconds
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
         
+        self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
+
+
+        #modify the trigger position if needed
+        if(self.target_sampling_rate_mhz>0):
+          originalsampling=1e3/self.dt_ns
+          newsampling=self.f_samp_mhz
+          ratio=originalsampling/newsampling
+        else:
+          ratio=1.0          
+
+        self.tt_volt.trigger_position=np.ushort(np.asarray(self.events.trigger_position)/ratio)
+                
         #apply time jitter
         jitter= self.params["add_jitter_ns"]
         assert jitter >=0

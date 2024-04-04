@@ -681,11 +681,11 @@ class RawEfieldTree(MotherEventTree):
     _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float")) 
     # peak 2 peak amplitudes (x,y,z,modulus) 
     _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("float")) 
-    ## X position in shower referential
+    ## X position in site referential
     _du_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    ## Y position in shower referential
+    ## Y position in site referential
     _du_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    ## Z position in shower referential
+    ## Z position in site referential
     _du_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))    
     
 

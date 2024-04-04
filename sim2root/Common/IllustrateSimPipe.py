@@ -134,6 +134,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       t_pre_L0=trunefieldsim_l0.t_pre
       t_pre_L1=trunefieldsim_l1.t_pre
 
+
       #TODO: this forces a homogeneous antenna array.
       trace_shape = trace_efield_L0.shape  # (nb_du, 3, tbins of a trace)
       nb_du = trace_shape[0]
@@ -145,7 +146,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
       dt_ns_l0 = np.asarray(trun_l0.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
       dt_ns_l1 = np.asarray(trun_l1.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
-      
+
+      #how to get tpre (the starting time of the trace) if you dont have trunefieldsim (on data). This also works with voltage and adc trees
+      t_pre_L0_foralldu=tefield_l0.trigger_position*dt_ns_l0
+      t_pre_L1_foralldu=tefield_l1.trigger_position*dt_ns_l1      
+
       du_xyzs= np.asarray(trun_l0.du_xyz)[event_dus_indices] 
      
 

@@ -360,7 +360,7 @@ def main():
     gt.trun.du_xyz = du_xyzs
     gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
 
-    # ToDo: shouldn't this and above be created for every DU in sims?
+    #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
     gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) 
 
     # Fill and write the TRun
@@ -471,21 +471,15 @@ def rawefield2grandrootrun(trawefield, gt):
 def get_tree_du_id_and_xyz(trawefield,shower_core):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
+
+    #trawefield has the antenna positions in array coordinates, cartesian. Origin is at the delcared latitude, longitude and altitude of the site.
+    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
     du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(int)
     du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
     du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
     
-
-    #trawefield has the antenna positions in shc, and we need to put them in array coordinates, or this is all messed up.
-    #TODO: This is a flat earth approximation that asumes shower core is in xc,yc,zc of flat cordinate system centered in the array, origin at ground.
-    # and that du_xs are given in a flat shower coordinate system , with origin in the core, but at sea level (in this system the core coordinates are 0,0,groundaltitude)
-    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
-    du_xs = du_xs + shower_core[0]
-    du_ys = du_ys + shower_core[1]
-    du_zs = du_zs
-
     # Get indices of the unique du_ids
     # ToDo: sort?
     unique_dus_idx = np.unique(du_ids, return_index=True)[1]
@@ -681,6 +675,9 @@ def rawefield2grandroot(trawefield, gt):
     gt.tefield.du_nanoseconds=tempnanoseconds
     gt.tefield.du_seconds=tempseconds
     
+    #store tpre in samples is the expected trigger position in sims. 
+    #This can be furter enforced with the --trigger_time_ns switch. All dus have the same value at the efield generator level
+    gt.tefield.trigger_position= np.ushort([trawefield.t_pre]*trawefield.du_count/trawefield.t_bin_size)
 
 # Convert the RawMetaTree entries
 def rawmeta2grandroot(trawmeta, gt):
