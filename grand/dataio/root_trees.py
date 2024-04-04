@@ -931,10 +931,14 @@ class DataTree:
             if field[0] == "_": field_name=field[1:]
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
-            u = getattr(self._tree, field_name)
-            # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
-            # Assign the TTree branch value to the class field
-            setattr(self, field_name, u)
+            try:
+                u = getattr(self._tree, field_name)
+                # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
+            except:
+                print(f"Could not find {field_name} in tree {self.tree_name}. This field won't be assigned.")
+            else:
+                # Assign the TTree branch value to the class field
+                setattr(self, field_name, u)
 
     ## Create metadata for the tree
     def create_metadata(self):
