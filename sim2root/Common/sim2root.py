@@ -233,9 +233,9 @@ def main():
               assert DesiredTpre > 0
               OriginalDuration= OriginalTpre+OriginalTpost
               DesiredTpost= OriginalDuration-DesiredTpre
-                          
+
             if clargs.target_duration_us is not None:
-              DesiredTpost=clargs.target_duration_us*1000-DesiredTpre            
+              DesiredTpost=clargs.target_duration_us*1000-DesiredTpre
             #we modify this becouse it needs to be stored in the run file on the first event.
             trawefield.t_pre=DesiredTpre
             trawefield.t_post=DesiredTpost
@@ -287,7 +287,7 @@ def main():
             rawmeta2grandroot(trawmeta, gt)
             
             # Change the trace lenght as specified in the comand line                                     
-            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)              
+            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
             trawefield.t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
 
             trawefield.trace_x=trace[:,0,:]
@@ -315,11 +315,11 @@ def main():
             # store temporarily the first event number
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
-            
+
             # Correct the first/last event number for file naming
             if(gt.tshower.event_number<start_event_number):
                 start_event_number = gt.tshower.event_number
- 
+
             if(gt.tshower.event_number>end_event_number):
                 end_event_number = gt.tshower.event_number
 
@@ -343,6 +343,12 @@ def main():
         gt.tshowersim.write()
         gt.tefield.write()
         # gt.tshower.first_interaction = trawshower.first_interaction
+
+        trawmeta.close_file()
+
+        trawshower.stop_using()
+        trawefield.stop_using()
+        trawmeta.stop_using()
 
         # Increment the event number if starting one specified on command line
         if ext_event_number is not None:
