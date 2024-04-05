@@ -110,10 +110,13 @@ def _cartesian_to_spherical(
     """Transform Cartesian coordinates to spherical"""
     rho2 = x ** 2 + y ** 2
     rho = np.sqrt(rho2)
-    theta = np.rad2deg(np.arctan2(rho, z))
-    phi = np.rad2deg(np.arctan2(y, x))
+    theta = 180. - np.rad2deg(np.arctan2(rho, z))
+    phi = np.rad2deg(np.arctan2(y, x)) + 180.
     r = np.sqrt(rho2 + z ** 2)
-
+    if phi==360:
+        phi=0
+    else:
+        phi=phi
     return theta, phi, r
 
 
@@ -136,11 +139,11 @@ def _spherical_to_cartesian(
     r: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform spherical coordinates to Cartesian"""
-    cos_theta = np.cos(np.deg2rad(theta))
-    sin_theta = np.sin(np.deg2rad(theta))
+    cos_theta = np.cos(np.deg2rad(180. - theta))
+    sin_theta = np.sin(np.deg2rad(180. - theta))
 
-    x = r * np.cos(np.deg2rad(phi)) * sin_theta
-    y = r * np.sin(np.deg2rad(phi)) * sin_theta
+    x = r * np.cos(np.deg2rad(phi + 180.)) * sin_theta
+    y = r * np.sin(np.deg2rad(phi + 180.)) * sin_theta
     z = r * cos_theta
 
     return x, y, z
@@ -153,7 +156,8 @@ def _spherical_to_horizontal(
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform spherical coordinates to horizontal"""
     # return 0.5 * np.pi - phi, 0.5 * np.pi - theta, r
-    return 90.0 - phi, 90.0 - theta, r
+    #return 90.0 - phi, 90.0 - theta, r #(the old angular convention)
+    return 270.0 - phi, theta - 90.0, r
 
 
 # Horizontal has an axis fixed to geographic North, so it can not be
@@ -176,7 +180,8 @@ def _horizontal_to_spherical(
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform horizontal coordinates to spherical"""
     # return 0.5 * np.pi - elevation, 0.5 * np.pi - azimuth, norm
-    return 90.0 - elevation, 90.0 - azimuth, norm
+    #return 90.0 - elevation, 90.0 - azimuth, norm #(the old angular convention)
+    return 90.0 + elevation, 270.0 - azimuth, norm
 
 
 # -----------Base Representation------------
