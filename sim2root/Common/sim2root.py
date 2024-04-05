@@ -288,14 +288,14 @@ def main():
             
             # Change the trace lenght as specified in the comand line                                     
             trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
-            trawefield.t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
+            ext_t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
 
-            trawefield.trace_x=trace[:,0,:]
-            trawefield.trace_y=trace[:,1,:]
-            trawefield.trace_z=trace[:,2,:]
+            # trawefield.trace_x=trace[:,0,:]
+            # trawefield.trace_y=trace[:,1,:]
+            # trawefield.trace_z=trace[:,2,:]
 
             # Convert the RawEfieldTree entries
-            rawefield2grandroot(trawefield, gt)
+            rawefield2grandroot(trawefield, gt, ext_trace=trace, ext_t_0=ext_t_0)
         
             # Overwrite the run number if specified on command line
             if ext_run_number is not None:
@@ -646,7 +646,7 @@ def rawshower2grandroot(trawshower, gt):
     # gt.tshower.first_interaction = trawshower.first_interaction
 
 # Convert the RawEfieldTree entries
-def rawefield2grandroot(trawefield, gt):
+def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     ## Run and event number
     gt.tefield.run_number = trawefield.run_number
     gt.tefield.event_number = trawefield.event_number
@@ -672,15 +672,25 @@ def rawefield2grandroot(trawefield, gt):
     gt.tefield.du_z = trawefield.du_z
 
     ## Efield trace in X,Y,Z direction
-    gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+    if ext_trace is not None:
+        gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+    else:
+        gt.tefield.trace_x=ext_trace[:,0,:]
+        gt.tefield.trace_y=ext_trace[:,1,:]
+        gt.tefield.trace_z=ext_trace[:,2,:]
+
+    if ext_t_0 is not None:
+        t_0 = ext_t_0
+    else:
+        t_0 = trawefield.t_0
 
     # Generate trigger times from t0s
-    tempseconds=np.zeros((len(trawefield.t_0)), dtype=np.int64)
+    tempseconds=np.zeros((len(t_0)), dtype=np.int64)
     tempseconds[:]=gt.tshowersim.event_seconds
-    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0)
+    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + t_0)
     #rolling over the nanoseconds    
-    maskplus= gt.tshowersim.event_nanoseconds + trawefield.t_0 >=1e9
-    maskminus= gt.tshowersim.event_nanoseconds + trawefield.t_0 <0
+    maskplus= gt.tshowersim.event_nanoseconds + t_0 >=1e9
+    maskminus= gt.tshowersim.event_nanoseconds + t_0 <0
     tempnanoseconds[maskplus]-=np.int64(1e9)
     tempseconds[maskplus]+=np.int64(1)   
     tempnanoseconds[maskminus]+=np.int64(1e9)
