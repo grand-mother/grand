@@ -13,7 +13,7 @@ argParser.add_argument("-l","--logfile",help="Logfile of convertion", required=T
 args = argParser.parse_args()
 
 dm = DataManager(os.path.dirname(__file__)+"/"+args.config)
-
+logfile = os.path.normpath(args.logfile)
 print(args.file)
 print(args.status)
 myfile = dm.database().sqlalchemysession.query(dm.database().tables()['rawfile']).filter_by(filename=args.file).first()
@@ -22,7 +22,7 @@ if not myfile:
     exit(0)
 else:
     id_raw_file = myfile.id_raw_file
-    converted = {'id_raw_file': id_raw_file, 'date_convertion': datetime.now(), 'logfile': args.logfile, 'root_filename': args.root, 'retcode': args.status}
+    converted = {'id_raw_file': id_raw_file, 'date_convertion': datetime.now(), 'logfile': logfile, 'root_filename': args.root, 'retcode': args.status}
     container = dm.database().tables()['convertion'](**converted)
     dm.database().sqlalchemysession.add(container)
     dm.database().sqlalchemysession.commit()
