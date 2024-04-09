@@ -672,12 +672,13 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     gt.tefield.du_z = trawefield.du_z
 
     ## Efield trace in X,Y,Z direction
-    if ext_trace is not None:
+    if ext_trace is None:
         gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
     else:
-        gt.tefield.trace_x=ext_trace[:,0,:]
-        gt.tefield.trace_y=ext_trace[:,1,:]
-        gt.tefield.trace_z=ext_trace[:,2,:]
+        gt.tefield.trace=ext_trace
+        # gt.tefield.trace_x=ext_trace[:,0,:]
+        # gt.tefield.trace_y=ext_trace[:,1,:]
+        # gt.tefield.trace_z=ext_trace[:,2,:]
 
     if ext_t_0 is not None:
         t_0 = ext_t_0
