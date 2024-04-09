@@ -593,7 +593,7 @@ def rawshower2grandroot(trawshower, gt):
     ### Core position with respect to the antenna array (undefined for neutrinos)
     ## ToDo: conversion?
     gt.tshower.shower_core_pos = trawshower.shower_core_pos
-    print("THI IS THE CORE",gt.tshower.shower_core_pos,trawshower.shower_core_pos)
+    #print("THI IS THE CORE",gt.tshower.shower_core_pos,trawshower.shower_core_pos)
 
     ### Longitudinal Pofiles (those compatible between Coreas/ZHAires)
 
