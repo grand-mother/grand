@@ -1926,6 +1926,9 @@ class TRawVoltage(MotherEventTree):
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Same as event_type, but event_type could consist of different triggered DUs"""
+    ## Trigger position in the trace, in samples
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""
     ## Atmospheric temperature (read via I2C)
     atm_temperature: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     """Atmospheric temperature (read via I2C)"""
