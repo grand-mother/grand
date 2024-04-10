@@ -2588,13 +2588,13 @@ class DataFile:
 
                 el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
-        # tree_class = getattr(thismodule, max_anal_tree_type)
-        # tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
-        # tree_instance.file = self.f
-        # setattr(self, tree_class.get_default_tree_name(), tree_instance)
-        setattr(self, tree_class.get_default_tree_name(), self.max_tree_instance)
-        # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
-        self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+            # tree_class = getattr(thismodule, max_anal_tree_type)
+            # tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+            # tree_instance.file = self.f
+            # setattr(self, tree_class.get_default_tree_name(), tree_instance)
+            setattr(self, tree_class.get_default_tree_name(), self.max_tree_instance)
+            # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
+            self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def print(self):
         """Prints the information about the TTrees in the file"""
