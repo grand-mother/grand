@@ -48,15 +48,19 @@ class StdVectorList(MutableSequence):
 
     # vec_type = ""
 
-    def __init__(self, vec_type, value=[]):
+    def __init__(self, vec_type, value=[], sec_vec_type=None):
         """
         Args:
             vec_type: C++ type for the std::vector (eg. "float", "string", etc.)
             value: list with which to init the vector
+            sec_vec_type: second possible vector type to switch to. Needed in case of branch of specific name having two possible types due to changes in the hardware binary blob format and maitaining compatibility through such changes.
         """
         self._vector = ROOT.vector(vec_type)(value)
+        if sec_vec_type is not None:
+            self._sec_vector = ROOT.vector(sec_vec_type)()
         #: C++ type for the std::vector (eg. "float", "string", etc.)
         self.vec_type = vec_type
+        self.sec_vec_type = sec_vec_type
         # Basic type of the vector - different than vec_type in case of vector of vectors
         if "<" in self.vec_type:
             self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
@@ -166,11 +170,25 @@ class StdVectorList(MutableSequence):
 
         return self
 
+    def switch_to_sec_vec_type(self):
+        """
+        Change the vector type to sec_vec_type. Expected to be ran only on branch creation.
+        """
+        self._vector = self._sec_vector
+        #: C++ type for the std::vector (eg. "float", "string", etc.)
+        self.vec_type = self.sec_vec_type
+        # Basic type of the vector - different than vec_type in case of vector of vectors
+        if "<" in self.vec_type:
+            self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
+        else:
+            self.basic_vec_type = self.vec_type
+        # The number of dimensions of this vector
+        self.ndim = self.vec_type.count("vector") + 1
 
 class StdVectorListDesc:
     """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
-    def __init__(self, vec_type):
-        self.factory = lambda: StdVectorList(vec_type)
+    def __init__(self, vec_type, sec_vec_type=None):
+        self.factory = lambda: StdVectorList(vec_type, sec_vec_type=sec_vec_type)
 
     def __set_name__(self, type, name):
         self.name = name
@@ -886,6 +904,11 @@ class DataTree:
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         # ROOT vectors as StdVectorList
         elif type(value) == StdVectorList or type(value) == StdVectorListDesc:
+            # For two-type vectors, check if a switch to the second vector type is needed
+            if getattr(self, value_name).sec_vec_type is not None:
+                # If the second vector type is the type of the branch, switch to the second vector type
+                if getattr(self, value_name).sec_vec_type in self._tree.GetLeaf(branch_name).GetTypeName():
+                    getattr(self, value_name).switch_to_sec_vec_type()
             # Create the branch
             if not set_branches:
                 self._tree.Branch(branch_name, getattr(self, value_name)._vector)
