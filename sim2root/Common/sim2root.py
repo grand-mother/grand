@@ -116,8 +116,8 @@ def adjust_trace_lenght(trace, DesiredTpre, DesiredTpost, CurrentTpre, CurrentTp
     DesiredTraceLenght=int((DesiredTpre+DesiredTpost)/TimeBinSize)
 
     if(len(trace[0,0])>DesiredTraceLenght):      
-      trace=trace[:,:,DesiredTraceLenght]
-    if(len(trace[0,0])<DesiredTraceLenght):
+      trace=trace[:,:,:DesiredTraceLenght]
+    elif(len(trace[0,0])<DesiredTraceLenght):
       delta=DesiredTraceLenght-len(trace[0,0])
       trace=np.pad(trace, ((0,0),(0,0),(0,delta)), 'constant')
       
