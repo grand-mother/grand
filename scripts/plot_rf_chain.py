@@ -4,6 +4,7 @@
 Plot qunatities related to the RF chain.
 
 June 2023, RK
+Modified March 2024, SN
 """
 import numpy as np
 import h5py
@@ -22,7 +23,8 @@ params = {
     "xtick.labelsize": 20,
     "ytick.labelsize": 20,
     #"figure.figsize": (10, 8),
-    "axes.grid": False,
+    #"axes.grid": False,
+    "axes.grid": True,
 }
 plt.rcParams.update(params)
 
@@ -37,7 +39,7 @@ mlg.create_output_for_logger("debug", log_stdout=True)
 
 # To Run:
 #   python3 plot_rf_chain.py lna
-#   options: [lna, balun_after_lna, cable, vga, balun_before_adc, rf_chain]
+#   options: [MatchingNetwork, lna, balun_after_lna, cable, vga, balun_before_adc, rf_chain]
 
 def plot(args="lna", savefig=False, **kwargs):
 
