@@ -2643,7 +2643,7 @@ class DataFile:
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
-        tree_instances = []
+        self.tree_instances = []
         # ToDo: make sure that this is for the instance, not the class
         self.max_tree_instance = None
         for key in self.tree_types:
@@ -2654,7 +2654,7 @@ class DataFile:
                 tree_class = getattr(thismodule, el["type"])
                 tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
                 tree_instance.file = self.f
-                tree_instances.append(tree_instance)
+                self.tree_instances.append(tree_instance)
                 # If there is analysis level info in the tree, attribute each level and max level
                 if "analysis_level" in el:
                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
@@ -2794,3 +2794,8 @@ class DataFile:
         # Select the highest analysis level trees for each class and store these trees as main attributes
         pass
 
+    def close(self):
+        """Close the file and the belonging trees"""
+        for t in self.tree_instances:
+            t.stop_using()
+        self.f.Close()
