@@ -2686,6 +2686,14 @@ class DataFile:
             # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
             self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
+    def __enter__(self):
+        """ enter() for DataFile as context manager"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """On exiting DataFile as context manager call close function"""
+        self.close()
+
     def print(self):
         """Prints the information about the TTrees in the file"""
 
