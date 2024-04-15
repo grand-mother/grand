@@ -679,9 +679,9 @@ class Event:
         min_t0 = np.min(np.array(np.array(self.tefield.du_seconds).astype(np.int64) * 1000000000 + np.array(self.tefield.du_nanoseconds).astype(np.int64), dtype="datetime64[ns]"))
 
         # Loop through traces
-        for i in range(len(self.tefield.trace[0])):
+        for i in range(len(self.tefield.trace)):
             v = Efield()
-            tx = self.tefield.trace[0][i]
+            tx = self.tefield.trace[i][0]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
