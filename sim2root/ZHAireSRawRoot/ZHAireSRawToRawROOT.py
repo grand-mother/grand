@@ -412,7 +412,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     tracefiles=glob.glob(InputFolder+ending_e)
     tracefiles=sorted(tracefiles, key=lambda x:int(x.split(".trace")[0].split("/a")[-1]))
         
-    if(SimEfieldInfo and len(tracefiles)>0):
+    if(SimEfieldInfo ):
 
         RawEfield = RawTrees.RawEfieldTree(OutputFileName)                                                                 
         
@@ -437,7 +437,15 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         #RefrIndex=R0*np.exp(Atmostable.T[0]*RefractionIndexParameters[1]/1000)        
         Atmosrefractivity=R0*np.exp(Atmosaltitude*RefractionIndexParameters[1]/1000.0)
 
-        AntennaN,IDs,antx,anty,antz,antt=AiresInfo.GetAntennaInfoFromSry(sryfile[0])
+
+        if(len(tracefiles)>0):
+          AntennaN,IDs,antx,anty,antz,antt=AiresInfo.GetAntennaInfoFromSry(sryfile[0])
+        else:
+          IDs=[-1] 
+          antx=[-1] 
+          anty=[-1] 
+          antz=[-1]
+          antt=[-1]
         ############################################################################################################################# 
         # Fill RawEfield part
         ############################################################################################################################ 
@@ -474,8 +482,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ############################################################################################################################        
 
         if(IDs[0]==-1 and antx[0]==-1 and anty[0]==-1 and antz[0]==-1 and antt[0]==-1):
-	         logging.critical("hey, no antennas found in event sry "+ str(EventID)+" SimEfield not produced")       
-
+            logging.critical("hey, no antennas found in event sry "+ str(EventID)+" bin size "+str(RawEfield.t_bin_size))  
+                              
+            RawEfield.fill()
+            RawEfield.write()            
         else:		
 
             #convert to 32 bits so it takes less space 
@@ -652,7 +662,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
             #print("Wrote RawEfield")
 
     else:
-        logging.critical("no trace files found in "+InputFolder+"Skipping SimEfield") #TODO: handle this exeption more elegantly
+        logging.critical("no trace files found in "+InputFolder+" Skipping SimEfield") #TODO: handle this exeption more elegantly
 
 
     #############################################################################################################################
