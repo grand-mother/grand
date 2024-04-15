@@ -48,15 +48,19 @@ class StdVectorList(MutableSequence):
 
     # vec_type = ""
 
-    def __init__(self, vec_type, value=[]):
+    def __init__(self, vec_type, value=[], sec_vec_type=None):
         """
         Args:
             vec_type: C++ type for the std::vector (eg. "float", "string", etc.)
             value: list with which to init the vector
+            sec_vec_type: second possible vector type to switch to. Needed in case of branch of specific name having two possible types due to changes in the hardware binary blob format and maitaining compatibility through such changes.
         """
         self._vector = ROOT.vector(vec_type)(value)
+        if sec_vec_type is not None:
+            self._sec_vector = ROOT.vector(sec_vec_type)()
         #: C++ type for the std::vector (eg. "float", "string", etc.)
         self.vec_type = vec_type
+        self.sec_vec_type = sec_vec_type
         # Basic type of the vector - different than vec_type in case of vector of vectors
         if "<" in self.vec_type:
             self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
@@ -166,11 +170,25 @@ class StdVectorList(MutableSequence):
 
         return self
 
+    def switch_to_sec_vec_type(self):
+        """
+        Change the vector type to sec_vec_type. Expected to be ran only on branch creation.
+        """
+        self._vector = self._sec_vector
+        #: C++ type for the std::vector (eg. "float", "string", etc.)
+        self.vec_type = self.sec_vec_type
+        # Basic type of the vector - different than vec_type in case of vector of vectors
+        if "<" in self.vec_type:
+            self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
+        else:
+            self.basic_vec_type = self.vec_type
+        # The number of dimensions of this vector
+        self.ndim = self.vec_type.count("vector") + 1
 
 class StdVectorListDesc:
     """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
-    def __init__(self, vec_type):
-        self.factory = lambda: StdVectorList(vec_type)
+    def __init__(self, vec_type, sec_vec_type=None):
+        self.factory = lambda: StdVectorList(vec_type, sec_vec_type=sec_vec_type)
 
     def __set_name__(self, type, name):
         self.name = name
@@ -886,6 +904,11 @@ class DataTree:
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         # ROOT vectors as StdVectorList
         elif type(value) == StdVectorList or type(value) == StdVectorListDesc:
+            # For two-type vectors, check if a switch to the second vector type is needed
+            if getattr(self, value_name).sec_vec_type is not None:
+                # If the second vector type is the type of the branch, switch to the second vector type
+                if getattr(self, value_name).sec_vec_type in self._tree.GetLeaf(branch_name).GetTypeName():
+                    getattr(self, value_name).switch_to_sec_vec_type()
             # Create the branch
             if not set_branches:
                 self._tree.Branch(branch_name, getattr(self, value_name)._vector)
@@ -1754,19 +1777,19 @@ class TADC(MotherEventTree):
     post_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
 
     gain_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>","vector<unsigned char>"))
     offset_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     base_maximum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     base_minimum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
 
     signal_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     noise_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
+    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
+    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
+    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
     qmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
     qmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
 
     ## ?? What is it? Some kind of the adc trace offset?
@@ -1777,6 +1800,93 @@ class TADC(MotherEventTree):
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<short>>"))
     """ADC traces for channels (0,1,2,3)"""
 
+    ## PPS-ID
+    pps_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """PPS-ID"""
+
+    ## FPGA temperature
+    fpga_temp: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """FPGA temperature"""
+
+    ## ADC temperature
+    adc_temp: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """ADC temperature"""
+
+    ## Hardware ID
+    hardware_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Hardware ID"""
+
+    ## Trigger status
+    trigger_status: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger status"""
+
+    ## Trigger DDR storage
+    trigger_ddr_storage: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger DDR storage"""
+
+    ## Data format version
+    data_format_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Data format version"""
+
+    ## ADAQ version
+    adaq_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADAQ version"""
+
+    ## DUDAQ version
+    dudaq_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """DUDAQ version"""
+
+    ## Trigger selection: ch0&ch1&ch2
+    trigger_pattern_ch0_ch1_ch2: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Trigger selection: ch0&ch1&ch2"""
+
+    ## Trigger selection: ch0&ch1&~ch2
+    trigger_pattern_ch0_ch1_notch2: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Trigger selection: ch0&ch1&~ch2"""
+
+    ## Trigger selection: 20 Hz
+    trigger_pattern_20Hz: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Trigger selection: 20 Hz"""
+
+    ## External pulse trigger period
+    trigger_external_test_pulse_period: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    """External pulse trigger period"""
+
+    ## GPS seconds since Sunday 00:00
+    gps_sec_sun: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """GPS seconds since Sunday 00:00"""
+
+    ## GPS week number
+    gps_week_num: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS week number"""
+
+    ## GPS receiver mode
+    gps_receiver_mode: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS receiver mode"""
+
+    ## GPS disciplining mode
+    gps_disciplining_mode: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS disciplining mode"""
+
+    ## GPS self-survey progress
+    gps_self_survey: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS self-survey progress"""
+
+    ## GPS minor alarms
+    gps_minor_alarms: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS minor alarms"""
+
+    ## GPS GNSS decoding
+    gps_gnss_decoding: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS GNSS decoding"""
+
+    ## GPS disciplining activity
+    gps_disciplining_activity: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS disciplining activity"""
+
+    ## Notch filter number
+    notch_filters_no_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    """Notch filter number"""
 
 @dataclass
 ## The class for storing voltage traces and associated values for each event
@@ -1816,6 +1926,9 @@ class TRawVoltage(MotherEventTree):
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Same as event_type, but event_type could consist of different triggered DUs"""
+    ## Trigger position in the trace, in samples
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""
     ## Atmospheric temperature (read via I2C)
     atm_temperature: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     """Atmospheric temperature (read via I2C)"""
@@ -2530,7 +2643,7 @@ class DataFile:
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
-        tree_instances = []
+        self.tree_instances = []
         # ToDo: make sure that this is for the instance, not the class
         self.max_tree_instance = None
         for key in self.tree_types:
@@ -2541,7 +2654,7 @@ class DataFile:
                 tree_class = getattr(thismodule, el["type"])
                 tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
                 tree_instance.file = self.f
-                tree_instances.append(tree_instance)
+                self.tree_instances.append(tree_instance)
                 # If there is analysis level info in the tree, attribute each level and max level
                 if "analysis_level" in el:
                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
@@ -2565,13 +2678,21 @@ class DataFile:
 
                 el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
-        # tree_class = getattr(thismodule, max_anal_tree_type)
-        # tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
-        # tree_instance.file = self.f
-        # setattr(self, tree_class.get_default_tree_name(), tree_instance)
-        setattr(self, tree_class.get_default_tree_name(), self.max_tree_instance)
-        # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
-        self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+            # tree_class = getattr(thismodule, max_anal_tree_type)
+            # tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+            # tree_instance.file = self.f
+            # setattr(self, tree_class.get_default_tree_name(), tree_instance)
+            setattr(self, tree_class.get_default_tree_name(), self.max_tree_instance)
+            # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
+            self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+
+    def __enter__(self):
+        """ enter() for DataFile as context manager"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """On exiting DataFile as context manager call close function"""
+        self.close()
 
     def print(self):
         """Prints the information about the TTrees in the file"""
@@ -2681,3 +2802,8 @@ class DataFile:
         # Select the highest analysis level trees for each class and store these trees as main attributes
         pass
 
+    def close(self):
+        """Close the file and the belonging trees"""
+        for t in self.tree_instances:
+            t.stop_using()
+        self.f.Close()
