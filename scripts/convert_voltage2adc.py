@@ -168,7 +168,7 @@ def get_noise_trace(data_dir,
 
             noise_trace[trace_idx] = trace
             trace_idx += 1
-
+        df.Close()
     return noise_trace
 
 
