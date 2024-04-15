@@ -959,7 +959,7 @@ class DataTree:
                 u = getattr(self._tree, field_name)
                 # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
             except:
-                print(f"Could not find {field_name} in tree {self.tree_name}. This field won't be assigned.")
+                logger.info(f"Could not find {field_name} in tree {self.tree_name}. This field won't be assigned.")
             else:
                 # Assign the TTree branch value to the class field
                 setattr(self, field_name, u)
@@ -2459,7 +2459,7 @@ class DataDirectory:
         if sim2root_structure:
             self.init_sim2root_structure()
         else:
-            print("Sorry, non sim2root directories not supported yet")
+            logger.warning("Sorry, non sim2root directories not supported yet")
 
         # Create chains and set them as attributes
         # self.create_chains()
