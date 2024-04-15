@@ -502,7 +502,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 
                 t_0= antt[ant_number]  
                 
-                DetectorID = IDs[ant_number]                                                
+                DetectorID = IDs[ant_number]
+
+                #Remove all non-digit characters from the string
+                digits_only = ''.join(filter(str.isdigit, DetectorID))                                  
                 
                 #print("DetectorID",DetectorID,"AntennaN",AntennaN[ant_number],"ant_number",ant_number,"pos",ant_position,"t0",t_0)
 
@@ -631,7 +634,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
                 ############################################################################################################################ 
                 
                 #RawEfield.du_id.append(int(AntennaN[ant_number]))
-                RawEfield.du_id.append(int(DetectorID[1:])) #TODO:assuming antena names are of the format A+number of antenna! This is a quick fix          
+                RawEfield.du_id.append(int(digits_only)) #TODO:assuming antena names are of the format A+number of antenna! This is a quick fix          
                 RawEfield.du_name.append(DetectorID)
                 RawEfield.t_0.append(t_0)            
 
