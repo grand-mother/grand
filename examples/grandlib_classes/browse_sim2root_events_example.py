@@ -18,15 +18,8 @@ def main():
 	# Create the EventList with the specified file, and tell it to use TRawVoltage tree as the voltage source
 	el = EventList(dir_name)
 
-	# First just get the first event, to draw the layout
-	e = el.get_event()
-	# Generating convenient array from antenna positions
-	positions = np.array([[ant.position.x[0], ant.position.y[0]] for ant in e.antennas])
-
 	# ROOT drawing of positions
-	c2 = arrays2canvas(positions[:, 0], positions[:, 1])
-	ROOT.gPad.Modified()
-	ROOT.gPad.Update()
+	c2 = ROOT.TCanvas("c_pos", "c_pos", 500, 500)
 
 	# ROOT canvas for traces
 	c1 = ROOT.TCanvas("c", "c", 1500, 500)
@@ -34,6 +27,14 @@ def main():
 	# Iterate through all the events
 	for i,e in enumerate(el):
 		print(f"Event {i}, du_id {e.efields[0].du_id}, time {e.efields[0].t0}")
+
+		# Generating convenient array from antenna positions
+		positions = np.array([[ant.position.x[0], ant.position.y[0]] for ant in e.antennas])
+		g_pos = arrays2graph(positions[:, 0], positions[:, 1])
+		c2.cd()
+		g_pos.Draw("A*")
+		ROOT.gPad.Modified()
+		ROOT.gPad.Update()
 
 		# Get the traces
 		t = e.efields[0].t_vector
@@ -49,7 +50,8 @@ def main():
 		gz.SetTitle(f"Event {i}, du_id {e.efields[0].du_id}, time {e.efields[0].t0}")
 		gz.GetXaxis().SetTitle("Time [ns]")
 		gz.GetYaxis().SetTitle("Efield [V]")
-		
+
+		c1.cd()
 		gz.Draw("AL")
 		gx.SetLineColor(2)
 		gx.Draw("same L")

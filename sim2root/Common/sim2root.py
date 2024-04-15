@@ -485,7 +485,7 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     # Get the ids and positions from all the events
 
     #trawefield has the antenna positions in array coordinates, cartesian. Origin is at the delcared latitude, longitude and altitude of the site.
-    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
+    print("Warning: using flat earth approximation for coordinates!.Event:",trawefield.event_number," Core:",shower_core)
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
     du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(int)
     du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)

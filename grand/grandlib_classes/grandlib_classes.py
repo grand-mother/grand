@@ -557,6 +557,7 @@ class Event:
                 # Make tsimshower really None
                 self.tsimshower = None
 
+        self.fill_antennas()
 
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self, run_entry_number=None):
@@ -584,21 +585,28 @@ class Event:
         # ToDo: This assumes uniform t_bin_size (to avoid current mismatch in number of bins for different trees coming from sim2root)
         self._t_bin_size = self.trun.t_bin_size[0]
 
+        return ret
+
+    ## Fill event's antennas
+    def fill_antennas(self):
+        """Fill event's antennas"""
         self.antennas = []
 
         # Fill the antenna part
-        for i in range(len(self.trun.du_id)):
+        if self.tefield is not None: event_dus_indices = self.tefield.get_dus_indices_in_run(self.trun)
+        elif self.tvoltage is not None: event_dus_indices = self.tvoltage.get_dus_indices_in_run(self.trun)
+        for i in range(len(event_dus_indices)):
             a = Antenna()
-            a.id = self.trun.du_id[i]
-            a.position.x = self.trun.du_xyz[i][0]
-            a.position.y = self.trun.du_xyz[i][1]
-            a.position.z = self.trun.du_xyz[i][2]
-            a.tilt.x = self.trun.du_tilt[i][0]
-            a.tilt.y = self.trun.du_tilt[i][1]
+            ant_ind = int(event_dus_indices[i])
+            a.id = self.trun.du_id[ant_ind]
+            a.position.x = self.trun.du_xyz[ant_ind][0]
+            a.position.y = self.trun.du_xyz[ant_ind][1]
+            a.position.z = self.trun.du_xyz[ant_ind][2]
+            a.tilt.x = self.trun.du_tilt[ant_ind][0]
+            a.tilt.y = self.trun.du_tilt[ant_ind][1]
 
             self.antennas.append(a)
 
-        return ret
 
     ## Fill part of the event from the Voltage tree
     def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
@@ -679,9 +687,9 @@ class Event:
         min_t0 = np.min(np.array(np.array(self.tefield.du_seconds).astype(np.int64) * 1000000000 + np.array(self.tefield.du_nanoseconds).astype(np.int64), dtype="datetime64[ns]"))
 
         # Loop through traces
-        for i in range(len(self.tefield.trace[0])):
+        for i in range(len(self.tefield.trace)):
             v = Efield()
-            tx = self.tefield.trace[0][i]
+            tx = self.tefield.trace[i][0]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
