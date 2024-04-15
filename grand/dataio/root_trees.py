@@ -921,7 +921,7 @@ class DataTree:
                     self._tree.SetBranchAddress(branch_name, getattr(self, value_name)._vector)
                 except:
                     # logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
-                    logger.warning(f"Could not find branch {branch_name} in tree {self.tree_name}. This branch will not be filled.")
+                    logger.info(f"Could not find branch {branch_name} in tree {self.tree_name}. This branch will not be filled.")
         elif type(value) == StdString:
             # Create the branch
             if not set_branches:
