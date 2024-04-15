@@ -907,8 +907,9 @@ class DataTree:
             # For two-type vectors, check if a switch to the second vector type is needed
             if getattr(self, value_name).sec_vec_type is not None:
                 # If the second vector type is the type of the branch, switch to the second vector type
-                if getattr(self, value_name).sec_vec_type in self._tree.GetLeaf(branch_name).GetTypeName():
-                    getattr(self, value_name).switch_to_sec_vec_type()
+                if self._tree.GetLeaf(branch_name) != None:
+                    if getattr(self, value_name).sec_vec_type in self._tree.GetLeaf(branch_name).GetTypeName():
+                        getattr(self, value_name).switch_to_sec_vec_type()
             # Create the branch
             if not set_branches:
                 self._tree.Branch(branch_name, getattr(self, value_name)._vector)
