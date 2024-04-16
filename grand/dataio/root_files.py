@@ -12,6 +12,7 @@ from typing import Optional
 
 import numpy as np
 import ROOT
+import matplotlib.pyplot as plt
 
 import grand.dataio.root_trees as groot
 from grand.basis.traces_event import Handling3dTraces
@@ -191,6 +192,37 @@ class _FileEventBase:
         nrj = shw.energy_primary
         o_tevent.info_shower += f" energy_primary={nrj:.1e} GeV"
         return o_tevent
+
+    def get_nb_traces_in_file(self):
+        nb_traces = 0
+        cur_idx = self.idx_event
+        for idx in range(self.get_nb_events()):
+            self.load_event_idx(idx)
+            nb_traces += self.du_count
+        self.load_event_idx(cur_idx)
+        return nb_traces
+
+    def plot_histo_vmax(self, nbins=20):
+        cur_idx = self.idx_event
+        a_vmax = np.zeros(self.get_nb_traces_in_file(), dtype=np.float32)
+        idx_t = 0
+        #for idx_e in range(self.get_nb_events()):
+        for idx_e in range(10):
+            self.load_event_idx(idx_e)
+            tr3d = self.get_obj_handling3dtraces()
+            max_norm = tr3d.get_max_norm()
+            a_vmax[idx_t : idx_t + self.du_count] = max_norm
+            idx_t += self.du_count
+            
+        _, bins = np.histogram(a_vmax, bins=nbins)
+        logbins = np.logspace(0,np.log10(bins[-1]),len(bins))  
+        plt.figure()
+        plt.title(f"{self.f_name}\nHistogram of max value for each traces")
+        plt.hist(a_vmax, bins=logbins)
+        #plt.xscale('log')
+        plt.yscale('log')
+        plt.grid()
+        self.load_event_idx(cur_idx)
 
 
 #
