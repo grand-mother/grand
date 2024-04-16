@@ -187,8 +187,13 @@ class DetectorUnitNetwork:
         ax1.set_title(s_title)
         vmin = np.nanmin(a_values)
         vmax = np.nanmax(a_values)
-        norm_user = colors.LogNorm(vmin=vmin, vmax=vmax)
         if scale == "log":
+            if vmin == 0.0:
+                vmin = None
+            if vmin == vmax:
+                vmin = None
+                vmax = None
+            norm_user = colors.LogNorm(vmin=vmin, vmax=vmax)
             my_cmaps = "Reds"
         elif scale == "lin":
             norm_user = colors.Normalize(vmin=vmin, vmax=vmax)
@@ -240,10 +245,9 @@ class DetectorUnitNetwork:
             if isinstance(scale, str):
                 my_cmaps = "Blues"
                 vmin = np.nanmin(a_values)
-                vmax = np.nanmax(a_values)
-                norm_user = colors.LogNorm(vmin=vmin, vmax=vmax)
+                vmax = np.nanmax(a_values)                
                 if scale == "log":
-                    pass
+                    norm_user = colors.LogNorm(vmin=vmin, vmax=vmax)
                 elif scale == "lin":
                     norm_user = colors.Normalize(vmin=vmin, vmax=vmax)
                 else:
