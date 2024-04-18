@@ -39,7 +39,8 @@ clparser.add_argument("-ru", "--run", help="Run number", default=None)
 clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
 clparser.add_argument("--target_duration_us",type=float,default=None,help="Adujust the trace lenght to the given duration, in us") 
 clparser.add_argument("--trigger_time_ns",type=float,default=None,help="Adujust the trace so that the maximum is at given ns from the begining of the trace")
-clparser.add_argument("--verbose", choices=["debug", "info", "warning", "error", "critical"],default="info", help="logger verbosity.")    
+clparser.add_argument("--verbose", choices=["debug", "info", "warning", "error", "critical"],default="info", help="logger verbosity.")
+clparser.add_argument("-ss", "--star_shape", help="For star-shapes: create a separate run for every event", action='store_true')
 clargs = clparser.parse_args()
 
 mlg.create_output_for_logger(clargs.verbose, log_stdout=True)
@@ -241,11 +242,15 @@ def main():
             trawefield.t_post=DesiredTpost
             
 
-            # If the first entry on the first file
-            if (file_num==0 and i==0):
+            # If the first entry on the first file or dealing with star shape sim
+            if (file_num==0 and i==0) or clargs.star_shape:
 
-                # Overwrite the run number if specified on command line
-                run_number = ext_run_number if ext_run_number is not None else trawshower.run_number
+                # Overwrite the run number if specified on command line (only for the first event)
+                if (file_num==0 and i==0):
+                    run_number = ext_run_number if ext_run_number is not None else trawshower.run_number
+                    start_run_number = run_number
+                # or increase it by one for star shapes
+                elif clargs.star_shape: run_number += 1
 
                 # Check if site name was not given as input, use the one from the trawshower
                 if not clargs.site_name:
@@ -253,8 +258,8 @@ def main():
                 else:
                     site = clargs.site_name
 
-                # Init output trees in the proper directory
-                out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, site, gt)
+                # Init output trees in the proper directory (only for the first event)
+                if file_num==0 and i==0: out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, site, gt)
 
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
@@ -332,11 +337,26 @@ def main():
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
             du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
+            tdu_ids, tdu_xyzs = du_ids, du_xyzs
         # For other files, append du ids and pos to the ones already retrieved
         else:
             tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
             du_ids = np.append(du_ids, tdu_ids)
             du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
+
+        # For star shapes, set the trun's du_id/xyz now and fill/write the tree
+        if clargs.star_shape:
+            gt.trun.du_id = tdu_ids
+            gt.trun.du_xyz = tdu_xyzs
+
+            gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
+
+            # For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
+            gt.trun.t_bin_size = [trawefield.t_bin_size] * len(du_ids)
+
+            # Fill and write the TRun
+            gt.trun.fill()
+            gt.trun.write()
 
         # Write the event trees
         gt.tshower.write()
@@ -354,35 +374,36 @@ def main():
         if ext_event_number is not None:
             ext_event_number += 1
 
-    # Fill the trun with antenna positions and ids from ALL the events
+    # Fill the trun with antenna positions and ids from ALL the events (not for star shape, already done)
     # ToDo: this should be done with TChain in one loop over all the files... maybe (which would be faster?)
+    if not clargs.star_shape:
 
-    # Get indices of the unique du_ids
-    unique_dus_idx = np.unique(du_ids, return_index=True)[1]
-    # Leave only the unique du_ids
-    du_ids = du_ids[unique_dus_idx]
-    # Sort the DUs
-    sorted_idx = np.argsort(du_ids)
-    du_ids = du_ids[sorted_idx]
-    # Stack x/y/z together and leave only the ones for unique du_ids, sort
-    du_xyzs = du_xyzs[unique_dus_idx][sorted_idx]
+        # Get indices of the unique du_ids
+        unique_dus_idx = np.unique(du_ids, return_index=True)[1]
+        # Leave only the unique du_ids
+        du_ids = du_ids[unique_dus_idx]
+        # Sort the DUs
+        sorted_idx = np.argsort(du_ids)
+        du_ids = du_ids[sorted_idx]
+        # Stack x/y/z together and leave only the ones for unique du_ids, sort
+        du_xyzs = du_xyzs[unique_dus_idx][sorted_idx]
 
-    # Assign the du ids and positions to the trun tree
-    gt.trun.du_id = du_ids
-    gt.trun.du_xyz = du_xyzs
-    gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
+        # Assign the du ids and positions to the trun tree
+        gt.trun.du_id = du_ids
+        gt.trun.du_xyz = du_xyzs
+        gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
 
-    #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids) 
+        #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
+        gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
 
-    # Fill and write the TRun
-    gt.trun.fill()
-    gt.trun.write()
+        # Fill and write the TRun
+        gt.trun.fill()
+        gt.trun.write()
 
 
     # Rename the created files to appropriate names   
     print("Renaming files to proper file names")
-    rename_files(clargs, out_dir_name, start_event_number, end_event_number, run_number)
+    rename_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
 
 # Initialise output trees and their directory
 def init_trees(clargs, unix_date, run_number, site, gt):
