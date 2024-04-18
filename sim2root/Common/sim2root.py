@@ -362,6 +362,8 @@ def main():
             # For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
             gt.trun.t_bin_size = [trawefield.t_bin_size] * len(du_ids)
 
+            gt.trun.site_layout = "star_shape"
+
             # Fill and write the TRun
             gt.trun.fill()
             gt.trun.write()
