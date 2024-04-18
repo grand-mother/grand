@@ -351,6 +351,9 @@ class Event:
     file_tsimshower: ROOT.TFile = None
     """TSimShower file"""
 
+    is_starshape: bool = False
+    """Is this event a star shape?"""
+
     # Options
 
     auto_file_close: bool = True
@@ -563,6 +566,10 @@ class Event:
     def fill_event_from_runtree(self, run_entry_number=None):
         ret = 1
 
+        # For star shape, the run entry number should be the same as event entry number
+        if self.is_starshape and run_entry_number is None and self.run_number is None:
+            run_entry_number = self._entry_number
+
         # If run number not provided in any way, get the first entry
         if run_entry_number is None and self.run_number is None:
             run_entry_number = 0
@@ -584,6 +591,10 @@ class Event:
         self.origin_geoid = self.trun.origin_geoid
         # ToDo: This assumes uniform t_bin_size (to avoid current mismatch in number of bins for different trees coming from sim2root)
         self._t_bin_size = self.trun.t_bin_size[0]
+
+        # Check if the run is star shape
+        if "star_shape" in self.trun.site_layout:
+            self.is_starshape = True
 
         return ret
 
