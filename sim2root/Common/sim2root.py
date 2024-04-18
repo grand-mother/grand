@@ -328,6 +328,8 @@ def main():
             if(gt.tshower.event_number>end_event_number):
                 end_event_number = gt.tshower.event_number
 
+            gt.tshowersim.input_name = Path(filename).stem
+
             # Fill the event trees
             gt.tshower.fill()
             gt.tshowersim.fill()
