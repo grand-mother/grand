@@ -310,6 +310,12 @@ def main():
                 gt.tshower.run_number = ext_run_number
                 gt.tshowersim.run_number = ext_run_number
                 gt.tefield.run_number = ext_run_number
+            # For starshape, update the event trees run numbers
+            elif clargs.star_shape:
+                gt.tshower.run_number = run_number
+                gt.tshowersim.run_number = run_number
+                gt.tefield.run_number = run_number
+
 
             # Overwrite the event number if specified on command line
             if ext_event_number is not None:
