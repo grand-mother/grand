@@ -808,6 +808,76 @@ class Rfchain_elements_db(GenericProcessingDU):
         ABCD_matrix *= denorm_factor # denormalizing factor for XYZ arms
         self.ABCD_matrix[:] = ABCD_matrix
 
+########################################################################################
+
+class Rfchain_elements_db_rad(GenericProcessingDU):
+    def __init__(self, filename="test2.s2p"):
+        super().__init__()
+        self.filename = filename
+
+        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.freqs_in = self.sparams[:, 0] / 1e6
+        self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
+
+    def _set_name_data_file(self):
+        filename = os.path.join("detector", "RFchain_v2", self.filename)
+        return grand_add_path_data(filename)
+    def compute_for_freqs(self, freqs_mhz):
+        self.set_out_freq_mhz(freqs_mhz)
+        freqs_in = self.freqs_in
+        assert self.nb_freqs > 0
+        # shape = (antenna_port, nb_freqs)
+        self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
+
+        # S2P File: Measurements: S11, S21, S12, S22
+        # ----- S11
+        dbs11 = self.sparams[:, 1]
+        phs11 = self.sparams[:, 2]
+        res11, ims11 = db2reim(dbs11, phs11)
+        self.dbs11[:] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)     
+        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       
+        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) 
+        # ----- S21
+        dbs21 = self.sparams[:, 3]
+        phs21 = self.sparams[:, 4]
+        res21, ims21 = db2reim(dbs21, phs21)
+        self.dbs21[:] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)     
+        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       
+        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) 
+        # ----- S12
+        dbs12 = self.sparams[:, 5]
+        phs12 = self.sparams[:, 6]
+        res12, ims12 = db2reim(dbs12, phs12)
+        self.dbs12[:] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)     
+        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       
+        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) 
+        # ----- S22
+        dbs22 = self.sparams[:][:, 7]
+        phs22 = self.sparams[:, 8]
+        res22, ims22 = db2reim(dbs22, phs22)
+        self.dbs22[:] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)     
+        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       
+        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) 
+
+        denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XYZ arms
+        denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
+        # for all three ports. shape should be (2, 2, ant ports, nb_freqs)        
+        ABCD_matrix = s2abcd(self.s11, self.s21, self.s12, self.s22)
+        ABCD_matrix *= denorm_factor # denormalizing factor for XYZ arms
+        self.ABCD_matrix[:] = ABCD_matrix
+        
 ###################################################################################### 
 
 class Rfchain_elements(GenericProcessingDU):
@@ -879,8 +949,77 @@ class Rfchain_elements(GenericProcessingDU):
         denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
         self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor 
 
+##############################################################################################
+class Rfchain_elements_rad(GenericProcessingDU):
+    def __init__(self, filename="test.s2p"):
+        super().__init__()
+        self.filename = filename
+        
+        self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
+        self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
+        # shape = (antenna_port, nb_freqs)
+        self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
 
-##################################
+    def _set_name_data_file(self):
+        filename = os.path.join("detector", "RFchain_v2", self.filename)
+        return grand_add_path_data(filename)
+
+    def compute_for_freqs(self, freqs_mhz):
+        """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
+
+        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+        """
+        self.set_out_freq_mhz(freqs_mhz)
+        freqs_in = self.freqs_in
+        assert self.nb_freqs > 0
+
+        # shape = (antenna_port, nb_freqs)
+        self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64) # shape = (2x2 matrix, 3 ports, nb_freqs)
+
+        # freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22
+        # ----- S11
+        mags11 = self.sparams[:, 1]
+        angs11 = self.sparams[:, 2]
+        res11 = mags11 * np.cos(angs11)
+        ims11 = mags11 * np.sin(angs11)
+        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       
+        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) 
+        # ----- S21
+        mags21 = self.sparams[:, 3]
+        angs21 = self.sparams[:, 4]
+        res21 = mags21 * np.cos(angs21)
+        ims21 = mags21 * np.sin(angs21)
+        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       
+        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) 
+        # ----- S12
+        mags12 = self.sparams[:, 5]
+        angs12 = self.sparams[:, 6]
+        res12 = mags12 * np.cos(angs12)
+        ims12 = mags12 * np.sin(angs12)
+        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       
+        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) 
+        # ----- S22
+        mags22 = self.sparams[:, 7]
+        angs22 = self.sparams[:, 8]
+        res22 = mags22 * np.cos(angs22)
+        ims22 = mags22 * np.sin(angs22)
+        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       
+        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) 
+
+        # for all three ports. shape should be (2, 2, ant ports, nb_freqs)
+        denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XYZ arms
+        denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
+        self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor 
+
+###########################################################################################
 
 class Zload_arb(GenericProcessingDU):
     def __init__(self, filename="S_balun_AD.s1p"):
