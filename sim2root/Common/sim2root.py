@@ -292,7 +292,7 @@ def main():
             rawmeta2grandroot(trawmeta, gt)
             
             # Change the trace lenght as specified in the comand line                                     
-            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1).astype(np.float32)
             ext_t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
 
             # trawefield.trace_x=trace[:,0,:]
@@ -355,12 +355,12 @@ def main():
         # For star shapes, set the trun's du_id/xyz now and fill/write the tree
         if clargs.star_shape:
             gt.trun.du_id = tdu_ids
-            gt.trun.du_xyz = tdu_xyzs
+            gt.trun.du_xyz = np.array(tdu_xyzs)
 
-            gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
+            gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
             # For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
-            gt.trun.t_bin_size = [trawefield.t_bin_size] * len(du_ids)
+            gt.trun.t_bin_size = np.array([trawefield.t_bin_size] * len(du_ids))
 
             gt.trun.site_layout = "star_shape"
 
@@ -518,7 +518,7 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     #trawefield has the antenna positions in array coordinates, cartesian. Origin is at the delcared latitude, longitude and altitude of the site.
     print("Warning: using flat earth approximation for coordinates!.Event:",trawefield.event_number," Core:",shower_core)
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
-    du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(int)
+    du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(np.int32)
     du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
     du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
@@ -706,7 +706,7 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     if ext_trace is None:
         gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
     else:
-        gt.tefield.trace=ext_trace
+        gt.tefield.trace = ext_trace
         # gt.tefield.trace_x=ext_trace[:,0,:]
         # gt.tefield.trace_y=ext_trace[:,1,:]
         # gt.tefield.trace_z=ext_trace[:,2,:]
@@ -727,8 +727,8 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     tempseconds[maskplus]+=np.int64(1)   
     tempnanoseconds[maskminus]+=np.int64(1e9)
     tempseconds[maskminus]-=np.int64(1)
-    gt.tefield.du_nanoseconds=tempnanoseconds
-    gt.tefield.du_seconds=tempseconds
+    gt.tefield.du_nanoseconds=tempnanoseconds.astype(np.uint32)
+    gt.tefield.du_seconds=tempseconds.astype(np.uint32)
     
     #store tpre in samples is the expected trigger position in sims. 
     #This can be furter enforced with the --trigger_time_ns switch. All dus have the same value at the efield generator level
