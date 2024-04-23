@@ -17,12 +17,17 @@ import array
 
 from collections import defaultdict
 
+# Load the C++ macros for vector filling from numpy arrays
+ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
+
 # Conversion between numpy dtype and array.array typecodes
 numpy_to_array_typecodes = {np.dtype('int8'): 'b', np.dtype('int16'): 'h', np.dtype('int32'): 'i', np.dtype('int64'): 'q', np.dtype('uint8'): 'B', np.dtype('uint16'): 'H', np.dtype('uint32'): 'I', np.dtype('uint64'): 'Q', np.dtype('float32'): 'f', np.dtype('float64'): 'd', np.dtype('complex64'): 'F', np.dtype('complex128'): 'D', np.dtype('int16'): 'h'}
 # numpy_to_array_typecodes = {np.int8: 'b', np.int16: 'h', np.int32: 'i', np.int64: 'q', np.uint8: 'B', np.uint16: 'H', np.uint32: 'I', np.uint64: 'Q', np.float32: 'f', np.float64: 'd', np.complex64: 'F', np.complex128: 'D', "int8": 'b', "int16": 'h', "int32": 'i', "int64": 'q', "uint8": 'B', "uint16": 'H', "uint32": 'I', "uint64": 'Q', "float32": 'f', "float64": 'd', "complex64": 'F', "complex128": 'D'}
 
 # Conversion between C++ type and array.array typecodes
 cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q', 'unsigned char': 'B', 'unsigned short': 'H', 'unsigned int': 'I', 'unsigned long long': 'Q', 'float': 'f', 'double': 'd', 'string': 'u'}
+
+cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype('uint64'), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -135,24 +140,33 @@ class StdVectorList(MutableSequence):
     def __iadd__(self, value):
     # function modified by Jelena to fix the negative issue, use at own risk
         try:
-            if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
-                if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+            if isinstance(value, np.ndarray):
+                if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](value, np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](value, np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](value, np.array(value.shape).astype(np.int32), self._vector)
             else:
-                value = list(value)
-
-            # The list needs to have simple Python types - ROOT.vector does not accept numpy types
-            try:
-                self._vector += value
-            except TypeError:
-                # Slow conversion to simple types. No better idea for now
-                if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
                     if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
                     if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
                     if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                elif not isinstance(value, StdVectorList):
+                    value = list(value)
 
-                self._vector += value
+                # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+                try:
+                    if isinstance(value, StdVectorList):
+                        # ToDo: Maybe faster than +=, but... to be checked
+                        self._vector.assign(value._vector)
+                    else:
+                        self._vector += value
+                except TypeError:
+                    # Slow conversion to simple types. No better idea for now
+                    if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+
+                    self._vector += value
 
         except OverflowError:
             # Handle the OverflowError here, e.g., by logging a message or taking an appropriate action.
