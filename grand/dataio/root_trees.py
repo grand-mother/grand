@@ -141,9 +141,9 @@ class StdVectorList(MutableSequence):
     # function modified by Jelena to fix the negative issue, use at own risk
         try:
             if isinstance(value, np.ndarray):
-                if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](value, np.array(value.shape).astype(np.int32), self._vector)
-                if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](value, np.array(value.shape).astype(np.int32), self._vector)
-                if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](value, np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
             else:
                 if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
                     if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
