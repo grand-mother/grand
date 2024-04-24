@@ -7,11 +7,15 @@ import argparse
 from types import SimpleNamespace
 import time
 from pathlib import Path
+
+import numpy as np
+
 from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
 import matplotlib.pyplot as plt
-from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
+# from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
+# from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -127,38 +131,40 @@ def adjust_trace_lenght(trace, DesiredTpre, DesiredTpost, CurrentTpre, CurrentTp
 
 
 def adjust_trigger(trace, CurrentT0s, TPre, TimeBinSize):
-  #now lets process a "trigger" algorithm that will modify where the trace is located.
-  #we asume trace is windowed between CurrentT0-Tpre and CurrentT0+tpost
-  #trace will have dim (du,3 or 4,tbins)
-                 
-  #totl will have dim du,tbins 
-  ttotal = np.linalg.norm(trace, axis=1) #make the modulus (the 1 is to remove the time)   
-  #trigger_index will have dim du
-  trigger_index = np.argmax(ttotal,axis=1)                    #look where the maximum happens
-   
-  #this definition of the trigger times makes the trigger be at the begining of the bin where the maximum is, becouse the index starts at 0. This is compatible with the definition of the window that we give.
-  trigger_time=trigger_index*TimeBinSize               
-  #If we need to shift the trigger time (the trigger time needs to be equal to tpre
-  DeltaT=TPre - trigger_time       
-  ShiftBins=(DeltaT/TimeBinSize).astype(int,copy=False)
+    # now lets process a "trigger" algorithm that will modify where the trace is located.
+    # we asume trace is windowed between CurrentT0-Tpre and CurrentT0+tpost
+    # trace will have dim (du,3 or 4,tbins)
 
-  #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly). 
-  mask=ShiftBins < -TPre/TimeBinSize
-  if mask.any():
-    logger.error("some elements needed to be shifted only up to the limt, tpre was too small")
-    ShiftBins[mask]= int(-TPre/TimeBinSize)
-                 
-  #we cannot use use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
-  #we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
-  
-  #TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.  
-  for du_idx in range(trace.shape[0]):     
-    trace[du_idx]=shift(trace[du_idx],(0,ShiftBins[du_idx]),cval=0)
-  
-  #we get the correct t0
-  T0s=CurrentT0s-ShiftBins*TimeBinSize
+    # totl will have dim du,tbins
+    ttotal = np.linalg.norm(trace, axis=1)  # make the modulus (the 1 is to remove the time)
+    # trigger_index will have dim du
+    trigger_index = np.argmax(ttotal, axis=1)  # look where the maximum happens
 
-  return T0s,trace
+    # this definition of the trigger times makes the trigger be at the begining of the bin where the maximum is, becouse the index starts at 0. This is compatible with the definition of the window that we give.
+    trigger_time = trigger_index * TimeBinSize
+    # If we need to shift the trigger time (the trigger time needs to be equal to tpre
+    DeltaT = TPre - trigger_time
+    ShiftBins = (DeltaT / TimeBinSize).astype(int, copy=False)
+
+    # this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly).
+    mask = ShiftBins < -TPre / TimeBinSize
+    if mask.any():
+        logger.error("some elements needed to be shifted only up to the limt, tpre was too small")
+        ShiftBins[mask] = int(-TPre / TimeBinSize)
+
+    # we cannot use use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
+    # we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
+
+    # TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.
+    # for du_idx in range(trace.shape[0]):
+    #     trace[du_idx] = shift(trace[du_idx], (0, ShiftBins[du_idx]), cval=0)
+    for du_idx in range(trace.shape[0]):
+        trace_shift(trace[du_idx], ShiftBins[du_idx])
+
+    # we get the correct t0
+    T0s = CurrentT0s - ShiftBins * TimeBinSize
+
+    return T0s, trace
 
 def convert_date(date_str):
     # Convert input string to a struct_time object
@@ -203,7 +209,7 @@ def main():
     # for file_num, filename in enumerate(clargs.filename):
     for file_num, filename in enumerate(file_list):
 
-        logger.info(f"Working on input file {filename}, {file_num}/{len(file_list)}")
+        logger.info(f"Working on input file {filename}, {file_num+1}/{len(file_list)}")
 
         # Output filename for GRAND Trees
         # if clargs.output_filename is None:
@@ -223,7 +229,7 @@ def main():
             trawshower.get_entry(i)
             trawefield.get_entry(i)
             trawmeta.get_entry(i)
-            
+
             OriginalTpre=trawefield.t_pre
             OriginalTpost=trawefield.t_post
             DesiredTpre=trawefield.t_pre
@@ -240,7 +246,6 @@ def main():
             #we modify this becouse it needs to be stored in the run file on the first event.
             trawefield.t_pre=DesiredTpre
             trawefield.t_post=DesiredTpost
-            
 
             # If the first entry on the first file or dealing with star shape sim
             if (file_num==0 and i==0) or clargs.star_shape:
@@ -283,16 +288,16 @@ def main():
                 gt.trunshowersim.fill()
                 gt.trunefieldsim.fill()
                 # gt.trun.write()
-                gt.trunshowersim.write()
-                gt.trunefieldsim.write()
 
             # Convert the RawShowerTree entries
             rawshower2grandroot(trawshower, gt)
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
             rawmeta2grandroot(trawmeta, gt)
-            
-            # Change the trace lenght as specified in the comand line                                     
-            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1).astype(np.float32)
+
+            # Change the trace lenght as specified in the comand line
+            # trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1).astype(np.float32)
+            # Slightly faster than the above
+            trace = np.stack([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z], 1, dtype=np.float32)
             ext_t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
 
             # trawefield.trace_x=trace[:,0,:]
@@ -301,7 +306,7 @@ def main():
 
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt, ext_trace=trace, ext_t_0=ext_t_0)
-        
+
             # Overwrite the run number if specified on command line
             if ext_run_number is not None:
                 gt.trun.run_number = ext_run_number
@@ -340,8 +345,7 @@ def main():
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
-        
-        
+
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
             du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
@@ -366,12 +370,7 @@ def main():
 
             # Fill and write the TRun
             gt.trun.fill()
-            gt.trun.write()
 
-        # Write the event trees
-        gt.tshower.write()
-        gt.tshowersim.write()
-        gt.tefield.write()
         # gt.tshower.first_interaction = trawshower.first_interaction
 
         trawmeta.close_file()
@@ -401,17 +400,26 @@ def main():
         # Assign the du ids and positions to the trun tree
         gt.trun.du_id = du_ids
         gt.trun.du_xyz = du_xyzs
-        gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
+        gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
         #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
         gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
 
         # Fill and write the TRun
         gt.trun.fill()
-        gt.trun.write()
+        # gt.trun.write()
+        # gt.trunshowersim.write()
+        # gt.trunefieldsim.write()
 
+    # Write the event trees
+    gt.tshower.write()
+    gt.tshowersim.write()
+    gt.tefield.write()
+    gt.trun.write()
+    gt.trunshowersim.write()
+    gt.trunefieldsim.write()
 
-    # Rename the created files to appropriate names   
+    # Rename the created files to appropriate names
     print("Renaming files to proper file names")
     rename_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
 
@@ -531,7 +539,7 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     # Stack x/y/z together and leave only the ones for unique du_ids
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
-    return np.asarray(du_ids), np.asarray(du_xyzs)
+    return np.asarray(du_ids, dtype=np.int32), np.asarray(du_xyzs, dtype=np.float32)
 
 
 # Convert the RawShowerTree entries
@@ -704,7 +712,7 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
 
     ## Efield trace in X,Y,Z direction
     if ext_trace is None:
-        gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+        gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1).astype(np.float32)
     else:
         gt.tefield.trace = ext_trace
         # gt.tefield.trace_x=ext_trace[:,0,:]
@@ -808,6 +816,20 @@ def rename_files(clargs, path, start_event_number, end_event_number, run_number)
         else:
             print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
             exit(0)
+
+# Simple shifting of a single x,y,z trace
+def trace_shift(arr, shift):
+    # Shift the array right
+    if shift>0:
+        arr[:,shift:]=arr[:,:-shift]
+        arr[:,:shift]=0
+    # Shift the array left
+    elif shift<0:
+        arr[:,:shift]=arr[:,-shift:]
+        arr[:,shift:]=0
+    # No shift
+    else:
+        return arr
 
 
 if __name__ == '__main__':
