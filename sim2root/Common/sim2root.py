@@ -222,9 +222,15 @@ def main():
         trawefield = RawTrees.RawEfieldTree(filename)
         trawmeta = RawTrees.RawMetaTree(filename)
 
+        nentries = trawshower.get_entries()
+
+        # Skip files with no or empty trees
+        if nentries==0 or trawefield.get_entries()==0 or trawmeta.get_entries()==0:
+            logger.warning("No entries or one of the rawroot trees does not exist. Skipping this file.")
+            continue
+
         # Loop through entries - assuming same number of entries in each tree
         # ToDo: this should be a tree iterator through one tree and getting the other through friends. Need to make friends working...
-        nentries = trawshower.get_entries()
         for i in range(nentries):
             trawshower.get_entry(i)
             trawefield.get_entry(i)
