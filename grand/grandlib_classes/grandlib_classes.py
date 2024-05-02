@@ -419,7 +419,7 @@ class Event:
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2]):
+    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True):
         """Fill this event from trees
         :param simshower: how to treat the TShower existing in the file, as sim values or reconstructed values
         :type simshower: bool
@@ -453,81 +453,105 @@ class Event:
 
         # *** Check what TTrees are available and fill according to their availability
 
-        # Check the Run tree existence
-        if trun := self.file_trun.Get("trun"):
-            self.trun = TRun(_tree=trun)
+        # If initialising trees requested
+        if init_trees:
+            # Check the Run tree existence
+            if trun := self.file_trun.Get("trun"):
+                self.trun = TRun(_tree=trun)
+            else:
+                print("No Run tree. Run information will not be available.")
+                # Make trun really None
+                self.trun = None
+
+        # If self.trun was successfully initialised
+        if self.trun is not None:
             # Fill part of the event from trun
             ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
-            if ret: print("Run information loaded.")
-            else: print("No Run tree. Run information will not be available.")
-        else:
-            print("No Run tree. Run information will not be available.")
-            # Make trun really None
-            self.trun = None
+            if ret:
+                print("Run information loaded.")
+            else:
+                print("No Run tree. Run information will not be available.")
 
         if self.file_tvoltage:
             # Use standard voltage tree
             if not use_trawvoltage:
-                # Check the Voltage tree existence
-                if tvoltage := self.file_tvoltage.Get("tvoltage"):
-                    self.tvoltage = TVoltage(_tree=tvoltage)
-                    # Fill part of the event from tvoltage
-                    ret = self.fill_event_from_voltage_tree()
-                    if ret: print("Voltage information loaded.")
+                # If initialising trees requested
+                if init_trees:
+                    # Check the Voltage tree existence
+                    if tvoltage := self.file_tvoltage.Get("tvoltage"):
+                        self.tvoltage = TVoltage(_tree=tvoltage)
                     else:
                         print("No Voltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
                         self.tvoltage = None
-                else:
-                    print("No Voltage tree. Voltage information will not be available.")
-                    # Make tvoltage really None
-                    self.tvoltage = None
+
+                # If self.tvoltage was successfully initialised
+                if self.tvoltage is not None:
+                    # Fill part of the event from tvoltage
+                    ret = self.fill_event_from_voltage_tree()
+                    if ret:
+                        print("Voltage information loaded.")
+                    else:
+                        print("No Voltage tree. Voltage information will not be available.")
+                        # Make tvoltage really None
+                        self.tvoltage = None
+
             # Use trawvoltage tree
             else:
-                # Check the Voltage tree existence
-                if tvoltage := self.file_tvoltage.Get("trawvoltage"):
-                    self.tvoltage = TRawVoltage(_tree=tvoltage)
-                    # Fill part of the event from tvoltage
-                    ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
-                    if ret: print("Voltage information (from TRawVoltage) loaded.")
+                # If initialising trees requested
+                if init_trees:
+                    # Check the Voltage tree existence
+                    if tvoltage := self.file_tvoltage.Get("trawvoltage"):
+                        self.tvoltage = TRawVoltage(_tree=tvoltage)
                     else:
                         print("No TRawVoltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
                         self.tvoltage = None
-                else:
-                    print("No TRawVoltage tree. Voltage information will not be available.")
-                    # Make tvoltage really None
-                    self.tvoltage = None
 
+                # If self.tvoltage was successfully initialised
+                if self.tvoltage is not None:
+                    # Fill part of the event from tvoltage
+                    ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
+                    if ret:
+                        print("Voltage information (from TRawVoltage) loaded.")
+                    else:
+                        print("No TRawVoltage tree. Voltage information will not be available.")
+                        # Make tvoltage really None
+                        self.tvoltage = None
 
         # Check the Efield file existence
         if self.file_tefield:
-            # Check the Efield tree existence
-            if tefield := self.file_tefield.Get("tefield"):
-                self.tefield = TEfield(_tree=tefield)
-                # Fill part of the event from tefield
-                ret = self.fill_event_from_efield_tree()
-                if ret: print("Efield information loaded.")
+            # If initialising trees requested
+            if init_trees:
+                # Check the Efield tree existence
+                if tefield := self.file_tefield.Get("tefield"):
+                    self.tefield = TEfield(_tree=tefield)
                 else:
                     print("No Efield tree. Efield information will not be available.")
                     # Make tefield really None
                     self.tefield = None
-            else:
-                print("No Efield tree. Efield information will not be available.")
-                # Make tefield really None
-                self.tefield = None
+
+            # If self.tefield was successfully initialised
+            if self.tefield is not None:
+                # Fill part of the event from tefield
+                ret = self.fill_event_from_efield_tree()
+                if ret:
+                    print("Efield information loaded.")
+                else:
+                    print("No Efield tree. Efield information will not be available.")
+                    # Make tefield really None
+                    self.tefield = None
 
         # Check the Shower file existence
         if self.file_tshower:
-            # Check the Shower tree existence
-            if tshower := self.file_tshower.Get("tshower"):
-                if simshower:
-                    self.tsimshower = TShower(_tree=tshower)
-                else:
-                    self.tshower = TShower(_tree=tshower)
-                # Fill part of the event from tshower
-                ret = self.fill_event_from_shower_tree(simshower)
-                if ret: print("Shower information loaded.")
+            # If initialising trees requested
+            if init_trees:
+                # Check the Shower tree existence
+                if tshower := self.file_tshower.Get("tshower"):
+                    if simshower:
+                        self.tsimshower = TShower(_tree=tshower)
+                    else:
+                        self.tshower = TShower(_tree=tshower)
                 else:
                     print("No Shower tree. Shower information will not be available.")
                     # Make tshower really None
@@ -535,30 +559,43 @@ class Event:
                         self.tsimshower = None
                     else:
                         self.tshower = None
-            else:
-                print("No Shower tree. Shower information will not be available.")
-                # Make tshower really None
-                if simshower:
-                    self.tsimshower = None
+
+            # If self.t(sim)shower was successfully initialised
+            if (simshower and self.tsimshower is not None) or (not simshower and self.thower is not None):
+                # Fill part of the event from tshower
+                ret = self.fill_event_from_shower_tree(simshower)
+                if ret:
+                    print("Shower information loaded.")
                 else:
-                    self.tshower = None
+                    print("No Shower tree. Shower information will not be available.")
+                    # Make tshower really None
+                    if simshower:
+                        self.tsimshower = None
+                    else:
+                        self.tshower = None
 
         # Check the sim Shower file existence
         if self.file_tsimshower:
-            # Check the SimShower tree existence
-            if tsimshower := self.file_tsimshower.Get("tshower"):
-                self.tsimshower = TShower(_tree=tsimshower)
+            # If initialising trees requested
+            if init_trees:
+                # Check the SimShower tree existence
+                if tsimshower := self.file_tsimshower.Get("tshower"):
+                    self.tsimshower = TShower(_tree=tsimshower)
+                else:
+                    print("No Simulated Shower tree. Simulated Shower information will not be available.")
+                    # Make tsimshower really None
+                    self.tsimshower = None
+
+            # If self.tsimshower was successfully initialised
+            if self.tsimshower is not None:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(True)
-                if ret: print("Simulated shower information loaded.")
+                if ret:
+                    print("Simulated shower information loaded.")
                 else:
                     print("No Simulated shower tree. Simulated shower information will not be available.")
                     # Make tsimshower really None
                     self.tsimshower = None
-            else:
-                print("No Simulated Shower tree. Simulated Shower information will not be available.")
-                # Make tsimshower really None
-                self.tsimshower = None
 
         self.fill_antennas()
 
@@ -1038,6 +1075,7 @@ class EventList:
         self.init_kwargs = kwargs
 
         self.event = Event()
+        self.init_trees = True
 
     def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
         """Get specified event from the event list"""
@@ -1078,9 +1116,12 @@ class EventList:
         if fill_event:
             # Overwrite the init kwargs with kwargs given here
             if len(kwargs)>0:
-                e.fill_event_from_trees(**kwargs)
+                e.fill_event_from_trees(init_trees=self.init_trees, **kwargs)
             else:
-                e.fill_event_from_trees(**self.init_kwargs)
+                e.fill_event_from_trees(init_trees=self.init_trees, **self.init_kwargs)
+
+            # Don't init trees anymore
+            self.init_trees = False
 
         return e
 
