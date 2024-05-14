@@ -91,14 +91,17 @@ class StdVectorList(MutableSequence):
         # If this is a vector of vectors, convert a subvector to list for the return
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[index])):
-                if self.ndim == 2:
-                    return list(self._vector[index])
-                elif self.ndim == 3:
-                    return [list(el) for el in self._vector[index]]
-                elif self.ndim == 4:
-                    return [list(el) for el1 in self._vector[index] for el in el1]
-                else:
-                    return self._vector[index]
+                try:
+                    return np.array(self._vector[index])
+                except:
+                    if self.ndim == 2:
+                        return list(self._vector[index])
+                    elif self.ndim == 3:
+                        return [list(el) for el in self._vector[index]]
+                    elif self.ndim == 4:
+                        return [list(el) for el1 in self._vector[index] for el in el1]
+                    else:
+                        return self._vector[index]
             else:
                 return self._vector[index]
         else:
