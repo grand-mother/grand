@@ -120,7 +120,7 @@ def plot_core_positions(directory, t_0_shift=False):
   ax1.set_ylabel("Y (westing)(m)")  
   plt.tight_layout()
   if(args.savefig):
-    plt.savefig(f"{plot_dir}/CorePositions_{myrun}.png")
+    plt.savefig(f"{plot_dir}/plots/CorePositions_{myrun}.png")
     plt.close(fig)
   else: 
     plt.show()
@@ -317,7 +317,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
         plt.tight_layout()
         if(args.savefig):
-          plt.savefig(f"{plot_dir}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+          plt.savefig(f"{plot_dir}/plots/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
           plt.close(fig)
         else: 
           plt.show()
@@ -454,7 +454,7 @@ def plot_time_map(directory, simulator=None):
 
       plt.tight_layout()
       if(args.savefig):
-        plt.savefig(f"{plot_dir}/TimeMap_{run_number}_{event_number}.png")
+        plt.savefig(f"{plot_dir}/plots/TimeMap_{run_number}_{event_number}.png")
         plt.close(fig)
       else: 
          plt.show()
@@ -518,7 +518,7 @@ def plot_raws(directory):
       
       plt.tight_layout()
       if(args.savefig):
-         plt.savefig(f"{plot_dir}/rawtrace_{du}.png")
+         plt.savefig(f"{plot_dir}/plots/rawtrace_{du}.png")
          plt.close()
       else: 
          plt.show()
