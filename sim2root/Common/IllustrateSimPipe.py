@@ -45,6 +45,12 @@ def manage_args():
         "directory",
         help="Simulation output data directory in GRANDROOT format."
     )
+   parser.add_argument(
+      "--savefig_dir",
+      type=str,
+      default=None,
+      help="Directory to save figures. Defaults to simulation output directory if not specified."
+  )
     parser.add_argument(
         "--verbose",
         choices=["debug", "info", "warning", "error", "critical"],
@@ -65,7 +71,15 @@ def manage_args():
     # retrieve argument
     return parser.parse_args()
 
-
+if savefig:
+  if savefig_dir is None:
+    # Use simulation output directory by default
+    plot_dir = directory
+  else:
+    # Use specified savefig_dir
+    plot_dir = savefig_dir
+else:
+   pass
 
 def plot_core_positions(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -115,7 +129,7 @@ def plot_core_positions(directory, t_0_shift=False):
   ax1.set_ylabel("Y (westing)(m)")  
   plt.tight_layout()
   if(args.savefig):
-    plt.savefig(f"{directory}/CorePositions_{myrun}.png")
+    plt.savefig(f"{plot_dir}/CorePositions_{myrun}.png")
     plt.close(fig)
   else: 
     plt.show()
@@ -312,7 +326,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
         plt.tight_layout()
         if(args.savefig):
-          plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+          plt.savefig(f"{plot_dir}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
           plt.close(fig)
         else: 
           plt.show()
@@ -449,7 +463,7 @@ def plot_time_map(directory, simulator=None):
 
       plt.tight_layout()
       if(args.savefig):
-        plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+        plt.savefig(f"{plot_dir}/TimeMap_{run_number}_{event_number}.png")
         plt.close(fig)
       else: 
          plt.show()
@@ -513,7 +527,7 @@ def plot_raws(directory):
       
       plt.tight_layout()
       if(args.savefig):
-         plt.savefig(f"{directory}/rawtrace_{du}.png")
+         plt.savefig(f"{plot_dir}/rawtrace_{du}.png")
          plt.close()
       else: 
          plt.show()
