@@ -45,12 +45,12 @@ def manage_args():
         "directory",
         help="Simulation output data directory in GRANDROOT format."
     )
-   parser.add_argument(
+    parser.add_argument(
       "--savefig_dir",
       type=str,
       default=None,
       help="Directory to save figures. Defaults to simulation output directory if not specified."
-  )
+     )
     parser.add_argument(
         "--verbose",
         choices=["debug", "info", "warning", "error", "critical"],
@@ -71,15 +71,6 @@ def manage_args():
     # retrieve argument
     return parser.parse_args()
 
-if savefig:
-  if savefig_dir is None:
-    # Use simulation output directory by default
-    plot_dir = directory
-  else:
-    # Use specified savefig_dir
-    plot_dir = savefig_dir
-else:
-   pass
 
 def plot_core_positions(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -541,8 +532,21 @@ if __name__ == "__main__":
   mlg.create_output_for_logger(args.verbose, log_stdout=True)
   logger.info(mlg.string_begin_script())
   logger.info("Creating event plots in source directory "+args.directory)
-
   directory = args.directory
+  savefig = args.savefig
+  savefig_dir = args.savefig_dir
+
+  if savefig:
+    if savefig_dir is None:
+      # Use simulation output directory by default
+      plot_dir = directory
+    else:
+      # Use specified savefig_dir
+      plot_dir = savefig_dir
+  else:
+    pass
+
+  
   plot_core_positions(directory)
   plot_time_map(directory, simulator=args.sim)
   plot_traces_all_levels(directory, t_0_shift=False)
