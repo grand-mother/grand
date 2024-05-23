@@ -46,11 +46,19 @@ def manage_args():
         help="Simulation output data directory in GRANDROOT format."
     )
     parser.add_argument(
+<<<<<<< HEAD
         "--savefig_dir",
         type=str,
         default=None,
         help="Directory to save figures. Defaults to simulation output directory if not specified."
     )
+=======
+      "--savefig_dir",
+      type=str,
+      default=None,
+      help="Directory to save figures. Defaults to simulation output directory if not specified."
+     )
+>>>>>>> 98d429ba3b61984c70c2aff8c050d6922c6d2e0f
     parser.add_argument(
         "--verbose",
         choices=["debug", "info", "warning", "error", "critical"],
@@ -71,6 +79,10 @@ def manage_args():
     # retrieve argument
     return parser.parse_args()
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 98d429ba3b61984c70c2aff8c050d6922c6d2e0f
 def plot_core_positions(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
 
@@ -119,7 +131,7 @@ def plot_core_positions(directory, t_0_shift=False):
   ax1.set_ylabel("Y (westing)(m)")  
   plt.tight_layout()
   if(args.savefig):
-    plt.savefig(f"{plot_dir}/CorePositions_{myrun}.png")
+    plt.savefig(f"{plot_dir}/plots/CorePositions_{myrun}.png")
     plt.close(fig)
   else: 
     plt.show()
@@ -316,7 +328,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
         plt.tight_layout()
         if(args.savefig):
-          plt.savefig(f"{plot_dir}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+          plt.savefig(f"{plot_dir}/plots/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
           plt.close(fig)
         else: 
           plt.show()
@@ -453,7 +465,7 @@ def plot_time_map(directory, simulator=None):
 
       plt.tight_layout()
       if(args.savefig):
-        plt.savefig(f"{plot_dir}/TimeMap_{run_number}_{event_number}.png")
+        plt.savefig(f"{plot_dir}/plots/TimeMap_{run_number}_{event_number}.png")
         plt.close(fig)
       else: 
          plt.show()
@@ -517,7 +529,7 @@ def plot_raws(directory):
       
       plt.tight_layout()
       if(args.savefig):
-         plt.savefig(f"{plot_dir}/rawtrace_{du}.png")
+         plt.savefig(f"{plot_dir}/plots/rawtrace_{du}.png")
          plt.close()
       else: 
          plt.show()
@@ -531,6 +543,7 @@ if __name__ == "__main__":
   mlg.create_output_for_logger(args.verbose, log_stdout=True)
   logger.info(mlg.string_begin_script())
   logger.info("Creating event plots in source directory "+args.directory)
+<<<<<<< HEAD
 
   # change plot directory if specified
   if args.savefig:
@@ -543,7 +556,23 @@ if __name__ == "__main__":
   else:
     pass
 
+=======
+>>>>>>> 98d429ba3b61984c70c2aff8c050d6922c6d2e0f
   directory = args.directory
+  savefig = args.savefig
+  savefig_dir = args.savefig_dir
+
+  if savefig:
+    if savefig_dir is None:
+      # Use simulation output directory by default
+      plot_dir = directory
+    else:
+      # Use specified savefig_dir
+      plot_dir = savefig_dir
+  else:
+    pass
+
+  
   plot_core_positions(directory)
   plot_time_map(directory, simulator=args.sim)
   plot_traces_all_levels(directory, t_0_shift=False)
