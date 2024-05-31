@@ -561,7 +561,7 @@ class Event:
                         self.tshower = None
 
             # If self.t(sim)shower was successfully initialised
-            if (simshower and self.tsimshower is not None) or (not simshower and self.thower is not None):
+            if (simshower and self.tsimshower is not None) or (not simshower and self.tshower is not None):
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(simshower)
                 if ret:
