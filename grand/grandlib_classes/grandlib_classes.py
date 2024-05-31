@@ -481,7 +481,7 @@ class Event:
                     if tvoltage := self.file_tvoltage.Get("tvoltage"):
                         self.tvoltage = TVoltage(_tree=tvoltage)
                     else:
-                        print("No Voltage tree. Voltage information will not be available.")
+                        # print("No Voltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
                         self.tvoltage = None
 
@@ -492,19 +492,20 @@ class Event:
                     if ret:
                         print("Voltage information loaded.")
                     else:
-                        print("No Voltage tree. Voltage information will not be available.")
+                        # print("No Voltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
                         self.tvoltage = None
 
-            # Use trawvoltage tree
-            else:
+            # Use trawvoltage tree if requested or tvoltage tree not found
+            if use_trawvoltage or self.tvoltage==None:
                 # If initialising trees requested
                 if init_trees:
                     # Check the Voltage tree existence
                     if tvoltage := self.file_tvoltage.Get("trawvoltage"):
                         self.tvoltage = TRawVoltage(_tree=tvoltage)
+                        use_trawvoltage = True
                     else:
-                        print("No TRawVoltage tree. Voltage information will not be available.")
+                        print("No Voltage or TRawVoltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
                         self.tvoltage = None
 
@@ -515,7 +516,7 @@ class Event:
                     if ret:
                         print("Voltage information (from TRawVoltage) loaded.")
                     else:
-                        print("No TRawVoltage tree. Voltage information will not be available.")
+                        print("No Voltage or TRawVoltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
                         self.tvoltage = None
 
