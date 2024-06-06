@@ -236,8 +236,8 @@ class Database:
                 .all()
 
         for record in file:
-            logger.debug(f"file {record.file.filename} found in repository {record.repository.repository}")
-            result.append([record.file.filename, record.repository.repository])
+            logger.debug(f"file {record.file.filename} found in repository {record.repository.repository} at path {record.file_location.path}")
+            result.append([record.file.filename, record.repository.repository, record.file_location.path, record.file.id_file])
         return result
 
     ## @brief For parameter <param> of value <value> in table <table> this function will check if the param is a foreign key and if yes it will
