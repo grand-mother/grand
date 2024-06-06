@@ -32,7 +32,7 @@ source env/setup.sh
 cd /pbs/home/p/prod_grand/scripts/transfers
 
 
-
+notify=0
 for file in "$@"
 do
 	echo "converting ${file} to GrandRoot"
@@ -51,6 +51,9 @@ do
 	# Convert file
 	${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
 	conv_status=$?
+	if [ "$conv_status" -ne 0 ]; then
+	  notify=1
+	fi
 	echo $conv_status >> ${logfile}
 	# Register conversion result into the database
 	python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
@@ -58,3 +61,6 @@ do
 	python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root
 done
 
+if [ "$notify" -ne "0" ]; then
+  echo "Error in files conversion : " $@ |   mail -s "Grand conversion error" fleg@lpnhe.in2p3.fr
+fi
