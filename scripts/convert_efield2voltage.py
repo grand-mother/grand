@@ -57,10 +57,15 @@ def manage_args():
         description="Calculation of DU response in volt for first event in Efield input file."
     )
     parser.add_argument(
-        "file",
-        help="Efield input data file in GRANDROOT format.",
-        type=argparse.FileType("r"),
+        "directory",
+        help="Simulation output data directory in GRANDROOT format.",
+        # type=argparse.FileType("r"),
     )
+    # parser.add_argument(
+    #     "file",
+    #     help="Efield input data file in GRANDROOT format.",
+    #     type=argparse.FileType("r"),
+    # )
     parser.add_argument(
         "--no_noise",
         action="store_false",
@@ -76,11 +81,17 @@ def manage_args():
     parser.add_argument(
         "-o",
         "--out_file",
-        default="",
+        default=None,
         help="output file in GRANDROOT format. If the file exists it is overwritten.",
-        required=True,
+        # required=True,
         # PB with option ???
         # type=argparse.FileType("w"),
+    )
+    parser.add_argument(
+        "-od",
+        "--out_directory",
+        default=None,
+        help="output directory in GRANDROOT format. If not given, is it the same as input directory",
     )
     parser.add_argument(
         "--verbose",
@@ -106,6 +117,30 @@ def manage_args():
         default=1.0,
         help="Increase size of signal with zero padding, with 1.2 the size is increased of 20%%. ",
     )
+    parser.add_argument(
+        "--target_duration_us",
+        type=float,
+        default=0,
+        help="Adujust (and override) padding factor in order to get a signal of the given duration, in us",
+    )    
+    parser.add_argument(
+        "--target_sampling_rate_mhz",
+        type=float,
+        default=0,
+        help="Target sampling rate of the data in Mhz",
+    ) 
+    parser.add_argument(
+        "--add_jitter_ns",
+        type=float,
+        default=0,
+        help="level of gaussian jitter (ns) to add to the trigger times",
+    )
+    parser.add_argument(
+        "--calibration_smearing_sigma",
+        type=float,
+        default=0,
+        help="Smear the stations amplitude calibrations with a gaussian centered in 1 and this input sigma",    
+    )      
     # retrieve argument
     return parser.parse_args()
 
@@ -124,6 +159,11 @@ if __name__ == "__main__":
     logger.info("Computing voltage from the input electric field.")
 
     args = manage_args()
+
+    # If no output directory given, define it as input directory
+    if args.out_directory is None:
+        args.out_directory = args.directory
+
     # define a handler for logger : standard only
     mlg.create_output_for_logger(args.verbose, log_stdout=True)
     logger.info(mlg.string_begin_script())
@@ -131,11 +171,15 @@ if __name__ == "__main__":
     seed = None if args.seed==-1 else args.seed
     logger.info(f"seed used for random number generator is {seed}.")
 
-    signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
+    # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
+    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor)
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
-
+    signal.params["resample_to_mhz"]=args.target_sampling_rate_mhz
+    signal.params["extend_to_us"]=args.target_duration_us
+    signal.params["calibration_smearing_sigma"]=args.calibration_smearing_sigma
+    signal.params["add_jitter_ns"]=args.add_jitter_ns
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
     signal.compute_voltage()    # saves automatically

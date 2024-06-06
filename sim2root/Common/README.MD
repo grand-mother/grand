@@ -45,6 +45,10 @@
     * [prim\_injpoint\_shc](#raw_root_trees.RawShowerTree.primary_inj_point_shc)
     * [prim\_inj\_alt\_shc](#raw_root_trees.RawShowerTree.primary_inj_alt_shc)
     * [prim\_inj\_dir\_shc](#raw_root_trees.RawShowerTree.primary_inj_dir_shc)
+    * [site](#raw_root_trees.RawShowerTree.site)
+    * [site_alt](#raw_root_trees.RawShowerTree.site_alt)
+    * [site_lon](#raw_root_trees.RawShowerTree.site_lon)
+    * [site_lat](#raw_root_trees.RawShowerTree.site_lat)
     * [atmos\_model](#raw_root_trees.RawShowerTree.atmos_model)
     * [atmos\_model\_param](#raw_root_trees.RawShowerTree.atmos_model_param)
     * [atmos\_altitude](#raw_root_trees.RawShowerTree.atmos_altitude)
@@ -886,7 +890,7 @@ refractivity for each altitude at atmos_altiude table
 def t_pre()
 ```
 
-Starting time of antenna data collection time window. The window starts at t0+t_pre, thus t_pre is usually negative.
+Starting time of antenna data collection time window. The window starts at t0-t_pre, thus t_pre is usually positive.
 
 <a id="raw_root_trees.RawEfieldTree.t_post"></a>
 

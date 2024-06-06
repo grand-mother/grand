@@ -1,4 +1,4 @@
-name: test_gr1
+name: /sps/grand/software/conda/grandlib_2304
 channels:
   - conda-forge
   - defaults
@@ -26,12 +26,13 @@ dependencies:
   - bzip2=1.0.8=h7f98852_4
   - c-ares=1.18.1=h7f98852_0
   - c-compiler=1.5.1=h166bdaf_0
-  - ca-certificates=2022.12.7=ha878542_0
+  - ca-certificates=2023.08.22=h06a4308_0
   - cairo=1.16.0=ha61ee94_1014
-  - certifi=2022.12.7=pyhd8ed1ab_0
+  - certifi=2023.7.22=py39h06a4308_0
   - cffi=1.15.1=py39he91dace_3
   - cfitsio=4.1.0=hd9d235c_0
   - charset-normalizer=2.1.1=pyhd8ed1ab_0
+  - cmake=3.22.1=h1fce559_0
   - colorama=0.4.6=pyhd8ed1ab_0
   - comm=0.1.2=pyhd8ed1ab_0
   - compilers=1.5.1=ha770c72_0
@@ -138,6 +139,7 @@ dependencies:
   - libtiff=4.4.0=h82bc61c_5
   - libtool=2.4.7=h27087fc_0
   - libuuid=2.32.1=h7f98852_1000
+  - libuv=1.44.2=h5eee18b_0
   - libwebp=1.2.4=h522a892_0
   - libwebp-base=1.2.4=h166bdaf_0
   - libxcb=1.13=h7f98852_1004
@@ -162,7 +164,7 @@ dependencies:
   - notebook-shim=0.2.2=pyhd8ed1ab_0
   - numba=0.56.4=py39h61ddf18_0
   - numpy=1.23.5=py39h3d75532_0
-  - openssl=3.0.7=h0b41bf4_2
+  - openssl=3.0.11=h7f8727e_2
   - packaging=23.0=pyhd8ed1ab_0
   - pandoc=2.19.2=h32600fe_1
   - pandocfilters=1.5.0=pyhd8ed1ab_0
@@ -201,6 +203,7 @@ dependencies:
   - requests=2.28.2=pyhd8ed1ab_0
   - rfc3339-validator=0.1.4=pyhd8ed1ab_0
   - rfc3986-validator=0.1.1=pyh9f0ad1d_0
+  - rhash=1.4.3=hdbd6064_0
   - root=6.26.10=py39h4661b88_1
   - root_base=6.26.10=py39h7695a35_1
   - scipy=1.10.0=py39h7360e5f_2
@@ -256,6 +259,11 @@ dependencies:
   - zlib=1.2.13=h166bdaf_4
   - zstd=1.5.2=h3eb15da_6
   - pip:
+      - appjar==0.94.0
+      - asdf==2.15.0
+      - asdf-standard==1.0.3
+      - asdf-transform-schemas==0.3.0
+      - asdf-unit-schemas==0.1.0
       - asteval==0.9.28
       - astroid==2.14.1
       - astropy==5.2.1
@@ -271,9 +279,11 @@ dependencies:
       - exceptiongroup==1.1.0
       - fonttools==4.38.0
       - future==0.18.3
+      - greenlet==2.0.2
       - h5py==3.8.0
       - iniconfig==2.0.0
       - isort==5.12.0
+      - jmespath==1.0.1
       - kiwisolver==1.4.4
       - lazy-object-proxy==1.9.0
       - lmfit==1.1.0
@@ -286,6 +296,7 @@ dependencies:
       - pathspec==0.11.0
       - pillow==9.4.0
       - pluggy==1.0.0
+      - psycopg2==2.9.6
       - py==1.11.0
       - pyerfa==2.0.0.1
       - pylint==2.16.1
@@ -293,6 +304,10 @@ dependencies:
       - pyparsing==3.0.9
       - pytest==7.2.1
       - scp==0.14.5
+      - semantic-version==2.10.0
+      - showerradio==1.0.0
+      - sqlalchemy==2.0.9
+      - sshtunnel==0.4.0
       - tokenize-rt==5.0.0
       - toml==0.10.2
       - tomli==2.0.1
@@ -300,4 +315,4 @@ dependencies:
       - uncertainties==3.1.7
       - uproot==5.0.2
       - wrapt==1.14.1
-prefix: /home/jcolley/miniconda3/envs/test_gr1
+prefix: /sps/grand/software/conda/grandlib_2304

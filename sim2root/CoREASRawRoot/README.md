@@ -1,11 +1,22 @@
 # Coreas to Raw Root Converter
+
 ## How to run just CoreasToRawRoot
-`python3 CoreasToRawRoot <directory with Coreas Sim>`
+### Convert Multiple Showers in a Directory
+To convert data from multiple CoREAS showers located in the same directory, use the following command:
+`python3 CoreasToRawRoot.py -d <path_to_directory>`
+The code will search for CoREAS .reas files in the specified directory and convert each of them into the GRANDROOT format.
+
+### Convert a Single CoREAS Shower
+To convert data from a single CoREAS shower, use the following command:
+`python3 CoreasToRawRoot.py --file <path_to_SIMxxxxxx.reas>`
+The code will convert the specified CoREAS simulation into GRANDROOT format.
+
 
 ## How to run the whole CoreasToRawRoot + sim2root + efield2voltage
-`python3 coreas_pipeline.py -d <directory with Coreas Sim>`
+`python3 coreas_pipeline.py -d <directory with Coreas Sim>`\
+optional: specify an output directory as well:\
+`python3 coreas_pipeline.py -d <directory with Coreas Sim> -o <output directory>`\
 
-**WARNING**: Currently, this only works when there is one shower per directory.
 
 ## Overview
 ### CoreasToRawRoot.py

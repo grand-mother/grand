@@ -14,8 +14,8 @@ Don't forget to initialize grand library before use it with script **env/setup.s
 
 .. code:: bash
    
-   $ pwd
-   .../grand
+   $ git clone https://github.com/grand-mother/grand.git
+   $ cd grand
    $ source env/setup.sh
 
 

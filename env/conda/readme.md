@@ -1,5 +1,9 @@
 # GRANDLIB env with conda
 
+## Frequent confusion
+
+The conda environment **does not contain GRANDLIB code**. The conda environment installs the necessary libraries, executables, initializes environment variables to correctly compile the C part of GRANLIB (gull and turtle), please [constraints to use grandlib](https://github.com/grand-mother/grand/wiki#constraints-to-use-grandlib) in GRANDLIB wiki.
+
 ## WARNING
 
  * A wifi connection is not recommended for this installation
@@ -13,7 +17,7 @@ You need to have conda command installed, the minimal package to have it is mini
 
 [CLI conda environnement](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
 
-conda cheatsheet PDF: file:///home/jcolley/T%C3%A9l%C3%A9chargements/conda-cheatsheet-1.pdf
+[Conda cheat sheet PDF](https://docs.conda.io/projects/conda/en/4.6.0/_downloads/52a95608c49671267e40c689e0bc00ca/conda-cheatsheet.pdf)
 
 ## Some conda commands
 
@@ -53,9 +57,11 @@ conda activate grandlib
 
 
 Initialize GRANDLIB package and GULL/TURTLE compilation, in 
-the root package, do 
+the root package, first clone the package grand
 
 ```
+git clone https://github.com/grand-mother/grand.git
+cd grand
 source env/setup.sh
 ```
 

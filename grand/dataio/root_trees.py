@@ -8,6 +8,7 @@ from logging import getLogger
 import sys
 import datetime
 import os
+from pathlib import Path
 
 import ROOT
 import numpy as np
@@ -16,12 +17,17 @@ import array
 
 from collections import defaultdict
 
+# Load the C++ macros for vector filling from numpy arrays
+ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
+
 # Conversion between numpy dtype and array.array typecodes
 numpy_to_array_typecodes = {np.dtype('int8'): 'b', np.dtype('int16'): 'h', np.dtype('int32'): 'i', np.dtype('int64'): 'q', np.dtype('uint8'): 'B', np.dtype('uint16'): 'H', np.dtype('uint32'): 'I', np.dtype('uint64'): 'Q', np.dtype('float32'): 'f', np.dtype('float64'): 'd', np.dtype('complex64'): 'F', np.dtype('complex128'): 'D', np.dtype('int16'): 'h'}
 # numpy_to_array_typecodes = {np.int8: 'b', np.int16: 'h', np.int32: 'i', np.int64: 'q', np.uint8: 'B', np.uint16: 'H', np.uint32: 'I', np.uint64: 'Q', np.float32: 'f', np.float64: 'd', np.complex64: 'F', np.complex128: 'D', "int8": 'b', "int16": 'h', "int32": 'i', "int64": 'q', "uint8": 'B', "uint16": 'H', "uint32": 'I', "uint64": 'Q', "float32": 'f', "float64": 'd', "complex64": 'F', "complex128": 'D'}
 
 # Conversion between C++ type and array.array typecodes
 cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q', 'unsigned char': 'B', 'unsigned short': 'H', 'unsigned int': 'I', 'unsigned long long': 'Q', 'float': 'f', 'double': 'd', 'string': 'u'}
+
+cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype('uint64'), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -47,15 +53,19 @@ class StdVectorList(MutableSequence):
 
     # vec_type = ""
 
-    def __init__(self, vec_type, value=[]):
+    def __init__(self, vec_type, value=[], sec_vec_type=None):
         """
         Args:
             vec_type: C++ type for the std::vector (eg. "float", "string", etc.)
             value: list with which to init the vector
+            sec_vec_type: second possible vector type to switch to. Needed in case of branch of specific name having two possible types due to changes in the hardware binary blob format and maitaining compatibility through such changes.
         """
         self._vector = ROOT.vector(vec_type)(value)
+        if sec_vec_type is not None:
+            self._sec_vector = ROOT.vector(sec_vec_type)()
         #: C++ type for the std::vector (eg. "float", "string", etc.)
         self.vec_type = vec_type
+        self.sec_vec_type = sec_vec_type
         # Basic type of the vector - different than vec_type in case of vector of vectors
         if "<" in self.vec_type:
             self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
@@ -81,14 +91,17 @@ class StdVectorList(MutableSequence):
         # If this is a vector of vectors, convert a subvector to list for the return
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[index])):
-                if self.ndim == 2:
-                    return list(self._vector[index])
-                elif self.ndim == 3:
-                    return [list(el) for el in self._vector[index]]
-                elif self.ndim == 4:
-                    return [list(el) for el1 in self._vector[index] for el in el1]
-                else:
-                    return self._vector[index]
+                try:
+                    return np.array(self._vector[index])
+                except:
+                    if self.ndim == 2:
+                        return list(self._vector[index])
+                    elif self.ndim == 3:
+                        return [list(el) for el in self._vector[index]]
+                    elif self.ndim == 4:
+                        return [list(el) for el1 in self._vector[index] for el in el1]
+                    else:
+                        return self._vector[index]
             else:
                 return self._vector[index]
         else:
@@ -128,36 +141,71 @@ class StdVectorList(MutableSequence):
 
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
-        # Python float is really a double, so for vector of floats it sometimes is not accepted (but why not always?)
-        if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
-            if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-            if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-            if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
-
-        # elif isinstance(value, np.ndarray):
-        #     # Fastest to convert this way to array.array, that is accepted properly by ROOT.vector()
-        #     value = array.array(numpy_to_array_typecodes[value.dtype], value.tobytes())
-        else:
-            value = list(value)
-
-        # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+    # function modified by Jelena to fix the negative issue, use at own risk
         try:
-            self._vector += value
-        except TypeError:
-            # Slow conversion to simple types. No better idea for now
-            if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
-                if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+            if isinstance(value, np.ndarray):
+                if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+            else:
+                if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
+                    if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                    if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                    if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                elif not isinstance(value, StdVectorList):
+                    value = list(value)
 
-            self._vector += value
+                # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+                try:
+                    if isinstance(value, StdVectorList):
+                        # ToDo: Maybe faster than +=, but... to be checked
+                        self._vector.assign(value._vector)
+                    else:
+                        self._vector += value
+                except TypeError:
+                    # Slow conversion to simple types. No better idea for now
+                    if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+
+                    self._vector += value
+
+        except OverflowError:
+            # Handle the OverflowError here, e.g., by logging a message or taking an appropriate action.
+            if isinstance(value, (list, np.ndarray)):
+                # Use signed integer types to allow for negative values
+                signed_type = 'l' if self.basic_vec_type.split()[-1] == "int" else self.basic_vec_type
+                if self.ndim == 1:
+                    value = array.array(signed_type, value)
+                if self.ndim == 2:
+                    value = [array.array(signed_type, el) for el in value]
+                if self.ndim == 3:
+                    value = [[array.array(signed_type, el1) for el1 in el] for el in value]
+            else:
+                value = list(value)
 
         return self
 
+    def switch_to_sec_vec_type(self):
+        """
+        Change the vector type to sec_vec_type. Expected to be ran only on branch creation.
+        """
+        self._vector = self._sec_vector
+        #: C++ type for the std::vector (eg. "float", "string", etc.)
+        self.vec_type = self.sec_vec_type
+        # Basic type of the vector - different than vec_type in case of vector of vectors
+        if "<" in self.vec_type:
+            self.basic_vec_type = self.vec_type.split("<")[-1].split(">")[0]
+        else:
+            self.basic_vec_type = self.vec_type
+        # The number of dimensions of this vector
+        self.ndim = self.vec_type.count("vector") + 1
+
 class StdVectorListDesc:
     """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
-    def __init__(self, vec_type):
-        self.factory = lambda: StdVectorList(vec_type)
+    def __init__(self, vec_type, sec_vec_type=None):
+        self.factory = lambda: StdVectorList(vec_type, sec_vec_type=sec_vec_type)
 
     def __set_name__(self, type, name):
         self.name = name
@@ -333,6 +381,20 @@ class DataTree:
     _modification_history: str = ""
     """Modification history - JSON"""
 
+    ## Unix creation datetime of the source tree; 0 s means no source
+    _source_datetime: datetime.datetime = None
+    """Unix creation datetime of the source tree; 0 s means no source"""
+    ## The tool used to generate this tree's values from another tree
+    _modification_software: str = ""
+    """The tool used to generate this tree's values from another tree"""
+    ## The version of the tool used to generate this tree's values from another tree
+    _modification_software_version: str = ""
+    """The version of the tool used to generate this tree's values from another tree"""
+    ## The analysis level of this tree
+    _analysis_level: int = 0
+    """The analysis level of this tree"""
+
+
     ## Fields that are not branches
     _nonbranch_fields = [
         "_nonbranch_fields",
@@ -471,6 +533,85 @@ class DataTree:
         # Update the property
         self._modification_history = val
 
+    @property
+    def source_datetime(self):
+        """Unix creation datetime of the source tree; 0 s means no source"""
+        # Convert from ROOT's TDatime into Python's datetime object
+        # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
+        return self._source_datetime
+
+    @source_datetime.setter
+    def source_datetime(self, val: datetime.datetime) -> None:
+        # Remove the existing datetime
+        self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
+
+        # If datetime was given
+        if type(val) == datetime.datetime:
+            val = int(val.timestamp())
+            val_dt = val
+        # If timestamp was given - this happens when initialising with self.assign_metadata()
+        elif type(val) == int:
+            val_dt = datetime.datetime.fromtimestamp(val)
+        else:
+            raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
+
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._source_datetime = val_dt
+
+    @property
+    def modification_software(self):
+        """The tool used to generate this tree's values from another tree"""
+        return self._modification_software
+
+    @modification_software.setter
+    def modification_software(self, val: str) -> None:
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
+        self._modification_software = val
+
+    @property
+    def modification_software_version(self):
+        """The tool used to generate this tree's values from another tree"""
+        return self._modification_software_version
+
+    @modification_software_version.setter
+    def modification_software_version(self, val: str) -> None:
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
+        # The meta field exists, change the value
+        else:
+            el.SetTitle(val)
+
+        self._modification_software_version = val
+
+    @property
+    def analysis_level(self):
+        """The analysis level of this tree"""
+        return self._analysis_level
+
+    @analysis_level.setter
+    def analysis_level(self, val: int) -> None:
+        # The meta field does not exist, add it
+        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
+            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
+        # The meta field exists, change the value
+        else:
+            el.SetVal(val)
+
+        self._analysis_level = val
+
     @classmethod
     def get_default_tree_name(cls):
         """Gets the default name of the tree of the class"""
@@ -500,7 +641,7 @@ class DataTree:
         for field in self.__dict__:
             if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
                 print("not set for", field)
-                
+
         self.__setattr__ = self.mod_setattr
 
     ## Return the iterable over self
@@ -557,9 +698,14 @@ class DataTree:
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
                     self._create_tree()
+
+                # Make the tree save itself in this file
+                self._tree.SetDirectory(self._file)
+
             else:
                 logger.info(f"creating tree {self._tree_name} {self._file}")
                 self._create_tree()
+
 
         self.assign_metadata()
 
@@ -775,6 +921,12 @@ class DataTree:
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         # ROOT vectors as StdVectorList
         elif type(value) == StdVectorList or type(value) == StdVectorListDesc:
+            # For two-type vectors, check if a switch to the second vector type is needed
+            if getattr(self, value_name).sec_vec_type is not None:
+                # If the second vector type is the type of the branch, switch to the second vector type
+                if self._tree.GetLeaf(branch_name) != None:
+                    if getattr(self, value_name).sec_vec_type in self._tree.GetLeaf(branch_name).GetTypeName():
+                        getattr(self, value_name).switch_to_sec_vec_type()
             # Create the branch
             if not set_branches:
                 self._tree.Branch(branch_name, getattr(self, value_name)._vector)
@@ -786,7 +938,7 @@ class DataTree:
                     self._tree.SetBranchAddress(branch_name, getattr(self, value_name)._vector)
                 except:
                     # logger.warning(f"Could not find branch {value_name[1:]} in tree {self.tree_name}. This branch will not be filled.")
-                    logger.warning(f"Could not find branch {branch_name} in tree {self.tree_name}. This branch will not be filled.")
+                    logger.info(f"Could not find branch {branch_name} in tree {self.tree_name}. This branch will not be filled.")
         elif type(value) == StdString:
             # Create the branch
             if not set_branches:
@@ -820,10 +972,14 @@ class DataTree:
             if field[0] == "_": field_name=field[1:]
             # print(field, self.__dataclass_fields__[field])
             # Read the TTree branch
-            u = getattr(self._tree, field_name)
-            # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
-            # Assign the TTree branch value to the class field
-            setattr(self, field_name, u)
+            try:
+                u = getattr(self._tree, field_name)
+                # print("*", field[1:], self.__dataclass_fields__[field].name, u, type(u), id(u))
+            except:
+                logger.info(f"Could not find {field_name} in tree {self.tree_name}. This field won't be assigned.")
+            else:
+                # Assign the TTree branch value to the class field
+                setattr(self, field_name, u)
 
     ## Create metadata for the tree
     def create_metadata(self):
@@ -833,6 +989,11 @@ class DataTree:
         self.comment = ""
         self.creation_datetime = datetime.datetime.utcnow()
         self.modification_history = ""
+        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+        self.source_datetime = datetime.datetime.fromtimestamp(0)
+        self.modification_software = ""
+        self.modification_software_version = ""
+        self.analysis_level = 0
 
     ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree
     def assign_metadata(self):
@@ -927,6 +1088,10 @@ class DataTree:
     def close_file(self):
         """Close the file associated to the tree"""
         self._file.Close()
+
+    def stop_using(self):
+        """Stop using this instance: remove it from the tree list"""
+        grand_tree_list.remove(self)
 
 
 ## A mother class for classes with Run values
@@ -1023,98 +1188,6 @@ class MotherEventTree(DataTree):
     # ToDo: it seems instances propagate this number among them without setting (but not the run number!). I should find why...
     event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
-    ## Unix creation datetime of the source tree; 0 s means no source
-    _source_datetime: datetime.datetime = None
-    """Unix creation datetime of the source tree; 0 s means no source"""
-    ## The tool used to generate this tree's values from another tree
-    _modification_software: str = ""
-    """The tool used to generate this tree's values from another tree"""
-    ## The version of the tool used to generate this tree's values from another tree
-    _modification_software_version: str = ""
-    """The version of the tool used to generate this tree's values from another tree"""
-    ## The analysis level of this tree
-    _analysis_level: int = 0
-    """The analysis level of this tree"""
-
-    @property
-    def source_datetime(self):
-        """Unix creation datetime of the source tree; 0 s means no source"""
-        # Convert from ROOT's TDatime into Python's datetime object
-        # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
-        return self._source_datetime
-
-    @source_datetime.setter
-    def source_datetime(self, val: datetime.datetime) -> None:
-        # Remove the existing datetime
-        self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
-
-        # If datetime was given
-        if type(val) == datetime.datetime:
-            val = int(val.timestamp())
-            val_dt = val
-        # If timestamp was given - this happens when initialising with self.assign_metadata()
-        elif type(val) == int:
-            val_dt = datetime.datetime.fromtimestamp(val)
-        else:
-            raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
-
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
-        # The meta field exists, change the value
-        else:
-            el.SetVal(val)
-
-        self._source_datetime = val_dt
-
-    @property
-    def modification_software(self):
-        """The tool used to generate this tree's values from another tree"""
-        return self._modification_software
-
-    @modification_software.setter
-    def modification_software(self, val: str) -> None:
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
-        # The meta field exists, change the value
-        else:
-            el.SetTitle(val)
-
-        self._modification_software = val
-
-    @property
-    def modification_software_version(self):
-        """The tool used to generate this tree's values from another tree"""
-        return self._modification_software_version
-
-    @modification_software_version.setter
-    def modification_software_version(self, val: str) -> None:
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
-        # The meta field exists, change the value
-        else:
-            el.SetTitle(val)
-
-        self._modification_software_version = val
-
-    @property
-    def analysis_level(self):
-        """The analysis level of this tree"""
-        return self._analysis_level
-
-    @analysis_level.setter
-    def analysis_level(self, val: int) -> None:
-        # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
-            self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
-        # The meta field exists, change the value
-        else:
-            el.SetVal(val)
-
-        self._analysis_level = val
-
     def __post_init__(self):
         super().__post_init__()
 
@@ -1125,16 +1198,16 @@ class MotherEventTree(DataTree):
 
         self.create_branches()
 
-    ## Create metadata for the tree
-    def create_metadata(self):
-        """Create metadata for the tree"""
-        # First add the medatata of the mother class
-        super().create_metadata()
-        # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
-        self.source_datetime = datetime.datetime.fromtimestamp(0)
-        self.modification_software = ""
-        self.modification_software_version = ""
-        self.analysis_level = 0
+    # ## Create metadata for the tree
+    # def create_metadata(self):
+    #     """Create metadata for the tree"""
+    #     # First add the medatata of the mother class
+    #     super().create_metadata()
+    #     # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
+    #     self.source_datetime = datetime.datetime.fromtimestamp(0)
+    #     self.modification_software = ""
+    #     self.modification_software_version = ""
+    #     self.analysis_level = 0
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
@@ -1159,6 +1232,8 @@ class MotherEventTree(DataTree):
         """Add proper friends to this tree"""
         # Create the indices
         self.build_index("run_number", "event_number")
+        # For now, do not add friends
+        return 0
 
         # Add the Run tree as a friend if exists already
         loc_vars = dict(locals())
@@ -1375,6 +1450,11 @@ class MotherEventTree(DataTree):
         else:
             return None
 
+    def get_dus_indices_in_run(self, trun):
+        """Gets an array of the indices of DUs of the current event in the TRun tree"""
+
+        return np.nonzero(np.isin(np.asarray(trun.du_id), np.asarray(self.du_id)))[0]
+
 
 ## A class wrapping around a TTree holding values common for the whole run
 @dataclass
@@ -1485,9 +1565,6 @@ class TRunVoltage(MotherRunTree):
     ## Nominal trace length in units of samples
     trace_length: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
     """Nominal trace length in units of samples"""
-    ## Nominal trigger position in the trace in unit of samples
-    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
-    """Nominal trigger position in the trace in unit of samples"""
     ## ADC sampling frequency in MHz
     adc_sampling_frequency: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """ADC sampling frequency in MHz"""
@@ -1718,19 +1795,19 @@ class TADC(MotherEventTree):
     post_coincidence_window_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
 
     gain_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    integration_time_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>","vector<unsigned char>"))
     offset_correction_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     base_maximum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     base_minimum_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
 
     signal_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
     noise_threshold_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
-    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    tper_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
+    tprev_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
+    ncmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
+    tcmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
     qmax_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
-    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    ncmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>", "vector<unsigned char>"))
     qmin_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
 
     ## ?? What is it? Some kind of the adc trace offset?
@@ -1741,6 +1818,93 @@ class TADC(MotherEventTree):
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<short>>"))
     """ADC traces for channels (0,1,2,3)"""
 
+    ## PPS-ID
+    pps_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """PPS-ID"""
+
+    ## FPGA temperature
+    fpga_temp: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """FPGA temperature"""
+
+    ## ADC temperature
+    adc_temp: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """ADC temperature"""
+
+    ## Hardware ID
+    hardware_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """Hardware ID"""
+
+    ## Trigger status
+    trigger_status: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger status"""
+
+    ## Trigger DDR storage
+    trigger_ddr_storage: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger DDR storage"""
+
+    ## Data format version
+    data_format_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Data format version"""
+
+    ## ADAQ version
+    adaq_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADAQ version"""
+
+    ## DUDAQ version
+    dudaq_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """DUDAQ version"""
+
+    ## Trigger selection: ch0&ch1&ch2
+    trigger_pattern_ch0_ch1_ch2: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Trigger selection: ch0&ch1&ch2"""
+
+    ## Trigger selection: ch0&ch1&~ch2
+    trigger_pattern_ch0_ch1_notch2: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Trigger selection: ch0&ch1&~ch2"""
+
+    ## Trigger selection: 20 Hz
+    trigger_pattern_20Hz: StdVectorListDesc = field(default=StdVectorListDesc("bool"))
+    """Trigger selection: 20 Hz"""
+
+    ## External pulse trigger period
+    trigger_external_test_pulse_period: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    """External pulse trigger period"""
+
+    ## GPS seconds since Sunday 00:00
+    gps_sec_sun: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
+    """GPS seconds since Sunday 00:00"""
+
+    ## GPS week number
+    gps_week_num: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS week number"""
+
+    ## GPS receiver mode
+    gps_receiver_mode: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS receiver mode"""
+
+    ## GPS disciplining mode
+    gps_disciplining_mode: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS disciplining mode"""
+
+    ## GPS self-survey progress
+    gps_self_survey: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS self-survey progress"""
+
+    ## GPS minor alarms
+    gps_minor_alarms: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS minor alarms"""
+
+    ## GPS GNSS decoding
+    gps_gnss_decoding: StdVectorListDesc = field(default=StdVectorListDesc("unsigned char"))
+    """GPS GNSS decoding"""
+
+    ## GPS disciplining activity
+    gps_disciplining_activity: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """GPS disciplining activity"""
+
+    ## Notch filter number
+    notch_filters_no_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
+    """Notch filter number"""
 
 @dataclass
 ## The class for storing voltage traces and associated values for each event
@@ -1780,6 +1944,9 @@ class TRawVoltage(MotherEventTree):
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Same as event_type, but event_type could consist of different triggered DUs"""
+    ## Trigger position in the trace, in samples
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""
     ## Atmospheric temperature (read via I2C)
     atm_temperature: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     """Atmospheric temperature (read via I2C)"""
@@ -1886,6 +2053,9 @@ class TVoltage(MotherEventTree):
     ## Same as event_type, but event_type could consist of different triggered DUs
     trigger_flag: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Same as event_type, but event_type could consist of different triggered DUs"""
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""    
+    
     ## Acceleration of the antenna in (x,y,z) in m/s2
     du_acceleration: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """Acceleration of the antenna in (x,y,z) in m/s2"""
@@ -1939,6 +2109,10 @@ class TEfield(MotherEventTree):
     ## Nanoseconds of the trigger for this DU
     du_nanoseconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
     """Nanoseconds of the trigger for this DU"""
+
+    trigger_position: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Trigger position in the trace, in samples"""
+
 
     ## Efield traces for antenna arms (x,y,z)
     trace: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
@@ -2281,11 +2455,14 @@ def set_vector_of_vectors(value, vec_type, variable, variable_name):
 class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
-    def __init__(self, dir_name: str, recursive: bool = False):
+    def __init__(self, dir_name: str, recursive: bool = False, analysis_level: int = -1, sim2root_structure: bool = True):
         """
         @param dir_name: the name of the directory to be scanned
         @param recursive: if to scan the directory recursively
+        @param analysis_level: which analysis level files to read. -1 means max
         """
+
+        self.analysis_level = analysis_level
 
         # Make the path absolute
         self.dir_name = os.path.abspath(dir_name)
@@ -2296,8 +2473,21 @@ class DataDirectory:
         # Get the file handle list
         self.file_handle_list = self.get_list_of_files_handles()
 
+        if sim2root_structure:
+            self.init_sim2root_structure()
+        else:
+            logger.warning("Sorry, non sim2root directories not supported yet")
+
         # Create chains and set them as attributes
-        self.create_chains()
+        # self.create_chains()
+
+    def __getattr__(self, name):
+        """For non-existing tree files or tree parameters, return None instead of rising an exception"""
+        trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
+        if any(s in name for s in trees_to_check):
+            return None
+        else:
+            raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
 
     def get_list_of_files(self, recursive: bool = False):
         """Gets list of files in the directory"""
@@ -2311,6 +2501,68 @@ class DataDirectory:
             file_handle_list.append(DataFile(filename))
 
         return file_handle_list
+
+    # Init the instance with sim2root structure files
+    def init_sim2root_structure(self):
+
+        # Loop through groups of files with tree types expected in the directory
+        for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
+            # Assign the list of files with specific tree type to the class instance
+            setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            max_level = -1
+            for (l, f) in getattr(self, flistname).items():
+                # Assign the file with the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[:-1]}_l{l}", f)
+                # Assign the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
+                if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
+                    max_level = l
+                    # Assign the file with the highest or requested analysis level as default to the class instance
+                    # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
+                    setattr(self, f"{flistname[:-1]}", f)
+                    # Assign the tree with the highest or requested analysis level as default to the class instance
+                    setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
+
+        # tree_types = set()
+        # # Loop through the list of file handles
+        # for i, f in enumerate(self.file_handle_list):
+        #
+        #
+        #     # Collect the tree types
+        #     tree_types.update(*f.tree_types.keys())
+        #
+        #     # Select the highest analysis level trees for each class and store these trees as main attributes
+        #     for key in f.tree_types:
+        #         if key == "run":
+        #             setattr(self, "trun", f.dict_of_trees["trun"])
+        #         else:
+        #             setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
+        #             if self.analysis_level>-1:
+        #
+        #
+        #
+        #             max_analysis_level = -1
+        #             for key1 in f.tree_types[key].keys():
+        #                 el = f.tree_types[key][key1]
+        #                 chain_name = el["name"]
+        #                 if "analysis_level" in el:
+        #                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
+        #                         max_analysis_level = el["analysis_level"]
+        #                         max_anal_chain_name = chain_name
+        #
+        #                         setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
+        #
+        #                 if chain_name not in chains_dict:
+        #                     chains_dict[chain_name] = ROOT.TChain(chain_name)
+        #                 chains_dict[chain_name].Add(self.file_list[i])
+        #
+        #                 # In case there is no analysis level info in the tree (old trees), just take the last one
+        #                 if max_analysis_level == -1:
+        #                     max_anal_chain_name = el["name"]
+        #
+        #             tree_class = getattr(thismodule, el["type"])
+        #             setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
+
 
     def create_chains(self):
         chains_dict = {}
@@ -2344,7 +2596,8 @@ class DataDirectory:
                         if max_analysis_level == -1:
                             max_anal_chain_name = el["name"]
 
-                    setattr(self, "t" + key, chains_dict[max_anal_chain_name])
+                    tree_class = getattr(thismodule, el["type"])
+                    setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
 
     def print(self, recursive=True):
         """Prints all the information about all the data"""
@@ -2374,12 +2627,20 @@ class DataFile:
 
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""
+
+        # Need to init here, so that different instances do not share the same data
+        self.dict_of_trees = {}
+        self.list_of_trees = []
+        self.tree_types = defaultdict(dict)
+
         # If a string given, open the file
         if type(filename) is str:
             f = ROOT.TFile(filename)
             self.f = f
+            self.filename = filename
         elif type(filename) is ROOT.TFile:
             self.f = filename
+            self.filename = self.f.GetName()
         else:
             raise TypeError(f"Unsupported type {type(filename)} as a filename")
 
@@ -2400,42 +2661,56 @@ class DataFile:
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
+        self.tree_instances = []
+        # ToDo: make sure that this is for the instance, not the class
+        self.max_tree_instance = None
         for key in self.tree_types:
-            if key == "run":
-                setattr(self, "trun", self.dict_of_trees["trun"])
-            else:
-                max_analysis_level = -1
-                # Loop through trees in the current tree type
-                for key1 in self.tree_types[key].keys():
-                    el = self.tree_types[key][key1]
-                    tree_class = getattr(thismodule, el["type"])
-                    tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
-                    # If there is analysis level info in the tree, attribute each level and max level
-                    if "analysis_level" in el:
-                        if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-                            max_analysis_level = el["analysis_level"]
-                            max_anal_tree_name = el["name"]
-                            max_anal_tree_type = el["type"]
-                        setattr(self, tree_class.get_default_tree_name() + "_" + str(el["analysis_level"]), tree_instance)
-                    # In case there is no analysis level info in the tree (old trees), just take the last one
-                    elif max_analysis_level == -1:
+            max_analysis_level = -1
+            # Loop through trees in the current tree type
+            for key1 in self.tree_types[key].keys():
+                el = self.tree_types[key][key1]
+                tree_class = getattr(thismodule, el["type"])
+                tree_instance = tree_class(_tree_name=self.dict_of_trees[el["name"]])
+                tree_instance.file = self.f
+                self.tree_instances.append(tree_instance)
+                # If there is analysis level info in the tree, attribute each level and max level
+                if "analysis_level" in el:
+                    if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
+                        max_analysis_level = el["analysis_level"]
                         max_anal_tree_name = el["name"]
                         max_anal_tree_type = el["type"]
+                        self.max_tree_instance = tree_instance
+                    setattr(self, tree_class.get_default_tree_name() + "_l" + str(el["analysis_level"]), tree_instance)
+                # In case there is no analysis level info in the tree (old trees), just take the last one
+                elif max_analysis_level == -1:
+                    max_anal_tree_name = el["name"]
+                    max_anal_tree_type = el["type"]
 
-                    traces_lenghts = self._get_traces_lengths(tree_instance)
-                    if traces_lenghts is not None:
-                        el["traces_lengths"] = traces_lenghts
+                traces_lenghts = self._get_traces_lengths(tree_instance)
+                if traces_lenghts is not None:
+                    el["traces_lengths"] = traces_lenghts
 
-                    dus = self._get_list_of_all_used_dus(tree_instance)
-                    if dus is not None:
-                        el["dus"] = dus
+                dus = self._get_list_of_all_used_dus(tree_instance)
+                if dus is not None:
+                    el["dus"] = dus
 
-                    el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
+                el["mem_size"], el["disk_size"] = tree_instance.get_tree_size()
 
-                tree_class = getattr(thismodule, max_anal_tree_type)
-                tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
-                setattr(self, tree_class.get_default_tree_name(), tree_instance)
-                self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+            # tree_class = getattr(thismodule, max_anal_tree_type)
+            # tree_instance = tree_class(_tree_name=self.dict_of_trees[max_anal_tree_name])
+            # tree_instance.file = self.f
+            # setattr(self, tree_class.get_default_tree_name(), tree_instance)
+            setattr(self, tree_class.get_default_tree_name(), self.max_tree_instance)
+            # setattr(self, tree_class.get_default_tree_name(), getattr(self, tree_class.get_default_tree_name() + "_l" + str(max_analysis_level)))
+            self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
+
+    def __enter__(self):
+        """ enter() for DataFile as context manager"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """On exiting DataFile as context manager call close function"""
+        self.close()
 
     def print(self):
         """Prints the information about the TTrees in the file"""
@@ -2545,3 +2820,8 @@ class DataFile:
         # Select the highest analysis level trees for each class and store these trees as main attributes
         pass
 
+    def close(self):
+        """Close the file and the belonging trees"""
+        for t in self.tree_instances:
+            t.stop_using()
+        self.f.Close()

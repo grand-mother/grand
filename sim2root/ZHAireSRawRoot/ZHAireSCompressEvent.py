@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
-import tarfile    #for ...you wont believe it...taring
+import tarfile    #for ...you wont believe it...taring the files
 import logging    #for...you guessed it...logging
 import argparse   #for command line parsing
 import glob       #for listing files in directories
@@ -26,19 +26,32 @@ def ZHAireSCompressEvent(eventdir, action):
             archive: compress + delete,
             compress: store all necessary output files on a tgz
             uncompress or expand: uncompress the tgz
-            delete: erese all the necessary files. Works only if a tgz is present (to be sure you are not deleting with no backup)
+            delete: erese all the simulation files. Works only if a tgz is present (to be sure you are not deleting with no backup)
             clean: erase uneeded files (ZHAireS runner auxiliary files)
             help: show what each action does
     
     Returns:
-        None
+        nothing if completed
+        0 if no action taken
+        -1 if error
     '''
     #provide alias
     if(action=="expand"):
       action="uncompress"
       
-    if(action=="compress" or action=="archive" or action=="delete"):
+    #Check if it is not compressed already  
+    if(action=="compress" or action=="archive" ):       
       
+      # Find all files with .tgz extension in the current directory
+      tgzs = glob.glob(eventdir+"/*.tgz")
+      # Check if or more tgz files exists
+      if len(tgzs) >= 1:
+        # Get the file name without extension
+        logging.critical("Error: A tgz file is already present. Are you sure the event is not already compressed?. Cannot continue")
+        return 0  
+      
+      
+    if(action=="compress" or action=="archive" or action=="delete"):     
       # Find all files with .idf extension in the current directory
       idfs = glob.glob(eventdir+"/*.idf")
       # Check if only one file exists
@@ -129,7 +142,7 @@ def ZHAireSCompressEvent(eventdir, action):
       #here gos the compess things
       tarfilename=eventdir+ "/" + JobName +".tgz"
       
-      #if the file exist, then we dont continue
+      #if the file exist, then we extract
       if os.path.isfile(tarfilename) :
           tar = tarfile.open(tarfilename,"r:gz")  
           tar.extractall(path=eventdir)
