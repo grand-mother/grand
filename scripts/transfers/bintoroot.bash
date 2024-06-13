@@ -7,6 +7,9 @@ register_convertion='/pbs/home/p/prod_grand/scripts/transfers/register_convert.p
 # path to script to register root file into the DB
 register_root='/pbs/home/p/prod_grand/softs/grand/granddb/register_file_in_db.py'
 config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
+sps_path='/sps/grand/'
+irods_path='/grand/home/trirods/'
+
 # Get tag and database file to use
 while getopts ":d:g:" option; do
   case $option in
@@ -55,6 +58,13 @@ do
 	  notify=1
 	fi
 	echo $conv_status >> ${logfile}
+	# Put GrandRoot file into irods
+	sfile=${dest}/${filename%.*}.root
+	ifile=${sfile/$sps_path/$irods_path}
+	ipath=${ifile%/*}
+	imkdir -p "$ipath"
+	iput "$sfile" "$ifile"
+
 	# Register conversion result into the database
 	python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
 	# Register root file into db
