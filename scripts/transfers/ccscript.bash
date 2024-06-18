@@ -8,6 +8,7 @@
 bin2root='/pbs/home/p/prod_grand/scripts/transfers/bintoroot.bash'
 register_transfers='/pbs/home/p/prod_grand/scripts/transfers/register_transfer.bash'
 refresh_mat_script='/pbs/home/p/prod_grand/scripts/transfers/refresh_mat_views.bash'
+update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
 gtot_option="-g1"
 
@@ -123,7 +124,8 @@ if [ "$convjobs" = "" ]; then
   dep=""
 else
   dep="--dependency=afterany${convjobs}"
-  #finally refresh the materialized views in the database
+  #finally refresh the materialized views in the database and the update of monitoring
   sbatch ${dep} -t 0-00:10 -n 1 -J refresh_mat -o ${submit_dir}/slurm-refresh_mat --mem 1G ${refresh_mat_script} --mail-user=${mail_user} --mail-type=${mail_type}
+  sbatch ${dep} -t 0-00:30 -n 1 -J update_webmonitoring -o ${submit_dir}/slurm-update_webmonitoring --mem 12G ${update_web_script} -mail-user=${mail_user} --mail-type=${mail_type}
 fi
 

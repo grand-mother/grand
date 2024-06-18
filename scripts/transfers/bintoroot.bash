@@ -63,7 +63,7 @@ do
 	ifile=${sfile/$sps_path/$irods_path}
 	ipath=${ifile%/*}
 	imkdir -p "$ipath"
-	iput "$sfile" "$ifile"
+	iput -f "$sfile" "$ifile"
 
 	# Register conversion result into the database
 	python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
