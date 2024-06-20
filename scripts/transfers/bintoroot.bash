@@ -38,43 +38,42 @@ cd /pbs/home/p/prod_grand/scripts/transfers
 notify=0
 for file in "$@"
 do
-	echo "converting ${file} to GrandRoot"
-	filename=$(basename $file)
-	tmp=${filename#*_}
-	dateobs=${tmp:0:8}
-	dest="${root_dest}/${dateobs:0:4}/${dateobs:4:2}"
-	if [ ! -d $dest ];then
-		mkdir -p $dest >/dev/null 2>&1
-	fi
-	dirlogs=${root_dest}/../logs
-	logfile=${dirlogs}/bin2root-${filename%.*}
-	if [ ! -d $dirlogs  ];then
-		mkdir -p $dirlogs >/dev/null 2>&1
-	fi
-	# Convert file
-	${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
-	conv_status=$?
-	if [ "$conv_status" -ne 0 ]; then
-	  notify=1
-	fi
-	echo $conv_status >> ${logfile}
-	# Put GrandRoot file into irods
-	sfile=${dest}/${filename%.*}.root
-	ifile=${sfile/$sps_path/$irods_path}
-	ipath=${ifile%/*}
-	echo "imkdir -p $ipath" >> ${logfile}
-  imkdir -p $ipath >> ${logfile}
+  echo "converting ${file} to GrandRoot"
+  filename=$(basename $file)
+  tmp=${filename#*_}
+  dateobs=${tmp:0:8}
+  dest="${root_dest}/${dateobs:0:4}/${dateobs:4:2}"
+  if [ ! -d $dest ];then
+  	mkdir -p $dest >/dev/null 2>&1
+  fi
+  dirlogs=${root_dest}/../logs
+  logfile=${dirlogs}/bin2root-${filename%.*}
+  if [ ! -d $dirlogs  ];then
+  	mkdir -p $dirlogs >/dev/null 2>&1
+  fi
+  # Convert file
+  ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+  conv_status=$?
+  if [ "$conv_status" -ne 0 ]; then
+    notify=1
+  fi
+  echo $conv_status >> ${logfile}
+  # Put GrandRoot file into irods
+  sfile=${dest}/${filename%.*}.root
+  ifile=${sfile/$sps_path/$irods_path}
+  ipath=${ifile%/*}
+  echo "imkdir -p $ipath" >> ${logfile}
+  imkdir -p $ipath >> ${logfile} 2>&1
   echo "iput -f $sfile $ifile" >> ${logfile}
-  iput -f $sfile $ifile >> ${logfile}
+  iput -f $sfile $ifile >> ${logfile} 2>&1
   iput_status=$?
-  if [ "iput_status" -ne 0 ]; then
-	  notify=1
-	fi
-
-	# Register conversion result into the database
-	python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
-	# Register root file into db
-	python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root
+  if [ "$iput_status" -ne 0 ]; then
+    notify=1
+  fi
+  # Register conversion result into the database
+  python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
+  # Register root file into db
+  python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root
 done
 
 if [ "$notify" -ne "0" ]; then
