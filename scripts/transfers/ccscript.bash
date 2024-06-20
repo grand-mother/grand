@@ -19,6 +19,18 @@ nbfiles=3
 mail_user='fleg@lpnhe.in2p3.fr'
 mail_type='FAIL,TIME_LIMIT,INVALID_DEPEND'
 
+#Export some env to make irods works
+export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/centos-7-x86_64/oracle/12.2.0/instantclient/lib::/pbs/software/centos-7-x86_64/irods/4.3.1/lib:/pbs/software/centos-7-x86_64/irods/irods-externals/4.3.1/lib
+export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/bin:/opt/software/rfio-hpss/prod/bin:/pbs/software/centos-7-x86_64/oracle/12.2.0/instantclient/bin:/pbs/software/centos-7-x86_64/fs4/prod/bin:/usr/lib64/qt-3.3/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/pbs/software/centos-7-x86_64/suptools/prod/bin:/opt/ccin2p3/bin:/pbs/software/centos-7-x86_64/irods/utils:/pbs/software/centos-7-x86_64/irods/4.3.1/bin:.
+export _LMFILES_=/pbs/software/centos-7-x86_64/modules/modulefiles/DataManagement/irods/4.3.1
+export IRODS_PLUGINS_HOME=/pbs/software/centos-7-x86_64/irods/4.3.1/lib/plugins
+export MODULEPATH=/pbs/software/centos-7-x86_64/modules/modulefiles:/etc/modulefiles
+export LOADEDMODULES=DataManagement/irods/4.3.1
+export __MODULES_SHARE_PATH=/pbs/software/centos-7-x86_64/irods/utils:2:/pbs/software/centos-7-x86_64/irods/4.3.1/bin:2
+export TRIRODS_DATA_DIR=/grand/home/trirods/data
+export BASH_ENV=/usr/share/Modules/init/bash
+
+
 # manage call from remote restricted ssh command (extract opt parameters)
 # default args
 fullscriptpath=${BASH_SOURCE[0]}
@@ -86,7 +98,7 @@ fi
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
 echo "#!/bin/bash" > $outfile
 echo "$register_transfers -d $db -t $tag" >> $outfile
-jregid=$(sbatch -t 0-01:00 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/slurm-${submit_base_name}-register-transfer --mem 8G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
+jregid=$(sbatch -t 0-00:10 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/slurm-${submit_base_name}-register-transfer --mem 1G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
 jregid=$(echo $jregid |awk '{print $NF}')
 
 # List files to be converted and group them by bunchs of nbfiles

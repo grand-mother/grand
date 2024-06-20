@@ -62,8 +62,14 @@ do
 	sfile=${dest}/${filename%.*}.root
 	ifile=${sfile/$sps_path/$irods_path}
 	ipath=${ifile%/*}
-	imkdir -p "$ipath"
-	iput -f "$sfile" "$ifile"
+	echo "imkdir -p $ipath" >> ${logfile}
+  imkdir -p $ipath >> ${logfile}
+  echo "iput -f $sfile $ifile" >> ${logfile}
+  iput -f $sfile $ifile >> ${logfile}
+  iput_status=$?
+  if [ "iput_status" -ne 0 ]; then
+	  notify=1
+	fi
 
 	# Register conversion result into the database
 	python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
