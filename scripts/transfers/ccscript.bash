@@ -15,6 +15,9 @@ gtot_option="-g1"
 # number of files to group in same submission
 nbfiles=3
 
+#time required to run bin2root on one file
+bin2rootduration=15
+
 # Notification options
 mail_user='fleg@lpnhe.in2p3.fr'
 mail_type='FAIL,TIME_LIMIT,INVALID_DEPEND'
@@ -117,6 +120,7 @@ do
   ((i++))
 done
 
+jobtime=`date -d@$(($bin2rootduration*60*$nbfiles))  -u +%H:%M`
 convjobs=""
 # Launch convertion of files (but after the registration has finished)
 for j in  "${!listoffiles[@]}"
@@ -127,7 +131,7 @@ do
 	echo "$bin2root -g '$gtot_option' -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	jid=$(sbatch --dependency=afterany:${jregid} -t 0-01:00 -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 8G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
+	jid=$(sbatch --dependency=afterany:${jregid} -t $jobtime -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 2G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
   jid=$(echo $jid |awk '{print $NF}')
   convjobs=$convjobs":"$jid
 done
