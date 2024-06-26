@@ -89,6 +89,7 @@ fi
 root_dest=${db%/logs*}/GrandRoot/
 submit_dir=$(dirname "${db}")
 submit_base_name=s${tag}
+crap_dir=${db%/logs*}/raw/crap
 
 if [ ! -d $root_dest ];then
         	mkdir -p $root_dest >/dev/null 2>&1
@@ -96,7 +97,9 @@ fi
 if [ ! -d $submit_dir ];then
                 mkdir -p $submit_dir >/dev/null 2>&1
 fi
-
+if [ ! -d $crap_dir ];then
+                mkdir -p $crap_dir >/dev/null 2>&1
+fi
 # First register raw files transfers into the DB and get the id of the registration job
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
 echo "#!/bin/bash" > $outfile
@@ -110,14 +113,19 @@ j=0
 declare -A listoffiles
 for file in $(sqlite3 $db "select target from transfer,gfiles where gfiles.id=transfer.id and tag='${tag}' and transfer.success=1;")
 do
-  if [ "$((i % nbfiles))" -eq "0" ]; then
-    ((j++))
+  # We exclude small files (which are suposed to be crap)
+  fsize=$(stat -c%s "$file")
+  if [ "$fsize" -le "256" ];then
+      echo "$file too small ($fsize). Moved to $crap_dir/ and skipped."
+      mv "$file" "$crap_dir/"
+  else
+      if [ "$((i % nbfiles))" -eq "0" ]; then
+        ((j++))
+      fi
+      #add file to the list of files to be treated
+      listoffiles[$j]+=" ${file}"
+      ((i++))
   fi
-
-	#add file to the list of files to be treated
-	listoffiles[$j]+=" ${file}"
-
-  ((i++))
 done
 
 jobtime=`date -d@$(($bin2rootduration*60*$nbfiles))  -u +%H:%M`
@@ -131,7 +139,7 @@ do
 	echo "$bin2root -g '$gtot_option' -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	jid=$(sbatch --dependency=afterany:${jregid} -t $jobtime -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 2G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
+	jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 2G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
   jid=$(echo $jid |awk '{print $NF}')
   convjobs=$convjobs":"$jid
 done
@@ -142,6 +150,6 @@ else
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
   sbatch ${dep} -t 0-00:10 -n 1 -J refresh_mat -o ${submit_dir}/slurm-refresh_mat --mem 1G ${refresh_mat_script} --mail-user=${mail_user} --mail-type=${mail_type}
-  sbatch ${dep} -t 0-00:30 -n 1 -J update_webmonitoring -o ${submit_dir}/slurm-update_webmonitoring --mem 12G ${update_web_script} -mail-user=${mail_user} --mail-type=${mail_type}
+  sbatch ${dep} -t 0-01:00 -n 1 -J update_webmonitoring -o ${submit_dir}/slurm-update_webmonitoring --mem 12G ${update_web_script} -mail-user=${mail_user} --mail-type=${mail_type}
 fi
 
