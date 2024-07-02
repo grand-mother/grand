@@ -273,7 +273,7 @@ def read_long(pathLongFile):
     TODO: fix hillas_parameter - something's not working yet
     """
     with open(pathLongFile, mode="r") as file:
-        lines=file.readlines
+        lines=file.readlines()
 
 
     n_steps = int(lines[0].rstrip().split()[3])
