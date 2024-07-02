@@ -104,7 +104,7 @@ fi
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
 echo "#!/bin/bash" > $outfile
 echo "$register_transfers -d $db -t $tag" >> $outfile
-jregid=$(sbatch -t 0-00:10 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/slurm-${submit_base_name}-register-transfer --mem 1G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
+jregid=$(sbatch -t 0-00:10 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/slurm-${submit_base_name}-register-transfer --mem 1G --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
 jregid=$(echo $jregid |awk '{print $NF}')
 
 # List files to be converted and group them by bunchs of nbfiles
@@ -139,7 +139,7 @@ do
 	echo "$bin2root -g '$gtot_option' -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 2G ${outfile} --mail-user=${mail_user} --mail-type=${mail_type})
+	jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/slurm-${submit_base_name}-${j} --mem 2G --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
   jid=$(echo $jid |awk '{print $NF}')
   convjobs=$convjobs":"$jid
 done
@@ -149,7 +149,7 @@ if [ "$convjobs" = "" ]; then
 else
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
-  sbatch ${dep} -t 0-00:10 -n 1 -J refresh_mat -o ${submit_dir}/slurm-refresh_mat --mem 1G ${refresh_mat_script} --mail-user=${mail_user} --mail-type=${mail_type}
-  sbatch ${dep} -t 0-01:00 -n 1 -J update_webmonitoring -o ${submit_dir}/slurm-update_webmonitoring --mem 12G ${update_web_script} -mail-user=${mail_user} --mail-type=${mail_type}
+  sbatch ${dep} -t 0-00:10 -n 1 -J refresh_mat -o ${submit_dir}/slurm-refresh_mat --mem 1G --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
+  sbatch ${dep} -t 0-01:00 -n 1 -J update_webmonitoring -o ${submit_dir}/slurm-update_webmonitoring --mem 12G -mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
 fi
 

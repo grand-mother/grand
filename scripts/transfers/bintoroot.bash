@@ -71,9 +71,11 @@ do
     notify=1
   fi
   # Register conversion result into the database
-  python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}
+  echo "Register convertion" >> ${logfile}
+  python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
   # Register root file into db
-  python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root
+  echo "register file in database" >> ${logfile}
+  python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
 done
 
 if [ "$notify" -ne "0" ]; then
