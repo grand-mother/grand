@@ -45,6 +45,7 @@ clparser.add_argument("--target_duration_us",type=float,default=None,help="Aduju
 clparser.add_argument("--trigger_time_ns",type=float,default=None,help="Adujust the trace so that the maximum is at given ns from the begining of the trace")
 clparser.add_argument("--verbose", choices=["debug", "info", "warning", "error", "critical"],default="info", help="logger verbosity.")
 clparser.add_argument("-ss", "--star_shape", help="For star-shapes: create a separate run for every event", action='store_true')
+clparser.add_argument("-ef", "--events_per_file", help="How many events to hold in a single file", type=int, default=None)
 clargs = clparser.parse_args()
 
 mlg.create_output_for_logger(clargs.verbose, log_stdout=True)
@@ -152,7 +153,7 @@ def adjust_trigger(trace, CurrentT0s, TPre, TimeBinSize):
         logger.error("some elements needed to be shifted only up to the limt, tpre was too small")
         ShiftBins[mask] = int(-TPre / TimeBinSize)
 
-    # we cannot use use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
+    # we cannot use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
     # we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
 
     # TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.
@@ -193,6 +194,7 @@ def main():
 
     # Check if a directory was given as input
     if Path(clargs.file_dir_name[0]).is_dir():
+        # ToDo: add console flag for file order randomisation
         file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.rawroot"))
     # Check if the first file is a list (of files, hopefully)
     elif Path(clargs.file_dir_name[0]).is_file() and Path(clargs.file_dir_name[0]).suffix==".txt":
@@ -204,6 +206,12 @@ def main():
     if len(file_list)==0:
         print("No RawRoot files found in the input directory. Exiting.")
         exit(0)
+
+    # How many events were stored in current files
+    events_in_file = 1
+
+    # The name of the output directory
+    out_dir_name = ""
 
     # Loop through the files specified on command line
     # for file_num, filename in enumerate(clargs.filename):
@@ -253,11 +261,14 @@ def main():
             trawefield.t_pre=DesiredTpre
             trawefield.t_post=DesiredTpost
 
-            # If the first entry on the first file or dealing with star shape sim
+            if events_in_file==1:
+                start_event_number = trawshower.event_number
+
+            # If the first entry on the first file, or dealing with star shape sim
             if (file_num==0 and i==0) or clargs.star_shape:
 
                 # Overwrite the run number if specified on command line (only for the first event)
-                if (file_num==0 and i==0):
+                if file_num==0 and i==0:
                     run_number = ext_run_number if ext_run_number is not None else trawshower.run_number
                     start_run_number = run_number
                 # or increase it by one for star shapes
@@ -269,8 +280,8 @@ def main():
                 else:
                     site = clargs.site_name
 
-                # Init output trees in the proper directory (only for the first event)
-                if file_num==0 and i==0: out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, site, gt)
+                # Init output trees in the proper directory
+                if file_num==0 and i==0: out_dir_name = init_all_trees(clargs, trawshower.unix_date, run_number, site, gt)
 
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
@@ -327,7 +338,6 @@ def main():
                 gt.tshowersim.run_number = run_number
                 gt.tefield.run_number = run_number
 
-
             # Overwrite the event number if specified on command line
             if ext_event_number is not None:
                 gt.tshower.event_number = ext_event_number
@@ -338,12 +348,19 @@ def main():
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
 
-            # Correct the first/last event number for file naming
-            if(gt.tshower.event_number<start_event_number):
-                start_event_number = gt.tshower.event_number
+            # # This event in file names ordering is kept only for compatibility with DC2 release. It is meaningless and probably better to keep the first and last events as sims are giving them, because maybe... that can tell us some positions in the original sims event list
+            # # ToDo: Remove this ordering all together
+            # if clargs.events_per_file is None:
+            #     # Correct the first/last event number for file naming
+            #     if(gt.tshower.event_number<start_event_number):
+            #         start_event_number = gt.tshower.event_number
+            #
+            #     if(gt.tshower.event_number>end_event_number):
+            #         end_event_number = gt.tshower.event_number
+            # # ToDo: this should be the standard case
+            # else:
 
-            if(gt.tshower.event_number>end_event_number):
-                end_event_number = gt.tshower.event_number
+            end_event_number = gt.tshower.event_number
 
             gt.tshowersim.input_name = Path(filename).stem
 
@@ -351,6 +368,33 @@ def main():
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
+
+            # If filled max number of events in file
+            if events_in_file == clargs.events_per_file and not (file_num==0 and i==0):
+
+                # tmp_start_event_number = gt.tshower.event_number
+
+                # Save and close the current event files
+                logger.info("Writing event trees")
+                gt.tshower.write(force_close_file=True)
+                gt.tshowersim.write(force_close_file=True)
+                gt.tefield.write(force_close_file=True)
+                gt.tshower.stop_using()
+                gt.tshowersim.stop_using()
+                gt.tefield.stop_using()
+
+                # Move the saved event files to proper filenames
+                logger.info("Renaming event files")
+                rename_event_files(clargs, out_dir_name, start_event_number, end_event_number)
+
+                # Create the new event files
+                logger.info("Creating new event files")
+                init_event_trees(out_dir_name, gt)
+
+                events_in_file=0
+                # start_event_number = tmp_start_event_number
+
+            events_in_file += 1
 
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
@@ -418,19 +462,19 @@ def main():
         # gt.trunefieldsim.write()
 
     # Write the event trees
-    gt.tshower.write()
-    gt.tshowersim.write()
-    gt.tefield.write()
-    gt.trun.write()
-    gt.trunshowersim.write()
-    gt.trunefieldsim.write()
+    gt.tshower.write(force_close_file=True)
+    gt.tshowersim.write(force_close_file=True)
+    gt.tefield.write(force_close_file=True)
+    gt.trun.write(force_close_file=True)
+    gt.trunshowersim.write(force_close_file=True)
+    gt.trunefieldsim.write(force_close_file=True)
 
     # Rename the created files to appropriate names
-    print("Renaming files to proper file names")
-    rename_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
+    logger.info("Renaming files to proper file names")
+    rename_all_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
 
-# Initialise output trees and their directory
-def init_trees(clargs, unix_date, run_number, site, gt):
+# Initialise all output trees and their directory
+def init_all_trees(clargs, unix_date, run_number, site, gt):
 
     # Use date/time from command line argument if specified, otherwise the unix time
     date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
@@ -442,7 +486,7 @@ def init_trees(clargs, unix_date, run_number, site, gt):
     # Create the appropriate output directory
     if clargs.forced_output_directory is None:
         out_dir_name = form_directory_name(clargs, date, time, run_number, site)
-        print("Storing files in directory ", out_dir_name)
+        logger.info(f"Storing files in directory {out_dir_name}")
         out_dir_name.mkdir()
     # If another directory was forced as the output directory, create it
     else:
@@ -450,15 +494,19 @@ def init_trees(clargs, unix_date, run_number, site, gt):
         out_dir_name.mkdir(exist_ok=True)
 
     # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
+    # Init run trees only if requested
     gt.trun = TRun((out_dir_name / "run.root").as_posix())
     gt.trunshowersim = TRunShowerSim((out_dir_name / "runshowersim.root").as_posix())
     gt.trunefieldsim = TRunEfieldSim((out_dir_name / "runefieldsim.root").as_posix())
-    gt.tshower = TShower((out_dir_name / "shower.root").as_posix())
-    gt.tshowersim = TShowerSim((out_dir_name / "showersim.root").as_posix())
-    gt.tefield = TEfield((out_dir_name / "efield.root").as_posix())
+    init_event_trees(out_dir_name, gt)
 
     return out_dir_name
 
+# Initialise event output trees
+def init_event_trees(out_dir_name, gt):
+    gt.tshower = TShower((out_dir_name / "shower.root").as_posix())
+    gt.tshowersim = TShowerSim((out_dir_name / "showersim.root").as_posix())
+    gt.tefield = TEfield((out_dir_name / "efield.root").as_posix())
 
 # Convert the RawShowerTree first entry to run values
 def rawshower2grandrootrun(trawshower, gt):
@@ -790,7 +838,7 @@ def form_directory_name(clargs, date, time, run_number, site):
     return dir_name
 
 # Rename the created files to appropriate names
-def rename_files(clargs, path, start_event_number, end_event_number, run_number):
+def rename_all_files(clargs, path, start_event_number, end_event_number, run_number):
 
     # Go through run output files
     for fn_start in ["run", "runshowersim", "runefieldsim"]:
@@ -807,6 +855,10 @@ def rename_files(clargs, path, start_event_number, end_event_number, run_number)
             print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
             exit(0)
 
+    # Rename the event files
+    rename_event_files(clargs, path, start_event_number, end_event_number)
+
+def rename_event_files(clargs, path, start_event_number, end_event_number):
 
     # Go through event output files
     for fn_start in ["shower", "showersim", "efield"]:
