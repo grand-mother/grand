@@ -456,10 +456,10 @@ def CoreasToRawRoot(file, simID=None):
 
     # define time params:
     t_length = len(timestamp)
-    t_0 = timestamp[0] + t_length/2
+    t_0 = timestamp[0] + t_length/2 * TimeBinSize
     t_pre  = 800#ns
-    t_pre = t_length/2 
-    t_post = t_length/2
+    t_pre = t_length/2 * TimeBinSize
+    t_post = t_length/2 * TimeBinSize
     
     # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]

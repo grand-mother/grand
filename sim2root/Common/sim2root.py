@@ -826,13 +826,13 @@ def form_directory_name(clargs, date, time, run_number, site):
     extra = clargs.extra.replace("_", "-")
 
     # Go through serial numbers in directory names to find a one that does not exist
-    for sn in range(1000):
+    for sn in range(5000):
         dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
         if not dir_name.exists():
             break
-    # If directories with serial number up to 1000 already created
+    # If directories with serial number up to 5000 already created
     else:
-        print("All directories with serial number up to 1000 already exist. Please clean up some directories!")
+        print("All directories with serial number up to 5000 already exist. Please clean up some directories!")
         exit(0)
 
     return dir_name
@@ -843,7 +843,7 @@ def rename_all_files(clargs, path, start_event_number, end_event_number, run_num
     # Go through run output files
     for fn_start in ["run", "runshowersim", "runefieldsim"]:
         # Go through serial numbers in directory names to find a one that does not exist
-        for sn in range(1000):
+        for sn in range(5000):
             fn_in = Path(path, f"{fn_start}.root")
             # Proper name of the file
             fn_out = Path(path, f"{fn_start}_{run_number}_L{clargs.analysis_level}_{sn:0>4}.root")
@@ -852,7 +852,7 @@ def rename_all_files(clargs, path, start_event_number, end_event_number, run_num
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
+            print(f"Could not find a free filename for {fn_in} until serial number 5000. Please clean up some files!")
             exit(0)
 
     # Rename the event files
@@ -863,7 +863,7 @@ def rename_event_files(clargs, path, start_event_number, end_event_number):
     # Go through event output files
     for fn_start in ["shower", "showersim", "efield"]:
         # Go through serial numbers in directory names to find a one that does not exist
-        for sn in range(1000):
+        for sn in range(5000):
             fn_in = Path(path, f"{fn_start}.root")
             # Proper name of the file
             fn_out = Path(path, f"{fn_start}_{start_event_number}-{end_event_number}_L{clargs.analysis_level}_{sn:0>4}.root")
@@ -872,7 +872,7 @@ def rename_event_files(clargs, path, start_event_number, end_event_number):
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
+            print(f"Could not find a free filename for {fn_in} until serial number 5s000. Please clean up some files!")
             exit(0)
 
 # Simple shifting of a single x,y,z trace
