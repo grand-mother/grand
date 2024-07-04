@@ -55,7 +55,7 @@ class DataManager:
     _database = None
     _provider = None
 
-    def __init__(self, file="config.ini"):
+    def __init__(self, file=os.path.join(os.path.dirname(__file__), 'config.ini')):
         configur = ConfigParser()
         # by default configparser convert all keys to lowercase... but we don't want !
         configur.optionxform = lambda option: option
@@ -97,7 +97,9 @@ class DataManager:
             self._directories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
             # We also append localdirs to repositories... so search method will first look at local dirs before searching on remote locations
             # self._repositories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
-            self._repositories["localdir"] = Datasource("localdir", "local", "localhost", "", dirlist, self.incoming())
+            # But instead of localhost and localdir we use the name of the machine
+            hostname = socket.getfqdn(os.environ["HOSTNAME"])
+            self._repositories["localdir"] = Datasource("localdir", "local", hostname, "", dirlist, self.incoming())
         else:
             logger.error(f"Section directories is mandatory in config file {file}")
             exit(1)
@@ -184,17 +186,24 @@ class DataManager:
     # If not, search first in localdirs and then in remote repositories. First match is returned.
     def get(self, file, repository=None, path=None):
         res = None
+        # Check if file is a simple name or full path name
+        if (os.path.dirname(file) != ""):
+            if (not (path is None) and (path !=  os.path.dirname(file))):
+                logger.warning(f"path given in filename ({os.path.dirname(file)}) and in repository path ({path}) are different ! The path {os.path.dirname(file)} from file will be used !")
+            path = os.path.dirname(file)
+            file = os.path.basename(file)
+
         # if repository is given we get file directly from this repo
         if not (repository is None):
             rep = self.getrepo(repository)
             if not (rep is None):
-                logger.debug(f"search in repository {rep.name()}")
+                logger.debug(f"search in repository {rep.name()} {path}")
                 res = rep.get(file, path)
         # if no repo specified, we search everywhere
         else:
             for name, rep in self.repositories().items():
-                logger.debug(f"search in repository {rep.name()}")
-                res = rep.get(file)
+                logger.debug(f"search in repository {rep.name()} {path}")
+                res = rep.get(file, path)
                 if not (res is None):
                     break
 
@@ -221,11 +230,21 @@ class DataManager:
 
 
     ##Function to register a file into the database. Returns the path to the file in the repository where the file was registered.
-    def register_file(self,filename):
+    def register_file(self,filename, repository=None, path=None):
         newfilename = None
-        file = self.get(filename)
+        file = self.get(filename,repository,path)
         if file is not None:
-            newfilename = self.referer().copy(file)
+            # If filename in referer repository then keep it
+            #print(os.path.basename(filename)+" "+self.referer().name()+" "+os.path.dirname(filename))
+            newfilename = self.get(os.path.basename(filename),self.referer().name())
+
+            if newfilename is None:
+                newfilename = self.referer().copy(file)
+            else:
+                newfilename = str(newfilename)
+
+            #print("newfilename = "+str(newfilename))
+
             self.database().register_file(file, newfilename, self.referer().id_repository, self.provider())
         return newfilename
 
@@ -384,7 +403,7 @@ class DatasourceLocal(Datasource):
         else:
             # No path given : we recursively search in all dirs and subdirs
             for path in self.paths():
-                logger.debug(f"search in localdir {path}{file}")
+                logger.debug(f"search in localdir {path} for file {file}")
 
                 #my_file = Path(path + file)
                 my_file = None
@@ -404,7 +423,7 @@ class DatasourceLocal(Datasource):
         if not found_file is None:
             logger.debug(f"file found in localdir {found_file}")
 
-        return found_file
+        return str(found_file)
 
     def copy(self, pathfile):
         newname = self.incoming() + uniquename(pathfile)
