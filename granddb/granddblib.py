@@ -327,14 +327,14 @@ class Database:
         if targetfile is None:
             targetfile = newfilename
         if dataset is not None:
-            id_dataset = self.get_or_create_key('dataset', 'name', os.path.basename(dataset))
+            id_dataset = self.get_or_create_key('dataset', 'dataset_name', os.path.basename(dataset))
             filt = {}
             filt['id_dataset'] = str(casttodb(id_dataset))
             filt['id_repository'] = str(casttodb(id_repository))
             ret = self.sqlalchemysession.query(getattr(self._tables['dataset_location'], 'id_dataset')).filter_by(
                 **filt).all()
             if len(ret) == 0:
-                container = self.tables()['dataset_location'](id_dataset=id_dataset, id_repository=id_repository,
+                container = self.tables()['dataset_location'](id_dataset=id_dataset, id_repository=id_repository, path=dataset,
                                                               description="")
                 self.sqlalchemysession.add(container)
                 self.sqlalchemysession.flush()
