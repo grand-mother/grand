@@ -109,6 +109,26 @@ class AntennaModel:
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_Zarm_leff.npz")
             self.leff_z = tabulated_antenna_model(path_ant)
             
+        elif du_type=="GP300_nec":
+            logger.info(f"Loading GP300 antenna model ...")
+            
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Yarm_leff.npz")
+            self.leff_ew = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Xarm_leff.npz")
+            self.leff_sn = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Zarm_leff.npz")
+            self.leff_z = tabulated_antenna_model(path_ant)
+            
+        elif du_type=="GP300_mat":
+            logger.info(f"Loading GP300 antenna model ...")
+            
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Yarm_leff.npz")
+            self.leff_ew = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Xarm_leff.npz")
+            self.leff_sn = tabulated_antenna_model(path_ant)
+            path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Zarm_leff.npz")
+            self.leff_z = tabulated_antenna_model(path_ant)
+            
         elif du_type=='Horizon':
             path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
             self.leff_ew = tabulated_antenna_model(path_ant)
