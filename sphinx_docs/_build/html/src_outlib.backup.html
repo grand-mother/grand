@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src_outlib.backup package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">src_outlib.backup package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-src_outlib.backup.signal_bkp">src_outlib.backup.signal_bkp module</a><ul>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.add_noise"><code class="docutils literal notranslate"><span class="pre">add_noise()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.digitize_signal"><code class="docutils literal notranslate"><span class="pre">digitize_signal()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.get_fastest_size_fft"><code class="docutils literal notranslate"><span class="pre">get_fastest_size_fft()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.get_fft"><code class="docutils literal notranslate"><span class="pre">get_fft()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.get_filter"><code class="docutils literal notranslate"><span class="pre">get_filter()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.get_inverse_fft"><code class="docutils literal notranslate"><span class="pre">get_inverse_fft()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.get_peakamptime_hilbert"><code class="docutils literal notranslate"><span class="pre">get_peakamptime_hilbert()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.backup.signal_bkp.halfcplx_fullcplx"><code class="docutils literal notranslate"><span class="pre">halfcplx_fullcplx()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#src-outlib-backup-signal-ex-module">src_outlib.backup.signal_ex module</a></li>
+<li><a class="reference internal" href="#module-src_outlib.backup">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src_outlib.backup package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/src_outlib.backup.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-outlib-backup-package">
+<h1>src_outlib.backup package<a class="headerlink" href="#src-outlib-backup-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-src_outlib.backup.signal_bkp">
+<span id="src-outlib-backup-signal-bkp-module"></span><h2>src_outlib.backup.signal_bkp module<a class="headerlink" href="#module-src_outlib.backup.signal_bkp" title="Link to this heading"></a></h2>
+<p>Signal processing</p>
+<ul class="simple">
+<li><p>This module contains several signal processing functionalities to be applied to sim/data</p></li>
+<li><p>operations are meant to be on the signal traces for individual antennas, suitable to be used both in Grandlib format/read from hdf5 files</p></li>
+<li><p>expects signal traces to be of the size (3,lengthoftrace)</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.add_noise">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vrms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#add_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.add_noise" title="Link to this definition"></a></dt>
+<dd><p>Add normal random noise on traces</p>
+<dl class="simple">
+<dt>&#64;todo</dt><dd><p>Later should be modified to add measured noise</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – voltage trace</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> (<em>vrms</em>) – noise rms, e.g vrmsnoise= 15 meu-V</p></li>
+</ul>
+</dd>
+</dl>
+<p>&#64;return (array): noisy voltage trace</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.digitize_signal">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">digitize_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tsampling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsamplingmethod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#digitize_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.digitize_signal" title="Link to this definition"></a></dt>
+<dd><p>Performs digitization/resampling of signal trace for a given sampling rate</p>
+<p>&#64;note
+There are several ways of resampling- scipy.resample seems most
+common for up/down sampling, an extra method is also added for
+downsampling-scipy.decimate - this seems to use antialiasing filter.
+these methods might change in future.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – [ns] time trace</p></li>
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> – signal trace - efield(meuV/m)/Voltage(meuV/m)</p></li>
+<li><p><strong>(</strong><strong>integer/float</strong><strong>)</strong> (<em>tsampling</em>) – [ns] desired sampling rate in time</p></li>
+<li><p><strong>(</strong><strong>integer</strong><strong>)</strong> (<em>downsamplingmethod</em>) – 1 for scipy.resample, 2.scipy.decimate</p></li>
+</ul>
+</dd>
+</dl>
+<p>&#64;return resampled signal and time trace</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.get_fastest_size_fft">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">get_fastest_size_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_samp_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_fact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#get_fastest_size_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.get_fastest_size_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sig_size</strong></p></li>
+<li><p><strong>f_samp_mhz</strong></p></li>
+<li><p><strong>padding_fact</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>&#64;return: size_fft (int,0), array freq (float,1) in MHz for rfft()</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.get_fft">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">get_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specialwindow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#get_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.get_fft" title="Link to this definition"></a></dt>
+<dd><p>Compute the one-dimensional discrete Fourier Transform for real input</p>
+<dl class="simple">
+<dt>&#64;note</dt><dd><ul class="simple">
+<li><p>numpy rfft pack calculates only positive frequency parts exploiting Hermitian-Symmetry,
+the returned array is complex and of length N/2+1</p></li>
+<li><p>for plotting purposes taking  abs(fft trace) is required</p></li>
+<li><p>for now a hamming window is used, special windows help with subtle effects like signal
+leakage,might be more important when used on measured data</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – [ns] time</p></li>
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> – ElectricField (muV/m)/voltage (muV) vectors to be filtered, could be raw or filtered</p></li>
+<li><p><strong>(</strong><strong>bool</strong><strong>)</strong> (<em>specialwindow</em>) – if true implements a hamming window</p></li>
+</ul>
+</dd>
+</dl>
+<p>&#64;returns (array): [Mhz]frequency, fft trace(complex)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.get_filter">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">get_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fr_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fr_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#get_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.get_filter" title="Link to this definition"></a></dt>
+<dd><p>Filter signal  in given bandwidth</p>
+<dl class="simple">
+<dt>&#64;note</dt><dd><p>At present Butterworth filter only is implemented, others: what
+is close to hardware filter?</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – [ns] time</p></li>
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> – ElectricField (muV/m)/voltage (muV) vectors to be filtered</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> (<em>fr_max</em>) – [Hz] The minimal frequency of the bandpass filter</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> – [Hz] The maximal frequency of the bandpass filter</p></li>
+</ul>
+</dd>
+</dl>
+<p>&#64;returns: filtered trace in time domain</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.get_inverse_fft">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">get_inverse_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trace</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#get_inverse_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.get_inverse_fft" title="Link to this definition"></a></dt>
+<dd><p>Computes the inverse of rfft</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – signal trace same as in get_fft</p>
+</dd>
+</dl>
+<p>&#64;return (array): inverse fft (time domain)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.get_peakamptime_hilbert">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">get_peakamptime_hilbert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#get_peakamptime_hilbert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.get_peakamptime_hilbert" title="Link to this definition"></a></dt>
+<dd><p>Get Peak and time of EField trace, either filtered or unfiltered</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – time</p></li>
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> – ElectricField (muV/m) vectors to be filtered- expected
+size (3,dlength), dlength= size of the signal trace</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> (<em>f_max</em>) – [Hz] The minimal frequency of the bandpass filter</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> – [Hz] The maximal frequency of the bandpass filter</p></li>
+<li><p><strong>(</strong><strong>bool</strong><strong>)</strong> (<em>filtered</em>) – if true filtering is applied else raw input trace is used</p></li>
+</ul>
+</dd>
+</dl>
+<p>&#64;return TBD</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.backup.signal_bkp.halfcplx_fullcplx">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.backup.signal_bkp.</span></span><span class="sig-name descname"><span class="pre">halfcplx_fullcplx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v_half</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">even</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/backup/signal_bkp.html#halfcplx_fullcplx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.backup.signal_bkp.halfcplx_fullcplx" title="Link to this definition"></a></dt>
+<dd><p>Return fft with full complex format where vector has half complex format,
+ie v_half=rfft(signal) in numpy/scipy convention</p>
+<p>For N size of signal and f frequency sampling</p>
+<section id="numpy-and-scipy-fft-convention">
+<h3>numpy and scipy.fft convention:<a class="headerlink" href="#numpy-and-scipy-fft-convention" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>halfcplx: for N=4 =&gt;  size of format halfcplx is N//2 + 1=3</dt><dd><p>f*0, f*1/N, f*2/N
+- f*2/N is Nyquist frequency
+- for real signal, f*0 and f*2/N mode are real in Fourier space
+- same number of value in direct space and Fourier space to define signal</p>
+</dd>
+<dt>fullcplx: for N=4</dt><dd><p>f*0, f*1/N, -f*2/N, -f*1/N
+- Nyquist frequency is negative</p>
+</dd>
+<dt>&#64;note:</dt><dd><p>Numpy reference : <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html">https://numpy.org/doc/stable/reference/generated/numpy.fft.rfftfreq.html</a></p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">param v_half (array 1D complex)<span class="colon">:</span></dt>
+<dd class="field-odd"><p>complex vector in half complex format, ie from rfft(signal)</p>
+</dd>
+<dt class="field-even">param even (bool)<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if size of signal is even</p>
+</dd>
+</dl>
+<p>&#64;return (array 1D complex) : fft(signal) in full complex format</p>
+</section>
+</dd></dl>
+
+</section>
+<section id="src-outlib-backup-signal-ex-module">
+<h2>src_outlib.backup.signal_ex module<a class="headerlink" href="#src-outlib-backup-signal-ex-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-src_outlib.backup">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src_outlib.backup" title="Link to this heading"></a></h2>
+<p>Created on Dec 15, 2022</p>
+<p>&#64;author: root</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

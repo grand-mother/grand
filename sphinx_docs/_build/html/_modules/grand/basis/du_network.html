@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.basis.du_network &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.basis.du_network</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.basis.du_network</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Handling DU network, footprint plot.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
+<span class="kn">from</span> <span class="nn">matplotlib.widgets</span> <span class="kn">import</span> <span class="n">Slider</span>
+<span class="kn">from</span> <span class="nn">matplotlib.offsetbox</span> <span class="kn">import</span> <span class="n">AnchoredText</span>
+<span class="kn">from</span> <span class="nn">matplotlib.backend_bases</span> <span class="kn">import</span> <span class="n">MouseButton</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">Delaunay</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="closest_node">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.closest_node">[docs]</a>
+<span class="k">def</span> <span class="nf">closest_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function finds the node in a list of nodes that is closest to a given node.</span>
+<span class="sd">    </span>
+<span class="sd">        :param node: The `node` parameter represents a specific node in a graph or network for which you want to find the closest node from a list of nodes provided in the `nodes` parameter. </span>
+<span class="sd">        :param nodes: list of nodes</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+    <span class="n">dist_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">nodes</span> <span class="o">-</span> <span class="n">node</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dist_2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork">[docs]</a>
+<span class="k">class</span> <span class="nc">DetectorUnitNetwork</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handling a DU network</span>
+
+<span class="sd">    Public attributs:</span>
+
+<span class="sd">        * name str: name of the set of trace</span>
+<span class="sd">        * du_pos float(nb_du, 3): position of DU</span>
+<span class="sd">        * du_id int(nb_du): array of identifier of DU</span>
+<span class="sd">        * t_start_ns float(nb_du): time of first sample of trace</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NotDefined&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">nb_du</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_du</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nb_du</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DetectorUnitNetwork.init_pos_id">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.init_pos_id">[docs]</a>
+    <span class="k">def</span> <span class="nf">init_pos_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_pos</span><span class="p">,</span> <span class="n">du_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Init object with array position and identifier</span>
+
+<span class="sd">        :param du_pos: position of DU</span>
+<span class="sd">        :type du_pos: float[nb_DU, 3]</span>
+<span class="sd">        :param du_id: identifier of DU</span>
+<span class="sd">        :type du_id: int[nb_DU]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span> <span class="o">=</span> <span class="n">du_pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="n">du_id</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">du_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">du_id</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">du_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.reduce_nb_du">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.reduce_nb_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">reduce_nb_du</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_nb_du</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Feature to debug and reduce computation</span>
+
+<span class="sd">        :param new_nb_du: keep only new_nb_du first DU</span>
+<span class="sd">        :type new_nb_du: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[:</span><span class="n">new_nb_du</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:</span><span class="n">new_nb_du</span><span class="p">,</span> <span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.get_sub_network">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.get_sub_network">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_sub_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduce networh to DU in list l_id</span>
+
+<span class="sd">        :param l_id: list of DU slected</span>
+<span class="sd">        :type: int[nb_DU in l_id]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sub_net</span> <span class="o">=</span> <span class="n">DetectorUnitNetwork</span><span class="p">(</span><span class="s2">&quot;sub-network of &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">sub_net</span><span class="o">.</span><span class="n">init_pos_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">l_id</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[</span><span class="n">l_id</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">sub_net</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.get_pos_id">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.get_pos_id">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_pos_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param l_id:</span>
+<span class="sd">        :type l_id:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.get_surface">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.get_surface">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_surface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return suface in km2</span>
+
+<span class="sd">        :return: [km2] surface of network envelop</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO:</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delaunay</span> <span class="o">=</span> <span class="n">Delaunay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">triangle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delaunay</span><span class="o">.</span><span class="n">simplices</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">triangle</span><span class="p">[:</span><span class="mi">20</span><span class="p">])</span>
+        <span class="n">a_area</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span>
+                <span class="n">pts</span><span class="p">[</span><span class="n">triangle</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">triangle</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">:],</span>
+                <span class="n">pts</span><span class="p">[</span><span class="n">triangle</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">triangle</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">:],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">a_area</span> <span class="o">/=</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">area_km2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">a_area</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e6</span>
+        <span class="c1"># self.sigma_norm_area = a_area.std() / a_area.mean()</span>
+        <span class="c1"># plt.hist(a_area)</span>
+        <span class="c1"># print(a_area[:20])</span>
+        <span class="c1"># print(a_area.std())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">area_km2</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.get_max_dist_du">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.get_max_dist_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_max_dist_du</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: [km] distance max between two DU of network</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+    <span class="c1">### PLOT</span>
+
+<div class="viewcode-block" id="DetectorUnitNetwork.plot_du_pos">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.plot_du_pos">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_du_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        plot DU position</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">DU network&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">du_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;[m]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;[m]&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.plot_footprint_1d">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_1d">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_1d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a_values</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">traces</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interactive footprint double click on DU draw trace associated and power spectrum</span>
+
+
+<span class="sd">        :param a_values: intensity associated to DU</span>
+<span class="sd">        :type a_values: float (nb DU)</span>
+<span class="sd">        :param title: title of figure</span>
+<span class="sd">        :type title: str</span>
+<span class="sd">        :param traces: object traces</span>
+<span class="sd">        :type traces: Handling3dTracesOfEvent</span>
+<span class="sd">        :param scale: type of scale</span>
+<span class="sd">        :type scale: str in [&quot;log&quot;, &quot;lin&quot;]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">size_circle</span> <span class="o">=</span> <span class="mi">200</span>
+        <span class="n">cur_idx_plot</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="k">def</span> <span class="nf">closest_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+            <span class="n">dist_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">nodes</span> <span class="o">-</span> <span class="n">node</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dist_2</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_move</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+            <span class="k">nonlocal</span> <span class="n">cur_idx_plot</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">inaxes</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">closest_node</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">ydata</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="n">cur_idx_plot</span><span class="p">:</span>
+                    <span class="n">cur_idx_plot</span> <span class="o">=</span> <span class="n">idx</span>
+                    <span class="n">anch_du</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DU=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">anch_val</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">on_click</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">button</span> <span class="ow">is</span> <span class="n">MouseButton</span><span class="o">.</span><span class="n">LEFT</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">dblclick</span><span class="p">:</span>
+                <span class="c1"># logger.info(f&quot;on_click {event.xdata}, {event.ydata}&quot;)</span>
+                <span class="k">if</span> <span class="n">traces</span><span class="p">:</span>
+                    <span class="n">traces</span><span class="o">.</span><span class="n">plot_trace_idx</span><span class="p">(</span><span class="n">cur_idx_plot</span><span class="p">)</span>
+                    <span class="n">traces</span><span class="o">.</span><span class="n">plot_ps_trace_idx</span><span class="p">(</span><span class="n">cur_idx_plot</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">DU network : </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">a_values</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">a_values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">norm_user</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;lin&quot;</span><span class="p">:</span>
+            <span class="n">norm_user</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scale must be in [&quot;log&quot;,&quot;lin&quot;]&#39;</span><span class="p">)</span>
+        <span class="n">scm</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">norm_user</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="n">size_circle</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">=</span><span class="n">a_values</span><span class="p">,</span>
+            <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Reds&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">scm</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;[m]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;[m]&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">traces</span><span class="p">:</span>
+            <span class="n">anch_du</span> <span class="o">=</span> <span class="n">AnchoredText</span><span class="p">(</span><span class="s2">&quot;DU&quot;</span><span class="p">,</span> <span class="n">prop</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">)</span>
+            <span class="n">anch_val</span> <span class="o">=</span> <span class="n">AnchoredText</span><span class="p">(</span>
+                <span class="s2">&quot;Value max&quot;</span><span class="p">,</span> <span class="n">prop</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper right&quot;</span>
+            <span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">anch_du</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">anch_val</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;button_press_event&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;motion_notify_event&quot;</span><span class="p">,</span> <span class="n">on_move</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.plot_footprint_4d">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_4d">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_4d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o_tr</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot footprint of time max by DU and value max by component</span>
+
+<span class="sd">        :param o_tr: object traces</span>
+<span class="sd">        :type o_tr: Handling3dTracesOfEvent</span>
+<span class="sd">        :param title: title of plot</span>
+<span class="sd">        :type title: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">subplot</span><span class="p">(</span><span class="n">plt_axis</span><span class="p">,</span> <span class="n">a_values</span><span class="p">,</span> <span class="n">traces</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cpnt</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">):</span>
+            <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt_axis</span>
+            <span class="n">size_circle</span> <span class="o">=</span> <span class="mi">80</span>
+            <span class="n">cur_idx_plot</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+            <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">cpnt</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+                <span class="n">my_cmaps</span> <span class="o">=</span> <span class="s2">&quot;Blues&quot;</span>
+                <span class="n">vmin</span> <span class="o">=</span> <span class="n">a_values</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+                <span class="n">vmax</span> <span class="o">=</span> <span class="n">a_values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+                <span class="n">norm_user</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;lin&quot;</span><span class="p">:</span>
+                    <span class="n">norm_user</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scale must be in [&quot;log&quot;,&quot;lin&quot;]&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Use scale as norm&quot;</span><span class="p">)</span>
+                <span class="n">norm_user</span> <span class="o">=</span> <span class="n">scale</span>
+                <span class="n">my_cmaps</span> <span class="o">=</span> <span class="s2">&quot;Reds&quot;</span>
+            <span class="n">scm</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">norm</span><span class="o">=</span><span class="n">norm_user</span><span class="p">,</span>
+                <span class="n">s</span><span class="o">=</span><span class="n">size_circle</span><span class="p">,</span>
+                <span class="n">c</span><span class="o">=</span><span class="n">a_values</span><span class="p">,</span>
+                <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="n">my_cmaps</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># plt.ylabel(&quot;[m]&quot;)</span>
+            <span class="c1"># plt.xlabel(&quot;[m]&quot;)</span>
+            <span class="k">return</span> <span class="n">scm</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">t_max</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">o_tr</span><span class="o">.</span><span class="n">get_tmax_vmax</span><span class="p">()</span>
+        <span class="n">v_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">o_tr</span><span class="o">.</span><span class="n">traces</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ret_scat</span> <span class="o">=</span> <span class="n">subplot</span><span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">t_max</span><span class="p">,</span> <span class="n">cpnt</span><span class="o">=</span><span class="s2">&quot;Time of max value&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;lin&quot;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">ret_scat</span><span class="p">)</span>
+        <span class="c1"># same scale for</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">v_max</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">v_max</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">norm_user</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="n">ret_scat</span> <span class="o">=</span> <span class="n">subplot</span><span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">v_max</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">o_tr</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">o_tr</span><span class="o">.</span><span class="n">axis_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">norm_user</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">ret_scat</span><span class="p">)</span>
+        <span class="n">ret_scat</span> <span class="o">=</span> <span class="n">subplot</span><span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">v_max</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">o_tr</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">o_tr</span><span class="o">.</span><span class="n">axis_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">norm_user</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">ret_scat</span><span class="p">)</span>
+        <span class="n">ret_scat</span> <span class="o">=</span> <span class="n">subplot</span><span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">v_max</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">o_tr</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">o_tr</span><span class="o">.</span><span class="n">axis_name</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">norm_user</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">ret_scat</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DetectorUnitNetwork.plot_footprint_time">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_time">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a_time</span><span class="p">,</span> <span class="n">a3_values</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interactive plot, footprint max value for time defined by user with slider widget</span>
+
+<span class="sd">        :param a_time: array of complet time of event</span>
+<span class="sd">        :type a_time: float[nb_sample full event]</span>
+<span class="sd">        :param a3_values: trace 3D</span>
+<span class="sd">        :type a3_values: float [nb_DU, 3]</span>
+<span class="sd">        :param title: title of plot</span>
+<span class="sd">        :type title: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># same number of sample</span>
+        <span class="k">assert</span> <span class="n">a_time</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">a3_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="c1"># we plot norm of 3D vector</span>
+        <span class="n">a_norm_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">a3_values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">val_min</span> <span class="o">=</span> <span class="n">a_norm_val</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">val_min</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">val_min</span> <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="n">col_log</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">val_min</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">a_norm_val</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">clip</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># col_log = colors.LogNorm(clip=True)</span>
+        <span class="n">cmap_b</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s2">&quot;Blues&quot;</span><span class="p">)</span>
+        <span class="n">delta_t</span> <span class="o">=</span> <span class="n">a_time</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Create the figure and the line that we will manipulate</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">scat</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">col_log</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">=</span><span class="n">a_norm_val</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="n">cmap_b</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">scat</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;[m]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;[m]&quot;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+        <span class="c1"># Make a horizontal slider to control the frequency.</span>
+        <span class="n">axe_idx</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">])</span>
+        <span class="n">time_slider</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span>
+            <span class="n">ax</span><span class="o">=</span><span class="n">axe_idx</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;time ns:&quot;</span><span class="p">,</span>
+            <span class="n">valmin</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">a_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="n">valmax</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">a_time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>  <span class="c1"># a_time.shape[0]-1,</span>
+            <span class="n">valinit</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">a_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="c1"># The function to be called anytime a slider&#39;s value changes</span>
+        <span class="k">def</span> <span class="nf">update_time</span><span class="p">(</span><span class="n">t_slider</span><span class="p">):</span>
+            <span class="n">frame_number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">t_slider</span> <span class="o">-</span> <span class="n">a_time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">delta_t</span><span class="p">)</span>
+            <span class="n">scat</span><span class="o">.</span><span class="n">set_array</span><span class="p">(</span><span class="n">a_norm_val</span><span class="p">[:,</span> <span class="n">frame_number</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">scat</span>
+
+        <span class="n">time_slider</span><span class="o">.</span><span class="n">on_changed</span><span class="p">(</span><span class="n">update_time</span><span class="p">)</span>
+        <span class="c1"># plt.connect(&quot;button_press_event&quot;, on_click)</span>
+        <span class="c1"># WARNING: we must used plt.show() of this module not in another module</span>
+        <span class="c1">#          else slider is blocked</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

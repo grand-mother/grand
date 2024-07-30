@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">grand.sim package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-grand.sim.efield2voltage">grand.sim.efield2voltage module</a><ul>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.add"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.add()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_du"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voc_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_event"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voc_event()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voltage()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_du"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voltage_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_event"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voltage_event()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.final_voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.final_voltage()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.get_event"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.get_event()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.get_leff"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.get_leff()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.get_time_samples"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.get_time_samples()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.multiply"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.multiply()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.save_voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.save_voltage()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.efield2voltage.get_fastest_size_fft"><code class="docutils literal notranslate"><span class="pre">get_fastest_size_fft()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.sim">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">grand.sim package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/grand.sim.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="grand-sim-package">
+<h1>grand.sim package<a class="headerlink" href="#grand-sim-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="grand.sim.detector.html">grand.sim.detector package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.detector.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.detector.html#module-grand.sim.detector.antenna_model">grand.sim.detector.antenna_model module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.AntennaModel"><code class="docutils literal notranslate"><span class="pre">AntennaModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.AntennaModel.plot_effective_length"><code class="docutils literal notranslate"><span class="pre">AntennaModel.plot_effective_length()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable"><code class="docutils literal notranslate"><span class="pre">DataTable</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.frequency"><code class="docutils literal notranslate"><span class="pre">DataTable.frequency</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.leff_phi"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_phi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.leff_phi_reim"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_phi_reim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.leff_theta"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.leff_theta_reim"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_theta_reim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.phase_phi"><code class="docutils literal notranslate"><span class="pre">DataTable.phase_phi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.phase_theta"><code class="docutils literal notranslate"><span class="pre">DataTable.phase_theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.phi"><code class="docutils literal notranslate"><span class="pre">DataTable.phi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.DataTable.theta"><code class="docutils literal notranslate"><span class="pre">DataTable.theta</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.antenna_model.tabulated_antenna_model"><code class="docutils literal notranslate"><span class="pre">tabulated_antenna_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.detector.html#module-grand.sim.detector.process_ant">grand.sim.detector.process_ant module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.compute_voltage"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.compute_voltage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.effective_length"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.effective_length()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.init_interpolation"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.init_interpolation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.model_leff"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.model_leff</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.pos"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.pos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.pre_cpt"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.pre_cpt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.set_out_freq_mhz()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.MissingFrameError"><code class="docutils literal notranslate"><span class="pre">MissingFrameError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.c_inf"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.c_inf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.c_sup"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.c_sup</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.get_linear_interpol()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.idx_first"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_first</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.idx_itp"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_itp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_lastp1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.init_linear_interpol()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.detector.html#module-grand.sim.detector.rf_chain">grand.sim.detector.rf_chain module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.BalunAfterLNA"><code class="docutils literal notranslate"><span class="pre">BalunAfterLNA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.BalunAfterLNA.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">BalunAfterLNA.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.BalunBeforeADC"><code class="docutils literal notranslate"><span class="pre">BalunBeforeADC</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.BalunBeforeADC.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">BalunBeforeADC.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.Cable"><code class="docutils literal notranslate"><span class="pre">Cable</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.Cable.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">Cable.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.GenericProcessingDU"><code class="docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.GenericProcessingDU.set_out_freq_mhz"><code class="docutils literal notranslate"><span class="pre">GenericProcessingDU.set_out_freq_mhz()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.LowNoiseAmplifier"><code class="docutils literal notranslate"><span class="pre">LowNoiseAmplifier</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.LowNoiseAmplifier.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">LowNoiseAmplifier.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.RFChain"><code class="docutils literal notranslate"><span class="pre">RFChain</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.RFChain.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">RFChain.compute_for_freqs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.RFChain.get_tf"><code class="docutils literal notranslate"><span class="pre">RFChain.get_tf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.RFChain.vout_f"><code class="docutils literal notranslate"><span class="pre">RFChain.vout_f()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.VGAFilter"><code class="docutils literal notranslate"><span class="pre">VGAFilter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.VGAFilter.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">VGAFilter.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.Zload"><code class="docutils literal notranslate"><span class="pre">Zload</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.Zload.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">Zload.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.db2reim"><code class="docutils literal notranslate"><span class="pre">db2reim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.interpol_at_new_x"><code class="docutils literal notranslate"><span class="pre">interpol_at_new_x()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.matmul"><code class="docutils literal notranslate"><span class="pre">matmul()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.detector.html#grand.sim.detector.rf_chain.s2abcd"><code class="docutils literal notranslate"><span class="pre">s2abcd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.detector.html#module-grand.sim.detector">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="grand.sim.shower.html">grand.sim.shower package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.shower.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.shower.html#module-grand.sim.shower.gen_shower">grand.sim.shower.gen_shower module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent"><code class="docutils literal notranslate"><span class="pre">ShowerEvent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.azimuth"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.azimuth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.core"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.core</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.energy"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.fields"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.fields</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.frame"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.frame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.geomagnet"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.geomagnet</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.load_root"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.load_root()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.maximum"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.maximum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.origin_geoid"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.origin_geoid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.primary"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.primary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.gen_shower.ShowerEvent.zenith"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.zenith</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.shower.html#module-grand.sim.shower.pdg">grand.sim.shower.pdg module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode"><code class="docutils literal notranslate"><span class="pre">ParticleCode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ANTI_ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_ELECTRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ANTI_MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_MUON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_E</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_MU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ANTI_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ELECTRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.GAMMA"><code class="docutils literal notranslate"><span class="pre">ParticleCode.GAMMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.IRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.IRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.MUON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_E</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_MU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.NEUTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.PION_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.PION_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_MINUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.PION_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_PLUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.PROTON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PROTON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.W_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_MINUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.W_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_PLUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.pdg.ParticleCode.Z_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.Z_0</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="grand.sim.shower.html#module-grand.sim.shower">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode"><code class="docutils literal notranslate"><span class="pre">ParticleCode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ANTI_ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_ELECTRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ANTI_MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_MUON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_E</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_MU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ANTI_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ELECTRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.GAMMA"><code class="docutils literal notranslate"><span class="pre">ParticleCode.GAMMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.IRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.IRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.MUON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_E</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_MU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.NEUTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.PION_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.PION_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_MINUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.PION_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_PLUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.PROTON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PROTON</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.TAU</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.W_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_MINUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.W_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_PLUS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ParticleCode.Z_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.Z_0</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent"><code class="docutils literal notranslate"><span class="pre">ShowerEvent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.azimuth"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.azimuth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.core"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.core</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.energy"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.fields"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.fields</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.frame"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.frame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.geomagnet"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.geomagnet</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.load_root"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.load_root()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.maximum"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.maximum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.origin_geoid"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.origin_geoid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.primary"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.primary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="grand.sim.shower.html#grand.sim.shower.ShowerEvent.zenith"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.zenith</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-grand.sim.efield2voltage">
+<span id="grand-sim-efield2voltage-module"></span><h2>grand.sim.efield2voltage module<a class="headerlink" href="#module-grand.sim.efield2voltage" title="Link to this heading"></a></h2>
+<p>Master module for the detector unit simulation GRAND</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.efield2voltage.</span></span><span class="sig-name descname"><span class="pre">Efield2Voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to compute voltage with GRANDROOT IO</p>
+<p>Goals:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Call simulator of detector units with ROOT data</p></li>
+<li><p>Call on more than one event</p></li>
+<li><p>Save output in ROOT format</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.add" title="Link to this definition"></a></dt>
+<dd><p>Add addend on vout_f. Used to add noises manually.
+Make sure:</p>
+<blockquote>
+<div><p>addend is in frequency domain
+addend broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)
+addend is computed/interpolated for self.freqs_mhz</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voc_du">
+<span class="sig-name descname"><span class="pre">compute_voc_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voc_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_du" title="Link to this definition"></a></dt>
+<dd><p>Compute open circuit voltage for one DU of one event. 
+This method is the base of computing voltage.
+All voltage computation is build on top of this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>du_idx</strong> – index of DU in array traces</p>
+</dd>
+</dl>
+<p>:    type du_idx: int</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voc_event">
+<span class="sig-name descname"><span class="pre">compute_voc_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voc_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_event" title="Link to this definition"></a></dt>
+<dd><p>Compute/simulate all DU in event either with index event_idx or with event_number and run_number.
+Computes open circuit voltage in time domain (voc) and frequency domain (voc_f)
+voc.shape = (nb_du, 3, len of time traces)
+voc_f.shape = (nb_du, 3, len of freqs_mhz)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)).</p>
+</dd>
+</dl>
+<p>:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int  
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voltage">
+<span class="sig-name descname"><span class="pre">compute_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">du_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage" title="Link to this definition"></a></dt>
+<dd><p>Primary method to compute voltage.  
+Compute/simulate voltage for any or all DUs for any or all events in input file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)). If None, all events in an input file is used.</p>
+</dd>
+</dl>
+<p>:    type: int, list, np.ndarray
+:param du_idx: index of DU for which voltage is computed. If None, all DUs of an event is used. du_idx can be used for only one event.
+:    type: int, list, np.ndarray
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
+:    type: int, list, np.ndarray
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
+:    type: int, list, np.ndarray</p>
+<dl class="simple">
+<dt>Note: Either event_idx, or both event_number and run_number must be provided, or all three must be None.      </dt><dd><p>if du_idx is provided, voltage of the given DU of the given event is computed. 
+du_idx can be an integer or list/np.ndarray. du_idx can be used for only one event.
+If improper event_idx or (event_number and run_number) is used, an error is generated when self.get_event() is called.
+Selective events with either event_idx or both event_number and run_number can be given.
+If list/np.ndarray is provided, length of event_number and run_number must be equal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voltage_du">
+<span class="sig-name descname"><span class="pre">compute_voltage_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voltage_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_du" title="Link to this definition"></a></dt>
+<dd><p>Compute voltage output for one DU with index du_idx.
+This method can add noises and RF chain to Voc if requested.</p>
+<dl class="simple">
+<dt>Processing order:</dt><dd><ol class="arabic simple">
+<li><p>compute Voc using antenna responses</p></li>
+<li><p>add galactic noise (if requested)</p></li>
+<li><p>RF chain effect    (if requested)</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)).</p>
+</dd>
+</dl>
+<p>:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int  
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voltage_event">
+<span class="sig-name descname"><span class="pre">compute_voltage_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voltage_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_event" title="Link to this definition"></a></dt>
+<dd><p>Simulate all DU of an event either with index event_idx or with event_number and run_number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event_idx</strong> – index of event for which voltage is computed.</p>
+</dd>
+</dl>
+<p>This method is equivalent to the code below that takes longer.
+for du_idx in range(self.nb_du):</p>
+<blockquote>
+<div><p>self.compute_voltage_du(du_idx)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)).</p>
+</dd>
+</dl>
+<p>:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int  
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.final_voltage">
+<span class="sig-name descname"><span class="pre">final_voltage</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.final_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.final_voltage" title="Link to this definition"></a></dt>
+<dd><p>Return final voltage in time domain after adding noises and propagating signal through RF chain.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.get_event">
+<span class="sig-name descname"><span class="pre">get_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.get_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.get_event" title="Link to this definition"></a></dt>
+<dd><p>Load data of event with index event_idx or with event_number and run_number. 
+Call this method everytime to load data for a new event with different event_idx, or with different event_number and run_number.
+:param: event_idx: index of event in events_list. It is a number from range(len(event_list)).
+:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int  
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.get_leff">
+<span class="sig-name descname"><span class="pre">get_leff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.get_leff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.get_leff" title="Link to this definition"></a></dt>
+<dd><p>Define for each antenna in DU du_idx an object AntennaProcessing according its position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>du_idx</strong> – index of DU</p>
+</dd>
+</dl>
+<p>:    type du_idx: int</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.get_time_samples">
+<span class="sig-name descname"><span class="pre">get_time_samples</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.get_time_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.get_time_samples" title="Link to this definition"></a></dt>
+<dd><p>Define time sample in ns for the duration of the trace
+t_samples.shape  = (nb_du, self.sig_size)
+t_start_ns.shape = (nb_du,)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.multiply">
+<span class="sig-name descname"><span class="pre">multiply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiplier</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.multiply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.multiply" title="Link to this definition"></a></dt>
+<dd><p>Multiply vout_f by multiplier. Used to manually provide RF chain.
+Make sure:</p>
+<blockquote>
+<div><p>multiplier is in frequency domain
+multiplier broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)
+multiplier is computed/interpolated for self.freqs_mhz</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.save_voltage">
+<span class="sig-name descname"><span class="pre">save_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">append_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.save_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.save_voltage" title="Link to this definition"></a></dt>
+<dd><p>: output path/file = self.f_output. It must be defined during instantiation of this class.
+:    type file_out: str
+:param append_file: use input file to add output
+:    type append_file: bool</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.get_fastest_size_fft">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.efield2voltage.</span></span><span class="sig-name descname"><span class="pre">get_fastest_size_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_samp_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#get_fastest_size_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.get_fastest_size_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sig_size</strong> – length of time traces</p></li>
+<li><p><strong>f_samp_mhz</strong> – sampling frequency in MHz. ex: 2000 MHz for dt_ns=0.5</p></li>
+<li><p><strong>padding_factor</strong> – factor to stretch length of time traces with zeros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>size_fft (int,0), array freq (float,1) in MHz for rfft()</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-grand.sim">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-grand.sim" title="Link to this heading"></a></h2>
+<p>Modeling and simulation classes for detector unit and signal from sky</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

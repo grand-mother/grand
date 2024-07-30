@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.detector package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">grand.sim.detector package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-grand.sim.detector.antenna_model">grand.sim.detector.antenna_model module</a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.AntennaModel"><code class="docutils literal notranslate"><span class="pre">AntennaModel</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.AntennaModel.plot_effective_length"><code class="docutils literal notranslate"><span class="pre">AntennaModel.plot_effective_length()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable"><code class="docutils literal notranslate"><span class="pre">DataTable</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.frequency"><code class="docutils literal notranslate"><span class="pre">DataTable.frequency</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.leff_phi"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_phi</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.leff_phi_reim"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_phi_reim</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.leff_theta"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_theta</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.leff_theta_reim"><code class="docutils literal notranslate"><span class="pre">DataTable.leff_theta_reim</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.phase_phi"><code class="docutils literal notranslate"><span class="pre">DataTable.phase_phi</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.phase_theta"><code class="docutils literal notranslate"><span class="pre">DataTable.phase_theta</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.phi"><code class="docutils literal notranslate"><span class="pre">DataTable.phi</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.DataTable.theta"><code class="docutils literal notranslate"><span class="pre">DataTable.theta</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.antenna_model.tabulated_antenna_model"><code class="docutils literal notranslate"><span class="pre">tabulated_antenna_model()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.sim.detector.process_ant">grand.sim.detector.process_ant module</a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.compute_voltage"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.compute_voltage()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.effective_length"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.effective_length()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.init_interpolation"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.init_interpolation()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.model_leff"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.model_leff</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.pos"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.pos</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.pre_cpt"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.pre_cpt</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.set_out_freq_mhz()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.MissingFrameError"><code class="docutils literal notranslate"><span class="pre">MissingFrameError</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_inf"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.c_inf</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_sup"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.c_sup</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.get_linear_interpol()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_first"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_first</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_itp"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_itp</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_lastp1</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.init_linear_interpol()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.sim.detector.rf_chain">grand.sim.detector.rf_chain module</a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.BalunAfterLNA"><code class="docutils literal notranslate"><span class="pre">BalunAfterLNA</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.BalunAfterLNA.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">BalunAfterLNA.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.BalunBeforeADC"><code class="docutils literal notranslate"><span class="pre">BalunBeforeADC</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.BalunBeforeADC.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">BalunBeforeADC.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.Cable"><code class="docutils literal notranslate"><span class="pre">Cable</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.Cable.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">Cable.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU"><code class="docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU.set_out_freq_mhz"><code class="docutils literal notranslate"><span class="pre">GenericProcessingDU.set_out_freq_mhz()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.LowNoiseAmplifier"><code class="docutils literal notranslate"><span class="pre">LowNoiseAmplifier</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.LowNoiseAmplifier.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">LowNoiseAmplifier.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.RFChain"><code class="docutils literal notranslate"><span class="pre">RFChain</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.RFChain.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">RFChain.compute_for_freqs()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.RFChain.get_tf"><code class="docutils literal notranslate"><span class="pre">RFChain.get_tf()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.RFChain.vout_f"><code class="docutils literal notranslate"><span class="pre">RFChain.vout_f()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.VGAFilter"><code class="docutils literal notranslate"><span class="pre">VGAFilter</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.VGAFilter.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">VGAFilter.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.Zload"><code class="docutils literal notranslate"><span class="pre">Zload</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.Zload.compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">Zload.compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.db2reim"><code class="docutils literal notranslate"><span class="pre">db2reim()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.interpol_at_new_x"><code class="docutils literal notranslate"><span class="pre">interpol_at_new_x()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.matmul"><code class="docutils literal notranslate"><span class="pre">matmul()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.detector.rf_chain.s2abcd"><code class="docutils literal notranslate"><span class="pre">s2abcd()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.sim.detector">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">grand.sim.detector package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/grand.sim.detector.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="grand-sim-detector-package">
+<h1>grand.sim.detector package<a class="headerlink" href="#grand-sim-detector-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-grand.sim.detector.antenna_model">
+<span id="grand-sim-detector-antenna-model-module"></span><h2>grand.sim.detector.antenna_model module<a class="headerlink" href="#module-grand.sim.detector.antenna_model" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.AntennaModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.antenna_model.</span></span><span class="sig-name descname"><span class="pre">AntennaModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GP300'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/antenna_model.html#AntennaModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.antenna_model.AntennaModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.AntennaModel.plot_effective_length">
+<span class="sig-name descname"><span class="pre">plot_effective_length</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/antenna_model.html#AntennaModel.plot_effective_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.antenna_model.AntennaModel.plot_effective_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.antenna_model.</span></span><span class="sig-name descname"><span class="pre">DataTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leff_theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leff_phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leff_phi_reim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leff_theta_reim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numbers.Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/antenna_model.html#DataTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.frequency">
+<span class="sig-name descname"><span class="pre">frequency</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.frequency" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.leff_phi">
+<span class="sig-name descname"><span class="pre">leff_phi</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.leff_phi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.leff_phi_reim">
+<span class="sig-name descname"><span class="pre">leff_phi_reim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.leff_phi_reim" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.leff_theta">
+<span class="sig-name descname"><span class="pre">leff_theta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.leff_theta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.leff_theta_reim">
+<span class="sig-name descname"><span class="pre">leff_theta_reim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.leff_theta_reim" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.phase_phi">
+<span class="sig-name descname"><span class="pre">phase_phi</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.phase_phi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.phase_theta">
+<span class="sig-name descname"><span class="pre">phase_theta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.phase_theta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.phi">
+<span class="sig-name descname"><span class="pre">phi</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.phi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.DataTable.theta">
+<span class="sig-name descname"><span class="pre">theta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#grand.sim.detector.antenna_model.DataTable.theta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.detector.antenna_model.tabulated_antenna_model">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.detector.antenna_model.</span></span><span class="sig-name descname"><span class="pre">tabulated_antenna_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/antenna_model.html#tabulated_antenna_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.antenna_model.tabulated_antenna_model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-grand.sim.detector.process_ant">
+<span id="grand-sim-detector-process-ant-module"></span><h2>grand.sim.detector.process_ant module<a class="headerlink" href="#module-grand.sim.detector.process_ant" title="Link to this heading"></a></h2>
+<p>Processing effective length of antenna</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.process_ant.</span></span><span class="sig-name descname"><span class="pre">AntennaProcessing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_leff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Processing effective length of antenna</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.compute_voltage">
+<span class="sig-name descname"><span class="pre">compute_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">efield</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.basis.html#grand.basis.type_trace.ElectricField" title="grand.basis.type_trace.ElectricField"><span class="pre">ElectricField</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="grand.basis.html#grand.basis.type_trace.Voltage" title="grand.basis.type_trace.Voltage"><span class="pre">Voltage</span></a></span></span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.compute_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.compute_voltage" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xmax</strong></p></li>
+<li><p><strong>efield</strong></p></li>
+<li><p><strong>frame</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.effective_length">
+<span class="sig-name descname"><span class="pre">effective_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">efield</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.basis.html#grand.basis.type_trace.ElectricField" title="grand.basis.type_trace.ElectricField"><span class="pre">ElectricField</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span></span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.effective_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.effective_length" title="Link to this definition"></a></dt>
+<dd><p>Calculation of FFT length effective of antenna for a given Xmax position.
+Linear interpolation of template of effective length in Fourier space
+by tripler (theta, phi, frequency)
+in direction of the efield source at antenna position
+:param xmax:
+:param efield:
+:param frame:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.init_interpolation">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">init_interpolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq_sampling_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_out_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.init_interpolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.init_interpolation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.model_leff">
+<span class="sig-name descname"><span class="pre">model_leff</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.model_leff" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.pos">
+<span class="sig-name descname"><span class="pre">pos</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></em><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.pos" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.pre_cpt">
+<span class="sig-name descname"><span class="pre">pre_cpt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol" title="grand.sim.detector.process_ant.PreComputeInterpol"><span class="pre">PreComputeInterpol</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.pre_cpt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz">
+<span class="sig-name descname"><span class="pre">set_out_freq_mhz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_freq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.set_out_freq_mhz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz" title="Link to this definition"></a></dt>
+<dd><p>!
+typically the return of scipy.fft.rfftfreq/1e6
+:param a_freq:
+:type a_freq:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.MissingFrameError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.process_ant.</span></span><span class="sig-name descname"><span class="pre">MissingFrameError</span></span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#MissingFrameError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.MissingFrameError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></p>
+<p>Error class</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.process_ant.</span></span><span class="sig-name descname"><span class="pre">PreComputeInterpol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx_first</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_lastp1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_itp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_inf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_sup</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#PreComputeInterpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Precompute linear interpolation of frequency of Leff</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.c_inf">
+<span class="sig-name descname"><span class="pre">c_inf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_inf" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.c_sup">
+<span class="sig-name descname"><span class="pre">c_sup</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_sup" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol">
+<span class="sig-name descname"><span class="pre">get_linear_interpol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#PreComputeInterpol.get_linear_interpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol" title="Link to this definition"></a></dt>
+<dd><p>Return f(freq_out_mhz) by linear interpolation of f defined by
+f(freq_in_mhz) = a_val
+:param a_val: defined value of function at freq_in_mhz</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.idx_first">
+<span class="sig-name descname"><span class="pre">idx_first</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_first" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.idx_itp">
+<span class="sig-name descname"><span class="pre">idx_itp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_itp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1">
+<span class="sig-name descname"><span class="pre">idx_lastp1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol">
+<span class="sig-name descname"><span class="pre">init_linear_interpol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq_in_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_out_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#PreComputeInterpol.init_linear_interpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol" title="Link to this definition"></a></dt>
+<dd><p>Precompute coefficient of linear interpolation for freq_out_mhz with reference defined at freq_in_mhz
+:param freq_in_mhz: regular array of frequency where function is defined
+:param freq_out_mhz: regular array frequency where we want interpol</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.sim.detector.rf_chain">
+<span id="grand-sim-detector-rf-chain-module"></span><h2>grand.sim.detector.rf_chain module<a class="headerlink" href="#module-grand.sim.detector.rf_chain" title="Link to this heading"></a></h2>
+<p>RF Chain (version 1) of detector units at the GP13 site in Dunhuang and in Europe.</p>
+<dl class="simple">
+<dt>This code includes: </dt><dd><ul class="simple">
+<li><p>Antenna Impedance</p></li>
+<li><p>Input Impedance  (computed after computing total_ABCD_matrix)</p></li>
+<li><p>LNA</p></li>
+<li><p>Balun after LNA (inside Nut)</p></li>
+<li><p>cable + connector</p></li>
+<li><p>VGA + Filter</p></li>
+<li><p>Balun after VGA&amp;filter + 200 ohm load + AD Chip</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Authors<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PengFei Zhang, Xu Xin and Xidian University group, GRANDLIB adaptation Colley JM, Ramesh, and Sandra.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Reference document: </dt><dd><ul class="simple">
+<li><p>“RF Chain simulation for GP300” by Xidian University, :Authors:  Pengfei Zhang and Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu</p></li>
+</ul>
+</dd>
+<dt>Convention Port/direction:</dt><dd><ul class="simple">
+<li><p>0 for X / North, South</p></li>
+<li><p>1 for Y / East/West</p></li>
+<li><p>2 for Z / Up</p></li>
+</ul>
+</dd>
+</dl>
+<p># Note: plotting has been moved to grand/scripts/plot_noise.py. Run: ./plot_noise.py -h for help.</p>
+<dl>
+<dt>Overview of calculations:</dt><dd><p>Voc = E * Leff</p>
+<p># S-parameters are measured using virtual network analyzer (VNA). A-parameters are computed from S-parameters.
+[A]    = [LNA]*[Balun A]*[Cable]*[VGA+Filter]     # total RF chain A-parameters without balun2
+Z_load = 50 * (1 + S11)/(1 - S11)                 # S11 for balun after VGA+Filter measured using VNA.
+Z_in   = (A11*Z_load + A12) / (A21*Z_load + A22)
+[A]    = [A] * [A balun2]                        # total RF chain A-parameters
+Z_ant  = antenna impedance computed from simulation</p>
+<p># current and voltage at input of Balun
+I_in_BA = Voc / (Z_ant + Z_in)
+V_in_BA = I_in_BA * Z_in</p>
+<p># Final voltage output at AD Chip in frequency domain.
+V_out = A11*V_in_BA + A12*I_in_BA
+I_out = A21*V_in_BA + A22*I_in_BA</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.BalunAfterLNA">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">BalunAfterLNA</span></span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#BalunAfterLNA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.BalunAfterLNA" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<dl class="simple">
+<dt>Class goals:</dt><dd><ul class="simple">
+<li><p>deals with Balun after LNA (inside Nut).</p></li>
+<li><p>Note that balun is placed after LNA in version 1. The same type of balun is placed before matching-network and LNA in version 2.</p></li>
+<li><p>Balun is used in X and Y ports only. No Balun in Z port.</p></li>
+<li><p>Balun without matching network is used in version 1.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.BalunAfterLNA.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#BalunAfterLNA.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.BalunAfterLNA.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>Compute ABCD_matrix for frequency freqs_mhz</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>freqs_mhz</em><em> (</em><em>float</em><em>,</em>) – [MHz] given by scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.BalunBeforeADC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">BalunBeforeADC</span></span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#BalunBeforeADC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.BalunBeforeADC" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<p>Class goals:
+* Pass signal through Balun before Analog to Digitial Converter (ADC) for each antenna
+* Balun is used in x, y, and z ports
+* Same data is used for all three ports
+* read data files only once
+* pre_compute interpolation
+* this Balun is referred to as Balun1 Balun2</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.BalunBeforeADC.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#BalunBeforeADC.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.BalunBeforeADC.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>freqs_mhz</em><em> (</em><em>float</em><em>,</em>) – [MHz] given by scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.Cable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">Cable</span></span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#Cable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.Cable" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<dl class="simple">
+<dt>Class goals:</dt><dd><ul class="simple">
+<li><p>pre_compute interpolation</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.Cable.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#Cable.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.Cable.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>Compute ABCD_matrix for frequency freqs_mhz</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>freqs_mhz</em><em> (</em><em>float</em><em>,</em>) – [MHz] given by scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.GenericProcessingDU">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">GenericProcessingDU</span></span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#GenericProcessingDU"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Define common attribut for frequencies for all DU effects processing</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.GenericProcessingDU.set_out_freq_mhz">
+<span class="sig-name descname"><span class="pre">set_out_freq_mhz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#GenericProcessingDU.set_out_freq_mhz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.GenericProcessingDU.set_out_freq_mhz" title="Link to this definition"></a></dt>
+<dd><p>Define frequencies</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>freqs_mhz</strong> (<em>float</em><em> (</em><em>nb_freqs</em><em>)</em>) – [MHz] given by scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.LowNoiseAmplifier">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">LowNoiseAmplifier</span></span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#LowNoiseAmplifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.LowNoiseAmplifier" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<dl class="simple">
+<dt>Class goals:</dt><dd><ul class="simple">
+<li><p>Perform the LNA filter on signal for each antenna</p></li>
+<li><p>read only once LNA data files</p></li>
+<li><p>pre_compute interpolation</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.LowNoiseAmplifier.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#LowNoiseAmplifier.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.LowNoiseAmplifier.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>compute s-parameters of LNA</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.RFChain">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">RFChain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vga_gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#RFChain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.RFChain" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<p>Facade for all elements in RF chain</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.RFChain.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#RFChain.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.RFChain.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>Compute transfer function for frequency freqs_mhz</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>freqs_mhz</em><em> (</em><em>float</em><em>,</em>) – return of scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.RFChain.get_tf">
+<span class="sig-name descname"><span class="pre">get_tf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#RFChain.get_tf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.RFChain.get_tf" title="Link to this definition"></a></dt>
+<dd><p>Return transfer function for all elements in RF chain
+total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
+&#64;return total TF (complex, (3,N)):</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.RFChain.vout_f">
+<span class="sig-name descname"><span class="pre">vout_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voc_f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#RFChain.vout_f"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.RFChain.vout_f" title="Link to this definition"></a></dt>
+<dd><p>Compute final voltage after propagating signal through RF chain.
+Input: Voc_f (in frequency domain)
+Output: Voltage after RF chain in frequency domain.
+Make sure to run self.compute_for_freqs() before calling this method.
+RK Note: name ‘vout_f’ is a placeholder. Change it with something better.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.VGAFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">VGAFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#VGAFilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.VGAFilter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<dl class="simple">
+<dt>Class goals:</dt><dd><ul class="simple">
+<li><p>pre_compute interpolation</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.VGAFilter.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#VGAFilter.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.VGAFilter.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>Compute ABCD_matrix for frequency freqs_mhz</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>freqs_mhz</em><em> (</em><em>float</em><em>,</em>) – [MHz] given by scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.Zload">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">Zload</span></span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#Zload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.Zload" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.sim.detector.rf_chain.GenericProcessingDU" title="grand.sim.detector.rf_chain.GenericProcessingDU"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericProcessingDU</span></code></a></p>
+<p>Class goals:
+* computes input impedance of load due to balun + 200ohm ADC.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.Zload.compute_for_freqs">
+<span class="sig-name descname"><span class="pre">compute_for_freqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#Zload.compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.Zload.compute_for_freqs" title="Link to this definition"></a></dt>
+<dd><p>compute S-paramters and Zload for freqs_mhz</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>freqs_mhz</em><em> (</em><em>float</em><em>,</em>) – [MHz] given by scipy.fft.rfftfreq/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.db2reim">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">db2reim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dB</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#db2reim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.db2reim" title="Link to this definition"></a></dt>
+<dd><p>Convert quantity given in deciBel to a complex number.
+:param dB: input quantity in deciBel
+:param phase: phase of the input quantity in radians.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.interpol_at_new_x">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">interpol_at_new_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#interpol_at_new_x"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.interpol_at_new_x" title="Link to this definition"></a></dt>
+<dd><p>Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
+and set to zero outside interval definition a_x</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>a_y</em><em> (</em><em>float</em><em>,</em>) – F(a_x) = a_y, N size of a_x</p></li>
+<li><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> – F(a_x) = a_y</p></li>
+<li><p><strong>(</strong><strong>M</strong><strong>)</strong><strong>)</strong> (<em>new_x</em><em> (</em><em>float</em><em>,</em>) – new value of x</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>F(new_x) (float, (M)): interpolation of F at new_x</p>
+</dd>
+</dl>
+<p># RK: scipy interpolate gave 0 values for S21 due to fill_values=(0,0)
+#.    which resulted in ‘nan’ values in A-parameters. Also final transfer
+#     function (TF) outside of the range of 10-300 MHz was weird. TF for Z-port produces a sharp peak around 10 MHz.
+#     So np.interp is used instead.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.matmul">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.matmul" title="Link to this definition"></a></dt>
+<dd><p>This function deals with 2x2 matrix multiplication.
+Input matrix shape in our case is (2,2,nports,nb_freqs)
+AxB = [[A11*B11 + A12*B21, A11*B12 + A12*B22],</p>
+<blockquote>
+<div><p>[A21*B11 + A22*B21, A21*B12 + A22*B22]]</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.detector.rf_chain.s2abcd">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.detector.rf_chain.</span></span><span class="sig-name descname"><span class="pre">s2abcd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s21</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s22</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/rf_chain.html#s2abcd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.rf_chain.s2abcd" title="Link to this definition"></a></dt>
+<dd><p>this is a normalized A-matrix represented by [a] in the document.</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.sim.detector">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-grand.sim.detector" title="Link to this heading"></a></h2>
+<p>Modeling classes to simulate detector unit : response antenna and electronic chain</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

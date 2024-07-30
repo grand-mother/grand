@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.detector.antenna_model &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.sim.detector.antenna_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.sim.detector.antenna_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+
+<span class="kn">from</span> <span class="nn">grand</span> <span class="kn">import</span> <span class="n">grand_add_path_data</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataTable">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.DataTable">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DataTable</span><span class="p">:</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">theta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">phi</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">leff_theta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">phase_theta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">leff_phi</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">phase_phi</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">leff_phi_reim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">leff_theta_reim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Number</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="c1">#def __post_init__(self):</span>
+    <span class="c1">#    logger.info(f&quot;size phase {self.phase_theta.shape}&quot;)</span>
+    <span class="c1">#    self.phase_theta_rad = np.deg2rad(self.phase_theta)</span>
+    <span class="c1">#    self.phase_phi_rad = np.deg2rad(self.phase_phi)</span>
+
+<div class="viewcode-block" id="tabulated_antenna_model">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.tabulated_antenna_model">[docs]</a>
+<span class="k">def</span> <span class="nf">tabulated_antenna_model</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># RK: TODO: update this function after antenna model is finalized. Remove tag.</span>
+    <span class="c1">#     1. GP300 model (~1GB/arm) 2. LP float32 model (~520MB/arm) 3. JM Light GP300 model (~120MB/arm)</span>
+    <span class="n">split_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">split_file</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;.npy&quot;</span><span class="p">:</span> <span class="c1"># for Horizon Antenna</span>
+        <span class="n">f</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">lefft</span><span class="p">,</span> <span class="n">leffp</span><span class="p">,</span> <span class="n">phaset</span><span class="p">,</span> <span class="n">phasep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mmap_mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+        <span class="n">n_f</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n_theta</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]))</span>
+        <span class="n">n_phi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">n_theta</span><span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_f</span><span class="p">,</span> <span class="n">n_phi</span><span class="p">,</span> <span class="n">n_theta</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape freq, phi, theta: </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">phi</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape R, X: </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape module tetha : </span><span class="si">{</span><span class="n">lefft</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape arg tetha : </span><span class="si">{</span><span class="n">phaset</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type leff  : </span><span class="si">{</span><span class="n">lefft</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type f  : </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type phi  : </span><span class="si">{</span><span class="n">phi</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;min max resistance  : </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;min max reactance  : </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">f</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.0e6</span>  <span class="c1"># MHz --&gt; Hz</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="n">n_theta</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># deg</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">::</span><span class="n">n_theta</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># deg</span>
+        <span class="n">lefft</span> <span class="o">=</span> <span class="n">lefft</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># m</span>
+        <span class="n">leffp</span> <span class="o">=</span> <span class="n">leffp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># m</span>
+        <span class="c1"># RK TODO: Make sure going from rad to deg does not affect calculations somewhere else.</span>
+        <span class="n">phaset</span> <span class="o">=</span> <span class="n">phaset</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># deg</span>
+        <span class="n">phasep</span> <span class="o">=</span> <span class="n">phasep</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># deg</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">DataTable</span><span class="p">(</span>
+            <span class="n">frequency</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+            <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
+            <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span>
+            <span class="n">leff_theta</span><span class="o">=</span><span class="n">lefft</span><span class="p">,</span>
+            <span class="n">phase_theta</span><span class="o">=</span><span class="n">phaset</span><span class="p">,</span>
+            <span class="n">leff_phi</span><span class="o">=</span><span class="n">leffp</span><span class="p">,</span>
+            <span class="n">phase_phi</span><span class="o">=</span><span class="n">phasep</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">t</span>
+
+
+    <span class="k">if</span> <span class="n">split_file</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;.npz&quot;</span><span class="p">:</span> <span class="c1"># for JM&#39;s file.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f_leff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f_leff</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;1.0&quot;</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">f_leff</span><span class="p">[</span><span class="s2">&quot;freq_mhz&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e6</span>   <span class="c1"># MHz --&gt; Hz</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">91</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">361</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">lefft</span> <span class="o">=</span> <span class="n">f_leff</span><span class="p">[</span><span class="s2">&quot;leff_theta&quot;</span><span class="p">]</span>   <span class="c1"># Real + j Imag. shape (phi, theta, freq) (361, 91, 221)</span>
+            <span class="n">leffp</span> <span class="o">=</span> <span class="n">f_leff</span><span class="p">[</span><span class="s2">&quot;leff_phi&quot;</span><span class="p">]</span>     <span class="c1"># Real + j Imag. shape (phi, theta, freq)</span>
+            <span class="n">lefft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">lefft</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># shape (phi, theta, freq) --&gt; (freq, phi, theta)</span>
+            <span class="n">leffp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">leffp</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># shape (phi, theta, freq) --&gt; (freq, phi, theta)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape freq, phi, theta: </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">phi</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape module tetha : </span><span class="si">{</span><span class="n">lefft</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type leff  : </span><span class="si">{</span><span class="n">lefft</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type f  : </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type phi  : </span><span class="si">{</span><span class="n">phi</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">t</span> <span class="o">=</span> <span class="n">DataTable</span><span class="p">(</span>
+                <span class="n">frequency</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+                <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
+                <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span>
+                <span class="n">leff_theta_reim</span><span class="o">=</span><span class="n">lefft</span><span class="p">,</span>
+                <span class="n">leff_phi_reim</span><span class="o">=</span><span class="n">leffp</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">t</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provide a proper antenna model. Current input file is </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AntennaModel">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaModel">[docs]</a>
+<span class="k">class</span> <span class="nc">AntennaModel</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_type</span><span class="o">=</span><span class="s2">&quot;GP300&quot;</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">du_type</span><span class="o">==</span><span class="s2">&quot;GP300&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading GP300 antenna model ...&quot;</span><span class="p">)</span>
+            
+            <span class="n">path_ant</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="s2">&quot;detector/Light_GP300Antenna_EWarm_leff.npz&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">leff_ew</span> <span class="o">=</span> <span class="n">tabulated_antenna_model</span><span class="p">(</span><span class="n">path_ant</span><span class="p">)</span>
+            <span class="n">path_ant</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="s2">&quot;detector/Light_GP300Antenna_SNarm_leff.npz&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">leff_sn</span> <span class="o">=</span> <span class="n">tabulated_antenna_model</span><span class="p">(</span><span class="n">path_ant</span><span class="p">)</span>
+            <span class="n">path_ant</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="s2">&quot;detector/Light_GP300Antenna_Zarm_leff.npz&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">leff_z</span> <span class="o">=</span> <span class="n">tabulated_antenna_model</span><span class="p">(</span><span class="n">path_ant</span><span class="p">)</span>
+            
+        <span class="k">elif</span> <span class="n">du_type</span><span class="o">==</span><span class="s1">&#39;Horizon&#39;</span><span class="p">:</span>
+            <span class="n">path_ant</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="s2">&quot;detector/HorizonAntenna_EWarm_leff_loaded.npy&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">leff_ew</span> <span class="o">=</span> <span class="n">tabulated_antenna_model</span><span class="p">(</span><span class="n">path_ant</span><span class="p">)</span>
+            <span class="n">path_ant</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="s2">&quot;detector/HorizonAntenna_SNarm_leff_loaded.npy&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">leff_sn</span> <span class="o">=</span> <span class="n">tabulated_antenna_model</span><span class="p">(</span><span class="n">path_ant</span><span class="p">)</span>
+            <span class="n">path_ant</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="s2">&quot;detector/HorizonAntenna_Zarm_leff_loaded.npy&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">leff_z</span> <span class="o">=</span> <span class="n">tabulated_antenna_model</span><span class="p">(</span><span class="n">path_ant</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_leff</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sn&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">leff_sn</span><span class="p">,</span> <span class="s2">&quot;ew&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">leff_ew</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">leff_z</span><span class="p">}</span>
+
+<div class="viewcode-block" id="AntennaModel.plot_effective_length">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaModel.plot_effective_length">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_effective_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

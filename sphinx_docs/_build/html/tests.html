@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">tests package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-tests.conftest_old">tests.conftest_old module</a><ul>
+<li><a class="reference internal" href="#tests.conftest_old.download_huge_file"><code class="docutils literal notranslate"><span class="pre">download_huge_file()</span></code></a></li>
+<li><a class="reference internal" href="#tests.conftest_old.grand_download_huge_file"><code class="docutils literal notranslate"><span class="pre">grand_download_huge_file()</span></code></a></li>
+<li><a class="reference internal" href="#tests.conftest_old.pytest_configure"><code class="docutils literal notranslate"><span class="pre">pytest_configure()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests.test_manage_log">tests.test_manage_log module</a><ul>
+<li><a class="reference internal" href="#tests.test_manage_log.test_check_logger_level"><code class="docutils literal notranslate"><span class="pre">test_check_logger_level()</span></code></a></li>
+<li><a class="reference internal" href="#tests.test_manage_log.test_get_logger_for_script"><code class="docutils literal notranslate"><span class="pre">test_get_logger_for_script()</span></code></a></li>
+<li><a class="reference internal" href="#tests.test_manage_log.test_get_logger_for_script_out_pkg"><code class="docutils literal notranslate"><span class="pre">test_get_logger_for_script_out_pkg()</span></code></a></li>
+<li><a class="reference internal" href="#tests.test_manage_log.test_get_logger_path"><code class="docutils literal notranslate"><span class="pre">test_get_logger_path()</span></code></a></li>
+<li><a class="reference internal" href="#tests.test_manage_log.test_get_string_now"><code class="docutils literal notranslate"><span class="pre">test_get_string_now()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests">Module contents</a><ul>
+<li><a class="reference internal" href="#tests.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">tests package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tests.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tests-package">
+<h1>tests package<a class="headerlink" href="#tests-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tests.basis.html">tests.basis package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.basis.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.basis.html#module-tests.basis.test_du_network">tests.basis.test_du_network module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.basis.html#tests.basis.test_du_network.test_get_sub_network"><code class="docutils literal notranslate"><span class="pre">test_get_sub_network()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.basis.html#tests.basis.test_du_network.test_init_pos_id"><code class="docutils literal notranslate"><span class="pre">test_init_pos_id()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.basis.html#tests.basis.test_du_network.test_reduce_nb_du"><code class="docutils literal notranslate"><span class="pre">test_reduce_nb_du()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.basis.html#module-tests.basis.test_pipeline">tests.basis.test_pipeline module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.basis.html#tests.basis.test_pipeline.PipelineTest"><code class="docutils literal notranslate"><span class="pre">PipelineTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_pipeline.PipelineTest.test_add"><code class="docutils literal notranslate"><span class="pre">PipelineTest.test_add()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.basis.html#module-tests.basis.test_signal">tests.basis.test_signal module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.basis.html#tests.basis.test_signal.SignalTest"><code class="docutils literal notranslate"><span class="pre">SignalTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_signal.SignalTest.Etrace"><code class="docutils literal notranslate"><span class="pre">SignalTest.Etrace</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_signal.SignalTest.shape"><code class="docutils literal notranslate"><span class="pre">SignalTest.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_signal.SignalTest.test_get_filter"><code class="docutils literal notranslate"><span class="pre">SignalTest.test_get_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_signal.SignalTest.test_get_peakamptime_norm_hilbert"><code class="docutils literal notranslate"><span class="pre">SignalTest.test_get_peakamptime_norm_hilbert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_signal.SignalTest.time"><code class="docutils literal notranslate"><span class="pre">SignalTest.time</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.basis.html#module-tests.basis.test_traces_event">tests.basis.test_traces_event module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest"><code class="docutils literal notranslate"><span class="pre">EventTracesTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.get_traces"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.get_traces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_define_t_samples"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_define_t_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_get_extended_traces"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_get_extended_traces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_get_max_norm"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_get_max_norm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_get_nb_du"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_get_nb_du()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_get_norm"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_get_norm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_get_size_trace"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_get_size_trace()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_get_tmax_vmax"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_get_tmax_vmax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_init_network"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_init_network()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_init_traces"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_init_traces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.basis.html#tests.basis.test_traces_event.EventTracesTest.test_set_unit_axis"><code class="docutils literal notranslate"><span class="pre">EventTracesTest.test_set_unit_axis()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.basis.html#module-tests.basis">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tests.sim.html">tests.sim package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#module-tests.sim.test_PreComputeInterpol">tests.sim.test_PreComputeInterpol module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_PreComputeInterpol.test_interpol"><code class="docutils literal notranslate"><span class="pre">test_interpol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_PreComputeInterpol.test_precompute"><code class="docutils literal notranslate"><span class="pre">test_precompute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#module-tests.sim.test_antenna">tests.sim.test_antenna module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_antenna.AntennaTest"><code class="docutils literal notranslate"><span class="pre">AntennaTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_antenna.AntennaTest.model"><code class="docutils literal notranslate"><span class="pre">AntennaTest.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_antenna.AntennaTest.path"><code class="docutils literal notranslate"><span class="pre">AntennaTest.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_antenna.AntennaTest.tearDown"><code class="docutils literal notranslate"><span class="pre">AntennaTest.tearDown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_antenna.AntennaTest.test_antenna"><code class="docutils literal notranslate"><span class="pre">AntennaTest.test_antenna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_antenna.AntennaTest.test_tabulated"><code class="docutils literal notranslate"><span class="pre">AntennaTest.test_tabulated()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#module-tests.sim.test_efield2voltage">tests.sim.test_efield2voltage module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_efield2voltage.Efield2VoltageTest"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_efield2voltage.Efield2VoltageTest.infile"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest.infile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_efield2voltage.Efield2VoltageTest.outfile"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest.outfile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_efield2voltage.Efield2VoltageTest.test_Efield2Voltage"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest.test_Efield2Voltage()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#module-tests.sim.test_rf_chain">tests.sim.test_rf_chain module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest"><code class="docutils literal notranslate"><span class="pre">RFChainTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_BalunAfterLNA"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_BalunAfterLNA()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_BalunBeforeADC"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_BalunBeforeADC()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_Cable"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_Cable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_LowNoiseAmplifier"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_LowNoiseAmplifier()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_RFChain"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_RFChain()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_VGAFilter"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_VGAFilter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.RFChainTest.test_Zload"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_Zload()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_rf_chain.test_compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">test_compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#module-tests.sim.test_shower">tests.sim.test_shower module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.sim.html#tests.sim.test_shower.ShowerTest"><code class="docutils literal notranslate"><span class="pre">ShowerTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_shower.ShowerTest.path"><code class="docutils literal notranslate"><span class="pre">ShowerTest.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.sim.html#tests.sim.test_shower.ShowerTest.test_showerevent"><code class="docutils literal notranslate"><span class="pre">ShowerTest.test_showerevent()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.sim.html#module-tests.sim">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-tests.conftest_old">
+<span id="tests-conftest-old-module"></span><h2>tests.conftest_old module<a class="headerlink" href="#module-tests.conftest_old" title="Link to this heading"></a></h2>
+<p>configuration file for pytest</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.conftest_old.download_huge_file">
+<span class="sig-prename descclassname"><span class="pre">tests.conftest_old.</span></span><span class="sig-name descname"><span class="pre">download_huge_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grand_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/conftest_old.html#download_huge_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.conftest_old.download_huge_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.conftest_old.grand_download_huge_file">
+<span class="sig-prename descclassname"><span class="pre">tests.conftest_old.</span></span><span class="sig-name descname"><span class="pre">grand_download_huge_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">depot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://github.com/grand-mother/store/releases/download/101'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/conftest_old.html#grand_download_huge_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.conftest_old.grand_download_huge_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.conftest_old.pytest_configure">
+<span class="sig-prename descclassname"><span class="pre">tests.conftest_old.</span></span><span class="sig-name descname"><span class="pre">pytest_configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/conftest_old.html#pytest_configure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.conftest_old.pytest_configure" title="Link to this definition"></a></dt>
+<dd><p>Run master_data_test main function prior to run pytests.</p>
+</dd></dl>
+
+</section>
+<section id="module-tests.test_manage_log">
+<span id="tests-test-manage-log-module"></span><h2>tests.test_manage_log module<a class="headerlink" href="#module-tests.test_manage_log" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.test_manage_log.test_check_logger_level">
+<span class="sig-prename descclassname"><span class="pre">tests.test_manage_log.</span></span><span class="sig-name descname"><span class="pre">test_check_logger_level</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_manage_log.html#test_check_logger_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.test_manage_log.test_check_logger_level" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.test_manage_log.test_get_logger_for_script">
+<span class="sig-prename descclassname"><span class="pre">tests.test_manage_log.</span></span><span class="sig-name descname"><span class="pre">test_get_logger_for_script</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_manage_log.html#test_get_logger_for_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.test_manage_log.test_get_logger_for_script" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.test_manage_log.test_get_logger_for_script_out_pkg">
+<span class="sig-prename descclassname"><span class="pre">tests.test_manage_log.</span></span><span class="sig-name descname"><span class="pre">test_get_logger_for_script_out_pkg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_manage_log.html#test_get_logger_for_script_out_pkg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.test_manage_log.test_get_logger_for_script_out_pkg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.test_manage_log.test_get_logger_path">
+<span class="sig-prename descclassname"><span class="pre">tests.test_manage_log.</span></span><span class="sig-name descname"><span class="pre">test_get_logger_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_manage_log.html#test_get_logger_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.test_manage_log.test_get_logger_path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.test_manage_log.test_get_string_now">
+<span class="sig-prename descclassname"><span class="pre">tests.test_manage_log.</span></span><span class="sig-name descname"><span class="pre">test_get_string_now</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_manage_log.html#test_get_string_now"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.test_manage_log.test_get_string_now" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-tests">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests" title="Link to this heading"></a></h2>
+<p>Unit tests for the GRAND package</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.main">
+<span class="sig-prename descclassname"><span class="pre">tests.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.main" title="Link to this definition"></a></dt>
+<dd><p>Run a local test suite</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

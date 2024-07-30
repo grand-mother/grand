@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.basis package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">grand.basis package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-grand.basis.du_network">grand.basis.du_network module</a><ul>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork</span></code></a><ul>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.get_max_dist_du"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.get_max_dist_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.get_pos_id"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.get_pos_id()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.get_sub_network"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.get_sub_network()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.get_surface"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.get_surface()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.init_pos_id"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.init_pos_id()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.plot_du_pos"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.plot_du_pos()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_1d"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.plot_footprint_1d()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_4d"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.plot_footprint_4d()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_time"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.plot_footprint_time()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.du_network.DetectorUnitNetwork.reduce_nb_du"><code class="docutils literal notranslate"><span class="pre">DetectorUnitNetwork.reduce_nb_du()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.basis.du_network.closest_node"><code class="docutils literal notranslate"><span class="pre">closest_node()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.basis.pipeline">grand.basis.pipeline module</a><ul>
+<li><a class="reference internal" href="#grand.basis.pipeline.Pipeline"><code class="docutils literal notranslate"><span class="pre">Pipeline</span></code></a><ul>
+<li><a class="reference internal" href="#grand.basis.pipeline.Pipeline.Add"><code class="docutils literal notranslate"><span class="pre">Pipeline.Add()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.pipeline.Pipeline.command_dict"><code class="docutils literal notranslate"><span class="pre">Pipeline.command_dict</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.pipeline.Pipeline.trees_dict"><code class="docutils literal notranslate"><span class="pre">Pipeline.trees_dict</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.basis.pipeline.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.basis.signal">grand.basis.signal module</a><ul>
+<li><a class="reference internal" href="#grand.basis.signal.get_fastest_size_fft"><code class="docutils literal notranslate"><span class="pre">get_fastest_size_fft()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.signal.get_filter"><code class="docutils literal notranslate"><span class="pre">get_filter()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.signal.get_peakamptime_norm_hilbert"><code class="docutils literal notranslate"><span class="pre">get_peakamptime_norm_hilbert()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.signal.interpol_at_new_x"><code class="docutils literal notranslate"><span class="pre">interpol_at_new_x()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.basis.traces_event">grand.basis.traces_event module</a><ul>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent</span></code></a><ul>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.delta_t_ns"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.delta_t_ns()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_extended_traces"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_extended_traces()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_max_abs"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_max_abs()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_max_norm"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_max_norm()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_min_max_t_start"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_min_max_t_start()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_nb_du"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_nb_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_norm"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_norm()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_size_trace"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_size_trace()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_tmax_vmax"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.get_tmax_vmax()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.init_network"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.init_network()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.init_traces"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.init_traces()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_all_traces_as_image"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_all_traces_as_image()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_4d"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_footprint_4d()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_time_max"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_footprint_time_max()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_footprint_val_max()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max_inter"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_footprint_val_max_inter()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_histo_t_start"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_histo_t_start()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_du"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_ps_trace_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_idx"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_ps_trace_idx()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_du"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_trace_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_idx"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.plot_trace_idx()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.reduce_nb_du"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.reduce_nb_du()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent.set_unit_axis"><code class="docutils literal notranslate"><span class="pre">Handling3dTracesOfEvent.set_unit_axis()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.basis.type_trace">grand.basis.type_trace module</a><ul>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField"><code class="docutils literal notranslate"><span class="pre">ElectricField</span></code></a><ul>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.a_time"><code class="docutils literal notranslate"><span class="pre">ElectricField.a_time</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.e_xyz"><code class="docutils literal notranslate"><span class="pre">ElectricField.e_xyz</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.frame"><code class="docutils literal notranslate"><span class="pre">ElectricField.frame</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.get_delta_time_s"><code class="docutils literal notranslate"><span class="pre">ElectricField.get_delta_time_s()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.get_fft"><code class="docutils literal notranslate"><span class="pre">ElectricField.get_fft()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.get_nb_sample"><code class="docutils literal notranslate"><span class="pre">ElectricField.get_nb_sample()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.ElectricField.pos_xyz"><code class="docutils literal notranslate"><span class="pre">ElectricField.pos_xyz</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.basis.type_trace.Voltage"><code class="docutils literal notranslate"><span class="pre">Voltage</span></code></a><ul>
+<li><a class="reference internal" href="#grand.basis.type_trace.Voltage.V"><code class="docutils literal notranslate"><span class="pre">Voltage.V</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.Voltage.get_delta_time_s"><code class="docutils literal notranslate"><span class="pre">Voltage.get_delta_time_s()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.Voltage.get_fft"><code class="docutils literal notranslate"><span class="pre">Voltage.get_fft()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.Voltage.get_nb_sample"><code class="docutils literal notranslate"><span class="pre">Voltage.get_nb_sample()</span></code></a></li>
+<li><a class="reference internal" href="#grand.basis.type_trace.Voltage.t"><code class="docutils literal notranslate"><span class="pre">Voltage.t</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.basis">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">grand.basis package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/grand.basis.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="grand-basis-package">
+<h1>grand.basis package<a class="headerlink" href="#grand-basis-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-grand.basis.du_network">
+<span id="grand-basis-du-network-module"></span><h2>grand.basis.du_network module<a class="headerlink" href="#module-grand.basis.du_network" title="Link to this heading"></a></h2>
+<p>Handling DU network, footprint plot.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.basis.du_network.</span></span><span class="sig-name descname"><span class="pre">DetectorUnitNetwork</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NotDefined'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Handling a DU network</p>
+<p>Public attributs:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>name str: name of the set of trace</p></li>
+<li><p>du_pos float(nb_du, 3): position of DU</p></li>
+<li><p>du_id int(nb_du): array of identifier of DU</p></li>
+<li><p>t_start_ns float(nb_du): time of first sample of trace</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.get_max_dist_du">
+<span class="sig-name descname"><span class="pre">get_max_dist_du</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.get_max_dist_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.get_max_dist_du" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[km] distance max between two DU of network</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.get_pos_id">
+<span class="sig-name descname"><span class="pre">get_pos_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.get_pos_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.get_pos_id" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>l_id</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.get_sub_network">
+<span class="sig-name descname"><span class="pre">get_sub_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.get_sub_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.get_sub_network" title="Link to this definition"></a></dt>
+<dd><p>Reduce networh to DU in list l_id</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>l_id</strong> – list of DU slected</p>
+</dd>
+<dt class="field-even">Type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int[nb_DU in l_id]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.get_surface">
+<span class="sig-name descname"><span class="pre">get_surface</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.get_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.get_surface" title="Link to this definition"></a></dt>
+<dd><p>Return suface in km2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[km2] surface of network envelop</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.init_pos_id">
+<span class="sig-name descname"><span class="pre">init_pos_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">du_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.init_pos_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.init_pos_id" title="Link to this definition"></a></dt>
+<dd><p>Init object with array position and identifier</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>du_pos</strong> (<em>float</em><em>[</em><em>nb_DU</em><em>, </em><em>3</em><em>]</em>) – position of DU</p></li>
+<li><p><strong>du_id</strong> (<em>int</em><em>[</em><em>nb_DU</em><em>]</em>) – identifier of DU</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.plot_du_pos">
+<span class="sig-name descname"><span class="pre">plot_du_pos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.plot_du_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.plot_du_pos" title="Link to this definition"></a></dt>
+<dd><p>plot DU position</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.plot_footprint_1d">
+<span class="sig-name descname"><span class="pre">plot_footprint_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.plot_footprint_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_1d" title="Link to this definition"></a></dt>
+<dd><p>Interactive footprint double click on DU draw trace associated and power spectrum</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a_values</strong> (<em>float</em><em> (</em><em>nb DU</em><em>)</em>) – intensity associated to DU</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – title of figure</p></li>
+<li><p><strong>traces</strong> (<a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent" title="grand.basis.traces_event.Handling3dTracesOfEvent"><em>Handling3dTracesOfEvent</em></a>) – object traces</p></li>
+<li><p><strong>scale</strong> (<em>str in</em><em> [</em><em>&quot;log&quot;</em><em>, </em><em>&quot;lin&quot;</em><em>]</em>) – type of scale</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.plot_footprint_4d">
+<span class="sig-name descname"><span class="pre">plot_footprint_4d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o_tr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.plot_footprint_4d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_4d" title="Link to this definition"></a></dt>
+<dd><p>Plot footprint of time max by DU and value max by component</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>o_tr</strong> (<a class="reference internal" href="#grand.basis.traces_event.Handling3dTracesOfEvent" title="grand.basis.traces_event.Handling3dTracesOfEvent"><em>Handling3dTracesOfEvent</em></a>) – object traces</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – title of plot</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.plot_footprint_time">
+<span class="sig-name descname"><span class="pre">plot_footprint_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a3_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.plot_footprint_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.plot_footprint_time" title="Link to this definition"></a></dt>
+<dd><p>Interactive plot, footprint max value for time defined by user with slider widget</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a_time</strong> (<em>float</em><em>[</em><em>nb_sample full event</em><em>]</em>) – array of complet time of event</p></li>
+<li><p><strong>a3_values</strong> (<em>float</em><em> [</em><em>nb_DU</em><em>, </em><em>3</em><em>]</em>) – trace 3D</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – title of plot</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.du_network.DetectorUnitNetwork.reduce_nb_du">
+<span class="sig-name descname"><span class="pre">reduce_nb_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_nb_du</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#DetectorUnitNetwork.reduce_nb_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.DetectorUnitNetwork.reduce_nb_du" title="Link to this definition"></a></dt>
+<dd><p>Feature to debug and reduce computation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_nb_du</strong> (<em>int</em>) – keep only new_nb_du first DU</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.basis.du_network.closest_node">
+<span class="sig-prename descclassname"><span class="pre">grand.basis.du_network.</span></span><span class="sig-name descname"><span class="pre">closest_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/du_network.html#closest_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.du_network.closest_node" title="Link to this definition"></a></dt>
+<dd><p>This function finds the node in a list of nodes that is closest to a given node.</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">param node<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The <cite>node</cite> parameter represents a specific node in a graph or network for which you want to find the closest node from a list of nodes provided in the <cite>nodes</cite> parameter.</p>
+</dd>
+<dt class="field-even">param nodes<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of nodes</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+</section>
+<section id="module-grand.basis.pipeline">
+<span id="grand-basis-pipeline-module"></span><h2>grand.basis.pipeline module<a class="headerlink" href="#module-grand.basis.pipeline" title="Link to this heading"></a></h2>
+<p>Functions used in the pipline execution.</p>
+<dl class="simple">
+<dt>RK TODO: implement techniques used in LP’s execute_pipeline where output_trees</dt><dd><p>and time-traces are saved on event-by-event basis.</p>
+</dd>
+</dl>
+<p>&#64;GRAND Collaboration, 2023</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.pipeline.Pipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.basis.pipeline.</span></span><span class="sig-name descname"><span class="pre">Pipeline</span></span><a class="reference internal" href="_modules/grand/basis/pipeline.html#Pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.pipeline.Pipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.pipeline.Pipeline.Add">
+<span class="sig-name descname"><span class="pre">Add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/pipeline.html#Pipeline.Add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.pipeline.Pipeline.Add" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.pipeline.Pipeline.command_dict">
+<span class="sig-name descname"><span class="pre">command_dict</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#grand.basis.pipeline.Pipeline.command_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.pipeline.Pipeline.trees_dict">
+<span class="sig-name descname"><span class="pre">trees_dict</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#grand.basis.pipeline.Pipeline.trees_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="grand.basis.pipeline.logger">
+<span class="sig-prename descclassname"><span class="pre">grand.basis.pipeline.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;Logger</span> <span class="pre">grand.basis.pipeline</span> <span class="pre">(WARNING)&gt;</span></em><a class="headerlink" href="#grand.basis.pipeline.logger" title="Link to this definition"></a></dt>
+<dd><p>Final usage:
+from grand.io.pipeline import Pipeline</p>
+<p>pipeline = Pipeline()
+pipeline.Add(“reader”,f_input=”f.root”) 
+pipeline.Add(“coreas2root”, …)
+pipeline.Add(“efield2voltage”, …..)
+pipeline.Add(“some_reco”, ….)
+pipeline.Add(“something_else”, …)
+pipeline.Add(“writer”, f_output=”out.root”)</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.basis.signal">
+<span id="grand-basis-signal-module"></span><h2>grand.basis.signal module<a class="headerlink" href="#module-grand.basis.signal" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>This module contains several signal processing functionalities to be applied to simulation/data</p></li>
+<li><p>operations are meant to be on the signal traces for individual antennas, suitable to be used both
+in Grandlib format/ read from hdf5 files</p></li>
+<li><p>expects signal traces to be of the size (3,lengthoftrace)</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.basis.signal.get_fastest_size_fft">
+<span class="sig-prename descclassname"><span class="pre">grand.basis.signal.</span></span><span class="sig-name descname"><span class="pre">get_fastest_size_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_samp_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_fact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/signal.html#get_fastest_size_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.signal.get_fastest_size_fft" title="Link to this definition"></a></dt>
+<dd><p>#RK: This function is copied to grand/simu/master_simu.py where it is used. Remove it from here if it is not used anywhere else.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sig_size</strong></p></li>
+<li><p><strong>f_samp_mhz</strong></p></li>
+<li><p><strong>padding_fact</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>size_fft (int,0), array freq (float,1) in MHz for rfft()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.basis.signal.get_filter">
+<span class="sig-prename descclassname"><span class="pre">grand.basis.signal.</span></span><span class="sig-name descname"><span class="pre">get_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fr_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fr_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/signal.html#get_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.signal.get_filter" title="Link to this definition"></a></dt>
+<dd><p>Filter signal  in given bandwidth</p>
+<dl class="simple">
+<dt>&#64;note</dt><dd><p>At present Butterworth filter only is implemented, others: what
+is close to hardware filter?</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> (<em>trace</em>) – [ns] time</p></li>
+<li><p><strong>(</strong><strong>array</strong><strong>)</strong> – ElectricField (muV/m)/voltage (muV) vectors to be filtered</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> (<em>fr_max</em>) – [Hz] The minimal frequency of the bandpass filter</p></li>
+<li><p><strong>(</strong><strong>float</strong><strong>)</strong> – [Hz] The maximal frequency of the bandpass filter</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>filtered trace in time domain</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.basis.signal.get_peakamptime_norm_hilbert">
+<span class="sig-prename descclassname"><span class="pre">grand.basis.signal.</span></span><span class="sig-name descname"><span class="pre">get_peakamptime_norm_hilbert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a2_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a3_trace</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/signal.html#get_peakamptime_norm_hilbert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.signal.get_peakamptime_norm_hilbert" title="Link to this definition"></a></dt>
+<dd><p>Get peak Hilbert amplitude norm of trace (v_max) and its time t_max without interpolation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>D</strong><strong>,</strong><strong>S</strong><strong>)</strong> (<em>time</em>) – time, with D number of vector of trace, S number of sample</p></li>
+<li><p><strong>(</strong><strong>D</strong><strong>,</strong><strong>3</strong><strong>,</strong><strong>S</strong><strong>)</strong> (<em>traces</em>) – trace</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>t_max float(D,) v_max float(D,), norm_hilbert_amp float(D,S),
+idx_max int, norm_hilbert_amp float(D,S)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.basis.signal.interpol_at_new_x">
+<span class="sig-prename descclassname"><span class="pre">grand.basis.signal.</span></span><span class="sig-name descname"><span class="pre">interpol_at_new_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/signal.html#interpol_at_new_x"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.signal.interpol_at_new_x" title="Link to this definition"></a></dt>
+<dd><p>#RK: This function is copied to galaxy.py and rf_chain.py where it is used. Remove it from here if it is not used anywhere else.</p>
+<p>Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
+and set to zero outside interval definition a_x</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>a_y</em><em> (</em><em>float</em><em>,</em>) – F(a_x) = a_y, N size of a_x</p></li>
+<li><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> – F(a_x) = a_y</p></li>
+<li><p><strong>(</strong><strong>M</strong><strong>)</strong><strong>)</strong> (<em>new_x</em><em> (</em><em>float</em><em>,</em>) – new value of x</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>F(new_x) (float, (M)): interpolation of F at new_x</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-grand.basis.traces_event">
+<span id="grand-basis-traces-event-module"></span><h2>grand.basis.traces_event module<a class="headerlink" href="#module-grand.basis.traces_event" title="Link to this heading"></a></h2>
+<p>Handling a set of 3D traces</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.basis.traces_event.</span></span><span class="sig-name descname"><span class="pre">Handling3dTracesOfEvent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NotDefined'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Handling a set of traces associated to one event observed on Detector Unit network</p>
+<p>Initialisation, with two methods:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>init_traces()</p></li>
+<li><p>optionally with init_network()</p></li>
+</ul>
+</div></blockquote>
+<p>Features:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>some plots : trace , power spectrum, footprint, …</p></li>
+<li><p>compute time where the trace is maximun</p></li>
+<li><p>compute time for each sample of trace</p></li>
+<li><p>compute a common time for trace</p></li>
+</ul>
+</div></blockquote>
+<p>Public attributes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>name str: name of the set of trace</p></li>
+<li><p>traces float(nb_du, 3, nb_sample): trace 3D</p></li>
+<li><p>du_id int(nb_du): array of identifier of DU</p></li>
+<li><p>t_start_ns float(nb_du): time of first sample of trace</p></li>
+<li><p>t_samples float(nb_du, nb_dim, nb_sample):</p></li>
+<li><p>f_samp_mhz float: [MHz] frequency sampling</p></li>
+<li><p>d_idxdu dict: for each identifier return the index in array</p></li>
+<li><p>unit_trace str: string unit of trace</p></li>
+<li><p>network object: content position network</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.delta_t_ns">
+<span class="sig-name descname"><span class="pre">delta_t_ns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.delta_t_ns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.delta_t_ns" title="Link to this definition"></a></dt>
+<dd><p>Return sampling rate in ns</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_extended_traces">
+<span class="sig-name descname"><span class="pre">get_extended_traces</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_extended_traces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_extended_traces" title="Link to this definition"></a></dt>
+<dd><p>compute and return traces extended to the entire duration of the event with common time</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>common time, extended traces</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float (nb extended sample), float (nb_du, 3, nb extended sample)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_max_abs">
+<span class="sig-name descname"><span class="pre">get_max_abs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_max_abs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_max_abs" title="Link to this definition"></a></dt>
+<dd><p>Find absolute maximal value in trace for each detector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array max of abs value</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float (nb_du,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_max_norm">
+<span class="sig-name descname"><span class="pre">get_max_norm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_max_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_max_norm" title="Link to this definition"></a></dt>
+<dd><p>Return array of maximal of 3D norm in trace for each detector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array norm of traces</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float (nb_du,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_min_max_t_start">
+<span class="sig-name descname"><span class="pre">get_min_max_t_start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_min_max_t_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_min_max_t_start" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>first and last time start</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_nb_du">
+<span class="sig-name descname"><span class="pre">get_nb_du</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_nb_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_nb_du" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>number of DU</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_norm">
+<span class="sig-name descname"><span class="pre">get_norm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_norm" title="Link to this definition"></a></dt>
+<dd><p>Return norm of traces for each time sample</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>norm of traces for each time sample</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float (nb_du, nb sample)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_size_trace">
+<span class="sig-name descname"><span class="pre">get_size_trace</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_size_trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_size_trace" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>number of sample in trace</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.get_tmax_vmax">
+<span class="sig-name descname"><span class="pre">get_tmax_vmax</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.get_tmax_vmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.get_tmax_vmax" title="Link to this definition"></a></dt>
+<dd><p>Return time where norm of the amplitude of the Hilbert tranform  is max</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>time of max and max</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float(nb_du,) , float(nb_du,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.init_network">
+<span class="sig-name descname"><span class="pre">init_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.init_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.init_network" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>du_pos</strong></p></li>
+<li><p><strong>du_id</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.init_traces">
+<span class="sig-name descname"><span class="pre">init_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">du_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_start_ns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_samp_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.init_traces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.init_traces" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>traces</strong> (<em>float</em><em> (</em><em>nb_du</em><em>, </em><em>3</em><em>, </em><em>nb sample</em><em>)</em>) – array traces 3D</p></li>
+<li><p><strong>du_id</strong> (<em>int</em><em> (</em><em>nb_du</em><em>,</em><em>)</em>) – array identifier of DU</p></li>
+<li><p><strong>t_start_ns</strong> (<em>int</em><em> (</em><em>nb_du</em><em>,</em><em>)</em>) – array time start of trace</p></li>
+<li><p><strong>f_samp_mhz</strong> (<em>float</em>) – franquency sampling in MHz</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_all_traces_as_image">
+<span class="sig-name descname"><span class="pre">plot_all_traces_as_image</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_all_traces_as_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_all_traces_as_image" title="Link to this definition"></a></dt>
+<dd><p>Interactive image double click open traces associated</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_4d">
+<span class="sig-name descname"><span class="pre">plot_footprint_4d</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_footprint_4d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_4d" title="Link to this definition"></a></dt>
+<dd><p>Plot time max and max value by component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_time_max">
+<span class="sig-name descname"><span class="pre">plot_footprint_time_max</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_footprint_time_max"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_time_max" title="Link to this definition"></a></dt>
+<dd><p>Plot footprint time associated to max value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max">
+<span class="sig-name descname"><span class="pre">plot_footprint_val_max</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_footprint_val_max"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max" title="Link to this definition"></a></dt>
+<dd><p>Plot footprint max value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max_inter">
+<span class="sig-name descname"><span class="pre">plot_footprint_val_max_inter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_footprint_val_max_inter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max_inter" title="Link to this definition"></a></dt>
+<dd><p>Plot footprint max value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_histo_t_start">
+<span class="sig-name descname"><span class="pre">plot_histo_t_start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_histo_t_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_histo_t_start" title="Link to this definition"></a></dt>
+<dd><p>Histogram of time start</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_du">
+<span class="sig-name descname"><span class="pre">plot_ps_trace_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'012'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_ps_trace_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_du" title="Link to this definition"></a></dt>
+<dd><p>Draw power spectrum for 3 traces associated to DU du_id</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>du_id</strong> (<em>int</em>) – DU identifier</p></li>
+<li><p><strong>to_draw</strong> (<em>enum str</em><em> [</em><em>&quot;0&quot;</em><em>, </em><em>&quot;1&quot;</em><em>, </em><em>&quot;2&quot;</em><em>] </em><em>not exclusive</em>) – select components to draw</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_idx">
+<span class="sig-name descname"><span class="pre">plot_ps_trace_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'012'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_ps_trace_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_idx" title="Link to this definition"></a></dt>
+<dd><p>Draw power spectrum for 3 traces associated to DU at index idx</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<em>int</em>) – index of trace</p></li>
+<li><p><strong>to_draw</strong> (<em>enum str</em><em> [</em><em>&quot;0&quot;</em><em>, </em><em>&quot;1&quot;</em><em>, </em><em>&quot;2&quot;</em><em>] </em><em>not exclusive</em>) – select components to draw</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_du">
+<span class="sig-name descname"><span class="pre">plot_trace_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'012'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_trace_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_du" title="Link to this definition"></a></dt>
+<dd><p>Draw 3 traces associated to DU du_id</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<em>int</em>) – index of DU to draw</p></li>
+<li><p><strong>to_draw</strong> (<em>enum str</em><em> [</em><em>&quot;0&quot;</em><em>, </em><em>&quot;1&quot;</em><em>, </em><em>&quot;2&quot;</em><em>] </em><em>not exclusive</em>) – select components to draw</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_idx">
+<span class="sig-name descname"><span class="pre">plot_trace_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_draw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'012'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.plot_trace_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_idx" title="Link to this definition"></a></dt>
+<dd><p>Draw 3 traces associated to DU with index idx</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<em>int</em>) – index of DU to draw</p></li>
+<li><p><strong>to_draw</strong> (<em>enum str</em><em> [</em><em>&quot;0&quot;</em><em>, </em><em>&quot;1&quot;</em><em>, </em><em>&quot;2&quot;</em><em>] </em><em>not exclusive</em>) – select components to draw</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.reduce_nb_du">
+<span class="sig-name descname"><span class="pre">reduce_nb_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_nb_du</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.reduce_nb_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.reduce_nb_du" title="Link to this definition"></a></dt>
+<dd><p>feature to reduce computation, for debugging</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_nb_du</strong> (<em>int</em>) – keep only new_nb_du first DU</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.traces_event.Handling3dTracesOfEvent.set_unit_axis">
+<span class="sig-name descname"><span class="pre">set_unit_axis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">str_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TBD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'idx'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/traces_event.html#Handling3dTracesOfEvent.set_unit_axis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.traces_event.Handling3dTracesOfEvent.set_unit_axis" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>str_unit</strong></p></li>
+<li><p><strong>axis_name</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.basis.type_trace">
+<span id="grand-basis-type-trace-module"></span><h2>grand.basis.type_trace module<a class="headerlink" href="#module-grand.basis.type_trace" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.basis.type_trace.</span></span><span class="sig-name descname"><span class="pre">ElectricField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_xyz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'CartesianRepresentation'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_xyz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[CartesianRepresentation,</span> <span class="pre">None]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[LTP,</span> <span class="pre">GRANDCS,</span> <span class="pre">None]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.a_time">
+<span class="sig-name descname"><span class="pre">a_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#grand.basis.type_trace.ElectricField.a_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.e_xyz">
+<span class="sig-name descname"><span class="pre">e_xyz</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></em><a class="headerlink" href="#grand.basis.type_trace.ElectricField.e_xyz" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.frame">
+<span class="sig-name descname"><span class="pre">frame</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.basis.type_trace.ElectricField.frame" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.get_delta_time_s">
+<span class="sig-name descname"><span class="pre">get_delta_time_s</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField.get_delta_time_s"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField.get_delta_time_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.get_fft">
+<span class="sig-name descname"><span class="pre">get_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size_sig_pad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField.get_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField.get_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size_sig_pad</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.get_nb_sample">
+<span class="sig-name descname"><span class="pre">get_nb_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField.get_nb_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField.get_nb_sample" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.pos_xyz">
+<span class="sig-name descname"><span class="pre">pos_xyz</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.geo.html#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.basis.type_trace.ElectricField.pos_xyz" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.basis.type_trace.</span></span><span class="sig-name descname"><span class="pre">Voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.V">
+<span class="sig-name descname"><span class="pre">V</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#grand.basis.type_trace.Voltage.V" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.get_delta_time_s">
+<span class="sig-name descname"><span class="pre">get_delta_time_s</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage.get_delta_time_s"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage.get_delta_time_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.get_fft">
+<span class="sig-name descname"><span class="pre">get_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size_sig_pad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage.get_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage.get_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size_sig_pad</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.get_nb_sample">
+<span class="sig-name descname"><span class="pre">get_nb_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage.get_nb_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage.get_nb_sample" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.t">
+<span class="sig-name descname"><span class="pre">t</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#grand.basis.type_trace.Voltage.t" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.basis">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-grand.basis" title="Link to this heading"></a></h2>
+<p>Fundamental classes usable in simulation and analysis.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

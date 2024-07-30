@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.geo package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">grand.geo package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-grand.geo.coordinates">grand.geo.coordinates module</a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_horizontal"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.cartesian_to_horizontal()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_spherical"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.cartesian_to_spherical()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.info"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.info()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.norm"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.norm()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.x"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.x</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.y"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.y</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.z"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.z</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Coordinates"><code class="docutils literal notranslate"><span class="pre">Coordinates</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.ECEF"><code class="docutils literal notranslate"><span class="pre">ECEF</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.ECEF.ecef_to_geodetic"><code class="docutils literal notranslate"><span class="pre">ECEF.ecef_to_geodetic()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.ECEF.ecef_to_grandcs"><code class="docutils literal notranslate"><span class="pre">ECEF.ecef_to_grandcs()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.ECEF.ecef_to_ltp"><code class="docutils literal notranslate"><span class="pre">ECEF.ecef_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.GRANDCS"><code class="docutils literal notranslate"><span class="pre">GRANDCS</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ecef"><code class="docutils literal notranslate"><span class="pre">GRANDCS.grandcs_to_ecef()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.GRANDCS.grandcs_to_geodetic"><code class="docutils literal notranslate"><span class="pre">GRANDCS.grandcs_to_geodetic()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ltp"><code class="docutils literal notranslate"><span class="pre">GRANDCS.grandcs_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Geodetic"><code class="docutils literal notranslate"><span class="pre">Geodetic</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_ecef"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_ecef()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_grandcs"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_grandcs()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_horizontal"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_horizontal()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_ltp"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Horizontal"><code class="docutils literal notranslate"><span class="pre">Horizontal</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.Horizontal.horizontal_to_ecef"><code class="docutils literal notranslate"><span class="pre">Horizontal.horizontal_to_ecef()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Horizontal.horizontal_to_geodetic"><code class="docutils literal notranslate"><span class="pre">Horizontal.horizontal_to_geodetic()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Horizontal.horizontal_to_grandcs"><code class="docutils literal notranslate"><span class="pre">Horizontal.horizontal_to_grandcs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.azimuth"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.azimuth</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.elevation"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.elevation</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_cartesian"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.horizontal_to_cartesian()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_spherical"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.horizontal_to_spherical()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.norm"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.norm</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.HorizontalVector"><code class="docutils literal notranslate"><span class="pre">HorizontalVector</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.LTP"><code class="docutils literal notranslate"><span class="pre">LTP</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_ecef"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_ecef()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_geodetic"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_geodetic()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_grandcs"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_grandcs()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_ltp"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Reference"><code class="docutils literal notranslate"><span class="pre">Reference</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.Reference.ELLIPSOID"><code class="docutils literal notranslate"><span class="pre">Reference.ELLIPSOID</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.Reference.GEOID"><code class="docutils literal notranslate"><span class="pre">Reference.GEOID</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.phi"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.phi</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.r"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.r</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_cartesian"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.spherical_to_cartesian()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_horizontal"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.spherical_to_horizontal()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.theta"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.theta</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.coordinates.geoid_undulation"><code class="docutils literal notranslate"><span class="pre">geoid_undulation()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.geo.geomagnet">grand.geo.geomagnet module</a><ul>
+<li><a class="reference internal" href="#grand.geo.geomagnet.Geomagnet"><code class="docutils literal notranslate"><span class="pre">Geomagnet</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.geomagnet.field"><code class="docutils literal notranslate"><span class="pre">field()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.geo.gull">grand.geo.gull module</a><ul>
+<li><a class="reference internal" href="#grand.geo.gull.LibraryError"><code class="docutils literal notranslate"><span class="pre">LibraryError</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.gull.Snapshot"><code class="docutils literal notranslate"><span class="pre">Snapshot</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.gull.Snapshot.altitude"><code class="docutils literal notranslate"><span class="pre">Snapshot.altitude</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.gull.Snapshot.date"><code class="docutils literal notranslate"><span class="pre">Snapshot.date</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.gull.Snapshot.order"><code class="docutils literal notranslate"><span class="pre">Snapshot.order</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.geo.topography">grand.geo.topography module</a><ul>
+<li><a class="reference internal" href="#grand.geo.topography.Reference"><code class="docutils literal notranslate"><span class="pre">Reference</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.topography.Reference.ELLIPSOID"><code class="docutils literal notranslate"><span class="pre">Reference.ELLIPSOID</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.Reference.GEOID"><code class="docutils literal notranslate"><span class="pre">Reference.GEOID</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.Reference.LOCAL"><code class="docutils literal notranslate"><span class="pre">Reference.LOCAL</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.topography.Topography"><code class="docutils literal notranslate"><span class="pre">Topography</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.topography.Topography.distance"><code class="docutils literal notranslate"><span class="pre">Topography.distance()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.Topography.elevation"><code class="docutils literal notranslate"><span class="pre">Topography.elevation()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.topography.cachedir"><code class="docutils literal notranslate"><span class="pre">cachedir()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.distance"><code class="docutils literal notranslate"><span class="pre">distance()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.elevation"><code class="docutils literal notranslate"><span class="pre">elevation()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.geoid_undulation"><code class="docutils literal notranslate"><span class="pre">geoid_undulation()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.model"><code class="docutils literal notranslate"><span class="pre">model()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.topography.update_data"><code class="docutils literal notranslate"><span class="pre">update_data()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.geo.turtle">grand.geo.turtle module</a><ul>
+<li><a class="reference internal" href="#grand.geo.turtle.LibraryError"><code class="docutils literal notranslate"><span class="pre">LibraryError</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.Map"><code class="docutils literal notranslate"><span class="pre">Map</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.turtle.Map.cache"><code class="docutils literal notranslate"><span class="pre">Map.cache</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.Map.elevation"><code class="docutils literal notranslate"><span class="pre">Map.elevation()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.Map.path"><code class="docutils literal notranslate"><span class="pre">Map.path</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.turtle.Stack"><code class="docutils literal notranslate"><span class="pre">Stack</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.turtle.Stack.elevation"><code class="docutils literal notranslate"><span class="pre">Stack.elevation()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.Stack.path"><code class="docutils literal notranslate"><span class="pre">Stack.path</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.Stack.stack_size"><code class="docutils literal notranslate"><span class="pre">Stack.stack_size</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.turtle.Stepper"><code class="docutils literal notranslate"><span class="pre">Stepper</span></code></a><ul>
+<li><a class="reference internal" href="#grand.geo.turtle.Stepper.add"><code class="docutils literal notranslate"><span class="pre">Stepper.add()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.Stepper.geoid"><code class="docutils literal notranslate"><span class="pre">Stepper.geoid</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.geo.turtle.ecef_from_geodetic"><code class="docutils literal notranslate"><span class="pre">ecef_from_geodetic()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.ecef_from_horizontal"><code class="docutils literal notranslate"><span class="pre">ecef_from_horizontal()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.ecef_to_geodetic"><code class="docutils literal notranslate"><span class="pre">ecef_to_geodetic()</span></code></a></li>
+<li><a class="reference internal" href="#grand.geo.turtle.ecef_to_horizontal"><code class="docutils literal notranslate"><span class="pre">ecef_to_horizontal()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.geo">Module contents</a><ul>
+<li><a class="reference internal" href="#grand.geo.DATADIR"><code class="docutils literal notranslate"><span class="pre">DATADIR</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">grand.geo package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/grand.geo.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="grand-geo-package">
+<h1>grand.geo package<a class="headerlink" href="#grand-geo-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-grand.geo.coordinates">
+<span id="grand-geo-coordinates-module"></span><h2>grand.geo.coordinates module<a class="headerlink" href="#module-grand.geo.coordinates" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>units: </dt><dd><ul class="simple">
+<li><p>energy: GeV</p></li>
+<li><p>time  : nanosecond</p></li>
+<li><p>length: m</p></li>
+<li><p>voltage: microVolt</p></li>
+<li><p>Efield: microVolt/m</p></li>
+<li><p>Bfield: nanoTesla</p></li>
+<li><p>angles: degree</p></li>
+<li><p>grammage: g/cm2</p></li>
+<li><p>Density: g/cm3</p></li>
+<li><p>frequency: Hz</p></li>
+<li><p>resistance: Ohm</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">CartesianRepresentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.Coordinates" title="grand.geo.coordinates.Coordinates"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coordinates</span></code></a></p>
+<p>Generic container for cartesian coordinates</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.cartesian_to_horizontal">
+<span class="sig-name descname"><span class="pre">cartesian_to_horizontal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.cartesian_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_horizontal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.cartesian_to_spherical">
+<span class="sig-name descname"><span class="pre">cartesian_to_spherical</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.cartesian_to_spherical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_spherical" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.info">
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.info" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.norm">
+<span class="sig-name descname"><span class="pre">norm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.norm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.x">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.z">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">z</span></span><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.z" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Coordinates">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Coordinates" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+<p>Generic container for a coordinates object
+This object created is a standard np.ndarray of size (3, n)
+where 3 is for 3D coordinates and n is the number of entries.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">ECEF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">CartesianRepresentation</span></code></a></p>
+<p>Generic container for Earth-Centered Earth-Fixed (ECEF) coordinate system.
+Center of Earth is the origin of this frame.</p>
+<p>ECEF is a right-handed Cartesian coordinate system with the origin at the
+Earth’s center. This coordinate frame is fixed with respect to the Earth
+(i.e., rotates along with the Earth). Units are in meters. The three axis are
+defined as follows:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>x :   Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).</p></li>
+<li><p>y :   Passes through the equator 90 degrees east of the Prime Meridian (latitude = 0, longitude = 90 degrees).</p></li>
+<li><p>z :   Passes through the North Pole (latitude = 90 degrees, longitude = any value).</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Reason to have __new__ and __init__ is to store obstime as instance attribute.
+obstime will be saved as class attribute if only __new__ is used. This means
+if obstime is modified for one case anywhere during calculation, obstime for
+all cases will be modified.</p>
+</dd>
+<dt class="field-even">Todo<span class="colon">:</span></dt>
+<dd class="field-even"><p>find an elegant way to do this.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF.ecef_to_geodetic">
+<span class="sig-name descname"><span class="pre">ecef_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF.ecef_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF.ecef_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF.ecef_to_grandcs">
+<span class="sig-name descname"><span class="pre">ecef_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF.ecef_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF.ecef_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF.ecef_to_ltp">
+<span class="sig-name descname"><span class="pre">ecef_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF.ecef_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF.ecef_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">GRANDCS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><code class="xref py py-class docutils literal notranslate"><span class="pre">LTP</span></code></a></p>
+<p>Class for the GRANDCS coordinate system (cs). This class instantiate coordinates
+in GRANDCS’s coordinate frame. Input can be either x, y, z coordinates value
+in GRANDCS’s cs or coordinates in ECEF or Geodetic system.</p>
+<p>If the input coordinates are in ECEF or Geodetic (or any coordinate system
+other than GRANDCS’s cs) following procedure is performed. Convert everything
+to ECEF frame to do all initial calculations and then finally project the
+positional vector from GRANDCS’s cs origin to it’s basis vectors. Basis for NWU GRANDCS’s
+cs is calculated based on GRANDCS’s origin. Basis forms a rotational matrix.
+Transpose of the rotational matrix is it’s inverse. Basis in this case are unit
+vectors in ECEF frame that describes the NWU direction from GRANDCS’s origin
+(also in ECEF frame). To convert other cs to GRANDCS’s cs, first transform the
+coordinates in ECEF frame, then shift the origin of coordinates from
+ECEF’s origin to GRANDCS’s origin. Now you get a positional vector from GRANDCS’s origin
+in ECEF frame. Take a dot product of this positional vector with the NWU basis unit
+vectors to get the coordinates in GRANDCS coordinate system.</p>
+<p>Use inverse (transpose) of rotational matrix to convert from GRANDCS cs to ECEF. Then
+convert from ECEF to Geodetic.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS.grandcs_to_ecef">
+<span class="sig-name descname"><span class="pre">grandcs_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS.grandcs_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS.grandcs_to_geodetic">
+<span class="sig-name descname"><span class="pre">grandcs_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS.grandcs_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS.grandcs_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS.grandcs_to_ltp">
+<span class="sig-name descname"><span class="pre">grandcs_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS.grandcs_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="grand.html#grand.GeodeticRepresentation" title="grand.geo.coordinates.GeodeticRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeodeticRepresentation</span></code></a></p>
+<p>Generic container for Geodetic coordinate system. Center of this frame
+is the center of Earth.</p>
+<dl class="simple">
+<dt>Latitude:   Angle north and south of the equator. +ve in the northern hemisphere,</dt><dd><p>-ve in the southern hemisphere. Range: -90 deg (South Pole)
+to +90 deg (North Pole). In equator, latitude = 0.</p>
+</dd>
+<dt>Longitude:  Angle east and west of the Prime Meridian. The Prime Meridian</dt><dd><p>is a north-south line that passes through Greenwich, UK.
++ve to the east of the Prime Meridian, -ve to the west.
+Range: -180 deg to +180 deg.</p>
+</dd>
+<dt>Height:     Also called altitude or elevation, this represents the height above</dt><dd><p>the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
+mathematical surface defined by a semi-major axis and a semi-minor axis.
+The most common values for these two parameters are defined by
+the World Geodetic Standard 1984 (WGS-84). The WGS-84 ellipsoid is
+intended to correspond to mean sea level. A Geodetic height of zero
+therefore roughly corresponds to sea level, with positive values increasing
+away from the Earth’s center. The theoretical range of height values is
+from the center of the Earth (about -6,371km) to positive infinity.</p>
+</dd>
+<dt>Imp:</dt><dd><p>It was necessary to divide __new__ into __new__ and __init__ to keep track
+of reference attribute. Using __new__ only caused reference to be a class
+attribute. So, if you change reference (as a class attribute) in any part
+of the code, reference for all instances changes resulting in a wrong calculation.
+To save reference as instance attribute instead of class attribute,
+__init__ is necessary. Same approach is used in LTP.
+Todo: There might be an elegant way to do this.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_ecef">
+<span class="sig-name descname"><span class="pre">geodetic_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_grandcs">
+<span class="sig-name descname"><span class="pre">geodetic_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_horizontal">
+<span class="sig-name descname"><span class="pre">geodetic_to_horizontal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_horizontal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_ltp">
+<span class="sig-name descname"><span class="pre">geodetic_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Horizontal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Geodetic([[38.88849],</span> <span class="pre">[92.28605],</span> <span class="pre">[2920.522]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation" title="grand.geo.coordinates.HorizontalRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">HorizontalRepresentation</span></code></a></p>
+<p>Generic container for horizontal coordinates.</p>
+<p>azimuth  : angle (deg) starting from true North towards East.
+elevation: angle (deg) from horizontal plane towards zenith.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal.horizontal_to_ecef">
+<span class="sig-name descname"><span class="pre">horizontal_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal.horizontal_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal.horizontal_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal.horizontal_to_geodetic">
+<span class="sig-name descname"><span class="pre">horizontal_to_geodetic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal.horizontal_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal.horizontal_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal.horizontal_to_grandcs">
+<span class="sig-name descname"><span class="pre">horizontal_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal.horizontal_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal.horizontal_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">HorizontalRepresentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalRepresentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.Coordinates" title="grand.geo.coordinates.Coordinates"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coordinates</span></code></a></p>
+<p>Generic container for horizontal coordinates.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.azimuth">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">azimuth</span></span><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.azimuth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.elevation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elevation</span></span><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.elevation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.horizontal_to_cartesian">
+<span class="sig-name descname"><span class="pre">horizontal_to_cartesian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalRepresentation.horizontal_to_cartesian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_cartesian" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.horizontal_to_spherical">
+<span class="sig-name descname"><span class="pre">horizontal_to_spherical</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalRepresentation.horizontal_to_spherical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_spherical" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.norm">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm</span></span><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.norm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalVector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">HorizontalVector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalVector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalVector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation" title="grand.geo.coordinates.HorizontalRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">HorizontalRepresentation</span></code></a></p>
+<p>This class has been merged into Horizontal class
+by adding ‘vector’ attribute to reduce code duplication.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">LTP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">CartesianRepresentation</span></code></a></p>
+<p>Calculates basis and orgin at a given latitude and longitude.
+Basis and origin is calculated in ECEF frame.
+‘location’ and ‘orientation’ are required.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_ecef">
+<span class="sig-name descname"><span class="pre">ltp_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_geodetic">
+<span class="sig-name descname"><span class="pre">ltp_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_grandcs">
+<span class="sig-name descname"><span class="pre">ltp_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_ltp">
+<span class="sig-name descname"><span class="pre">ltp_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Reference">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Reference" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
+<p>Reference level for height in Geodetic coordinate system.
+Reference is also defined in topography.py for Topography use.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Reference.ELLIPSOID">
+<span class="sig-name descname"><span class="pre">ELLIPSOID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#grand.geo.coordinates.Reference.ELLIPSOID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Reference.GEOID">
+<span class="sig-name descname"><span class="pre">GEOID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#grand.geo.coordinates.Reference.GEOID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">SphericalRepresentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#SphericalRepresentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.Coordinates" title="grand.geo.coordinates.Coordinates"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coordinates</span></code></a></p>
+<p>Generic container for spherical coordinates</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.phi">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">phi</span></span><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.phi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.r">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">r</span></span><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.r" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.spherical_to_cartesian">
+<span class="sig-name descname"><span class="pre">spherical_to_cartesian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#SphericalRepresentation.spherical_to_cartesian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_cartesian" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.spherical_to_horizontal">
+<span class="sig-name descname"><span class="pre">spherical_to_horizontal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#SphericalRepresentation.spherical_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_horizontal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.theta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">theta</span></span><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.theta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.coordinates.geoid_undulation">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">geoid_undulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#geoid_undulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.geoid_undulation" title="Link to this definition"></a></dt>
+<dd><p>Get the geoid undulation. This function calculates the height of
+the geoid w.r.t the ellipsoid at a given latitude and longitude.
+This function is also defined in topography.py for Topography use.</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.geo.geomagnet">
+<span id="grand-geo-geomagnet-module"></span><h2>grand.geo.geomagnet module<a class="headerlink" href="#module-grand.geo.geomagnet" title="Link to this heading"></a></h2>
+<p>Geomagnetic field wrapper for GRAND packages</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.geomagnet.Geomagnet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.geomagnet.</span></span><span class="sig-name descname"><span class="pre">Geomagnet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.ECEF" title="grand.geo.coordinates.ECEF"><span class="pre">ECEF</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.Geodetic" title="grand.geo.coordinates.Geodetic"><span class="pre">Geodetic</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obstime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">date</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/geomagnet.html#Geomagnet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.geomagnet.Geomagnet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Proxy to a geomagnetic model. ‘IGRF13’ is used as a default model.
+Get the geo-magnetic field components [Bx, By, Bz] on any geodetic location of
+Earth at any given time. For location, either provide latitude (deg), longitude (deg), and
+height (m) or provide location in ECEF, Geodetic, or GRAND coordinate system. TypeError
+will occur if location is not provided. For obstime, provide time in isoformat
+(‘2020-01-19’) or in datetime.date(2020, 1, 19). If obstime is not provided, a
+default value (‘2020-01-01’) is used.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.geomagnet.field">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.geomagnet.</span></span><span class="sig-name descname"><span class="pre">field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.ECEF" title="grand.geo.coordinates.ECEF"><span class="pre">ECEF</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.Geodetic" title="grand.geo.coordinates.Geodetic"><span class="pre">Geodetic</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span></span><a class="reference internal" href="_modules/grand/geo/geomagnet.html#field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.geomagnet.field" title="Link to this definition"></a></dt>
+<dd><p>Get the default geo-magnetic field at the given <em>coordinates</em>.</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.geo.gull">
+<span id="grand-geo-gull-module"></span><h2>grand.geo.gull module<a class="headerlink" href="#module-grand.geo.gull" title="Link to this heading"></a></h2>
+<p>Wrapper for the GULL C library</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grand.geo.gull.LibraryError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.gull.</span></span><span class="sig-name descname"><span class="pre">LibraryError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/gull.html#LibraryError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.gull.LibraryError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>A GULL library error</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.gull.Snapshot">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.gull.</span></span><span class="sig-name descname"><span class="pre">Snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'2020-01-01'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/gull.html#Snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.gull.Snapshot" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Proxy for a GULL snapshot object</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.gull.Snapshot.altitude">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">altitude</span></span><a class="headerlink" href="#grand.geo.gull.Snapshot.altitude" title="Link to this definition"></a></dt>
+<dd><p>The altitude range of the snapshot</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.gull.Snapshot.date">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">date</span></span><a class="headerlink" href="#grand.geo.gull.Snapshot.date" title="Link to this definition"></a></dt>
+<dd><p>The date of the snapshot</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.gull.Snapshot.order">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">order</span></span><a class="headerlink" href="#grand.geo.gull.Snapshot.order" title="Link to this definition"></a></dt>
+<dd><p>The approximation order of the model</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.geo.topography">
+<span id="grand-geo-topography-module"></span><h2>grand.geo.topography module<a class="headerlink" href="#module-grand.geo.topography" title="Link to this heading"></a></h2>
+<p>Topography wrapper for GRAND packages.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.topography.Reference">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">Reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#Reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.Reference" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
+<p>Reference level for topography data</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.topography.Reference.ELLIPSOID">
+<span class="sig-name descname"><span class="pre">ELLIPSOID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#grand.geo.topography.Reference.ELLIPSOID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.topography.Reference.GEOID">
+<span class="sig-name descname"><span class="pre">GEOID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#grand.geo.topography.Reference.GEOID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.topography.Reference.LOCAL">
+<span class="sig-name descname"><span class="pre">LOCAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#grand.geo.topography.Reference.LOCAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.topography.Topography">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">Topography</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">PosixPath('/pbs/home/j/jkastner/ma/grand/data/topography')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#Topography"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.Topography" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Proxy to topography data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.topography.Topography.distance">
+<span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#Topography.distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.Topography.distance" title="Link to this definition"></a></dt>
+<dd><p>Get the signed intersection distance with the topography.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.topography.Topography.elevation">
+<span class="sig-name descname"><span class="pre">elevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#Topography.elevation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.Topography.elevation" title="Link to this definition"></a></dt>
+<dd><p>Get the topography elevation, w.r.t. sea level, w.r.t the
+ellipsoid or in local coordinates. The default reference is
+w.r.t sea level (GEOID).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.topography.cachedir">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">cachedir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/grand/geo/topography.html#cachedir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.cachedir" title="Link to this definition"></a></dt>
+<dd><p>Get the location of the topography data cache.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.topography.distance">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.distance" title="Link to this definition"></a></dt>
+<dd><p>Get the signed intersection distance with the topography.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.topography.elevation">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">elevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#elevation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.elevation" title="Link to this definition"></a></dt>
+<dd><p>Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.topography.geoid_undulation">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">geoid_undulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#geoid_undulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.geoid_undulation" title="Link to this definition"></a></dt>
+<dd><p>Get the geoid undulation. This function calculates the height of
+the geoid w.r.t the ellipsoid at a given latitude and longitude.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.topography.model">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/grand/geo/topography.html#model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.model" title="Link to this definition"></a></dt>
+<dd><p>Get the default model for topographic data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.topography.update_data">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.topography.</span></span><span class="sig-name descname"><span class="pre">update_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/topography.html#update_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.topography.update_data" title="Link to this definition"></a></dt>
+<dd><p>Update the cache of topography data.
+Data are stored in <a class="reference external" href="https://github.com/grand-mother/store/releases">https://github.com/grand-mother/store/releases</a>.
+Locally saved as …/grand/data/topography/<a href="#id1"><span class="problematic" id="id2">*</span></a>.hgt</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.geo.turtle">
+<span id="grand-geo-turtle-module"></span><h2>grand.geo.turtle module<a class="headerlink" href="#module-grand.geo.turtle" title="Link to this heading"></a></h2>
+<p>Wrapper for the TURTLE C library</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grand.geo.turtle.LibraryError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">LibraryError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#LibraryError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.LibraryError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>A TURTLE library error</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.turtle.Map">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">Map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#Map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.Map" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Proxy for a TURTLE map object</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.turtle.Map.cache">
+<span class="sig-name descname"><span class="pre">cache</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#grand.geo.turtle.Map.cache" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.turtle.Map.elevation">
+<span class="sig-name descname"><span class="pre">elevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#Map.elevation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.Map.elevation" title="Link to this definition"></a></dt>
+<dd><p>Get the elevation at the given map coordinates</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.turtle.Map.path">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#grand.geo.turtle.Map.path" title="Link to this definition"></a></dt>
+<dd><p>The path where the data tiles are located</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">Stack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#Stack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.Stack" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Proxy for a TURTLE stack object</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stack.elevation">
+<span class="sig-name descname"><span class="pre">elevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#Stack.elevation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.Stack.elevation" title="Link to this definition"></a></dt>
+<dd><p>Get the elevation at the given geodetic coordinates</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stack.path">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#grand.geo.turtle.Stack.path" title="Link to this definition"></a></dt>
+<dd><p>The path where the data tiles are located</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stack.stack_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stack_size</span></span><a class="headerlink" href="#grand.geo.turtle.Stack.stack_size" title="Link to this definition"></a></dt>
+<dd><p>The maximum number of data tiles kept in memory</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stepper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">Stepper</span></span><a class="reference internal" href="_modules/grand/geo/turtle.html#Stepper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.Stepper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Proxy for a TURTLE stepper object</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stepper.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.turtle.Map" title="grand.geo.turtle.Map"><span class="pre">Map</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.turtle.Stack" title="grand.geo.turtle.Stack"><span class="pre">Stack</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#Stepper.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.Stepper.add" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.turtle.Stepper.geoid">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">geoid</span></span><a class="headerlink" href="#grand.geo.turtle.Stepper.geoid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.turtle.ecef_from_geodetic">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">ecef_from_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#ecef_from_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.ecef_from_geodetic" title="Link to this definition"></a></dt>
+<dd><p>Convert geodetic coordinates to ECEF ones</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.turtle.ecef_from_horizontal">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">ecef_from_horizontal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#ecef_from_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.ecef_from_horizontal" title="Link to this definition"></a></dt>
+<dd><p>Convert horizontal coordinates to an ECEF direction</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.turtle.ecef_to_geodetic">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">ecef_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ecef</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#ecef_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.ecef_to_geodetic" title="Link to this definition"></a></dt>
+<dd><p>Convert ECEF coordinates to geodetic ones</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.turtle.ecef_to_horizontal">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.turtle.</span></span><span class="sig-name descname"><span class="pre">ecef_to_horizontal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/turtle.html#ecef_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.turtle.ecef_to_horizontal" title="Link to this definition"></a></dt>
+<dd><p>Convert an ECEF direction to horizontal coordinates</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.geo">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-grand.geo" title="Link to this heading"></a></h2>
+<p>Earth-related classes: positioning, topography, geodesy, magnetism</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="grand.geo.DATADIR">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.</span></span><span class="sig-name descname"><span class="pre">DATADIR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PosixPath('/pbs/home/j/jkastner/ma/grand/grand/geo/data')</span></em><a class="headerlink" href="#grand.geo.DATADIR" title="Link to this definition"></a></dt>
+<dd><p>Path to the package data</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

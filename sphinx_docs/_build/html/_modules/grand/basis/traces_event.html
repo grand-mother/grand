@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.basis.traces_event &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.basis.traces_event</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.basis.traces_event</h1><div class="highlight"><pre>
+<span></span><span class="c1"># The `Handling3dTracesOfEvent` class provides methods for handling a set of 3D traces associated with</span>
+<span class="c1"># events observed on a Detector Unit network, including operations like plotting traces, computing</span>
+<span class="c1"># time values, and interacting with the network.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Handling a set of 3D traces</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="k">as</span> <span class="nn">ssig</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
+<span class="kn">from</span> <span class="nn">matplotlib.backend_bases</span> <span class="kn">import</span> <span class="n">MouseButton</span>
+
+<span class="kn">from</span> <span class="nn">grand.basis.du_network</span> <span class="kn">import</span> <span class="n">DetectorUnitNetwork</span>
+<span class="kn">import</span> <span class="nn">grand.basis.signal</span> <span class="k">as</span> <span class="nn">gsig</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent">[docs]</a>
+<span class="k">class</span> <span class="nc">Handling3dTracesOfEvent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handling a set of traces associated to one event observed on Detector Unit network</span>
+
+<span class="sd">    Initialisation, with two methods:</span>
+
+<span class="sd">       * init_traces()</span>
+<span class="sd">       * optionally with init_network()</span>
+
+<span class="sd">    Features:</span>
+
+<span class="sd">        * some plots : trace , power spectrum, footprint, ...</span>
+<span class="sd">        * compute time where the trace is maximun</span>
+<span class="sd">        * compute time for each sample of trace</span>
+<span class="sd">        * compute a common time for trace</span>
+
+
+<span class="sd">    Public attributes:</span>
+
+<span class="sd">        * name str: name of the set of trace</span>
+<span class="sd">        * traces float(nb_du, 3, nb_sample): trace 3D</span>
+<span class="sd">        * du_id int(nb_du): array of identifier of DU</span>
+<span class="sd">        * t_start_ns float(nb_du): time of first sample of trace</span>
+<span class="sd">        * t_samples float(nb_du, nb_dim, nb_sample):</span>
+<span class="sd">        * f_samp_mhz float: [MHz] frequency sampling</span>
+<span class="sd">        * d_idxdu dict: for each identifier return the index in array</span>
+<span class="sd">        * unit_trace str: string unit of trace</span>
+<span class="sd">        * network object: content position network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NotDefined&quot;</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Create Handling3dTracesOfEvent with name </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">nb_du</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">nb_sample</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_du</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">nb_sample</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nb_du</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_du</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_du</span><span class="p">,</span> <span class="n">nb_sample</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_idxdu</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unit_trace</span> <span class="o">=</span> <span class="s2">&quot;TBD&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d_axis_val</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;cart&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;dir&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;SN&quot;</span><span class="p">,</span> <span class="s2">&quot;EW&quot;</span><span class="p">,</span> <span class="s2">&quot;UP&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="c1"># blue for UP because the sky is blue</span>
+        <span class="c1"># yellow for EW because sun is yellow</span>
+        <span class="c1">#  and it rises in the west and sets in the east</span>
+        <span class="c1"># k for black because the poles are white</span>
+        <span class="c1">#  and the reverse of white (not visible on plot) is black</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_color</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d_axis_val</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1">### INTERNAL</span>
+
+    <span class="c1">### INIT/SETTER</span>
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.init_traces">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.init_traces">[docs]</a>
+    <span class="k">def</span> <span class="nf">init_traces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">traces</span><span class="p">,</span> <span class="n">du_id</span><span class="p">,</span> <span class="n">t_start_ns</span><span class="p">,</span> <span class="n">f_samp_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param traces: array traces 3D</span>
+<span class="sd">        :type traces: float (nb_du, 3, nb sample)</span>
+<span class="sd">        :param du_id: array identifier of DU</span>
+<span class="sd">        :type du_id: int (nb_du,)</span>
+<span class="sd">        :param t_start_ns: array time start of trace</span>
+<span class="sd">        :type t_start_ns: int (nb_du,)</span>
+<span class="sd">        :param f_samp_mhz: franquency sampling in MHz</span>
+<span class="sd">        :type f_samp_mhz: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="n">traces</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="n">du_id</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ident</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">d_idxdu</span><span class="p">[</span><span class="n">ident</span><span class="p">]</span> <span class="o">=</span> <span class="n">idx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span> <span class="o">=</span> <span class="n">t_start_ns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span> <span class="o">=</span> <span class="n">f_samp_mhz</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span>
+        <span class="k">assert</span> <span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">du_id</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">du_id</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">t_start_ns</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_define_t_samples</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.init_network">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.init_network">[docs]</a>
+    <span class="k">def</span> <span class="nf">init_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_pos</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param du_pos:</span>
+<span class="sd">        :type du_pos:</span>
+<span class="sd">        :param du_id:</span>
+<span class="sd">        :type du_id:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">DetectorUnitNetwork</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">init_pos_id</span><span class="p">(</span><span class="n">du_pos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.set_unit_axis">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.set_unit_axis">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_unit_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">str_unit</span><span class="o">=</span><span class="s2">&quot;TBD&quot;</span><span class="p">,</span> <span class="n">axis_name</span><span class="o">=</span><span class="s2">&quot;idx&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param str_unit:</span>
+<span class="sd">        :type str_unit:</span>
+<span class="sd">        :param axis_name:</span>
+<span class="sd">        :type axis_name:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">str_unit</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unit_trace</span> <span class="o">=</span> <span class="n">str_unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d_axis_val</span><span class="p">[</span><span class="n">axis_name</span><span class="p">]</span></div>
+
+
+    <span class="c1">### OPERATIONS</span>
+
+    <span class="k">def</span> <span class="nf">_define_t_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define time sample for the duration of the trace</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">delta_ns</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span>
+            <span class="n">nb_sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="c1"># to use numpy broadcast I need to transpose</span>
+            <span class="n">t_trace</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nb_sample</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                    <span class="n">delta_ns</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="p">)</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span> <span class="o">=</span> <span class="n">t_trace</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape t_samples =  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.reduce_nb_du">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.reduce_nb_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">reduce_nb_du</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_nb_du</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        feature to reduce computation, for debugging</span>
+
+<span class="sd">        :param new_nb_du: keep only new_nb_du first DU</span>
+<span class="sd">        :type new_nb_du: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">new_nb_du</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">assert</span> <span class="n">new_nb_du</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nb_du</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[:</span><span class="n">new_nb_du</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[:</span><span class="n">new_nb_du</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span><span class="p">[:</span><span class="n">new_nb_du</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span><span class="p">[:</span><span class="n">new_nb_du</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">reduce_nb_du</span><span class="p">(</span><span class="n">new_nb_du</span><span class="p">)</span></div>
+
+
+    <span class="c1">### GETTER :</span>
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.delta_t_ns">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.delta_t_ns">[docs]</a>
+    <span class="k">def</span> <span class="nf">delta_t_ns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return sampling rate in ns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_max_abs">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_max_abs">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_max_abs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find absolute maximal value in trace for each detector</span>
+
+<span class="sd">        :return:  array max of abs value</span>
+<span class="sd">        :rtype: float (nb_du,)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_max_norm">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_max_norm">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_max_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return array of maximal of 3D norm in trace for each detector</span>
+
+<span class="sd">        :return: array norm of traces</span>
+<span class="sd">        :rtype: float (nb_du,)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># norm on 3D composant =&gt; axis=1</span>
+        <span class="c1"># max on all norm =&gt; axis=1</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_norm">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_norm">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return norm of traces for each time sample</span>
+
+<span class="sd">        :return:  norm of traces for each time sample</span>
+<span class="sd">        :rtype: float (nb_du, nb sample)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_tmax_vmax">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_tmax_vmax">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_tmax_vmax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return time where norm of the amplitude of the Hilbert tranform  is max</span>
+
+<span class="sd">        :return:  time of max and max</span>
+<span class="sd">        :rtype: float(nb_du,) , float(nb_du,)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tmax</span><span class="p">,</span> <span class="n">vmax</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">gsig</span><span class="o">.</span><span class="n">get_peakamptime_norm_hilbert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">vmax</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_min_max_t_start">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_min_max_t_start">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_min_max_t_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: first and last time start</span>
+<span class="sd">        :rtype: float, float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_nb_du">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_nb_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_nb_du</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: number of DU</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_size_trace">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_size_trace">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_size_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: number of sample in trace</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.get_extended_traces">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.get_extended_traces">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_extended_traces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        compute and return traces extended to the entire duration of the event with common time</span>
+
+<span class="sd">        :return: common time, extended traces</span>
+<span class="sd">        :rtype: float (nb extended sample), float (nb_du, 3, nb extended sample)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">size_tr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_size_trace</span><span class="p">())</span>
+        <span class="n">t_min</span><span class="p">,</span> <span class="n">t_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_min_max_t_start</span><span class="p">()</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_t_ns</span><span class="p">()</span>
+        <span class="n">nb_sample_mm</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_max</span> <span class="o">-</span> <span class="n">t_min</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span>
+        <span class="n">nb_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">nb_sample_mm</span><span class="p">)</span> <span class="o">+</span> <span class="n">size_tr</span><span class="p">)</span>
+        <span class="n">extended_traces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">get_nb_du</span><span class="p">(),</span> <span class="mi">3</span><span class="p">,</span> <span class="n">nb_sample</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="c1"># don&#39;t use np.uint64 else int+ int =float ??</span>
+        <span class="n">i_beg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span> <span class="o">-</span> <span class="n">t_min</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_nb_du</span><span class="p">()):</span>
+            <span class="n">extended_traces</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i_beg</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">:</span> <span class="n">i_beg</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">size_tr</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">common_time</span> <span class="o">=</span> <span class="n">t_min</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nb_sample</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">delta</span>
+        <span class="k">return</span> <span class="n">common_time</span><span class="p">,</span> <span class="n">extended_traces</span></div>
+
+
+    <span class="c1">### PLOTS</span>
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_trace_idx">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_idx">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_trace_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">to_draw</span><span class="o">=</span><span class="s2">&quot;012&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw 3 traces associated to DU with index idx</span>
+
+<span class="sd">        :param idx: index of DU to draw</span>
+<span class="sd">        :type idx: int</span>
+<span class="sd">        :param to_draw: select components to draw</span>
+<span class="sd">        :type to_draw: enum str [&quot;0&quot;, &quot;1&quot;, &quot;2&quot;] not exclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_define_t_samples</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Trace of DU </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> (idx=</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx_axis</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx_axis</span><span class="p">)</span> <span class="ow">in</span> <span class="n">to_draw</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">t_samples</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">idx_axis</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_color</span><span class="p">[</span><span class="n">idx_axis</span><span class="p">],</span>
+                    <span class="n">label</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unit_trace</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ns</span><span class="se">\n</span><span class="s2">File: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_trace_du">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_trace_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_trace_du</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_id</span><span class="p">,</span> <span class="n">to_draw</span><span class="o">=</span><span class="s2">&quot;012&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw 3 traces associated to DU du_id</span>
+
+<span class="sd">        :param idx: index of DU to draw</span>
+<span class="sd">        :type idx: int</span>
+<span class="sd">        :param to_draw: select components to draw</span>
+<span class="sd">        :type to_draw: enum str [&quot;0&quot;, &quot;1&quot;, &quot;2&quot;] not exclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_trace_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_idxdu</span><span class="p">[</span><span class="n">du_id</span><span class="p">],</span> <span class="n">to_draw</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_ps_trace_idx">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_idx">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_ps_trace_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">to_draw</span><span class="o">=</span><span class="s2">&quot;012&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw power spectrum for 3 traces associated to DU at index idx</span>
+
+<span class="sd">        :param idx: index of trace</span>
+<span class="sd">        :type idx: int</span>
+<span class="sd">        :param to_draw: select components to draw</span>
+<span class="sd">        :type to_draw: enum str [&quot;0&quot;, &quot;1&quot;, &quot;2&quot;] not exclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_define_t_samples</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">noverlap</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Power spectrum of DU </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> (idx=</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx_axis</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx_axis</span><span class="p">)</span> <span class="ow">in</span> <span class="n">to_draw</span><span class="p">:</span>
+                <span class="n">freq</span><span class="p">,</span> <span class="n">pxx_den</span> <span class="o">=</span> <span class="n">ssig</span><span class="o">.</span><span class="n">welch</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">idx_axis</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
+                    <span class="n">window</span><span class="o">=</span><span class="s2">&quot;taylor&quot;</span><span class="p">,</span>
+                    <span class="n">noverlap</span><span class="o">=</span><span class="n">noverlap</span><span class="p">,</span>
+                    <span class="n">scaling</span><span class="o">=</span><span class="s2">&quot;spectrum&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">freq</span> <span class="o">*</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">pxx_den</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_color</span><span class="p">[</span><span class="n">idx_axis</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unit_trace</span><span class="si">}</span><span class="s2">)^2&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MHz</span><span class="se">\n</span><span class="s2">File: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_ps_trace_du">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_ps_trace_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_ps_trace_du</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_id</span><span class="p">,</span> <span class="n">to_draw</span><span class="o">=</span><span class="s2">&quot;012&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw power spectrum for 3 traces associated to DU du_id</span>
+
+<span class="sd">        :param du_id: DU identifier</span>
+<span class="sd">        :type du_id: int</span>
+<span class="sd">        :param to_draw: select components to draw</span>
+<span class="sd">        :type to_draw: enum str [&quot;0&quot;, &quot;1&quot;, &quot;2&quot;] not exclusive</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_ps_trace_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_idxdu</span><span class="p">[</span><span class="n">du_id</span><span class="p">],</span> <span class="n">to_draw</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_all_traces_as_image">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_all_traces_as_image">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_all_traces_as_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interactive image double click open traces associated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_norm</span><span class="p">()</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="c1"># fig.canvas.manager.set_window_title(f&quot;{self.name}&quot;)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Norm of all traces in event&quot;</span><span class="p">)</span>
+        <span class="n">col_log</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">clip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">im_traces</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Blues&quot;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">col_log</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_traces</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Index sample</span><span class="se">\n</span><span class="s2">File: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Index DU&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_click</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">button</span> <span class="ow">is</span> <span class="n">MouseButton</span><span class="o">.</span><span class="n">LEFT</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">dblclick</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">plot_trace_idx</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">ydata</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;button_press_event&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_histo_t_start">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_histo_t_start">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_histo_t_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Histogram of time start</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">Time start histogram&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_start_ns</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;ns&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_footprint_4d">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_4d">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_4d</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot time max and max value by component</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">plot_footprint_4d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;3D&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;DU network isn&#39;t defined, can&#39;t plot footprint&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_footprint_val_max">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_val_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot footprint max value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">plot_footprint_1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_max_norm</span><span class="p">(),</span> <span class="s2">&quot;Max ||trace||&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;DU network isn&#39;t defined, can&#39;t plot footprint&quot;</span><span class="p">)</span>        </div>
+
+        
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_footprint_val_max_inter">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_val_max_inter">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_val_max_inter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot footprint max value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">:</span>
+            <span class="n">a_time</span><span class="p">,</span> <span class="n">a_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extended_traces</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">plot_footprint_time</span><span class="p">(</span><span class="n">a_time</span><span class="p">,</span> <span class="n">a_values</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;DU network isn&#39;t defined, can&#39;t plot footprint&quot;</span><span class="p">)</span>        </div>
+
+
+<div class="viewcode-block" id="Handling3dTracesOfEvent.plot_footprint_time_max">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.traces_event.Handling3dTracesOfEvent.plot_footprint_time_max">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_footprint_time_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot footprint time associated to max value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tmax</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tmax_vmax</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">plot_footprint_1d</span><span class="p">(</span><span class="n">tmax</span><span class="p">,</span> <span class="s2">&quot;Time of max value&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;lin&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;DU network isn&#39;t defined, can&#39;t plot footprint&quot;</span><span class="p">)</span>        </div>
+</div>
+
+        
+        
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

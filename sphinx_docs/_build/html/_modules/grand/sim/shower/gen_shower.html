@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.shower.gen_shower &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.sim.shower.gen_shower</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.sim.shower.gen_shower</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="c1">#from pathlib import Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">grand.sim.shower.pdg</span> <span class="kn">import</span> <span class="n">ParticleCode</span>
+<span class="c1">#from grand.basis.type_trace import ElectricField, Voltage</span>
+<span class="c1">#from grand.dataio import io_node as io</span>
+
+<span class="c1"># TODO: when the unused import grand.io.root_trees is defined test coverage indicate test on it</span>
+<span class="c1"># from grand.io.root_trees import ShowerEventSimdataTree</span>
+<span class="kn">from</span> <span class="nn">grand.geo.coordinates</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Geodetic</span><span class="p">,</span>
+    <span class="n">LTP</span><span class="p">,</span>
+    <span class="n">GRANDCS</span><span class="p">,</span>
+    <span class="n">CartesianRepresentation</span><span class="p">,</span>
+<span class="p">)</span>  <span class="c1"># RK</span>
+<span class="c1">#from fontTools.ttLib.tables import D_S_I_G_</span>
+
+<span class="c1">#__all__ = [&quot;CollectionEntry&quot;, &quot;FieldsCollection&quot;, &quot;ShowerEvent&quot;]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ShowerEvent&quot;</span><span class="p">]</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">#RK: From previous version of grandlib. This part is no longer used.</span>
+<span class="sd">@dataclass</span>
+<span class="sd">class CollectionEntry:</span>
+<span class="sd">    electric: Optional[ElectricField] = None</span>
+<span class="sd">    voltage: Optional[Voltage] = None</span>
+
+<span class="sd">    @classmethod</span>
+<span class="sd">    def load(cls, node: io.DataNode) -&gt; CollectionEntry:</span>
+<span class="sd">        try:</span>
+<span class="sd">            subnode = node[&quot;electric&quot;]</span>
+<span class="sd">        except KeyError:</span>
+<span class="sd">            electric = None</span>
+<span class="sd">        else:</span>
+<span class="sd">            electric = ElectricField.load(subnode)</span>
+
+<span class="sd">        try:</span>
+<span class="sd">            subnode = node[&quot;voltage&quot;]</span>
+<span class="sd">        except KeyError:</span>
+<span class="sd">            voltage = None</span>
+<span class="sd">        else:</span>
+<span class="sd">            voltage = Voltage.load(node)</span>
+
+<span class="sd">        return cls(electric, voltage)</span>
+
+<span class="sd">    def dump(self, node: io.DataNode) -&gt; None:</span>
+<span class="sd">        if self.electric is not None:</span>
+<span class="sd">            self.electric.dump(node.branch(&quot;electric&quot;))</span>
+<span class="sd">        if self.voltage is not None:</span>
+<span class="sd">            self.voltage.dump(node.branch(&quot;voltage&quot;))</span>
+
+
+<span class="sd">class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):</span>
+<span class="sd">    pass</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ShowerEvent">
+<a class="viewcode-back" href="../../../../grand.sim.shower.html#grand.ShowerEvent">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ShowerEvent</span><span class="p">:</span>
+    <span class="n">energy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">zenith</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">azimuth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">primary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParticleCode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">GRANDCS</span><span class="p">,</span> <span class="n">LTP</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">core</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CartesianRepresentation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">geomagnet</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CartesianRepresentation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">maximum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CartesianRepresentation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">origin_geoid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OrderedDict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Since ROOT is the only format in which GRAND data will be stored in, </span>
+    <span class="c1"># so the code to deal with other formats are deleted.</span>
+<div class="viewcode-block" id="ShowerEvent.load_root">
+<a class="viewcode-back" href="../../../../grand.sim.shower.html#grand.ShowerEvent.load_root">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_root</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_shower</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">=</span> <span class="n">d_shower</span><span class="o">.</span><span class="n">energy_primary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zenith</span> <span class="o">=</span> <span class="n">d_shower</span><span class="o">.</span><span class="n">zenith</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">azimuth</span> <span class="o">=</span> <span class="n">d_shower</span><span class="o">.</span><span class="n">azimuth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary</span> <span class="o">=</span> <span class="n">d_shower</span><span class="o">.</span><span class="n">primary_type</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin_geoid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">origin_geoid</span> <span class="o">=</span> <span class="n">Geodetic</span><span class="p">(</span>
+                <span class="n">latitude</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_geoid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">longitude</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_geoid</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">height</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_geoid</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grand_ref_frame</span> <span class="o">=</span> <span class="n">GRANDCS</span><span class="p">(</span><span class="n">arg</span><span class="o">=</span><span class="n">origin_geoid</span><span class="p">,</span><span class="n">location</span><span class="o">=</span><span class="n">origin_geoid</span><span class="p">)</span>  
+    
+        <span class="c1"># define a shower core in GRANDCS. shower_core_pos are given in GRANDCS.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">core</span> <span class="o">=</span> <span class="n">GRANDCS</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">d_shower</span><span class="o">.</span><span class="n">shower_core_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">d_shower</span><span class="o">.</span><span class="n">shower_core_pos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">z</span><span class="o">=</span><span class="n">d_shower</span><span class="o">.</span><span class="n">shower_core_pos</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="n">location</span><span class="o">=</span><span class="n">origin_geoid</span><span class="p">)</span>  <span class="c1">#RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.</span>
+        <span class="c1"># define a shower frame. DU positions and Xmax is defined wrt this frame.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">LTP</span><span class="p">(</span>
+            <span class="n">arg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="p">,</span>
+            <span class="n">location</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="p">,</span> <span class="c1"># core is correct</span>
+            <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;NWU&quot;</span><span class="p">,</span>
+            <span class="n">magnetic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>          <span class="c1">#RK: add obstime=TShowerSim.event_date. Make sure obstime is in string or datetime format.</span>
+
+        <span class="c1">#logger.info(f&quot;Site position long lat: {s_pos}&quot;)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Site origin [lat, long, height]: </span><span class="si">{</span><span class="n">origin_geoid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">xmax</span> <span class="o">=</span> <span class="n">d_shower</span><span class="o">.</span><span class="n">xmax_pos_shc</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;xmax in shower coordinate: </span><span class="si">{</span><span class="n">xmax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximum</span> <span class="o">=</span> <span class="n">LTP</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">xmax</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">xmax</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">z</span><span class="o">=</span><span class="n">xmax</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">frame</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">)</span></div>
+
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    # Since ROOT is the only format in which GRAND data will be stored in, </span>
+<span class="sd">    # so the code to deal with other formats are deleted. These commented </span>
+<span class="sd">    # part of the code is not used anywhere in the grandlib.</span>
+<span class="sd">    @classmethod</span>
+<span class="sd">    def load(cls, source: Union[Path, str, io.DataNode]) -&gt; ShowerEvent:</span>
+<span class="sd">        baseclass = cls</span>
+<span class="sd">        if type(source) == io.DataNode:</span>
+<span class="sd">            source = cast(io.DataNode, source)</span>
+<span class="sd">            filename = f&quot;{source.filename}:{source.path}&quot;</span>
+<span class="sd">            loader = &quot;_from_datanode&quot;</span>
+<span class="sd">        else:</span>
+<span class="sd">            source = cast(Union[Path, str], source)</span>
+<span class="sd">            filename = f&quot;{source}:/&quot;</span>
+<span class="sd">            source = Path(source)</span>
+<span class="sd">            if source.is_dir():</span>
+<span class="sd">                loader = &quot;_from_dir&quot;</span>
+<span class="sd">                if not hasattr(cls, loader):</span>
+<span class="sd">                    # Detection of the simulation engine. Lazy imports are used</span>
+<span class="sd">                    # in order to avoid circular references</span>
+<span class="sd">                    from grand.sim.shower.coreas import CoreasShower</span>
+<span class="sd">                    from grand.sim.shower.zhaires import ZhairesShower</span>
+
+<span class="sd">                    if CoreasShower.check_dir(source):</span>
+<span class="sd">                        baseclass = CoreasShower</span>
+<span class="sd">                    elif ZhairesShower.check_dir(source):</span>
+<span class="sd">                        baseclass = ZhairesShower</span>
+<span class="sd">            else:</span>
+<span class="sd">                loader = &quot;_from_datafile&quot;</span>
+<span class="sd">        logger.info(f&quot;Loading shower data from {filename}&quot;)</span>
+<span class="sd">        try:</span>
+<span class="sd">            load = getattr(baseclass, loader)</span>
+<span class="sd">        except AttributeError as load_exit:</span>
+<span class="sd">            raise NotImplementedError(&quot;Invalid data format&quot;) from load_exit</span>
+<span class="sd">        else:</span>
+<span class="sd">            self = load(source)</span>
+<span class="sd">        if self.fields is not None:</span>
+<span class="sd">            logger.info(f&quot;Loaded {len(self.fields)} field(s) from {filename}&quot;)</span>
+<span class="sd">        return self</span>
+
+<span class="sd">    @classmethod</span>
+<span class="sd">    def _from_datafile(cls, path: Path) -&gt; ShowerEvent:</span>
+<span class="sd">        with io.open(path) as root:</span>
+<span class="sd">            return cls._from_datanode(root)</span>
+
+<span class="sd">    @classmethod</span>
+<span class="sd">    def _from_datanode(cls, node: io.DataNode) -&gt; ShowerEvent:</span>
+<span class="sd">        kwargs = {}</span>
+<span class="sd">        for name, data in node.elements:</span>
+<span class="sd">            kwargs[name] = data</span>
+
+<span class="sd">        try:</span>
+<span class="sd">            fields_node = node[&quot;fields&quot;]</span>
+<span class="sd">        except KeyError:</span>
+<span class="sd">            pass</span>
+<span class="sd">        else:</span>
+<span class="sd">            l_fields: OrderedDict = OrderedDict()</span>
+<span class="sd">            kwargs[&quot;fields&quot;] = l_fields</span>
+
+<span class="sd">            for antenna_node in fields_node:</span>
+<span class="sd">                antenna = int(antenna_node.name)</span>
+<span class="sd">                l_fields[antenna] = CollectionEntry.load(antenna_node)</span>
+
+<span class="sd">        return cls(**kwargs)</span>
+
+<span class="sd">    def dump(self, source: Union[Path, str, io.DataNode]) -&gt; None:</span>
+<span class="sd">        if type(source) == io.DataNode:</span>
+<span class="sd">            source = cast(io.DataNode, source)</span>
+<span class="sd">            self._to_datanode(source)</span>
+<span class="sd">        else:</span>
+<span class="sd">            source = cast(Union[Path, str], source)</span>
+<span class="sd">            with io.open(source, &quot;w&quot;) as root:</span>
+<span class="sd">                self._to_datanode(root)</span>
+
+<span class="sd">    def _to_datanode(self, node: io.DataNode):</span>
+<span class="sd">        logger.info(f&quot;Dumping shower data to {node.filename}:{node.path}&quot;)</span>
+
+<span class="sd">        for f in fields(self):</span>
+<span class="sd">            k = f.name</span>
+<span class="sd">            if k != &quot;fields&quot; and (k[0] != &quot;_&quot;):</span>
+<span class="sd">                v = getattr(self, k)</span>
+<span class="sd">                if v is not None:</span>
+<span class="sd">                    node.write(k, v)</span>
+
+<span class="sd">        if self.fields is not None:</span>
+<span class="sd">            for antenna, field in self.fields.items():</span>
+<span class="sd">                with node.branch(f&quot;fields/{antenna}&quot;) as n:</span>
+<span class="sd">                    field.dump(n)</span>
+
+<span class="sd">            m = len(self.fields)</span>
+<span class="sd">            logger.info(f&quot;Dumped {m} field(s) to {node.filename}:{node.path}&quot;)</span>
+
+<span class="sd">    def shower_frame(self):</span>
+<span class="sd">        # Idea: Change the basis vectors by vectors pointing towards evB, evvB, and ev</span>
+<span class="sd">        ev = self.core - self.maximum</span>
+<span class="sd">        ev /= np.linalg.norm(ev)</span>
+<span class="sd">        ev = ev.T[0]  # [[x], [y], [z]] --&gt; [x, y, z]</span>
+<span class="sd">        evB = np.cross(ev, self.geomagnet.T[0])</span>
+<span class="sd">        evB /= np.linalg.norm(evB)</span>
+<span class="sd">        evvB = np.cross(ev, evB)</span>
+
+<span class="sd">        # change these unit vector from &#39;NWU&#39; LTP frame to ECEF frame.</span>
+<span class="sd">        # RK TODO: Going back to ECEF frame is a common process for vectors.</span>
+<span class="sd">        #          Develop a function to do this.</span>
+<span class="sd">        ev = np.matmul(self.frame.basis.T, ev)</span>
+<span class="sd">        evB = np.matmul(self.frame.basis.T, evB)</span>
+<span class="sd">        evvB = np.matmul(self.frame.basis.T, evvB)</span>
+<span class="sd">        self.frame.basis = np.vstack((evB, evvB, ev))</span>
+
+<span class="sd">        return self.frame</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

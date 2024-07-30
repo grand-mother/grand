@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.detector.process_ant &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.sim.detector.process_ant</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.sim.detector.process_ant</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Processing effective length of antenna</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.fft</span> <span class="k">as</span> <span class="nn">sf</span>
+
+<span class="kn">from</span> <span class="nn">grand.geo.coordinates</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LTP</span><span class="p">,</span>
+    <span class="n">GRANDCS</span><span class="p">,</span>
+    <span class="n">CartesianRepresentation</span><span class="p">,</span>
+    <span class="n">SphericalRepresentation</span><span class="p">,</span>
+    <span class="n">ECEF</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grand.basis.type_trace</span> <span class="kn">import</span> <span class="n">ElectricField</span><span class="p">,</span> <span class="n">Voltage</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MissingFrameError">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.MissingFrameError">[docs]</a>
+<span class="k">class</span> <span class="nc">MissingFrameError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Error class&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="PreComputeInterpol">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.PreComputeInterpol">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">PreComputeInterpol</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Precompute linear interpolation of frequency of Leff</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># index of freq in first in band 30-250MHz</span>
+    <span class="n">idx_first</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># index of freq in last plus one in band 30-250MHz</span>
+    <span class="n">idx_lastp1</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># JM</span>
+    <span class="c1">#idx_last: Any = None    # RK: replaced idx_lastp1 to idx_last</span>
+    <span class="c1"># array of index where f_out are in f_in for </span>
+    <span class="c1"># interpolation between idx_itp[i], idx_itp[i]+1</span>
+    <span class="c1"># with c_inf and c_sup coefficient</span>
+    <span class="n">idx_itp</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># array of coefficient inf</span>
+    <span class="n">c_inf</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># array of coefficient sup</span>
+    <span class="c1"># c_inf + c_sup = 1</span>
+    <span class="n">c_sup</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="PreComputeInterpol.init_linear_interpol">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.PreComputeInterpol.init_linear_interpol">[docs]</a>
+    <span class="k">def</span> <span class="nf">init_linear_interpol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq_in_mhz</span><span class="p">,</span> <span class="n">freq_out_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Precompute coefficient of linear interpolation for freq_out_mhz with reference defined at freq_in_mhz</span>
+<span class="sd">        :param freq_in_mhz: regular array of frequency where function is defined</span>
+<span class="sd">        :param freq_out_mhz: regular array frequency where we want interpol</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d_freq_out</span> <span class="o">=</span> <span class="n">freq_out_mhz</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># index of freq in first in band, + 1 to have first in band</span>
+        <span class="n">idx_first</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">freq_in_mhz</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">d_freq_out</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1"># index of freq in last plus one, + 1 to have first out band</span>
+        <span class="n">idx_lastp1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">freq_in_mhz</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">d_freq_out</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1"># https://github.com/grand-mother/collaboration-issues/issues/30</span>
+        <span class="c1">#idx_last = int(freq_in_mhz[-1] / d_freq_out)      # RK: idx_lastp1 --&gt; idx_last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_first</span> <span class="o">=</span> <span class="n">idx_first</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_lastp1</span> <span class="o">=</span> <span class="n">idx_lastp1</span>
+        <span class="n">d_freq_in</span> <span class="o">=</span> <span class="n">freq_in_mhz</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">freq_in_mhz</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">freq_in_band</span> <span class="o">=</span> <span class="n">freq_out_mhz</span><span class="p">[</span><span class="n">idx_first</span><span class="p">:</span><span class="n">idx_lastp1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_itp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trunc</span><span class="p">((</span><span class="n">freq_in_band</span> <span class="o">-</span> <span class="n">freq_in_mhz</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">d_freq_in</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="c1"># define coefficient of linear interpolation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c_sup</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq_in_band</span> <span class="o">-</span> <span class="n">freq_in_mhz</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idx_itp</span><span class="p">])</span> <span class="o">/</span> <span class="n">d_freq_in</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_itp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span> <span class="o">==</span> <span class="n">freq_in_mhz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># https://github.com/grand-mother/collaboration-issues/issues/30</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; ** Specfic processing when f_in = k * f_out else IndexError **&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idx_itp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="c1"># in this case last c_sup must be zero</span>
+            <span class="c1"># check it !</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c_sup</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c_inf</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_sup</span></div>
+
+
+<div class="viewcode-block" id="PreComputeInterpol.get_linear_interpol">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.PreComputeInterpol.get_linear_interpol">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_linear_interpol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a_val</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return f(freq_out_mhz) by linear interpolation of f defined by</span>
+<span class="sd">        f(freq_in_mhz) = a_val</span>
+<span class="sd">        :param a_val: defined value of function at freq_in_mhz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">a_itp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_inf</span> <span class="o">*</span> <span class="n">a_val</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idx_itp</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_sup</span> <span class="o">*</span> <span class="n">a_val</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idx_itp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">a_itp</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AntennaProcessing">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaProcessing">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">AntennaProcessing</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processing effective length of antenna</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_leff</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">pos</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LTP</span><span class="p">,</span> <span class="n">GRANDCS</span><span class="p">]</span>
+    <span class="n">pre_cpt</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">PreComputeInterpol</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#assert isinstance(self.model_leff, TabulatedAntennaModel)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_fft</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_out_hz</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="AntennaProcessing.init_interpolation">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaProcessing.init_interpolation">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">init_interpolation</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">freq_sampling_mhz</span><span class="p">,</span> <span class="n">freq_out_mhz</span><span class="p">):</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">PreComputeInterpol</span><span class="p">()</span>
+        <span class="n">pre</span><span class="o">.</span><span class="n">init_linear_interpol</span><span class="p">(</span><span class="n">freq_sampling_mhz</span><span class="p">,</span> <span class="n">freq_out_mhz</span><span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">pre_cpt</span> <span class="o">=</span> <span class="n">pre</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AntennaProcessing.set_out_freq_mhz">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaProcessing.set_out_freq_mhz">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_out_freq_mhz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a_freq</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        !</span>
+<span class="sd">        typically the return of scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        :param a_freq:</span>
+<span class="sd">        :type a_freq:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a_freq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">a_freq</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_out_hz</span> <span class="o">=</span> <span class="n">a_freq</span> <span class="o">*</span> <span class="mf">1e6</span>
+        <span class="c1"># we used rfreqfft</span>
+        <span class="c1"># https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftfreq.html</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_fft</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">a_freq</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;size_fft: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">size_fft</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AntennaProcessing.effective_length">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaProcessing.effective_length">[docs]</a>
+    <span class="k">def</span> <span class="nf">effective_length</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">xmax</span><span class="p">:</span> <span class="n">LTP</span><span class="p">,</span>
+        <span class="n">efield</span><span class="p">:</span> <span class="n">ElectricField</span><span class="p">,</span>
+        <span class="n">frame</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LTP</span><span class="p">,</span> <span class="n">GRANDCS</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CartesianRepresentation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculation of FFT length effective of antenna for a given Xmax position.</span>
+<span class="sd">        Linear interpolation of template of effective length in Fourier space</span>
+<span class="sd">        by tripler (theta, phi, frequency)</span>
+<span class="sd">        in direction of the efield source at antenna position</span>
+<span class="sd">        :param xmax:</span>
+<span class="sd">        :param efield:</span>
+<span class="sd">        :param frame:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># &#39;frame&#39; is shower frame. &#39;self.frame&#39; is antenna frame.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xmax</span><span class="p">,</span> <span class="n">LTP</span><span class="p">):</span>
+            <span class="c1"># shower frame --&gt; antenna frame</span>
+            <span class="c1"># TODO: why next takes time ? =&gt; LPT init 35 ms ????</span>
+            <span class="c1"># direction = xmax.ltp_to_ltp(self.pos)</span>
+            <span class="n">ecef</span> <span class="o">=</span> <span class="n">ECEF</span><span class="p">(</span><span class="n">xmax</span><span class="p">)</span>
+            <span class="n">pos_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">ecef</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">ecef</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                    <span class="n">ecef</span><span class="o">.</span><span class="n">z</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">z</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">direction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">basis</span><span class="p">,</span> <span class="n">pos_v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provide Xmax in LTP frame instead of </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">xmax</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># compute efield direction in spherical coordinate in antenna frame</span>
+        <span class="n">direction_cart</span> <span class="o">=</span> <span class="n">CartesianRepresentation</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">z</span><span class="o">=</span><span class="n">direction</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">direction_sphr</span> <span class="o">=</span> <span class="n">SphericalRepresentation</span><span class="p">(</span><span class="n">direction_cart</span><span class="p">)</span>
+        <span class="n">theta_efield</span><span class="p">,</span> <span class="n">phi_efield</span> <span class="o">=</span> <span class="n">direction_sphr</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">direction_sphr</span><span class="o">.</span><span class="n">phi</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type theta_efield: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">theta_efield</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">theta_efield</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Source direction (degree): azimuth=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">phi_efield</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, zenith=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">theta_efield</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># logger.debug(f&quot;{theta_efield.r}&quot;)</span>
+        <span class="c1"># Interpolate using a tri-linear interpolation in (f, phi, theta)</span>
+        <span class="c1"># table store antenna response</span>
+        <span class="c1"># delta theta in degree</span>
+        <span class="n">dtheta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># theta_efield between index it0 and it1 in theta antenna response representation</span>
+        <span class="n">rt1</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta_efield</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">dtheta</span>
+        <span class="c1"># prevent &gt; 360 deg or &gt;180 deg ?</span>
+        <span class="n">it0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rt1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">it1</span> <span class="o">=</span> <span class="n">it0</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">it1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>  <span class="c1"># Prevent overflow</span>
+            <span class="n">it1</span><span class="p">,</span> <span class="n">rt1</span> <span class="o">=</span> <span class="n">it0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rt1</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rt1</span><span class="p">)</span>
+        <span class="n">rt0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">rt1</span>
+        <span class="c1"># phi_efield between index ip0 and ip1 in phi antenna response representation</span>
+        <span class="n">dphi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># deg</span>
+        <span class="n">rp1</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_efield</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">dphi</span>
+        <span class="n">ip0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rp1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">phi</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">ip1</span> <span class="o">=</span> <span class="n">ip0</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">ip1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">phi</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>  <span class="c1"># Results are periodic along phi</span>
+            <span class="n">ip1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">rp1</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rp1</span><span class="p">)</span>
+        <span class="n">rp0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">rp1</span>
+        <span class="c1"># fft</span>
+        <span class="c1"># logger.info(efield.e_xyz.info())</span>
+        <span class="n">e_xyz</span> <span class="o">=</span> <span class="n">efield</span><span class="o">.</span><span class="n">e_xyz</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">e_xyz</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># Leff ref frequency  [Hz]</span>
+        <span class="n">freq_ref_hz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">frequency</span>
+        <span class="c1"># frequency [Hz] with padding</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_fft</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># case without init before call effective_length</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Run AntennaProcessing.init_interpolation() only once per event.</span><span class="se">\</span>
+<span class="s2">                Define output frequency before calling effective_length by calling set_out_freq_mhz()&quot;</span>
+            <span class="p">)</span>
+            <span class="n">freq_out</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">efield</span><span class="o">.</span><span class="n">get_nb_sample</span><span class="p">(),</span> <span class="n">efield</span><span class="o">.</span><span class="n">get_delta_time_s</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1e-6</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freq_out</span><span class="p">)</span>
+            <span class="c1"># frequency in MHz</span>
+            <span class="n">AntennaProcessing</span><span class="o">.</span><span class="n">init_interpolation</span><span class="p">(</span><span class="n">freq_ref_hz</span> <span class="o">*</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">freq_out</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;size_fft=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">size_fft</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># interpolation Leff theta and phi on sphere</span>
+        <span class="n">leff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">leff_theta_reim</span>
+        <span class="n">leff_itp_t</span> <span class="o">=</span> <span class="p">(</span>
+                 <span class="n">rp0</span> <span class="o">*</span> <span class="n">rt0</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip0</span><span class="p">,</span> <span class="n">it0</span><span class="p">]</span> \
+                <span class="o">+</span><span class="n">rp1</span> <span class="o">*</span> <span class="n">rt0</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip1</span><span class="p">,</span> <span class="n">it0</span><span class="p">]</span> \
+                <span class="o">+</span><span class="n">rp0</span> <span class="o">*</span> <span class="n">rt1</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip0</span><span class="p">,</span> <span class="n">it1</span><span class="p">]</span> \
+                <span class="o">+</span><span class="n">rp1</span> <span class="o">*</span> <span class="n">rt1</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip1</span><span class="p">,</span> <span class="n">it1</span><span class="p">]</span>
+                <span class="p">)</span>
+        <span class="n">leff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_leff</span><span class="o">.</span><span class="n">leff_phi_reim</span>
+        <span class="n">leff_itp_p</span> <span class="o">=</span> <span class="p">(</span>
+                 <span class="n">rp0</span> <span class="o">*</span> <span class="n">rt0</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip0</span><span class="p">,</span> <span class="n">it0</span><span class="p">]</span> \
+                <span class="o">+</span><span class="n">rp1</span> <span class="o">*</span> <span class="n">rt0</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip1</span><span class="p">,</span> <span class="n">it0</span><span class="p">]</span> \
+                <span class="o">+</span><span class="n">rp0</span> <span class="o">*</span> <span class="n">rt1</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip0</span><span class="p">,</span> <span class="n">it1</span><span class="p">]</span> \
+                <span class="o">+</span><span class="n">rp1</span> <span class="o">*</span> <span class="n">rt1</span> <span class="o">*</span> <span class="n">leff</span><span class="p">[:,</span> <span class="n">ip1</span><span class="p">,</span> <span class="n">it1</span><span class="p">]</span>
+                <span class="p">)</span>
+        <span class="n">leff_itp_sph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">leff_itp_t</span><span class="p">,</span> <span class="n">leff_itp_p</span><span class="p">])</span>
+        <span class="c1"># interpolation Leff theta and phi on frequency</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">AntennaProcessing</span><span class="o">.</span><span class="n">pre_cpt</span>
+        <span class="n">leff_itp</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">pre</span><span class="o">.</span><span class="n">c_inf</span> <span class="o">*</span> <span class="n">leff_itp_sph</span><span class="p">[:,</span> <span class="n">pre</span><span class="o">.</span><span class="n">idx_itp</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre</span><span class="o">.</span><span class="n">c_sup</span> <span class="o">*</span> <span class="n">leff_itp_sph</span><span class="p">[:,</span> <span class="n">pre</span><span class="o">.</span><span class="n">idx_itp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># now add zeros outside leff frequency band and unpack leff theta , phi</span>
+        <span class="n">l_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_out_hz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="n">l_t</span><span class="p">[</span><span class="n">pre</span><span class="o">.</span><span class="n">idx_first</span> <span class="p">:</span> <span class="n">pre</span><span class="o">.</span><span class="n">idx_lastp1</span><span class="p">]</span> <span class="o">=</span> <span class="n">leff_itp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">l_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_out_hz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="n">l_p</span><span class="p">[</span><span class="n">pre</span><span class="o">.</span><span class="n">idx_first</span> <span class="p">:</span> <span class="n">pre</span><span class="o">.</span><span class="n">idx_lastp1</span><span class="p">]</span> <span class="o">=</span> <span class="n">leff_itp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># fmt: off</span>
+        <span class="n">t_rad</span><span class="p">,</span> <span class="n">p_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">theta_efield</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">phi_efield</span><span class="p">)</span>
+        <span class="n">c_t</span><span class="p">,</span> <span class="n">s_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">t_rad</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t_rad</span><span class="p">)</span>
+        <span class="n">c_p</span><span class="p">,</span> <span class="n">s_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">p_rad</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">p_rad</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_x</span> <span class="o">=</span> <span class="n">l_t</span> <span class="o">*</span> <span class="n">c_t</span> <span class="o">*</span> <span class="n">c_p</span> <span class="o">-</span> <span class="n">s_p</span> <span class="o">*</span> <span class="n">l_p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_y</span> <span class="o">=</span> <span class="n">l_t</span> <span class="o">*</span> <span class="n">c_t</span> <span class="o">*</span> <span class="n">s_p</span> <span class="o">+</span> <span class="n">c_p</span> <span class="o">*</span> <span class="n">l_p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_z</span> <span class="o">=</span> <span class="o">-</span><span class="n">s_t</span> <span class="o">*</span> <span class="n">l_t</span>
+        <span class="c1"># fmt: on</span>
+        <span class="c1"># del l_t, l_p, c_t, s_t , c_p, s_p</span>
+        <span class="c1"># Treating Leff as a vector (no change in magnitude) and transforming</span>
+        <span class="c1"># it to the shower frame from antenna frame.</span>
+        <span class="c1"># antenna frame --&gt; ECEF frame --&gt; shower frame</span>
+        <span class="c1"># TODO: there might be an easier way to do this.</span>
+        <span class="c1"># vector wrt ECEF frame. AntennaProcessing --&gt; ECEF</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leff_frame_ant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">l_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_z</span><span class="p">])</span>
+        <span class="n">leff_frame_ecef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">leff_frame_ant</span><span class="p">)</span>
+        <span class="c1"># vector wrt shower frame. ECEF --&gt; Shower</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leff_frame_shower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">basis</span><span class="p">,</span> <span class="n">leff_frame_ecef</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">leff_frame_shower</span></div>
+
+
+<div class="viewcode-block" id="AntennaProcessing.compute_voltage">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.AntennaProcessing.compute_voltage">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_voltage</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">xmax</span><span class="p">:</span> <span class="n">LTP</span><span class="p">,</span> <span class="c1"># local tangential plane</span>
+        <span class="n">efield</span><span class="p">:</span> <span class="n">ElectricField</span><span class="p">,</span>
+        <span class="n">frame</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LTP</span><span class="p">,</span> <span class="n">GRANDCS</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Voltage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param xmax:</span>
+<span class="sd">        :type xmax:</span>
+<span class="sd">        :param efield:</span>
+<span class="sd">        :type efield:</span>
+<span class="sd">        :param frame:</span>
+<span class="sd">        :type frame:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># frame is shower frame. self.frame is antenna frame.</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pos&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">)))</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">frame</span><span class="p">))):</span> <span class="c1"># which one</span>
+            <span class="k">raise</span> <span class="n">MissingFrameError</span><span class="p">(</span><span class="s2">&quot;missing antenna or shower frame&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Compute the voltage. input fft_leff and field are in shower frame.</span>
+        <span class="n">leff_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">effective_length</span><span class="p">(</span><span class="n">xmax</span><span class="p">,</span> <span class="n">efield</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">leff_f</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># E is CartesianRepresentation</span>
+        <span class="n">fft_e</span> <span class="o">=</span> <span class="n">efield</span><span class="o">.</span><span class="n">get_fft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size_fft</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;size_fft leff=</span><span class="si">{</span><span class="n">leff_f</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;size_fft efield=</span><span class="si">{</span><span class="n">leff_f</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># convol e_xyz field by Leff in Fourier space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">fft_e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">leff_f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">fft_e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">leff_f</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">fft_e</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">leff_f</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># inverse FFT and remove zero-padding</span>
+        <span class="n">voc</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span><span class="p">)[:</span> <span class="n">efield</span><span class="o">.</span><span class="n">e_xyz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="c1"># WARNING do not used : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">efield</span><span class="o">.</span><span class="n">a_time</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;time : </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;volt : </span><span class="si">{</span><span class="n">voc</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">voc</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Voltage</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">voc</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

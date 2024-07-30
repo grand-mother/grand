@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src_outlib package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">src_outlib package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-src_outlib.AiresInfoFunctionsGRANDROOT">src_outlib.AiresInfoFunctionsGRANDROOT module</a><ul>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.DeprecatedReadAiresSry"><code class="docutils literal notranslate"><span class="pre">DeprecatedReadAiresSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAiresVersionFromSry"><code class="docutils literal notranslate"><span class="pre">GetAiresVersionFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAntennaInfoFromSry"><code class="docutils literal notranslate"><span class="pre">GetAntennaInfoFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAtmosphericModelFromSry"><code class="docutils literal notranslate"><span class="pre">GetAtmosphericModelFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAzimuthAngleFromSry"><code class="docutils literal notranslate"><span class="pre">GetAzimuthAngleFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetCorePositionFromInp"><code class="docutils literal notranslate"><span class="pre">GetCorePositionFromInp()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetDateFromSry"><code class="docutils literal notranslate"><span class="pre">GetDateFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetEffectiveRefractionIndex"><code class="docutils literal notranslate"><span class="pre">GetEffectiveRefractionIndex()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetElectronEnergyCutFromSry"><code class="docutils literal notranslate"><span class="pre">GetElectronEnergyCutFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetEnergyFractionInNeutrinosFromSry"><code class="docutils literal notranslate"><span class="pre">GetEnergyFractionInNeutrinosFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetEnergyFromSry"><code class="docutils literal notranslate"><span class="pre">GetEnergyFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetExpectedKmXmaxFromSry"><code class="docutils literal notranslate"><span class="pre">GetExpectedKmXmaxFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetGammaEnergyCutFromSry"><code class="docutils literal notranslate"><span class="pre">GetGammaEnergyCutFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetGroundAltitudeFromSry"><code class="docutils literal notranslate"><span class="pre">GetGroundAltitudeFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetHadronicModelFromSry"><code class="docutils literal notranslate"><span class="pre">GetHadronicModelFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetInjectionAltitudeFromSry"><code class="docutils literal notranslate"><span class="pre">GetInjectionAltitudeFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetKmXmaxFromSry"><code class="docutils literal notranslate"><span class="pre">GetKmXmaxFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetLatLongFromSry"><code class="docutils literal notranslate"><span class="pre">GetLatLongFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetLateralTable"><code class="docutils literal notranslate"><span class="pre">GetLateralTable()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetLongitudinalTable"><code class="docutils literal notranslate"><span class="pre">GetLongitudinalTable()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetMagneticFieldFromSry"><code class="docutils literal notranslate"><span class="pre">GetMagneticFieldFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetMesonEnergyCutFromSry"><code class="docutils literal notranslate"><span class="pre">GetMesonEnergyCutFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetMuonEnergyCutFromSry"><code class="docutils literal notranslate"><span class="pre">GetMuonEnergyCutFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetNmaxFromSry"><code class="docutils literal notranslate"><span class="pre">GetNmaxFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetNucleonEnergyCutFromSry"><code class="docutils literal notranslate"><span class="pre">GetNucleonEnergyCutFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetPrimaryFromSry"><code class="docutils literal notranslate"><span class="pre">GetPrimaryFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetRandomSeedFromSry"><code class="docutils literal notranslate"><span class="pre">GetRandomSeedFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetSiteFromSry"><code class="docutils literal notranslate"><span class="pre">GetSiteFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetSlantXmaxFromSry"><code class="docutils literal notranslate"><span class="pre">GetSlantXmaxFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetStatusFromStatus"><code class="docutils literal notranslate"><span class="pre">GetStatusFromStatus()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTaskNameFromSry"><code class="docutils literal notranslate"><span class="pre">GetTaskNameFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetThinningRelativeEnergyFromSry"><code class="docutils literal notranslate"><span class="pre">GetThinningRelativeEnergyFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeBinFromSry"><code class="docutils literal notranslate"><span class="pre">GetTimeBinFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeWindowMaxFromSry"><code class="docutils literal notranslate"><span class="pre">GetTimeWindowMaxFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeWindowMinFromSry"><code class="docutils literal notranslate"><span class="pre">GetTimeWindowMinFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTmpFromDirs"><code class="docutils literal notranslate"><span class="pre">GetTmpFromDirs()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTotalCPUTimeFromSry"><code class="docutils literal notranslate"><span class="pre">GetTotalCPUTimeFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetWeightFactorFromSry"><code class="docutils literal notranslate"><span class="pre">GetWeightFactorFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetZHAireSVersionFromSry"><code class="docutils literal notranslate"><span class="pre">GetZHAireSVersionFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetZHSEffectiveRefractionIndex"><code class="docutils literal notranslate"><span class="pre">GetZHSEffectiveRefractionIndex()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetZenithAngleFromSry"><code class="docutils literal notranslate"><span class="pre">GetZenithAngleFromSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.ReadAiresLgf"><code class="docutils literal notranslate"><span class="pre">ReadAiresLgf()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.ReadAiresSry"><code class="docutils literal notranslate"><span class="pre">ReadAiresSry()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.AiresInfoFunctionsGRANDROOT.get_antenna_t0"><code class="docutils literal notranslate"><span class="pre">get_antenna_t0()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#src-outlib-zhairesrawtograndroot-module">src_outlib.ZHAireSRawToGRANDROOT module</a></li>
+<li><a class="reference internal" href="#src-outlib-analyse-resp-antenna-module">src_outlib.analyse_resp_antenna module</a></li>
+<li><a class="reference internal" href="#src-outlib-debug-plot-module">src_outlib.debug_plot module</a></li>
+<li><a class="reference internal" href="#src-outlib-test-dc1-module">src_outlib.test_dc1 module</a></li>
+<li><a class="reference internal" href="#src-outlib-test-file-efield-module">src_outlib.test_file_efield module</a></li>
+<li><a class="reference internal" href="#src-outlib-test-io-root-module">src_outlib.test_io_root module</a></li>
+<li><a class="reference internal" href="#module-src_outlib.test_template">src_outlib.test_template module</a><ul>
+<li><a class="reference internal" href="#src_outlib.test_template.test_foo"><code class="docutils literal notranslate"><span class="pre">test_foo()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#src-outlib-test-trace-module">src_outlib.test_trace module</a></li>
+<li><a class="reference internal" href="#src-outlib-trace-module">src_outlib.trace module</a></li>
+<li><a class="reference internal" href="#src-outlib-use-root-tree-module">src_outlib.use_root_tree module</a></li>
+<li><a class="reference internal" href="#src-outlib-widget-module">src_outlib.widget module</a></li>
+<li><a class="reference internal" href="#module-src_outlib.xdu_rf_ref">src_outlib.xdu_rf_ref module</a><ul>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.CEL"><code class="docutils literal notranslate"><span class="pre">CEL()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.LNA_get"><code class="docutils literal notranslate"><span class="pre">LNA_get()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.expan"><code class="docutils literal notranslate"><span class="pre">expan()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.fftget"><code class="docutils literal notranslate"><span class="pre">fftget()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.filter_get"><code class="docutils literal notranslate"><span class="pre">filter_get()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.gala"><code class="docutils literal notranslate"><span class="pre">gala()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.ifftget"><code class="docutils literal notranslate"><span class="pre">ifftget()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.inter"><code class="docutils literal notranslate"><span class="pre">inter()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.mkdir"><code class="docutils literal notranslate"><span class="pre">mkdir()</span></code></a></li>
+<li><a class="reference internal" href="#src_outlib.xdu_rf_ref.time_data_get"><code class="docutils literal notranslate"><span class="pre">time_data_get()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-src_outlib">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src_outlib package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/src_outlib.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-outlib-package">
+<h1>src_outlib package<a class="headerlink" href="#src-outlib-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="src_outlib.backup.html">src_outlib.backup package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src_outlib.backup.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src_outlib.backup.html#module-src_outlib.backup.signal_bkp">src_outlib.backup.signal_bkp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.add_noise"><code class="docutils literal notranslate"><span class="pre">add_noise()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.digitize_signal"><code class="docutils literal notranslate"><span class="pre">digitize_signal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.get_fastest_size_fft"><code class="docutils literal notranslate"><span class="pre">get_fastest_size_fft()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.get_fft"><code class="docutils literal notranslate"><span class="pre">get_fft()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.get_filter"><code class="docutils literal notranslate"><span class="pre">get_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.get_inverse_fft"><code class="docutils literal notranslate"><span class="pre">get_inverse_fft()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.get_peakamptime_hilbert"><code class="docutils literal notranslate"><span class="pre">get_peakamptime_hilbert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src_outlib.backup.html#src_outlib.backup.signal_bkp.halfcplx_fullcplx"><code class="docutils literal notranslate"><span class="pre">halfcplx_fullcplx()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src_outlib.backup.html#src-outlib-backup-signal-ex-module">src_outlib.backup.signal_ex module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src_outlib.backup.html#module-src_outlib.backup">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-src_outlib.AiresInfoFunctionsGRANDROOT">
+<span id="src-outlib-airesinfofunctionsgrandroot-module"></span><h2>src_outlib.AiresInfoFunctionsGRANDROOT module<a class="headerlink" href="#module-src_outlib.AiresInfoFunctionsGRANDROOT" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.DeprecatedReadAiresSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">DeprecatedReadAiresSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAND'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#DeprecatedReadAiresSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.DeprecatedReadAiresSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetAiresVersionFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetAiresVersionFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetAiresVersionFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAiresVersionFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetAntennaInfoFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetAntennaInfoFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetAntennaInfoFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAntennaInfoFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetAtmosphericModelFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetAtmosphericModelFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetAtmosphericModelFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAtmosphericModelFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetAzimuthAngleFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetAzimuthAngleFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAND'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetAzimuthAngleFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetAzimuthAngleFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetCorePositionFromInp">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetCorePositionFromInp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inp_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetCorePositionFromInp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetCorePositionFromInp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetDateFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetDateFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetDateFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetDateFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetEffectiveRefractionIndex">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetEffectiveRefractionIndex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stepsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetEffectiveRefractionIndex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetEffectiveRefractionIndex" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetElectronEnergyCutFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetElectronEnergyCutFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetElectronEnergyCutFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetElectronEnergyCutFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetEnergyFractionInNeutrinosFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetEnergyFractionInNeutrinosFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetEnergyFractionInNeutrinosFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetEnergyFractionInNeutrinosFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetEnergyFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetEnergyFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAND'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetEnergyFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetEnergyFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetExpectedKmXmaxFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetExpectedKmXmaxFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetExpectedKmXmaxFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetExpectedKmXmaxFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetGammaEnergyCutFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetGammaEnergyCutFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetGammaEnergyCutFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetGammaEnergyCutFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetGroundAltitudeFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetGroundAltitudeFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetGroundAltitudeFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetGroundAltitudeFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetHadronicModelFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetHadronicModelFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetHadronicModelFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetHadronicModelFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetInjectionAltitudeFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetInjectionAltitudeFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetInjectionAltitudeFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetInjectionAltitudeFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetKmXmaxFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetKmXmaxFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetKmXmaxFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetKmXmaxFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetLatLongFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetLatLongFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetLatLongFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetLatLongFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetLateralTable">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetLateralTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">TableNumber</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Density</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Double'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetLateralTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetLateralTable" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetLongitudinalTable">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetLongitudinalTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">TableNumber</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Slant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Double'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetLongitudinalTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetLongitudinalTable" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetMagneticFieldFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetMagneticFieldFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetMagneticFieldFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetMagneticFieldFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetMesonEnergyCutFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetMesonEnergyCutFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetMesonEnergyCutFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetMesonEnergyCutFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetMuonEnergyCutFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetMuonEnergyCutFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetMuonEnergyCutFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetMuonEnergyCutFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetNmaxFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetNmaxFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetNmaxFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetNmaxFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetNucleonEnergyCutFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetNucleonEnergyCutFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetNucleonEnergyCutFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetNucleonEnergyCutFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetPrimaryFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetPrimaryFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetPrimaryFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetPrimaryFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetRandomSeedFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetRandomSeedFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetRandomSeedFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetRandomSeedFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetSiteFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetSiteFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetSiteFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetSiteFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetSlantXmaxFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetSlantXmaxFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetSlantXmaxFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetSlantXmaxFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetStatusFromStatus">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetStatusFromStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetStatusFromStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetStatusFromStatus" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetTaskNameFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetTaskNameFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetTaskNameFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTaskNameFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetThinningRelativeEnergyFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetThinningRelativeEnergyFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetThinningRelativeEnergyFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetThinningRelativeEnergyFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeBinFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetTimeBinFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetTimeBinFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeBinFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeWindowMaxFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetTimeWindowMaxFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetTimeWindowMaxFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeWindowMaxFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeWindowMinFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetTimeWindowMinFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetTimeWindowMinFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTimeWindowMinFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetTmpFromDirs">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetTmpFromDirs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dirs_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetTmpFromDirs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTmpFromDirs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetTotalCPUTimeFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetTotalCPUTimeFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetTotalCPUTimeFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetTotalCPUTimeFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetWeightFactorFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetWeightFactorFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetWeightFactorFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetWeightFactorFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetZHAireSVersionFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetZHAireSVersionFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetZHAireSVersionFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetZHAireSVersionFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetZHSEffectiveRefractionIndex">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetZHSEffectiveRefractionIndex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.1218</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stepsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetZHSEffectiveRefractionIndex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetZHSEffectiveRefractionIndex" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.GetZenithAngleFromSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">GetZenithAngleFromSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAND'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#GetZenithAngleFromSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.GetZenithAngleFromSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.ReadAiresLgf">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">ReadAiresLgf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lgf_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#ReadAiresLgf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.ReadAiresLgf" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.ReadAiresSry">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">ReadAiresSry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sry_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outmode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'N/A'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#ReadAiresSry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.ReadAiresSry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.AiresInfoFunctionsGRANDROOT.get_antenna_t0">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.AiresInfoFunctionsGRANDROOT.</span></span><span class="sig-name descname"><span class="pre">get_antenna_t0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuthdeg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zenithdeg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/AiresInfoFunctionsGRANDROOT.html#get_antenna_t0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.AiresInfoFunctionsGRANDROOT.get_antenna_t0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="src-outlib-zhairesrawtograndroot-module">
+<h2>src_outlib.ZHAireSRawToGRANDROOT module<a class="headerlink" href="#src-outlib-zhairesrawtograndroot-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-analyse-resp-antenna-module">
+<h2>src_outlib.analyse_resp_antenna module<a class="headerlink" href="#src-outlib-analyse-resp-antenna-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-debug-plot-module">
+<h2>src_outlib.debug_plot module<a class="headerlink" href="#src-outlib-debug-plot-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-test-dc1-module">
+<h2>src_outlib.test_dc1 module<a class="headerlink" href="#src-outlib-test-dc1-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-test-file-efield-module">
+<h2>src_outlib.test_file_efield module<a class="headerlink" href="#src-outlib-test-file-efield-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-test-io-root-module">
+<h2>src_outlib.test_io_root module<a class="headerlink" href="#src-outlib-test-io-root-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-src_outlib.test_template">
+<span id="src-outlib-test-template-module"></span><h2>src_outlib.test_template module<a class="headerlink" href="#module-src_outlib.test_template" title="Link to this heading"></a></h2>
+<p>TEMPLATE WITH LOGGER INITIALISED</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.test_template.test_foo">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.test_template.</span></span><span class="sig-name descname"><span class="pre">test_foo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/test_template.html#test_foo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.test_template.test_foo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="src-outlib-test-trace-module">
+<h2>src_outlib.test_trace module<a class="headerlink" href="#src-outlib-test-trace-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-trace-module">
+<h2>src_outlib.trace module<a class="headerlink" href="#src-outlib-trace-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-use-root-tree-module">
+<h2>src_outlib.use_root_tree module<a class="headerlink" href="#src-outlib-use-root-tree-module" title="Link to this heading"></a></h2>
+</section>
+<section id="src-outlib-widget-module">
+<h2>src_outlib.widget module<a class="headerlink" href="#src-outlib-widget-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-src_outlib.xdu_rf_ref">
+<span id="src-outlib-xdu-rf-ref-module"></span><h2>src_outlib.xdu_rf_ref module<a class="headerlink" href="#module-src_outlib.xdu_rf_ref" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.CEL">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">CEL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#CEL"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.CEL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.LNA_get">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">LNA_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">antennas11_complex_short</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#LNA_get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.LNA_get" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.expan">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">expan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#expan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.expan" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.fftget">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">fftget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_ori</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#fftget"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.fftget" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.filter_get">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">filter_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#filter_get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.filter_get" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.gala">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">gala</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lst</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#gala"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.gala" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.ifftget">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">ifftget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_ori</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#ifftget"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.ifftget" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.inter">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">inter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_complex_five</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_phi</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#inter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.inter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.mkdir">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">mkdir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#mkdir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.mkdir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src_outlib.xdu_rf_ref.time_data_get">
+<span class="sig-prename descclassname"><span class="pre">src_outlib.xdu_rf_ref.</span></span><span class="sig-name descname"><span class="pre">time_data_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src_outlib/xdu_rf_ref.html#time_data_get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src_outlib.xdu_rf_ref.time_data_get" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src_outlib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src_outlib" title="Link to this heading"></a></h2>
+<p>Created on Dec 15, 2022</p>
+<p>&#64;author: root</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

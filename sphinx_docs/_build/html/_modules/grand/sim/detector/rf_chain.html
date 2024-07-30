@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.detector.rf_chain &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.sim.detector.rf_chain</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.sim.detector.rf_chain</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RF Chain (version 1) of detector units at the GP13 site in Dunhuang and in Europe.</span>
+
+<span class="sd">This code includes: </span>
+<span class="sd"> * Antenna Impedance</span>
+<span class="sd"> * Input Impedance  (computed after computing total_ABCD_matrix)</span>
+<span class="sd"> * LNA</span>
+<span class="sd"> * Balun after LNA (inside Nut)</span>
+<span class="sd"> * cable + connector</span>
+<span class="sd"> * VGA + Filter</span>
+<span class="sd"> * Balun after VGA&amp;filter + 200 ohm load + AD Chip</span>
+
+<span class="sd">:Authors: PengFei Zhang, Xu Xin and Xidian University group, GRANDLIB adaptation Colley JM, Ramesh, and Sandra.</span>
+
+<span class="sd">Reference document: </span>
+<span class="sd">  * &quot;RF Chain simulation for GP300&quot; by Xidian University, :Authors:  Pengfei Zhang and Pengxiong Ma, Chao Zhang, Rongjuan Wand, Xin Xu</span>
+<span class="sd">  </span>
+<span class="sd">Convention Port/direction:</span>
+<span class="sd"> * 0 for X / North, South</span>
+<span class="sd"> * 1 for Y / East/West</span>
+<span class="sd"> * 2 for Z / Up</span>
+<span class="sd"> </span>
+<span class="sd"># Note: plotting has been moved to grand/scripts/plot_noise.py. Run: ./plot_noise.py -h for help.</span>
+
+<span class="sd">Overview of calculations:</span>
+<span class="sd">    Voc = E * Leff</span>
+
+<span class="sd">    # S-parameters are measured using virtual network analyzer (VNA). A-parameters are computed from S-parameters.</span>
+<span class="sd">    [A]    = [LNA]*[Balun A]*[Cable]*[VGA+Filter]     # total RF chain A-parameters without balun2</span>
+<span class="sd">    Z_load = 50 * (1 + S11)/(1 - S11)                 # S11 for balun after VGA+Filter measured using VNA.</span>
+<span class="sd">    Z_in   = (A11*Z_load + A12) / (A21*Z_load + A22)</span>
+<span class="sd">    [A]    = [A] * [A balun2]                        # total RF chain A-parameters</span>
+<span class="sd">    Z_ant  = antenna impedance computed from simulation</span>
+
+<span class="sd">    # current and voltage at input of Balun</span>
+<span class="sd">    I_in_BA = Voc / (Z_ant + Z_in)</span>
+<span class="sd">    V_in_BA = I_in_BA * Z_in</span>
+
+<span class="sd">    # Final voltage output at AD Chip in frequency domain.</span>
+<span class="sd">    V_out = A11*V_in_BA + A12*I_in_BA</span>
+<span class="sd">    I_out = A21*V_in_BA + A22*I_in_BA</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">scipy.fft</span> <span class="k">as</span> <span class="nn">sf</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">grand</span> <span class="kn">import</span> <span class="n">grand_add_path_data</span>
+
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="interpol_at_new_x">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.interpol_at_new_x">[docs]</a>
+<span class="k">def</span> <span class="nf">interpol_at_new_x</span><span class="p">(</span><span class="n">a_x</span><span class="p">,</span> <span class="n">a_y</span><span class="p">,</span> <span class="n">new_x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value</span>
+<span class="sd">    and set to zero outside interval definition a_x</span>
+
+<span class="sd">    :param a_x (float, (N)): F(a_x) = a_y, N size of a_x</span>
+<span class="sd">    :param a_y (float, (N)): F(a_x) = a_y</span>
+<span class="sd">    :param new_x (float, (M)): new value of x</span>
+
+<span class="sd">    :return: F(new_x) (float, (M)): interpolation of F at new_x</span>
+<span class="sd">    # RK: scipy interpolate gave 0 values for S21 due to fill_values=(0,0)</span>
+<span class="sd">    #.    which resulted in &#39;nan&#39; values in A-parameters. Also final transfer</span>
+<span class="sd">    #     function (TF) outside of the range of 10-300 MHz was weird. TF for Z-port produces a sharp peak around 10 MHz.</span>
+<span class="sd">    #     So np.interp is used instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">interpolate</span>
+    <span class="k">assert</span> <span class="n">a_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="c1">#func_interpol = interpolate.interp1d(</span>
+    <span class="c1">#    a_x, a_y, &quot;cubic&quot;, bounds_error=False, fill_value=(1.0, 1.0)</span>
+    <span class="c1">#)</span>
+    <span class="c1">#return func_interpol(new_x)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">new_x</span><span class="p">,</span> <span class="n">a_x</span><span class="p">,</span> <span class="n">a_y</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="db2reim">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.db2reim">[docs]</a>
+<span class="k">def</span> <span class="nf">db2reim</span><span class="p">(</span><span class="n">dB</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert quantity given in deciBel to a complex number.</span>
+<span class="sd">    :param dB: input quantity in deciBel</span>
+<span class="sd">    :param phase: phase of the input quantity in radians.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mag</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">dB</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
+
+    <span class="n">re</span> <span class="o">=</span> <span class="n">mag</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">mag</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">re</span><span class="p">,</span> <span class="n">im</span></div>
+
+
+<div class="viewcode-block" id="s2abcd">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.s2abcd">[docs]</a>
+<span class="k">def</span> <span class="nf">s2abcd</span><span class="p">(</span><span class="n">s11</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">s12</span><span class="p">,</span> <span class="n">s22</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;this is a normalized A-matrix represented by [a] in the document.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span>
+        <span class="p">[((</span><span class="mi">1</span><span class="o">+</span><span class="n">s11</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">s22</span><span class="p">)</span> <span class="o">+</span> <span class="n">s12</span><span class="o">*</span><span class="n">s21</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">s21</span><span class="p">),</span> <span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">s11</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">s22</span><span class="p">)</span> <span class="o">-</span> <span class="n">s12</span><span class="o">*</span><span class="n">s21</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">s21</span><span class="p">)],</span>
+        <span class="p">[((</span><span class="mi">1</span><span class="o">-</span><span class="n">s11</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">s22</span><span class="p">)</span> <span class="o">-</span> <span class="n">s12</span><span class="o">*</span><span class="n">s21</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">s21</span><span class="p">),</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">s11</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">s22</span><span class="p">)</span> <span class="o">+</span> <span class="n">s12</span><span class="o">*</span><span class="n">s21</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">s21</span><span class="p">)]</span>
+        <span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="matmul">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.matmul">[docs]</a>
+<span class="k">def</span> <span class="nf">matmul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function deals with 2x2 matrix multiplication.</span>
+<span class="sd">    Input matrix shape in our case is (2,2,nports,nb_freqs)</span>
+<span class="sd">    AxB = [[A11*B11 + A12*B21, A11*B12 + A12*B22],</span>
+<span class="sd">           [A21*B11 + A22*B21, A21*B12 + A22*B22]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span>
+        <span class="p">[</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span>
+        <span class="p">[</span><span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="GenericProcessingDU">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.GenericProcessingDU">[docs]</a>
+<span class="k">class</span> <span class="nc">GenericProcessingDU</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Define common attribut for frequencies for all DU effects processing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_sig</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param axis:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># fix a file version for processing by heritage</span>
+        <span class="k">pass</span>
+
+    <span class="c1">### SETTER</span>
+
+<div class="viewcode-block" id="GenericProcessingDU.set_out_freq_mhz">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.GenericProcessingDU.set_out_freq_mhz">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_out_freq_mhz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define frequencies</span>
+
+<span class="sd">        :param freqs_mhz: [MHz] given by scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        :type freqs_mhz: float (nb_freqs)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span> <span class="o">=</span> <span class="n">freqs_mhz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">=</span> <span class="n">freqs_mhz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_sig</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span></div>
+</div>
+
+
+<div class="viewcode-block" id="LowNoiseAmplifier">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.LowNoiseAmplifier">[docs]</a>
+<span class="k">class</span> <span class="nc">LowNoiseAmplifier</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Class goals:</span>
+<span class="sd">      * Perform the LNA filter on signal for each antenna</span>
+<span class="sd">      * read only once LNA data files</span>
+<span class="sd">      * pre_compute interpolation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param size_sig: size of the trace after</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1">#self.data_lna = []</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">lna</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_name_data_file</span><span class="p">(</span><span class="n">axis</span><span class="p">),</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lna</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span> <span class="o">=</span> <span class="n">lna</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span>   <span class="c1"># note: freqs_in for x and y ports is the same, but for z port is different.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs_in</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span><span class="p">)</span>
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Ceyear Technologies,3672C,ZKL00189,2.1.5</span>
+<span class="sd">        Calibration ON : 2P/1,2</span>
+<span class="sd">        Sweep Type: lin Frequency Sweep</span>
+<span class="sd">        S2P File: Measurements: S11, S21, S12, S22:</span>
+<span class="sd">        Thursday, April 27, 2023</span>
+<span class="sd">        Hz  S  dB  R 50.000</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">axis_dict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="s2">&quot;Z&quot;</span><span class="p">}</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">axis_dict</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span><span class="si">}</span><span class="s2">LNA.s2p&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LowNoiseAmplifier.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.LowNoiseAmplifier.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        compute s-parameters of LNA</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)</span>
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+        <span class="c1"># S2P File: Measurements dB, phase[deg]: S11, S21, S12, S22</span>
+        <span class="c1"># Fill S-parameters from files obtained by measuring S-parameters using virtual network analyzer.</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="c1"># note: freqs_in for x and y ports is the same, but for z port is different.</span>
+            <span class="c1"># ----- S11</span>
+            <span class="n">dbs11</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">phs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">2</span><span class="p">])</span>
+            <span class="n">res11</span><span class="p">,</span> <span class="n">ims11</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs11</span><span class="p">,</span> <span class="n">phs11</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="c1"># ----- S21</span>
+            <span class="n">dbs21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="n">phs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">4</span><span class="p">])</span>
+            <span class="n">res21</span><span class="p">,</span> <span class="n">ims21</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs21</span><span class="p">,</span> <span class="n">phs21</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="c1"># ----- S12</span>
+            <span class="n">dbs12</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">5</span><span class="p">]</span>
+            <span class="n">phs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">6</span><span class="p">])</span>
+            <span class="n">res12</span><span class="p">,</span> <span class="n">ims12</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs12</span><span class="p">,</span> <span class="n">phs12</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="c1"># ----- S22</span>
+            <span class="n">dbs22</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">7</span><span class="p">]</span>
+            <span class="n">phs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[</span><span class="n">axis</span><span class="p">][:,</span> <span class="mi">8</span><span class="p">])</span>
+            <span class="n">res22</span><span class="p">,</span> <span class="n">ims22</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs22</span><span class="p">,</span> <span class="n">phs22</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+
+        <span class="c1"># for all three ports. shape should be (2, 2, ant ports, nb_freqs)</span>
+        <span class="n">xy_denorm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">100.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="c1"># denormalizing factor for XY arms</span>
+        <span class="n">xy_denorm_factor</span> <span class="o">=</span> <span class="n">xy_denorm_factor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="n">z_denorm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">50.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>    <span class="c1"># denormalizing factor for Z arms</span>
+        <span class="n">z_denorm_factor</span> <span class="o">=</span> <span class="n">z_denorm_factor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+
+        <span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">s2abcd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">)</span> <span class="c1"># this is a normalized A-matrix represented by [a] in the document.</span>
+
+        <span class="n">ABCD_matrix</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*=</span> <span class="n">xy_denorm_factor</span> <span class="c1"># denormalizing factor for XY arms</span>
+        <span class="n">ABCD_matrix</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*=</span> <span class="n">z_denorm_factor</span>   <span class="c1"># denormalizing factor for Z arm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">ABCD_matrix</span> <span class="c1"># this is an A-matrix represented by [A] in the document.</span></div>
+</div>
+
+
+<div class="viewcode-block" id="BalunAfterLNA">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.BalunAfterLNA">[docs]</a>
+<span class="k">class</span> <span class="nc">BalunAfterLNA</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class goals:</span>
+<span class="sd">      * deals with Balun after LNA (inside Nut). </span>
+<span class="sd">      * Note that balun is placed after LNA in version 1. The same type of balun is placed before matching-network and LNA in version 2.</span>
+<span class="sd">      * Balun is used in X and Y ports only. No Balun in Z port.</span>
+<span class="sd">      * Balun without matching network is used in version 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1">#self.data_cable = np.loadtxt(self._set_name_data_file(), comments=[&#39;#&#39;, &#39;!&#39;])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_name_data_file</span><span class="p">(),</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="c1"># Hz to MHz</span>
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Created: May 4, 2023</span>
+<span class="sd">        hz S ma R 50</span>
+<span class="sd">        2 Port Network Data from SP1.SP block</span>
+<span class="sd">        freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22         </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#filename = os.path.join(&quot;detector&quot;, &quot;RFchain_v1&quot;, &quot;balun_after_LNA.s2p&quot;)</span>
+        <span class="c1">#filename = os.path.join(&quot;detector&quot;, &quot;RFchain_v1&quot;, &quot;balun46in.s2p&quot;)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="s2">&quot;balun46in20230612.s2p&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BalunAfterLNA.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.BalunAfterLNA.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute ABCD_matrix for frequency freqs_mhz</span>
+
+<span class="sd">        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># shape = (2x2 matrix, 3 ports, nb_freqs)</span>
+
+        <span class="c1"># freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22</span>
+        <span class="c1"># ----- S11</span>
+        <span class="n">mags11</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">angs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">res11</span> <span class="o">=</span> <span class="n">mags11</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs11</span><span class="p">)</span>
+        <span class="n">ims11</span> <span class="o">=</span> <span class="n">mags11</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs11</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S21</span>
+        <span class="n">mags21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="n">angs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">])</span>
+        <span class="n">res21</span> <span class="o">=</span> <span class="n">mags21</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs21</span><span class="p">)</span>
+        <span class="n">ims21</span> <span class="o">=</span> <span class="n">mags21</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs21</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S12</span>
+        <span class="n">mags12</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span>
+        <span class="n">angs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">])</span>
+        <span class="n">res12</span> <span class="o">=</span> <span class="n">mags12</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs12</span><span class="p">)</span>
+        <span class="n">ims12</span> <span class="o">=</span> <span class="n">mags12</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs12</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S22</span>
+        <span class="n">mags22</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">7</span><span class="p">]</span>
+        <span class="n">angs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">8</span><span class="p">])</span>
+        <span class="n">res22</span> <span class="o">=</span> <span class="n">mags22</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs22</span><span class="p">)</span>
+        <span class="n">ims22</span> <span class="o">=</span> <span class="n">mags22</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs22</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">50.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="c1"># denormalizing factor for XYZ arms</span>
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">denorm_factor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="c1"># match with the shape of ABCD_matrix to broadcast.</span>
+        <span class="c1"># for X and Y ports only. No Balun in Z port. shape of ABCD_matrix is (2, 2, 3, nb_freqs).     </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">s2abcd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">)</span> <span class="o">*</span> <span class="n">denorm_factor</span>
+        <span class="c1"># force components of ABCD_matrix for Z port to be identity matrix because there is no Balun in Z port.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">[:,:,</span><span class="mi">2</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="mi">2</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>  <span class="c1"># add np.newaxis to broadcast to all frequencies.</span></div>
+</div>
+
+
+<div class="viewcode-block" id="Cable">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.Cable">[docs]</a>
+<span class="k">class</span> <span class="nc">Cable</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Class goals:</span>
+<span class="sd">      * pre_compute interpolation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1">#self.data_cable = np.loadtxt(self._set_name_data_file(), comments=[&#39;#&#39;, &#39;!&#39;])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_name_data_file</span><span class="p">(),</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="c1"># Hz to MHz</span>
+
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param axis:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="s2">&quot;cable+Connector.s2p&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Cable.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.Cable.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute ABCD_matrix for frequency freqs_mhz</span>
+
+<span class="sd">        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+        <span class="c1"># S2P File: Measurements: S11, S21, S12, S22</span>
+        <span class="c1"># ----- S11</span>
+        <span class="n">dbs11</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">phs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">res11</span><span class="p">,</span> <span class="n">ims11</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs11</span><span class="p">,</span> <span class="n">phs11</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S21</span>
+        <span class="n">dbs21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="n">phs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">])</span>
+        <span class="n">res21</span><span class="p">,</span> <span class="n">ims21</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs21</span><span class="p">,</span> <span class="n">phs21</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S12</span>
+        <span class="n">dbs12</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span>
+        <span class="n">phs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">])</span>
+        <span class="n">res12</span><span class="p">,</span> <span class="n">ims12</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs12</span><span class="p">,</span> <span class="n">phs12</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S22</span>
+        <span class="n">dbs22</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:][:,</span> <span class="mi">7</span><span class="p">]</span>
+        <span class="n">phs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">8</span><span class="p">])</span>
+        <span class="n">res22</span><span class="p">,</span> <span class="n">ims22</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs22</span><span class="p">,</span> <span class="n">phs22</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">50.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="c1"># denormalizing factor for XYZ arms</span>
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">denorm_factor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="c1"># match with the shape of ABCD_matrix.</span>
+        <span class="c1"># for all three ports. shape of ABCD_matrix is (2, 2, ant ports, nb_freqs)   .     </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">s2abcd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">)</span> <span class="o">*</span> <span class="n">denorm_factor</span></div>
+</div>
+
+
+<div class="viewcode-block" id="VGAFilter">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.VGAFilter">[docs]</a>
+<span class="k">class</span> <span class="nc">VGAFilter</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Class goals:</span>
+<span class="sd">      * pre_compute interpolation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        :param gain: gain setup for VGA in dB.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_name_data_file</span><span class="p">(),</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="c1"># Hz to MHz</span>
+
+        <span class="c1"># shape = (nports, nfreqs). self.nb_freqs here is 0.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param axis:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;vga gain: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;vga</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="si">}</span><span class="s2">db+filter.s2p&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VGAFilter.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.VGAFilter.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute ABCD_matrix for frequency freqs_mhz</span>
+
+<span class="sd">        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+        <span class="c1"># S2P File: Measurements: S11, S21, S12, S22</span>
+        <span class="c1"># ----- S11</span>
+        <span class="n">dbs11</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">phs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">res11</span><span class="p">,</span> <span class="n">ims11</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs11</span><span class="p">,</span> <span class="n">phs11</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs11</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S21</span>
+        <span class="n">dbs21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="n">phs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">])</span>
+        <span class="n">res21</span><span class="p">,</span> <span class="n">ims21</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs21</span><span class="p">,</span> <span class="n">phs21</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs21</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S12</span>
+        <span class="n">dbs12</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span>
+        <span class="n">phs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">])</span>
+        <span class="n">res12</span><span class="p">,</span> <span class="n">ims12</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs12</span><span class="p">,</span> <span class="n">phs12</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs12</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S22</span>
+        <span class="n">dbs22</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:][:,</span> <span class="mi">7</span><span class="p">]</span>
+        <span class="n">phs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">8</span><span class="p">])</span>
+        <span class="n">res22</span><span class="p">,</span> <span class="n">ims22</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs22</span><span class="p">,</span> <span class="n">phs22</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs22</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">dbs22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>     <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">50.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="c1"># denormalizing factor for XYZ arms</span>
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">denorm_factor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="c1"># for all three ports. shape should be (2, 2, ant ports, nb_freqs)        </span>
+        <span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">s2abcd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">)</span>
+        <span class="n">ABCD_matrix</span> <span class="o">*=</span> <span class="n">denorm_factor</span> <span class="c1"># denormalizing factor for XYZ arms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">ABCD_matrix</span></div>
+</div>
+
+
+<div class="viewcode-block" id="BalunBeforeADC">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.BalunBeforeADC">[docs]</a>
+<span class="k">class</span> <span class="nc">BalunBeforeADC</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class goals:</span>
+<span class="sd">      * Pass signal through Balun before Analog to Digitial Converter (ADC) for each antenna</span>
+<span class="sd">      * Balun is used in x, y, and z ports</span>
+<span class="sd">      * Same data is used for all three ports</span>
+<span class="sd">      * read data files only once</span>
+<span class="sd">      * pre_compute interpolation</span>
+<span class="sd">      * this Balun is referred to as Balun1 Balun2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        :param sparams: S-parameters data for x, y, and z ports. Same data is used for x, y, and z ports.</span>
+<span class="sd">        :param freqs_in: frequencies corresponding to the S-parameters data for x, y, and z ports.</span>
+<span class="sd">        :param s11, s21, s12, s22: S-parameters for x, y, and z ports. shape (3, nb_freqs).</span>
+<span class="sd">        :param ABCD_matrix: not normalized ABCD matrix corresponding to S-parameters. shape (2, 2, nb_ports, nb_freqs)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_name_data_file</span><span class="p">(),</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="c1"># Hz to MHz</span>
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Created Mon May 15, 2023 11:21:18 2023</span>
+<span class="sd">        hz S ma R 50</span>
+<span class="sd">        2 Port Network Data from SP1.SP block</span>
+<span class="sd">        freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22  </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="s2">&quot;balun_before_ad.s2p&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BalunBeforeADC.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.BalunBeforeADC.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz</span>
+
+<span class="sd">        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># shape = (antenna_port, nb_freqs)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># shape = (2x2 matrix, 3 ports, nb_freqs)</span>
+
+        <span class="c1"># freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22</span>
+        <span class="c1"># ----- S11</span>
+        <span class="n">mags11</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">angs11</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">res11</span> <span class="o">=</span> <span class="n">mags11</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs11</span><span class="p">)</span>
+        <span class="n">ims11</span> <span class="o">=</span> <span class="n">mags11</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs11</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S21</span>
+        <span class="n">mags21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="n">angs21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">])</span>
+        <span class="n">res21</span> <span class="o">=</span> <span class="n">mags21</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs21</span><span class="p">)</span>
+        <span class="n">ims21</span> <span class="o">=</span> <span class="n">mags21</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs21</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S12</span>
+        <span class="n">mags12</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span>
+        <span class="n">angs12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">])</span>
+        <span class="n">res12</span> <span class="o">=</span> <span class="n">mags12</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs12</span><span class="p">)</span>
+        <span class="n">ims12</span> <span class="o">=</span> <span class="n">mags12</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs12</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="c1"># ----- S22</span>
+        <span class="n">mags22</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">7</span><span class="p">]</span>
+        <span class="n">angs22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">8</span><span class="p">])</span>
+        <span class="n">res22</span> <span class="o">=</span> <span class="n">mags22</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angs22</span><span class="p">)</span>
+        <span class="n">ims22</span> <span class="o">=</span> <span class="n">mags22</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angs22</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims22</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+
+        <span class="c1"># for all three ports. shape should be (2, 2, ant ports, nb_freqs)</span>
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">50.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="c1"># denormalizing factor for XYZ arms</span>
+        <span class="n">denorm_factor</span> <span class="o">=</span> <span class="n">denorm_factor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">s2abcd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s11</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s12</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s22</span><span class="p">)</span> <span class="o">*</span> <span class="n">denorm_factor</span> <span class="c1"># this is an A-matrix represented by [A] in the document.</span></div>
+</div>
+
+
+<div class="viewcode-block" id="Zload">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.Zload">[docs]</a>
+<span class="k">class</span> <span class="nc">Zload</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class goals:</span>
+<span class="sd">      * computes input impedance of load due to balun + 200ohm ADC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reflection coefficient (self.s) is measured using VNA.</span>
+<span class="sd">        Same value is used for all ports.</span>
+<span class="sd">        :param sparams: S-parameters data to compute Zload for x, y, and z ports. Same Zload is used for x, y, and z ports.</span>
+<span class="sd">        :param freqs_in: frequencies corresponding to the S-parameters data for x, y, and z ports.</span>
+<span class="sd">        :param s: reflection coefficient for x, y, and z ports. shape (nb_freqs,).</span>
+<span class="sd">        :param Z_load: total impedance of the load that includes balun, 200 ohm resistor and AD chip.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_name_data_file</span><span class="p">(),</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="c1"># Hz to MHz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># shape = (nb_freqs, )</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_load</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># shape = (nb_freqs, )</span>
+
+    <span class="k">def</span> <span class="nf">_set_name_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ceyear Technologies,3672C, ZKL00189, 2.1.5</span>
+<span class="sd">        Calibration ON : 2P/1,2</span>
+<span class="sd">        Sweep Type: lin Frequency Sweep</span>
+<span class="sd">        S1P File: Measurements: S22:</span>
+<span class="sd">        Thursday, April 20, 2023</span>
+<span class="sd">        Hz  S  RI  R 50</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#filename = os.path.join(&quot;detector&quot;, &quot;RFchain_v1&quot;, &quot;zload_balun_200ohm.s1p&quot;)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="s2">&quot;S_balun_AD.s1p&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Zload.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.Zload.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute S-paramters and Zload for freqs_mhz</span>
+
+<span class="sd">        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="n">freqs_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_in</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># shape = (nb_freqs, )</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_load</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># shape = (nb_freqs, )</span>
+
+        <span class="c1"># S1P File: Measurements: S22</span>
+        <span class="c1">#res = self.sparams[:, 1]</span>
+        <span class="c1">#ims = self.sparams[:, 2]</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">phs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparams</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">ims</span> <span class="o">=</span> <span class="n">db2reim</span><span class="p">(</span><span class="n">dbs</span><span class="p">,</span> <span class="n">phs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">[:]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">ims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate s-parameters for self.freqs_mhz frequencies.</span>
+
+        <span class="c1"># Calculation of Zload (Zload = balun+200ohm + ADchip)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_load</span><span class="p">[:]</span> <span class="o">=</span> <span class="mi">50</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="RFChain">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.RFChain">[docs]</a>
+<span class="k">class</span> <span class="nc">RFChain</span><span class="p">(</span><span class="n">GenericProcessingDU</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Facade for all elements in RF chain</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vga_gain</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lna</span> <span class="o">=</span> <span class="n">LowNoiseAmplifier</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">balun1</span> <span class="o">=</span> <span class="n">BalunAfterLNA</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cable</span> <span class="o">=</span> <span class="n">Cable</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vgaf</span> <span class="o">=</span> <span class="n">VGAFilter</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="n">vga_gain</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">balun2</span> <span class="o">=</span> <span class="n">BalunBeforeADC</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zload</span> <span class="o">=</span> <span class="n">Zload</span><span class="p">()</span>
+        <span class="c1"># Note: self.nb_freqs at this point is 0.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V_out_RFchain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I_out_RFchain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RFChain.compute_for_freqs">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.RFChain.compute_for_freqs">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs_mhz</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute transfer function for frequency freqs_mhz</span>
+
+<span class="sd">        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">balun1</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cable</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vgaf</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">balun2</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zload</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="c1">#self.balun_after_vga.compute_for_freqs(freqs_mhz)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">nb_freqs</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">nb_freqs</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">balun1</span><span class="o">.</span><span class="n">nb_freqs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V_out_RFchain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I_out_RFchain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
+
+        <span class="c1"># Note that components of ABCD_matrix for Z port of balun1 is set to 1 as no Balun is used. shape = (2,2,nports,nfreqs)</span>
+        <span class="c1"># Note that this is a matrix multiplication</span>
+        <span class="c1"># Associative property of matrix multiplication is used, ie. (AB)C = A(BC)</span>
+        <span class="c1"># Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix</span>
+        <span class="n">MM1</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lna</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">balun1</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">)</span>
+        <span class="n">MM2</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cable</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vgaf</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">MM1</span><span class="p">,</span> <span class="n">MM2</span><span class="p">)</span>
+
+        <span class="c1"># Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_load</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zload</span><span class="o">.</span><span class="n">Z_load</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span> <span class="c1"># shape (nfreq) --&gt; (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_in</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Z_load</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Z_load</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">balun2</span><span class="o">.</span><span class="n">ABCD_matrix</span><span class="p">)</span> 
+
+        <span class="c1"># Antenna Impedance.</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;RFchain_v1&quot;</span><span class="p">,</span> <span class="s2">&quot;Z_ant_3.2m.csv&quot;</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">grand_add_path_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">Zant_dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">],</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">freqs_in</span> <span class="o">=</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># MHz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate impedance for self.lna.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate impedance for self.lna.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate impedance for self.lna.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">4</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate impedance for self.lna.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">5</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>       <span class="c1"># interpolate impedance for self.lna.freqs_mhz frequencies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">interpol_at_new_x</span><span class="p">(</span><span class="n">freqs_in</span><span class="p">,</span> <span class="n">Zant_dat</span><span class="p">[:,</span><span class="mi">6</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span> <span class="c1"># interpolate impedance for self.lna.freqs_mhz frequencies.</span></div>
+
+
+<div class="viewcode-block" id="RFChain.vout_f">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.RFChain.vout_f">[docs]</a>
+    <span class="k">def</span> <span class="nf">vout_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">voc_f</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Compute final voltage after propagating signal through RF chain.</span>
+<span class="sd">        Input: Voc_f (in frequency domain)</span>
+<span class="sd">        Output: Voltage after RF chain in frequency domain.</span>
+<span class="sd">        Make sure to run self.compute_for_freqs() before calling this method.</span>
+<span class="sd">        RK Note: name &#39;vout_f&#39; is a placeholder. Change it with something better. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">voc_f</span><span class="o">.</span><span class="n">shape</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">Z_in</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># shape = (nports, nfreqs)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">I_in_balunA</span> <span class="o">=</span> <span class="n">voc_f</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Z_ant</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Z_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V_in_balunA</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">I_in_balunA</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Z_in</span>
+
+        <span class="c1"># loop over three ports. shape of total_ABCD_matrix is (2,2,nports,nfreqs)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">ABCD_matrix_1port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_ABCD_matrix</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">,:]</span>
+            <span class="n">ABCD_matrix_1port</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">ABCD_matrix_1port</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># (2,2,nfreqs) --&gt; (nfreqs,2,2), to compute inverse of ABCD_matrix using np.linalg.inv.</span>
+            <span class="n">ABCD_matrix_1port_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">ABCD_matrix_1port</span><span class="p">)</span>
+            <span class="n">V_out_RFchain</span> <span class="o">=</span> <span class="n">ABCD_matrix_1port_inv</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">V_in_balunA</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">ABCD_matrix_1port_inv</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">I_in_balunA</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">I_out_RFchain</span> <span class="o">=</span> <span class="n">ABCD_matrix_1port_inv</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">V_in_balunA</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">ABCD_matrix_1port_inv</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">I_in_balunA</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">V_out_RFchain</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">V_out_RFchain</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">I_out_RFchain</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">I_out_RFchain</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">V_out_RFchain</span></div>
+
+
+<div class="viewcode-block" id="RFChain.get_tf">
+<a class="viewcode-back" href="../../../../grand.sim.detector.html#grand.RFChain.get_tf">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_tf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return transfer function for all elements in RF chain</span>
+<span class="sd">        total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.</span>
+<span class="sd">        @return total TF (complex, (3,N)):</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_freqs</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_tf</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

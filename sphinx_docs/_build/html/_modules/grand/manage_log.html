@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.manage_log &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.manage_log</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.manage_log</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! pylint: disable=line-too-long</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">brief:</span>
+<span class="sd">  Define output logger (file/stdout) for given level of message and some tools to use </span>
+<span class="sd">  logger in script.</span>
+
+<span class="sd">note:</span>
+<span class="sd">  This module can be copied and used in other projects by modifying the following 2 variables:</span>
+<span class="sd">       - NAME_PKG_GIT</span>
+<span class="sd">       - NAME_ROOT_LIB</span>
+
+<span class="sd">Log_mod How used python logger in library module:</span>
+
+<span class="sd">The best practice is indicated in</span>
+<span class="sd">&lt;a href=&quot;https://docs.python.org/3.8/howto/logging.html#advanced-logging-tutorial&quot;&gt;</span>
+<span class="sd">python documentation&lt;/a&gt; </span>
+<span class="sd">In particular this note:</span>
+
+<span class="sd">note:</span>
+<span class="sd">  It is strongly advised that you do not add any handlers other than NullHandler to </span>
+<span class="sd">  your library’s loggers. This is because the configuration of handlers is the </span>
+<span class="sd">  prerogative of the application developer who uses your library. The application </span>
+<span class="sd">  developer knows their target audience and what handlers are most appropriate for </span>
+<span class="sd">  their application: if you add handlers ‘under the hood’, you might well interfere </span>
+<span class="sd">  with their ability to carry out unit tests and deliver logs which suit their </span>
+<span class="sd">  requirements.</span>
+<span class="sd">  </span>
+<span class="sd">and this one</span>
+
+<span class="sd">note:</span>
+<span class="sd">  A good convention to use when naming loggers is to use a module-level logger, </span>
+<span class="sd">  in each module which uses logging, named as follows:</span>
+<span class="sd"> </span>
+<span class="sd"> </span>
+<span class="sd">from logging import getLogger</span>
+
+<span class="sd">logger = getLogger(__name__)</span>
+
+<span class="sd">def foo(var):</span>
+<span class="sd">  logger.debug(&#39;call foo()&#39;)</span>
+<span class="sd">  logger.info(f&quot;var={var}&quot;)</span>
+<span class="sd">  ...</span>
+<span class="sd"> </span>
+
+<span class="sd">:warning:</span>
+<span class="sd">  Use always f-string to include current value of variables in message, or create a </span>
+<span class="sd">  string message with &quot;.format&quot; before and give it to logger.</span>
+
+<span class="sd">and that&#39;s all. Nothing in &quot;__init__.py&quot;. Now in a script</span>
+
+<span class="sd">Log_script How to define logger in a script and outputs:</span>
+
+<span class="sd">So the job of script is to define handler for logger, but script can also write log ans </span>
+<span class="sd">the value of &quot;__name__&quot; is &quot;__main__&quot; so a specific logger definition is </span>
+<span class="sd">provided by this module by the function @link get_logger_for_script </span>
+<span class="sd">get_logger_for_script() @endlink called with &quot;__file__&quot; value.</span>
+
+<span class="sd">The function @link create_output_for_logger create_output_for_logger() @endlink alllows to define </span>
+<span class="sd">output file/stdout and level of message.</span>
+
+<span class="sd">A couple of function  can be useful to:</span>
+<span class="sd">  - define message at the beginning and the end of script @link string_begin_script </span>
+<span class="sd">    string_xxx_script() @endlink</span>
+<span class="sd">  - easily have chronometer @link chrono_start chrono_xxx() @endlink</span>
+
+<span class="sd">Example:</span>
+
+
+<span class="sd">import grand.manage_log as mlg</span>
+
+<span class="sd"># specific logger definition for script because __mane__ is &quot;__main__&quot;</span>
+<span class="sd">logger = mlg.get_logger_for_script(__file__)</span>
+
+<span class="sd"># define a handler for logger : standart output and file log.txt</span>
+<span class="sd">mlg.create_output_for_logger(&quot;debug&quot;, log_file=&quot;log.txt&quot;, log_stdout=True)</span>
+
+<span class="sd">logger.info(mlg.string_begin_script())</span>
+<span class="sd">...</span>
+
+<span class="sd">logger.info(mlg.chrono_start())</span>
+
+<span class="sd"># Xmax, Efield, and input frame are all in shower frame.</span>
+<span class="sd">field.voltage = antenna.compute_voltage(shower.maximum, field.electric, frame=shower.frame)</span>
+
+<span class="sd">logger.info(mlg.chrono_string_duration())</span>
+<span class="sd">...</span>
+
+
+<span class="sd">logger.info(mlg.string_end_script())</span>
+<span class="sd">plt.show()</span>
+
+
+<span class="sd">Result log file</span>
+
+<span class="sd">11:28:09.621  INFO [grand.examples.simulation.shower-event 27] </span>
+<span class="sd">11:28:09.621  INFO [grand.examples.simulation.shower-event 27] ===========&gt; begin at 2022-01-17T11:28:09Z &lt;===========</span>
+<span class="sd">11:28:09.621  INFO [grand.examples.simulation.shower-event 27] </span>
+<span class="sd">11:28:09.621  INFO [grand.examples.simulation.shower-event 27] </span>
+<span class="sd">11:28:09.622  INFO [grand.simu.shower.gen_shower 102] Loading shower data from ../../tests/simulation/data/zhaires:/</span>
+<span class="sd">11:28:09.625  INFO [grand.simu.shower.zhaires 104] ### zhaires.py: reading groundaltitude from. inp file.</span>
+<span class="sd">11:28:10.030  INFO [grand.simu.shower.gen_shower 114] Loaded 176 field(s) from ../../tests/simulation/data/zhaires:/</span>
+<span class="sd">11:28:10.030  INFO [grand.io.file_leff 73] Loading tabulated antenna model from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/</span>
+<span class="sd">11:28:10.077  INFO [grand.io.file_leff 80] Loaded 1841112 entries from /home/jcolley/.grand/HorizonAntenna_EWarm_leff_loaded.npy:/</span>
+<span class="sd">11:28:10.183  INFO [grand.examples.simulation.shower-event 99] -----&gt; Chrono start</span>
+<span class="sd">11:28:10.183 DEBUG [grand.simu.du.process_ant 180] call compute_voltage()</span>
+<span class="sd">11:28:10.244  INFO [grand.examples.simulation.shower-event 103] -----&gt; Chrono Duration (h:m:s): 0:00:00.060869</span>
+<span class="sd">11:28:10.396  INFO [grand.examples.simulation.shower-event 121] </span>
+<span class="sd">11:28:10.396  INFO [grand.examples.simulation.shower-event 121] </span>
+<span class="sd">11:28:10.396  INFO [grand.examples.simulation.shower-event 121] ===========&gt; End at 2022-01-17T11:28:10Z &lt;===========</span>
+<span class="sd">11:28:10.396  INFO [grand.examples.simulation.shower-event 121] Duration (h:m:s): 0:00:00.775352</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># pylint: enable=line-too-long</span>
+
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">osp</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c1"># value to customize for each project</span>
+<span class="n">NAME_PKG_GIT</span> <span class="o">=</span> <span class="s2">&quot;grand&quot;</span>
+<span class="n">NAME_ROOT_LIB</span> <span class="o">=</span> <span class="s2">&quot;grand&quot;</span>
+
+<span class="c1"># constant value to manage logger and its features</span>
+<span class="n">TPL_FMT_LOGGER</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)5s</span><span class="s2"> [</span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(lineno)d</span><span class="s2">] </span><span class="si">%(message)s</span><span class="s2">&quot;</span>
+
+<span class="n">DICT_LOG_LEVELS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+    <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="s2">&quot;warning&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+    <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+    <span class="s2">&quot;critical&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">START_BEGIN</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+<span class="n">START_CHRONO</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+<span class="n">SCRIPT_ROOT_LOGGER</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1">#############################</span>
+<span class="c1"># Public functions of module</span>
+<span class="c1">#############################</span>
+
+
+<div class="viewcode-block" id="create_output_for_logger">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.create_output_for_logger">[docs]</a>
+<span class="k">def</span> <span class="nf">create_output_for_logger</span><span class="p">(</span>
+    <span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_stdout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_root</span><span class="o">=</span><span class="n">NAME_ROOT_LIB</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a logger with handler for grand</span>
+
+<span class="sd">    :param log_level: standard python logger level define in DICT_LOG_LEVELS</span>
+<span class="sd">    :param log_file: create a log file with path and name log_file</span>
+<span class="sd">    :param log_stdout: enable standard output</span>
+<span class="sd">    :param log_root: define a log_root logger str or list of str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_root</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">l_log_root</span> <span class="o">=</span> <span class="p">[</span><span class="n">log_root</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">l_log_root</span> <span class="o">=</span> <span class="n">log_root</span>
+    <span class="k">if</span> <span class="n">SCRIPT_ROOT_LOGGER</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">l_log_root</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SCRIPT_ROOT_LOGGER</span><span class="p">)</span>
+    <span class="n">ret_level</span> <span class="o">=</span> <span class="n">_check_logger_level</span><span class="p">(</span><span class="n">log_level</span><span class="p">)</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">_MyFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="n">TPL_FMT_LOGGER</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">l_log_root</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">my_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">my_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">ret_level</span><span class="p">)</span>
+    <span class="c1"># first root logger NAME_ROOT_LIB define handler</span>
+    <span class="k">if</span> <span class="n">log_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">f_hd</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="n">f_hd</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">ret_level</span><span class="p">)</span>
+        <span class="n">f_hd</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+        <span class="n">my_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">f_hd</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">log_stdout</span><span class="p">:</span>
+        <span class="n">s_hd</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+        <span class="n">s_hd</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">ret_level</span><span class="p">)</span>
+        <span class="n">s_hd</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+        <span class="n">my_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">s_hd</span><span class="p">)</span>
+    <span class="c1"># others root logger with handler already created</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">l_log_root</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">my_log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+        <span class="n">my_log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">ret_level</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">my_log</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">f_hd</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log_stdout</span><span class="p">:</span>
+            <span class="n">my_log</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">s_hd</span><span class="p">)</span>
+    <span class="n">mes_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;create handler for root logger: </span><span class="si">{</span><span class="n">l_log_root</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">mes_str</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="close_output_for_logger">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.close_output_for_logger">[docs]</a>
+<span class="k">def</span> <span class="nf">close_output_for_logger</span><span class="p">(</span><span class="n">log_root</span><span class="o">=</span><span class="n">NAME_ROOT_LIB</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;close handler for test&quot;&quot;&quot;</span>
+    <span class="n">my_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">log_root</span><span class="p">)</span>
+    <span class="n">handlers</span> <span class="o">=</span> <span class="n">my_logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">[:]</span>
+    <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">handlers</span><span class="p">:</span>
+        <span class="n">handler</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">my_logger</span><span class="o">.</span><span class="n">removeHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_logger_for_script">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.get_logger_for_script">[docs]</a>
+<span class="k">def</span> <span class="nf">get_logger_for_script</span><span class="p">(</span><span class="n">pfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a logger with root logger is defined by the path of the file.</span>
+
+<span class="sd">    @note</span>
+<span class="sd">      Must be call before create_output_for_logger()</span>
+
+<span class="sd">    :param pfile: path of the file, so always call with __file__ value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">SCRIPT_ROOT_LOGGER</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="n">str_logger</span> <span class="o">=</span> <span class="n">_get_logger_path</span><span class="p">(</span><span class="n">pfile</span><span class="p">)</span>
+    <span class="n">root_logger</span> <span class="o">=</span> <span class="n">str_logger</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">root_logger</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">NAME_PKG_GIT</span><span class="p">,</span> <span class="n">NAME_ROOT_LIB</span><span class="p">]:</span>
+        <span class="n">SCRIPT_ROOT_LOGGER</span> <span class="o">=</span> <span class="n">root_logger</span>
+    <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">str_logger</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="string_begin_script">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.string_begin_script">[docs]</a>
+<span class="k">def</span> <span class="nf">string_begin_script</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return string start message with date, time</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">START_BEGIN</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="n">START_BEGIN</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">===========&gt; Begin at </span><span class="si">{</span><span class="n">_get_string_now</span><span class="p">()</span><span class="si">}</span><span class="s2"> &lt;===========</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+
+<div class="viewcode-block" id="string_end_script">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.string_end_script">[docs]</a>
+<span class="k">def</span> <span class="nf">string_end_script</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return string end message with date, time and duration</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">===========&gt; End at </span><span class="si">{</span><span class="n">_get_string_now</span><span class="p">()</span><span class="si">}</span><span class="s2"> &lt;===========</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">ret</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Duration (h:m:s): </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">-</span><span class="n">START_BEGIN</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+
+<div class="viewcode-block" id="chrono_start">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.chrono_start">[docs]</a>
+<span class="k">def</span> <span class="nf">chrono_start</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Start chonometer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">START_CHRONO</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="n">START_CHRONO</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">return</span> <span class="s2">&quot;-----&gt; Chrono start&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="chrono_string_duration">
+<a class="viewcode-back" href="../../grand.html#grand.manage_log.chrono_string_duration">[docs]</a>
+<span class="k">def</span> <span class="nf">chrono_string_duration</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return string with duration between call chrono_start()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;-----&gt; Chrono duration (h:m:s): </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">-</span><span class="n">START_CHRONO</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<span class="c1">#########################################</span>
+<span class="c1"># Internal functions of module</span>
+<span class="c1">#########################################</span>
+
+
+<span class="k">def</span> <span class="nf">_check_logger_level</span><span class="p">(</span><span class="n">str_level</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check the validity of the logger level specified&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DICT_LOG_LEVELS</span><span class="p">[</span><span class="n">str_level</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;keyword &#39;</span><span class="si">{</span><span class="n">str_level</span><span class="si">}</span><span class="s2">&#39; isn&#39;t in </span><span class="si">{</span><span class="n">DICT_LOG_LEVELS</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="s2">&quot;use debug level by default.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DICT_LOG_LEVELS</span><span class="p">[</span><span class="s2">&quot;debug&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_get_string_now</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns string with current date, time</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_logger_path</span><span class="p">(</span><span class="n">pfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param pfile: give __file__ where this is function is call</span>
+<span class="sd">    @return: NAME_PKG_GIT.xx.yy.zz of module that call this function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">l_sep</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">sep</span>
+    <span class="n">r_str</span> <span class="o">=</span> <span class="n">l_sep</span> <span class="o">+</span> <span class="n">NAME_PKG_GIT</span> <span class="o">+</span> <span class="n">l_sep</span>
+    <span class="n">p_grand</span> <span class="o">=</span> <span class="n">pfile</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">r_str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p_grand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># -3 for size of &quot;.py&quot;</span>
+        <span class="n">g_str</span> <span class="o">=</span> <span class="n">pfile</span><span class="p">[</span><span class="n">p_grand</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">l_sep</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># out package git</span>
+        <span class="c1"># -3 for size of &quot;.py&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;out package git&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pfile</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">l_sep</span><span class="p">:</span>
+            <span class="n">g_str</span> <span class="o">=</span> <span class="n">pfile</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">l_sep</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">g_str</span> <span class="o">=</span> <span class="n">pfile</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">l_sep</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">g_str</span>
+
+
+<span class="k">class</span> <span class="nc">_MyFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Formatter without date and with millisecond by default&quot;&quot;&quot;</span>
+
+    <span class="n">converter</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">def</span> <span class="nf">formatTime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">datefmt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define my specific time format for GRAND logger.</span>
+
+<span class="sd">        @note</span>
+<span class="sd">          This method is not used directly by the user.</span>
+
+<span class="sd">        :param record: internal param</span>
+<span class="sd">        :param datefmt: internal param</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">my_convert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">created</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">datefmt</span><span class="p">:</span>
+            <span class="n">str_date</span> <span class="o">=</span> <span class="n">my_convert</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">datefmt</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">str_time</span> <span class="o">=</span> <span class="n">my_convert</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%H:%M:%S&quot;</span><span class="p">)</span>
+            <span class="n">str_date</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">str_time</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">msecs</span><span class="p">)</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">str_date</span>
+
+    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Override format function to manage multiline with \n</span>
+
+<span class="sd">        @note</span>
+<span class="sd">          This method is not used directly by the user.</span>
+
+<span class="sd">        :param record: internal param</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">message</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">msg</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

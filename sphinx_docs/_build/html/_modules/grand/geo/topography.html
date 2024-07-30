@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.geo.topography &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.geo.topography</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.geo.topography</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Topography wrapper for GRAND packages.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">grand</span> <span class="kn">import</span> <span class="n">grand_get_path_root_pkg</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">DATADIR</span>
+<span class="kn">from</span> <span class="nn">grand.geo.coordinates</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ECEF</span><span class="p">,</span>
+    <span class="n">Geodetic</span><span class="p">,</span>
+    <span class="n">GeodeticRepresentation</span><span class="p">,</span>
+    <span class="n">LTP</span><span class="p">,</span>
+    <span class="n">GRANDCS</span><span class="p">,</span>
+    <span class="n">CartesianRepresentation</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">.turtle</span> <span class="kn">import</span> <span class="n">Map</span> <span class="k">as</span> <span class="n">_Map</span><span class="p">,</span> <span class="n">Stack</span> <span class="k">as</span> <span class="n">_Stack</span><span class="p">,</span> <span class="n">Stepper</span> <span class="k">as</span> <span class="n">_Stepper</span>
+<span class="kn">import</span> <span class="nn">grand.dataio.protocol</span> <span class="k">as</span> <span class="nn">store</span>
+<span class="kn">from</span> <span class="nn">.._core</span> <span class="kn">import</span> <span class="n">ffi</span><span class="p">,</span> <span class="n">lib</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;elevation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;distance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;geoid_undulation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;update_data&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cachedir&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Reference&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Topography&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="Reference">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.Reference">[docs]</a>
+<span class="k">class</span> <span class="nc">Reference</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reference level for topography data&quot;&quot;&quot;</span>
+
+    <span class="n">ELLIPSOID</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">GEOID</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">LOCAL</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span></div>
+
+
+
+<span class="n">DATADIR</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">grand_get_path_root_pkg</span><span class="p">())</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;topography&quot;</span>
+<span class="sd">&quot;&quot;&quot;Location of cached topography data&quot;&quot;&quot;</span>
+
+
+<span class="n">_DEFAULT_MODEL</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="s2">&quot;SRTMGL1&quot;</span>
+<span class="sd">&quot;&quot;&quot;The default topographic model&quot;&quot;&quot;</span>
+
+
+<span class="n">_default_topography</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Topography&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="sd">&quot;&quot;&quot;Stack for the topographic data&quot;&quot;&quot;</span>
+
+<span class="n">_default_reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;GEOID&quot;</span>  <span class="c1"># options: &#39;GEOID&#39;, LOCAL&#39;, &#39;ELLIPSOID&#39;</span>
+<span class="sd">&quot;&quot;&quot;Stack for the topographic data&quot;&quot;&quot;</span>
+
+<span class="n">_geoid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_Map</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="sd">&quot;&quot;&quot;Map with geoid undulations&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="distance">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.distance">[docs]</a>
+<span class="k">def</span> <span class="nf">distance</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">CartesianRepresentation</span><span class="p">,</span>
+    <span class="n">maximum_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the signed intersection distance with the topography.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_default_topography</span>
+
+    <span class="k">if</span> <span class="n">_default_topography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">DATADIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">_default_topography</span> <span class="o">=</span> <span class="n">Topography</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_default_topography</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">maximum_distance</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="elevation">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.elevation">[docs]</a>
+<span class="k">def</span> <span class="nf">elevation</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">_default_reference</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_default_topography</span>
+
+    <span class="k">if</span> <span class="n">_default_topography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">DATADIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">_default_topography</span> <span class="o">=</span> <span class="n">Topography</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_default_topography</span><span class="o">.</span><span class="n">elevation</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">reference</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_get_geoid</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">_geoid</span>
+
+    <span class="k">if</span> <span class="n">_geoid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># path = os.path.join(DATADIR, &quot;egm96.png&quot;)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">grand_get_path_root_pkg</span><span class="p">())</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;egm96.png&quot;</span>
+        <span class="n">_geoid</span> <span class="o">=</span> <span class="n">_Map</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_geoid</span>
+
+
+<div class="viewcode-block" id="geoid_undulation">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.geoid_undulation">[docs]</a>
+<span class="k">def</span> <span class="nf">geoid_undulation</span><span class="p">(</span><span class="n">coordinates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">latitude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">longitude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the geoid undulation. This function calculates the height of</span>
+<span class="sd">    the geoid w.r.t the ellipsoid at a given latitude and longitude.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">geoid</span> <span class="o">=</span> <span class="n">_get_geoid</span><span class="p">()</span>
+
+    <span class="c1"># Compute the geodetic coordinates</span>
+    <span class="c1"># if (not isinstance(latitude, type(None))) and (not isinstance(longitude, type(None))):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">latitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">longitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">pass</span>
+        <span class="c1"># elif not isinstance(coordinates, type(None)):</span>
+    <span class="k">elif</span> <span class="n">coordinates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">geodetic</span> <span class="o">=</span> <span class="n">Geodetic</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+        <span class="n">latitude</span> <span class="o">=</span> <span class="n">geodetic</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">longitude</span> <span class="o">=</span> <span class="n">geodetic</span><span class="o">.</span><span class="n">longitude</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;Provide coordinates in known coordinate frames or as latitude and longitude.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">geoid</span><span class="o">.</span><span class="n">elevation</span><span class="p">(</span><span class="n">longitude</span><span class="p">,</span> <span class="n">latitude</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_data">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.update_data">[docs]</a>
+<span class="k">def</span> <span class="nf">update_data</span><span class="p">(</span><span class="n">coordinates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">clear</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update the cache of topography data.</span>
+<span class="sd">    Data are stored in https://github.com/grand-mother/store/releases.</span>
+<span class="sd">    Locally saved as .../grand/data/topography/*.hgt</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">clear</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">DATADIR</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;**/*.*&quot;</span><span class="p">):</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">coordinates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">DATADIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Compute the bounding box</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="p">(</span><span class="n">ECEF</span><span class="p">,</span> <span class="n">Geodetic</span><span class="p">,</span> <span class="n">GeodeticRepresentation</span><span class="p">,</span> <span class="n">GRANDCS</span><span class="p">,</span> <span class="n">LTP</span><span class="p">)):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">coordinates</span><span class="p">),</span>
+                <span class="s2">&quot;Coordinate must be in ECEF, Geodetic, GeodeticRepresentaion, GRANDCS or LTP.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">Geodetic</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+        <span class="n">latitude</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">longitude</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">height</span>
+        <span class="c1"># latitude and longitude are stored as ndarray. Find minimum and maximum.</span>
+        <span class="n">latitude</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">latitude</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">latitude</span><span class="p">)]</span>
+        <span class="n">longitude</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">longitude</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">longitude</span><span class="p">)]</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">height</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">height</span><span class="p">)]</span>
+
+        <span class="c1"># Extend by the radius, if any</span>
+        <span class="k">if</span> <span class="n">radius</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                <span class="c1"># define a local LTP frame at a given latitude and longitude.</span>
+                <span class="n">location</span> <span class="o">=</span> <span class="n">Geodetic</span><span class="p">(</span><span class="n">latitude</span><span class="o">=</span><span class="n">latitude</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">longitude</span><span class="o">=</span><span class="n">longitude</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">LTP</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;ENU&quot;</span><span class="p">,</span> <span class="n">magnetic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">basis</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">basis</span>  <span class="c1"># in ECEF frame</span>
+                <span class="n">origin</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">location</span>  <span class="c1"># in ECEF frame</span>
+
+                <span class="c1"># Find the maximum latitude and longitude at radius distance from the LTP origin.</span>
+                <span class="c1"># 3 points defined at radius distance from the origin, one point on each axis.</span>
+                <span class="c1"># Max latitude = origin+radius towards N. Min latitude = origin-radius towards N.</span>
+                <span class="c1"># Max longitude = origin+radius towards E. Min longitude = origin-radius towards E.</span>
+                <span class="n">delta</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">radius</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span> <span class="k">else</span> <span class="n">radius</span>
+                <span class="n">ltp_E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># delta distance [m] towards E from origin.</span>
+                <span class="n">ltp_N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># delta distance [m] towards N from origin.</span>
+                <span class="n">ltp_U</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">])</span>  <span class="c1"># delta distance [m] towards U from origin.</span>
+                <span class="n">arg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">ltp_E</span><span class="p">,</span> <span class="n">ltp_N</span><span class="p">,</span> <span class="n">ltp_U</span><span class="p">)</span>
+                <span class="p">)</span>  <span class="c1"># [[x1, x2, x3], [y1, y2, y3], [z1, z2, z3]]</span>
+                <span class="c1"># Transform all 3 points from local LTP to ECEF frame.</span>
+                <span class="n">ecef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">basis</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span> <span class="o">+</span> <span class="n">origin</span>
+                <span class="n">geod</span> <span class="o">=</span> <span class="n">Geodetic</span><span class="p">(</span><span class="n">ecef</span><span class="p">)</span>
+                <span class="n">latitude</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">geod</span><span class="o">.</span><span class="n">latitude</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">geod</span><span class="o">.</span><span class="n">latitude</span><span class="p">)</span>
+                <span class="n">longitude</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">geod</span><span class="o">.</span><span class="n">longitude</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">geod</span><span class="o">.</span><span class="n">longitude</span><span class="p">)</span>
+                <span class="n">height</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">geod</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">geod</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+
+        <span class="c1"># Get the corresponding tiles</span>
+        <span class="n">longitude</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span> <span class="k">for</span> <span class="n">lon</span> <span class="ow">in</span> <span class="n">longitude</span><span class="p">]</span>
+        <span class="n">latitude</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="k">for</span> <span class="n">lat</span> <span class="ow">in</span> <span class="n">latitude</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">lat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">latitude</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">latitude</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">lon</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">longitude</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">longitude</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">ns</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span> <span class="k">if</span> <span class="n">lat</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;N&quot;</span>
+                <span class="n">ew</span> <span class="o">=</span> <span class="s2">&quot;W&quot;</span> <span class="k">if</span> <span class="n">lon</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;E&quot;</span>
+                <span class="n">lat</span> <span class="o">=</span> <span class="o">-</span><span class="n">lat</span> <span class="k">if</span> <span class="n">lat</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">lat</span>
+                <span class="n">lon</span> <span class="o">=</span> <span class="o">-</span><span class="n">lon</span> <span class="k">if</span> <span class="n">lon</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">lon</span>
+
+                <span class="n">base</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ns</span><span class="si">}{</span><span class="n">lat</span><span class="si">:</span><span class="s2">02.0f</span><span class="si">}{</span><span class="n">ew</span><span class="si">}{</span><span class="n">lon</span><span class="si">:</span><span class="s2">03.0f</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">basename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ns</span><span class="si">}{</span><span class="n">lat</span><span class="si">:</span><span class="s2">02.0f</span><span class="si">}{</span><span class="n">ew</span><span class="si">}{</span><span class="n">lon</span><span class="si">:</span><span class="s2">03.0f</span><span class="si">}</span><span class="s2">.SRTMGL1.hgt&quot;</span> <span class="c1"># .gz will be added in protocol.py</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;topography:&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">ew</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">basename</span><span class="p">)</span>
+                <span class="c1"># path = DATADIR / basename</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">DATADIR</span> <span class="o">/</span> <span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">&quot;.hgt&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Caching data for&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="n">basename</span>
+                        <span class="p">)</span>  <span class="c1"># stored in github.com/grand-mother/store/releases.</span>
+                    <span class="k">except</span> <span class="n">store</span><span class="o">.</span><span class="n">InvalidBLOB</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;missing data in GRAND repository for </span><span class="si">{</span><span class="n">basename</span><span class="si">}</span><span class="s2">. Download it from https://search.earthdata.nasa.gov/search/granules?p=C1000000240-LPDAAC_ECS&amp;pg[0][v]=f&amp;pg[0][gsk]=-start_date&amp;tl=1680158515.135!3!!&quot;</span>
+                        <span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>  <span class="c1"># RK: what is this? and why?</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+                <span class="c1"># ToDo: Add error message if failing to load topography data.</span>
+
+    <span class="c1"># Reset the topography proxy</span>
+    <span class="k">global</span> <span class="n">_default_topography</span>
+    <span class="n">_default_topography</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="cachedir">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.cachedir">[docs]</a>
+<span class="k">def</span> <span class="nf">cachedir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the location of the topography data cache.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DATADIR</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">datadir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the location of the topography data cache.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DATADIR</span>
+
+
+<div class="viewcode-block" id="model">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.model">[docs]</a>
+<span class="k">def</span> <span class="nf">model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the default model for topographic data.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_DEFAULT_MODEL</span></div>
+
+
+
+<div class="viewcode-block" id="Topography">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.Topography">[docs]</a>
+<span class="k">class</span> <span class="nc">Topography</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proxy to topography data.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">DATADIR</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="n">_Stack</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stepper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_Stepper</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Topography.elevation">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.Topography.elevation">[docs]</a>
+    <span class="k">def</span> <span class="nf">elevation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinates</span><span class="p">,</span>
+        <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">_default_reference</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the topography elevation, w.r.t. sea level, w.r.t the</span>
+<span class="sd">        ellipsoid or in local coordinates. The default reference is</span>
+<span class="sd">        w.r.t sea level (GEOID).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">reference</span> <span class="o">==</span> <span class="s2">&quot;LOCAL&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="p">(</span><span class="n">LTP</span><span class="p">,</span> <span class="n">GRANDCS</span><span class="p">)):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;not an LTP or GRANDCS frame&quot;</span><span class="p">)</span>
+                <span class="n">elevation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_elevation</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">elevation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_elevation</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">reference</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">elevation</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">elevation</span> <span class="o">=</span> <span class="n">elevation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">elevation</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO: what doing if reference is None ?</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_as_double_ptr</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;CONTIGUOUS&quot;</span><span class="p">,</span> <span class="s2">&quot;ALIGNED&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="s2">&quot;double *&quot;</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_local_elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the topography elevation in local coordinates, i.e. along the (Oz) axis.&quot;&quot;&quot;</span>
+        <span class="c1"># Compute the x and y coordinate in local frame.</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">y</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">x</span><span class="p">,))</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">y</span><span class="p">,))</span>
+
+        <span class="c1"># Return the topography elevation</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">elevation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">location</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">coordinates</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">T</span>
+        <span class="p">)</span>  <span class="c1"># basis in coordinates.py and in lib... are transpose of each other.</span>
+        <span class="n">geoid</span> <span class="o">=</span> <span class="n">_get_geoid</span><span class="p">()</span><span class="o">.</span><span class="n">_map</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">_stack</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">_stack</span> <span class="k">else</span> <span class="n">ffi</span><span class="o">.</span><span class="n">NULL</span>
+
+        <span class="n">lib</span><span class="o">.</span><span class="n">grand_topography_local_elevation</span><span class="p">(</span>
+            <span class="n">stack</span><span class="p">,</span>
+            <span class="n">geoid</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">origin</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">basis</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">elevation</span><span class="p">),</span>
+            <span class="n">n</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">elevation</span>
+
+    <span class="k">def</span> <span class="nf">_global_elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the topography elevation w.r.t. sea level or w.r.t. the</span>
+<span class="sd">        ellipsoid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Compute the geodetic coordinates</span>
+        <span class="n">geodetic</span> <span class="o">=</span> <span class="n">Geodetic</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+        <span class="n">latitude</span> <span class="o">=</span> <span class="n">geodetic</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">longitude</span> <span class="o">=</span> <span class="n">geodetic</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">latitude</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">latitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">latitude</span><span class="p">,))</span>
+            <span class="n">longitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">longitude</span><span class="p">,))</span>
+
+        <span class="c1"># Return the topography elevation</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">latitude</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">elevation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reference</span> <span class="o">==</span> <span class="s2">&quot;ELLIPSOID&quot;</span><span class="p">:</span>
+            <span class="n">geoid</span> <span class="o">=</span> <span class="n">_get_geoid</span><span class="p">()</span><span class="o">.</span><span class="n">_map</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">geoid</span> <span class="o">=</span> <span class="n">ffi</span><span class="o">.</span><span class="n">NULL</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">_stack</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">_stack</span> <span class="k">else</span> <span class="n">ffi</span><span class="o">.</span><span class="n">NULL</span>
+
+        <span class="n">lib</span><span class="o">.</span><span class="n">grand_topography_global_elevation</span><span class="p">(</span>
+            <span class="n">stack</span><span class="p">,</span>
+            <span class="n">geoid</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">latitude</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">longitude</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">elevation</span><span class="p">),</span>
+            <span class="n">n</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">elevation</span>
+
+<div class="viewcode-block" id="Topography.distance">
+<a class="viewcode-back" href="../../../grand.geo.html#grand.Topography.distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="n">CartesianRepresentation</span><span class="p">,</span>
+        <span class="n">maximum_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the signed intersection distance with the topography.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stepper</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stepper</span> <span class="o">=</span> <span class="n">_Stepper</span><span class="p">()</span>
+            <span class="n">stepper</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="p">)</span>
+            <span class="n">stepper</span><span class="o">.</span><span class="n">geoid</span> <span class="o">=</span> <span class="n">_get_geoid</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stepper</span> <span class="o">=</span> <span class="n">stepper</span>
+
+        <span class="n">position</span> <span class="o">=</span> <span class="n">ECEF</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="p">(</span><span class="n">CartesianRepresentation</span><span class="p">,</span> <span class="n">ECEF</span><span class="p">)):</span>
+            <span class="c1"># TODO: Convert direction vector given in any known coordinate frame to ECEF frame.</span>
+            <span class="c1">#       direction must be in ECEF frame for lib.grand_topography_distance()</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Direction must be in CartesianRepresentation in ECEF frame.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Normalize the direction vector. Unit vector is required.</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">direction</span> <span class="o">/</span> <span class="n">norm</span>
+
+        <span class="n">dn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">maximum_distance</span><span class="p">)</span><span class="o">.</span><span class="n">size</span> <span class="k">if</span> <span class="n">maximum_distance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">direction</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="p">((</span><span class="n">direction</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="p">((</span><span class="n">position</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="p">((</span><span class="n">dn</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dn</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">))</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;incompatible size&quot;</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+        <span class="c1"># r[start:stop:step] -&gt; r[start::step]. Take every step-th value starting from start.</span>
+        <span class="c1"># l = [0,1,2,3,4,5]. l[::2] -&gt; [0, 2, 4]. l[1::2] -&gt; [1, 3, 5]</span>
+        <span class="n">r</span><span class="p">[::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">y</span>
+        <span class="n">r</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">z</span>
+        <span class="n">v</span><span class="p">[::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">direction</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">direction</span><span class="o">.</span><span class="n">y</span>
+        <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">direction</span><span class="o">.</span><span class="n">z</span>
+        <span class="n">d</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">maximum_distance</span> <span class="k">if</span> <span class="n">maximum_distance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="n">lib</span><span class="o">.</span><span class="n">grand_topography_distance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stepper</span><span class="o">.</span><span class="n">_stepper</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">r</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">v</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_as_double_ptr</span><span class="p">(</span><span class="n">d</span><span class="p">),</span>
+            <span class="n">n</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">d</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

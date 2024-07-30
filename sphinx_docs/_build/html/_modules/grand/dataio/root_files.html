@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.dataio.root_files &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.dataio.root_files</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.dataio.root_files</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The code defines classes and functions to manage ROOT files containing Efield simulation data and</span>
+<span class="sd">    voltage ADC event data.</span>
+<span class="sd">    </span>
+<span class="sd">    :param f_root: The `f_root` parameter is a string representing the path to a ROOT file that contains</span>
+<span class="sd">    data from an Efield simulation or voltage ADCevent. This file is used to extract information such as</span>
+<span class="sd">    event numbers, run numbers, traces, and other relevant data for further analysis or processing</span>
+<span class="sd">    :return: The code provided defines classes and functions for managing ROOT files of Efield</span>
+<span class="sd">    simulation and voltage ADCevent data. The `get_file_event` function serves as a factory method to</span>
+<span class="sd">    create instances of either `FileEfield` or `FileVoltage` classes based on the content of the ROOT</span>
+<span class="sd">    file.</span>
+<span class="sd">    </span>
+<span class="sd">Manage ROOT file of type Efield simulation, voltage ADCevent is experimental </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">ROOT</span>
+
+<span class="kn">import</span> <span class="nn">grand.dataio.root_trees</span> <span class="k">as</span> <span class="nn">groot</span>
+<span class="kn">from</span> <span class="nn">grand.basis.traces_event</span> <span class="kn">import</span> <span class="n">Handling3dTracesOfEvent</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_ttree_in_file">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.get_ttree_in_file">[docs]</a>
+<span class="k">def</span> <span class="nf">get_ttree_in_file</span><span class="p">(</span><span class="n">f_root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return all TTree name in ROOT file</span>
+
+<span class="sd">    :param f_root:</span>
+<span class="sd">    :type f_root:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tfile</span> <span class="o">=</span> <span class="n">ROOT</span><span class="o">.</span><span class="n">TFile</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">f_root</span><span class="p">)</span>
+    <span class="n">l_ttree</span> <span class="o">=</span> <span class="n">tfile</span><span class="o">.</span><span class="n">GetListOfKeys</span><span class="p">()</span>
+    <span class="n">l_name_ttree</span> <span class="o">=</span> <span class="p">[</span><span class="n">ttree</span><span class="o">.</span><span class="n">GetName</span><span class="p">()</span> <span class="k">for</span> <span class="n">ttree</span> <span class="ow">in</span> <span class="n">l_ttree</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">l_name_ttree</span></div>
+
+
+
+<div class="viewcode-block" id="check_ttree_in_file">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.check_ttree_in_file">[docs]</a>
+<span class="k">def</span> <span class="nf">check_ttree_in_file</span><span class="p">(</span><span class="n">f_root</span><span class="p">,</span> <span class="n">ttree_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return True if f_root contents ttree_name</span>
+
+<span class="sd">    :param f_root:</span>
+<span class="sd">    :type f_root:</span>
+<span class="sd">    :param ttree_name:</span>
+<span class="sd">    :type ttree_name:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ttree_name</span> <span class="ow">in</span> <span class="n">get_ttree_in_file</span><span class="p">(</span><span class="n">f_root</span><span class="p">)</span></div>
+
+
+
+<span class="k">class</span> <span class="nc">_FileEventBase</span><span class="p">:</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Goals of the class:</span>
+
+<span class="sd">      * add access to event by index not by identifier (event, run)</span>
+<span class="sd">      * initialize instance to the first event</span>
+<span class="sd">      * conversion io.root array to numpy if necessary</span>
+
+<span class="sd">    Public attributes:</span>
+
+<span class="sd">        * tt_event object: object ROOT_tree of type TTree Event</span>
+<span class="sd">        * f_name str: path/name to ROOT file</span>
+<span class="sd">        * l_events list : list of tuple (event, run)</span>
+<span class="sd">        * traces float(N,3,S): 3D trace of N detector unit with S samples</span>
+<span class="sd">        * idx_event int:  current object contents data of event at index idx_event in l_events</span>
+<span class="sd">        * delta_t_ns float: [ns] time sampling</span>
+<span class="sd">        * event_number int: given by l_events list(idx_event)</span>
+<span class="sd">        * run_number int: given by l_events list(idx_event)</span>
+<span class="sd">        * du_count int: number of DU in current object</span>
+<span class="sd">        * du_pos float(N,3): cartesian position of detector unit</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt_event</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_bin_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_xyz</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span> <span class="o">=</span> <span class="n">tt_event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">get_list_of_events</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_event</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="c1"># self.delta_t_ns = -1</span>
+        <span class="c1"># self.evt_nb = -1</span>
+        <span class="c1"># self.run_nb = -1</span>
+        <span class="c1"># self.nb_du = 0</span>
+        <span class="c1"># self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">load_event_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load event/run with index idx in list return by get_list_of_events()</span>
+
+<span class="sd">        :param idx:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_event</span> <span class="o">==</span> <span class="n">idx</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_event</span> <span class="o">=</span> <span class="n">idx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_events</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_events</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_event_identifier</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load_next_event</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load next event, return False at the end of list else True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_event</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nb_events</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No more event&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_event_idx</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_load_event_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load traces/pos of event/run event_number/run_number</span>
+<span class="sd">        :param event_number:</span>
+<span class="sd">        :param run_number:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;load event: </span><span class="si">{</span><span class="n">event_number</span><span class="si">}</span><span class="s2"> of run  </span><span class="si">{</span><span class="n">run_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># efield</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">du_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">du_count</span>
+
+        <span class="c1"># trace_size = len(self.tt_event.trace_x[0])</span>
+        <span class="n">trace_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># if trace_size != self.traces.shape[2]:</span>
+        <span class="c1">#    self.traces = np.empty((self.du_count, 3, trace_size), dtype=np.float32)</span>
+        <span class="c1">#    logger.info(f&quot;resize numpy array trace to {self.traces.shape}&quot;)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># self.traces[:, 0, :] = np.array(self.tt_event.trace_x, dtype=np.float32)</span>
+        <span class="c1"># self.traces[:, 1, :] = np.array(self.tt_event.trace_y, dtype=np.float32)</span>
+        <span class="c1"># self.traces[:, 2, :] = np.array(self.tt_event.trace_z, dtype=np.float32)</span>
+        <span class="c1"># self.du_pos = np.empty((self.du_count, 3), dtype=np.float32)</span>
+        <span class="c1"># self.du_pos[:, 0] = np.array(self.tt_event.pos_x, dtype=np.float32)</span>
+        <span class="c1"># self.du_pos[:, 1] = np.array(self.tt_event.pos_y, dtype=np.float32)</span>
+        <span class="c1"># self.du_pos[:, 2] = np.array(self.tt_event.pos_z, dtype=np.float32)</span>
+
+    <span class="k">def</span> <span class="nf">get_du_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return number of du in event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">du_count</span>
+
+    <span class="k">def</span> <span class="nf">get_nb_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return number of event in file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l_events</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_size_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return number of sample in trace</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_sampling_freq_mhz</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return sampling frequency in MHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mf">1e3</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_bin_size</span>
+
+    <span class="k">def</span> <span class="nf">get_obj_handling3dtraces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a traces container IO independent Handling3dTracesOfEvent</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">o_tevent</span> <span class="o">=</span> <span class="n">Handling3dTracesOfEvent</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> evt=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="si">}</span><span class="s2"> run=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># TODO: difference between du_id for all network and for specific event ?</span>
+        <span class="n">du_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">du_id</span><span class="p">)</span>
+        <span class="n">o_tevent</span><span class="o">.</span><span class="n">init_traces</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">,</span>
+            <span class="n">du_id</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span><span class="o">.</span><span class="n">du_nanoseconds</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_sampling_freq_mhz</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">o_tevent</span>
+
+
+<div class="viewcode-block" id="FileEfield">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.FileEfield">[docs]</a>
+<span class="k">class</span> <span class="nc">FileEfield</span><span class="p">(</span><span class="n">_FileEventBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    File simulation of air shower with 4 TTree</span>
+
+<span class="sd">      * tefield</span>
+<span class="sd">      * trun</span>
+<span class="sd">      * trunefieldsim</span>
+<span class="sd">      * tshower</span>
+
+<span class="sd">    Goals of the class:</span>
+
+<span class="sd">      * synchronize each TTree on same event/run</span>
+<span class="sd">      * add access to event by index not by identifier (event, run)</span>
+<span class="sd">      * initialize instance to the first event</span>
+<span class="sd">      * conversion io.root array to numpy if necessary</span>
+
+<span class="sd">    Public attributes:</span>
+
+<span class="sd">      * same as _FileEventBase class</span>
+<span class="sd">      * tt_efield object EfieldEventTree</span>
+<span class="sd">      * tt_shower object ShowerEventSimdataTree</span>
+<span class="sd">      * tt_run object RunTree</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_name</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name_ttree</span> <span class="o">=</span> <span class="s2">&quot;tefield&quot;</span>
+        <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f_name</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> doesn&#39;t exist.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_ttree_in_file</span><span class="p">(</span><span class="n">f_name</span><span class="p">,</span> <span class="n">name_ttree</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> doesn&#39;t content TTree </span><span class="si">{</span><span class="n">name_ttree</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">AssertionError</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Events  in file </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TEfield</span><span class="p">(</span><span class="n">f_name</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_efield</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tt_event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_shower</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TShower</span><span class="p">(</span><span class="n">f_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_run</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TRun</span><span class="p">(</span><span class="n">f_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_event_idx</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="n">f_name</span>
+
+    <span class="k">def</span> <span class="nf">_load_event_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        synchronize all event TTree with method get_event() in file.</span>
+
+<span class="sd">        :param event_number:</span>
+<span class="sd">        :param run_number:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_load_event_identifier</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">)</span>
+        <span class="c1"># synchronize showerTree on same evt, run</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;load tt_shower: </span><span class="si">{</span><span class="n">event_number</span><span class="si">}</span><span class="s2"> of run  </span><span class="si">{</span><span class="n">run_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_shower</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">)</span>
+        <span class="c1"># synchronize runTree on same run</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_run</span><span class="o">.</span><span class="n">get_run</span><span class="p">(</span><span class="n">run_number</span><span class="p">)</span>
+        <span class="c1"># synchronize EfieldRunSimdataTree on same run</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_bin_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_run</span><span class="o">.</span><span class="n">t_bin_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_xyz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_run</span><span class="o">.</span><span class="n">du_xyz</span><span class="p">)</span>
+        
+
+<div class="viewcode-block" id="FileEfield.get_obj_handling3dtraces">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.FileEfield.get_obj_handling3dtraces">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_obj_handling3dtraces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a traces container IO independent</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">o_tevent</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_obj_handling3dtraces</span><span class="p">()</span>
+        <span class="n">o_tevent</span><span class="o">.</span><span class="n">init_network</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">du_xyz</span><span class="p">)</span>
+        <span class="n">o_tevent</span><span class="o">.</span><span class="n">set_unit_axis</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\mu$V/m&quot;</span><span class="p">,</span> <span class="s2">&quot;cart&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">o_tevent</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FileVoltage">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.FileVoltage">[docs]</a>
+<span class="k">class</span> <span class="nc">FileVoltage</span><span class="p">(</span><span class="n">_FileEventBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Goals of the class:</span>
+
+<span class="sd">      * add access to event by index not by identifier (event, run)</span>
+<span class="sd">      * initialize instance to the first event</span>
+<span class="sd">      * conversion io.root array to numpy if necessary</span>
+
+<span class="sd">    Public attributs:</span>
+
+<span class="sd">      * same as _FileEventBase class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_name</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name_ttree</span> <span class="o">=</span> <span class="s2">&quot;tvoltage&quot;</span>
+        <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f_name</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> doesn&#39;t exist.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_ttree_in_file</span><span class="p">(</span><span class="n">f_name</span><span class="p">,</span> <span class="n">name_ttree</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> doesn&#39;t content TTree </span><span class="si">{</span><span class="n">name_ttree</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">AssertionError</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Events  in file </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TVoltage</span><span class="p">(</span><span class="n">f_name</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_event_idx</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="n">f_name</span>
+
+<div class="viewcode-block" id="FileVoltage.get_obj_handling3dtraces">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.FileVoltage.get_obj_handling3dtraces">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_obj_handling3dtraces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a traces container IO independent</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">o_tevent</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_obj_handling3dtraces</span><span class="p">()</span>
+        <span class="n">o_tevent</span><span class="o">.</span><span class="n">set_unit_axis</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\mu$V&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">o_tevent</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_file_event">
+<a class="viewcode-back" href="../../../grand.dataio.html#grand.dataio.root_files.get_file_event">[docs]</a>
+<span class="k">def</span> <span class="nf">get_file_event</span><span class="p">(</span><span class="n">f_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Factory for ROOT event file, return an instance of FileSimuEfield or FileVoltageEvent</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f_name</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File does not exist&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> doesn&#39;t exist.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span>
+    <span class="n">trees_list</span> <span class="o">=</span> <span class="n">get_ttree_in_file</span><span class="p">(</span><span class="n">f_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;tefield&quot;</span> <span class="ow">in</span> <span class="n">trees_list</span><span class="p">:</span>  <span class="c1"># File with Efield info as input</span>
+        <span class="k">return</span> <span class="n">FileEfield</span><span class="p">(</span><span class="n">f_name</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;tvoltage&quot;</span> <span class="ow">in</span> <span class="n">trees_list</span><span class="p">:</span>  <span class="c1"># File with voltage info as input</span>
+        <span class="k">return</span> <span class="n">FileVoltage</span><span class="p">(</span><span class="n">f_name</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">f_name</span><span class="si">}</span><span class="s2"> doesn&#39;t content TTree teventefield or teventvoltage. It contains </span><span class="si">{</span><span class="n">trees_list</span><span class="si">}</span><span class="s2">.&quot;</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">AssertionError</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

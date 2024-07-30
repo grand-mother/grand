@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.basis.pipeline &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.basis.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.basis.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="c1"># The above code defines a Python class `Pipeline` and a function `execute_pipeline` that are used in</span>
+<span class="c1"># the pipeline execution.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions used in the pipline execution.</span>
+
+<span class="sd">RK TODO: implement techniques used in LP&#39;s execute_pipeline where output_trees</span>
+<span class="sd">         and time-traces are saved on event-by-event basis.</span>
+
+<span class="sd">@GRAND Collaboration, 2023</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="kn">import</span> <span class="nn">grand.dataio.root_trees</span> <span class="k">as</span> <span class="nn">groot</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Final usage:</span>
+<span class="sd">from grand.io.pipeline import Pipeline</span>
+
+<span class="sd">pipeline = Pipeline()</span>
+<span class="sd">pipeline.Add(&quot;reader&quot;,f_input=&quot;f.root&quot;) </span>
+<span class="sd">pipeline.Add(&quot;coreas2root&quot;, ...)</span>
+<span class="sd">pipeline.Add(&quot;efield2voltage&quot;, .....)</span>
+<span class="sd">pipeline.Add(&quot;some_reco&quot;, ....)</span>
+<span class="sd">pipeline.Add(&quot;something_else&quot;, ...)</span>
+<span class="sd">pipeline.Add(&quot;writer&quot;, f_output=&quot;out.root&quot;)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#idea: push trees of one events down the pipeline and append them to write at the end of the pipeline.</span>
+<span class="c1">#      Repeat the same process for the next event.</span>
+
+<span class="c1"># The `@dataclass` decorator is used to create a simple class to hold data. In this case, the</span>
+<span class="c1"># `Pipeline` class is defined as a dataclass with two class variables `trees_dict` and `command_dict`.</span>
+<span class="c1"># The `Add` method within the `Pipeline` class is used to add different components to the pipeline</span>
+<span class="c1"># based on the `name` provided.</span>
+<div class="viewcode-block" id="Pipeline">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.pipeline.Pipeline">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Pipeline</span><span class="p">:</span>
+
+    <span class="n">trees_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">command_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="Pipeline.Add">
+<a class="viewcode-back" href="../../../grand.basis.html#grand.basis.pipeline.Pipeline.Add">[docs]</a>
+    <span class="k">def</span> <span class="nf">Add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;reader&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading input files&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;f_input&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f_input</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;f_input&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Provide an input filename with option f_input=&#39;&lt;your_file.root&gt;&#39;. &quot;</span><span class="p">)</span>
+
+            <span class="c1">#print(&#39;filename:&#39;, self.f_input)</span>
+            <span class="c1">#print(&#39;kwargs:&#39;, kwargs)</span>
+
+        <span class="k">if</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;efield2voltage&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading efield2voltage&quot;</span><span class="p">)</span>
+            <span class="c1"># call class to compute voltage from efield.</span>
+            <span class="kn">from</span> <span class="nn">grand.sim.efield2voltage</span> <span class="kn">import</span> <span class="n">Efield2Voltage</span>
+
+            <span class="c1">#print(&#39;kwargs:&#39;, kwargs)</span>
+            <span class="c1">#events      = groot.EfieldEventTree(self.f_input) </span>
+            <span class="c1">#events_list = events.get_list_of_events()</span>
+
+            <span class="k">if</span> <span class="s1">&#39;seed&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;padding_factor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="n">Efield2Voltage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_input</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;seed&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s1">&#39;seed&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;padding_factor&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="n">Efield2Voltage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_input</span><span class="p">,</span> <span class="n">padding_factor</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;padding_factor&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s1">&#39;seed&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;padding_factor&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="n">Efield2Voltage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_input</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;seed&#39;</span><span class="p">],</span> <span class="n">padding_factor</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;padding_factor&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s1">&#39;seed&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;padding_factor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="c1"># use default seed=None, padding_factor=1.0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="n">Efield2Voltage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_input</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;master defined&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;add_noise&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;add_noise&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;add_noise&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;add_rf_chain&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;add_rf_chain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;add_rf_chain&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;lst&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;lst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;lst&#39;</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">command_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span>
+
+        <span class="k">if</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;writer&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;writing on output file&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">==</span><span class="s2">&quot;efield2voltage&quot;</span><span class="p">:</span>
+                    <span class="n">command</span><span class="o">.</span><span class="n">f_output</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;f_output&#39;</span><span class="p">]</span>
+                    <span class="n">command</span><span class="o">.</span><span class="n">compute_voltage</span><span class="p">()</span></div>
+</div>
+
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd"># ToDo: there should also be a kind of tree names list. Probably will be solved with usage of DataFile</span>
+<span class="sd">def execute_pipeline(pipeline, filelist, output_dir=&quot;&quot;):</span>
+<span class="sd">    #Execute the pipeline</span>
+
+<span class="sd">    # Changes the returns of functions to dictionaries - needed for the pipeline</span>
+<span class="sd">    electronic_chain.ec_config.in_pipeline = True</span>
+
+<span class="sd">    # Execute the prep_func before looping through files</span>
+<span class="sd">    # Only one prep func allowed in pipeline</span>
+<span class="sd">    if &quot;prefileloop_call&quot; in pipeline:</span>
+<span class="sd">        # RK: prep_func returns {&#39;rfft&#39;: True, &#39;irfft&#39;: True}. var_dict part has no effect at all. Why is this done?</span>
+<span class="sd">        prep_func = importlib.__import__(pipeline[&quot;prefileloop_call&quot;][&quot;module&quot;], fromlist=(&quot;prefileloop_call&quot;)).prep_func</span>
+<span class="sd">        var_dict = prep_func(**pipeline[&quot;prefileloop_call&quot;][&quot;kwargs&quot;]) # At this stage, var_dict={&#39;rfft&#39;: True, &#39;irfft&#39;: True}</span>
+
+<span class="sd">    # Loop through files</span>
+<span class="sd">    for in_root_file in filelist:</span>
+<span class="sd">        print(&quot;************** Analysing file&quot;, in_root_file)</span>
+
+<span class="sd">        # Removing the trees from the previous file from memory</span>
+<span class="sd">        # ToDo: This should not be up to a user, at least not in this ugly way</span>
+<span class="sd">        grand.io.root_trees.grand_tree_list = []</span>
+
+<span class="sd">        # Remove the previous traces, if exist</span>
+<span class="sd">        if &quot;traces_t&quot; in var_dict:</span>
+<span class="sd">            del var_dict[&quot;traces_t&quot;]</span>
+<span class="sd">            del var_dict[&quot;traces_f&quot;]</span>
+
+<span class="sd">        # Execute all the preeventloop_calls in the pipeline</span>
+<span class="sd">        for (key,part) in pipeline.items():</span>
+<span class="sd">            if part[&quot;type&quot;]==&quot;preeventloop_call&quot;:</span>
+<span class="sd">                # Find the specified preeventloop function in the module</span>
+<span class="sd">                print(&#39;preloop module, key&#39;, part[&quot;module&quot;], key)</span>
+<span class="sd">                func = getattr(importlib.__import__(part[&quot;module&quot;]), key) # func = preevent_func inside PM_functions/preevent_func.py</span>
+<span class="sd">                # Call the function. returns dictionary with to-be stored empty tree object, freqs_MHz, dt_ns, LNA, and filter values for freqs_MHz.</span>
+<span class="sd">                var_dict.update(func(pipeline=pipeline, in_root_file=in_root_file, output_dir=output_dir, **var_dict))</span>
+
+<span class="sd">        output_trees = var_dict[&quot;output_trees&quot;]</span>
+<span class="sd">        tshower, tefield = var_dict[&quot;tshower&quot;], var_dict[&quot;tefield&quot;]</span>
+
+<span class="sd">        # Loop through events</span>
+<span class="sd">        for i in range(tshower.get_entries()):</span>
+<span class="sd">            tshower.get_entry(i)</span>
+<span class="sd">            # ToDo: A bug in root_trees? Get entry should not be necessary after get entry on tshower (friends!)</span>
+<span class="sd">            tefield.get_entry(i)</span>
+<span class="sd">            # tvoltage.copy_contents(tefield)</span>
+
+<span class="sd">            # Loop through the elements of the pipeline</span>
+<span class="sd">            for (key,part) in pipeline.items():</span>
+<span class="sd">                print(&quot;Applying &quot;, key)</span>
+<span class="sd">                # Skip the prefileloop_call and preeventloop_call</span>
+<span class="sd">                # RK: maybe this should be --&gt; if key==&quot;prefileloop_call&quot; or part[&quot;type&quot;]==&quot;preeventloop_call&quot;: continue</span>
+<span class="sd">                #     There is no key called &quot;preeventloop_call&quot;. There is a key called &quot;preevent_func&quot; though.</span>
+<span class="sd">                if key==&quot;prefileloop_call&quot; or key==&quot;preeventloop_call&quot;: continue</span>
+
+<span class="sd">                # Take action depending on the type of the pipeline element</span>
+<span class="sd">                # ToDo: when we upgrade to Python &gt;=3.10, &quot;match&quot; conditional should be used</span>
+<span class="sd">                if part[&quot;type&quot;]==&quot;call&quot;:</span>
+<span class="sd">                    # ToDo: slightly more optimal to do the import before all the looping (but not much)</span>
+<span class="sd">                    func = getattr(importlib.__import__(part[&quot;module&quot;]), key)</span>
+<span class="sd">                    # Merge the function arguments with the output dictionary</span>
+<span class="sd">                    # ToDo: It should be dict union &quot;|&quot; for python &gt;=3.9</span>
+<span class="sd">                    if &quot;kwargs&quot; in part:</span>
+<span class="sd">                        input_dict = {**part[&quot;kwargs&quot;], **var_dict}</span>
+<span class="sd">                    else:</span>
+<span class="sd">                        input_dict = var_dict</span>
+
+<span class="sd">                    res = func(**input_dict)</span>
+<span class="sd">                    # Update the results dictionary</span>
+<span class="sd">                    var_dict.update(res)</span>
+<span class="sd">                    if &quot;traces_t&quot; in var_dict.keys():</span>
+<span class="sd">                        print(&#39;final trace_t.shape:&#39;, var_dict[&quot;traces_t&quot;].shape)</span>
+
+<span class="sd">                    # RK</span>
+<span class="sd">                    #if key==&#39;generate_galacticnoise&#39;:</span>
+<span class="sd">                    #    print(&#39;func:&#39;, func)</span>
+<span class="sd">                    #    print(&#39;input_dict:&#39;, input_dict)</span>
+<span class="sd">                    #    print(&#39;res:&#39;, res)</span>
+<span class="sd">                    #    print(&#39;var_dict:&#39;, var_dict.keys())</span>
+<span class="sd">                    #print(&#39;func:&#39;, func)</span>
+<span class="sd">                    #print(&#39;key:&#39;, key)</span>
+<span class="sd">                    #print(&#39;var_dict:&#39;, var_dict.keys())</span>
+
+<span class="sd">                elif part[&quot;type&quot;]==&quot;add&quot;:</span>
+<span class="sd">                    res = add_traces(addend=var_dict[key], **var_dict)</span>
+<span class="sd">                    var_dict.update(res)</span>
+
+<span class="sd">                elif part[&quot;type&quot;]==&quot;add_randomized&quot;:</span>
+<span class="sd">                    #print(&#39;add_randomized:&#39;, key, var_dict[key])</span>
+<span class="sd">                    res = add_traces_randomized(addend=var_dict[key], **var_dict)</span>
+<span class="sd">                    var_dict.update(res)</span>
+
+<span class="sd">                elif part[&quot;type&quot;]==&quot;multiply&quot;:</span>
+<span class="sd">                    res = multiply_traces(multiplier=var_dict[key], **var_dict)</span>
+<span class="sd">                    var_dict.update(res)</span>
+
+<span class="sd">                # Store the results in a tree if requested</span>
+<span class="sd">                elif part[&quot;type&quot;]==&quot;store&quot;:</span>
+<span class="sd">                    if &quot;copy_tefield&quot; in part and part[&quot;copy_tefield&quot;] == True:</span>
+<span class="sd">                        store_traces(var_dict[&quot;traces_t&quot;], part[&quot;output_tree&quot;], tefield)</span>
+<span class="sd">                    else:</span>
+<span class="sd">                        store_traces(var_dict[&quot;traces_t&quot;], part[&quot;output_tree&quot;])</span>
+
+<span class="sd">                # RK</span>
+<span class="sd">                if key==&#39;galactic_noise&#39;:</span>
+<span class="sd">                    print(&quot;saved volt_fft_with_galnoise_LP.npy&quot;)</span>
+<span class="sd">                    np.save(&quot;volt_fft_with_galnoise_LP.npy&quot;, var_dict[&quot;traces_f&quot;])</span>
+
+<span class="sd">        # Write all the trees that are to be written</span>
+<span class="sd">        for tree in output_trees:</span>
+<span class="sd">            print(&quot;Writing&quot;, tree.tree_name)</span>
+<span class="sd">            tree.write()</span>
+
+
+<span class="sd">def store_traces(traces_t, tree, copy_tree=None):</span>
+<span class="sd">    &quot;&quot;&quot;Stores provided traces in the provided tree&quot;&quot;&quot;</span>
+<span class="sd">    # Copy contents of another tree if requested</span>
+<span class="sd">    if copy_tree:</span>
+<span class="sd">        tree.copy_contents(copy_tree)</span>
+
+<span class="sd">    # Different traces fields for ADC tree</span>
+<span class="sd">    if &quot;ADC&quot; in tree.type.upper():</span>
+<span class="sd">        tree.trace_0 = traces_t[:, 0, :].astype(np.int16)</span>
+<span class="sd">        tree.trace_1 = traces_t[:, 1, :].astype(np.int16)</span>
+<span class="sd">        tree.trace_2 = traces_t[:, 2, :].astype(np.int16)</span>
+<span class="sd">    else:</span>
+<span class="sd">        tree.trace_x = traces_t[:, 0, :].astype(np.float32)</span>
+<span class="sd">        tree.trace_y = traces_t[:, 1, :].astype(np.float32)</span>
+<span class="sd">        tree.trace_z = traces_t[:, 2, :].astype(np.float32)</span>
+
+<span class="sd">    tree.fill()</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.sim package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">tests.sim package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-tests.sim.test_PreComputeInterpol">tests.sim.test_PreComputeInterpol module</a><ul>
+<li><a class="reference internal" href="#tests.sim.test_PreComputeInterpol.test_interpol"><code class="docutils literal notranslate"><span class="pre">test_interpol()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_PreComputeInterpol.test_precompute"><code class="docutils literal notranslate"><span class="pre">test_precompute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests.sim.test_antenna">tests.sim.test_antenna module</a><ul>
+<li><a class="reference internal" href="#tests.sim.test_antenna.AntennaTest"><code class="docutils literal notranslate"><span class="pre">AntennaTest</span></code></a><ul>
+<li><a class="reference internal" href="#tests.sim.test_antenna.AntennaTest.model"><code class="docutils literal notranslate"><span class="pre">AntennaTest.model</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_antenna.AntennaTest.path"><code class="docutils literal notranslate"><span class="pre">AntennaTest.path</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_antenna.AntennaTest.tearDown"><code class="docutils literal notranslate"><span class="pre">AntennaTest.tearDown()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_antenna.AntennaTest.test_antenna"><code class="docutils literal notranslate"><span class="pre">AntennaTest.test_antenna()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_antenna.AntennaTest.test_tabulated"><code class="docutils literal notranslate"><span class="pre">AntennaTest.test_tabulated()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests.sim.test_efield2voltage">tests.sim.test_efield2voltage module</a><ul>
+<li><a class="reference internal" href="#tests.sim.test_efield2voltage.Efield2VoltageTest"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest</span></code></a><ul>
+<li><a class="reference internal" href="#tests.sim.test_efield2voltage.Efield2VoltageTest.infile"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest.infile</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_efield2voltage.Efield2VoltageTest.outfile"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest.outfile</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_efield2voltage.Efield2VoltageTest.test_Efield2Voltage"><code class="docutils literal notranslate"><span class="pre">Efield2VoltageTest.test_Efield2Voltage()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests.sim.test_rf_chain">tests.sim.test_rf_chain module</a><ul>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest"><code class="docutils literal notranslate"><span class="pre">RFChainTest</span></code></a><ul>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_BalunAfterLNA"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_BalunAfterLNA()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_BalunBeforeADC"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_BalunBeforeADC()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_Cable"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_Cable()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_LowNoiseAmplifier"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_LowNoiseAmplifier()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_RFChain"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_RFChain()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_VGAFilter"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_VGAFilter()</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.RFChainTest.test_Zload"><code class="docutils literal notranslate"><span class="pre">RFChainTest.test_Zload()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tests.sim.test_rf_chain.test_compute_for_freqs"><code class="docutils literal notranslate"><span class="pre">test_compute_for_freqs()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests.sim.test_shower">tests.sim.test_shower module</a><ul>
+<li><a class="reference internal" href="#tests.sim.test_shower.ShowerTest"><code class="docutils literal notranslate"><span class="pre">ShowerTest</span></code></a><ul>
+<li><a class="reference internal" href="#tests.sim.test_shower.ShowerTest.path"><code class="docutils literal notranslate"><span class="pre">ShowerTest.path</span></code></a></li>
+<li><a class="reference internal" href="#tests.sim.test_shower.ShowerTest.test_showerevent"><code class="docutils literal notranslate"><span class="pre">ShowerTest.test_showerevent()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-tests.sim">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">tests.sim package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tests.sim.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tests-sim-package">
+<h1>tests.sim package<a class="headerlink" href="#tests-sim-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-tests.sim.test_PreComputeInterpol">
+<span id="tests-sim-test-precomputeinterpol-module"></span><h2>tests.sim.test_PreComputeInterpol module<a class="headerlink" href="#module-tests.sim.test_PreComputeInterpol" title="Link to this heading"></a></h2>
+<p>Created on 20 févr. 2023</p>
+<p>&#64;author: jcolley</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.sim.test_PreComputeInterpol.test_interpol">
+<span class="sig-prename descclassname"><span class="pre">tests.sim.test_PreComputeInterpol.</span></span><span class="sig-name descname"><span class="pre">test_interpol</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_PreComputeInterpol.html#test_interpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_PreComputeInterpol.test_interpol" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.sim.test_PreComputeInterpol.test_precompute">
+<span class="sig-prename descclassname"><span class="pre">tests.sim.test_PreComputeInterpol.</span></span><span class="sig-name descname"><span class="pre">test_precompute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_PreComputeInterpol.html#test_precompute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_PreComputeInterpol.test_precompute" title="Link to this definition"></a></dt>
+<dd><p>freq in : ~frequency band [20, 30]
+freq out : step 2.1, [0, 2.1, 4.2, ….]</p>
+<p>idx out , freq out,   freq in , idx in
+9             18.9        out of band
+10            21          21        1
+11            23.1        23        3
+12            25.2        25        5
+13            27.3        27        7
+14            29.4        29        9
+15            30.5        out of band</p>
+</dd></dl>
+
+</section>
+<section id="module-tests.sim.test_antenna">
+<span id="tests-sim-test-antenna-module"></span><h2>tests.sim.test_antenna module<a class="headerlink" href="#module-tests.sim.test_antenna" title="Link to this heading"></a></h2>
+<p>Unit tests for the grand.sim.detector module</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.sim.test_antenna.AntennaTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.sim.test_antenna.</span></span><span class="sig-name descname"><span class="pre">AntennaTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_antenna.html#AntennaTest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_antenna.AntennaTest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Unit tests for the antenna module</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="tests.sim.test_antenna.AntennaTest.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#tests.sim.test_antenna.AntennaTest.model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tests.sim.test_antenna.AntennaTest.path">
+<span class="sig-name descname"><span class="pre">path</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PosixPath('antenna.hdf5')</span></em><a class="headerlink" href="#tests.sim.test_antenna.AntennaTest.path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_antenna.AntennaTest.tearDown">
+<span class="sig-name descname"><span class="pre">tearDown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_antenna.html#AntennaTest.tearDown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_antenna.AntennaTest.tearDown" title="Link to this definition"></a></dt>
+<dd><p>Hook method for deconstructing the test fixture after testing it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_antenna.AntennaTest.test_antenna">
+<span class="sig-name descname"><span class="pre">test_antenna</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_antenna.html#AntennaTest.test_antenna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_antenna.AntennaTest.test_antenna" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_antenna.AntennaTest.test_tabulated">
+<span class="sig-name descname"><span class="pre">test_tabulated</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_antenna.html#AntennaTest.test_tabulated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_antenna.AntennaTest.test_tabulated" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-tests.sim.test_efield2voltage">
+<span id="tests-sim-test-efield2voltage-module"></span><h2>tests.sim.test_efield2voltage module<a class="headerlink" href="#module-tests.sim.test_efield2voltage" title="Link to this heading"></a></h2>
+<p>Unit tests for the grand.sim.efield2voltage module.</p>
+<p>Jun 19, 2023.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.sim.test_efield2voltage.Efield2VoltageTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.sim.test_efield2voltage.</span></span><span class="sig-name descname"><span class="pre">Efield2VoltageTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_efield2voltage.html#Efield2VoltageTest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_efield2voltage.Efield2VoltageTest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Unit tests for the module to compute voltage from electric field.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tests.sim.test_efield2voltage.Efield2VoltageTest.infile">
+<span class="sig-name descname"><span class="pre">infile</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PosixPath('/pbs/home/j/jkastner/ma/grand/data/test_efield.root')</span></em><a class="headerlink" href="#tests.sim.test_efield2voltage.Efield2VoltageTest.infile" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tests.sim.test_efield2voltage.Efield2VoltageTest.outfile">
+<span class="sig-name descname"><span class="pre">outfile</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PosixPath('/pbs/home/j/jkastner/ma/grand/data/test_voltage1.root')</span></em><a class="headerlink" href="#tests.sim.test_efield2voltage.Efield2VoltageTest.outfile" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_efield2voltage.Efield2VoltageTest.test_Efield2Voltage">
+<span class="sig-name descname"><span class="pre">test_Efield2Voltage</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_efield2voltage.html#Efield2VoltageTest.test_Efield2Voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_efield2voltage.Efield2VoltageTest.test_Efield2Voltage" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-tests.sim.test_rf_chain">
+<span id="tests-sim-test-rf-chain-module"></span><h2>tests.sim.test_rf_chain module<a class="headerlink" href="#module-tests.sim.test_rf_chain" title="Link to this heading"></a></h2>
+<p>Unit tests for the grand.sim.detector.rf_chain module. RK.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.sim.test_rf_chain.</span></span><span class="sig-name descname"><span class="pre">RFChainTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_BalunAfterLNA">
+<span class="sig-name descname"><span class="pre">test_BalunAfterLNA</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_BalunAfterLNA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_BalunAfterLNA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_BalunBeforeADC">
+<span class="sig-name descname"><span class="pre">test_BalunBeforeADC</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_BalunBeforeADC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_BalunBeforeADC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_Cable">
+<span class="sig-name descname"><span class="pre">test_Cable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_Cable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_Cable" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_LowNoiseAmplifier">
+<span class="sig-name descname"><span class="pre">test_LowNoiseAmplifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_LowNoiseAmplifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_LowNoiseAmplifier" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_RFChain">
+<span class="sig-name descname"><span class="pre">test_RFChain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_RFChain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_RFChain" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_VGAFilter">
+<span class="sig-name descname"><span class="pre">test_VGAFilter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_VGAFilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_VGAFilter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.RFChainTest.test_Zload">
+<span class="sig-name descname"><span class="pre">test_Zload</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#RFChainTest.test_Zload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.RFChainTest.test_Zload" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.sim.test_rf_chain.test_compute_for_freqs">
+<span class="sig-prename descclassname"><span class="pre">tests.sim.test_rf_chain.</span></span><span class="sig-name descname"><span class="pre">test_compute_for_freqs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_rf_chain.html#test_compute_for_freqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_rf_chain.test_compute_for_freqs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-tests.sim.test_shower">
+<span id="tests-sim-test-shower-module"></span><h2>tests.sim.test_shower module<a class="headerlink" href="#module-tests.sim.test_shower" title="Link to this heading"></a></h2>
+<p>Unit tests for the grand.sim.shower module.</p>
+<p>Rewrote on Jun 19, 2023.
+Removed test on older version of CoREAS and ZHAiRES to hdf file.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.sim.test_shower.ShowerTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.sim.test_shower.</span></span><span class="sig-name descname"><span class="pre">ShowerTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_shower.html#ShowerTest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_shower.ShowerTest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Unit tests for the shower module</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tests.sim.test_shower.ShowerTest.path">
+<span class="sig-name descname"><span class="pre">path</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PosixPath('/pbs/home/j/jkastner/ma/grand/data/test_efield.root')</span></em><a class="headerlink" href="#tests.sim.test_shower.ShowerTest.path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.sim.test_shower.ShowerTest.test_showerevent">
+<span class="sig-name descname"><span class="pre">test_showerevent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/sim/test_shower.html#ShowerTest.test_showerevent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.sim.test_shower.ShowerTest.test_showerevent" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-tests.sim">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests.sim" title="Link to this heading"></a></h2>
+<p>Unit tests for the grand.simu package</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

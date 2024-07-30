@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">grand</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;GRAND software package</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">osp</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="k">def</span> <span class="nf">grand_get_path_root_pkg</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;get the root path of grand git package, ex: /home/user/grand</span>
+
+<span class="sd">    @return (string) : root path of grand git package</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GRAND_ROOT&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">root</span><span class="p">:</span>
+        <span class="n">l_sep</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">sep</span>
+        <span class="n">full</span> <span class="o">=</span> <span class="vm">__file__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">l_sep</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">l_sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">root</span>
+
+
+<span class="k">def</span> <span class="nf">grand_get_path_grandlib</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;get root path of grand source, ex: /home/user/grand/grand</span>
+
+<span class="sd">    @return (string) : root path of grand source</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">grand_get_path_root_pkg</span><span class="p">(),</span> <span class="s2">&quot;grand&quot;</span><span class="p">)</span>
+
+
+<span class="n">GRAND_DATA_PATH</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">grand_get_path_root_pkg</span><span class="p">(),</span> <span class="s2">&quot;data&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="grand_add_path_data">
+<a class="viewcode-back" href="../grand.html#grand.grand_add_path_data">[docs]</a>
+<span class="k">def</span> <span class="nf">grand_add_path_data</span><span class="p">(</span><span class="n">s_file</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAND_DATA_PATH</span><span class="p">,</span> <span class="n">s_file</span><span class="p">)</span></div>
+
+
+
+<span class="kn">from</span> <span class="nn">grand.geo</span> <span class="kn">import</span> <span class="n">geomagnet</span><span class="p">,</span> <span class="n">topography</span>
+<span class="kn">from</span> <span class="nn">grand.geo.topography</span> <span class="kn">import</span> <span class="n">geoid_undulation</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">Topography</span>
+<span class="kn">from</span> <span class="nn">grand.geo</span> <span class="kn">import</span> <span class="n">coordinates</span>
+<span class="kn">from</span> <span class="nn">grand.geo.geomagnet</span> <span class="kn">import</span> <span class="n">Geomagnet</span>
+<span class="kn">from</span> <span class="nn">grand.geo.coordinates</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Coordinates</span><span class="p">,</span>
+    <span class="n">CartesianRepresentation</span><span class="p">,</span>
+    <span class="n">SphericalRepresentation</span><span class="p">,</span>
+    <span class="n">GeodeticRepresentation</span><span class="p">,</span>
+    <span class="n">Geodetic</span><span class="p">,</span>
+    <span class="n">GRANDCS</span><span class="p">,</span>
+    <span class="n">LTP</span><span class="p">,</span>
+    <span class="n">ECEF</span><span class="p">,</span>
+    <span class="n">HorizontalVector</span><span class="p">,</span>
+    <span class="n">Horizontal</span><span class="p">,</span>
+    <span class="n">HorizontalRepresentation</span><span class="p">,</span>
+    <span class="n">Rotation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">grand.dataio.protocol</span> <span class="k">as</span> <span class="nn">store</span>
+<span class="kn">from</span> <span class="nn">grand.sim</span> <span class="kn">import</span> <span class="n">efield2voltage</span>
+<span class="kn">from</span> <span class="nn">grand.sim.efield2voltage</span> <span class="kn">import</span> <span class="n">Efield2Voltage</span>
+<span class="kn">from</span> <span class="nn">grand.sim.detector.antenna_model</span> <span class="kn">import</span> <span class="n">tabulated_antenna_model</span><span class="p">,</span> <span class="n">AntennaModel</span>
+<span class="kn">from</span> <span class="nn">grand.sim.detector.process_ant</span> <span class="kn">import</span> <span class="n">AntennaProcessing</span>
+<span class="kn">from</span> <span class="nn">grand.sim.detector.rf_chain</span> <span class="kn">import</span> <span class="n">RFChain</span>
+<span class="kn">from</span> <span class="nn">grand.sim.noise.galaxy</span> <span class="kn">import</span> <span class="n">galactic_noise</span>
+<span class="kn">from</span> <span class="nn">grand.sim.shower.gen_shower</span> <span class="kn">import</span> <span class="n">ShowerEvent</span>
+<span class="kn">from</span> <span class="nn">grand.sim.shower.pdg</span> <span class="kn">import</span> <span class="n">ParticleCode</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;GRAND_DATA_PATH&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;grand_add_path_data&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;geomagnet&quot;</span><span class="p">,</span> <span class="s2">&quot;Geomagnet&quot;</span><span class="p">,</span> <span class="s2">&quot;topography&quot;</span><span class="p">,</span> <span class="s2">&quot;Topography&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;geoid_undulation&quot;</span><span class="p">,</span> <span class="s2">&quot;Reference&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Coordinates&quot;</span><span class="p">,</span> <span class="s2">&quot;CartesianRepresentation&quot;</span><span class="p">,</span> <span class="s2">&quot;SphericalRepresentation&quot;</span><span class="p">,</span> <span class="s2">&quot;GeodeticRepresentation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Geodetic&quot;</span><span class="p">,</span> <span class="s2">&quot;ECEF&quot;</span><span class="p">,</span> <span class="s2">&quot;LTP&quot;</span><span class="p">,</span> <span class="s2">&quot;GRANDCS&quot;</span><span class="p">,</span> <span class="s2">&quot;Rotation&quot;</span><span class="p">,</span> 
+    <span class="s2">&quot;store&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;efield2voltage&quot;</span><span class="p">,</span> <span class="s2">&quot;Efield2Voltage&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tabulated_antenna_model&quot;</span><span class="p">,</span> <span class="s2">&quot;AntennaModel&quot;</span><span class="p">,</span> <span class="s2">&quot;AntennaProcessing&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RFChain&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;galactic_noise&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ShowerEvent&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ParticleCode&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

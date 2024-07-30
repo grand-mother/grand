@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.efield2voltage &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../grand.html">grand</a></li>
+      <li class="breadcrumb-item active">grand.sim.efield2voltage</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for grand.sim.efield2voltage</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Master module for the detector unit simulation GRAND</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.fft</span> <span class="k">as</span> <span class="nn">sf</span>
+
+<span class="kn">import</span> <span class="nn">grand.geo.coordinates</span> <span class="k">as</span> <span class="nn">coord</span>
+<span class="kn">import</span> <span class="nn">grand.dataio.root_trees</span> <span class="k">as</span> <span class="nn">groot</span>
+<span class="kn">from</span> <span class="nn">grand.basis.type_trace</span> <span class="kn">import</span> <span class="n">ElectricField</span>
+
+<span class="kn">from</span> <span class="nn">.detector.antenna_model</span> <span class="kn">import</span> <span class="n">AntennaModel</span>
+<span class="kn">from</span> <span class="nn">.detector.process_ant</span> <span class="kn">import</span> <span class="n">AntennaProcessing</span>
+<span class="kn">from</span> <span class="nn">.detector.rf_chain</span> <span class="kn">import</span> <span class="n">RFChain</span>
+<span class="kn">from</span> <span class="nn">.shower.gen_shower</span> <span class="kn">import</span> <span class="n">ShowerEvent</span>
+<span class="kn">from</span> <span class="nn">.noise.galaxy</span> <span class="kn">import</span> <span class="n">galactic_noise</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="get_fastest_size_fft">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.get_fastest_size_fft">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fastest_size_fft</span><span class="p">(</span><span class="n">sig_size</span><span class="p">,</span> <span class="n">f_samp_mhz</span><span class="p">,</span> <span class="n">padding_factor</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param sig_size:         length of time traces</span>
+<span class="sd">    :param f_samp_mhz:       sampling frequency in MHz. ex: 2000 MHz for dt_ns=0.5</span>
+<span class="sd">    :param padding_factor:     factor to stretch length of time traces with zeros</span>
+
+<span class="sd">    :return: size_fft (int,0), array freq (float,1) in MHz for rfft()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">padding_factor</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+    <span class="n">dt_s</span>      <span class="o">=</span> <span class="mf">1e-6</span> <span class="o">/</span> <span class="n">f_samp_mhz</span>
+    <span class="n">fast_size</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">next_fast_len</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">padding_factor</span> <span class="o">*</span> <span class="n">sig_size</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">))</span>
+    <span class="c1"># ToDo: this function (or something higher) should properly handle different time bin for each trace</span>
+    <span class="n">freqs_mhz</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">fast_size</span><span class="p">,</span> <span class="n">dt_s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1e-6</span>
+    <span class="k">return</span> <span class="n">fast_size</span><span class="p">,</span> <span class="n">freqs_mhz</span></div>
+
+
+
+<div class="viewcode-block" id="Efield2Voltage">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage">[docs]</a>
+<span class="k">class</span> <span class="nc">Efield2Voltage</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to compute voltage with GRANDROOT IO</span>
+
+<span class="sd">    Goals:</span>
+
+<span class="sd">      * Call simulator of detector units with ROOT data</span>
+<span class="sd">      * Call on more than one event</span>
+<span class="sd">      * Save output in ROOT format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_input</span><span class="p">,</span> <span class="n">f_output</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">padding_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_input</span> <span class="o">=</span> <span class="n">f_input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_output</span> <span class="o">=</span> <span class="n">f_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>                                    <span class="c1"># used to generate same set of random numbers. (gal noise)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">padding_factor</span> <span class="o">=</span> <span class="n">padding_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TEfield</span><span class="p">(</span><span class="n">f_input</span><span class="p">)</span>                <span class="c1"># traces and du_pos are stored here</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TRun</span><span class="p">(</span><span class="n">f_input</span><span class="p">)</span>                      <span class="c1"># site_long, site_lat info is stored here. Used to define shower frame.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shower</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TShower</span><span class="p">(</span><span class="n">f_input</span><span class="p">)</span>                <span class="c1"># shower info (like energy, theta, phi, xmax etc) are stored here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">get_list_of_events</span><span class="p">()</span> <span class="c1"># [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rf_chain</span> <span class="o">=</span> <span class="n">RFChain</span><span class="p">()</span>                           <span class="c1"># loads RF chain. # RK: TODO: load this only if we want to add RF Chain.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_model</span> <span class="o">=</span> <span class="n">AntennaModel</span><span class="p">()</span>                     <span class="c1"># loads antenna models. time consuming. du_type=&#39;GP300&#39; (default), &#39;Horizon&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;add_noise&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;lst&quot;</span><span class="p">:</span> <span class="mf">18.0</span><span class="p">,</span> <span class="s2">&quot;add_rf_chain&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_run</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>                              <span class="c1"># Not to load run info everytime event info is loaded.</span>
+
+<div class="viewcode-block" id="Efield2Voltage.get_event">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.get_event">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_number</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data of event with index event_idx or with event_number and run_number. </span>
+<span class="sd">        Call this method everytime to load data for a new event with different event_idx, or with different event_number and run_number.</span>
+<span class="sd">        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int  </span>
+<span class="sd">        Note: Either event_idx, or both event_number and run_number must be provided.      </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_idx</span> <span class="o">=</span> <span class="n">event_idx</span>  <span class="c1"># index of events. 0 is for the 1st event and so on. Just a placeholder if event_number and run_number are provided.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">event_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">run_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_number</span> <span class="o">=</span> <span class="n">event_number</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span> <span class="o">=</span> <span class="n">run_number</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_idx</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events_list</span><span class="p">)):</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">event_idx</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">event_idx</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Provide positive integer of either event_idx or both event_number and run_number. If event_idx is given, it must</span><span class="se">\</span>
+<span class="s2">            be less than </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events_list</span><span class="p">)</span><span class="si">}</span><span class="s2">. If event_number and run_number are given, they must be from the list of (event_number, run_number)</span><span class="se">\</span>
+<span class="s2">            </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">events_list</span><span class="si">}</span><span class="s2">. Provided values are: event_idx=</span><span class="si">{</span><span class="n">event_idx</span><span class="si">}</span><span class="s2">, event_number=</span><span class="si">{</span><span class="n">event_number</span><span class="si">}</span><span class="s2">, run_number=</span><span class="si">{</span><span class="n">run_number</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running on event_number: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="si">}</span><span class="s2">, run_number: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span>           <span class="c1"># update traces, du_pos etc for event with event_idx.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shower</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_number</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span>           <span class="c1"># update shower info (theta, phi, xmax etc) for event with event_idx.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_run</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">:</span>                      <span class="c1"># load only for new run.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">get_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span>                         <span class="c1"># update run info to get site latitude and longitude.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">previous_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span>
+
+        <span class="c1"># stack efield traces</span>
+        <span class="n">trace_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># (nb_du, 3, tbins of a trace)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">du_id</span><span class="p">)</span>         <span class="c1"># used for printing info and saving in voltage tree.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_du</span> <span class="o">=</span> <span class="n">trace_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span> <span class="o">=</span> <span class="n">trace_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">trace</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">du_xyz</span><span class="p">)</span> <span class="c1"># (nb_du, 3) antenna position wrt local grand coordinate</span>
+
+        <span class="c1"># shower information like theta, phi, xmax etc for one event.</span>
+        <span class="n">shower</span> <span class="o">=</span> <span class="n">ShowerEvent</span><span class="p">()</span>
+        <span class="n">shower</span><span class="o">.</span><span class="n">origin_geoid</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">origin_geoid</span> <span class="c1"># [lat, lon, height]</span>
+        <span class="n">shower</span><span class="o">.</span><span class="n">load_root</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shower</span><span class="p">)</span>                <span class="c1"># calculates grand_ref_frame, shower_frame, Xmax in shower_frame LTP etc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span> <span class="o">=</span> <span class="n">shower</span>                     <span class="c1"># Note that &#39;shower&#39; is an instance of &#39;self.shower&#39; for one event.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shower origin in Geodetic: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">origin_geoid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt_ns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">t_bin_size</span><span class="p">)</span> <span class="c1"># sampling time in ns, sampling freq = 1e9/dt_ns.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span> <span class="o">=</span> <span class="mf">1e3</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">dt_ns</span>             <span class="c1"># MHz</span>
+        <span class="c1"># comupte time samples in ns for all antennas in event with index event_idx.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_time_samples</span><span class="p">()</span>  <span class="c1"># t_samples.shape = (nb_du, self.sig_size)</span>
+        <span class="c1"># common frequencies for all processing in Fourier domain.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span> <span class="o">=</span> <span class="n">get_fastest_size_fft</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f_samp_mhz</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">padding_factor</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Length of frequency bins with padding factor </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">padding_factor</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># container to collect computed Voc and the final voltage in time domain for one event.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">)</span> <span class="c1"># time domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">trace_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">trace_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span> <span class="c1"># frequency domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">)</span> <span class="c1"># final voltage in time domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span><span class="p">)</span> <span class="c1"># frequency domain. changes with addition of noise and signal propagation in rf chain.</span>
+
+        <span class="c1"># initialize linear interpolation of Leff for self.freqs_mhz frequency. This is required once per event.</span>
+        <span class="n">AntennaProcessing</span><span class="o">.</span><span class="n">init_interpolation</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ant_model</span><span class="o">.</span><span class="n">leff_sn</span><span class="o">.</span><span class="n">frequency</span><span class="o">/</span><span class="mf">1e6</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span>
+        <span class="p">)</span>
+        <span class="c1"># Compute galactic noise.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_noise&quot;</span><span class="p">]:</span>
+            <span class="c1"># lst: local sideral time, galactic noise max at 18h</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fft_noise_gal_3d</span> <span class="o">=</span> <span class="n">galactic_noise</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;lst&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fft_size</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nb_du</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span>
+            <span class="p">)</span>
+        <span class="c1"># compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_rf_chain&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rf_chain</span><span class="o">.</span><span class="n">compute_for_freqs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.get_leff">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.get_leff">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_leff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_idx</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define for each antenna in DU du_idx an object AntennaProcessing according its position</span>
+
+<span class="sd">        :param du_idx: index of DU</span>
+<span class="sd">        :    type du_idx: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">22000000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;du_pos_x is too large for computing!&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">22000000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;du_pos_y is too large for computing!&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">22000000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;du_pos_z is too large for computing!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+
+        <span class="n">antenna_location</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">LTP</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="c1">#self.du_pos[du_idx, 0],    # antenna position wrt local grand coordinate</span>
+            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="c1">#self.du_pos[du_idx, 1],    # antenna position wrt local grand coordinate</span>
+            <span class="n">z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">du_pos</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="c1">#self.du_pos[du_idx, 2],    # antenna position wrt local grand coordinate</span>
+            <span class="n">frame</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">grand_ref_frame</span>
+            <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;antenna_location&quot;</span><span class="p">,</span> <span class="n">antenna_location</span><span class="p">)</span>
+
+        <span class="n">antenna_frame</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">LTP</span><span class="p">(</span>
+            <span class="n">arg</span><span class="o">=</span><span class="n">antenna_location</span><span class="p">,</span>
+            <span class="n">location</span><span class="o">=</span><span class="n">antenna_location</span><span class="p">,</span> 
+            <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;NWU&quot;</span><span class="p">,</span> 
+            <span class="n">magnetic</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;antenna_frame = &quot;</span> <span class="p">,</span> <span class="n">antenna_frame</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_sn</span> <span class="o">=</span> <span class="n">AntennaProcessing</span><span class="p">(</span><span class="n">model_leff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ant_model</span><span class="o">.</span><span class="n">leff_sn</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">antenna_frame</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_ew</span> <span class="o">=</span> <span class="n">AntennaProcessing</span><span class="p">(</span><span class="n">model_leff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ant_model</span><span class="o">.</span><span class="n">leff_ew</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">antenna_frame</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_z</span>  <span class="o">=</span> <span class="n">AntennaProcessing</span><span class="p">(</span><span class="n">model_leff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ant_model</span><span class="o">.</span><span class="n">leff_z</span> <span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">antenna_frame</span><span class="p">)</span>
+        <span class="c1"># Set array frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_sn</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_ew</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_z</span><span class="o">.</span><span class="n">set_out_freq_mhz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqs_mhz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.get_time_samples">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.get_time_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_time_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define time sample in ns for the duration of the trace</span>
+<span class="sd">        t_samples.shape  = (nb_du, self.sig_size)</span>
+<span class="sd">        t_start_ns.shape = (nb_du,)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t_start_ns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">du_nanoseconds</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>   <span class="c1"># shape = (nb_du, 1)</span>
+        <span class="n">t_samples</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dt_ns</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_du</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="p">)</span> <span class="o">+</span> <span class="n">t_start_ns</span> <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shape du_nanoseconds and t_samples =  </span><span class="si">{</span><span class="n">t_start_ns</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">t_samples</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">t_samples</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.add">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.add">[docs]</a>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addend</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add addend on vout_f. Used to add noises manually.</span>
+<span class="sd">        Make sure:</span>
+<span class="sd">            addend is in frequency domain</span>
+<span class="sd">            addend broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)</span>
+<span class="sd">            addend is computed/interpolated for self.freqs_mhz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="o">.</span><span class="n">shape</span><span class="o">==</span><span class="n">addend</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span> <span class="o">+=</span> <span class="n">addend</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.multiply">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.multiply">[docs]</a>
+    <span class="k">def</span> <span class="nf">multiply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Multiply vout_f by multiplier. Used to manually provide RF chain.</span>
+<span class="sd">        Make sure:</span>
+<span class="sd">            multiplier is in frequency domain</span>
+<span class="sd">            multiplier broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)</span>
+<span class="sd">            multiplier is computed/interpolated for self.freqs_mhz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="n">multiplier</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span> <span class="o">*=</span> <span class="n">multiplier</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.final_voltage">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.final_voltage">[docs]</a>
+    <span class="k">def</span> <span class="nf">final_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return final voltage in time domain after adding noises and propagating signal through RF chain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span><span class="p">]</span></div>
+
+
+    <span class="c1"># compute open circuit voltage in one antenna of one event.</span>
+<div class="viewcode-block" id="Efield2Voltage.compute_voc_du">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.compute_voc_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_voc_du</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_idx</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute open circuit voltage for one DU of one event. </span>
+<span class="sd">        This method is the base of computing voltage.</span>
+<span class="sd">        All voltage computation is build on top of this method.</span>
+
+<span class="sd">        :param du_idx: index of DU in array traces</span>
+<span class="sd">        :    type du_idx: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;==============&gt;  Processing DU with id: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">du_idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_leff</span><span class="p">(</span><span class="n">du_idx</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_sn</span><span class="o">.</span><span class="n">model_leff</span><span class="p">)</span>
+        <span class="c1"># define E field at antenna position</span>
+        <span class="n">e_trace</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">CartesianRepresentation</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">efield_idx</span> <span class="o">=</span> <span class="n">ElectricField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_samples</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">e_trace</span><span class="p">)</span>
+
+        <span class="c1"># ----- antenna responses -----</span>
+        <span class="c1"># compute_voltage() --&gt; return Voltage(t=t, V=volt_t)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_sn</span><span class="o">.</span><span class="n">compute_voltage</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">maximum</span><span class="p">,</span> <span class="n">efield_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">frame</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">V</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_ew</span><span class="o">.</span><span class="n">compute_voltage</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">maximum</span><span class="p">,</span> <span class="n">efield_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">frame</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">V</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_z</span><span class="o">.</span><span class="n">compute_voltage</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">maximum</span><span class="p">,</span> <span class="n">efield_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">evt_shower</span><span class="o">.</span><span class="n">frame</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">V</span>
+
+        <span class="c1"># Open circuit voltage in frequency domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_sn</span><span class="o">.</span><span class="n">voc_f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_ew</span><span class="o">.</span><span class="n">voc_f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voc_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_z</span><span class="o">.</span><span class="n">voc_f</span>
+
+        <span class="c1"># output voltage is time domain. At this stage, vout=voc.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">voc</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span>
+
+        <span class="c1"># Use vout_f for further processing. Add noise and propagate signal through RF chain.</span>
+        <span class="c1"># voc and voc_f is saved so that they can be used for testing or adding user defined noises and rf chain.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_sn</span><span class="o">.</span><span class="n">voc_f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_ew</span><span class="o">.</span><span class="n">voc_f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ant_leff_z</span><span class="o">.</span><span class="n">voc_f</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.compute_voc_event">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.compute_voc_event">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_voc_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_number</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute/simulate all DU in event either with index event_idx or with event_number and run_number.</span>
+<span class="sd">        Computes open circuit voltage in time domain (voc) and frequency domain (voc_f)</span>
+<span class="sd">        voc.shape = (nb_du, 3, len of time traces)</span>
+<span class="sd">        voc_f.shape = (nb_du, 3, len of freqs_mhz)</span>
+
+<span class="sd">        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int  </span>
+<span class="sd">        Note: Either event_idx, or both event_number and run_number must be provided.      </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># update event. Provide either integer event_idx, or event_number and run_number.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_idx</span><span class="p">,</span> <span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">du_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_du</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_voc_du</span><span class="p">(</span><span class="n">du_idx</span><span class="p">)</span></div>
+
+
+    <span class="c1"># compute voltage in one antenna of one event.</span>
+<div class="viewcode-block" id="Efield2Voltage.compute_voltage_du">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.compute_voltage_du">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_voltage_du</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">du_idx</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute voltage output for one DU with index du_idx.</span>
+<span class="sd">        This method can add noises and RF chain to Voc if requested.</span>
+
+<span class="sd">        Processing order:</span>
+<span class="sd">          1. compute Voc using antenna responses</span>
+<span class="sd">          2. add galactic noise (if requested)</span>
+<span class="sd">          3. RF chain effect    (if requested)</span>
+
+<span class="sd">        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int  </span>
+<span class="sd">        Note: Either event_idx, or both event_number and run_number must be provided.      </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">du_idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_voc_du</span><span class="p">(</span><span class="n">du_idx</span><span class="p">)</span>
+
+        <span class="c1"># ----- Add galactic noise -----</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_noise&quot;</span><span class="p">]:</span>
+            <span class="c1"># RK: I think irfft of galactic noise here is unnecessary.</span>
+            <span class="c1">#noise_gal = sf.irfft(self.fft_noise_gal_3d[du_idx])[:, : self.sig_size]</span>
+            <span class="c1">#logger.debug(np.std(noise_gal, axis=1))</span>
+            <span class="c1">#self.voc[du_idx] += noise_gal</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fft_noise_gal_3d</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span>
+
+        <span class="c1"># ----- Add RF chain -----</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_rf_chain&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf_chain</span><span class="o">.</span><span class="n">get_tf</span><span class="p">()</span>
+
+        <span class="c1"># Final voltage output for antenna with index du_idx</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_noise&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_rf_chain&quot;</span><span class="p">]:</span>
+            <span class="c1"># inverse FFT and remove zero-padding</span>
+            <span class="c1"># WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vout</span><span class="p">[</span><span class="n">du_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vout_f</span><span class="p">[</span><span class="n">du_idx</span><span class="p">])[:,</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_size</span><span class="p">]</span></div>
+
+
+    <span class="c1"># compute voltage in all antennas of one event.</span>
+<div class="viewcode-block" id="Efield2Voltage.compute_voltage_event">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.compute_voltage_event">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_voltage_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_number</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulate all DU of an event either with index event_idx or with event_number and run_number.</span>
+
+<span class="sd">        :param event_idx: index of event for which voltage is computed.</span>
+<span class="sd">        This method is equivalent to the code below that takes longer.</span>
+<span class="sd">        for du_idx in range(self.nb_du):</span>
+<span class="sd">            self.compute_voltage_du(du_idx)</span>
+
+<span class="sd">        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int</span>
+<span class="sd">        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.</span>
+<span class="sd">        :    type: int  </span>
+<span class="sd">        Note: Either event_idx, or both event_number and run_number must be provided.      </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Provide either integer event_idx, or both event_number and run_number.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_voc_event</span><span class="p">(</span><span class="n">event_idx</span><span class="p">,</span> <span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="p">)</span>
+
+        <span class="c1"># ----- Add galactic noise -----</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_noise&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_noise_gal_3d</span><span class="p">)</span>
+
+        <span class="c1"># ----- Add RF chain -----</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_rf_chain&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf_chain</span><span class="o">.</span><span class="n">get_tf</span><span class="p">())</span>
+
+        <span class="c1"># Final voltage output for antenna with index du_idx</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_noise&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;add_rf_chain&quot;</span><span class="p">]:</span>
+            <span class="c1"># inverse FFT and remove zero-padding</span>
+            <span class="c1"># WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding</span>
+            <span class="c1">#self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">final_voltage</span><span class="p">()</span>   <span class="c1"># inverse fourier transform. update self.vout.</span></div>
+
+        
+    <span class="c1"># Primary method to compute voltage. </span>
+    <span class="c1"># Compute voltage in any one antennas of any one event. If None, voltage for all DUs of all events is computed.</span>
+<div class="viewcode-block" id="Efield2Voltage.compute_voltage">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.compute_voltage">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+        <span class="n">event_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+        <span class="n">du_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+        <span class="n">event_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+        <span class="n">run_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+        <span class="n">append_file</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Primary method to compute voltage.  </span>
+<span class="sd">        Compute/simulate voltage for any or all DUs for any or all events in input file.</span>
+
+<span class="sd">        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)). If None, all events in an input file is used.</span>
+<span class="sd">        :    type: int, list, np.ndarray</span>
+<span class="sd">        :param du_idx: index of DU for which voltage is computed. If None, all DUs of an event is used. du_idx can be used for only one event.</span>
+<span class="sd">        :    type: int, list, np.ndarray</span>
+<span class="sd">        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.</span>
+<span class="sd">        :    type: int, list, np.ndarray</span>
+<span class="sd">        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.</span>
+<span class="sd">        :    type: int, list, np.ndarray  </span>
+
+<span class="sd">        Note: Either event_idx, or both event_number and run_number must be provided, or all three must be None.      </span>
+<span class="sd">              if du_idx is provided, voltage of the given DU of the given event is computed. </span>
+<span class="sd">              du_idx can be an integer or list/np.ndarray. du_idx can be used for only one event.</span>
+<span class="sd">              If improper event_idx or (event_number and run_number) is used, an error is generated when self.get_event() is called.</span>
+<span class="sd">              Selective events with either event_idx or both event_number and run_number can be given.</span>
+<span class="sd">              If list/np.ndarray is provided, length of event_number and run_number must be equal.    </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compute voltage for all DUs of given event/s.</span>
+        <span class="k">if</span> <span class="n">du_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># default case: compute voltage for all DUs of all events and all runs provided in the input file.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">event_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">event_number</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">run_number</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="n">nb_events</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events_list</span><span class="p">)</span>
+                <span class="c1"># If there are no events in the file, exit</span>
+                <span class="k">if</span> <span class="n">nb_events</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;There are no events in the file! Exiting.&quot;</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">evt_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_events</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">compute_voltage_event</span><span class="p">(</span><span class="n">event_idx</span><span class="o">=</span><span class="n">evt_idx</span><span class="p">)</span> <span class="c1"># event_number and run_number is None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">save_voltage</span><span class="p">(</span><span class="n">append_file</span><span class="p">)</span>
+            <span class="c1"># compute voltage for one event with index event_idx or with event_number and run_number.</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_number</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compute_voltage_event</span><span class="p">(</span><span class="n">event_idx</span><span class="o">=</span><span class="n">event_idx</span><span class="p">,</span> <span class="n">event_number</span><span class="o">=</span><span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="o">=</span><span class="n">run_number</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">save_voltage</span><span class="p">(</span><span class="n">append_file</span><span class="p">)</span>
+            <span class="c1"># compute voltage for a list of events given in event_idx. List can be given as &#39;list&#39; or &#39;np.ndarray&#39;.</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_idx</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">evt_idx</span> <span class="ow">in</span> <span class="n">event_idx</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">compute_voltage_event</span><span class="p">(</span><span class="n">event_idx</span><span class="o">=</span><span class="n">evt_idx</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">save_voltage</span><span class="p">(</span><span class="n">append_file</span><span class="p">)</span>
+            <span class="c1"># compute voltage for a list of events given in event_number and run_number. List can be given as &#39;list&#39; or &#39;np.ndarray&#39;.</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_number</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_number</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">run_number</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">event_number</span><span class="p">)):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">compute_voltage_event</span><span class="p">(</span><span class="n">event_number</span><span class="o">=</span><span class="n">event_number</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">run_number</span><span class="o">=</span><span class="n">run_number</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">save_voltage</span><span class="p">(</span><span class="n">append_file</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Provide positive integer or list of either event_idx or both event_number and run_number. </span><span class="se">\</span>
+<span class="s2">                Provided values are: event_idx=</span><span class="si">{</span><span class="n">event_idx</span><span class="si">}</span><span class="s2">, event_number=</span><span class="si">{</span><span class="n">event_number</span><span class="si">}</span><span class="s2">, run_number=</span><span class="si">{</span><span class="n">run_number</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="c1"># Compute voltage of one DU of a given event. Note that this can be only done for one event.</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">du_idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_idx</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> <span class="s2">&quot;event_index must be integer when du_idx is given. Can compute voltage for only one event.&quot;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> <span class="s2">&quot;event_number must be integer when du_idx is given. Can compute voltage for only one event.&quot;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_number</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> <span class="s2">&quot;run_number must be integer when du_idx is given. Can compute voltage for only one event.&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_idx</span><span class="o">=</span><span class="n">event_idx</span><span class="p">,</span> <span class="n">event_number</span><span class="o">=</span><span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="o">=</span><span class="n">run_number</span><span class="p">)</span> <span class="c1"># update event</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_voltage_du</span><span class="p">(</span><span class="n">du_idx</span><span class="p">)</span>
+
+        <span class="c1"># Compute voltage of list of DUs of a given event. Note that this can be only done for one event.</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">du_idx</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_idx</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> <span class="s2">&quot;event_index must be integer when du_idx is given. Can compute voltage for only one event.&quot;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_number</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> <span class="s2">&quot;event_number must be integer when du_idx is given. Can compute voltage for only one event.&quot;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_number</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> <span class="s2">&quot;run_number must be integer when du_idx is given. Can compute voltage for only one event.&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_idx</span><span class="o">=</span><span class="n">event_idx</span><span class="p">,</span> <span class="n">event_number</span><span class="o">=</span><span class="n">event_number</span><span class="p">,</span> <span class="n">run_number</span><span class="o">=</span><span class="n">run_number</span><span class="p">)</span> <span class="c1"># update event</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">du_idx</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compute_voltage_du</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Provide positive integer or list of either event_idx or both event_number and run_number. </span><span class="se">\</span>
+<span class="s2">            Provided values are: event_idx=</span><span class="si">{</span><span class="n">event_idx</span><span class="si">}</span><span class="s2">, event_number=</span><span class="si">{</span><span class="n">event_number</span><span class="si">}</span><span class="s2">, run_number=</span><span class="si">{</span><span class="n">run_number</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Efield2Voltage.save_voltage">
+<a class="viewcode-back" href="../../../grand.sim.html#grand.Efield2Voltage.save_voltage">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">append_file</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        : output path/file = self.f_output. It must be defined during instantiation of this class.</span>
+<span class="sd">        :    type file_out: str</span>
+<span class="sd">        :param append_file: use input file to add output</span>
+<span class="sd">        :    type append_file: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># delete file can take time =&gt; start with this action</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_output</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">split_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_input</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f_output</span>   <span class="o">=</span> <span class="n">split_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;_voltage.root&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No output file was defined. Output file is automatically defined as </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">append_file</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_output</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;save on a new file and remove existing file </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_output</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;save result in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span> <span class="o">=</span> <span class="n">groot</span><span class="o">.</span><span class="n">TVoltage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_output</span><span class="p">)</span>
+
+        <span class="c1"># Fill voltage object. d_root = events</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">du_count</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_du</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;We will save voltage for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">du_count</span><span class="si">}</span><span class="s2"> DUs.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">run_number</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">run_number</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">event_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">event_number</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">event_number</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">run_number</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">event_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">first_du</span>         <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">time_seconds</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">time_seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">time_nanoseconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">time_nanoseconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">du_nanoseconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">du_nanoseconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">du_seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">du_seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">du_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">du_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vout</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">fill</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tt_volt</span><span class="o">.</span><span class="n">write</span><span class="p">()</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

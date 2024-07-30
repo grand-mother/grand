@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grand.sim.shower package &mdash; grandlib 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grandlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">grand.sim.shower package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-grand.sim.shower.gen_shower">grand.sim.shower.gen_shower module</a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent"><code class="docutils literal notranslate"><span class="pre">ShowerEvent</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.azimuth"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.azimuth</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.core"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.core</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.energy"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.energy</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.fields"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.fields</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.frame"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.frame</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.geomagnet"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.geomagnet</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.load_root"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.load_root()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.maximum"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.maximum</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.origin_geoid"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.origin_geoid</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.primary"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.primary</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.gen_shower.ShowerEvent.zenith"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.zenith</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.sim.shower.pdg">grand.sim.shower.pdg module</a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode"><code class="docutils literal notranslate"><span class="pre">ParticleCode</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ANTI_ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_ELECTRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ANTI_MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_MUON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_E</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_MU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ANTI_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ELECTRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.GAMMA"><code class="docutils literal notranslate"><span class="pre">ParticleCode.GAMMA</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.IRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.IRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.MUON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_E</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_MU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.NEUTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.PION_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_0</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.PION_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_MINUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.PION_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_PLUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.PROTON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PROTON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.W_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_MINUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.W_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_PLUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.pdg.ParticleCode.Z_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.Z_0</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-grand.sim.shower">Module contents</a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode"><code class="docutils literal notranslate"><span class="pre">ParticleCode</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ANTI_ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_ELECTRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ANTI_MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_MUON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_E</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_MU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_NEUTRINO_TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ANTI_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ANTI_TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.ELECTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.ELECTRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.GAMMA"><code class="docutils literal notranslate"><span class="pre">ParticleCode.GAMMA</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.IRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.IRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.MUON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.MUON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.NEUTRINO_E"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_E</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.NEUTRINO_MU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_MU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.NEUTRINO_TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRINO_TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.NEUTRON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.NEUTRON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.PION_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_0</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.PION_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_MINUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.PION_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PION_PLUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.PROTON"><code class="docutils literal notranslate"><span class="pre">ParticleCode.PROTON</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.TAU"><code class="docutils literal notranslate"><span class="pre">ParticleCode.TAU</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.W_MINUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_MINUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.W_PLUS"><code class="docutils literal notranslate"><span class="pre">ParticleCode.W_PLUS</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ParticleCode.Z_0"><code class="docutils literal notranslate"><span class="pre">ParticleCode.Z_0</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent"><code class="docutils literal notranslate"><span class="pre">ShowerEvent</span></code></a><ul>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.azimuth"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.azimuth</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.core"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.core</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.energy"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.energy</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.fields"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.fields</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.frame"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.frame</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.geomagnet"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.geomagnet</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.load_root"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.load_root()</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.maximum"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.maximum</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.origin_geoid"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.origin_geoid</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.primary"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.primary</span></code></a></li>
+<li><a class="reference internal" href="#grand.sim.shower.ShowerEvent.zenith"><code class="docutils literal notranslate"><span class="pre">ShowerEvent.zenith</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grandlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">grand.sim.shower package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/grand.sim.shower.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="grand-sim-shower-package">
+<h1>grand.sim.shower package<a class="headerlink" href="#grand-sim-shower-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-grand.sim.shower.gen_shower">
+<span id="grand-sim-shower-gen-shower-module"></span><h2>grand.sim.shower.gen_shower module<a class="headerlink" href="#module-grand.sim.shower.gen_shower" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.shower.gen_shower.</span></span><span class="sig-name descname"><span class="pre">ShowerEvent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zenith</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[ParticleCode]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[Union[GRANDCS,</span> <span class="pre">LTP]]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[CartesianRepresentation]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geomagnet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[CartesianRepresentation]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[CartesianRepresentation]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin_geoid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[list,</span> <span class="pre">np.ndarray]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[OrderedDict]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/shower/gen_shower.html#ShowerEvent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.azimuth">
+<span class="sig-name descname"><span class="pre">azimuth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.azimuth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.core">
+<span class="sig-name descname"><span class="pre">core</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.CartesianRepresentation" title="grand.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.core" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.energy">
+<span class="sig-name descname"><span class="pre">energy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.energy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">OrderedDict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.frame">
+<span class="sig-name descname"><span class="pre">frame</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.GRANDCS" title="grand.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.LTP" title="grand.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.frame" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.geomagnet">
+<span class="sig-name descname"><span class="pre">geomagnet</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.CartesianRepresentation" title="grand.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.geomagnet" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.load_root">
+<span class="sig-name descname"><span class="pre">load_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_shower</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/shower/gen_shower.html#ShowerEvent.load_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.load_root" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.maximum">
+<span class="sig-name descname"><span class="pre">maximum</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.CartesianRepresentation" title="grand.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.maximum" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.origin_geoid">
+<span class="sig-name descname"><span class="pre">origin_geoid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.origin_geoid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.primary">
+<span class="sig-name descname"><span class="pre">primary</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.ParticleCode" title="grand.ParticleCode"><span class="pre">ParticleCode</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.primary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.gen_shower.ShowerEvent.zenith">
+<span class="sig-name descname"><span class="pre">zenith</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.gen_shower.ShowerEvent.zenith" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.sim.shower.pdg">
+<span id="grand-sim-shower-pdg-module"></span><h2>grand.sim.shower.pdg module<a class="headerlink" href="#module-grand.sim.shower.pdg" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.shower.pdg.</span></span><span class="sig-name descname"><span class="pre">ParticleCode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/shower/pdg.html#ParticleCode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
+<p>PDG Monte Carlo particle numbering scheme</p>
+<p>Ref: <a class="reference external" href="http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf">http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf</a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ANTI_ELECTRON">
+<span class="sig-name descname"><span class="pre">ANTI_ELECTRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-11</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ANTI_ELECTRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ANTI_MUON">
+<span class="sig-name descname"><span class="pre">ANTI_MUON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-13</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ANTI_MUON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_E">
+<span class="sig-name descname"><span class="pre">ANTI_NEUTRINO_E</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-12</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_E" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_MU">
+<span class="sig-name descname"><span class="pre">ANTI_NEUTRINO_MU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-14</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_MU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_TAU">
+<span class="sig-name descname"><span class="pre">ANTI_NEUTRINO_TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-16</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ANTI_NEUTRINO_TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ANTI_TAU">
+<span class="sig-name descname"><span class="pre">ANTI_TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-15</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ANTI_TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.ELECTRON">
+<span class="sig-name descname"><span class="pre">ELECTRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">11</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.ELECTRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.GAMMA">
+<span class="sig-name descname"><span class="pre">GAMMA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">22</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.GAMMA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.IRON">
+<span class="sig-name descname"><span class="pre">IRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000260560</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.IRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.MUON">
+<span class="sig-name descname"><span class="pre">MUON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">13</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.MUON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.NEUTRINO_E">
+<span class="sig-name descname"><span class="pre">NEUTRINO_E</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.NEUTRINO_E" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.NEUTRINO_MU">
+<span class="sig-name descname"><span class="pre">NEUTRINO_MU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">14</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.NEUTRINO_MU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.NEUTRINO_TAU">
+<span class="sig-name descname"><span class="pre">NEUTRINO_TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.NEUTRINO_TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.NEUTRON">
+<span class="sig-name descname"><span class="pre">NEUTRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2112</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.NEUTRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.PION_0">
+<span class="sig-name descname"><span class="pre">PION_0</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">111</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.PION_0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.PION_MINUS">
+<span class="sig-name descname"><span class="pre">PION_MINUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-211</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.PION_MINUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.PION_PLUS">
+<span class="sig-name descname"><span class="pre">PION_PLUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">211</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.PION_PLUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.PROTON">
+<span class="sig-name descname"><span class="pre">PROTON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2212</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.PROTON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.TAU">
+<span class="sig-name descname"><span class="pre">TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.W_MINUS">
+<span class="sig-name descname"><span class="pre">W_MINUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-24</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.W_MINUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.W_PLUS">
+<span class="sig-name descname"><span class="pre">W_PLUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">24</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.W_PLUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.pdg.ParticleCode.Z_0">
+<span class="sig-name descname"><span class="pre">Z_0</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">23</span></em><a class="headerlink" href="#grand.sim.shower.pdg.ParticleCode.Z_0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.sim.shower">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-grand.sim.shower" title="Link to this heading"></a></h2>
+<p>Classes to handle external Air shower simulators: ZHAires and Coreas</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.shower.</span></span><span class="sig-name descname"><span class="pre">ParticleCode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/shower/pdg.html#ParticleCode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.shower.ParticleCode" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
+<p>PDG Monte Carlo particle numbering scheme</p>
+<p>Ref: <a class="reference external" href="http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf">http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf</a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ANTI_ELECTRON">
+<span class="sig-name descname"><span class="pre">ANTI_ELECTRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-11</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ANTI_ELECTRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ANTI_MUON">
+<span class="sig-name descname"><span class="pre">ANTI_MUON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-13</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ANTI_MUON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ANTI_NEUTRINO_E">
+<span class="sig-name descname"><span class="pre">ANTI_NEUTRINO_E</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-12</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_E" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ANTI_NEUTRINO_MU">
+<span class="sig-name descname"><span class="pre">ANTI_NEUTRINO_MU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-14</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_MU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ANTI_NEUTRINO_TAU">
+<span class="sig-name descname"><span class="pre">ANTI_NEUTRINO_TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-16</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ANTI_NEUTRINO_TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ANTI_TAU">
+<span class="sig-name descname"><span class="pre">ANTI_TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-15</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ANTI_TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.ELECTRON">
+<span class="sig-name descname"><span class="pre">ELECTRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">11</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.ELECTRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.GAMMA">
+<span class="sig-name descname"><span class="pre">GAMMA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">22</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.GAMMA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.IRON">
+<span class="sig-name descname"><span class="pre">IRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000260560</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.IRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.MUON">
+<span class="sig-name descname"><span class="pre">MUON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">13</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.MUON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.NEUTRINO_E">
+<span class="sig-name descname"><span class="pre">NEUTRINO_E</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.NEUTRINO_E" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.NEUTRINO_MU">
+<span class="sig-name descname"><span class="pre">NEUTRINO_MU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">14</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.NEUTRINO_MU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.NEUTRINO_TAU">
+<span class="sig-name descname"><span class="pre">NEUTRINO_TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.NEUTRINO_TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.NEUTRON">
+<span class="sig-name descname"><span class="pre">NEUTRON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2112</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.NEUTRON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.PION_0">
+<span class="sig-name descname"><span class="pre">PION_0</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">111</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.PION_0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.PION_MINUS">
+<span class="sig-name descname"><span class="pre">PION_MINUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-211</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.PION_MINUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.PION_PLUS">
+<span class="sig-name descname"><span class="pre">PION_PLUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">211</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.PION_PLUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.PROTON">
+<span class="sig-name descname"><span class="pre">PROTON</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2212</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.PROTON" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.TAU">
+<span class="sig-name descname"><span class="pre">TAU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.TAU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.W_MINUS">
+<span class="sig-name descname"><span class="pre">W_MINUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-24</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.W_MINUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.W_PLUS">
+<span class="sig-name descname"><span class="pre">W_PLUS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">24</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.W_PLUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ParticleCode.Z_0">
+<span class="sig-name descname"><span class="pre">Z_0</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">23</span></em><a class="headerlink" href="#grand.sim.shower.ParticleCode.Z_0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grand.sim.shower.</span></span><span class="sig-name descname"><span class="pre">ShowerEvent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zenith</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[ParticleCode]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[Union[GRANDCS,</span> <span class="pre">LTP]]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[CartesianRepresentation]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geomagnet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[CartesianRepresentation]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[CartesianRepresentation]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin_geoid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[list,</span> <span class="pre">np.ndarray]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[OrderedDict]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/shower/gen_shower.html#ShowerEvent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.shower.ShowerEvent" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.azimuth">
+<span class="sig-name descname"><span class="pre">azimuth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.azimuth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.core">
+<span class="sig-name descname"><span class="pre">core</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.CartesianRepresentation" title="grand.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.core" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.energy">
+<span class="sig-name descname"><span class="pre">energy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.energy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">OrderedDict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.frame">
+<span class="sig-name descname"><span class="pre">frame</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.GRANDCS" title="grand.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.LTP" title="grand.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.frame" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.geomagnet">
+<span class="sig-name descname"><span class="pre">geomagnet</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.CartesianRepresentation" title="grand.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.geomagnet" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.load_root">
+<span class="sig-name descname"><span class="pre">load_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_shower</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/shower/gen_shower.html#ShowerEvent.load_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.shower.ShowerEvent.load_root" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.maximum">
+<span class="sig-name descname"><span class="pre">maximum</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="grand.html#grand.CartesianRepresentation" title="grand.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.maximum" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.origin_geoid">
+<span class="sig-name descname"><span class="pre">origin_geoid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.origin_geoid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.primary">
+<span class="sig-name descname"><span class="pre">primary</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#grand.sim.shower.ParticleCode" title="grand.sim.shower.ParticleCode"><span class="pre">ParticleCode</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.primary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.shower.ShowerEvent.zenith">
+<span class="sig-name descname"><span class="pre">zenith</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#grand.sim.shower.ShowerEvent.zenith" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
