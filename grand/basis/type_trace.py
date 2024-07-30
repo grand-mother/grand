@@ -1,3 +1,7 @@
+# This Python code snippet defines two data classes: `ElectricField` and `Voltage`. Here's a breakdown
+# of what each class does:
+# This code snippet is written in Python and defines two data classes: `ElectricField` and `Voltage`.
+# Here's a breakdown of what the code does:
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,6 +22,8 @@ from grand.geo.coordinates import (
 logger = getLogger(__name__)
 
 
+# This code defines a data class named `ElectricField` in Python using the `@dataclass` decorator.
+# Here's a breakdown of what the class does:
 @dataclass
 class ElectricField:
     a_time: np.ndarray

@@ -1,4 +1,15 @@
 """
+    The code defines classes and functions to manage ROOT files containing Efield simulation data and
+    voltage ADC event data.
+    
+    :param f_root: The `f_root` parameter is a string representing the path to a ROOT file that contains
+    data from an Efield simulation or voltage ADCevent. This file is used to extract information such as
+    event numbers, run numbers, traces, and other relevant data for further analysis or processing
+    :return: The code provided defines classes and functions for managing ROOT files of Efield
+    simulation and voltage ADCevent data. The `get_file_event` function serves as a factory method to
+    create instances of either `FileEfield` or `FileVoltage` classes based on the content of the ROOT
+    file.
+    
 Manage ROOT file of type Efield simulation, voltage ADCevent is experimental 
 """
 

@@ -1,3 +1,5 @@
+# The above code defines a Python class `Pipeline` and a function `execute_pipeline` that are used in
+# the pipeline execution.
 """
 Functions used in the pipline execution.
 
@@ -30,6 +32,10 @@ pipeline.Add("writer", f_output="out.root")
 #idea: push trees of one events down the pipeline and append them to write at the end of the pipeline.
 #      Repeat the same process for the next event.
 
+# The `@dataclass` decorator is used to create a simple class to hold data. In this case, the
+# `Pipeline` class is defined as a dataclass with two class variables `trees_dict` and `command_dict`.
+# The `Add` method within the `Pipeline` class is used to add different components to the pipeline
+# based on the `name` provided.
 @dataclass
 class Pipeline:
 

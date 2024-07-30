@@ -1,3 +1,6 @@
+# The `Handling3dTracesOfEvent` class provides methods for handling a set of 3D traces associated with
+# events observed on a Detector Unit network, including operations like plotting traces, computing
+# time values, and interacting with the network.
 """
 Handling a set of 3D traces
 """

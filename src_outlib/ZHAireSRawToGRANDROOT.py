@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 #I use this environment variable to let python know where to find it, but alternatively you just copy the AiresInfoFunctions.py file on the same dir you are using this.
 #ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
 #sys.path.append(ZHAIRESPYTHON)
-<<<<<<<< HEAD:examples/dataio/ZHAireSRawToGRANDROOT.py
+#<<<<<<<< HEAD:examples/dataio/ZHAireSRawToGRANDROOT.py
 sys.path.append(".")
 import AiresInfoFunctionsGRANDROOT as AiresInfo
 import ZHAireSInputGenerator as ZHAireSGen
@@ -24,7 +24,7 @@ from grand.dataio.root_trees import *
 import src_outlib.AiresInfoFunctionsGRANDROOT as AiresInfo
 from grand.io.root.run import RunTree
 from grand.io.root.event.shower import *
->>>>>>>> master:src_outlib/ZHAireSRawToGRANDROOT.py
+#>>>>>>>> master:src_outlib/ZHAireSRawToGRANDROOT.py
 from copy import deepcopy
 logging.basicConfig(level=logging.INFO)	
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

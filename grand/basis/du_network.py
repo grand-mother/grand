@@ -1,5 +1,5 @@
 """
-Handling DU network, footprint plot
+Handling DU network, footprint plot.
 """
 from logging import getLogger
 
@@ -17,6 +17,13 @@ logger = getLogger(__name__)
 
 
 def closest_node(node, nodes):
+    """
+    This function finds the node in a list of nodes that is closest to a given node.
+    
+        :param node: The `node` parameter represents a specific node in a graph or network for which you want to find the closest node from a list of nodes provided in the `nodes` parameter. 
+        :param nodes: list of nodes
+
+    """
     nodes = np.asarray(nodes)
     dist_2 = np.sum((nodes - node) ** 2, axis=1)
     return np.argmin(dist_2)

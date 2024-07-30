@@ -1,11 +1,9 @@
 """ Signal processing
 
-- This module contains several signal processing
-functionalities to be applied to sim/data
-- operations are meant to be on the signal traces 
-for individual antennas, suitable to be used both
-in Grandlib format/ read from hdf5 files
+- This module contains several signal processing functionalities to be applied to sim/data
+- operations are meant to be on the signal traces for individual antennas, suitable to be used both in Grandlib format/read from hdf5 files
 - expects signal traces to be of the size (3,lengthoftrace)
+
 """
 
 from logging import getLogger
@@ -56,11 +54,10 @@ def get_fft(time, trace, specialwindow=False):
         leakage,might be more important when used on measured data
 
     :param time (array): [ns] time
-    :param trace (array) : ElectricField (muV/m)/voltage (muV) vectors to be filtered, could be raw or
-      filtered
+    :param trace (array): ElectricField (muV/m)/voltage (muV) vectors to be filtered, could be raw or filtered
     :param specialwindow (bool): if true implements a hamming window
 
-    @returns (array): [Mhz]frequency , fft trace(complex)
+    @returns (array): [Mhz]frequency, fft trace(complex)
     """
     # length of  the trace
     dlength = trace.shape[1]
@@ -119,15 +116,16 @@ def digitize_signal(time, trace, tsampling, downsamplingmethod=1):
     Performs digitization/resampling of signal trace for a given sampling rate
 
     @note
-      There are several ways of resampling- scipy.resample seems most
-      common for up/down sampling, an extra method is also added for
-      downsampling-scipy.decimate - this seems to use antialiasing filter.
-      these methods might change in future.
+    There are several ways of resampling- scipy.resample seems most
+    common for up/down sampling, an extra method is also added for
+    downsampling-scipy.decimate - this seems to use antialiasing filter.
+    these methods might change in future.
 
     :param time (array): [ns] time trace
     :param trace (array):  signal trace - efield(meuV/m)/Voltage(meuV/m)
     :param tsampling (integer/float): [ns] desired sampling rate in time
     :param downsamplingmethod (integer):  1 for scipy.resample, 2.scipy.decimate
+
     @return resampled signal and time trace
     """
     # in [ns]
@@ -184,7 +182,7 @@ def halfcplx_fullcplx(v_half, even=True):
       f*0, f*1/N, f*2/N
       - f*2/N is Nyquist frequency
       - for real signal, f*0 and f*2/N mode are real in Fourier space
-            => same number of value in direct space and Fourier space to define signal
+      - same number of value in direct space and Fourier space to define signal
 
     fullcplx: for N=4
       f*0, f*1/N, -f*2/N, -f*1/N
