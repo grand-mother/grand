@@ -6,13 +6,9 @@ GRANDlib
 *Core* `Python 3`_  *package for the offline data handling and analysis for the* `GRAND`_
 *Collaboration.*
 
-## Contents
-
-1. [Environment](#environment)
-2. [Documentation](#documentation)
-3. [How to contribute](#how-to-contribute)
-4. [Licence](#licence)
-5. [Citing](#citing)
+.. contents:: Contents
+   :local:
+   :depth: 2
 
 
 Environment
@@ -109,14 +105,15 @@ If you use GRANDlib in your work, we ask you that you please cite the following 
 
 If you are citing GRANDlib in a document that will be uploaded to the arXiv, please consider using the LaTeX or BibTeX entries provided by INSPIRE (link here):
 
-@article{GRANDlib_paper,
+.. code:: latex
+
+   @article{GRANDlib_paper,
       author         = "...",
-      title          = "GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection
-(GRAND)",
+      title          = "GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection (GRAND)",
       year           = "2024",
       eprint         = "",
       archivePrefix  = "arXiv",
       primaryClass   = "hep-ph",
       SLACcitation   = "%%CITATION = ARXIV:;%%"
-}
+   }
 
