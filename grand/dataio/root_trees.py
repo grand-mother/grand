@@ -2523,47 +2523,6 @@ class DataDirectory:
                     # Assign the tree with the highest or requested analysis level as default to the class instance
                     setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
-        # tree_types = set()
-        # # Loop through the list of file handles
-        # for i, f in enumerate(self.file_handle_list):
-        #
-        #
-        #     # Collect the tree types
-        #     tree_types.update(*f.tree_types.keys())
-        #
-        #     # Select the highest analysis level trees for each class and store these trees as main attributes
-        #     for key in f.tree_types:
-        #         if key == "run":
-        #             setattr(self, "trun", f.dict_of_trees["trun"])
-        #         else:
-        #             setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-        #             if self.analysis_level>-1:
-        #
-        #
-        #
-        #             max_analysis_level = -1
-        #             for key1 in f.tree_types[key].keys():
-        #                 el = f.tree_types[key][key1]
-        #                 chain_name = el["name"]
-        #                 if "analysis_level" in el:
-        #                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-        #                         max_analysis_level = el["analysis_level"]
-        #                         max_anal_chain_name = chain_name
-        #
-        #                         setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-        #
-        #                 if chain_name not in chains_dict:
-        #                     chains_dict[chain_name] = ROOT.TChain(chain_name)
-        #                 chains_dict[chain_name].Add(self.file_list[i])
-        #
-        #                 # In case there is no analysis level info in the tree (old trees), just take the last one
-        #                 if max_analysis_level == -1:
-        #                     max_anal_chain_name = el["name"]
-        #
-        #             tree_class = getattr(thismodule, el["type"])
-        #             setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
-
-
     def create_chains(self):
         chains_dict = {}
         tree_types = set()
@@ -2825,3 +2784,22 @@ class DataFile:
         for t in self.tree_instances:
             t.stop_using()
         self.f.Close()
+
+class DataFileChain:
+    """Class holding a number of DataFiles with the same TTree type, TChaining the trees together"""
+
+    self.list_of_files = []
+    """The list of DataFiles in the chain"""
+
+    self.chain = None
+    """The main TChain"""
+
+    def __init__(self, files, tree_type):
+
+        # Create the ROOT TChain and the list of files
+        self.chain = ROOT.TChain(tree_type)
+        for f in files:
+            self.list_of_files.append(f)
+            self.chain.Add(f.filename)
+
+
