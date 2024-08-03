@@ -2788,10 +2788,10 @@ class DataFile:
 class DataFileChain:
     """Class holding a number of DataFiles with the same TTree type, TChaining the trees together"""
 
-    self.list_of_files = []
+    list_of_files = []
     """The list of DataFiles in the chain"""
 
-    self.chain = None
+    chain = None
     """The main TChain"""
 
     def __init__(self, files, tree_type):
