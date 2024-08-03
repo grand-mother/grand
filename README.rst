@@ -26,9 +26,14 @@ Don't forget to initialize grand library before use it with script **env/setup.s
 
 
 Documentation
------------ 
+-------------
 
-Check the `online documentation`_ for further details.
+Check the `online documentation`_ for further details, but best study the examples.
+
+Examples
+--------
+
+Examples and scripts can be found under *examples/* and *scripts/* subdirectories
 
 
 How to contribute
