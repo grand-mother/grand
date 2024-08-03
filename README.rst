@@ -1,14 +1,20 @@
-grand package |workflow| |codecov| |docs| |appimage|
-====================================================
+GRANDlib
+========
+|workflow| |codecov| |docs| |appimage|
 
-*Core* `Python 3`_  *package for the offline software of the* `GRAND`_
+
+*Core* `Python 3`_  *package for the offline data handling and analysis for the* `GRAND`_
 *Collaboration.*
+
+.. contents:: Contents
+   :local:
+   :depth: 2
 
 
 Environment
 -----------
 
-GRAND library can be used under docker to define a correct environment, read `GRAND_wiki`_ for more information, else you must install `ROOT`_ library and compile `TURTLE`_ and `GULL`_ library under your computer.
+The GRAND library - **GRANDlib** - can be used under docker to define a correct environment, read `GRAND_wiki`_ for more information, else you must install `ROOT`_ library and compile `TURTLE`_ and `GULL`_ library under your computer.
 
 Don't forget to initialize grand library before use it with script **env/setup.sh** only in the root of the package
 
@@ -20,9 +26,14 @@ Don't forget to initialize grand library before use it with script **env/setup.s
 
 
 Documentation
------------ 
+-------------
 
-Check the `online documentation`_ for further details.
+Check the `online documentation`_ for further details, but best study the examples.
+
+Examples
+--------
+
+Examples and scripts can be found under *examples/* and *scripts/* subdirectories
 
 
 How to contribute
@@ -90,3 +101,24 @@ The GRAND software is distributed under the LGPL-3.0 license. See the provided
 
 .. |workflow| image:: https://github.com/grand-mother/grand/workflows/Tests/badge.svg
    :target: https://github.com/grand-mother/grand/actions?query=workflow%3ATests
+
+Citing
+------
+
+If you use GRANDlib in your work, we ask you that you please cite the following paper: R. Alves Batista et al., GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection
+(GRAND) (arXiv:...).
+
+If you are citing GRANDlib in a document that will be uploaded to the arXiv, please consider using the LaTeX or BibTeX entries provided by INSPIRE (link here):
+
+.. code:: latex
+
+   @article{GRANDlib_paper,
+      author         = "...",
+      title          = "GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection (GRAND)",
+      year           = "2024",
+      eprint         = "",
+      archivePrefix  = "arXiv",
+      primaryClass   = "hep-ph",
+      SLACcitation   = "%%CITATION = ARXIV:;%%"
+   }
+
