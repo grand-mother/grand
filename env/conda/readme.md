@@ -50,6 +50,7 @@ conda deactivate
 Start by update your conda and create the GRANDLIB environnement with file conf defined in grand/env/conda 
 
 ```
+conda config --set channel_priority disabled
 conda env create -n grandlib --file grandlib_amd64.yml
 conda activate grandlib
 ```
