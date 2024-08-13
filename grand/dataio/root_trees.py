@@ -14,8 +14,12 @@ import ROOT
 import numpy as np
 import glob
 import array
+import warnings
 
 from collections import defaultdict
+
+# ToDo: Ignore the warning about branches (and all the other ROOT errors :( ) for TChain until an answer in the ROOT forum
+ROOT.gErrorIgnoreLevel = ROOT.kFatal
 
 # Load the C++ macros for vector filling from numpy arrays
 ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
@@ -394,6 +398,10 @@ class DataTree:
     _analysis_level: int = 0
     """The analysis level of this tree"""
 
+    ## Is the tree read from TChain
+    is_tchain: bool = False
+    """Is the tree read from TChain"""
+
 
     ## Fields that are not branches
     _nonbranch_fields = [
@@ -413,7 +421,8 @@ class DataTree:
         "_source_datetime",
         "_analysis_level",
         "_modification_history",
-        "__setattr__"
+        "__setattr__",
+        "is_tchain"
     ]
     """Fields that are not branches"""
 
@@ -662,27 +671,45 @@ class DataTree:
         if isinstance(f, ROOT.TFile):
             self._file = f
             self._file_name = self._file.GetName()
-        # If the filename string is given, open/create the ROOT file with this name
-        else:
-            self._file_name = f
-            # print(self._file_name)
-            # If the file with that filename is already opened, use it (do not reopen)
-            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
-                self._file = f
-            # If not opened, open
+        # If the filename string is given, check if chain, if not open/create the ROOT file with this name
+        elif isinstance(f, str):
+            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
+            flist = glob.glob(f)
+            if len(flist) > 1:
+                f = flist
+            # Otherwise, it was a single file
             else:
-                # If file exists, initially open in the read-only mode (changed during write())
-                if os.path.isfile(self._file_name):
-                    self._file = ROOT.TFile(self._file_name, "read")
-                # If the file does not exist, create it
+                self._file_name = f
+                # print(self._file_name)
+                # If the file with that filename is already opened, use it (do not reopen)
+                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
+                    self._file = f
+                # If not opened, open
                 else:
-                    self._file = ROOT.TFile(self._file_name, "create")
+                    # If file exists, initially open in the read-only mode (changed during write())
+                    if os.path.isfile(self._file_name):
+                        self._file = ROOT.TFile(self._file_name, "read")
+                    # If the file does not exist, create it
+                    else:
+                        self._file = ROOT.TFile(self._file_name, "create")
+        else:
+            raise ValueError(f"Unsupported filename {f}. Can't open/create a file with a tree.")
+
+        # If a list is given, it's a Chain
+        if isinstance(f, list):
+            self.is_tchain = True
+            # Create the TChain
+            self._tree = ROOT.TChain(self._tree_name, self._tree_name)
+            # Assign files to the chain
+            for el in f:
+                self._tree.Add(el)
+
 
     ## Init/readout the tree from a file
     def _set_tree(self, t):
         """Init/readout the tree from a file"""
         # If the ROOT TTree is given, just use it
-        if isinstance(t, ROOT.TTree):
+        if isinstance(t, ROOT.TTree) or isinstance(t, ROOT.TChain):
             self._tree = t
             self._tree_name = t.GetName()
         # If the tree name string is given, open/create the ROOT TTree with this name
@@ -958,7 +985,7 @@ class DataTree:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         else:
-            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
+            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
@@ -1195,6 +1222,8 @@ class MotherEventTree(DataTree):
             self._tree.SetName(self._tree_name)
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
+
+        print(self._tree, type(self._tree))
 
         self.create_branches()
 
