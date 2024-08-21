@@ -106,19 +106,20 @@ Citing
 ------
 
 If you use GRANDlib in your work, we ask you that you please cite the following paper: R. Alves Batista et al., GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection
-(GRAND) (arXiv:...).
+(GRAND) (arXiv:2408.10926).
 
 If you are citing GRANDlib in a document that will be uploaded to the arXiv, please consider using the LaTeX or BibTeX entries provided by INSPIRE (link here):
 
 .. code:: latex
 
-   @article{GRANDlib_paper,
-      author         = "...",
-      title          = "GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection (GRAND)",
-      year           = "2024",
-      eprint         = "",
-      archivePrefix  = "arXiv",
-      primaryClass   = "hep-ph",
-      SLACcitation   = "%%CITATION = ARXIV:;%%"
+   @article{GRAND:2024atu,
+    author = "Alves Batista, Rafael and others",
+    collaboration = "GRAND",
+    title = "{GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection (GRAND)}",
+    eprint = "2408.10926",
+    archivePrefix = "arXiv",
+    primaryClass = "astro-ph.IM",
+    month = "8",
+    year = "2024"
    }
 
