@@ -9,14 +9,16 @@ register_root='/pbs/home/p/prod_grand/softs/grand/granddb/register_file_in_db.py
 config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
 sps_path='/sps/grand/'
 irods_path='/grand/home/trirods/'
-
+submit_base_name=''
 # Get tag and database file to use
-while getopts ":d:g:" option; do
+while getopts ":d:g:n:" option; do
   case $option in
     d)
       root_dest=${OPTARG};;
     g)
       gtot_options=${OPTARG};;
+    n)
+      submit_base_name=${OPTARG};;
     :)
       printf "option -${OPTARG} need an argument\n"
       exit 1;;
@@ -47,7 +49,7 @@ do
   	mkdir -p $dest >/dev/null 2>&1
   fi
   dirlogs=${root_dest}/../logs
-  logfile=${dirlogs}/bin2root-${filename%.*}
+  logfile=${dirlogs}/${submit_base_name}-bin2root-${filename%.*}
   if [ ! -d $dirlogs  ];then
   	mkdir -p $dirlogs >/dev/null 2>&1
   fi
