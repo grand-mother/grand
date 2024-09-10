@@ -139,7 +139,7 @@ else
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
   sbatch ${dep} -t 0-00:10 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
-  sbatch ${dep} -t 0-01:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 12G --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
+  sbatch ${dep} -t 0-01:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 12G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
   sbatch -t 0-00:15 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
