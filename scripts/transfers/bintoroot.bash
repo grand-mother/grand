@@ -30,16 +30,33 @@ done
 
 shift $(($OPTIND - 1))
 
+cd /pbs/home/p/prod_grand/softs/grand
+source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
 uname -r |grep el9 >/dev/null
 el9=$?
 
-cd /pbs/home/p/prod_grand/softs/grand 
-source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh 
+#Export some env to make irods works
+export LOADEDMODULES=DataManagement/irods/4.3.1
+export TRIRODS_DATA_DIR=/grand/home/trirods/data
+export BASH_ENV=/usr/share/Modules/init/bash
+
 if [ "$el9" -ne 0 ]; then
   conda activate /sps/grand/software/conda/grandlib_2304
+  export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/centos-7-x86_64/oracle/12.2.0/instantclient/lib::/pbs/software/centos-7-x86_64/irods/4.3.1/lib:/pbs/software/centos-7-x86_64/irods/irods-externals/4.3.1/lib
+  export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/bin:/opt/software/rfio-hpss/prod/bin:/pbs/software/centos-7-x86_64/oracle/12.2.0/instantclient/bin:/pbs/software/centos-7-x86_64/fs4/prod/bin:/usr/lib64/qt-3.3/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/pbs/software/centos-7-x86_64/suptools/prod/bin:/opt/ccin2p3/bin:/pbs/software/centos-7-x86_64/irods/utils:/pbs/software/centos-7-x86_64/irods/4.3.1/bin:.
+  export _LMFILES_=/pbs/software/centos-7-x86_64/modules/modulefiles/DataManagement/irods/4.3.1
+  export IRODS_PLUGINS_HOME=/pbs/software/centos-7-x86_64/irods/4.3.1/lib/plugins
+  export MODULEPATH=/pbs/software/centos-7-x86_64/modules/modulefiles:/etc/modulefiles
+  export __MODULES_SHARE_PATH=/pbs/software/centos-7-x86_64/irods/utils:2:/pbs/software/centos-7-x86_64/irods/4.3.1/bin:2
 else
-    conda activate /sps/grand/software/conda/grandlib_2409
+  conda activate /sps/grand/software/conda/grandlib_2409
+  export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/redhat-9-x86_64/irods/4.3.1/lib:/pbs/software/redhat-9-x86_64/irods/irods-externals/4.3.1/lib
+  export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/software/rfio-hpss/prod/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/opt/ccin2p3/bin:/pbs/software/redhat-9-x86_64/irods/utils:/pbs/software/redhat-9-x86_64/irods/4.3.1/bin:.
+  export _LMFILES_=/pbs/software/modulefiles/redhat-9-x86_64/DataManagement/irods/4.3.1
+  export IRODS_PLUGINS_HOME=/pbs/software/redhat-9-x86_64/irods/4.3.1/lib/plugins
+  export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
 fi
+
 source env/setup.sh
 cd /pbs/home/p/prod_grand/scripts/transfers
 
