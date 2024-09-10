@@ -39,7 +39,7 @@ mlg.create_output_for_logger("debug", log_stdout=True)
 
 # To Run:
 #   python3 plot_rf_chain.py lna
-#   options: [MatchingNetwork, lna, balun_after_lna, cable, vga, balun_before_adc, rf_chain]
+#   options: [MatchingNetwork, lna, balun_after_lna, cable, vga, balun_before_adc, rf_chain, rf_chain_gaa]
 
 def plot(args="lna", savefig=False, **kwargs):
 
@@ -1447,7 +1447,35 @@ def plot(args="lna", savefig=False, **kwargs):
         if savefig:
             plt.savefig(f"total_transfer_function_vgagain{gain}.png", bbox_inches='tight')
         plt.show()
+##################################################################################
 
+    if args=='rf_chain_gaa':
+
+        print("Parameters of total RF Chain at G@Auger")
+
+        gain = 0      # VGA options: [-5, 0, 5, 20]
+        name_dict = {-5:'M5', 0:'0', 5:'P5', 20:'P20'}
+        rfchain= grfc.RFChain_gaa(vga_gain=gain)
+        rfchain.compute_for_freqs(freq_MHz)
+
+        plt.figure()
+        for port in range(3):
+            plt.plot(rfchain.freqs_mhz, np.abs(rfchain.vout_f(np.ones((3,rfchain.nb_freqs)))[port]), l_col[port])
+            #print('port:', port)
+            #print(list(rfchain.freqs_mhz))
+            #print(list(np.abs(rfchain.vout(np.ones((3,rfchain.nb_freqs)))[port])))
+            #print('')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xlabel("Frequency(MHz)")
+        plt.ylabel(r"Transfer Function: abs(V$_{\rm out}$/V$_{\rm oc}$)", fontsize=15)
+        plt.grid(ls='--', alpha=0.3)
+        plt.tight_layout()
+        plt.title(f"VGA gain: {gain} dB - G@Auger")
+        if savefig:
+            plt.savefig(f"total_transfer_function_vgagain{gain}_gaa.png", bbox_inches='tight')
+        #plt.show()
+
+##########################################################################################
 
 if __name__ == "__main__":
     import argparse
@@ -1471,7 +1499,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    options_list = ["matching_network", "lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain"]
+    options_list = ["matching_network", "lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain","rf_chain_gaa"]
 
     if args.plot_option in options_list:
         plot(args.plot_option, savefig=args.savefig)
