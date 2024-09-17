@@ -30,33 +30,21 @@ done
 
 shift $(($OPTIND - 1))
 
+export PLATFORM=redhat-9-x86_64
 cd /pbs/home/p/prod_grand/softs/grand
 source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
-uname -r |grep el9 >/dev/null
-el9=$?
+
 
 #Export some env to make irods works
 export LOADEDMODULES=DataManagement/irods/4.3.1
 export TRIRODS_DATA_DIR=/grand/home/trirods/data
 export BASH_ENV=/usr/share/Modules/init/bash
-
-if [ "$el9" -ne 0 ]; then
-  conda activate /sps/grand/software/conda/grandlib_2304
-  export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/centos-7-x86_64/oracle/12.2.0/instantclient/lib::/pbs/software/centos-7-x86_64/irods/4.3.1/lib:/pbs/software/centos-7-x86_64/irods/irods-externals/4.3.1/lib
-  export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/bin:/opt/software/rfio-hpss/prod/bin:/pbs/software/centos-7-x86_64/oracle/12.2.0/instantclient/bin:/pbs/software/centos-7-x86_64/fs4/prod/bin:/usr/lib64/qt-3.3/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/pbs/software/centos-7-x86_64/suptools/prod/bin:/opt/ccin2p3/bin:/pbs/software/centos-7-x86_64/irods/utils:/pbs/software/centos-7-x86_64/irods/4.3.1/bin:.
-  export _LMFILES_=/pbs/software/centos-7-x86_64/modules/modulefiles/DataManagement/irods/4.3.1
-  export IRODS_PLUGINS_HOME=/pbs/software/centos-7-x86_64/irods/4.3.1/lib/plugins
-  export MODULEPATH=/pbs/software/centos-7-x86_64/modules/modulefiles:/etc/modulefiles
-  export __MODULES_SHARE_PATH=/pbs/software/centos-7-x86_64/irods/utils:2:/pbs/software/centos-7-x86_64/irods/4.3.1/bin:2
-else
-  conda activate /sps/grand/software/conda/grandlib_2409
-  export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/redhat-9-x86_64/irods/4.3.1/lib:/pbs/software/redhat-9-x86_64/irods/irods-externals/4.3.1/lib
-  export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/software/rfio-hpss/prod/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/opt/ccin2p3/bin:/pbs/software/redhat-9-x86_64/irods/utils:/pbs/software/redhat-9-x86_64/irods/4.3.1/bin:.
-  export _LMFILES_=/pbs/software/modulefiles/redhat-9-x86_64/DataManagement/irods/4.3.1
-  export IRODS_PLUGINS_HOME=/pbs/software/redhat-9-x86_64/irods/4.3.1/lib/plugins
-  export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
-fi
-
+export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/redhat-9-x86_64/irods/4.3.1/lib:/pbs/software/redhat-9-x86_64/irods/irods-externals/4.3.1/lib
+export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/software/rfio-hpss/prod/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/opt/ccin2p3/bin:/pbs/software/redhat-9-x86_64/irods/utils:/pbs/software/redhat-9-x86_64/irods/4.3.1/bin:.
+export _LMFILES_=/pbs/software/modulefiles/redhat-9-x86_64/DataManagement/irods/4.3.1
+export IRODS_PLUGINS_HOME=/pbs/software/redhat-9-x86_64/irods/4.3.1/lib/plugins
+export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
+conda activate /sps/grand/software/conda/grandlib_2409
 source env/setup.sh
 cd /pbs/home/p/prod_grand/scripts/transfers
 
@@ -64,44 +52,53 @@ cd /pbs/home/p/prod_grand/scripts/transfers
 notify=0
 for file in "$@"
 do
-  echo "converting ${file} to GrandRoot"
-  filename=$(basename $file)
-  tmp=${filename#*_}
-  dateobs=${tmp:0:8}
-  dest="${root_dest}/${dateobs:0:4}/${dateobs:4:2}"
-  if [ ! -d $dest ];then
-  	mkdir -p $dest >/dev/null 2>&1
+  if [ -f $file ]; then
+    echo "converting ${file} to GrandRoot"
+    filename=$(basename $file)
+    tmp=${filename#*_}
+    dateobs=${tmp:0:8}
+    dest="${root_dest}/${dateobs:0:4}/${dateobs:4:2}"
+    if [ ! -d $dest ];then
+      mkdir -p $dest >/dev/null 2>&1
+    fi
+    dirlogs=${root_dest}/../logs
+    logfile=${dirlogs}/${submit_base_name}-bin2root-${filename%.*}.log
+    if [ ! -d $dirlogs  ];then
+      mkdir -p $dirlogs >/dev/null 2>&1
+    fi
+    #Determine if file is TR (so no conversion)
+    tr=$(echo basename ${file} |awk -F_ '{print $5} ')
+    if [ $tr == "TR" ]; then
+      cp ${file} ${dest}/${filename%.*}.root
+      conv_status=0
+    else
+      # Convert file
+      ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+      conv_status=$?
+    fi
+    if [ "$conv_status" -ne 0 ]; then
+      notify=1
+    fi
+    echo $conv_status >> ${logfile}
+    # Put GrandRoot file into irods
+    sfile=${dest}/${filename%.*}.root
+    ifile=${sfile/$sps_path/$irods_path}
+    ipath=${ifile%/*}
+    echo "imkdir -p $ipath" >> ${logfile}
+    imkdir -p $ipath >> ${logfile} 2>&1
+    echo "iput -f $sfile $ifile" >> ${logfile}
+    iput -f $sfile $ifile >> ${logfile} 2>&1
+    iput_status=$?
+    if [ "$iput_status" -ne 0 ]; then
+      notify=1
+    fi
+    # Register conversion result into the database
+    echo "Register convertion" >> ${logfile}
+    python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
+    # Register root file into db
+    echo "register file in database" >> ${logfile}
+    python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
   fi
-  dirlogs=${root_dest}/../logs
-  logfile=${dirlogs}/${submit_base_name}-bin2root-${filename%.*}
-  if [ ! -d $dirlogs  ];then
-  	mkdir -p $dirlogs >/dev/null 2>&1
-  fi
-  # Convert file
-  ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
-  conv_status=$?
-  if [ "$conv_status" -ne 0 ]; then
-    notify=1
-  fi
-  echo $conv_status >> ${logfile}
-  # Put GrandRoot file into irods
-  sfile=${dest}/${filename%.*}.root
-  ifile=${sfile/$sps_path/$irods_path}
-  ipath=${ifile%/*}
-  echo "imkdir -p $ipath" >> ${logfile}
-  imkdir -p $ipath >> ${logfile} 2>&1
-  echo "iput -f $sfile $ifile" >> ${logfile}
-  iput -f $sfile $ifile >> ${logfile} 2>&1
-  iput_status=$?
-  if [ "$iput_status" -ne 0 ]; then
-    notify=1
-  fi
-  # Register conversion result into the database
-  echo "Register convertion" >> ${logfile}
-  python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
-  # Register root file into db
-  echo "register file in database" >> ${logfile}
-  python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
 done
 
 if [ "$notify" -ne "0" ]; then

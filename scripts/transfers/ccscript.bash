@@ -64,6 +64,7 @@ case $site in
     gtot_option="-g1";;
 esac
 
+export PLATFORM=redhat-9-x86_64
 
 #test dbfile exists and tag is set
 if [ -z "$tag" ] || [ -z "$db" ];then 
