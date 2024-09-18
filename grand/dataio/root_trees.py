@@ -2527,8 +2527,16 @@ class DataDirectory:
         """Go through the list of files in the directory and open all of them"""
         file_handle_list = []
 
-        for filename in self.file_list:
-            file_handle_list.append(DataFile(filename))
+        # Function returning the tree type and analysis level from the filename. That's how we want to group files.
+        def split_filenames(x):
+            el = Path(x).name.split("_")
+            return el[0], el[2]
+
+        # for filename in self.file_list:
+        from itertools import groupby
+        for key, filenames in groupby(sorted(self.file_list, key=split_filenames), split_filenames):
+            filenames = list(filenames)
+            file_handle_list.append(DataFile(filenames))
 
         return file_handle_list
 
