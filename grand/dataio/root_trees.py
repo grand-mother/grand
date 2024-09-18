@@ -1223,8 +1223,6 @@ class MotherEventTree(DataTree):
         if self._tree.GetTitle() == "":
             self._tree.SetTitle(self._tree_name)
 
-        print(self._tree, type(self._tree))
-
         self.create_branches()
 
     # ## Create metadata for the tree
@@ -1459,11 +1457,12 @@ class MotherEventTree(DataTree):
         except:
             current_entry = None
 
-        # Get the detector units branch
-        du_br = self._tree.GetBranch("du_id")
-
         count = self.draw("du_id", "", "goff")
         detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
+
+        # Get the detector units branch
+        # It has to be here, not before the draw(), due to a bug in PyROOT
+        du_br = self._tree.GetBranch("du_id")
 
         # If there was an entry read before this action, come back to this entry
         if current_entry is not None:
@@ -2613,6 +2612,15 @@ class DataFile:
     tree_types = defaultdict(dict)
     """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
 
+    ## Does this instace hold a chain of files
+    is_tchain = False
+    """Does this instace hold a chain of files"""
+
+    ## File list in case this is a chain
+    flist = []
+    """File list in case this is a chain"""
+
+
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""
 
@@ -2620,12 +2628,24 @@ class DataFile:
         self.dict_of_trees = {}
         self.list_of_trees = []
         self.tree_types = defaultdict(dict)
+        self.is_tchain = False
+        self.flist = []
 
         # If a string given, open the file
         if type(filename) is str:
-            f = ROOT.TFile(filename)
-            self.f = f
-            self.filename = filename
+            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
+            flist = glob.glob(filename)
+            if len(flist) > 1:
+                f = ROOT.TFile(flist[0])
+                self.f = f
+                self.filename = flist[0]
+                self.is_tchain = True
+                self.flist = flist
+            # Single file
+            else:
+                f = ROOT.TFile(filename)
+                self.f = f
+                self.filename = filename
         elif type(filename) is ROOT.TFile:
             self.f = filename
             self.filename = self.f.GetName()
@@ -2641,6 +2661,13 @@ class DataFile:
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
+
+            # If we want a TChain
+            if self.is_tchain:
+                t = ROOT.TChain(t.GetName(), t.GetName())
+                # Assign files to the chain
+                for el in self.flist:
+                    t.Add(el)
 
             # Add the tree to a dict for this tree class
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
