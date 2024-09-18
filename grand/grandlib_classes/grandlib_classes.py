@@ -402,12 +402,21 @@ class Event:
         else:
             self._directory = value
 
-        # Set all the tree files as this file
+        # Set all the tree files as this file and trees as file's trees
         self.file_trun = self.directory.ftrun.f
-        if self.directory.ftvoltages: self.file_tvoltage = self.directory.ftvoltage.f
-        if self.directory.ftefield: self.file_tefield = self.directory.ftefield.f
-        if self.directory.ftshower_l1: self.file_tshower = self.directory.ftshower_l1.f
-        if self.directory.ftshower_l0: self.file_tsimshower = self.directory.ftshower_l0.f
+        self.trun = self.directory.trun
+        if self.directory.ftvoltages:
+            self.file_tvoltage = self.directory.ftvoltage.f
+            self.tvoltage = self.directory.tvoltage
+        if self.directory.ftefield:
+            self.file_tefield = self.directory.ftefield.f
+            self.tefield = self.directory.tefield
+        if self.directory.ftshower_l1:
+            self.file_tshower = self.directory.ftshower_l1.f
+            self.tshower = self.directory.tshower_l1
+        if self.directory.ftshower_l0:
+            self.tsimshower = self.directory.tshower_l0
+
 
     @property
     def origin_geoid(self):
@@ -1077,6 +1086,10 @@ class EventList:
 
         self.event = Event()
         self.init_trees = True
+
+        # No need to init trees if using a DataDirectory (which inits the trees)
+        if self.directory:
+            self.init_trees = False
 
     def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
         """Get specified event from the event list"""
