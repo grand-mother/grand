@@ -1071,6 +1071,8 @@ class DataTree:
 
         metadata = {}
 
+        # ToDo: this should create some lists of values for TChains
+
         for el in tree.GetUserInfo():
             try:
                 val = el.GetVal()
@@ -2669,6 +2671,9 @@ class DataFile:
                 for el in self.flist:
                     t.Add(el)
 
+                # Modify the number of events for this TChain
+                tree_info["evt_cnt"] = t.GetEntries()
+
             # Add the tree to a dict for this tree class
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
 
@@ -2730,7 +2735,15 @@ class DataFile:
     def print(self):
         """Prints the information about the TTrees in the file"""
 
-        print(f"File size: {self.f.GetSize():40}")
+        # If this file is a chain
+        if self.is_tchain:
+            print("This DataFile is a chain of the following files:")
+            print(self.flist)
+            print(f"The first file size: {self.f.GetSize():40}")
+            print("Most of the information below are based on the tree in the first file")
+        else:
+            print(f"File size: {self.f.GetSize():40}")
+
         print(f"Tree classes found in the file: {str([el for el in self.tree_types.keys()]):40}")
 
         for key in self.tree_types:
