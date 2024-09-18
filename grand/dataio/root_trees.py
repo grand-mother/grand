@@ -2648,6 +2648,19 @@ class DataFile:
                 f = ROOT.TFile(filename)
                 self.f = f
                 self.filename = filename
+        # If list of files is given, make a TChain
+        elif type(filename) is list:
+            if len(filename) > 1:
+                f = ROOT.TFile(filename[0])
+                self.f = f
+                self.filename = filename[0]
+                self.is_tchain = True
+                self.flist = filename
+            # Single file
+            else:
+                f = ROOT.TFile(filename[0])
+                self.f = f
+                self.filename = filename[0]
         elif type(filename) is ROOT.TFile:
             self.f = filename
             self.filename = self.f.GetName()
