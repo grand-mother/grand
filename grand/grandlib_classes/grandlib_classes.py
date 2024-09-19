@@ -907,7 +907,7 @@ class Event:
         self.trun.site = self.site
         # self.trun.site_long = self.site_long
         # self.trun.site_lat = self.site_lat
-        self.trun.origin_geoid = self.origin_geoid
+        self.trun.origin_geoid = self.origin_geoid[:,0]
         self.trun.t_bin_size = self._t_bin_size
 
         # Fill the tree with values
@@ -943,7 +943,8 @@ class Event:
         self.tvoltage.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
+        # self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
+        self.tvoltage.trace = [v.trace for v in self.voltages]
         # self.tvoltage.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
@@ -990,7 +991,8 @@ class Event:
         self.tefield.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        # self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        self.tefield.trace = [v.trace for v in self.efields]
         # self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
         # self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
         # self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
@@ -1029,13 +1031,13 @@ class Event:
         ## Shower Xmax [g/cm2]
         self.tshower.xmax_grams = self.shower.Xmax
         ## Shower position in the site's reference frame
-        self.tshower.xmax_pos = self.shower.Xmaxpos
+        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0]
         ## Shower azimuth
         self.tshower.azimuth = self.shower.azimuth
         ## Shower zenith
         self.tshower.zenith = self.shower.zenith
         ## Poistion of the core on the ground in the site's reference frame
-        self.tshower.shower_core_pos = self.shower.core_ground_pos
+        self.tshower.shower_core_pos = self.shower.core_ground_pos[:,0]
 
         self.tshower.fill()
 
