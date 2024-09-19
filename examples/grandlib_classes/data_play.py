@@ -25,7 +25,6 @@ if len(sys.argv)==2:
     if ROOT.gROOT.GetVersionInt() < 62602:
         import os
         os._exit(1)
-    e.file.Close()
 
 else:
     print("Please provide a ROOT filename with the trees")
