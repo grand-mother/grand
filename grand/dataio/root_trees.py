@@ -2570,7 +2570,7 @@ class DataDirectory:
             print("\n\033[95;40mProperties of each file attribute:\033[0m")
             for attr in self.file_attrs:
                 f = getattr(self, attr)
-                print(f"\n\033[34;40m{attr}\033[0m\n{f.flist}\n")
+                print(f"\n\n\033[34;40m{attr}:\033[0m\n")
                 f.print()
 
     def get_list_of_chains(self):
@@ -2737,6 +2737,8 @@ class DataFile:
             print(f"The first file size: {self.f.GetSize():40}")
             print("Most of the information below are based on the tree in the first file")
         else:
+            print("This DataFile refers to the following file:")
+            print(self.flist)
             print(f"File size: {self.f.GetSize():40}")
 
         print(f"Tree classes found in the file: {str([el for el in self.tree_types.keys()]):40}")
