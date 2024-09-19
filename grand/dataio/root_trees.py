@@ -2539,7 +2539,7 @@ class DataDirectory:
 
     # Init the instance with sim2root structure files
     def init_sim2root_structure(self):
-
+        self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
         for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
@@ -2548,6 +2548,7 @@ class DataDirectory:
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
                 setattr(self, f"{flistname[:-1]}_l{l}", f)
+                self.file_attrs.append(f"{flistname[:-1]}_l{l}")
                 # Assign the tree with the specific analysis level to the class instance
                 setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
                 if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
@@ -2558,9 +2559,19 @@ class DataDirectory:
                     # Assign the tree with the highest or requested analysis level as default to the class instance
                     setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
-    def print(self, recursive=True):
+    def print(self, verbose=True):
         """Prints all the information about all the data"""
-        pass
+        print(f"This DataDirectory instance has:")
+        print(f"  {len(self.file_attrs):<3} file/tree attributes")
+        print(f"  {len(self.file_list):<3} files")
+        print(f"  {len(self.file_handle_list):<3} file chains")
+
+        if verbose:
+            print("\n\033[95;40mProperties of each file attribute:\033[0m")
+            for attr in self.file_attrs:
+                f = getattr(self, attr)
+                print(f"\n\033[34;40m{attr}\033[0m\n{f.flist}\n")
+                f.print()
 
     def get_list_of_chains(self):
         """Gets list of TTree chains of specific type from the directory"""
