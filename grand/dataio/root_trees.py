@@ -2607,12 +2607,12 @@ class DataFile:
         if type(filename) is str:
             # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
             flist = glob.glob(filename)
+            self.flist = flist
             if len(flist) > 1:
                 f = ROOT.TFile(flist[0])
                 self.f = f
                 self.filename = flist[0]
                 self.is_tchain = True
-                self.flist = flist
             # Single file
             else:
                 f = ROOT.TFile(filename)
@@ -2631,6 +2631,7 @@ class DataFile:
                 f = ROOT.TFile(filename[0])
                 self.f = f
                 self.filename = filename[0]
+                self.flist = filename
         elif type(filename) is ROOT.TFile:
             self.f = filename
             self.filename = self.f.GetName()
