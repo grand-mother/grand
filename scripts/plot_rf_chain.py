@@ -1504,5 +1504,5 @@ if __name__ == "__main__":
     if args.plot_option in options_list:
         plot(args.plot_option, savefig=args.savefig)
     else:
-        raise Exception("Please provide a proper option for plotting noise. Options: galactic, vswr, lna, vga, cable, rf_chain.")
+        raise Exception("Please provide a proper option for plotting noise. Options: galactic, vswr, lna, vga, cable, rf_chain, rf_chain_gaa")
 
