@@ -7,6 +7,7 @@ from re import search
 import io
 import numpy as np
 from datetime import datetime
+import pdb
 
 
 # read single values from SIM.reas or RUN.inp
@@ -226,9 +227,10 @@ def read_long(pathLongFile):
 
         for line in file:
             # use a regex to search for a minus sign that is not part of an exponent
-            if search(r"(?<!e)(-)(?=\d)", line):
+            if search(r"(?<!E)(-)(?=\d)", line):
                 # if the minus sign is not part of an exponent, replace it with a space and a minus sign
                 line = line.replace("-", " -")
+                #line = line.replace("-", "-")
             # write the corrected line to the temporary file
             temp_file.write(line)
 
@@ -247,13 +249,12 @@ def read_long(pathLongFile):
     n_data_str.writelines(lines[2:(n_steps + 2)])
     n_data_str.seek(0)
     n_data = np.genfromtxt(n_data_str)
-
     # store dE table
     dE_data_str = io.StringIO()
     dE_data_str.writelines(lines[(n_steps + 4):(2 * n_steps + 4)])
     dE_data_str.seek(0)
     dE_data = np.genfromtxt(dE_data_str)
-
+    
     # read out hillas fit
     hillas_parameter = []
     # for line in lines:

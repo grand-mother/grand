@@ -54,6 +54,9 @@ from grand import grand_add_path_data
 from logging import getLogger
 logger = getLogger(__name__)
 
+def interp(x,y,z):
+    return np.interp(x,y,z)
+
 def interpol_at_new_x(a_x, a_y, new_x):
     """
     Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
@@ -180,7 +183,7 @@ class MatchingNetwork(GenericProcessingDU):
         ! 2 Port Network Data from SP1.SP block
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
-        filename = os.path.join("detector", "RFchain_v2", f"{axis_dict[axis]}_matching_network.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "NewMatchingNetwork"f"{axis_dict[axis]}.s2p")
 
         return grand_add_path_data(filename)
 
@@ -274,6 +277,7 @@ class gaa_frontend0db(GenericProcessingDU):
             matcnet = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
             self.sparams.append(matcnet)
         self.freqs_in = matcnet[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
+        #self.freqs_in = matcnet[:, 0]   # note: freqs_in for x and y ports is the same, but for z port is different.
         self.nb_freqs_in = len(self.freqs_in)
         # shape = (antenna_port, nb_freqs)
         self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -294,7 +298,7 @@ class gaa_frontend0db(GenericProcessingDU):
         ! 2 Port Network Data from SP1.SP block
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
-        filename = os.path.join("detector", "RFchain_v2", f"{axis_dict[axis]}_gaa_frontend0db.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "antenna_LNA_"f"{axis_dict[axis]}_frontend0db.s2p")
         return grand_add_path_data(filename)
 
     def compute_for_freqs(self, freqs_mhz):
@@ -417,7 +421,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
         Hz  S  dB  R 50.000
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
-        filename = os.path.join("detector", "RFchain_v2", f"{axis_dict[axis]}lna.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "NewLNA_"f"{axis_dict[axis]}.s2p")
 
         return grand_add_path_data(filename)
 
@@ -520,7 +524,7 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         #filename = os.path.join("detector", "RFchain_v1", "balun_after_LNA.s2p")
         #filename = os.path.join("detector", "RFchain_v1", "balun46in.s2p")
-        filename = os.path.join("detector", "RFchain_v2", "balun13in20230612.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "balun_in_nut.s2p")
         
         return grand_add_path_data(filename)
 
@@ -1519,12 +1523,17 @@ class RFChain_gaa(GenericProcessingDU):
         # loop over three ports. shape of total_ABCD_matrix is (2,2,nports,nfreqs)
         for i in range(3):
             ABCD_matrix_1port = self.total_ABCD_matrix[:,:,i,:]
+            ABCD_matrix_2port = self.total_ABCD_matrix[:,:,i,:]
             ABCD_matrix_1port = np.moveaxis(ABCD_matrix_1port, -1, 0) # (2,2,nfreqs) --> (nfreqs,2,2), to compute inverse of ABCD_matrix using np.linalg.inv.
             ABCD_matrix_1port_inv = np.linalg.inv(ABCD_matrix_1port)
-            V_out_RFchain = ABCD_matrix_1port_inv[:,0,0]*self.V_in_balunA[i] + ABCD_matrix_1port_inv[:,0,1]*self.I_in_balunA[i]
+            
+            self.V_out_RFchain[i] = 2/(self.total_ABCD_matrix[0,0,i,:] + self.total_ABCD_matrix[0,1,i,:]/50 + self.total_ABCD_matrix[1,0,i,:]*50 + self.total_ABCD_matrix[1,1,i,:])
+            #V_out_RFchain = ABCD_matrix_1port_inv[:,0,0]*self.V_in_balunA[i] + ABCD_matrix_1port_inv[:,0,1]*self.I_in_balunA[i]
             I_out_RFchain = ABCD_matrix_1port_inv[:,1,0]*self.V_in_balunA[i] + ABCD_matrix_1port_inv[:,1,1]*self.I_in_balunA[i]
+            #V_out_RFchain = ABCD_matrix_1port_inv[:,0,0] + ABCD_matrix_1port_inv[:,0,1]
+            #I_out_RFchain = ABCD_matrix_1port_inv[:,1,0] + ABCD_matrix_1port_inv[:,1,1]
 
-            self.V_out_RFchain[i] = V_out_RFchain
+            #self.V_out_RFchain[i] = V_out_RFchain
             self.I_out_RFchain[i] = I_out_RFchain
 
         return self.V_out_RFchain

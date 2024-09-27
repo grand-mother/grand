@@ -177,9 +177,11 @@ def CoreasToRawRoot(file, simID=None):
   NucleonEnergyCut  = ecuts[0]
   MesonEnergyCut    = HadronEnergyCut # mesons are hadronic, so this should be fine
 
-  parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
-  ECTCUT = parallel[0]
-  ECTMAX = parallel[1]
+  #parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
+  #ECTCUT = parallel[0]
+  #ECTMAX = parallel[1]
+  ECTCUT = 1.
+  ECTMAX = 1.
 
   # PARALLEL = [ECTCUT, ECTMAX, MPIID, FECTOUT]
   # ECTCUT: limit for subshowers GeV
