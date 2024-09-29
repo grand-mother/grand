@@ -705,7 +705,7 @@ class VGAFilter(GenericProcessingDU):
         """
         assert self.gain in [-5, 0, 5, 20]
         logger.info(f"vga gain: {self.gain} dB")
-        filename = os.path.join("detector", "RFchain_v2", f"vga{self.gain}db+filter.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
 
         return grand_add_path_data(filename)
 
