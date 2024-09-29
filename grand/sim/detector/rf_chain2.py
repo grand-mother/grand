@@ -326,36 +326,36 @@ class gaa_frontend0db(GenericProcessingDU):
             # ----- S11
             dbs11 = self.sparams[axis][:, 1]
             phs11 = np.deg2rad(self.sparams[axis][:, 2])
-            #res11, ims11 = db2reim(dbs11, phs11)
-            res11 = dbs11 * np.cos(phs11)
-            ims11 = dbs11 * np.sin(phs11)
+            res11, ims11 = db2reim(dbs11, phs11)
+            #res11 = dbs11 * np.cos(phs11)
+            #ims11 = dbs11 * np.sin(phs11)
             self.dbs11[axis] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s11[axis] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s11[axis] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
             # ----- S21
             dbs21 = self.sparams[axis][:, 3]
             phs21 = np.deg2rad(self.sparams[axis][:, 4])
-            #res21, ims21 = db2reim(dbs21, phs21)
-            res21 = dbs21 * np.cos(phs21)
-            ims21 = dbs21 * np.sin(phs21)
+            res21, ims21 = db2reim(dbs21, phs21)
+            #res21 = dbs21 * np.cos(phs21)
+            #ims21 = dbs21 * np.sin(phs21)
             self.dbs21[axis] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s21[axis] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s21[axis] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
             # ----- S12
             dbs12 = self.sparams[axis][:, 5]
             phs12 = np.deg2rad(self.sparams[axis][:, 6])
-            #res12, ims12 = db2reim(dbs12, phs12)
-            res12 = dbs12 * np.cos(phs12)
-            ims12 = dbs12 * np.sin(phs12)
+            res12, ims12 = db2reim(dbs12, phs12)
+            #res12 = dbs12 * np.cos(phs12)
+            #ims12 = dbs12 * np.sin(phs12)
             self.dbs12[axis] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s12[axis] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s12[axis] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
             # ----- S22
             dbs22 = self.sparams[axis][:, 7]
             phs22 = np.deg2rad(self.sparams[axis][:, 8])
-            #res22, ims22 = db2reim(dbs22, phs22)
-            res22 = dbs22 * np.cos(phs22)
-            ims22 = dbs22 * np.sin(phs22)
+            res22, ims22 = db2reim(dbs22, phs22)
+            #res22 = dbs22 * np.cos(phs22)
+            #ims22 = dbs22 * np.sin(phs22)
             self.dbs22[axis] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s22[axis] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
             self.s22[axis] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.

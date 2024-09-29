@@ -1454,8 +1454,9 @@ def plot(args="lna", savefig=False, **kwargs):
         print("Parameters of total RF Chain at G@Auger")
 
         gain = 0      # VGA options: [-5, 0, 5, 20]
-        name_dict = {-5:'M5', 0:'0', 5:'P5', 20:'P20'}
-        rfchain= grfc.RFChain_gaa(vga_gain=gain)
+        #name_dict = {-5:'M5', 0:'0', 5:'P5', 20:'P20'}
+        #rfchain= grfc.RFChain_gaa(vga_gain=gain)
+        rfchain= grfc.RFChain_gaa()
         rfchain.compute_for_freqs(freq_MHz)
 
         plt.figure()
