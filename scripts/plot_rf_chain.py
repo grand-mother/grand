@@ -1478,6 +1478,32 @@ def plot(args="lna", savefig=False, **kwargs):
 
 ##########################################################################################
 
+
+    if args=='rf_chain_nut':
+
+        print("Parameters of total RF Chain at the nut - after LNA")
+        rfchain= grfc.RFChainNut()
+        rfchain.compute_for_freqs(freq_MHz)
+
+        plt.figure()
+        for port in range(3):
+            plt.plot(rfchain.freqs_mhz, np.abs(rfchain.vout_f(np.ones((3,rfchain.nb_freqs)))[port]), l_col[port])
+            #print('port:', port)
+            #print(list(rfchain.freqs_mhz))
+            #print(list(np.abs(rfchain.vout(np.ones((3,rfchain.nb_freqs)))[port])))
+            #print('')
+        plt.legend(["port X", "port Y", "port Z"], loc="upper right")
+        plt.xlabel("Frequency(MHz)")
+        plt.ylabel(r"Transfer Function: abs(V$_{\rm out}$/V$_{\rm oc}$)", fontsize=15)
+        plt.grid(ls='--', alpha=0.3)
+        plt.tight_layout()
+        plt.title("Transfer Functions at the LNA out")
+        if savefig:
+            plt.savefig("Transfer_Functions_Nut.png", bbox_inches='tight')
+        #plt.show()
+
+##########################################################################################
+
 if __name__ == "__main__":
     import argparse
 
@@ -1500,7 +1526,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    options_list = ["matching_network", "lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain","rf_chain_gaa"]
+    options_list = ["matching_network", "lna", "balun_after_lna", "vga", "cable", "balun_before_adc", "rf_chain","rf_chain_gaa","rf_chain_nut"]
 
     if args.plot_option in options_list:
         plot(args.plot_option, savefig=args.savefig)

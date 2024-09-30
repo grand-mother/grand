@@ -4,11 +4,14 @@ Script to compute voltage from electric field.
 Electric field traces are provided in a ROOT file.
 
 To Run:
-    python3 convert_efield2voltage.py <efield.root> -o <output.root> # RF chain and noise added automatically.
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> # noise added automatically.
     python3 convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 --lst 10
-    python3 convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --no_rf_chain
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --rf_chain # Add RF Full RF chain for GP13
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --rf_chain #Add GN and RF chain
     python3 convert_efield2voltage.py <efield.root> -o <output.root> --du_type GP300_nec (or GP300 or GP300_mat)
-
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --rf_chain_nut #Calculates Voltage at the Nut (after LNA)
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --rf_chain_gaa #RF chain in G@Auger
+     
 In this file:
     signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
     signal.compute_voltage()    # saves automatically
@@ -70,17 +73,24 @@ def manage_args():
         help="don't add galactic noise.",
     )
     parser.add_argument(
-        "--no_rf_chain",
+        "--rf_chain",
         action="store_false",
-        default=True,
+        default=False,
         help="don't add RF chain.",
     )
-    
+
     parser.add_argument(
         "--rf_chain_nut",
         action="store_true",
         default=False,
         help="add RF chain in antenna nut",
+    )
+    
+    parser.add_argument(
+        "--rf_chain_gaa",
+        action="store_false",
+        default=False,
+        help="add RF chain for G@Auger setup",
     )
     
     parser.add_argument(
@@ -149,7 +159,7 @@ if __name__ == "__main__":
 
     signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
     signal.params["add_noise"]    = args.no_noise
-    signal.params["add_rf_chain"] = args.no_rf_chain
+    #signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
 
     #signal.compute_voltage_event(0)
