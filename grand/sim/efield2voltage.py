@@ -66,7 +66,7 @@ class Efield2Voltage:
         self.rf_chain2nut = RFChainNut()
         self.rf_chain2gaa = RFChain_gaa()
         self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":False, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
