@@ -1388,6 +1388,7 @@ class RFChainNut(GenericProcessingDU):
         self.V_out_RFchain = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.I_out_RFchain = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.total_ABCD_matrix = np.zeros(self.lna.ABCD_matrix.shape, dtype=np.complex64)
+        self.total_ABCD_matrix_nut = np.zeros(self.lna.ABCD_matrix.shape, dtype=np.complex64)
 
         # Note that components of ABCD_matrix for Z port of balun1 is set to 1 as no Balun is used. shape = (2,2,nports,nfreqs)
         # Note that this is a matrix multiplication
@@ -1395,7 +1396,12 @@ class RFChainNut(GenericProcessingDU):
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
         
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
-        self.total_ABCD_matrix[:] = matmul(MM1, self.lna.ABCD_matrix)
+        MM2 = matmul(MM1, self.lna.ABCD_matrix)
+        MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
+        self.total_ABCD_matrix[:] = matmul(MM2, MM3)
+        
+        MMM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
+        self.total_ABCD_matrix_nut[:] = matmul(MMM1, self.lna.ABCD_matrix)
         
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
@@ -1430,7 +1436,8 @@ class RFChainNut(GenericProcessingDU):
 
         # loop over three ports. shape of total_ABCD_matrix is (2,2,nports,nfreqs)
         for i in range(3):
-            ABCD_matrix_1port = self.total_ABCD_matrix[:,:,i,:]
+            #ABCD_matrix_1port = self.total_ABCD_matrix[:,:,i,:]
+            ABCD_matrix_1port = self.total_ABCD_matrix_nut[:,:,i,:]
             ABCD_matrix_1port = np.moveaxis(ABCD_matrix_1port, -1, 0) # (2,2,nfreqs) --> (nfreqs,2,2), to compute inverse of ABCD_matrix using np.linalg.inv.
             ABCD_matrix_1port_inv = np.linalg.inv(ABCD_matrix_1port)
             V_out_RFchain = ABCD_matrix_1port_inv[:,0,0]*self.V_in_balunA[i] + ABCD_matrix_1port_inv[:,0,1]*self.I_in_balunA[i]
