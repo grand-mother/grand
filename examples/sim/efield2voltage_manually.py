@@ -9,7 +9,7 @@ To Run:
 import numpy as np
 from grand.sim.efield2voltage import Efield2Voltage
 from grand.sim.noise.galaxy import galactic_noise
-import grand.sim.detector.rf_chain as grfc
+import grand.sim.detector.rf_chain2 as grfc
 
 rng = np.random.default_rng(0)     
 
