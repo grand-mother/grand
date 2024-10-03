@@ -216,17 +216,28 @@ def get_antenna_position(pathAntennaList, antenna):
     gp300_data = np.genfromtxt("GP300.list", dtype="str")
 
     # Filter data based on antenna name
+    #print(antenna) HOU
+    #print(file[:,5]) HOU
     filtered_data = file[file[:, 5] == antenna]  # Select rows where name matches
     gp300_filtered = gp300_data[gp300_data[:, 5] == antenna]
 
-    if len(filtered_data) == 0 or len(gp300_filtered) == 0:
+    if len(filtered_data) == 0 and len(gp300_filtered) == 0: # from or to and (HOU)
         # Antenna not found in either file
         return None
 
-    # Replace x, y, z positions with the original positions
-    x = gp300_filtered[0][2].astype(float) * 10**-2
-    y = gp300_filtered[0][3].astype(float) * 10**-2
-    z = gp300_filtered[0][4].astype(float) * 10**-2
+    if len(gp300_filtered)>0: # added the if statememnt (HOU)
+      # Replace x, y, z positions with the original positions
+      #print("in gp300_filtered") HOU
+      x = gp300_filtered[0][2].astype(float) * 10**-2
+      y = gp300_filtered[0][3].astype(float) * 10**-2
+      z = gp300_filtered[0][4].astype(float) * 10**-2
+
+    if len(filtered_data)>0: # added this option as well (HOU)
+      # Replace x, y, z positions with the original positions
+      # print("in filtered_data") HOU
+      x = filtered_data[0][2].astype(float) * 10**-2
+      y = filtered_data[0][3].astype(float) * 10**-2
+      z = filtered_data[0][4].astype(float) * 10**-2
 
     return x, y, z
 

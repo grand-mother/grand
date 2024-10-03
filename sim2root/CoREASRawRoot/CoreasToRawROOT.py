@@ -180,9 +180,11 @@ def CoreasToRawRoot(file, simID=None):
   NucleonEnergyCut  = ecuts[0]
   MesonEnergyCut    = HadronEnergyCut # mesons are hadronic, so this should be fine
 
-  parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
-  ECTCUT = parallel[0]
-  ECTMAX = parallel[1]
+ # parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
+ # ECTCUT = parallel[0]
+ # ECTMAX = parallel[1]
+  ECTCUT = 0
+  ECTMAX = 0
 
   # PARALLEL = [ECTCUT, ECTMAX, MPIID, FECTOUT]
   # ECTCUT: limit for subshowers GeV
@@ -357,7 +359,15 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.first_interaction = first_interaction
 
   pathAntennaList = f"{path}/SIM{simID}.list"
-  core_shift_x, core_shift_y = calculate_array_shift(pathAntennaList)
+  result = calculate_array_shift(pathAntennaList) # HOU to handle starshape
+  if result is None:
+    core_shift_x=0
+    core_shift_y=0
+    print("Failed to calculate array shift. Is this StarShape?")
+  else:
+    core_shift_x, core_shift_y = result
+    print(f"Shift X: {shift_x}, Shift Y: {shift_y}")
+  #core_shift_x, core_shift_y = calculate_array_shift(pathAntennaList)
   
   #the array coordinate system has its origin at ground level
   print("[WARNING] antenna altitude is hard coded to 0")
