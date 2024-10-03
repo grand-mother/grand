@@ -144,6 +144,114 @@ class GenericProcessingDU:
         self.nb_freqs = freqs_mhz.shape[0]
         self.size_sig = (self.nb_freqs - 1) * 2
 
+class MatchingNetwork(GenericProcessingDU):    
+
+    def __init__(self):
+        """
+
+        :param size_sig: size of the trace after
+        """
+        super().__init__()
+        #self.data_lna = []
+        self.sparams = []
+        for axis in range(3):
+            matcnet = np.loadtxt(self._set_name_data_file(axis), comments=['#', '!'])
+            self.sparams.append(matcnet)
+        self.freqs_in = matcnet[:, 0] / 1e6   # note: freqs_in for x and y ports is the same, but for z port is different.
+        self.nb_freqs_in = len(self.freqs_in)
+        # shape = (antenna_port, nb_freqs)
+        self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
+
+    def _set_name_data_file(self, axis):
+        """
+
+        ! Created Wed May 10 01:24:03 2023
+        # hz S ma R 50
+        ! 2 Port Network Data from SP1.SP block
+        """
+        axis_dict = {0:"X", 1:"Y", 2:"Z"}
+        filename = os.path.join("detector", "RFchain_v2", "NewMatchingNetwork"f"{axis_dict[axis]}.s2p")
+
+        return grand_add_path_data(filename)
+
+    def compute_for_freqs(self, freqs_mhz):
+        
+        logger.debug(f"{self.sparams[0].shape}")
+        self.set_out_freq_mhz(freqs_mhz)
+        assert self.nb_freqs > 0
+
+        # nb_freqs in __init__ is 0. nb_freqs changes after self.set_out_freq_mhz(freqs_mhz)
+        # shape = (antenna_port, nb_freqs)
+        self.dbs11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.dbs22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s11 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s21 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s12 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.s22 = np.zeros((3, self.nb_freqs), dtype=np.complex64)
+        self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
+
+        # S2P File: Measurements dB, phase[deg]: S11, S21, S12, S22
+        # Fill S-parameters from files obtained by measuring S-parameters using virtual network analyzer.
+        for axis in range(3):
+            freqs_in = self.sparams[axis][:, 0] / 1e6 # note: freqs_in for x and y ports is the same, but for z port is different.
+            # ----- S11
+            dbs11 = self.sparams[axis][:, 1]
+            phs11 = np.deg2rad(self.sparams[axis][:, 2])
+            #res11, ims11 = db2reim(dbs11, phs11)
+            res11 = dbs11 * np.cos(phs11)
+            ims11 = dbs11 * np.sin(phs11)
+            self.dbs11[axis] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s11[axis] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s11[axis] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
+            # ----- S21
+            dbs21 = self.sparams[axis][:, 3]
+            phs21 = np.deg2rad(self.sparams[axis][:, 4])
+            #res21, ims21 = db2reim(dbs21, phs21)
+            res21 = dbs21 * np.cos(phs21)
+            ims21 = dbs21 * np.sin(phs21)
+            self.dbs21[axis] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s21[axis] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s21[axis] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
+            # ----- S12
+            dbs12 = self.sparams[axis][:, 5]
+            phs12 = np.deg2rad(self.sparams[axis][:, 6])
+            #res12, ims12 = db2reim(dbs12, phs12)
+            res12 = dbs12 * np.cos(phs12)
+            ims12 = dbs12 * np.sin(phs12)
+            self.dbs12[axis] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s12[axis] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s12[axis] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
+            # ----- S22
+            dbs22 = self.sparams[axis][:, 7]
+            phs22 = np.deg2rad(self.sparams[axis][:, 8])
+            #res22, ims22 = db2reim(dbs22, phs22)
+            res22 = dbs22 * np.cos(phs22)
+            ims22 = dbs22 * np.sin(phs22)
+            self.dbs22[axis] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)     # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s22[axis] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       # interpolate s-parameters for self.freqs_mhz frequencies.
+            self.s22[axis] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) # interpolate s-parameters for self.freqs_mhz frequencies.
+
+        xy_denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XY arms
+        xy_denorm_factor = xy_denorm_factor[..., np.newaxis, np.newaxis]
+        z_denorm_factor = np.array([[1, 50], [1/50., 1]])    # denormalizing factor for Z arms
+        z_denorm_factor = z_denorm_factor[..., np.newaxis]
+
+        ABCD_matrix = s2abcd(self.s11, self.s21, self.s12, self.s22) # this is a normalized A-matrix represented by [a] in the document.
+
+        ABCD_matrix[..., :2, :] *= xy_denorm_factor # denormalizing factor for XY arms
+        ABCD_matrix[..., 2, :] *= z_denorm_factor   # denormalizing factor for Z arm
+        self.ABCD_matrix[:] = ABCD_matrix # this is an A-matrix represented by [A] in the document.
+
 class LowNoiseAmplifier(GenericProcessingDU):
     """
 
@@ -188,7 +296,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
         Hz  S  dB  R 50.000
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
-        filename = os.path.join("detector", "RFchain_v1", f"{axis_dict[axis]}LNA.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "NewLNA_"f"{axis_dict[axis]}.s2p")
 
         return grand_add_path_data(filename)
 
@@ -288,9 +396,9 @@ class BalunAfterLNA(GenericProcessingDU):
         2 Port Network Data from SP1.SP block
         freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22         
         """
-        #filename = os.path.join("detector", "RFchain_v1", "balun_after_LNA.s2p")
-        #filename = os.path.join("detector", "RFchain_v1", "balun46in.s2p")
-        filename = os.path.join("detector", "RFchain_v1", "balun46in20230612.s2p")
+        #filename = os.path.join("detector", "RFchain_v2", "balun_after_LNA.s2p")
+        #filename = os.path.join("detector", "RFchain_v2", "balun46in.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "balun_in_nut.s2p")
         
         return grand_add_path_data(filename)
 
@@ -377,7 +485,7 @@ class Cable(GenericProcessingDU):
 
         :param axis:
         """
-        filename = os.path.join("detector", "RFchain_v1", "cable+Connector.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "cable+Connector.s2p")
 
         return grand_add_path_data(filename)
 
@@ -471,7 +579,7 @@ class VGAFilter(GenericProcessingDU):
         """
         assert self.gain in [-5, 0, 5, 20]
         logger.info(f"vga gain: {self.gain} dB")
-        filename = os.path.join("detector", "RFchain_v1", f"vga{self.gain}db+filter.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
 
         return grand_add_path_data(filename)
 
@@ -565,7 +673,7 @@ class BalunBeforeADC(GenericProcessingDU):
         2 Port Network Data from SP1.SP block
         freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22  
         """
-        filename = os.path.join("detector", "RFchain_v1", "balun_before_ad.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "balun_before_ad.s2p")
 
         return grand_add_path_data(filename)
 
@@ -647,8 +755,8 @@ class Zload(GenericProcessingDU):
         Thursday, April 20, 2023
         Hz  S  RI  R 50
         """
-        #filename = os.path.join("detector", "RFchain_v1", "zload_balun_200ohm.s1p")
-        filename = os.path.join("detector", "RFchain_v1", "S_balun_AD.s1p")
+        #filename = os.path.join("detector", "RFchain_v2", "zload_balun_200ohm.s1p")
+        filename = os.path.join("detector", "RFchain_v2", "S_balun_AD.s1p")
 
         return grand_add_path_data(filename)
 
@@ -702,6 +810,7 @@ class RFChain(GenericProcessingDU):
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
         """
         self.set_out_freq_mhz(freqs_mhz)
+        self.matcnet.compute_for_freqs(freqs_mhz)
         self.lna.compute_for_freqs(freqs_mhz)
         self.balun1.compute_for_freqs(freqs_mhz)
         self.cable.compute_for_freqs(freqs_mhz)
@@ -714,6 +823,10 @@ class RFChain(GenericProcessingDU):
         assert self.lna.ABCD_matrix.shape[-1] > 0
         assert self.lna.nb_freqs==self.balun1.nb_freqs
 
+        assert self.matcnet.nb_freqs > 0
+        assert self.matcnet.ABCD_matrix.shape[-1] > 0
+        assert self.matcnet.nb_freqs==self.balun1.nb_freqs
+
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.V_out_RFchain = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -724,9 +837,10 @@ class RFChain(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        MM1 = matmul(self.lna.ABCD_matrix,  self.balun1.ABCD_matrix)
-        MM2 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
-        self.total_ABCD_matrix[:] = matmul(MM1, MM2)
+        MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
+        MM2 = matmul(MM1, self.lna.ABCD_matrix)
+        MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
+        self.total_ABCD_matrix[:] = matmul(MM2, MM3)
 
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
@@ -736,7 +850,7 @@ class RFChain(GenericProcessingDU):
         self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = os.path.join("detector", "RFchain_v1", "Z_ant_3.2m.csv")
+        filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
