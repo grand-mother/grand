@@ -15,6 +15,120 @@ from scipy import interpolate
 logger = getLogger(__name__)
 
 
+def find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max):
+    """Parabolic interpolation of the maximum with 3 points
+
+
+    trace : all values >= 0
+
+    :param x_trace:
+    :param y_trace:
+    algo Mode pic, input 3 values and the middle one is max:
+        parabola : ax^2 + bx + c
+        offset of (x0, y0)
+        solve coef a, b , interpolation of the maximum is
+          x_m = x0 - b/2a
+          y_m = y0 - b^2/4a
+    :param idx_max: index of sample max, idx_max < nb_sample
+    :type idx_max: int
+    :return: x_max, y_max
+    """
+    if (idx_max >= len(x_trace) - 1) or idx_max == 0:
+        return x_trace[idx_max], y_trace[idx_max]
+    logger.debug(f"Parabola interp: mode pic {idx_max} {len(x_trace)}")
+    # remove offset (x0, v0)
+    y_pic = y_trace[idx_max : idx_max + 2] - y_trace[idx_max - 1]
+    x_pic = x_trace[idx_max : idx_max + 2] - x_trace[idx_max - 1]
+    logger.debug(x_trace[idx_max : idx_max + 2])
+    logger.debug(y_trace[idx_max : idx_max + 2])
+    # solve coef a, b
+    r_pic = y_pic / x_pic
+    c_a = (r_pic[1] - r_pic[0]) / (x_pic[1] - x_pic[0])
+    c_b = r_pic[0] - c_a * x_pic[0]
+    # interpolation of the maximum is
+    x_m = -c_b / (2 * c_a)
+    x_max = x_trace[idx_max - 1] + x_m
+    y_max = y_trace[idx_max - 1] + x_m * c_b / 2
+    return x_max, y_max
+
+
+def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.96):
+    """Parabolic interpolation of the maximum with more than 3 points
+
+    trace : all values >= 0
+
+    algo:
+      1. find begin idx, ie trace[--idx_max] > v_max*factor_hill
+      2. find end idx, ie trace[idx_max++] > v_max*factor_hill
+      3. if nb idx <= 2 : mode pic else mode hill
+      4. Mode pic : 3 values and the middle one is max
+         4.1 offset of (x0, v0)
+         4.2 solve coef a, b => x_m = offset - b/2a ; v_m=offset - b^2/4a
+      5. Mode hill:
+         5.0 offset of (x, y) of first sample
+         5.1 solve overdetermined linear system with a, b, c
+         5.2 x_m =offset - b/2a ; v_m=offset - b^2/4a + c
+
+    :param trace:
+    :type trace:
+    :param idx_max:
+    :type idx_max:
+    :param factor_hill:
+    :type factor_hill:
+    """
+    # y threshold mean around max (so 3 points) * factor_hill
+    y_lim = (y_trace[idx_max - 1 : idx_max + 2].sum() / 3) * factor_hill
+    logger.debug(f"y_lim={y_lim}")
+    # 1
+    b_idx = idx_max - 1
+    out_lim = 6
+    nb_out = 0
+    last_idx = b_idx
+    while b_idx > 0 and nb_out < out_lim:
+        if y_trace[b_idx] < y_lim:
+            nb_out += 1
+        else:
+            nb_out = 0
+            last_idx = b_idx
+        b_idx -= 1
+    b_idx = last_idx
+    # 2
+    nb_sple = y_trace.shape[0]
+    e_idx = idx_max + 1
+    nb_out = 0
+    last_idx = e_idx
+    while e_idx < (nb_sple-1) and nb_out < out_lim:
+        if y_trace[e_idx] < y_lim:
+            nb_out += 1
+        else:
+            nb_out = 0
+            last_idx = e_idx
+        e_idx += 1
+    e_idx = last_idx
+    if e_idx >= nb_sple:
+        e_idx = nb_sple -1
+    logger.debug(f"border around idx max {idx_max} is {b_idx}, {e_idx}")
+    logger.debug(f"{x_trace[b_idx]}\t{x_trace[e_idx]}")
+    if (e_idx - b_idx) <= 2:
+        return find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max)
+    logger.debug(f"Parabola interp: mode hill")
+    # mode hill
+    y_hill = y_trace[b_idx : e_idx + 1] - y_trace[b_idx]
+    x_hill = x_trace[b_idx : e_idx + 1] - x_trace[b_idx]
+    mat = np.empty((x_hill.shape[0], 3), dtype=np.float32)
+    mat[:, 2] = 1
+    mat[:, 1] = x_hill
+    mat[:, 0] = x_hill * x_hill
+    sol = np.linalg.lstsq(mat, y_hill, rcond=None)[0]
+    if -1e-5 < sol[0] and sol[0] < 1e-5:
+        # very flat case
+        return x_trace[idx_max], y_trace[idx_max]
+    x_m = -sol[1] / (2 * sol[0])
+    x_max = x_trace[b_idx] + x_m
+    y_max = y_trace[b_idx] + x_m * sol[1] / 2 + sol[2]
+    return x_max, y_max
+
+
 def get_filter(time, trace, fr_min, fr_max):
     """
     Filter signal  in given bandwidth

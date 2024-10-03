@@ -56,7 +56,7 @@ def test_histo_t_start():
     o_trevt.plot_histo_t_start()
     idx = 46
     o_trevt.plot_trace_idx(idx)
-    o_trevt.plot_ps_trace_idx(idx)
+    o_trevt.plot_psd_trace_idx(idx)
     
 if __name__ == '__main__':
     logger.info(mlg.string_begin_script())

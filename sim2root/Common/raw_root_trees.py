@@ -86,6 +86,15 @@ class RawShowerTree(MotherEventTree):
     # primary injection direction in Shower Coordinates
     primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
+    ### Simulation site name TODO:standardize
+    _site: StdString = StdString("nosite")
+    ### Simulation site latitude (deg)
+    _site_lat : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    ### Simulation site longitude (deg)
+    _site_lon : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    ### Simulation site altitude (deg)
+    _site_alt : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+        
     ### Atmospheric model name TODO:standardize
     _atmos_model: StdString = StdString("")
 
@@ -412,7 +421,6 @@ class RawShowerTree(MotherEventTree):
         self._azimuth[0] = value
 
 
-
     @property
     def zenith(self):
         """Shower zenith TODO: Discuss coordinates Cosmic ray convention is bad for neutrinos, but neurtino convention is problematic for round earth"""
@@ -422,6 +430,48 @@ class RawShowerTree(MotherEventTree):
     def zenith(self, value):
         self._zenith[0] = value
 
+
+    @property
+    def site(self):
+        """Simulation Site TODO:standarize"""
+        return str(self._site)
+
+    @site.setter
+    def site(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        self._site.string.assign(value)
+
+
+
+    @property
+    def site_alt(self):
+        return self._site_alt[0]
+
+    @site_alt.setter
+    def site_alt(self, value):
+        self._site_alt[0] = value
+
+    @property
+    def site_lon(self):
+        return self._site_lon[0]
+
+    @site_lon.setter
+    def site_lon(self, value):
+        self._site_lon[0] = value
+
+
+    @property
+    def site_lat(self):
+        return self._site_lat[0]
+
+    @site_lat.setter
+    def site_lat(self, value):
+        self._site_lat[0] = value
 
 
     @property
@@ -631,11 +681,11 @@ class RawEfieldTree(MotherEventTree):
     _t_0: StdVectorList = field(default_factory=lambda: StdVectorList("float")) 
     # peak 2 peak amplitudes (x,y,z,modulus) 
     _p2p: StdVectorList = field(default_factory=lambda: StdVectorList("float")) 
-    ## X position in shower referential
+    ## X position in site referential
     _du_x: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    ## Y position in shower referential
+    ## Y position in site referential
     _du_y: StdVectorList = field(default_factory=lambda: StdVectorList("float"))
-    ## Z position in shower referential
+    ## Z position in site referential
     _du_z: StdVectorList = field(default_factory=lambda: StdVectorList("float"))    
     
 

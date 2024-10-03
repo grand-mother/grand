@@ -248,14 +248,14 @@ def GenerateRawMetaTree(EventParametersFile,RunID,EventID,OutputFileName):
       TestedPositions=GetTestedPositionsFromParametersFile(EventParametersFile)
 
     else:
-      logging.critical("Input EventParametersFile file not found, {} using default values".format(EventParametersFile))
+      print("Input EventParametersFile file not found, {} using default values".format(EventParametersFile))
       # return i will not return, in order to be able to handle old sims. I will asign default or dummy values to the required variables
       ArrayName="Unknown"  
       CorePosition=(0,0,0)
       UnixSecond=1
       UnixNano=1
       EventWeight=1
-      TestedCores=[]       
+      TestedPositions=[]       
 
     RawMeta = RawTrees.RawMetaTree(OutputFileName)
     RawMeta.run_number = RunID

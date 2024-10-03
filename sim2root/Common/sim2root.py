@@ -9,24 +9,163 @@ import time
 from pathlib import Path
 from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 import raw_root_trees as RawTrees # this is here in Common
+import grand.manage_log as mlg
+import matplotlib.pyplot as plt
+from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
+
+# specific logger definition for script because __mane__ is "__main__" !
+logger = mlg.get_logger_for_script(__file__)
+logger.info("Converting rawroot to grandlib file")
 
 
+#ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file. Site too.
 # Command line argument parsing
 clparser = argparse.ArgumentParser(description="Convert simulation data in rawroot format into GRANDROOT format")
-clparser.add_argument("filename", nargs='+', help="ROOT file containing GRANDRaw data TTrees")
+clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GRANDRaw data TTrees, a directory with GRANDraw files or a .txt file with list of rawroot files")
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
-clparser.add_argument("-s", "--site_name", help="The name of the site", default="nosite")
-clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
+clparser.add_argument("-s", "--site_name", help="The name of the site", default=None)
+clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
+clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default=None)
+# clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
+# clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default="000000")
 clparser.add_argument("-e", "--extra", help="Extra information to store in the directory name", default="")
 clparser.add_argument("-av", "--analysis_level", help="Analysis level of the data", default=0, type=int)
 # clparser.add_argument("-se", "--serial", help="Serial number of the simulation", default=0)
-clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=40.984558)
-clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=93.952247)
-clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=1200)
-clparser.add_argument("-ru", "--run", help="Run number", default=0, const=None)
-clparser.add_argument("-se", "--start_event", help="Starting event number", default=0, const=None)
+clparser.add_argument("-la", "--latitude", help="Latitude of the site", default=None)
+clparser.add_argument("-lo", "--longitude", help="Longitude of the site", default=None)
+clparser.add_argument("-al", "--altitude", help="Altitude of the site", default=None)
+clparser.add_argument("-ru", "--run", help="Run number", default=None)
+clparser.add_argument("-se", "--start_event", help="Starting event number", default=None)
+clparser.add_argument("--target_duration_us",type=float,default=None,help="Adujust the trace lenght to the given duration, in us") 
+clparser.add_argument("--trigger_time_ns",type=float,default=None,help="Adujust the trace so that the maximum is at given ns from the begining of the trace")
+clparser.add_argument("--verbose", choices=["debug", "info", "warning", "error", "critical"],default="info", help="logger verbosity.")
+clparser.add_argument("-ss", "--star_shape", help="For star-shapes: create a separate run for every event", action='store_true')
 clargs = clparser.parse_args()
+
+mlg.create_output_for_logger(clargs.verbose, log_stdout=True)
+
+logger.info("#################################################")
+
+############################################################################################################################
+# adjust the trace lenght to force the requested tpre and tpost  TODO:This should be properly codede into a tool on grandlib tools for trace manipulation
+###########################################################################################################################
+def adjust_trace(trace, t0s, CurrentTpre,CurrentTpost, DesiredTpre, DesiredTpost,TimeBinSize):
+
+    #trace holds a list, needs to be converted into a numpy array
+    trace=np.asarray(trace)
+    #t0s is a vector with all the du's t0s
+
+    #TODO: assert that the times are multiples of TimeBinSize, as we are not ready to handle fractional time bins
+        
+    logger.info("Adjusting trace so that t_pre is "+str(DesiredTpre)+" and t_post is "+str(DesiredTpost)+".Trace lenght will be "+str(DesiredTpre+DesiredTpost))
+    logger.debug("Original t_pre is "+str(CurrentTpre)+" and t_post is "+str(CurrentTpost)+" .t_bin_size is "+str(TimeBinSize))
+    #plt.plot(trace[1,1],label="before",linewidth=5)
+    trace=adjust_trace_lenght(trace, DesiredTpre, DesiredTpost, CurrentTpre, CurrentTpost,TimeBinSize)
+    #plt.plot(trace[1,1],label="after",linewidth=3)
+    #plt.axvline(DesiredTpre/TimeBinSize,label="RequestedTriggerPosition",color="orange")
+    #plt.axvline(CurrentTpre/TimeBinSize,label="OriginalTriggerPosition",color="blue")
+    t0s,trace=adjust_trigger(trace, t0s, DesiredTpre, TimeBinSize)
+    #plt.plot(trace[1,1],label="corrected t0")
+    #plt.legend()
+    #plt.show()    
+    return t0s,trace
+  
+
+def adjust_trace_lenght(trace, DesiredTpre, DesiredTpost, CurrentTpre, CurrentTpost,TimeBinSize): 
+    #we will assume that, on input, all traces have the same tpre and tpost
+    #everything is in ns.
+    #time window is defined as starting at t0-tpre and finishing at t0+tpost
+    #If the DesiredTpre or DesiredTpost are, 0, the original value is kept
+    #TimeBinSize is the size of the time bin
+    #trace is a vector with shape   (n_du, 3,ntimebins)
+    
+    #TODO: assert that the times are multiples of TimeBinSize, as we are not ready to handle fractional time bins   
+    if DesiredTpre!=0:
+      DeltaTimePre=DesiredTpre-CurrentTpre
+      DeltaBinsPre=int(np.round(DeltaTimePre/TimeBinSize))
+    else:
+      DeltaBinsPre=0                    
+      DesiredTpre=CurrentTpre
+      
+    if DesiredTpost!=0:
+      DeltaTimePost=DesiredTpost-CurrentTpost
+      DeltaBinsPost=int(np.round(DeltaTimePost/TimeBinSize))
+    else:
+      DeltaBinsPost=0 
+      DesiredTpost=CurrentTpost 
+
+    #if the current value is larger than what we desire, we just remove the bins.                
+    if DeltaBinsPre<0:
+      trace=trace[:,:,-DeltaBinsPre:]
+      logger.debug("We had to remove "+str(-DeltaBinsPre)+" bins at the start of trace")
+      DeltaBinsPre=0
+     
+    if DeltaBinsPost<0 :
+      trace=trace[:,:,:DeltaBinsPost]   
+      logger.debug("We had to remove "+str(-DeltaBinsPost)+" bins at the end of trace")
+      DeltaBinsPost=0
+   
+    #if the desired value is larger, we have to pad.
+    if DeltaBinsPost>0 or DeltaBinsPre>0:
+      npad = ((0,0),(0,0),(DeltaBinsPre, DeltaBinsPost))
+      trace=np.pad(trace, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
+      logger.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of the trace")
+      logger.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of the trace")
+
+    #Check that we achieved the correct length (rounding errors can leave us one bin short or long (TODO:we lack a definition of what to do if the times are not a multiple of tbinsize.)
+    DesiredTraceLenght=int((DesiredTpre+DesiredTpost)/TimeBinSize)
+
+    if(len(trace[0,0])>DesiredTraceLenght):      
+      trace=trace[:,:,:DesiredTraceLenght]
+    elif(len(trace[0,0])<DesiredTraceLenght):
+      delta=DesiredTraceLenght-len(trace[0,0])
+      trace=np.pad(trace, ((0,0),(0,0),(0,delta)), 'constant')
+      
+    #now, we have traces that meet the desired tpre and tpost. No changes to t0 are needed (TODO: maybe changes to t0 are needed if we have a non-integer number of bins between the t_pre and the t_post)     
+    return trace
+
+
+def adjust_trigger(trace, CurrentT0s, TPre, TimeBinSize):
+  #now lets process a "trigger" algorithm that will modify where the trace is located.
+  #we asume trace is windowed between CurrentT0-Tpre and CurrentT0+tpost
+  #trace will have dim (du,3 or 4,tbins)
+                 
+  #totl will have dim du,tbins 
+  ttotal = np.linalg.norm(trace, axis=1) #make the modulus (the 1 is to remove the time)   
+  #trigger_index will have dim du
+  trigger_index = np.argmax(ttotal,axis=1)                    #look where the maximum happens
+   
+  #this definition of the trigger times makes the trigger be at the begining of the bin where the maximum is, becouse the index starts at 0. This is compatible with the definition of the window that we give.
+  trigger_time=trigger_index*TimeBinSize               
+  #If we need to shift the trigger time (the trigger time needs to be equal to tpre
+  DeltaT=TPre - trigger_time       
+  ShiftBins=(DeltaT/TimeBinSize).astype(int,copy=False)
+
+  #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly). 
+  mask=ShiftBins < -TPre/TimeBinSize
+  if mask.any():
+    logger.error("some elements needed to be shifted only up to the limt, tpre was too small")
+    ShiftBins[mask]= int(-TPre/TimeBinSize)
+                 
+  #we cannot use use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
+  #we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
+  
+  #TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.  
+  for du_idx in range(trace.shape[0]):     
+    trace[du_idx]=shift(trace[du_idx],(0,ShiftBins[du_idx]),cval=0)
+  
+  #we get the correct t0
+  T0s=CurrentT0s-ShiftBins*TimeBinSize
+
+  return T0s,trace
+
+def convert_date(date_str):
+    # Convert input string to a struct_time object
+    date_struct = time.strptime(date_str, "%Y-%m-%d")
+    # Format the struct_time object as a string in YYYYMMDD format
+    formatted_date = time.strftime("%Y%m%d", date_struct)
+    return formatted_date
 
 
 def main():
@@ -40,20 +179,31 @@ def main():
     if clargs.start_event is not None:
         ext_event_number = int(clargs.start_event)
 
-    # Create the appropriate output directory
-    if clargs.forced_output_directory is None:
-        out_dir_name = form_directory_name(clargs)
-        print("Storing files in directory ", out_dir_name)
-        out_dir_name.mkdir()
-    # If another directory was forced as the output directory, create it
-    else:
-        out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
-        out_dir_name.mkdir(exist_ok=True)
-
     start_event_number = 0
+    end_event_number = 0
+    run_number = 0
+    # Namespace for holding output trees
+    gt = SimpleNamespace()
+
+    # Check if a directory was given as input
+    if Path(clargs.file_dir_name[0]).is_dir():
+        file_list = sorted(glob.glob(clargs.file_dir_name[0]+"/*.rawroot"))
+    # Check if the first file is a list (of files, hopefully)
+    elif Path(clargs.file_dir_name[0]).is_file() and Path(clargs.file_dir_name[0]).suffix==".txt":
+        with open(clargs.file_dir_name[0]) as f:
+            file_list = f.read().splitlines()
+    else:
+        file_list = clargs.file_dir_name
+
+    if len(file_list)==0:
+        print("No RawRoot files found in the input directory. Exiting.")
+        exit(0)
 
     # Loop through the files specified on command line
-    for file_num, filename in enumerate(clargs.filename):
+    # for file_num, filename in enumerate(clargs.filename):
+    for file_num, filename in enumerate(file_list):
+
+        logger.info(f"Working on input file {filename}, {file_num}/{len(file_list)}")
 
         # Output filename for GRAND Trees
         # if clargs.output_filename is None:
@@ -66,15 +216,6 @@ def main():
         trawefield = RawTrees.RawEfieldTree(filename)
         trawmeta = RawTrees.RawMetaTree(filename)
 
-        # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
-        gt = SimpleNamespace()
-        gt.trun = TRun((out_dir_name/"trun.root").as_posix())
-        gt.trunshowersim = TRunShowerSim((out_dir_name/"trunshowersim.root").as_posix())
-        gt.trunefieldsim = TRunEfieldSim((out_dir_name/"trunefieldsim.root").as_posix())
-        gt.tshower = TShower((out_dir_name/"tshower.root").as_posix())
-        gt.tshowersim = TShowerSim((out_dir_name/"tshowersim.root").as_posix())
-        gt.tefield = TEfield((out_dir_name/"tefield.root").as_posix())
-
         # Loop through entries - assuming same number of entries in each tree
         # ToDo: this should be a tree iterator through one tree and getting the other through friends. Need to make friends working...
         nentries = trawshower.get_entries()
@@ -82,28 +223,66 @@ def main():
             trawshower.get_entry(i)
             trawefield.get_entry(i)
             trawmeta.get_entry(i)
+            
+            OriginalTpre=trawefield.t_pre
+            OriginalTpost=trawefield.t_post
+            DesiredTpre=trawefield.t_pre
+            DesiredTpost=trawefield.t_post
 
-            # If the first entry or (run number enforced and first file), fill the run trees
-            if (i==0 and ext_run_number is None) or (ext_run_number is not None and file_num==0):
+            if clargs.trigger_time_ns is not None:
+              DesiredTpre=clargs.trigger_time_ns
+              assert DesiredTpre > 0
+              OriginalDuration= OriginalTpre+OriginalTpost
+              DesiredTpost= OriginalDuration-DesiredTpre
+
+            if clargs.target_duration_us is not None:
+              DesiredTpost=clargs.target_duration_us*1000-DesiredTpre
+            #we modify this becouse it needs to be stored in the run file on the first event.
+            trawefield.t_pre=DesiredTpre
+            trawefield.t_post=DesiredTpost
+            
+
+            # If the first entry on the first file or dealing with star shape sim
+            if (file_num==0 and i==0) or clargs.star_shape:
+
+                # Overwrite the run number if specified on command line (only for the first event)
+                if (file_num==0 and i==0):
+                    run_number = ext_run_number if ext_run_number is not None else trawshower.run_number
+                    start_run_number = run_number
+                # or increase it by one for star shapes
+                elif clargs.star_shape: run_number += 1
+
+                # Check if site name was not given as input, use the one from the trawshower
+                if not clargs.site_name:
+                    site = trawshower.site
+                else:
+                    site = clargs.site_name
+
+                # Init output trees in the proper directory (only for the first event)
+                if file_num==0 and i==0: out_dir_name = init_trees(clargs, trawshower.unix_date, run_number, site, gt)
+
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
                 # Convert the RawEfield entries
                 rawefield2grandrootrun(trawefield, gt)
 
+                #ToDo:latitude,longitude and altitude are available in ZHAireS .sry file, and could be added to the RawRoot file
+                # JK: also available in Coreas!
+                
                 # Set the origin geoid
-                gt.trun.origin_geoid = get_origin_geoid(clargs)
+                gt.trun.origin_geoid = get_origin_geoid(clargs, trawshower)
 
-                # Overwrite the run number if specified on command line
-                if ext_run_number is not None:
-                    gt.trun.run_number = ext_run_number
-                    gt.trunshowersim.run_number = ext_run_number
-                    gt.trunefieldsim.run_number = ext_run_number
+                gt.trun.run_number = run_number
+                gt.trunshowersim.run_number = run_number
+                gt.trunefieldsim.run_number = run_number
+
+                gt.trun.site = site
 
                 # Fill the run trees and write
-                gt.trun.fill()
+                # gt.trun.fill()
                 gt.trunshowersim.fill()
                 gt.trunefieldsim.fill()
-                gt.trun.write()
+                # gt.trun.write()
                 gt.trunshowersim.write()
                 gt.trunefieldsim.write()
 
@@ -111,9 +290,18 @@ def main():
             rawshower2grandroot(trawshower, gt)
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
             rawmeta2grandroot(trawmeta, gt)
-            # Convert the RawEfieldTree entries
-            rawefield2grandroot(trawefield, gt)
+            
+            # Change the trace lenght as specified in the comand line                                     
+            trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+            ext_t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
 
+            # trawefield.trace_x=trace[:,0,:]
+            # trawefield.trace_y=trace[:,1,:]
+            # trawefield.trace_z=trace[:,2,:]
+
+            # Convert the RawEfieldTree entries
+            rawefield2grandroot(trawefield, gt, ext_trace=trace, ext_t_0=ext_t_0)
+        
             # Overwrite the run number if specified on command line
             if ext_run_number is not None:
                 gt.trun.run_number = ext_run_number
@@ -122,6 +310,12 @@ def main():
                 gt.tshower.run_number = ext_run_number
                 gt.tshowersim.run_number = ext_run_number
                 gt.tefield.run_number = ext_run_number
+            # For starshape, update the event trees run numbers
+            elif clargs.star_shape:
+                gt.tshower.run_number = run_number
+                gt.tshowersim.run_number = run_number
+                gt.tefield.run_number = run_number
+
 
             # Overwrite the event number if specified on command line
             if ext_event_number is not None:
@@ -129,34 +323,132 @@ def main():
                 gt.tshowersim.event_number = ext_event_number
                 gt.tefield.event_number = ext_event_number
 
-            # For the first file/iteration, store the event number
+            # store temporarily the first event number
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
+
+            # Correct the first/last event number for file naming
+            if(gt.tshower.event_number<start_event_number):
+                start_event_number = gt.tshower.event_number
+
+            if(gt.tshower.event_number>end_event_number):
+                end_event_number = gt.tshower.event_number
+
+            gt.tshowersim.input_name = Path(filename).stem
 
             # Fill the event trees
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
+        
+        
+        # For the first file, get all the file's events du ids and pos
+        if file_num==0:
+            du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
+            tdu_ids, tdu_xyzs = du_ids, du_xyzs
+        # For other files, append du ids and pos to the ones already retrieved
+        else:
+            tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
+            du_ids = np.append(du_ids, tdu_ids)
+            du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
+
+        # For star shapes, set the trun's du_id/xyz now and fill/write the tree
+        if clargs.star_shape:
+            gt.trun.du_id = tdu_ids
+            gt.trun.du_xyz = tdu_xyzs
+
+            gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
+
+            # For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
+            gt.trun.t_bin_size = [trawefield.t_bin_size] * len(du_ids)
+
+            gt.trun.site_layout = "star_shape"
+
+            # Fill and write the TRun
+            gt.trun.fill()
+            gt.trun.write()
 
         # Write the event trees
         gt.tshower.write()
         gt.tshowersim.write()
         gt.tefield.write()
+        # gt.tshower.first_interaction = trawshower.first_interaction
+
+        trawmeta.close_file()
+
+        trawshower.stop_using()
+        trawefield.stop_using()
+        trawmeta.stop_using()
 
         # Increment the event number if starting one specified on command line
         if ext_event_number is not None:
             ext_event_number += 1
 
-    # Rename the created files to appropriate names
-    end_event_number = gt.tshower.event_number
+    # Fill the trun with antenna positions and ids from ALL the events (not for star shape, already done)
+    # ToDo: this should be done with TChain in one loop over all the files... maybe (which would be faster?)
+    if not clargs.star_shape:
+
+        # Get indices of the unique du_ids
+        unique_dus_idx = np.unique(du_ids, return_index=True)[1]
+        # Leave only the unique du_ids
+        du_ids = du_ids[unique_dus_idx]
+        # Sort the DUs
+        sorted_idx = np.argsort(du_ids)
+        du_ids = du_ids[sorted_idx]
+        # Stack x/y/z together and leave only the ones for unique du_ids, sort
+        du_xyzs = du_xyzs[unique_dus_idx][sorted_idx]
+
+        # Assign the du ids and positions to the trun tree
+        gt.trun.du_id = du_ids
+        gt.trun.du_xyz = du_xyzs
+        gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2))
+
+        #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
+        gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
+
+        # Fill and write the TRun
+        gt.trun.fill()
+        gt.trun.write()
+
+
+    # Rename the created files to appropriate names   
     print("Renaming files to proper file names")
-    rename_files(clargs, out_dir_name, start_event_number, end_event_number)
+    rename_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
+
+# Initialise output trees and their directory
+def init_trees(clargs, unix_date, run_number, site, gt):
+
+    # Use date/time from command line argument if specified, otherwise the unix time
+    date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
+    if clargs.sim_date is not None:
+        date = clargs.sim_date
+    if clargs.sim_time is not None:
+        time = clargs.sim_time
+
+    # Create the appropriate output directory
+    if clargs.forced_output_directory is None:
+        out_dir_name = form_directory_name(clargs, date, time, run_number, site)
+        print("Storing files in directory ", out_dir_name)
+        out_dir_name.mkdir()
+    # If another directory was forced as the output directory, create it
+    else:
+        out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
+        out_dir_name.mkdir(exist_ok=True)
+
+    # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
+    gt.trun = TRun((out_dir_name / "run.root").as_posix())
+    gt.trunshowersim = TRunShowerSim((out_dir_name / "runshowersim.root").as_posix())
+    gt.trunefieldsim = TRunEfieldSim((out_dir_name / "runefieldsim.root").as_posix())
+    gt.tshower = TShower((out_dir_name / "shower.root").as_posix())
+    gt.tshowersim = TShowerSim((out_dir_name / "showersim.root").as_posix())
+    gt.tefield = TEfield((out_dir_name / "efield.root").as_posix())
+
+    return out_dir_name
 
 
 # Convert the RawShowerTree first entry to run values
 def rawshower2grandrootrun(trawshower, gt):
     gt.trunshowersim.run_number = trawshower.run_number
-
     ## Name and version of the shower simulator
     gt.trunshowersim.sim_name = trawshower.sim_name
 
@@ -211,14 +503,26 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.refractivity_model = trawefield.refractivity_model
     gt.trunefieldsim.refractivity_model_parameters = trawefield.refractivity_model_parameters
 
+    # The TRun run number
+    gt.trun.run_number = trawefield.run_number
+
+    ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0-t_pre (thus t_pre should be positive) and ends on t0+post
+    gt.trunefieldsim.t_pre = trawefield.t_pre
+    gt.trunefieldsim.t_post = trawefield.t_post
+
+
+def get_tree_du_id_and_xyz(trawefield,shower_core):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
+
+    #trawefield has the antenna positions in array coordinates, cartesian. Origin is at the delcared latitude, longitude and altitude of the site.
+    print("Warning: using flat earth approximation for coordinates!.Event:",trawefield.event_number," Core:",shower_core)
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
     du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(int)
     du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
     du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
-
+    
     # Get indices of the unique du_ids
     # ToDo: sort?
     unique_dus_idx = np.unique(du_ids, return_index=True)[1]
@@ -227,19 +531,7 @@ def rawefield2grandrootrun(trawefield, gt):
     # Stack x/y/z together and leave only the ones for unique du_ids
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
-    # The TRun run number
-    gt.trun.run_number = trawefield.run_number
-
-    # Assign the du ids and positions to the trun tree
-    gt.trun.du_id = du_ids
-    gt.trun.du_xyz = du_xyzs
-
-    ## The antenna time window is defined around a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
-    gt.trunefieldsim.t_pre = trawefield.t_pre
-    gt.trunefieldsim.t_post = trawefield.t_post
-    # ToDo: shouldn't this and above be created for every DU in sims?
-    # gt.trun.t_bin_size = [trawefield.t_bin_size*1e9]*len(du_ids)
-    gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
+    return np.asarray(du_ids), np.asarray(du_xyzs)
 
 
 # Convert the RawShowerTree entries
@@ -299,7 +591,7 @@ def rawshower2grandroot(trawshower, gt):
     gt.tshowersim.atmos_depth = trawshower.atmos_depth
 
     ### Magnetic field parameters: Inclination, Declination, Fmodulus.: In shower coordinates. Declination
-    # The Earth’s magnetic field, B, is described by its strength, Fmodulus = ∥B∥; its inclination, I, defined
+    # The Earth's magnetic field, B, is described by its strength, Fmodulus = |B|; its inclination, I, defined
     # as the angle between the local horizontal plane and the field vector; and its declination, D, defined
     # as the angle between the horizontal component of B, H, and the geographical North (direction of
     # the local meridian). The angle I is positive when B points downwards and D is positive when H is
@@ -332,6 +624,7 @@ def rawshower2grandroot(trawshower, gt):
     ### Core position with respect to the antenna array (undefined for neutrinos)
     ## ToDo: conversion?
     gt.tshower.shower_core_pos = trawshower.shower_core_pos
+    #print("THI IS THE CORE",gt.tshower.shower_core_pos,trawshower.shower_core_pos)
 
     ### Longitudinal Pofiles (those compatible between Coreas/ZHAires)
 
@@ -383,9 +676,8 @@ def rawshower2grandroot(trawshower, gt):
 
     # gt.tshower.first_interaction = trawshower.first_interaction
 
-
 # Convert the RawEfieldTree entries
-def rawefield2grandroot(trawefield, gt):
+def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     ## Run and event number
     gt.tefield.run_number = trawefield.run_number
     gt.tefield.event_number = trawefield.event_number
@@ -411,15 +703,26 @@ def rawefield2grandroot(trawefield, gt):
     gt.tefield.du_z = trawefield.du_z
 
     ## Efield trace in X,Y,Z direction
-    gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+    if ext_trace is None:
+        gt.tefield.trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1)
+    else:
+        gt.tefield.trace=ext_trace
+        # gt.tefield.trace_x=ext_trace[:,0,:]
+        # gt.tefield.trace_y=ext_trace[:,1,:]
+        # gt.tefield.trace_z=ext_trace[:,2,:]
+
+    if ext_t_0 is not None:
+        t_0 = ext_t_0
+    else:
+        t_0 = trawefield.t_0
 
     # Generate trigger times from t0s
-    tempseconds=np.zeros((len(trawefield.t_0)), dtype=np.int64)
+    tempseconds=np.zeros((len(t_0)), dtype=np.int64)
     tempseconds[:]=gt.tshowersim.event_seconds
-    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + trawefield.t_0)
+    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + t_0)
     #rolling over the nanoseconds    
-    maskplus= gt.tshowersim.event_nanoseconds + trawefield.t_0 >=1e9
-    maskminus= gt.tshowersim.event_nanoseconds + trawefield.t_0 <0
+    maskplus= gt.tshowersim.event_nanoseconds + t_0 >=1e9
+    maskminus= gt.tshowersim.event_nanoseconds + t_0 <0
     tempnanoseconds[maskplus]-=np.int64(1e9)
     tempseconds[maskplus]+=np.int64(1)   
     tempnanoseconds[maskminus]+=np.int64(1e9)
@@ -427,10 +730,13 @@ def rawefield2grandroot(trawefield, gt):
     gt.tefield.du_nanoseconds=tempnanoseconds
     gt.tefield.du_seconds=tempseconds
     
+    #store tpre in samples is the expected trigger position in sims. 
+    #This can be furter enforced with the --trigger_time_ns switch. All dus have the same value at the efield generator level
+    gt.tefield.trigger_position= np.ushort([trawefield.t_pre]*trawefield.du_count/trawefield.t_bin_size)
 
 # Convert the RawMetaTree entries
 def rawmeta2grandroot(trawmeta, gt):
-    gt.tshower.shower_core_pos = trawmeta.shower_core_pos
+    #gt.tshower.shower_core_pos = trawmeta.shower_core_pos this is duplicated, using ithe one in shower for compatibility
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
     #event time    
@@ -446,33 +752,52 @@ def rawmeta2grandroot(trawmeta, gt):
     
 
 ## Get origin geoid
-def get_origin_geoid(clargs):
-    origin_geoid = [clargs.latitude, clargs.longitude, clargs.altitude]
-    return origin_geoid
+def get_origin_geoid(clargs, trawshower):
+    lat = clargs.latitude if clargs.latitude else trawshower.site_lat
+    lon = clargs.longitude if clargs.longitude else trawshower.site_lon
+    alt = clargs.altitude if clargs.altitude else trawshower.site_alt
+    return [lat, lon, alt]
 
 # Form the proper output directory name from command line arguments
-def form_directory_name(clargs):
+def form_directory_name(clargs, date, time, run_number, site):
     # Change possible underscores in extra into -
     extra = clargs.extra.replace("_", "-")
 
     # Go through serial numbers in directory names to find a one that does not exist
-    for sn in range(1000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{clargs.site_name}_{clargs.sim_date}_{extra}_{sn:0>4}")
+    for sn in range(5000):
+        dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
         if not dir_name.exists():
             break
-    # If directories with serial number up to 1000 already created
+    # If directories with serial number up to 5000 already created
     else:
-        print("All directories with serial number up to 1000 already exist. Please clean up some directories!")
+        print("All directories with serial number up to 5000 already exist. Please clean up some directories!")
         exit(0)
 
     return dir_name
 
 # Rename the created files to appropriate names
-def rename_files(clargs, path, start_event_number, end_event_number):
-    # Go through output files
-    for fn_start in ["trun", "trunshowersim", "trunefieldsim", "tshower", "tshowersim", "tefield"]:
+def rename_files(clargs, path, start_event_number, end_event_number, run_number):
+
+    # Go through run output files
+    for fn_start in ["run", "runshowersim", "runefieldsim"]:
         # Go through serial numbers in directory names to find a one that does not exist
-        for sn in range(1000):
+        for sn in range(5000):
+            fn_in = Path(path, f"{fn_start}.root")
+            # Proper name of the file
+            fn_out = Path(path, f"{fn_start}_{run_number}_L{clargs.analysis_level}_{sn:0>4}.root")
+            # If the output file with the current serial number does not exist, rename to it
+            if not fn_out.exists():
+                fn_in.rename(fn_out)
+                break
+        else:
+            print(f"Could not find a free filename for {fn_in} until serial number 5000. Please clean up some files!")
+            exit(0)
+
+
+    # Go through event output files
+    for fn_start in ["shower", "showersim", "efield"]:
+        # Go through serial numbers in directory names to find a one that does not exist
+        for sn in range(5000):
             fn_in = Path(path, f"{fn_start}.root")
             # Proper name of the file
             fn_out = Path(path, f"{fn_start}_{start_event_number}-{end_event_number}_L{clargs.analysis_level}_{sn:0>4}.root")
@@ -481,7 +806,7 @@ def rename_files(clargs, path, start_event_number, end_event_number):
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 1000. Please clean up some files!")
+            print(f"Could not find a free filename for {fn_in} until serial number 5s000. Please clean up some files!")
             exit(0)
 
 

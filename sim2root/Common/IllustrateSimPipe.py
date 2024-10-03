@@ -20,7 +20,11 @@ March 2024
 import grand.dataio.root_trees as groot 
 # import the rest of the guardians of the galaxy:
 import grand.manage_log as mlg
+<<<<<<< HEAD
 #import raw_root_trees as RawTrees # this is here in Common
+=======
+import raw_root_trees as RawTrees # this is here in Common
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
 import sys
 import argparse
 import numpy as np
@@ -46,11 +50,21 @@ def manage_args():
         help="Simulation output data directory in GRANDROOT format."
     )
     parser.add_argument(
+<<<<<<< HEAD
+=======
+        "--savefig_dir",
+        type=str,
+        default=None,
+        help="Directory to save figures. Defaults to simulation output directory if not specified."
+    )
+    parser.add_argument(
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
         "--verbose",
         choices=["debug", "info", "warning", "error", "critical"],
         default="info",
         help="logger verbosity."
     )
+<<<<<<< HEAD
     parser.add_argument(
      "--savefig",
      action="store_true",
@@ -67,6 +81,22 @@ def manage_args():
 
 
 
+=======
+    parser.add_argument( 
+        "--savefig",
+        action="store_true",
+        default=False,
+        help="save figures to files insted of displaying them."
+    )
+    parser.add_argument(
+        "--sim",
+        default="None",
+        help="specify simulator: Coreas vs. Zhaires"
+        )
+    # retrieve argument
+    return parser.parse_args()
+
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
 def plot_core_positions(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
 
@@ -83,27 +113,63 @@ def plot_core_positions(directory, t_0_shift=False):
   
   corex=np.zeros(nb_events)
   corey=np.zeros(nb_events)
+<<<<<<< HEAD
   corez=np.zeros(nb_events)    
+=======
+  corez=np.zeros(nb_events)   
+
+   
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
   ####################################################################################
   # start looping over the events
   ####################################################################################
   previous_run = None    
   i=0
+<<<<<<< HEAD
   for event_number,run_number in events_list:
       assert isinstance(event_number, int)
       assert isinstance(run_number, int)
       logger.info(f"Running event_number: {event_number}, run_number: {run_number}")
+=======
+  myrun=0
+  for event_number,run_number in events_list:
+      assert isinstance(event_number, int)
+      assert isinstance(run_number, int)
+      logger.debug(f"Running event_number: {event_number}, run_number: {run_number}")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
       
       tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
       
       corex[i]=tshower_l0.shower_core_pos[0]
       corey[i]=tshower_l0.shower_core_pos[1]
       corez[i]=tshower_l0.shower_core_pos[2]
+<<<<<<< HEAD
             
       i=i+1   
 
   plt.scatter(corex,corey)
   plt.show()
+=======
+      myrun=run_number      
+      i=i+1   
+
+  # Plot arrival time distribution
+  # Create a figure with subplots to match the other plot 
+  fig, ax1 = plt.subplots(1,1, figsize=(8, 6))
+  
+  map = ax1.scatter(corex, corey, marker='o', s=20)
+  ax1.set_title(f"core positions")
+  ax1.set_xlabel("X (northing) (m)")
+  ax1.set_ylabel("Y (westing)(m)")  
+  plt.tight_layout()
+  if(args.savefig):
+    plt.savefig(f"{plot_dir}/plots/CorePositions_{myrun}.png")
+    plt.close(fig)
+  else: 
+    plt.show()
+
+
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
 
 def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -135,7 +201,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
   for event_number,run_number in events_list:
       assert isinstance(event_number, int)
       assert isinstance(run_number, int)
+<<<<<<< HEAD
       logger.info(f"Running event_number: {event_number}, run_number: {run_number}")
+=======
+      logger.debug(f"Running event_number: {event_number}, run_number: {run_number}")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
       
       tefield_l0.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
       tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
@@ -194,7 +264,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
       # loop over all stations.          
       for du_idx in range(nb_du):
+<<<<<<< HEAD
         print(f"Running DU number {du_idx}")
+=======
+        logger.debug(f"Running DU number {du_idx}")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
 
         # efield trace L0
         trace_efield_L0_x = trace_efield_L0[du_idx,0]
@@ -227,7 +301,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
         else:
           fig, axs = plt.subplots(2,2, figsize=(8, 6), sharex=True)
         if t_0_shift == True:
+<<<<<<< HEAD
           print("shifting by t0")
+=======
+          logger.debug(f"shifting by t0")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
           trace_efield_L0_time += t0_efield_L0[du_idx]
           trace_voltage_time += t0_voltage_L0[du_idx]
           trace_ADC_L1_time += t0_adc_L1[du_idx]
@@ -236,7 +314,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Shower Time")
           savelabel = "with_t0_shift"
         else:
+<<<<<<< HEAD
           print(f"NOT shifting by t0 - peaks should be at 0ns")
+=======
+          logger.debug(f"NOT shifting by t0 - peaks should be at 0ns")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
           plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Trigger Time")
           savelabel = "no_t0s_shift"
           
@@ -295,7 +377,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
         plt.tight_layout()
         if(args.savefig):
+<<<<<<< HEAD
           plt.savefig(f"{directory}/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+=======
+          plt.savefig(f"{plot_dir}/plots/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
           plt.close(fig)
         else: 
           plt.show()
@@ -432,7 +518,11 @@ def plot_time_map(directory, simulator=None):
 
       plt.tight_layout()
       if(args.savefig):
+<<<<<<< HEAD
         plt.savefig(f"{directory}/TimeMap_{run_number}_{event_number}.png")
+=======
+        plt.savefig(f"{plot_dir}/plots/TimeMap_{run_number}_{event_number}.png")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
         plt.close(fig)
       else: 
          plt.show()
@@ -449,6 +539,7 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
     
 
+<<<<<<< HEAD
     #trawefield has the antenna positions in shc, and we need to put them in array coordinates, or this is all messed up.
     #TODO: This is a flat earth approximation that asumes shower core is in xc,yc,zc of flat cordinate system centered in the array, origin at ground.
     # and that du_xs are given in a flat shower coordinate system , with origin in the core, but at sea level (in this system the core coordinates are 0,0,groundaltitude)
@@ -457,6 +548,8 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     du_ys = du_ys + shower_core[1]
     du_zs = du_zs
 
+=======
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
     # Get indices of the unique du_ids
     # ToDo: sort?
     unique_dus_idx = np.unique(du_ids, return_index=True)[1]
@@ -504,7 +597,11 @@ def plot_raws(directory):
       
       plt.tight_layout()
       if(args.savefig):
+<<<<<<< HEAD
          plt.savefig(f"{directory}/rawtrace_{du}.png")
+=======
+         plt.savefig(f"{plot_dir}/plots/rawtrace_{du}.png")
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
          plt.close()
       else: 
          plt.show()
@@ -519,7 +616,36 @@ if __name__ == "__main__":
   logger.info(mlg.string_begin_script())
   logger.info("Creating event plots in source directory "+args.directory)
 
+<<<<<<< HEAD
   directory = args.directory
+=======
+  # change plot directory if specified
+  if args.savefig:
+    if args.savefig_dir is None:
+      # Use simulation output directory by default
+      plot_dir = args.directory
+    else:
+      # Use specified savefig_dir
+      plot_dir = args.savefig_dir
+  else:
+    pass
+
+  directory = args.directory
+  savefig = args.savefig
+  savefig_dir = args.savefig_dir
+
+  if savefig:
+    if savefig_dir is None:
+      # Use simulation output directory by default
+      plot_dir = directory
+    else:
+      # Use specified savefig_dir
+      plot_dir = savefig_dir
+  else:
+    pass
+
+  
+>>>>>>> 543186835d8777d8ec9939efb94fd40457105c1f
   plot_core_positions(directory)
   plot_time_map(directory, simulator=args.sim)
   plot_traces_all_levels(directory, t_0_shift=False)

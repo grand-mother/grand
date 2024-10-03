@@ -5,15 +5,12 @@ import glob
 from CorsikaInfoFuncs import read_params
 import sys
 import re
+import os
 
 parser = OptionParser()
 parser.add_option("--directory", "--dir", "-d", type="str",
-                  help="Specify the full path to the (inp) directory of the Coreas simulation set.\
-                  ")
-parser.add_option("--output", "--out", "-o", type="str",
-                  help="Specify the where you want to store the converted simulation set.\
-                  ")
-
+                  help="Specify the full path to the (inp) directory of the Coreas simulation set."
+                  )
 (options, args) = parser.parse_args()
 
 if __name__ == '__main__':
@@ -51,38 +48,75 @@ if __name__ == '__main__':
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting Coreas Simulation {simID} to RawRoot format...")
 
+            # * - * - * - * - * - * - *
+            # * produce RawROOT
             # Run CoreasToRawROOT.py
-            print("executing CoreasToRawROOT.py")
+            print("producing RawROOT file...")
             CoreasToRawROOT = [
-                'python3', 'CoreasToRawROOT.py', '-d', str(options.directory)
+                "python3", "CoreasToRawROOT.py", "-d", f"{str(options.directory)}"
             ]
             subprocess.run(CoreasToRawROOT, check=True)
-            print(f"Created Coreas_{simID}.root")
+            print(f"Created Coreas_{simID}.rawroot")
 
             print("* - * - * - * - * - * - * - * - * - *")
             print(f"Converting from RawRoot to GRANDroot format...")
 
-            # Run sim2root.py
-            print("executing sim2root.py")
-            sim2root = [
-                'python3', '../Common/sim2root.py', f"Coreas_{simID}.root"
-            ]
-            subprocess.run(sim2root, check=True)
-            print(f"Created gr_Coreas_{simID}.root")
-
-            print("* - * - * - * - * - * - * - * - * - *")
-            print(f"Converting traces from efield to voltage...")
-
-            print("executing convert_efield2voltage.py")
-            # Run convert_efield2voltage.py
-            sim2root = [
-                'python3', '../../scripts/convert_efield2voltage.py', f"gr_Coreas_{simID}.root",\
-                f"-o {options.output}/efield_gr_Coreas_{simID}.root"
-            ]
-            subprocess.run(sim2root, check=True)
-            print(f"Created efield_gr_Coreas_{simID}.root")
+            # * - * - * - * - * - * - *
+            # * produce GRANDroot
             print("********************************")
-            pass
+            print("producing GRANDroot files...")
+            # Run sim2root.py
+            sim2root = [
+                "python3", "../Common/sim2root.py", f"Coreas_{simID}.rawroot", "-o", f"{str(options.directory)}", "--target_duration_us=4.096", "--trigger_time_ns=800"
+            ]
+            subprocess.run(sim2root, check=True)
+            print(f"Created grandroot trees in {str(options.directory)}")
 
-        print(f"Finished analyzing files in {options.directory}")
-        print("********************************")
+            # get the path to the efield.root file
+            sim2root_file = glob.glob(str(options.directory)+"/sim_*/efield*")[0]
+            # get the path to the directory 
+            sim2root_out  = os.path.dirname(sim2root_file)
+          
+            print("* - * - * - * - * - * - * - * - * - *")
+
+            # * - * - * - * - * - * - * - *
+            # * produce voltage
+            print("********************************")
+            print("producing voltage files...")
+            # Run convert_efield2voltage.py
+            voltage = [
+                "python3", "../../scripts/convert_efield2voltage.py", f"{sim2root_out}", "--seed=1234", "--add_jitter_ns=5", "--calibration_smearing_sigma=0.075", "--verbose=info"
+            ]
+            
+            subprocess.run(voltage, check=True)
+            print(f"Created voltage files in {sim2root_out}.")
+            print("********************************")
+
+            # * - * - * - * - * - * - * - *
+            # * produce ADC
+            print("********************************")
+            print("producing ADC files...")
+            adc = [
+                "python3", "../../scripts/convert_voltage2adc.py", f"{sim2root_out}"
+            ]
+            subprocess.run(adc, check=True)
+            print(f"Created ADC files in {sim2root_out}.")
+            print("********************************")
+
+            # * - * - * - * - * - * - * - *
+            # * produce DC2 efield
+            print("********************************")
+            print("producing DC2 efield files...")
+            dc2 = [
+                "python3", "../../scripts/convert_efield2efield.py", f"{sim2root_out}", "--add_noise_uVm=22", "--add_jitter_ns=5", "--calibration_smearing_sigma=0.075", "--target_duration_us=4.096","--target_sampling_rate_mhz=500"
+            ]
+            
+            subprocess.run(dc2, check=True)
+            print(f"Created DC2 efield files in {sim2root_out}.")
+            print("********************************")
+            print("* - * - * - * - * - * - * - * - * - *")
+            print(f"Finished converting files in {options.directory}")
+            print("********************************")
+
+    else:
+        sys.exit("Please specify a directory containing Coreas simulations.")
