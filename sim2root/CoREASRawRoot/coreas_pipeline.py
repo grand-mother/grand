@@ -54,7 +54,7 @@ if __name__ == '__main__':
             # Run CoreasToRawROOT.py
             print("producing RawROOT file...")
             CoreasToRawROOT = [
-                "python3", "CoreasToRawROOT.py", "-f", f"{str(reas_file)}"
+                "python3", "./CoreasToRawROOT.py", "-f", f"{str(reas_file)}"
             ]
             subprocess.run(CoreasToRawROOT, check=True)
             print(f"Created Coreas_{simID}.rawroot")
