@@ -18,7 +18,9 @@ from grand import GRAND_DATA_PATH, grand_add_path_data
 
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
 #FILE_MODEL = "grand_model_2207.tar.gz"
-LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201902/grand_model_2306.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2306.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/251637/grand_model_190224.tar.gz"
+LINK_MODEL = "https://forge.in2p3.fr/attachments/download/312643/RFchain_V3.tar.gz"
 FILE_MODEL = LINK_MODEL.split("/")[-1]
 # class MyProgressBar():
 #     def __init__(self):
@@ -37,16 +39,17 @@ FILE_MODEL = LINK_MODEL.split("/")[-1]
 
 
 # 1- test if download is necessary
-if os.path.exists(grand_add_path_data('detector')):
+if os.path.exists(grand_add_path_data('detector/RFchain_v2')):
     print("==============================")
     print('Skip download data model')
     sys.exit(0)
 
-tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
+GRAND_DATA_PATH_1 = osp.join(grand_add_path_data('detector'))
+tar_file = osp.join(GRAND_DATA_PATH_1, FILE_MODEL)
 
 # 2- download
 print("==============================")
-print("Download data model (~ 452 MB) for GRAND, please wait ...")
+print("Download new RFchain model (~ 450 KB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")
@@ -59,11 +62,11 @@ print("==============================")
 print('Extract tar file')
 try:
     my_tar = tarfile.open(tar_file)
-    my_tar.extractall(grand_add_path_data(''))
+    my_tar.extractall(grand_add_path_data('detector'))
     my_tar.close()
     os.remove(tar_file)  # delete zipped file are extraction.
 except:
     print(f"Extract failed '{tar_file}'")
     sys.exit(1)
-print("data model available in grand/data directory !")
+print("data model available in grand/data/detector directory !")
 sys.exit(0) 
