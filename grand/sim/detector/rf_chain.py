@@ -791,6 +791,7 @@ class RFChain(GenericProcessingDU):
 
     def __init__(self, vga_gain=20):
         super().__init__()
+        self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
         self.balun1 = BalunAfterLNA()
         self.cable = Cable()
