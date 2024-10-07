@@ -38,7 +38,9 @@ FILE_MODEL = LINK_MODEL.split("/")[-1]
 #             self.pbar.finish()
 
 
-# 1- test if download is necessary
+# 1- check if detector folder exists and test if download is necessary
+os.makedirs(grand_add_path_data('detector'), exist_ok=True)
+
 if os.path.exists(grand_add_path_data('detector/RFchain_v2')):
     print("==============================")
     print('Skip download data model')
