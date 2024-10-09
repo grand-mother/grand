@@ -411,8 +411,10 @@ def CoreasToRawRoot(file, simID=None):
   # the list file contains all antenna positions for each antenna ID
   pathAntennaList = f"{path}/SIM{simID}.list"
   # store all antenna IDs in ant_IDs
+  # stores the actual antenna names from the coreas -list file
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
-  antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
+  # if antenna name is in the form of "ant???" or "gp_???", stores the digits after "ant" or "gp_", otherwise generic counter from 1
+  antenna_IDs = antenna_positions_dict(pathAntennaList)["ID"] 
 
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
