@@ -410,6 +410,7 @@ def CoreasToRawRoot(file, simID=None):
   #****** load positions ******
   # the list file contains all antenna positions for each antenna ID
   pathAntennaList = f"{path}/SIM{simID}.list"
+
   # store all antenna IDs in ant_IDs
   # stores the actual antenna names from the coreas -list file
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
