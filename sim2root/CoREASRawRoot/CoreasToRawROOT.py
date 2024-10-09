@@ -8,7 +8,7 @@ import glob
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
-import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
+import sim2root.Common.raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 from optparse import OptionParser
 
 """
@@ -443,7 +443,7 @@ def CoreasToRawRoot(file, simID=None):
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
     efield = np.loadtxt(tracefile)
     
-    timestamp = efield[:,0] * 10**9 #convert to ns 
+    timestamp = efield[:,0] * 10**9 # convert to ns 
     # coreas uses cgs units, so voltage is in statvolt
     # efield in statvolt / cm
     # 1 statV * 299.792458 V/statV = 1 V

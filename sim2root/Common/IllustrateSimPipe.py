@@ -305,10 +305,10 @@ def plot_traces_all_levels(directory, t_0_shift=False):
           ax3.axvline(t0_efield_L0[du_idx], label="t0 Trigger")
           ax4.axvline(t0_efield_L1[du_idx], label="t0 Trigger")
         else:
-          ax1.axvline(0, label="t0 Trigger")
-          ax2.axvline(0, label="t0 Trigger")
-          ax3.axvline(0, label="t0 Trigger")
-          ax4.axvline(0, label="t0 Trigger")
+          ax1.axvline(0, label="t0 Trigger", alpha=0.2)
+          ax2.axvline(0, label="t0 Trigger", alpha=0.2)
+          ax3.axvline(0, label="t0 Trigger", alpha=0.2)
+          ax4.axvline(0, label="t0 Trigger", alpha=0.2)
 
         # Add common vertical line (assuming same time axis)
         for ax in [ax1, ax2, ax3, ax4]:
