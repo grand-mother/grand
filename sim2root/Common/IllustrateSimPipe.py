@@ -177,8 +177,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       trace_voltage = np.asarray(tvoltage_l0.trace, dtype=np.float32)
       trace_ADC_L1= np.asarray(tadc_l1.trace_ch, dtype=np.float32)
       trace_efield_L1= np.asarray(tefield_l1.trace, dtype=np.float32)
-      du_id = np.asarray(tefield_l0.du_id) # MT: used for printing info and saving in voltage tree.
-      # JK: du_id is currently unused - TODO
+      du_id = np.asarray(tefield_l0.du_id)
 
 
       # t0 calculations
@@ -213,8 +212,8 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       du_xyzs= np.asarray(trun_l0.du_xyz)[event_dus_indices] 
      
 
-      # loop over all stations.          
-      for du_idx in range(nb_du):
+      # loop over all stations in the event.          
+      for du_idx in range(len(du_id)):
         logger.debug(f"Running DU number {du_idx}")
 
         # efield trace L0
@@ -254,11 +253,11 @@ def plot_traces_all_levels(directory, t_0_shift=False):
           trace_ADC_L1_time += t0_adc_L1[du_idx]
           trace_efield_L1_time += t0_efield_L1[du_idx]
 
-          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Shower Time")
+          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_id[du_idx]} - Shower Time")
           savelabel = "with_t0_shift"
         else:
           logger.debug(f"NOT shifting by t0 - peaks should be at 0ns")
-          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_idx} - Trigger Time \n position {du_xyzs[du_idx]}")
+          plt.suptitle(f"event {event_number}, run {run_number}, antenna {du_id[du_idx]} - Trigger Time \n position {du_xyzs[du_idx]}")
           savelabel = "no_t0s_shift"
           
 
@@ -316,7 +315,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
 
         plt.tight_layout()
         if(args.savefig):
-          plt.savefig(f"{plot_dir}/plots/IllustrateSimPipe_{run_number}_{event_number}_{du_idx}_{savelabel}.png")
+          plt.savefig(f"{plot_dir}/plots/IllustrateSimPipe_{run_number}_{event_number}_{du_id[du_idx]}_{savelabel}.png")
           plt.close(fig)
         else: 
           plt.show()
