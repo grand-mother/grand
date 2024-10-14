@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 # Script triggered after transfering data from a GRAND observatory to CCIN2P3 (or to any site)
 # It will launch the jobs to convert binary files into GrandRoot and register the results of the transfers and convertions into the database
 # Fleg & Fred: 03/2024

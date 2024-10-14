@@ -67,7 +67,7 @@ do
       mkdir -p $dirlogs >/dev/null 2>&1
     fi
     #Determine if file is TR (so no conversion)
-    tr=$(echo basename ${file} |awk -F_ '{print $5} ')
+    tr=$(echo basename ${file} |awk -F_ '{print $5}')
     if [ $tr == "TR" ]; then
       cp ${file} ${dest}/${filename%.*}.root
       conv_status=0
@@ -96,8 +96,10 @@ do
     echo "Register convertion" >> ${logfile}
     python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
     # Register root file into db
-    echo "register file in database" >> ${logfile}
-    python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
+    if [ $tr != "TR" ]; then
+      echo "register file in database" >> ${logfile}
+      python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
+    fi
   fi
 done
 

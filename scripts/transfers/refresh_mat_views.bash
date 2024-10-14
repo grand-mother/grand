@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 cd /pbs/home/p/prod_grand/softs/grand
 export PLATFORM=redhat-9-x86_64
 source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
