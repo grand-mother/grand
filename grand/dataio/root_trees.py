@@ -14,8 +14,12 @@ import ROOT
 import numpy as np
 import glob
 import array
+import warnings
 
 from collections import defaultdict
+
+# ToDo: Ignore the warning about branches (and all the other ROOT errors :( ) for TChain until an answer in the ROOT forum
+ROOT.gErrorIgnoreLevel = ROOT.kFatal
 
 # Load the C++ macros for vector filling from numpy arrays
 ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
@@ -394,6 +398,10 @@ class DataTree:
     _analysis_level: int = 0
     """The analysis level of this tree"""
 
+    ## Is the tree read from TChain
+    is_tchain: bool = False
+    """Is the tree read from TChain"""
+
 
     ## Fields that are not branches
     _nonbranch_fields = [
@@ -413,7 +421,8 @@ class DataTree:
         "_source_datetime",
         "_analysis_level",
         "_modification_history",
-        "__setattr__"
+        "__setattr__",
+        "is_tchain"
     ]
     """Fields that are not branches"""
 
@@ -662,27 +671,45 @@ class DataTree:
         if isinstance(f, ROOT.TFile):
             self._file = f
             self._file_name = self._file.GetName()
-        # If the filename string is given, open/create the ROOT file with this name
-        else:
-            self._file_name = f
-            # print(self._file_name)
-            # If the file with that filename is already opened, use it (do not reopen)
-            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
-                self._file = f
-            # If not opened, open
+        # If the filename string is given, check if chain, if not open/create the ROOT file with this name
+        elif isinstance(f, str):
+            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
+            flist = glob.glob(f)
+            if len(flist) > 1:
+                f = flist
+            # Otherwise, it was a single file
             else:
-                # If file exists, initially open in the read-only mode (changed during write())
-                if os.path.isfile(self._file_name):
-                    self._file = ROOT.TFile(self._file_name, "read")
-                # If the file does not exist, create it
+                self._file_name = f
+                # print(self._file_name)
+                # If the file with that filename is already opened, use it (do not reopen)
+                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
+                    self._file = f
+                # If not opened, open
                 else:
-                    self._file = ROOT.TFile(self._file_name, "create")
+                    # If file exists, initially open in the read-only mode (changed during write())
+                    if os.path.isfile(self._file_name):
+                        self._file = ROOT.TFile(self._file_name, "read")
+                    # If the file does not exist, create it
+                    else:
+                        self._file = ROOT.TFile(self._file_name, "create")
+        else:
+            raise ValueError(f"Unsupported filename {f}. Can't open/create a file with a tree.")
+
+        # If a list is given, it's a Chain
+        if isinstance(f, list):
+            self.is_tchain = True
+            # Create the TChain
+            self._tree = ROOT.TChain(self._tree_name, self._tree_name)
+            # Assign files to the chain
+            for el in f:
+                self._tree.Add(el)
+
 
     ## Init/readout the tree from a file
     def _set_tree(self, t):
         """Init/readout the tree from a file"""
         # If the ROOT TTree is given, just use it
-        if isinstance(t, ROOT.TTree):
+        if isinstance(t, ROOT.TTree) or isinstance(t, ROOT.TChain):
             self._tree = t
             self._tree_name = t.GetName()
         # If the tree name string is given, open/create the ROOT TTree with this name
@@ -958,7 +985,7 @@ class DataTree:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         else:
-            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
+            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
@@ -1043,6 +1070,8 @@ class DataTree:
         """Get the meta information as a dictionary"""
 
         metadata = {}
+
+        # ToDo: this should create some lists of values for TChains
 
         for el in tree.GetUserInfo():
             try:
@@ -1430,11 +1459,12 @@ class MotherEventTree(DataTree):
         except:
             current_entry = None
 
-        # Get the detector units branch
-        du_br = self._tree.GetBranch("du_id")
-
         count = self.draw("du_id", "", "goff")
         detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
+
+        # Get the detector units branch
+        # It has to be here, not before the draw(), due to a bug in PyROOT
+        du_br = self._tree.GetBranch("du_id")
 
         # If there was an entry read before this action, come back to this entry
         if current_entry is not None:
@@ -2478,9 +2508,6 @@ class DataDirectory:
         else:
             logger.warning("Sorry, non sim2root directories not supported yet")
 
-        # Create chains and set them as attributes
-        # self.create_chains()
-
     def __getattr__(self, name):
         """For non-existing tree files or tree parameters, return None instead of rising an exception"""
         trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
@@ -2497,14 +2524,22 @@ class DataDirectory:
         """Go through the list of files in the directory and open all of them"""
         file_handle_list = []
 
-        for filename in self.file_list:
-            file_handle_list.append(DataFile(filename))
+        # Function returning the tree type and analysis level from the filename. That's how we want to group files.
+        def split_filenames(x):
+            el = Path(x).name.split("_")
+            return el[0], el[2]
+
+        # for filename in self.file_list:
+        from itertools import groupby
+        for key, filenames in groupby(sorted(self.file_list, key=split_filenames), split_filenames):
+            filenames = list(filenames)
+            file_handle_list.append(DataFile(filenames))
 
         return file_handle_list
 
     # Init the instance with sim2root structure files
     def init_sim2root_structure(self):
-
+        self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
         for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
@@ -2513,6 +2548,7 @@ class DataDirectory:
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
                 setattr(self, f"{flistname[:-1]}_l{l}", f)
+                self.file_attrs.append(f"{flistname[:-1]}_l{l}")
                 # Assign the tree with the specific analysis level to the class instance
                 setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
                 if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
@@ -2523,85 +2559,19 @@ class DataDirectory:
                     # Assign the tree with the highest or requested analysis level as default to the class instance
                     setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
-        # tree_types = set()
-        # # Loop through the list of file handles
-        # for i, f in enumerate(self.file_handle_list):
-        #
-        #
-        #     # Collect the tree types
-        #     tree_types.update(*f.tree_types.keys())
-        #
-        #     # Select the highest analysis level trees for each class and store these trees as main attributes
-        #     for key in f.tree_types:
-        #         if key == "run":
-        #             setattr(self, "trun", f.dict_of_trees["trun"])
-        #         else:
-        #             setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-        #             if self.analysis_level>-1:
-        #
-        #
-        #
-        #             max_analysis_level = -1
-        #             for key1 in f.tree_types[key].keys():
-        #                 el = f.tree_types[key][key1]
-        #                 chain_name = el["name"]
-        #                 if "analysis_level" in el:
-        #                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-        #                         max_analysis_level = el["analysis_level"]
-        #                         max_anal_chain_name = chain_name
-        #
-        #                         setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-        #
-        #                 if chain_name not in chains_dict:
-        #                     chains_dict[chain_name] = ROOT.TChain(chain_name)
-        #                 chains_dict[chain_name].Add(self.file_list[i])
-        #
-        #                 # In case there is no analysis level info in the tree (old trees), just take the last one
-        #                 if max_analysis_level == -1:
-        #                     max_anal_chain_name = el["name"]
-        #
-        #             tree_class = getattr(thismodule, el["type"])
-        #             setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
-
-
-    def create_chains(self):
-        chains_dict = {}
-        tree_types = set()
-        # Loop through the list of file handles
-        for i, f in enumerate(self.file_handle_list):
-            # Collect the tree types
-            tree_types.update(*f.tree_types.keys())
-
-            # Select the highest analysis level trees for each class and store these trees as main attributes
-            for key in f.tree_types:
-                if key == "run":
-                    setattr(self, "trun", f.dict_of_trees["trun"])
-                else:
-                    max_analysis_level = -1
-                    for key1 in f.tree_types[key].keys():
-                        el = f.tree_types[key][key1]
-                        chain_name = el["name"]
-                        if "analysis_level" in el:
-                            if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-                                max_analysis_level = el["analysis_level"]
-                                max_anal_chain_name = chain_name
-
-                                setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-
-                        if chain_name not in chains_dict:
-                            chains_dict[chain_name] = ROOT.TChain(chain_name)
-                        chains_dict[chain_name].Add(self.file_list[i])
-
-                        # In case there is no analysis level info in the tree (old trees), just take the last one
-                        if max_analysis_level == -1:
-                            max_anal_chain_name = el["name"]
-
-                    tree_class = getattr(thismodule, el["type"])
-                    setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
-
-    def print(self, recursive=True):
+    def print(self, verbose=True):
         """Prints all the information about all the data"""
-        pass
+        print(f"This DataDirectory instance has:")
+        print(f"  {len(self.file_attrs):<3} file/tree attributes")
+        print(f"  {len(self.file_list):<3} files")
+        print(f"  {len(self.file_handle_list):<3} file chains")
+
+        if verbose:
+            print("\n\033[95;40mProperties of each file attribute:\033[0m")
+            for attr in self.file_attrs:
+                f = getattr(self, attr)
+                print(f"\n\n\033[34;40m{attr}:\033[0m\n")
+                f.print()
 
     def get_list_of_chains(self):
         """Gets list of TTree chains of specific type from the directory"""
@@ -2625,6 +2595,15 @@ class DataFile:
     tree_types = defaultdict(dict)
     """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
 
+    ## Does this instace hold a chain of files
+    is_tchain = False
+    """Does this instace hold a chain of files"""
+
+    ## File list in case this is a chain
+    flist = []
+    """File list in case this is a chain"""
+
+
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""
 
@@ -2632,12 +2611,38 @@ class DataFile:
         self.dict_of_trees = {}
         self.list_of_trees = []
         self.tree_types = defaultdict(dict)
+        self.is_tchain = False
+        self.flist = []
 
         # If a string given, open the file
         if type(filename) is str:
-            f = ROOT.TFile(filename)
-            self.f = f
-            self.filename = filename
+            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
+            flist = glob.glob(filename)
+            self.flist = flist
+            if len(flist) > 1:
+                f = ROOT.TFile(flist[0])
+                self.f = f
+                self.filename = flist[0]
+                self.is_tchain = True
+            # Single file
+            else:
+                f = ROOT.TFile(filename)
+                self.f = f
+                self.filename = filename
+        # If list of files is given, make a TChain
+        elif type(filename) is list:
+            if len(filename) > 1:
+                f = ROOT.TFile(filename[0])
+                self.f = f
+                self.filename = filename[0]
+                self.is_tchain = True
+                self.flist = filename
+            # Single file
+            else:
+                f = ROOT.TFile(filename[0])
+                self.f = f
+                self.filename = filename[0]
+                self.flist = filename
         elif type(filename) is ROOT.TFile:
             self.f = filename
             self.filename = self.f.GetName()
@@ -2653,6 +2658,16 @@ class DataFile:
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
+
+            # If we want a TChain
+            if self.is_tchain:
+                t = ROOT.TChain(t.GetName(), t.GetName())
+                # Assign files to the chain
+                for el in self.flist:
+                    t.Add(el)
+
+                # Modify the number of events for this TChain
+                tree_info["evt_cnt"] = t.GetEntries()
 
             # Add the tree to a dict for this tree class
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
@@ -2715,7 +2730,17 @@ class DataFile:
     def print(self):
         """Prints the information about the TTrees in the file"""
 
-        print(f"File size: {self.f.GetSize():40}")
+        # If this file is a chain
+        if self.is_tchain:
+            print("This DataFile is a chain of the following files:")
+            print(self.flist)
+            print(f"The first file size: {self.f.GetSize():40}")
+            print("Most of the information below are based on the tree in the first file")
+        else:
+            print("This DataFile refers to the following file:")
+            print(self.flist)
+            print(f"File size: {self.f.GetSize():40}")
+
         print(f"Tree classes found in the file: {str([el for el in self.tree_types.keys()]):40}")
 
         for key in self.tree_types:

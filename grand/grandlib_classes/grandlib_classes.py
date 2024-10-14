@@ -402,12 +402,21 @@ class Event:
         else:
             self._directory = value
 
-        # Set all the tree files as this file
+        # Set all the tree files as this file and trees as file's trees
         self.file_trun = self.directory.ftrun.f
-        if self.directory.ftvoltages: self.file_tvoltage = self.directory.ftvoltage.f
-        if self.directory.ftefield: self.file_tefield = self.directory.ftefield.f
-        if self.directory.ftshower_l1: self.file_tshower = self.directory.ftshower_l1.f
-        if self.directory.ftshower_l0: self.file_tsimshower = self.directory.ftshower_l0.f
+        self.trun = self.directory.trun
+        if self.directory.ftvoltages:
+            self.file_tvoltage = self.directory.ftvoltage.f
+            self.tvoltage = self.directory.tvoltage
+        if self.directory.ftefield:
+            self.file_tefield = self.directory.ftefield.f
+            self.tefield = self.directory.tefield
+        if self.directory.ftshower_l1:
+            self.file_tshower = self.directory.ftshower_l1.f
+            self.tshower = self.directory.tshower_l1
+        if self.directory.ftshower_l0:
+            self.tsimshower = self.directory.tshower_l0
+
 
     @property
     def origin_geoid(self):
@@ -898,7 +907,7 @@ class Event:
         self.trun.site = self.site
         # self.trun.site_long = self.site_long
         # self.trun.site_lat = self.site_lat
-        self.trun.origin_geoid = self.origin_geoid
+        self.trun.origin_geoid = self.origin_geoid[:,0]
         self.trun.t_bin_size = self._t_bin_size
 
         # Fill the tree with values
@@ -934,7 +943,8 @@ class Event:
         self.tvoltage.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
+        # self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
+        self.tvoltage.trace = [v.trace for v in self.voltages]
         # self.tvoltage.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
         # self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
@@ -981,7 +991,8 @@ class Event:
         self.tefield.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        # self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        self.tefield.trace = [v.trace for v in self.efields]
         # self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
         # self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
         # self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
@@ -1020,13 +1031,13 @@ class Event:
         ## Shower Xmax [g/cm2]
         self.tshower.xmax_grams = self.shower.Xmax
         ## Shower position in the site's reference frame
-        self.tshower.xmax_pos = self.shower.Xmaxpos
+        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0]
         ## Shower azimuth
         self.tshower.azimuth = self.shower.azimuth
         ## Shower zenith
         self.tshower.zenith = self.shower.zenith
         ## Poistion of the core on the ground in the site's reference frame
-        self.tshower.shower_core_pos = self.shower.core_ground_pos
+        self.tshower.shower_core_pos = self.shower.core_ground_pos[:,0]
 
         self.tshower.fill()
 
@@ -1077,6 +1088,10 @@ class EventList:
 
         self.event = Event()
         self.init_trees = True
+
+        # No need to init trees if using a DataDirectory (which inits the trees)
+        if self.directory:
+            self.init_trees = False
 
     def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
         """Get specified event from the event list"""

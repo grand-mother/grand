@@ -52,7 +52,7 @@ def find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max):
     return x_max, y_max
 
 
-def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.8):
+def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.96):
     """Parabolic interpolation of the maximum with more than 3 points
 
     trace : all values >= 0
@@ -76,6 +76,7 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.8):
     :param factor_hill:
     :type factor_hill:
     """
+    # y threshold mean around max (so 3 points) * factor_hill
     y_lim = (y_trace[idx_max - 1 : idx_max + 2].sum() / 3) * factor_hill
     logger.debug(f"y_lim={y_lim}")
     # 1

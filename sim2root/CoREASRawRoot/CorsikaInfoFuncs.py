@@ -273,23 +273,7 @@ def read_long(pathLongFile):
     TODO: fix hillas_parameter - something's not working yet
     """
     with open(pathLongFile, mode="r") as file:
-        # create a temporary file to write the corrected contents
-        temp_file = io.StringIO()
-
-        for line in file:
-            # use a regex to search for a minus sign that is not part of an exponent
-            if search(r"(?<!e)(-)(?=\d)", line):
-                # if the minus sign is not part of an exponent, replace it with a space and a minus sign
-                line = line.replace("-", " -")
-            # write the corrected line to the temporary file
-            temp_file.write(line)
-
-        # set the file pointer to the beginning of the temporary file
-        temp_file.seek(0)
-
-        # read the contents of the temporary file into a list of strings
-        lines = temp_file.readlines()
-
+        lines=file.readlines()
 
 
     n_steps = int(lines[0].rstrip().split()[3])
@@ -310,7 +294,7 @@ def read_long(pathLongFile):
     hillas_parameters = []
     for line in lines:
         if bool(search("PARAMETERS", line)):
-            parts = re.split(r"\s+", line)
+            parts = line.split()
             param1, param2, xmax, param4, param5, param6 = parts[2], parts[3], parts[4], parts[5], parts[6], parts[7]
             hillas_parameters.append(xmax)
         if bool(search("CHI", line)):
