@@ -126,7 +126,7 @@ class _FileEventBase:
         self.tt_shower.get_event(event_number, run_number)
         self.tt_run.get_run(run_number)
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.tt_run.du_id)}
-        self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
+        self.t_bin_size = np.asarray(self.tt_run.t_bin_size, dtype=np.float64)
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
         self.traces = np.asarray(self.tt_event.trace)
         self.sig_size = self.traces.shape[-1]
@@ -159,9 +159,21 @@ class _FileEventBase:
         """
         return nanosecond between 0s to 2s max
         """
+        du_s = np.array(self.tt_event.du_seconds, dtype=np.float64)
+        min_sec = du_s.min()
+        du_ns = np.array(self.tt_event.du_nanoseconds, dtype=np.float64) + 1e9 * (du_s - min_sec)
+        return du_ns, min_sec
+
+    def get_du_nanosec_ordered_int(self):
+        """
+        return nanosecond between 0s to 2s max
+        """
         du_s = np.array(self.tt_event.du_seconds)
+        print(du_s.dtype,du_s.shape )
+        print(du_s.min(), du_s.max())
         min_sec = du_s.min()
         du_ns = np.array(self.tt_event.du_nanoseconds) + 1000000000 * (du_s - min_sec)
+        print(du_ns.dtype, du_ns.shape)
         return du_ns
 
     def get_obj_handling3dtraces(self):
@@ -173,10 +185,11 @@ class _FileEventBase:
             f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
         )
         du_id = np.array(self.tt_event.du_id)
+        t0_ns, t_ref_s = self.get_du_nanosec_ordered()
         o_tevent.init_traces(
             self.traces,
             du_id,
-            self.get_du_nanosec_ordered(),
+            t0_ns,
             self.get_sampling_freq_mhz()[0],
         )
         l_idx = [self.idt2idx[idt] for idt in self.du_id]
@@ -250,10 +263,17 @@ def get_simu_parameters(f_name, idx_evt=0):
     event_files = get_file_event(f_name)
     event_files.load_event_idx(idx_evt)
     d_simu = {}
-    d_simu["xmax_pos_shc"] = event_files.tt_shower.xmax_pos_shc
+    xmax_sea_level = event_files.tt_shower.xmax_pos_shc
+    d_simu["xmax_pos_shc"] = xmax_sea_level
+    d_simu["xmax_sea_level"] = xmax_sea_level
+    origin_geoid = event_files.tt_run.origin_geoid
+    d_simu["origin_geoid"] = origin_geoid
+    d_simu["xmax_site_level"] = xmax_sea_level - np.array([0, 0, origin_geoid[2]])
     d_simu["azimuth"] = event_files.tt_shower.azimuth
     d_simu["zenith"] = event_files.tt_shower.zenith
     d_simu["energy_primary"] = event_files.tt_shower.energy_primary
+    d_simu["shower_core_pos"] = event_files.tt_shower.shower_core_pos
+    d_simu["magnetic_field"] = event_files.tt_shower.magnetic_field
     return d_simu
 
 
