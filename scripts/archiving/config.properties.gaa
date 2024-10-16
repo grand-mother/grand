@@ -1,4 +1,4 @@
-aipTempDirectory=/sps/grand/prod_grand/tests/archivage/archs/gaa/
+aipTempDirectory=/sps/grand/prod_grand/archiving/gaa/
 configMetadataDescriptiveDC=dc_gaa.xml
-configDocumentation=GRAND_DMP_2024.pdf
+configDocumentation=GRAND_DMP_2024.pdf,GrandRawFilesFormat.pdf,grand_dataflow_v2.pdf
 representationID_1=representation1
