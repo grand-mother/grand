@@ -345,6 +345,8 @@ class Efield2Voltage:
 
         # ----- antenna responses -----
         # compute_voltage() --> return Voltage(t=t, V=volt_t)
+        print("here frame",self.evt_shower.frame)
+  
         self.voc[du_idx, 0] = self.ant_leff_sn.compute_voltage(
             self.evt_shower.maximum, efield_idx, self.evt_shower.frame
         ).V

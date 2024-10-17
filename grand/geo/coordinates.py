@@ -571,7 +571,9 @@ class Geodetic(GeodeticRepresentation):
     Longitude:	Angle east and west of the Prime Meridian. The Prime Meridian
                             is a north-south line that passes through Greenwich, UK.
                             +ve to the east of the Prime Meridian, -ve to the west.
-                            Range: -180 deg to +180 deg.
+                            Range: 0 deg to 360 deg positive or negative. 
+                            Note that coordinate transformation is possible for +ve 0 to 360 deg.
+                            So negative values are changed to positive by adding 360.
     Height:	Also called altitude or elevation, this represents the height above
                     the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
                     mathematical surface defined by a semi-major axis and a semi-minor axis.
@@ -702,6 +704,10 @@ class Geodetic(GeodeticRepresentation):
 
         if isinstance(latitude, (Number, np.ndarray)):
             # use setter to replace placeholder coordinates values with the real values.
+            # RK: +ve 0 to 360 were only accepted for coordinate transformation. 
+            #     Now both +ve and -ve values are accepted for longitudes.
+            longitude = 360+longitude if longitude<0 else longitude 
+
             self.latitude = latitude
             self.longitude = longitude
             self.height = height
