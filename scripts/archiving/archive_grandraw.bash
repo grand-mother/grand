@@ -7,12 +7,13 @@ datadir="/sps/grand/data"
 archive_root_dir="/sps/grand/prod_grand/archiving"
 archive_root_name="doi+10.25520+in2p3.archive.grand"
 irods_path='/grand/home/trirods/data/archives/'
-# The script to create archive needs java 8 (some used libs are not available in java versions > 8)
-javabin='/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.422.b05-2.el9.x86_64/jre/bin/java'
+# The former script to create archive needed java 8 (some used libs are not available in java versions > 8) but is now corrected
+#javabin='/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.422.b05-2.el9.x86_64/jre/bin/java'
+javabin='java'
 
 # Get the year and month for 2 month ago
 read year month << DATE_COMMAND
- $(date --date="TODAY -3 month" "+%Y %m")
+ $(date --date="TODAY -2 month" "+%Y %m")
 DATE_COMMAND
 
 # Define dir to search
