@@ -57,7 +57,7 @@ from grand.sim import efield2voltage
 from grand.sim.efield2voltage import Efield2Voltage
 from grand.sim.detector.antenna_model import tabulated_antenna_model, AntennaModel
 from grand.sim.detector.process_ant import AntennaProcessing
-from grand.sim.detector.rf_chain2 import RFChain
+from grand.sim.detector.rf_chain import RFChain
 from grand.sim.noise.galaxy import galactic_noise
 from grand.sim.shower.gen_shower import ShowerEvent
 from grand.sim.shower.pdg import ParticleCode
