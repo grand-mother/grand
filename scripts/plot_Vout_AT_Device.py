@@ -12,7 +12,7 @@ October 2024 SN
 import numpy as np
 import h5py
 import scipy.fft as sf
-import grand.sim.detector.rf_chain2 as grfc
+import grand.sim.detector.rf_chain as grfc
 from grand import grand_add_path_data
 import grand.manage_log as mlg
 
