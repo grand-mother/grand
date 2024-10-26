@@ -87,7 +87,7 @@ def manage_args():
     
     parser.add_argument(
         "--rf_chain_gaa",
-        action="store_false",
+        action="store_true",
         default=False,
         help="add RF chain for G@Auger setup",
     )
@@ -160,7 +160,8 @@ if __name__ == "__main__":
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
-
+    signal.params["add_rf_chain_nut"] = args.rf_chain_nut
+    signal.params["add_rf_chain_gaa"] = args.rf_chain_gaa
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
     signal.compute_voltage()    # saves automatically
