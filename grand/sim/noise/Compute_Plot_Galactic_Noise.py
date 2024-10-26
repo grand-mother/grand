@@ -23,13 +23,13 @@
                 #LST value for frequency plot
 # Example of how to use:
 #python3 Compute_plot_Galactic_Noise.py --site gp13 --du_type GP300 --run_mode Voc --lst_value 18
-# For the Voc run_mode the output file that saved is in shape (221,72,3) wich means the Volts/Hz for 221 #frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
+# For the Voc run_mode the output file that saved is in shape (221,72,3) wich means the Volts^2/Hz (square Vrms) for 221 #frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
 
-# For the Vout run_mode the output file that saved is in shape (221,72,3) wich means the Volts/Hz for #221 frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
+# For the Vout run_mode the output file that saved is in shape (221,72,3) wich means the Volts^2/Hz (square Vrms) for #221 frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
 
 # For the PL run_mode the output file that saved is in shape (221,72,3) wich means the Watt/Hz for 221 #frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
 
-# For the Efield run_mode the output file that saved is in shape (221,72,3) wich means the <temp * kB> (J), the average radiance <B_nu> (W/m2/Hz) and the average Efiled_rms^2 (V2/m2/Hz) for 221 #frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min).
+# For the Efield run_mode the output file that saved is in shape (221,72,3) wich means the <temp * kB> (J), the average radiance <B_nu> (W/m2/Hz) and the average Efiled_rms^2 (V^2/m^2/Hz) for 221 #frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min).
 
 
 import numpy as np
