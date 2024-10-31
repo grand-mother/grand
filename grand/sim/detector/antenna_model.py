@@ -1,3 +1,11 @@
+# Modified by SN in April 2024, in order to include the models for the effective length of the antennas produced by the codes NEC and matlab from HOU group. 
+# The coresponding files are Light_GP300Antenna_nec_*_leff.npz and Light_GP300Antenna_mat_*_leff.npz for NEC and matlab respectively (* stands for the 3 arms X-NS, Y-EW and Z-vertical)
+# The default effective length model were produced using HFSS simulation code by Xidian group. 
+# The coresponding files of the default model are Light_GP300Antenna_EWarm_leff.npz, Light_GP300Antenna_SNarm_leff.npz and Light_GP300Antenna_Zarm_leff.npz.
+# For details on how these simulations were produced using the different codes and comparisons between different model (HFSS, NEC matlab) please refer to the documents and presentations 
+# posted in forge software forum https://forge.in2p3.fr/projects/software-forum/dmsf (for NEC and matlab) and https://forge.in2p3.fr/documents/1353, https://forge.in2p3.fr/documents/1354 for the HFSS simulations.
+
+
 from logging import getLogger
 
 from grand import grand_add_path_data

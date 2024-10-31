@@ -102,22 +102,6 @@ def geoid_undulation(latitude=None, longitude=None):
 # Define functions to transform from one coordinate representation to
 # another coordinate representation. Cartesian, Spherical, and Horizontal
 # coordinate representation are defined.
-
-#The old angular convention
-#def _cartesian_to_spherical(
-#    x: Union[float, int, np.ndarray],
-#    y: Union[float, int, np.ndarray],
-#    z: Union[float, int, np.ndarray],
-#) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
-#    """Transform Cartesian coordinates to spherical"""
-#    rho2 = x ** 2 + y ** 2
-#    rho = np.sqrt(rho2)
-#    theta = np.rad2deg(np.arctan2(rho, z))
-#    phi = np.rad2deg(np.arctan2(y, x))
-#    r = np.sqrt(rho2 + z ** 2)
-#
-#    return theta, phi, r
-
 def _cartesian_to_spherical(
     x: Union[float, int, np.ndarray],
     y: Union[float, int, np.ndarray],
@@ -126,16 +110,11 @@ def _cartesian_to_spherical(
     """Transform Cartesian coordinates to spherical"""
     rho2 = x ** 2 + y ** 2
     rho = np.sqrt(rho2)
-    theta = 180. - np.rad2deg(np.arctan2(rho, z))
-    phi = np.rad2deg(np.arctan2(y, x)) + 180.
+    theta = np.rad2deg(np.arctan2(rho, z))
+    phi = np.rad2deg(np.arctan2(y, x))
     r = np.sqrt(rho2 + z ** 2)
-    if phi==360:
-        phi=0
-    else:
-        phi=phi
+
     return theta, phi, r
-
-
 
 
 # Horizontal has an axis fixed to geographic North, so it can not be
@@ -150,21 +129,6 @@ def _cartesian_to_horizontal(
     theta, phi, r = _cartesian_to_spherical(x, y, z)
     return _spherical_to_horizontal(theta, phi, r)
 
-#The old angular convention
-#def _spherical_to_cartesian(
-#    theta: Union[float, int, np.ndarray],
-#    phi: Union[float, int, np.ndarray],
-#    r: Union[float, int, np.ndarray],
-#) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
-#    """Transform spherical coordinates to Cartesian"""
-#    cos_theta = np.cos(np.deg2rad(theta))
-#    sin_theta = np.sin(np.deg2rad(theta))
-#
-#    x = r * np.cos(np.deg2rad(phi)) * sin_theta
-#    y = r * np.sin(np.deg2rad(phi)) * sin_theta
-#    z = r * cos_theta
-#
-#    return x, y, z
 
 def _spherical_to_cartesian(
     theta: Union[float, int, np.ndarray],
@@ -172,16 +136,15 @@ def _spherical_to_cartesian(
     r: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
     """Transform spherical coordinates to Cartesian"""
-    cos_theta = np.cos(np.deg2rad(180. - theta))
-    sin_theta = np.sin(np.deg2rad(180. - theta))
+    cos_theta = np.cos(np.deg2rad(theta))
+    sin_theta = np.sin(np.deg2rad(theta))
 
-    x = r * np.cos(np.deg2rad(phi + 180.)) * sin_theta
-    y = r * np.sin(np.deg2rad(phi + 180.)) * sin_theta
+    x = r * np.cos(np.deg2rad(phi)) * sin_theta
+    y = r * np.sin(np.deg2rad(phi)) * sin_theta
     z = r * cos_theta
 
     return x, y, z
-    
-    
+
 
 def _spherical_to_horizontal(
     theta: Union[float, int, np.ndarray],
@@ -190,8 +153,8 @@ def _spherical_to_horizontal(
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform spherical coordinates to horizontal"""
     # return 0.5 * np.pi - phi, 0.5 * np.pi - theta, r
-    #return 90.0 - phi, 90.0 - theta, r #(the old angular convention)
-    return 270.0 - phi, theta - 90.0, r
+    return 90.0 - phi, 90.0 - theta, r
+
 
 # Horizontal has an axis fixed to geographic North, so it can not be
 # converted like cartesian and spherical. If conversion is done, then
@@ -213,8 +176,8 @@ def _horizontal_to_spherical(
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """Transform horizontal coordinates to spherical"""
     # return 0.5 * np.pi - elevation, 0.5 * np.pi - azimuth, norm
-    #return 90.0 - elevation, 90.0 - azimuth, norm #(the old angular convention)
-    return 90.0 + elevation, 270.0 - azimuth, norm
+    return 90.0 - elevation, 90.0 - azimuth, norm
+
 
 # -----------Base Representation------------
 class Coordinates(np.ndarray):
@@ -1297,7 +1260,6 @@ class GRANDCS(LTP):
             height=height,  # height of LTP's location/origin
             location=location,  # location of LTP in Geodetic, GRANDCS, or ECEF
             orientation="NWU",  # orientation of LTP. 'NWU', 'ENU' etc
-            #orientation="SED",  # orientation of LTP. 'NWU', 'ENU' etc
             magnetic=True,  # shift orientation by magnetic declination?
             magmodel="IGRF13",  # if shift, which magnetic model to use?
             declination=None,  # or simply provide the magnetic declination
