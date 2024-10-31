@@ -227,7 +227,7 @@ def read_long(pathLongFile):
 
         for line in file:
             # use a regex to search for a minus sign that is not part of an exponent
-            if search(r"(?<!E)(-)(?=\d)", line):
+            if search(r"(?<!e)(-)(?=\d)", line):
                 # if the minus sign is not part of an exponent, replace it with a space and a minus sign
                 line = line.replace("-", " -")
                 #line = line.replace("-", "-")
