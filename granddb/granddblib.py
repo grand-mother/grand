@@ -22,22 +22,33 @@ mlg.create_output_for_logger("debug", log_stdout=True)
 
 
 def casttodb(value):
+    #print(f'{type(value)} - {value}')
     if isinstance(value, numpy.uint32):
-        value = int(value)
-    if isinstance(value, numpy.float32):
-        value = float(value)
-    if isinstance(value, numpy.ndarray):
+        val = int(value)
+    elif isinstance(value, numpy.float32):
+        val = float(value)
+    elif isinstance(value, numpy.ndarray):
         if value.size == 0:
-            value = None
+            val = None
         elif value.size == 1:
-            value = value.item()
+            val = value.item()
         else:
-            value = value.tolist()
-    if isinstance(value, grand.dataio.root_trees.StdVectorList):
-        value = [i for i in value]
-    if isinstance(value, str):
-        value = value.strip().strip('\t').strip('\n')
-    return value
+            val = value.tolist()
+    elif isinstance(value, grand.dataio.root_trees.StdVectorList):
+        val =[]
+        #postgres cannot store arrays of arrays... so we split (not sure if really correct)!
+        for i in value:
+            if isinstance(i,numpy.ndarray) or isinstance(i, grand.dataio.root_trees.StdVectorList):
+                val.append(casttodb(i))
+            else:
+                val.append(i)
+
+        #value = [i for i in value]
+    elif isinstance(value, str):
+        val = value.strip().strip('\t').strip('\n')
+    else:
+        val = value
+    return val
 
 
 ## @brief Class to handle the Grand database.
@@ -94,7 +105,8 @@ class Database:
         Base = automap_base()
 
         Base.prepare(engine, reflect=True)
-        self.sqlalchemysession = Session(engine)
+        self.sqlalchemysession = Session(engine,autoflush=False)
+        #self.sqlalchemysession.no_autoflush = True
         inspection = inspect(engine)
         for table in inspection.get_table_names():
             # for table in engine.table_names(): #this is obsolete
@@ -306,21 +318,37 @@ class Database:
     # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e it's a new file)
     # and false if the file was already registered. This is usefull to know if the metadata of the file needs to be read
     # or not
-    def register_filename(self, filename, newfilename, id_repository, provider):
+    def register_filename(self, filename, newfilename, dataset, id_repository, provider, targetfile=None):
         import os
         register_file = False
         isnewfile = False
         idfile = None
+        id_dataset = None
+        if targetfile is None:
+            targetfile = newfilename
+        if dataset is not None:
+            id_dataset = self.get_or_create_key('dataset', 'dataset_name', os.path.basename(dataset))
+            filt = {}
+            filt['id_dataset'] = str(casttodb(id_dataset))
+            filt['id_repository'] = str(casttodb(id_repository))
+            ret = self.sqlalchemysession.query(getattr(self._tables['dataset_location'], 'id_dataset')).filter_by(
+                **filt).all()
+            if len(ret) == 0:
+                container = self.tables()['dataset_location'](id_dataset=id_dataset, id_repository=id_repository, path=dataset,
+                                                              description="")
+                self.sqlalchemysession.add(container)
+                self.sqlalchemysession.flush()
+
         ## Check if file not already registered IN THIS REPO : IF YES, ABORT, IF NO REGISTER
+        #First see if file is registered elsewhere
         file_exist = self.sqlalchemysession.query(self.tables()['file']).filter_by(
-            filename=os.path.basename(newfilename)).first()
+            filename=os.path.basename(targetfile),id_dataset=id_dataset).first()
         if file_exist is not None:
-            # file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
-            #    id_repository=id_repository).first()
+            #File exists somewhere... see if in the repository we want
             file_exist_here = self.sqlalchemysession.query(self.tables()['file_location']).filter_by(
-                id_repository=id_repository).first()
+                id_repository=id_repository, id_file=file_exist.id_file).first()
             if file_exist_here is None:
-                # file exists in different repo. We only need to register it in the current repo
+                # file exists but in a different repo. We only need to register it in the current repo
                 register_file = True
                 idfile = file_exist.id_file
         else:
@@ -332,11 +360,11 @@ class Database:
         if register_file:
             id_provider = self.get_or_create_key('provider', 'provider', provider)
             if isnewfile:
-                # rfile = ROOT.TFile(str(filename))
                 rfile = rdb.RootFile(str(filename))
-                rfile.dataset_name()
+                #rfile.dataset_name()
                 # rfile.file().GetSize()
-                container = self.tables()['file'](filename=os.path.basename(newfilename),
+                container = self.tables()['file'](id_dataset=id_dataset,
+                                                  filename=os.path.basename(targetfile),
                                                   description='autodesc',
                                                   original_name=os.path.basename(filename),
                                                   id_provider=id_provider,
@@ -346,9 +374,10 @@ class Database:
                 self.sqlalchemysession.flush()
                 idfile = container.id_file
             # container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=os.path.dirname(newfilename))
-            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=newfilename,
+            container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=targetfile,
                                                        description="")
             self.sqlalchemysession.add(container)
+            logger.debug(f"File name {filename} registered")
             # self.sqlalchemysession.flush()
 
         return idfile, isnewfile
@@ -485,8 +514,8 @@ class Database:
                 # print('Execution time:', elapsed_time, 'seconds')
                 logger.debug(f"execution time {elapsed_time} seconds")
 
-    def register_file(self, orgfilename, newfilename, id_repository, provider):
-        idfile, read_file = self.register_filename(orgfilename, newfilename, id_repository, provider)
+    def register_file(self, orgfilename, newfilename, dataset, id_repository, provider, targetdir=None):
+        idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetdir)
         if read_file:
             # We read the localfile and not the remote one
             self.register_filecontent(orgfilename, idfile)
@@ -494,3 +523,5 @@ class Database:
         else:
             logger.info(f"file {orgfilename} already registered.")
         self.sqlalchemysession.commit()
+
+

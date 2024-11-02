@@ -21,8 +21,9 @@ localdir = ["/home/fleg/incoming/"]
 ; If credentials are required to access the repository, they should be given in the [credential] section using the same name
 ; repository CCIN2P3 is already defined in the database (so it's not necessary to define it here), but credentials for it have
 ; to be supplied in the [credentials] section below
+; THIS DEFINITIONS OVERRIDE THE ONES FROM THE DATABASE
 [repositories]
-CCIN2P3 = ["ssh","cca.in2p3.fr",22,["/sps/grand/data/nancay/GRANDfiles"]]
+CC = ["ssh","cca.in2p3.fr",22,["/sps/grand/data/nancay/GRANDfiles"]]
 
 
 ; Credentials for repositories given as :
@@ -35,6 +36,7 @@ CCIN2P3 = ["ssh","cca.in2p3.fr",22,["/sps/grand/data/nancay/GRANDfiles"]]
 ; To run an ssh-agent just do : `eval $(ssh-agent)` and `ssh-add .ssh/id_rsa`
 [credentials]
 CCIN2P3 = ["john",""]
+CC = ["jim",""]
 SSHTUNNEL = ["joe",""]
 
 ; database to use (only one database can be defined)

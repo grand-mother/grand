@@ -1,6 +1,7 @@
 import ROOT
 import grand.dataio.root_trees as groot
 import grand.manage_log as mlg
+import os
 logger = mlg.get_logger_for_script(__name__)
 #mlg.create_output_for_logger("debug", log_stdout=True)
 
@@ -136,21 +137,21 @@ class RootFile:
         'hadronic_model': 'id_hadronic_model',
         'low_energy_model': 'id_low_energy_model',
         'cpu_time': 'cpu_time',
-        #        'long_pd_depth': 'long_pd_depth',
-        #        'long_pd_eminus': 'long_pd_eminus',
-        #        'long_pd_eplus': 'long_pd_eplus',
-        #        'long_pd_muminus': 'long_pd_muminus',
-        #        'long_pd_muplus': 'long_pd_muplus',
-        #        'long_pd_gamma': 'long_pd_gamma',
-        #        'long_pd_hadron': 'long_pd_hadron',
-        #        'long_gamma_elow': 'long_gamma_elow',
-        #        'long_e_elow': 'long_e_elow',
-        #        'long_e_edep': 'long_e_edep',
-        #        'long_mu_edep': 'long_mu_edep',
-        #        'long_mu_elow': 'long_mu_elow',
-        #        'long_hadron_edep': 'long_hadron_edep',
-        #        'long_hadron_elow': 'long_hadron_elow',
-        #        'long_neutrino': 'long_neutrino',
+        #'long_pd_depth': 'long_pd_depth',
+        #'long_pd_eminus': 'long_pd_eminus',
+        #'long_pd_eplus': 'long_pd_eplus',
+        #'long_pd_muminus': 'long_pd_muminus',
+        #'long_pd_muplus': 'long_pd_muplus',
+        #'long_pd_gamma': 'long_pd_gamma',
+        #'long_pd_hadron': 'long_pd_hadron',
+        #'long_gamma_elow': 'long_gamma_elow',
+        #'long_e_elow': 'long_e_elow',
+        #'long_e_edep': 'long_e_edep',
+        #'long_mu_edep': 'long_mu_edep',
+        #'long_mu_elow': 'long_mu_elow',
+        #'long_hadron_edep': 'long_hadron_edep',
+        #'long_hadron_elow': 'long_hadron_elow',
+        #'long_neutrino': 'long_neutrino',
         'event_weight': 'event_weight'
     }
     tadcToDB = {
@@ -307,9 +308,11 @@ class RootFile:
     #TreeList is a dict with name of the trees as key and the class corresponding to it's type as value
     TreeList = {}
     file = None
+    filename = None
 
     ## We retreive the list of Ttrees in the file  and store them as the corresponding class from root_files.py in the dict TreeList
     def __init__(self, f_name):
+        self.filename = f_name
         self.TreeList.clear()
         self.file = ROOT.TFile(f_name)
         for key in self.file.GetListOfKeys():
@@ -341,6 +344,8 @@ class RootFile:
     # [extra]-> given by user (metadata ?)
     # serial -> automatically incremented in case of new version (how to do that ?)
     def dataset_name(self):
+        name = os.path.basename(os.path.dirname(self.filename))
+        return name
         treename = 'trun'
         name = "noname"
         for run in self.TreeList[treename].get_list_of_runs():
