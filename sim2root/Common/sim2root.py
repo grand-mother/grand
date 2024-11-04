@@ -11,7 +11,7 @@ from grand.dataio.root_trees import * # this is home/grand/grand (at least in do
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
 import matplotlib.pyplot as plt
-from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
+from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -559,6 +559,8 @@ def rawshower2grandroot(trawshower, gt):
     ### Primary energy (GeV)
     # ToDo: it should be a scalar on sim side
     gt.tshower.energy_primary = trawshower.energy_primary[0]
+
+    gt.tshower.energy_em = trawshower.energy_em[0]
 
     ### Shower azimuth (deg, CR convention)
     gt.tshower.azimuth = trawshower.azimuth
