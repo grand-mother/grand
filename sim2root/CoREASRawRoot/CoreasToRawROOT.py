@@ -271,6 +271,9 @@ def CoreasToRawRoot(file, simID=None):
   site = read_site(inp_input)
   latitude, longitude, altitude = read_lat_long_alt(site)
 
+  # set altitude to simulations obslevel
+  altitude = CorePosition[2]
+
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
@@ -292,6 +295,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.rnd_seed = RandomSeed
 
   RawShower.energy_in_neutrinos = EnergyInNeutrinos
+  RawShower.energy_em = [Eem]
   RawShower.energy_primary = [Energy]
   RawShower.azimuth = azimuth
   RawShower.zenith = zenith
