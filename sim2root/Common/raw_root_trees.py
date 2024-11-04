@@ -67,6 +67,9 @@ class RawShowerTree(MotherEventTree):
     
     ###X Primary energy (GeV) 
     energy_primary: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+
+    ###X Electromagnetic energy (GeV) 
+    energy_em: StdVectorListDesc = field(default=StdVectorListDesc("float"))
     
     ### Shower azimuth (deg, CR convention)
     _azimuth: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
