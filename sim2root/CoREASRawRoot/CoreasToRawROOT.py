@@ -3,6 +3,7 @@
 ## by Jelena Köhler, @jelenakhlr
 
 import sys
+import numpy as np
 import os
 import glob
 import time #to get the unix timestamp
@@ -235,6 +236,15 @@ def CoreasToRawRoot(file, simID=None):
   ed_hadron_cut = energy_dep[:,7]
   ed_neutrino = energy_dep[:,8]
   ed_sum = energy_dep[:,9]
+
+
+  Egamma = np.sum(ed_gamma)
+  Eem_ion = np.sum(ed_em_ioniz)
+  Eem_cut = np.sum(ed_em_cut)
+
+  # calculate electromagnetic shower energy and convert to eV
+  Eem = (Egamma + Eem_ion + Eem_cut) * 1e9
+  print("Electromagnetic shower energy:", Eem)
 
 
   ##############################################
