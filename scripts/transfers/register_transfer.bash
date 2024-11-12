@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 register_transfers='python3 /pbs/home/p/prod_grand/scripts/transfers/register_transfers.py'
 
