@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 # Script to tar all logs olders than -d month for site -s site.
 data_path='/sps/grand/data'
 

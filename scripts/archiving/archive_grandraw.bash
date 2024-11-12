@@ -23,7 +23,7 @@ date="${year}_${month}"
 # Loop over site data directories
 #dir="2023/12"
 #site="gaa"
-for site in gaa gp13
+for site in gaa gp13 gp80
 do
   outfile=${archive_root_name}.${site}.${date}
 	outdir="${archive_root_dir}/${site}/${outfile}"
@@ -82,12 +82,12 @@ do
         rm ${outdir}.tar >> ${logfile} 2>&1
         echo "Raw data of ${year}/${month} from ${site} archived " >> ${logfile}
 
-        #echo "compress files" >> ${logfile}
-        #while IFS= read -r line
-        #do
-        #  echo "gzip ${line}"
-        #  gzip $line
-        #done < "${fileslist}"
+        echo "compress files" >> ${logfile}
+        while IFS= read -r line
+        do
+          echo "gzip ${line}"
+          gzip $line
+        done < "${fileslist}"
 
         rm ${fileslist}
 

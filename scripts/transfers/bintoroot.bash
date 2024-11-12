@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 # path to gtot
 gtot_path='/pbs/home/p/prod_grand/softs/gtot/cmake-build-release/gtot'
@@ -22,7 +22,7 @@ while getopts ":d:g:n:" option; do
     :)
       printf "option -${OPTARG} need an argument\n"
       exit 1;;
-    ?) # Invalid option
+    *) # Invalid option
       printf "Error: Invalid option -${OPTARG}\n"
       exit 1;;
   esac
@@ -30,20 +30,20 @@ done
 
 shift $(($OPTIND - 1))
 
-export PLATFORM=redhat-9-x86_64
+#export PLATFORM=redhat-9-x86_64
 cd /pbs/home/p/prod_grand/softs/grand
 source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
 
 
 #Export some env to make irods works
-export LOADEDMODULES=DataManagement/irods/4.3.1
-export TRIRODS_DATA_DIR=/grand/home/trirods/data
-export BASH_ENV=/usr/share/Modules/init/bash
-export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/redhat-9-x86_64/irods/4.3.1/lib:/pbs/software/redhat-9-x86_64/irods/irods-externals/4.3.1/lib
-export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/software/rfio-hpss/prod/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/opt/ccin2p3/bin:/pbs/software/redhat-9-x86_64/irods/utils:/pbs/software/redhat-9-x86_64/irods/4.3.1/bin:.
-export _LMFILES_=/pbs/software/modulefiles/redhat-9-x86_64/DataManagement/irods/4.3.1
-export IRODS_PLUGINS_HOME=/pbs/software/redhat-9-x86_64/irods/4.3.1/lib/plugins
-export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
+#export LOADEDMODULES=DataManagement/irods/4.3.1
+#export TRIRODS_DATA_DIR=/grand/home/trirods/data
+#export BASH_ENV=/usr/share/Modules/init/bash
+#export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/redhat-9-x86_64/irods/4.3.1/lib:/pbs/software/redhat-9-x86_64/irods/irods-externals/4.3.1/lib
+#export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/software/rfio-hpss/prod/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/opt/ccin2p3/bin:/pbs/software/redhat-9-x86_64/irods/utils:/pbs/software/redhat-9-x86_64/irods/4.3.1/bin:.
+#export _LMFILES_=/pbs/software/modulefiles/redhat-9-x86_64/DataManagement/irods/4.3.1
+#export IRODS_PLUGINS_HOME=/pbs/software/redhat-9-x86_64/irods/4.3.1/lib/plugins
+#export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
 conda activate /sps/grand/software/conda/grandlib_2409
 source env/setup.sh
 cd /pbs/home/p/prod_grand/scripts/transfers
@@ -66,16 +66,39 @@ do
     if [ ! -d $dirlogs  ];then
       mkdir -p $dirlogs >/dev/null 2>&1
     fi
-    #Determine if file is TR (so no conversion)
-    tr=$(echo basename ${file} |awk -F_ '{print $5}')
-    if [ $tr == "TR" ]; then
-      cp ${file} ${dest}/${filename%.*}.root
-      conv_status=0
-    else
-      # Convert file
-      ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
-      conv_status=$?
-    fi
+    #Determine if file is TR (so no conversion) or CD and gp80 so -gc option is required
+    tr=$($(echo basename ${file}) |awk -F_ '{print $5}')
+    case $tr in
+      TR)
+        cp ${file} ${dest}/${filename%.*}.root
+        conv_status=0
+        ;;
+      CD)
+        site=${filename%_*}
+        site=$($(echo basename ${file}) |awk -F_ '{print $1}')
+        if [ "${site,,}" == "gp80" ]; then
+          gtot_extra_option="-gc"
+        else
+          gtot_extra_option=${gtot_options}
+        fi
+        ${gtot_path}  ${gtot_extra_option} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+        conv_status=$?
+        ;;
+      *)
+        ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+        conv_status=$?
+        ;;
+    esac
+
+    #if [ $tr == "TR" ]; then
+    #  cp ${file} ${dest}/${filename%.*}.root
+    #  conv_status=0
+    #else
+    #  # Convert file
+    #  ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+    #  conv_status=$?
+    #fi
+
     if [ "$conv_status" -ne 0 ]; then
       notify=1
     fi
