@@ -9,15 +9,17 @@
 # Site name prefix in filenames
 # 'GP13' for gp13
 # gaa for gaa
-site='GP13'
+# GP80 for gp80
+site='GP80'
 
 # Start date for transfer (all files older than this date will be skipped
-first_transfer='20240314'
+first_transfer='20241102'
 
 # skip open files (if set to false the opened files will be transfered into /tmp)
 declare -A defskipopenfiles
 defskipopenfiles["gaa"]=false
 defskipopenfiles["GP13"]=true
+defskipopenfiles["GP80"]=true
 skipopenfiles=${defskipopenfiles[$site]}
 
 # Local database name (sqlite filename)
@@ -26,6 +28,7 @@ skipopenfiles=${defskipopenfiles[$site]}
 declare -A defdbfile
 defdbfile["gaa"]='/home/grand/data-transfer/grand_transfer.db'
 defdbfile["GP13"]='grand_transfer_Since202409.db'
+defdbfile["GP80"]='grand_gp80_transfer.db'
 dbfile=${defdbfile[$site]}
 
 # Local directory where are stored the data to be transfered (will be explored recursively)
@@ -34,6 +37,7 @@ dbfile=${defdbfile[$site]}
 declare -A deflocaldatadir
 deflocaldatadir["gaa"]='/data/Malargue/'
 deflocaldatadir["GP13"]='/share03/users/m/mapx/cc-in2p3/'
+deflocaldatadir["GP80"]='/share03/users/m/mapx/cc-in2p3/'
 localdatadir=${deflocaldatadir[$site]}
 
 #path to local rsync to use (leave blank if your default rsync --version >= 3.2.3
@@ -52,6 +56,7 @@ remote_account='prod_grand'
 declare -A defssh_key_rsync
 defssh_key_rsync["gaa"]="/root/.ssh/id_ed25519-nopw"
 defssh_key_rsync["GP13"]="/home/mapx/.ssh/id_ed25519-rsync"
+defssh_key_rsync["GP80"]="/home/mapx/.ssh/id_ed25519-rsync"
 ssh_key_rsync=${defssh_key_rsync[$site]}
 
 #ssh key for exec remote scripts
@@ -60,6 +65,7 @@ ssh_key_rsync=${defssh_key_rsync[$site]}
 declare -A defssh_key_exec
 defssh_key_exec["gaa"]="/root/.ssh/id_ed25519-nopw-scripts"
 defssh_key_exec["GP13"]="/home/mapx/.ssh/id_ed25519-scripts"
+defssh_key_exec["GP80"]="/home/mapx/.ssh/id_ed25519-scripts"
 ssh_key_exec=${defssh_key_exec[$site]}
 
 # Target directory on remote server, must be the same directory as the one defined in remote_account@remote_server:~/.ssh/authorized_keys for ssh_key_rsync
@@ -68,6 +74,7 @@ ssh_key_exec=${defssh_key_exec[$site]}
 declare -A defremotedatadir
 defremotedatadir["gaa"]='/sps/grand/data/gaa'
 defremotedatadir["GP13"]='/sps/grand/data/gp13'
+defremotedatadir["GP80"]='/sps/grand/data/gp80'
 remotedatadir=${defremotedatadir[$site]}
 
 
@@ -77,6 +84,7 @@ remotedatadir=${defremotedatadir[$site]}
 declare -A defpre_run_script
 defpre_run_script["gaa"]='/root/bin/setup_network_auger.bash -init'
 defpre_run_script["GP13"]=''
+defpre_run_script["GP80"]=''
 pre_run_script=${defpre_run_script[$site]}
 
 # Local script to be launched after run
@@ -85,6 +93,7 @@ pre_run_script=${defpre_run_script[$site]}
 declare -A defpost_run_script
 defpost_run_script["gaa"]='/root/bin/setup_network_auger.bash -close'
 defpost_run_script["GP13"]=''
+defpost_run_script["GP80"]=''
 
 # rsync_options : a to keep the creation time of files, z to compress if bandwidth is limited (but it's ~5 times slower). Please keep the "a" option  !
 rsync_options="-az --mkpath --chmod=go-w"
@@ -196,7 +205,6 @@ do
 	if [ "$?" -eq "0" ]
 	then
 	  md5=${trans#*md5:}
-	  #echo $md52
 		#Transfer successful : store info to update database at the end
 		translog[$i]+=";UPDATE gfiles SET success=1, md5sum='${md5}' WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,target,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'), \"${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}\", '${trans}')"
 		# colors only for terminal
