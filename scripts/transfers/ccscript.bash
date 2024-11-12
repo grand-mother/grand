@@ -6,20 +6,16 @@
 # Copyright : Grand Observatory 2024
 
 # path to bin2root file
-bin2root='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/bintoroot.bash'
-register_transfers='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfer.bash'
-refresh_mat_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/refresh_mat_views.bash'
+bin2root='/pbs/home/p/prod_grand/scripts/transfers/bintoroot.bash'
+register_transfers='/pbs/home/p/prod_grand/scripts/transfers/register_transfer.bash'
+refresh_mat_script='/pbs/home/p/prod_grand/scripts/transfers/refresh_mat_views.bash'
 update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
-tar_logs_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/tar_logs.bash'
-config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
+tar_logs_script='/pbs/home/p/prod_grand/scripts/transfers/tar_logs.bash'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
-gtot_option="-g1 -os"
+gtot_option="-g1"
 
 # number of files to group in same submission
-nbfiles=10
-
-# nbjobs for number of simultaneous jobs running
-nbjobs=10
+nbfiles=3
 
 #time required to run bin2root on one file
 bin2rootduration=15
@@ -76,13 +72,13 @@ done
 
 case ${site,,} in
   gp13)
-    gtot_option="-g1 -rn -os -ow";;
+    gtot_option="-g1 -rn";;
   gp80)
-    gtot_option="-g1 -os -rn -ow";;
+    gtot_option="-g1 -os -rn";;
   gaa)
-    gtot_option="-f2 -os -ow";;
+    gtot_option="-f2";;
   ?)
-    gtot_option="-g1 -os";;
+    gtot_option="-g1";;
 esac
 
 #test dbfile exists and tag is set
@@ -111,10 +107,9 @@ if [ ! -d $crap_dir ];then
 fi
 # First register raw files transfers into the DB and get the id of the registration job
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
-echo "#!/bin/bash" > $outfile
-echo "# ${0} ${@}" >> $outfile
-echo "$register_transfers -d $db -t $tag -c $config_file" >> $outfile
-jregid=$(sbatch -t 0-00:20 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+echo "#!/bin/bash -l" > $outfile
+echo "$register_transfers -d $db -t $tag" >> $outfile
+jregid=$(sbatch -t 0-00:20 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
 jregid=$(echo $jregid |awk '{print $NF}')
 
 # List files to be converted and group them by bunchs of nbfiles
@@ -141,47 +136,26 @@ done
 jobtime=`date -d@$(($bin2rootduration*60*$nbfiles))  -u +%H:%M`
 convjobs=""
 # Launch convertion of files (but after the registration has finished)
-# Add dependency to avoid too much connexions to the database at the same time
-
-# jobsid[j] store the id of submited job j
-declare -A jobsid
-#we use a k index because j is not necessarily ordered
-k=0
 for j in  "${!listoffiles[@]}"
 do
   outfile="${submit_dir}/${submit_base_name}-${j}.bash"
 	logfile="${submit_dir}/${submit_base_name}-${j}.log"
-	echo "#!/bin/bash" > $outfile
+	echo "#!/bin/bash -l" > $outfile
 	echo "$bin2root -g '$gtot_option' -n $submit_base_name -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	# The first nbjobs are launched after registration (jregid) ended
-	if [ "$k" -gt "$nbjobs" ]; then
-	  # The next jobs are launched only when a previous one ended (so dependency of the id of job j-nbjobs)
-	  l=$((k - nbjobs))
-	  jregid=${jobsid[${l}]}
-  fi
-  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
-  jobsid[${k}]=$(echo ${jobsid[${k}]} |awk '{print $NF}')
-	convjobs=$convjobs":"${jobsid[${k}]}
-  ((k++))
+	jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+  jid=$(echo $jid |awk '{print $NF}')
+  convjobs=$convjobs":"$jid
 done
-
 
 if [ "$convjobs" = "" ]; then
   dep=""
 else
-  #reduce size of convjobs to the last nbjobs ones only if more than nbjobs
-  if [ $k -gt $nbjobs ]; then
-    IFS=':' read -ra my_array <<< "$convjobs"
-    convjobs=${my_array[@]: -nbjobs}
-    convjobs=":"${convjobs// /:}
-  fi
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
-  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
-  sbatch ${dep} -t 0-01:30 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
+  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
+  sbatch ${dep} -t 0-01:30 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
   sbatch -t 0-00:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
-#

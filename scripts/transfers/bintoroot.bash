@@ -3,7 +3,7 @@
 # path to gtot
 gtot_path='/pbs/home/p/prod_grand/softs/gtot/cmake-build-release/gtot'
 # path to script to register convertion results
-register_convertion='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_convert.py'
+register_convertion='/pbs/home/p/prod_grand/scripts/transfers/register_convert.py'
 # path to script to register root file into the DB
 register_root='/pbs/home/p/prod_grand/softs/grand/granddb/register_file_in_db.py'
 config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
@@ -46,8 +46,8 @@ source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
 #export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
 conda activate /sps/grand/software/conda/grandlib_2409
 source env/setup.sh
-cd /pbs/home/p/prod_grand/softs/grand/scripts/transfers
-export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
+cd /pbs/home/p/prod_grand/scripts/transfers
+
 
 notify=0
 for file in "$@"
@@ -77,7 +77,7 @@ do
         site=${filename%_*}
         site=$($(echo basename ${file}) |awk -F_ '{print $1}')
         if [ "${site,,}" == "gp80" ]; then
-          gtot_extra_option="-gc -os -rn"
+          gtot_extra_option="-gc"
         else
           gtot_extra_option=${gtot_options}
         fi
@@ -101,10 +101,8 @@ do
 
     if [ "$conv_status" -ne 0 ]; then
       notify=1
-      echo "Error ${conv_status} in conversion."  |& tee -a ${logfile}
-      outstatus=$conv_status
     fi
-
+    echo $conv_status >> ${logfile}
     # Put GrandRoot file into irods
     sfile=${dest}/${filename%.*}.root
     ifile=${sfile/$sps_path/$irods_path}
@@ -116,30 +114,18 @@ do
     iput_status=$?
     if [ "$iput_status" -ne 0 ]; then
       notify=1
-      echo "Error ${iput_status} in iput"  |& tee -a ${logfile}
-      outstatus=$iput_status
     fi
     # Register conversion result into the database
     echo "Register convertion" >> ${logfile}
-    echo "Run ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}"  |& tee -a ${logfile}
     python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
     # Register root file into db
     if [ $tr != "TR" ]; then
-      echo "register file ${dest}/${filename%.*}.root in database" >> ${logfile}
-      echo "Run python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root " |& tee -a ${logfile}
+      echo "register file in database" >> ${logfile}
       python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
-      register_status=$?
-      if [ "$register_status" -ne 0 ]; then
-        notify=1
-        echo "Error ${register_status} in registration" |& tee -a ${logfile}
-        outstatus=$register_status
-      fi
     fi
   fi
 done
 
 if [ "$notify" -ne "0" ]; then
-  parent_script=$(cat /proc/$PPID/comm)
-  echo "Error in files conversion/registration : ${parent_script} ${0} ${*} " |   mail -s "Grand pipeline error in ${submit_base_name} " fleg@lpnhe.in2p3.fr
-  exit $outstatus
+  echo "Error in files conversion : " $@ |   mail -s "Grand conversion error" fleg@lpnhe.in2p3.fr
 fi
