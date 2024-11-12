@@ -2,6 +2,7 @@
 # Script triggered after transfering data from a GRAND observatory to CCIN2P3 (or to any site)
 # It will launch the jobs to convert binary files into GrandRoot and register the results of the transfers and convertions into the database
 # Fleg & Fred: 03/2024
+# update Fleg : 11/2024 (option to run locally + gp80 management)
 # Copyright : Grand Observatory 2024
 
 # path to bin2root file
@@ -23,19 +24,29 @@ bin2rootduration=15
 mail_user='fleg@lpnhe.in2p3.fr'
 mail_type='FAIL,TIME_LIMIT,INVALID_DEPEND'
 
-# manage call from remote restricted ssh command (extract opt parameters)
-# default args
 fullscriptpath=${BASH_SOURCE[0]}
 args="$*"
-case $SSH_ORIGINAL_COMMAND in
-    "$fullscriptpath "*)
-        args=$(echo "${SSH_ORIGINAL_COMMAND}" | sed -e "s,^${fullscriptpath} ,,")
-        ;;
-    *)
-        echo "Permission denied. You are not authorized to run ${fullscriptpath}. Check ssh key ?"
-        exit 1
-        ;;
-esac
+#Check how the script is launched (local execution is authorized and sshd exec is restricted to authorized keys)
+access_type=$(ps h -o comm -p "$PPID")
+if [ "${access_type}" == "sshd" ] ; then
+  # manage call from remote restricted ssh command (extract opt parameters)
+  # default args
+  case $SSH_ORIGINAL_COMMAND in
+      "$fullscriptpath "*)
+          args=$(echo "${SSH_ORIGINAL_COMMAND}" | sed -e "s,^${fullscriptpath} ,,")
+          ;;
+      *)
+          echo "Permission denied. You are not authorized to run ${fullscriptpath}. Check ssh key ?"
+          exit 1
+          ;;
+  esac
+elif [ "${access_type}" == "bash" ] ; then
+        echo "Local execution authorized"
+else
+        echo "Permission denied."
+fi
+
+
 
 # Get tag and database file to use
 while getopts ":t:d:s:" option ${args}; do
@@ -46,25 +57,29 @@ while getopts ":t:d:s:" option ${args}; do
          db=${OPTARG};;
       s)
         site=${OPTARG};;
-      :) 
+      :)
          printf "option -${OPTARG} need an argument\n"
          exit 1;;
       ?) # Invalid option
          printf "Error: Invalid option -${OPTARG}\n"
          exit 1;;
    esac
+   if [ "${OPTARG:0:1}" == "-" ]; then
+           printf "option -${option} need an argument\n"
+           exit 1
+   fi
 done
 
-case $site in
+case ${site,,} in
   gp13)
-    gtot_option="-g1";;
+    gtot_option="-g1 -rn";;
+  gp80)
+    gtot_option="-g1 -os -rn";;
   gaa)
     gtot_option="-f2";;
   ?)
     gtot_option="-g1";;
 esac
-
-export PLATFORM=redhat-9-x86_64
 
 #test dbfile exists and tag is set
 if [ -z "$tag" ] || [ -z "$db" ];then 
@@ -92,9 +107,9 @@ if [ ! -d $crap_dir ];then
 fi
 # First register raw files transfers into the DB and get the id of the registration job
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
-echo "#!/bin/bash" > $outfile
+echo "#!/bin/bash -l" > $outfile
 echo "$register_transfers -d $db -t $tag" >> $outfile
-jregid=$(sbatch -t 0-00:10 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+jregid=$(sbatch -t 0-00:20 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
 jregid=$(echo $jregid |awk '{print $NF}')
 
 # List files to be converted and group them by bunchs of nbfiles
@@ -125,7 +140,7 @@ for j in  "${!listoffiles[@]}"
 do
   outfile="${submit_dir}/${submit_base_name}-${j}.bash"
 	logfile="${submit_dir}/${submit_base_name}-${j}.log"
-	echo "#!/bin/bash" > $outfile
+	echo "#!/bin/bash -l" > $outfile
 	echo "$bin2root -g '$gtot_option' -n $submit_base_name -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
@@ -139,8 +154,8 @@ if [ "$convjobs" = "" ]; then
 else
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
-  sbatch ${dep} -t 0-00:10 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
-  sbatch ${dep} -t 0-01:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 12G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
-  sbatch -t 0-00:15 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
+  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
+  sbatch ${dep} -t 0-01:30 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
+  sbatch -t 0-00:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
