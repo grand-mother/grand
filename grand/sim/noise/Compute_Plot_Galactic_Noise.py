@@ -8,7 +8,7 @@
 #usage: Compute_plot_Galactic_Noise.py [-h] [--site {gp13,gaa}]
 #                                      [--du_type {GP300,GP300_nec,GP300_mat}] --run_mode
 #                                      {Voc,Vout,PL,Efield}
-#                                      [--lst_value {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23}]
+#                                      [--lst {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23}]
 
 #Process Galactic Noise Data
 #
@@ -19,10 +19,10 @@
 #                        Detector unit type
 #  --run_mode {Voc,Vout,PL,Efield}
 #                        Run mode
-#  --lst_value {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23}
+#  --lst {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23}
                 #LST value for frequency plot
 # Example of how to use:
-#python3 Compute_plot_Galactic_Noise.py --site gp13 --du_type GP300 --run_mode Voc --lst_value 18
+#python3 Compute_plot_Galactic_Noise.py --site gp13 --du_type GP300 --run_mode Voc --lst 18
 # For the Voc run_mode the output file that saved is in shape (221,72,3) wich means the Volts^2/Hz (square Vrms) for 221 #frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
 
 # For the Vout run_mode the output file that saved is in shape (221,72,3) wich means the Volts^2/Hz (square Vrms) for #221 frequencies bins (30-250 MHz step 1MHz), 72 LST bins (0:00-23:40, step 20 min) for X, Y, Z ports.
@@ -66,7 +66,7 @@ def compute_antenna_paths(du_type):
         raise ValueError("Unsupported du_type value!")
     return path_antX, path_antY, path_antZ
 
-def main(site, du_type, run_mode, lst_value):
+def main(site, du_type, run_mode, lst):
     freq_MHz = np.arange(30, 251, 1)
     
     # Initialize RFChain and latitude based on site
@@ -276,10 +276,10 @@ def main(site, du_type, run_mode, lst_value):
         plt.close()
 
         plt.figure(figsize=(12, 8))
-        plt.title(f'Square of open circuit Voltage per Hz vs Frequency at LST {lst_value} h', fontsize=20)
-        plt.plot(freqs, voc2X[:, lst_value == lstaxis].flatten(), '-*', color='k')
-        plt.plot(freqs, voc2Y[:, lst_value == lstaxis].flatten(), '-*', color='y')
-        plt.plot(freqs, voc2Z[:, lst_value == lstaxis].flatten(), '-*', color='b')
+        plt.title(f'Square of open circuit Voltage per Hz vs Frequency at LST {lst} h', fontsize=20)
+        plt.plot(freqs, voc2X[:, lst == lstaxis].flatten(), '-*', color='k')
+        plt.plot(freqs, voc2Y[:, lst == lstaxis].flatten(), '-*', color='y')
+        plt.plot(freqs, voc2Z[:, lst == lstaxis].flatten(), '-*', color='b')
         plt.grid(ls='--', alpha=0.3)
         plt.legend(["port X", "port Y", "port Z"], loc="best", fontsize=12)
         plt.xticks(fontsize=12)
@@ -306,10 +306,10 @@ def main(site, du_type, run_mode, lst_value):
         plt.close()
 
         plt.figure(figsize=(12, 8))
-        plt.title(f'Square of Output Voltage per Hz vs Frequency at LST {lst_value} h', fontsize=20)
-        plt.plot(freqs, vout2X[:, lst_value == lstaxis].flatten(), '-*', color='k')
-        plt.plot(freqs, vout2Y[:, lst_value == lstaxis].flatten(), '-*', color='y')
-        plt.plot(freqs, vout2Z[:, lst_value == lstaxis].flatten(), '-*', color='b')
+        plt.title(f'Square of Output Voltage per Hz vs Frequency at LST {lst} h', fontsize=20)
+        plt.plot(freqs, vout2X[:, lst == lstaxis].flatten(), '-*', color='k')
+        plt.plot(freqs, vout2Y[:, lst == lstaxis].flatten(), '-*', color='y')
+        plt.plot(freqs, vout2Z[:, lst == lstaxis].flatten(), '-*', color='b')
         plt.grid(ls='--', alpha=0.3)
         plt.legend(["port X", "port Y", "port Z"], loc="best", fontsize=12)
         plt.xticks(fontsize=12)
@@ -337,10 +337,10 @@ def main(site, du_type, run_mode, lst_value):
         plt.close()
 
         plt.figure(figsize=(12, 8))
-        plt.title(f'Galactic Power per Hz vs Frequency at LST {lst_value}h', fontsize=20)
-        plt.plot(freqs, plX[:, lst_value == lstaxis].flatten(), '-*', color='k')
-        plt.plot(freqs, plY[:, lst_value == lstaxis].flatten(), '-*', color='y')
-        plt.plot(freqs, plZ[:, lst_value == lstaxis].flatten(), '-*', color='b')
+        plt.title(f'Galactic Power per Hz vs Frequency at LST {lst}h', fontsize=20)
+        plt.plot(freqs, plX[:, lst == lstaxis].flatten(), '-*', color='k')
+        plt.plot(freqs, plY[:, lst == lstaxis].flatten(), '-*', color='y')
+        plt.plot(freqs, plZ[:, lst == lstaxis].flatten(), '-*', color='b')
         plt.grid(ls='--', alpha=0.3)
         plt.legend(["port X", "port Y", "port Z"], loc="best", fontsize=12)
         plt.xticks(fontsize=12)
@@ -391,7 +391,7 @@ if __name__ == "__main__":
     parser.add_argument("--site", type=str, choices=["gp13", "gaa"], default="gp13", help="Site location")
     parser.add_argument("--du_type", type=str, choices=["GP300", "GP300_nec", "GP300_mat"], default="GP300", help="Detector unit type")
     parser.add_argument("--run_mode", type=str, choices=["Voc", "Vout", "PL", "Efield"], required=True, help="Run mode")
-    parser.add_argument("--lst_value", type=int, default=18, choices=range(0, 24), help="LST value for frequency plot")
+    parser.add_argument("--lst", type=int, default=18, choices=range(0, 24), help="LST value for frequency plot")
 
     args = parser.parse_args()
-    main(args.site, args.du_type, args.run_mode, args.lst_value)
+    main(args.site, args.du_type, args.run_mode, args.lst)

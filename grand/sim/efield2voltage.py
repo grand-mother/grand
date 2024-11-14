@@ -43,15 +43,14 @@ class Efield2Voltage:
     Class to compute voltage with GRANDROOT IO
 
     Goals:
-
       * Call simulator of detector units with ROOT data
+      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
       * Call on more than one event
       * Save output in ROOT format
     """
 
     def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0, du_type='GP300'):
-        # du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
-        self.du_type = du_type
+        self.du_type = du_type                              # load antenna models
         self.f_input = f_input
         self.f_output = f_output
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
@@ -60,10 +59,9 @@ class Efield2Voltage:
         self.run = groot.TRun(f_input)                      # site_long, site_lat info is stored here. Used to define shower frame.
         self.shower = groot.TShower(f_input)                # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
-        #self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
-        self.rf_chain = RFChain()                         
-        self.rf_chainnut = RFChainNut()
-        self.rf_chaingaa = RFChain_gaa()
+        self.rf_chain = RFChain()                            # loads RF chain for GP13                    
+        self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
+        self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
         self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
         self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
