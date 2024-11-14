@@ -24,16 +24,20 @@ LINK_MODEL = "https://forge.in2p3.fr/attachments/download/340302/grand_model_141
 FILE_MODEL = LINK_MODEL.split("/")[-1]
 
 
-if os.path.exists(grand_add_path_data('detector')):
+directory = grand_add_path_data('detector')
+specific_file = os.path.join(directory, 'Light_GP300Antenna_nec_Yarm_leff.npz') 
+
+# Check if the specific file exists in the directory
+if os.path.isfile(specific_file):
     print("==============================")
-    print('Skip download data model')
+    print('Skip download Grand antenna models')
     sys.exit(0)
 
 tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
 
 # 2- download
 print("==============================")
-print("Download data model (~ 1GB) for GRAND, please wait ...")
+print("Download antenna models, RFchain, Galactic noise (~ 1GB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")
@@ -52,5 +56,5 @@ try:
 except:
     print(f"Extract failed '{tar_file}'")
     sys.exit(1)
-print("data model available in grand/data directory !")
+print("Antenna models available in grand/data/detector directory !")
 sys.exit(0) 

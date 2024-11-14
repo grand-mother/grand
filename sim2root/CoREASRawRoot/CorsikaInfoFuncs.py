@@ -7,8 +7,6 @@ from re import search
 import io
 import numpy as np
 from datetime import datetime
-import pdb
-
 
 # read single values from SIM.reas or RUN.inp
 def find_input_vals(line):
@@ -230,7 +228,6 @@ def read_long(pathLongFile):
             if search(r"(?<!e)(-)(?=\d)", line):
                 # if the minus sign is not part of an exponent, replace it with a space and a minus sign
                 line = line.replace("-", " -")
-                #line = line.replace("-", "-")
             # write the corrected line to the temporary file
             temp_file.write(line)
 

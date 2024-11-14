@@ -5,9 +5,10 @@ Plot Voltage output and ratios at individual RF chain elements.
 October 2024 SN
 """
 # To Run:
-#   python3 plot_Vout_AT_Device.py lna
+#   python3 plot_Vout_AT_Device.py lna --savefig
 #   options: [Vin_balun1, Vout_balun1, Vout_match_net, Vout_lna, Vout_cable_connector, Vout_VGA Vout_tot] for Voltage at Device
 #   options: [Vratio_Balun1, Vratio_match_net, Vratio_lna, Vratio_cable_connector, Vratio_vga, Vratio_adc] for Voltage ratios
+# If --savefig option is used the coresponding plots are save in the directory /grand/scripts/figures/
 
 import numpy as np
 import h5py
@@ -73,7 +74,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Input Voltage (abs) at first Balun (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Input_Voltage_Balun1.png", bbox_inches='tight')
+            plt.savefig("./figures/Input_Voltage_Balun1.png", bbox_inches='tight')
         #plt.show()
         
     
@@ -112,7 +113,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Output Voltage (abs) at first Balun (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Output_Voltage_Balun1.png", bbox_inches='tight')
+            plt.savefig("./figures/Output_Voltage_Balun1.png", bbox_inches='tight')
         #plt.show()
     
     if args=='Vout_match_net':
@@ -150,7 +151,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Output Voltage (abs) at Matching Network (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Output_Voltage_match_net.png", bbox_inches='tight')
+            plt.savefig("./figures/Output_Voltage_match_net.png", bbox_inches='tight')
         #plt.show()
     
     if args=='Vout_lna':
@@ -188,7 +189,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Output Voltage (abs) at LNA (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Output_Voltage_lna.png", bbox_inches='tight')
+            plt.savefig("./figures/Output_Voltage_lna.png", bbox_inches='tight')
         #plt.show()
     
     if args=='Vout_cable_connector':
@@ -226,7 +227,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Output Voltage (abs) at Cable + Connector (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Output_Voltage_cable_connector.png", bbox_inches='tight')
+            plt.savefig("./figures/Output_Voltage_cable_connector.png", bbox_inches='tight')
         #plt.show()
         
     if args=='Vout_VGA':
@@ -264,7 +265,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Output Voltage (abs) at VGA + Filters (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Output_Voltage_vga.png", bbox_inches='tight')
+            plt.savefig("./figures/Output_Voltage_vga.png", bbox_inches='tight')
         #plt.show()
     
     if args=='Vout_tot':
@@ -302,7 +303,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Output Voltage (abs) at ADC (V$_{oc}$=1)")
         if savefig:
-            plt.savefig("Output_Voltage_ADC.png", bbox_inches='tight')
+            plt.savefig("./figures/Output_Voltage_ADC.png", bbox_inches='tight')
         #plt.show()
     
     if args=='Vratio_Balun1':
@@ -323,7 +324,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Voltage ratio at Balun1")
         if savefig:
-            plt.savefig("Voltage_ratio_Balun1.png", bbox_inches='tight')
+            plt.savefig("./figures/Voltage_ratio_Balun1.png", bbox_inches='tight')
         #plt.show()
      
     if args=='Vratio_match_net':
@@ -344,7 +345,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Voltage ratio at Matching network")
         if savefig:
-            plt.savefig("Voltage_ratio_match_net.png", bbox_inches='tight')
+            plt.savefig("./figures/Voltage_ratio_match_net.png", bbox_inches='tight')
         #plt.show()
         
     if args=='Vratio_lna':
@@ -365,7 +366,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Voltage ratio at LNA")
         if savefig:
-            plt.savefig("Voltage_ratio_lna.png", bbox_inches='tight')
+            plt.savefig("./figures/Voltage_ratio_lna.png", bbox_inches='tight')
         #plt.show()
         
         
@@ -387,7 +388,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Voltage ratio at Cable+Connector")
         if savefig:
-            plt.savefig("Voltage_ratio_cable_connector.png", bbox_inches='tight')
+            plt.savefig("./figures/Voltage_ratio_cable_connector.png", bbox_inches='tight')
         #plt.show()
         
     if args=='Vratio_vga':
@@ -408,7 +409,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Voltage ratio at VGA+Filters")
         if savefig:
-            plt.savefig("Voltage_ratio_vga.png", bbox_inches='tight')
+            plt.savefig("./figures/Voltage_ratio_vga.png", bbox_inches='tight')
         #plt.show()
     
     if args=='Vratio_adc':
@@ -429,7 +430,7 @@ def plot(args="Vin_balun1", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title("Voltage ratio at ADC")
         if savefig:
-            plt.savefig("Voltage_ratio_adc.png", bbox_inches='tight')
+            plt.savefig("./figures/Voltage_ratio_adc.png", bbox_inches='tight')
         #plt.show()
 
     ##########################################################################################      
