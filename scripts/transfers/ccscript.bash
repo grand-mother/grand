@@ -72,13 +72,13 @@ done
 
 case ${site,,} in
   gp13)
-    gtot_option="-g1 -rn";;
+    gtot_option="-g1 -rn -os";;
   gp80)
     gtot_option="-g1 -os -rn";;
   gaa)
-    gtot_option="-f2";;
+    gtot_option="-f2 -os";;
   ?)
-    gtot_option="-g1";;
+    gtot_option="-g1 -os";;
 esac
 
 #test dbfile exists and tag is set
@@ -107,7 +107,7 @@ if [ ! -d $crap_dir ];then
 fi
 # First register raw files transfers into the DB and get the id of the registration job
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
-echo "#!/bin/bash -l" > $outfile
+echo "#!/bin/bash" > $outfile
 echo "$register_transfers -d $db -t $tag" >> $outfile
 jregid=$(sbatch -t 0-00:20 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
 jregid=$(echo $jregid |awk '{print $NF}')
@@ -140,7 +140,7 @@ for j in  "${!listoffiles[@]}"
 do
   outfile="${submit_dir}/${submit_base_name}-${j}.bash"
 	logfile="${submit_dir}/${submit_base_name}-${j}.log"
-	echo "#!/bin/bash -l" > $outfile
+	echo "#!/bin/bash" > $outfile
 	echo "$bin2root -g '$gtot_option' -n $submit_base_name -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
