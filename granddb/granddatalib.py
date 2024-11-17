@@ -16,7 +16,7 @@ import getpass
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("debug", log_stdout=True)
+mlg.create_output_for_logger("warning", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -98,7 +98,10 @@ class DataManager:
             # We also append localdirs to repositories... so search method will first look at local dirs before searching on remote locations
             # self._repositories.append(Datasource("localdir", "local", "localhost", "", dirlist, self.incoming()))
             # But instead of localhost and localdir we use the name of the machine
-            hostname = socket.getfqdn(os.environ["HOSTNAME"])
+            try:
+                hostname = socket.getfqdn(os.environ["HOSTNAME"])
+            except:
+                hostname = "localhost"
             self._repositories["localdir"] = Datasource("localdir", "local", hostname, "", dirlist, self.incoming())
         else:
             logger.error(f"Section directories is mandatory in config file {file}")

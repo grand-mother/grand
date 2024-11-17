@@ -47,7 +47,7 @@ source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
 conda activate /sps/grand/software/conda/grandlib_2409
 source env/setup.sh
 cd /pbs/home/p/prod_grand/scripts/transfers
-
+export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
 
 notify=0
 for file in "$@"
