@@ -18,7 +18,7 @@ import grand.manage_log as mlg
 import ROOT
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("debug", log_stdout=True)
+mlg.create_output_for_logger("warning", log_stdout=True)
 
 
 def casttodb(value):

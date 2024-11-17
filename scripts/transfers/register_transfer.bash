@@ -1,5 +1,4 @@
 #!/bin/bash -l
-
 register_transfers='python3 /pbs/home/p/prod_grand/scripts/transfers/register_transfers.py'
 
 while getopts ":d:t:" option; do
@@ -31,6 +30,7 @@ else
 fi
 source env/setup.sh
 cd /pbs/home/p/prod_grand/scripts/transfers
+export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
 
 #${register_transfers} -d ${db} -t ${tag} -c ${config}
 ${register_transfers} -d ${db} -t ${tag}
