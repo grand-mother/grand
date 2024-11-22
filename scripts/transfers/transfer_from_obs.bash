@@ -100,6 +100,11 @@ rsync_options="-az --mkpath --chmod=go-w"
 
 ##### End of Configuration section (do not modify below) #####
 
+lock_file="/tmp/grand_transfer_lock"
+exec {lock_fd}>${lock_file} || exit 1
+flock -n "$lock_fd" || { echo "Script is already running. Skipping." >&2; exit 1; }
+
+
 # treatment scripts location @CCIN2P3
 ccscripts='/pbs/home/p/prod_grand/scripts/transfers/ccscript.bash'
 
@@ -299,3 +304,5 @@ then
   fi
 fi
 
+flock -u "$lock_fd"
+rm ${lock_file}
