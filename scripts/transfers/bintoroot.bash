@@ -77,7 +77,7 @@ do
         site=${filename%_*}
         site=$($(echo basename ${file}) |awk -F_ '{print $1}')
         if [ "${site,,}" == "gp80" ]; then
-          gtot_extra_option="-gc"
+          gtot_extra_option="-gc -os -rn"
         else
           gtot_extra_option=${gtot_options}
         fi
