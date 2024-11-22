@@ -12,7 +12,7 @@ refresh_mat_script='/pbs/home/p/prod_grand/scripts/transfers/refresh_mat_views.b
 update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
 tar_logs_script='/pbs/home/p/prod_grand/scripts/transfers/tar_logs.bash'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
-gtot_option="-g1"
+gtot_option="-g1 -os"
 
 # number of files to group in same submission
 nbfiles=3
