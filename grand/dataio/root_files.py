@@ -166,7 +166,6 @@ class _FileEventBase:
         du_ns = np.array(self.tt_event.du_nanoseconds, dtype=np.float64) + 1e9 * (du_s - min_sec)
         return du_ns, min_sec
 
-
     def get_obj_handling3dtraces(self):
         """
         Return a traces container IO independent Handling3dTraces
