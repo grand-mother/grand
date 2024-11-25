@@ -334,7 +334,8 @@ class Database:
             ret = self.sqlalchemysession.query(getattr(self._tables['dataset_location'], 'id_dataset')).filter_by(
                 **filt).all()
             if len(ret) == 0:
-                container = self.tables()['dataset_location'](id_dataset=id_dataset, id_repository=id_repository, path=dataset,
+                dataset_path=os.path.dirname(targetfile)
+                container = self.tables()['dataset_location'](id_dataset=id_dataset, id_repository=id_repository, path=dataset_path,
                                                               description="")
                 self.sqlalchemysession.add(container)
                 self.sqlalchemysession.flush()
@@ -514,6 +515,7 @@ class Database:
                 # print('Execution time:', elapsed_time, 'seconds')
                 logger.debug(f"execution time {elapsed_time} seconds")
 
+    ## @brief Function to register a file into the database.
     def register_file(self, orgfilename, newfilename, dataset, id_repository, provider, targetdir=None):
         idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetdir)
         if read_file:
@@ -524,4 +526,31 @@ class Database:
             logger.info(f"file {orgfilename} already registered.")
         self.sqlalchemysession.commit()
 
+    ## @brief Function to register a file which is already registered into the database.
+    # It will first search the registered file and will remove it from the database before registering it again as a new file
+    # Usefull when reprocessing or correcting a file
+    def register_again_file(self, orgfilename, newfilename, dataset, id_repository, provider, targetfile=None):
+        import os
 
+        if targetfile is None:
+            targetfile = newfilename
+        if dataset is not None:
+            id_dataset = self.get_or_create_key('dataset', 'dataset_name', os.path.basename(dataset))
+        else:
+            id_dataset = None
+        file_exist = self.sqlalchemysession.query(self.tables()['file']).filter_by(
+            filename=os.path.basename(targetfile),id_dataset=id_dataset).first()
+        if file_exist is not None:
+            idfile = file_exist.id_file
+            from sqlalchemy import func
+            removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
+            print(removed)
+
+        idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
+        if read_file:
+            # We read the localfile and not the remote one
+            self.register_filecontent(orgfilename, idfile)
+            # self.register_filecontent(newfilename,idfile)
+        else:
+            logger.info(f"file {orgfilename} already registered.")
+        self.sqlalchemysession.commit()
