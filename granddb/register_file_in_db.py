@@ -23,7 +23,8 @@ else:
     repo_name = args.repository
 for file in args.files:
     try:
-        dm.register_file(file, repo_name)
+        logger.info(f'Register ${file}')
+        dm.register_file(file, None, repo_name)
     except Exception as e:
         logger.error(f'Error when importing {file}. Skipping.')
         logger.error(f'Error was {e}.')

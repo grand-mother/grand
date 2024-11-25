@@ -296,15 +296,17 @@ class DataManager:
 
     ##Function to register a file into the database.
     # The file MUST be present in the target repository and the full path must be given.
+    # again parameter specify if file need to be registered again if present into the database... in that case previous
+    # records will be deleted and the file will be registered again as a new file
     # Returns the path to the file in the repository where the file was registered.
-    def register_file(self, localfile, dataset=None, repository=None, targetdir=None):
+    def register_file(self, localfile, dataset=None, repository=None, targetdir=None, again=False):
         newfilename = None
         if targetdir is None or os.path.dirname(targetdir) == os.path.dirname(localfile):
-            targetdir = localfile
+            targetfile = localfile
         else:
             # Target file is made of target dir + dataset name + filename
-            targetdir = targetdir + "/" + os.path.basename(dataset) + "/" + os.path.basename(localfile)
-            targetdir=os.path.normpath(targetdir)
+            targetfile = targetdir + "/" + os.path.basename(dataset) + "/" + os.path.basename(localfile)
+            targetfile=os.path.normpath(targetfile)
         # If repository not given then use the referer
         if repository is None:
             repository = self.referer()
@@ -319,14 +321,22 @@ class DataManager:
                 logger.error(f"For registering, local filename ({localfile}) must be a full path ")
             else:
                 # And the file must be already present in the target repository and in the local directory
-                fileexists = self.get(targetdir, repository.name(), grab=False)
+                fileexists = self.get(targetfile, repository.name(), grab=False)
                 #TODO: Check file exists in
                 if fileexists :
-                #if fileexists is not None:
                     newfilename = localfile
-                    self.database().register_file(localfile, newfilename, dataset, repository.id_repository, self.provider(), targetdir=targetdir)
+                    # check if dataset is not None. In that case, dataset must be equal to the last part of the targetdir.
+                    if dataset is not None:
+                        if os.path.basename(fileexists.parent) !=  dataset:
+                            logger.error(f"Dataset {dataset} is not the name of the last directory of {targetfile} thus cannot be registered")
+                            newfilename = None
+                            return newfilename
+                    if again:
+                        self.database().register_again_file(localfile, newfilename, dataset, repository.id_repository, self.provider(), targetfile=targetfile)
+                    else:
+                        self.database().register_file(localfile, newfilename, dataset, repository.id_repository, self.provider(), targetdir=targetfile)
                 else:
-                    logger.error(f"File {targetdir} was not found in repository {repository.name()} thus cannot be registered")
+                    logger.error(f"File {targetfile} was not found in repository {repository.name()} thus cannot be registered")
                     newfilename = None
         else:
             logger.error(f"No repository found to register file {localfile}")
