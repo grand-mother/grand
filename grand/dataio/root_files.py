@@ -5,6 +5,8 @@ The main functionnalities of this module is
 * provide a numpy container of traces by event, with method get_obj_handling3dtraces()
 
 """
+from functools import lru_cache
+
 
 import os.path
 from logging import getLogger
@@ -164,17 +166,6 @@ class _FileEventBase:
         du_ns = np.array(self.tt_event.du_nanoseconds, dtype=np.float64) + 1e9 * (du_s - min_sec)
         return du_ns, min_sec
 
-    def get_du_nanosec_ordered_int(self):
-        """
-        return nanosecond between 0s to 2s max
-        """
-        du_s = np.array(self.tt_event.du_seconds)
-        print(du_s.dtype,du_s.shape )
-        print(du_s.min(), du_s.max())
-        min_sec = du_s.min()
-        du_ns = np.array(self.tt_event.du_nanoseconds) + 1000000000 * (du_s - min_sec)
-        print(du_ns.dtype, du_ns.shape)
-        return du_ns
 
     def get_obj_handling3dtraces(self):
         """
@@ -205,12 +196,45 @@ class _FileEventBase:
         o_tevent.info_shower += f" energy_primary={nrj:.1e} GeV"
         return o_tevent
 
+    def get_simu_parameters(self):
+        """Return dictionary of simulation parameters
+
+        Parameters returned from TRun (same name) without transformation
+          * xmax_pos_shc
+          * azimuth
+          * zenith
+          * energy_primary
+
+        :param f_name: string ROOT path/file_name
+        :param idx_evt: integer
+        :return: dictionary with some raw value of simulation parameters
+        """
+        d_simu = {}
+        # raw
+        xmax_temp = self.tt_shower.xmax_pos_shc
+        d_simu["xmax_pos_shc"] = xmax_temp
+        d_simu["azimuth"] = self.tt_shower.azimuth
+        d_simu["zenith"] = self.tt_shower.zenith
+        d_simu["energy_primary"] = self.tt_shower.energy_primary
+        d_simu["shower_core_pos"] = self.tt_shower.shower_core_pos
+        d_simu["magnetic_field"] = self.tt_shower.magnetic_field
+        origin_geoid = self.tt_run.origin_geoid
+        d_simu["origin_geoid"] = origin_geoid
+        # DC2 bug xmax_pos isn't filled
+        d_simu["xmax_pos"] = self.tt_shower.xmax_pos
+        logger.warn("DC2 FIX to define 'xmax_pos'  in DU Frame")
+        d_simu["FIX_xmax_pos"] = (
+            xmax_temp + d_simu["shower_core_pos"] - np.array([0, 0, origin_geoid[2]])
+        )
+        return d_simu
+
 
 #
 # public function class
 #
 
 
+@lru_cache(maxsize=None)
 def get_file_event(f_name):
     """Event factory
 
@@ -262,19 +286,7 @@ def get_simu_parameters(f_name, idx_evt=0):
     """
     event_files = get_file_event(f_name)
     event_files.load_event_idx(idx_evt)
-    d_simu = {}
-    xmax_sea_level = event_files.tt_shower.xmax_pos_shc
-    d_simu["xmax_pos_shc"] = xmax_sea_level
-    d_simu["xmax_sea_level"] = xmax_sea_level
-    origin_geoid = event_files.tt_run.origin_geoid
-    d_simu["origin_geoid"] = origin_geoid
-    d_simu["xmax_site_level"] = xmax_sea_level - np.array([0, 0, origin_geoid[2]])
-    d_simu["azimuth"] = event_files.tt_shower.azimuth
-    d_simu["zenith"] = event_files.tt_shower.zenith
-    d_simu["energy_primary"] = event_files.tt_shower.energy_primary
-    d_simu["shower_core_pos"] = event_files.tt_shower.shower_core_pos
-    d_simu["magnetic_field"] = event_files.tt_shower.magnetic_field
-    return d_simu
+    return event_files.get_simu_parameters()
 
 
 class FileEfield(_FileEventBase):
