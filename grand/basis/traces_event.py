@@ -224,6 +224,7 @@ class Handling3dTraces:
             self.idt2idx[ident] = idx
         self.traces = self.traces[l_idx]
         self.t_start_ns = self.t_start_ns[l_idx]
+        self.f_samp_mhz  = self.f_samp_mhz[l_idx] 
         if self.t_samples.shape[0] > 0:
             self.t_samples = self.t_samples[l_idx]
         if self.network:
@@ -340,7 +341,7 @@ class Handling3dTraces:
         """
         return np.linalg.norm(self.traces, axis=1)
 
-    def get_tmax_vmax(self, hilbert=True, interpol="auto"):
+    def get_tmax_vmax(self, hilbert=True, interpol="parab"):
         """Return time where norm of the amplitude of the Hilbert tranform  is max
 
         :param hilbert: True for Hilbert envelop else norm L2
