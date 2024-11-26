@@ -751,7 +751,7 @@ class Event:
         self.trun.site = self.site
         # self.trun.site_long = self.site_long
         # self.trun.site_lat = self.site_lat
-        self.trun.origin_geoid = self.origin_geoid
+        self.trun.origin_geoid = self.origin_geoid[:,0]
         self.trun.t_bin_size = self._t_bin_size
 
         # Fill the tree with values
@@ -873,13 +873,13 @@ class Event:
         ## Shower Xmax [g/cm2]
         self.tshower.xmax_grams = self.shower.Xmax
         ## Shower position in the site's reference frame
-        self.tshower.xmax_pos = self.shower.Xmaxpos
+        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0]
         ## Shower azimuth
         self.tshower.azimuth = self.shower.azimuth
         ## Shower zenith
         self.tshower.zenith = self.shower.zenith
         ## Poistion of the core on the ground in the site's reference frame
-        self.tshower.shower_core_pos = self.shower.core_ground_pos
+        self.tshower.shower_core_pos = self.shower.core_ground_pos[:,0]
 
         self.tshower.fill()
 
