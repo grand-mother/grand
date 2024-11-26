@@ -1645,6 +1645,74 @@ class TRunVoltage(MotherRunTree):
 
         self.create_branches()
 
+## General info on the raw voltage common to all events.
+@dataclass
+class TRunRawVoltage(MotherRunTree):
+    """General info on the voltage common to all events."""
+
+    _type: str = "runrawvoltage"
+
+    _tree_name: str = "trunrawvoltage"
+
+    ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual).
+    digi_ctrl: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual)."""
+    ## Firmware version
+    firmware_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Firmware version"""
+    ## Nominal trace length in units of samples
+    trace_length: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Nominal trace length in units of samples"""
+    ## ADC sampling frequency in MHz
+    adc_sampling_frequency: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling frequency in MHz"""
+    ## ADC sampling resolution in bits
+    adc_sampling_resolution: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling resolution in bits"""
+    ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
+    adc_input_channels: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
+    ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
+    adc_enabled_channels: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
+    ## Value of the Variable gain amplification on the board
+    gain: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Value of the Variable gain amplification on the board"""
+    ## Conversion factor from bits to V for ADC
+    adc_conversion: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Conversion factor from bits to V for ADC"""
+    ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
+    digi_prepost_trig_windows: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
+    ## Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?
+    channel_properties_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    ## Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?
+    channel_properties_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    ## Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?
+    channel_properties_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    ## Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    channel_trig_settings_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    ## Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    channel_trig_settings_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    ## Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    channel_trig_settings_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
 
 @dataclass
 ## The class for storing ADC traces and associated values for each event
@@ -2520,7 +2588,7 @@ class DataDirectory:
 
     def __getattr__(self, name):
         """For non-existing tree files or tree parameters, return None instead of rising an exception"""
-        trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
+        trees_to_check = ["trun", "trunvoltage", "trunrawvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
         if any(s in name for s in trees_to_check):
             return None
         else:
@@ -2574,7 +2642,7 @@ class DataDirectory:
     def init_exp_structure(self):
         self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
-        for flistname in ["ftruns", "ftadcs", "ftrawvoltages"]:
+        for flistname in ["ftruns", "ftrunrawvoltages", "ftadcs", "ftrawvoltages"]:
         # for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
             setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
