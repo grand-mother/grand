@@ -75,11 +75,11 @@ done
 
 case ${site,,} in
   gp13)
-    gtot_option="-g1 -rn -os";;
+    gtot_option="-g1 -rn -os -ow";;
   gp80)
-    gtot_option="-g1 -os -rn";;
+    gtot_option="-g1 -os -rn -ow";;
   gaa)
-    gtot_option="-f2 -os";;
+    gtot_option="-f2 -os -ow";;
   ?)
     gtot_option="-g1 -os";;
 esac
@@ -185,3 +185,4 @@ else
   sbatch -t 0-00:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
+#
