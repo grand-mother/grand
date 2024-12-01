@@ -1,0 +1,4 @@
+aipTempDirectory=/sps/grand/prod_grand/archiving/gp80/
+configMetadataDescriptiveDC=dc_gp80.xml
+configDocumentation=GRAND_DMP_2024.pdf,GrandRawFilesFormat.pdf,grand_dataflow_v2.pdf
+representationID_1=representation1
