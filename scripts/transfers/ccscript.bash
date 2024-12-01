@@ -6,11 +6,11 @@
 # Copyright : Grand Observatory 2024
 
 # path to bin2root file
-bin2root='/pbs/home/p/prod_grand/scripts/transfers/bintoroot.bash'
-register_transfers='/pbs/home/p/prod_grand/scripts/transfers/register_transfer.bash'
-refresh_mat_script='/pbs/home/p/prod_grand/scripts/transfers/refresh_mat_views.bash'
+bin2root='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/bintoroot.bash'
+register_transfers='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfer.bash'
+refresh_mat_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/refresh_mat_views.bash'
 update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
-tar_logs_script='/pbs/home/p/prod_grand/scripts/transfers/tar_logs.bash'
+tar_logs_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/tar_logs.bash'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
 gtot_option="-g1 -os"
 
