@@ -15,7 +15,10 @@ tar_logs_script='/pbs/home/p/prod_grand/scripts/transfers/tar_logs.bash'
 gtot_option="-g1 -os"
 
 # number of files to group in same submission
-nbfiles=3
+nbfiles=10
+
+# nbjobs for number of simultaneous jobs running
+nbjobs=20
 
 #time required to run bin2root on one file
 bin2rootduration=15
@@ -136,6 +139,12 @@ done
 jobtime=`date -d@$(($bin2rootduration*60*$nbfiles))  -u +%H:%M`
 convjobs=""
 # Launch convertion of files (but after the registration has finished)
+# Add dependency to avoid too much connexions to the database at the same time
+
+# jobsid[j] store the id of submited job j
+declare -A jobsid
+#we use a k index because j is not necessarily ordered
+k=0
 for j in  "${!listoffiles[@]}"
 do
   outfile="${submit_dir}/${submit_base_name}-${j}.bash"
@@ -144,14 +153,31 @@ do
 	echo "$bin2root -g '$gtot_option' -n $submit_base_name -d $root_dest ${listoffiles[$j]}" >> $outfile
 	#submit script
 	echo "submit  $outfile"
-	jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
-  jid=$(echo $jid |awk '{print $NF}')
-  convjobs=$convjobs":"$jid
+	# The first nbjobs are launched after registration (jregid) ended
+	if [ "$k" -gt "$nbjobs" ]; then
+	  # The next jobs are launched only when a previous one ended (so dependency of the id of job j-nbjobs)
+	  l=$((k - nbjobs))
+	  jregid=${jobsid[${l}]}
+  fi
+  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+  jobsid[${k}]=$(echo ${jobsid[${k}]} |awk '{print $NF}')
+	convjobs=$convjobs":"${jobsid[${k}]}
+  #jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+  #jid=$(echo $jid |awk '{print $NF}')
+  #convjobs=$convjobs":"$jid
+  ((k++))
 done
+
 
 if [ "$convjobs" = "" ]; then
   dep=""
 else
+  #reduce size of convjobs to the last nbjobs ones only if more than nbjobs
+  if [ $k -gt $nbjobs ]; then
+    IFS=':' read -ra my_array <<< "$convjobs"
+    convjobs=${my_array[@]: -nbjobs}
+    convjobs=":"${convjobs// /:}
+  fi
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
   sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
