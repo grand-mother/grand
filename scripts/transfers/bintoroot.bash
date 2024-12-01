@@ -137,5 +137,5 @@ done
 
 if [ "$notify" -ne "0" ]; then
   parent_script=$(cat /proc/$PPID/comm)
-  echo "Error in files conversion/registration : ${parent_script} " $# " " $@ |   mail -s "Grand pipeline error in $# " fleg@lpnhe.in2p3.fr
+  echo "Error in files conversion/registration : ${parent_script} ${0} ${@} " |   mail -s "Grand pipeline error in $0 " fleg@lpnhe.in2p3.fr
 fi
