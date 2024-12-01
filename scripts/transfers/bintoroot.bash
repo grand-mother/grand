@@ -3,7 +3,7 @@
 # path to gtot
 gtot_path='/pbs/home/p/prod_grand/softs/gtot/cmake-build-release/gtot'
 # path to script to register convertion results
-register_convertion='/pbs/home/p/prod_grand/scripts/transfers/register_convert.py'
+register_convertion='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_convert.py'
 # path to script to register root file into the DB
 register_root='/pbs/home/p/prod_grand/softs/grand/granddb/register_file_in_db.py'
 config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
@@ -46,7 +46,7 @@ source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
 #export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
 conda activate /sps/grand/software/conda/grandlib_2409
 source env/setup.sh
-cd /pbs/home/p/prod_grand/scripts/transfers
+cd /pbs/home/p/prod_grand/softs/grand/scripts/transfers
 export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
 
 notify=0
