@@ -101,8 +101,9 @@ do
 
     if [ "$conv_status" -ne 0 ]; then
       notify=1
+      echo "Error ${conv_status} in conversion."  |& tee -a ${logfile}
     fi
-    echo $conv_status >> ${logfile}
+
     # Put GrandRoot file into irods
     sfile=${dest}/${filename%.*}.root
     ifile=${sfile/$sps_path/$irods_path}
@@ -114,18 +115,27 @@ do
     iput_status=$?
     if [ "$iput_status" -ne 0 ]; then
       notify=1
+      echo "Error ${iput_status} in iput"  |& tee -a ${logfile}
     fi
     # Register conversion result into the database
     echo "Register convertion" >> ${logfile}
+    echo "Run ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}"  |& tee -a ${logfile}
     python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
     # Register root file into db
     if [ $tr != "TR" ]; then
-      echo "register file in database" >> ${logfile}
+      echo "register file ${dest}/${filename%.*}.root in database" >> ${logfile}
+      echo "Run python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root " |& tee -a ${logfile}
       python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
+      register_status=$?
+      if [ "$register_status" -ne 0 ]; then
+        notify=1
+        echo "Error ${register_status} in registration" |& tee -a ${logfile}
+      fi
     fi
   fi
 done
 
 if [ "$notify" -ne "0" ]; then
-  echo "Error in files conversion : " $@ |   mail -s "Grand conversion error" fleg@lpnhe.in2p3.fr
+  parent_script=$(cat /proc/$PPID/comm)
+  echo "Error in files conversion/registration : ${parent_script} " $# " " $@ |   mail -s "Grand pipeline error in $# " fleg@lpnhe.in2p3.fr
 fi
