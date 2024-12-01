@@ -24,7 +24,7 @@ else:
 for file in args.files:
     try:
         logger.info(f'Register ${file}')
-        dm.register_file(file, None, repo_name)
+        dm.register_file(localfile=file, dataset=None, repository=repo_name)
     except Exception as e:
         logger.error(f'Error when importing {file}. Skipping.')
         logger.error(f'Error was {e}.')
