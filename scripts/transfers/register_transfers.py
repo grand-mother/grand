@@ -9,13 +9,15 @@ argParser.add_argument("-d", "--database", help="Database file to use", required
 argParser.add_argument("-t", "--tag", default="*", help="Tag for the files to register")
 args = argParser.parse_args()
 
-dm = DataManager(os.path.dirname(__file__)+"/"+args.config)
+if args.config[0] == '/':
+    config_path = args.config
+else:
+    config_path = os.path.dirname(__file__)+"/"+args.config
+
+dm = DataManager(config_path)
 
 db = args.database
 tag = args.tag
-
-#db = "/sps/grand/data/gp13/logs/20240325225834_dbfile"
-#tag = "20240325225834"
 
 connection = sqlite3.connect(db)
 connection.row_factory = sqlite3.Row
@@ -28,7 +30,6 @@ for row in rows:
     trans = dict(row)
     rawfile = {'filename': os.path.basename(trans["file"]), 'md5': trans["md5sum"]}
     fname = os.path.basename(trans["file"])
-
     myobject = dm.database().sqlalchemysession.query(dm.database().tables()['rawfile']).filter_by(filename=fname).first()
     if not myobject:
         container = dm.database().tables()['rawfile'](**rawfile)
@@ -47,3 +48,5 @@ for row in rows:
         id_raw_file = container.id_raw_file
 
     dm.database().sqlalchemysession.commit()
+
+dm.database().sqlalchemysession.close()
