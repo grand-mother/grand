@@ -11,6 +11,7 @@ register_transfers='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/registe
 refresh_mat_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/refresh_mat_views.bash'
 update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
 tar_logs_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/tar_logs.bash'
+config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
 gtot_option="-g1 -os"
 
@@ -111,8 +112,9 @@ fi
 # First register raw files transfers into the DB and get the id of the registration job
 outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
 echo "#!/bin/bash" > $outfile
-echo "$register_transfers -d $db -t $tag" >> $outfile
-jregid=$(sbatch -t 0-00:20 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+echo "# ${0} ${@}" >> $outfile
+echo "$register_transfers -d $db -t $tag -c $config_file" >> $outfile
+jregid=$(sbatch -t 0-00:20 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
 jregid=$(echo $jregid |awk '{print $NF}')
 
 # List files to be converted and group them by bunchs of nbfiles
@@ -159,12 +161,9 @@ do
 	  l=$((k - nbjobs))
 	  jregid=${jobsid[${l}]}
   fi
-  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
   jobsid[${k}]=$(echo ${jobsid[${k}]} |awk '{print $NF}')
 	convjobs=$convjobs":"${jobsid[${k}]}
-  #jid=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 2G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
-  #jid=$(echo $jid |awk '{print $NF}')
-  #convjobs=$convjobs":"$jid
   ((k++))
 done
 
@@ -180,8 +179,8 @@ else
   fi
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
-  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
-  sbatch ${dep} -t 0-01:30 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G --constraint el9 --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
+  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
+  sbatch ${dep} -t 0-01:30 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
   sbatch -t 0-00:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
