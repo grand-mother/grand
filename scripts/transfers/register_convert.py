@@ -12,7 +12,12 @@ argParser.add_argument("-l","--logfile",help="Logfile of convertion", required=T
 
 args = argParser.parse_args()
 
-dm = DataManager(os.path.dirname(__file__)+"/"+args.config)
+if args.config[0] == '/':
+    config_path = args.config
+else:
+    config_path = os.path.dirname(__file__)+"/"+args.config
+
+dm = DataManager(config_path)
 logfile = os.path.normpath(args.logfile)
 print(args.file)
 print(args.status)
@@ -26,3 +31,5 @@ else:
     container = dm.database().tables()['convertion'](**converted)
     dm.database().sqlalchemysession.add(container)
     dm.database().sqlalchemysession.commit()
+
+dm.database().sqlalchemysession.close()
