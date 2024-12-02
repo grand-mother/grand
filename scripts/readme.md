@@ -101,3 +101,28 @@ optional arguments:
 ```bash
 python3 plot_rf_chain.py lna
 ```
+
+# plot_Vout_AT_Device.py
+
+Plot Voltage output and Voltage ratios at individual RF chain elements.
+
+## Help
+
+```bash
+grand/scripts# plot_Vout_AT_Device.py -h
+usage: plot_Vout_AT_Device.py [-h] [{Vin_balun1, Vout_balun1, Vout_match_net, Vout_lna, Vout_cable_connector, Vout_VGA, Vout_tot, Vratio_Balun1, Vratio_match_net, Vratio_lna, Vratio_cable_connector, Vratio_vga, Vratio_adc}]
+
+Information and plot parameters of various elements of the RF chain (version 2).
+
+optional arguments:
+  -h, --help            show this help message and exit
+  plot_option           {Vin_balun1, Vout_balun1, Vout_match_net, Vout_lna, Vout_cable_connector, Vout_VGA, Vout_tot, Vratio_Balun1, Vratio_match_net, Vratio_lna, Vratio_cable_connector, Vratio_vga, Vratio_adc}
+                        plot parameters of various components of the RF chain. plot_option allows you to choose component.
+```
+
+## Example
+
+```bash
+python3 plot_Vout_AT_Device.py Vout_lna
+python3 plot_Vout_AT_Device.py Vratio_lna
+```

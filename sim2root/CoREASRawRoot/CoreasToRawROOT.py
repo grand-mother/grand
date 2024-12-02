@@ -180,7 +180,7 @@ def CoreasToRawRoot(file, simID=None):
   parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
   ECTCUT = parallel[0]
   ECTMAX = parallel[1]
-
+  
   # PARALLEL = [ECTCUT, ECTMAX, MPIID, FECTOUT]
   # ECTCUT: limit for subshowers GeV
   # ECTMAX: maximum energy for complete shower GeV

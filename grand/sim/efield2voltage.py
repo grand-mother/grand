@@ -15,6 +15,8 @@ from grand.basis.type_trace import ElectricField
 from .detector.antenna_model import AntennaModel
 from .detector.process_ant import AntennaProcessing
 from .detector.rf_chain import RFChain
+from .detector.rf_chain import RFChainNut
+from .detector.rf_chain import RFChain_gaa
 from .shower.gen_shower import ShowerEvent
 from .noise.galaxy import galactic_noise
 
@@ -41,13 +43,14 @@ class Efield2Voltage:
     Class to compute voltage with GRANDROOT IO
 
     Goals:
-
       * Call simulator of detector units with ROOT data
+      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
       * Call on more than one event
       * Save output in ROOT format
     """
 
-    def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0):
+    def __init__(self, f_input, f_output="", seed=None, padding_factor=1.0, du_type='GP300'):
+        self.du_type = du_type                              # load antenna models
         self.f_input = f_input
         self.f_output = f_output
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
@@ -56,9 +59,11 @@ class Efield2Voltage:
         self.run = groot.TRun(f_input)                      # site_long, site_lat info is stored here. Used to define shower frame.
         self.shower = groot.TShower(f_input)                # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
-        self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
-        self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True}
+        self.rf_chain = RFChain()                            # loads RF chain for GP13                    
+        self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
+        self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
+        self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -142,12 +147,22 @@ class Efield2Voltage:
                 self.fft_size,
                 self.freqs_mhz,
                 self.nb_du,
-                seed=self.seed
+                seed=self.seed,
+                du_type=self.du_type
             )
         # compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.
         if self.params["add_rf_chain"]:
+            #self.rf_chain.compute_for_freqs(self.freqs_mhz)
             self.rf_chain.compute_for_freqs(self.freqs_mhz)
-
+            
+        if self.params["add_rf_chain_nut"]:
+        #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
+            self.rf_chainnut.compute_for_freqs(self.freqs_mhz)
+            
+        if self.params["add_rf_chain_gaa"]:
+        #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
+            self.rf_chaingaa.compute_for_freqs(self.freqs_mhz)    
+            
     def get_leff(self, du_idx):
         """
         Define for each antenna in DU du_idx an object AntennaProcessing according its position
@@ -331,14 +346,33 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
+            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
             self.vout_f[du_idx] *= self.rf_chain.get_tf()
+        
+        if self.params["add_rf_chain_nut"]:
+            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
+            self.vout_f[du_idx] *= self.rf_chainnut.get_tf()
+            
+        if self.params["add_rf_chain_gaa"]:
+            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
+            self.vout_f[du_idx] *= self.rf_chaingaa.get_tf()
 
         # Final voltage output for antenna with index du_idx
         if self.params["add_noise"] or self.params["add_rf_chain"]:
             # inverse FFT and remove zero-padding
             # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
             self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
-
+        
+        if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
+            # inverse FFT and remove zero-padding
+            # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+            
+        if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
+            # inverse FFT and remove zero-padding
+            # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+        
     # compute voltage in all antennas of one event.
     def compute_voltage_event(self, event_idx=None, event_number=None, run_number=None):
         """
@@ -366,13 +400,34 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
+            #self.multiply(self.rf_chain.get_tf())
             self.multiply(self.rf_chain.get_tf())
-
+            
+        if self.params["add_rf_chain_nut"]:
+            #self.multiply(self.rf_chain.get_tf())
+            self.multiply(self.rf_chainnut.get_tf())
+            
+        if self.params["add_rf_chain_gaa"]:
+            #self.multiply(self.rf_chain.get_tf())
+            self.multiply(self.rf_chaingaa.get_tf())
+        
         # Final voltage output for antenna with index du_idx
         if self.params["add_noise"] or self.params["add_rf_chain"]:
             # inverse FFT and remove zero-padding
             # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
             #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+            self.final_voltage()   # inverse fourier transform. update self.vout.
+        
+        if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
+        #    # inverse FFT and remove zero-padding
+        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+            self.final_voltage()   # inverse fourier transform. update self.vout.
+        
+        if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
+        #    # inverse FFT and remove zero-padding
+        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
             self.final_voltage()   # inverse fourier transform. update self.vout.
         
     # Primary method to compute voltage. 
