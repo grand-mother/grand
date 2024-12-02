@@ -7,7 +7,13 @@ logger = mlg.get_logger_for_script(__name__)
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-c", "--config",default="config.ini", help="Config file to use")
 args = argParser.parse_args()
-dm = DataManager(os.path.dirname(__file__)+"/"+args.config)
+
+if args.config[0] == '/':
+    config_path = args.config
+else:
+    config_path = os.path.dirname(__file__)+"/"+args.config
+
+dm = DataManager(config_path)
 
 materialized_views = ['datamat']
 for view in materialized_views:
