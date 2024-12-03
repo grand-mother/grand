@@ -24,9 +24,15 @@ from grand.simu.du.process_ant import AntennaProcessing
 from grand.simu.shower.gen_shower import ShowerEvent
 from grand.io.file_leff import TabulatedAntennaModel
 from grand import grand_add_path_data, grand_get_path_root_pkg
-from grand import ECEF, Geodetic, LTP, GRANDCS
+#from grand import ECEF, Geodetic, LTP, GRANDCS
+from grand.geo.coordinates import (
+    Geodetic,
+    GRANDCS,
+    LTP,
+    ECEF
+)
 import grand.manage_log as mlg
-import grand.io.root_trees as groot
+import grand.dataio.root_trees as groot
 
 
 # showerdir = osp.join(grand_get_path_root_pkg(), "tests/simulation/data/zhaires")
