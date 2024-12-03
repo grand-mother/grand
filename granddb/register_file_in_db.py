@@ -1,6 +1,6 @@
 import sys, os, getopt
 import grand.manage_log as mlg
-from granddatalib import DataManager
+from granddb.granddatalib import DataManager
 import argparse
 logger = mlg.get_logger_for_script(__name__)
 

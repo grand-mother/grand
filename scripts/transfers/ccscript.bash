@@ -19,7 +19,7 @@ gtot_option="-g1 -os"
 nbfiles=10
 
 # nbjobs for number of simultaneous jobs running
-nbjobs=20
+nbjobs=10
 
 #time required to run bin2root on one file
 bin2rootduration=15
