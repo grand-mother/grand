@@ -9,21 +9,36 @@ from tests import TestCase
 
 import numpy
 import datetime
-from grand import (
-    ECEF,
-    LTP,
-    Geodetic,
-    GeodeticRepresentation,
+from grand.geo.coordinates import (
+    Coordinates,
     CartesianRepresentation,
     SphericalRepresentation,
-    HorizontalRepresentation,
+    GeodeticRepresentation,
+    Geodetic,
+    GRANDCS,
+    LTP,
+    ECEF,
     HorizontalVector,
     Horizontal,
-    Reference,
-    Coordinates,
+    HorizontalRepresentation,
     Rotation,
-    GRANDCS,
 )
+#from grand import (
+#    ECEF,
+#    LTP,
+#    Geodetic,
+#    GeodeticRepresentation,
+#    CartesianRepresentation,
+#    SphericalRepresentation,
+#    HorizontalRepresentation,
+#    HorizontalVector,
+#    Horizontal,
+#    Reference,
+#    Coordinates,
+#    Rotation,
+#    GRANDCS,
+#)
+from grand.geo.topography import geoid_undulation, Reference, Topography
 import copy as _copy
 
 
