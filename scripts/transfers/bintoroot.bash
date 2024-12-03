@@ -102,7 +102,6 @@ do
     if [ "$conv_status" -ne 0 ]; then
       notify=1
       echo "Error ${conv_status} in conversion."  |& tee -a ${logfile}
-      outstatus=$conv_status
     fi
 
     # Put GrandRoot file into irods
@@ -117,7 +116,6 @@ do
     if [ "$iput_status" -ne 0 ]; then
       notify=1
       echo "Error ${iput_status} in iput"  |& tee -a ${logfile}
-      outstatus=$iput_status
     fi
     # Register conversion result into the database
     echo "Register convertion" >> ${logfile}
@@ -132,7 +130,6 @@ do
       if [ "$register_status" -ne 0 ]; then
         notify=1
         echo "Error ${register_status} in registration" |& tee -a ${logfile}
-        outstatus=$register_status
       fi
     fi
   fi
@@ -141,5 +138,4 @@ done
 if [ "$notify" -ne "0" ]; then
   parent_script=$(cat /proc/$PPID/comm)
   echo "Error in files conversion/registration : ${parent_script} ${0} ${*} " |   mail -s "Grand pipeline error in ${submit_base_name} " fleg@lpnhe.in2p3.fr
-  exit $outstatus
 fi
