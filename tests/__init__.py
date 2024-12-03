@@ -82,15 +82,24 @@ def main():
         # Look for doc tests
         # from astropy.coordinates import CartesianRepresentation
         # import astropy.units as u
-        from grand import (
-            geomagnet,
-            store,
-            topography,
-            ECEF,
+        from grand.geo import geomagnet, topography
+        import grand.dataio.protocol as store
+#        from grand import (
+#            geomagnet,
+#            store,
+#            topography,
+#            ECEF,
+#            CartesianRepresentation,
+#            GeodeticRepresentation,
+#            HorizontalRepresentation,
+#            LTP,
+#        )
+        from grand.geo.coordinates import (
             CartesianRepresentation,
             GeodeticRepresentation,
-            HorizontalRepresentation,
             LTP,
+            ECEF,
+            HorizontalRepresentation
         )
         import grand.hdf5 as io
 

@@ -9,8 +9,12 @@ import os.path as osp
 
 
 import numpy
-
-from grand import ECEF, CartesianRepresentation, LTP
+from grand.geo.coordinates import (
+    CartesianRepresentation,
+    LTP,
+    ECEF
+)
+#from grand import ECEF, CartesianRepresentation, LTP
 from grand.sim.detector.process_ant import AntennaProcessing
 from grand.basis.type_trace import ElectricField,Voltage
 from grand import grand_add_path_data

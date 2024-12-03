@@ -151,7 +151,8 @@ if __name__ == "__main__":
     import numpy as np
 
     import grand.manage_log as mlg
-    from grand import Efield2Voltage
+    #from grand import Efield2Voltage
+    from grand.sim.efield2voltage import Efield2Voltage
 
     # specific logger definition for script because __mane__ is "__main__" !
     logger = mlg.get_logger_for_script(__file__)

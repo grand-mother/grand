@@ -27,7 +27,9 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grand import ADC, manage_log
+#from grand import ADC, manage_log
+from grand.sim.detector.adc import ADC
+import grand.manage_log
 import grand.dataio.root_trees as rt
 
 logger = logging.getLogger(__name__)

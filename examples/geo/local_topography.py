@@ -1,5 +1,11 @@
 #! /usr/bin/env python
-from grand import ECEF, Geodetic, LTP, topography
+from grand.geo import topography
+#from grand import ECEF, Geodetic, LTP
+from grand.geo.coordinates import (
+    Geodetic,
+    LTP,
+    ECEF
+)
 import matplotlib.pyplot as pl
 import numpy as np
 

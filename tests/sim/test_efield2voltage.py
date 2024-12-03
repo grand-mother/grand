@@ -9,7 +9,9 @@ from tests import TestCase
 from pathlib import Path
 
 from grand import grand_get_path_root_pkg
-from grand import Efield2Voltage
+#from grand import Efield2Voltage
+from grand.sim.efield2voltage import Efield2Voltage
+
 
 class Efield2VoltageTest(TestCase):
     """Unit tests for the module to compute voltage from electric field."""

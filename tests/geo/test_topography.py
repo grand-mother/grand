@@ -9,10 +9,17 @@ from tests import TestCase
 
 import grand.dataio.protocol as store
 import grand.geo as tools
-from grand import topography, Topography, geoid_undulation  # , Reference
+from grand.geo import geomagnet, topography
+#from grand import Topography, geoid_undulation  # , Reference
+from grand.geo.topography import geoid_undulation, Reference, Topography
 from grand import grand_get_path_root_pkg
-from grand import ECEF, Geodetic, LTP, GRANDCS
-
+#from grand import ECEF, Geodetic, LTP, GRANDCS
+from grand.geo.coordinates import (
+    Geodetic,
+    GRANDCS,
+    LTP,
+    ECEF
+)
 
 class TopographyTest(TestCase):
     """Unit tests for the topography module"""
