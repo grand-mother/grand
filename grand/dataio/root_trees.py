@@ -1539,7 +1539,7 @@ class TRun(MotherRunTree):
     """Origin of the coordinate system used for the array"""
 
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
@@ -1754,7 +1754,7 @@ class TADC(MotherEventTree):
     event_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """The T3 trigger number"""
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -2031,7 +2031,7 @@ class TRawVoltage(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -2140,7 +2140,7 @@ class TVoltage(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -2199,7 +2199,7 @@ class TEfield(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
