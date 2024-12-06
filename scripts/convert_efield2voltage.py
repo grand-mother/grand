@@ -106,6 +106,13 @@ def manage_args():
         help="Fix the random seed to reproduce same galactic noise, must be positive integer",
     )
     parser.add_argument(
+        "-r",
+        "--range_idx",
+        type=str,
+        default="", 
+        help="Define the range of index event to compute. For debug. Format: '-r 12,30'",
+    )
+    parser.add_argument(
         "--lst",
         type=check_float_day_hour,
         default=18.0,
@@ -182,6 +189,12 @@ if __name__ == "__main__":
     signal.params["add_jitter_ns"]=args.add_jitter_ns
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
+    if args.range_idx != "":
+        rs_idx =  args.range_idx.split(',')
+        l_idx = [int(rs_idx[0]),int(rs_idx[1])]
+        logger.info(f"Define range of index event {l_idx}")           
+        signal.set_idx_du_range(l_idx)
+        
     signal.compute_voltage()    # saves automatically
 
     # =============================================

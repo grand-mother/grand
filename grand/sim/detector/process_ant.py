@@ -161,7 +161,7 @@ class AntennaProcessing:
         direction_sphr = SphericalRepresentation(direction_cart)
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
-        logger.debug(
+        logger.info(
             f"Source direction (degree): azimuth={float(phi_efield):.1f}, zenith={float(theta_efield):.1f}"
         )
         # logger.debug(f"{theta_efield.r}")

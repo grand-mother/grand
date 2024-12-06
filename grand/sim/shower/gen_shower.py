@@ -92,7 +92,10 @@ class ShowerEvent:
         else:
             raise Exception("Provide origin_geoid for this shower. Example: shower.origin_geoid=TRun.origin_geoid")
         self.grand_ref_frame = GRANDCS(arg=origin_geoid,location=origin_geoid)  
-    
+        # DEBUG JMC    
+        logger.info(f'TTree tshower.shower_core_pos : {d_shower.shower_core_pos}')
+        logger.info('From TTree tshower.azimuth tshower.zenith')
+        logger.info(f'Xmax direction at Xcore position: ************ azimuth={d_shower.azimuth:.1f}/{d_shower.azimuth-360:.1f} ,zenith={d_shower.zenith:.2f} ************')
         # define a shower core in GRANDCS. shower_core_pos are given in GRANDCS.
         self.core = GRANDCS(
             x=d_shower.shower_core_pos[0],
@@ -111,7 +114,7 @@ class ShowerEvent:
         xmax = d_shower.xmax_pos_shc
         logger.info(f"xmax in shower coordinate: {xmax}")
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
-
+        logger.info(f"xmax in DU coordinate: {self.maximum}")
     """
     # Since ROOT is the only format in which GRAND data will be stored in, 
     # so the code to deal with other formats are deleted. These commented 

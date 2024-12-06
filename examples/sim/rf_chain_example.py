@@ -1202,4 +1202,4 @@ if __name__ == "__main__":
         plot(args.plot_option, savefig=args.savefig)
     else:
         raise Exception("Please provide a proper option for plotting noise. Options: galactic, vswr, lna, vga, cable, rf_chain.")
-
+    plt.show()
