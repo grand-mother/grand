@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 default_config="/pbs/home/p/prod_grand/scripts/transfers/softs/grand/scripts/transfers/config-prod.ini"
 register_transfers='python3 /pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfers.py'
 
