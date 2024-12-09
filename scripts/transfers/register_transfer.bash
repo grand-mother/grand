@@ -1,6 +1,6 @@
 #!/bin/bash
 default_config="/pbs/home/p/prod_grand/scripts/transfers/softs/grand/scripts/transfers/config-prod.ini"
-register_transfers='python3 /pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfers.py'
+register_transfers='/sps/grand/software/conda/grandlib_2409/bin/python3 /pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfers.py'
 
 while getopts ":d:t:c:" option; do
   case $option in
@@ -32,4 +32,5 @@ cd /pbs/home/p/prod_grand/softs/grand/scripts/transfers
 export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
 
 #${register_transfers} -d ${db} -t ${tag} -c ${config}
+echo "launch ${register_transfers} -d ${db} -t ${tag} -c ${config}"
 ${register_transfers} -d ${db} -t ${tag} -c ${config}

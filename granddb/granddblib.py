@@ -7,15 +7,10 @@ import grand.dataio.root_trees
 import re
 import granddb.rootdblib as rdb
 from sqlalchemy import create_engine
-from sqlalchemy import exc
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy import func
 from sqlalchemy.inspection import inspect
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects import postgresql
 import grand.manage_log as mlg
-import ROOT
 
 logger = mlg.get_logger_for_script(__name__)
 mlg.create_output_for_logger("warning", log_stdout=True)
