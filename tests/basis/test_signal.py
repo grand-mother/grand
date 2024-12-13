@@ -2,7 +2,7 @@ from grand.basis.signal import *
 import grand.basis.traces_event as tre
 import scipy as scp
 
-G_FlagPlot = False
+G_FlagPlot = True
 
 def test_get_peakamptime_norm_hilbert():
     '''

@@ -221,7 +221,7 @@ class _FileEventBase:
         d_simu["origin_geoid"] = origin_geoid
         # DC2 bug xmax_pos isn't filled
         d_simu["xmax_pos"] = self.tt_shower.xmax_pos
-        logger.warn("DC2 FIX to define 'xmax_pos'  in DU Frame")
+        #logger.warn("DC2 FIX to define 'xmax_pos'  in DU Frame")
         d_simu["FIX_xmax_pos"] = (
             xmax_temp + d_simu["shower_core_pos"] - np.array([0, 0, origin_geoid[2]])
         )
@@ -265,7 +265,11 @@ def get_handling3dtraces(f_name, idx_evt=0):
     :param idx_evt: integer
     :return: object Handling3dTraces
     """
-    event_files = get_file_event(f_name)
+    try:
+        event_files = get_file_event(f_name)
+    except:
+        print(f_name)
+        raise
     event_files.load_event_idx(idx_evt)
     return event_files.get_obj_handling3dtraces()
 
