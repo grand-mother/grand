@@ -34,34 +34,7 @@ def grand_add_path_data(s_file):
     return os.path.join(GRAND_DATA_PATH, s_file)
 
 
-from grand.geo import geomagnet, topography
-from grand.geo.topography import geoid_undulation, Reference, Topography
-from grand.geo import coordinates
-from grand.geo.geomagnet import Geomagnet
-from grand.geo.coordinates import (
-    Coordinates,
-    CartesianRepresentation,
-    SphericalRepresentation,
-    GeodeticRepresentation,
-    Geodetic,
-    GRANDCS,
-    LTP,
-    ECEF,
-    HorizontalVector,
-    Horizontal,
-    HorizontalRepresentation,
-    Rotation,
-)
 import grand.dataio.protocol as store
-from grand.sim import efield2voltage
-from grand.sim.efield2voltage import Efield2Voltage
-from grand.sim.detector.antenna_model import tabulated_antenna_model, AntennaModel
-from grand.sim.detector.process_ant import AntennaProcessing
-from grand.sim.detector.rf_chain import RFChain
-from grand.sim.detector.adc import ADC
-from grand.sim.noise.galaxy import galactic_noise
-from grand.sim.shower.gen_shower import ShowerEvent
-from grand.sim.shower.pdg import ParticleCode
 
 
 __all__ = [
