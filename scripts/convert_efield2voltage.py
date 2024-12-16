@@ -4,9 +4,12 @@ Script to compute voltage from electric field.
 Electric field traces are provided in a ROOT file.
 
 To Run:
-    python convert_efield2voltage.py <efield.root> -o <output.root> # RF chain and noise added automatically.
-    python convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 --lst 10
-    convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --no_rf_chain
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> # # RF chain and noise added automatically.
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --seed 0 --lst 10
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --no_noise --no_rf_chain # Voc without noise and RF chain
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --du_type GP300_nec (or GP300 or GP300_mat)
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --no_rf_chain --rf_chain_nut #Calculates Voltage at the Nut (after LNA)
+    python3 convert_efield2voltage.py <efield.root> -o <output.root> --no_rf_chain --rf_chain_gaa #RF chain in G@Auger
 
 In this file:
     signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
@@ -33,7 +36,7 @@ In this file:
 
 
 Computing voltage with your own function to compute Voc.
-    signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor)
+    signal = Efield2Voltage(efield.root, out_voltage.root, seed=seed, padding_factor=args.padding_factor, du_type='GP300')
     my_volt = my_function(....)
     signal.voc = my_volt.voc
     signal.voc_f = my_volt.voc_f
@@ -44,6 +47,7 @@ Computing voltage with your own function to compute Voc.
     signal.multiply(rf_chain)  # make sure shape of rf_chain broadcasts with the shape of signal.vout_f.
 
 June 2023, JM and RK.
+Feb 2024 modified by SN to add antenna model selection.
 """
 def check_float_day_hour(s_hour):
     f_hour = float(s_hour)
@@ -78,6 +82,21 @@ def manage_args():
         default=True,
         help="don't add RF chain.",
     )
+
+    parser.add_argument(
+        "--rf_chain_nut",
+        action="store_true",
+        default=False,
+        help="add RF chain in antenna nut",
+    )
+
+    parser.add_argument(
+        "--rf_chain_gaa",
+        action="store_true",
+        default=False,
+        help="add RF chain for G@Auger setup",
+    )
+
     parser.add_argument(
         "-o",
         "--out_file",
@@ -118,17 +137,23 @@ def manage_args():
         help="Increase size of signal with zero padding, with 1.2 the size is increased of 20%%. ",
     )
     parser.add_argument(
+        "--du_type",
+        type=str,
+        default='GP300',
+        help="Choose between 4 different antenna models, GP300 -using hfss simulations, GP300_nec -using nec simulations, GP300_mat -using matlab simulations, Horizon",
+    )
+    parser.add_argument(
         "--target_duration_us",
         type=float,
         default=0,
         help="Adujust (and override) padding factor in order to get a signal of the given duration, in us",
-    )    
+    )
     parser.add_argument(
         "--target_sampling_rate_mhz",
         type=float,
         default=0,
         help="Target sampling rate of the data in Mhz",
-    ) 
+    )
     parser.add_argument(
         "--add_jitter_ns",
         type=float,
@@ -139,8 +164,8 @@ def manage_args():
         "--calibration_smearing_sigma",
         type=float,
         default=0,
-        help="Smear the stations amplitude calibrations with a gaussian centered in 1 and this input sigma",    
-    )      
+        help="Smear the stations amplitude calibrations with a gaussian centered in 1 and this input sigma",
+    )
     # retrieve argument
     return parser.parse_args()
 
@@ -172,10 +197,12 @@ if __name__ == "__main__":
     logger.info(f"seed used for random number generator is {seed}.")
 
     # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
-    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor)
+    signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
+    signal.params["add_rf_chain_nut"] = args.rf_chain_nut
+    signal.params["add_rf_chain_gaa"] = args.rf_chain_gaa
     signal.params["resample_to_mhz"]=args.target_sampling_rate_mhz
     signal.params["extend_to_us"]=args.target_duration_us
     signal.params["calibration_smearing_sigma"]=args.calibration_smearing_sigma

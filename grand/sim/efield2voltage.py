@@ -16,6 +16,8 @@ from grand.basis.type_trace import ElectricField
 from .detector.antenna_model import AntennaModel
 from .detector.process_ant import AntennaProcessing
 from .detector.rf_chain import RFChain
+from .detector.rf_chain import RFChainNut
+from .detector.rf_chain import RFChain_gaa
 from .shower.gen_shower import ShowerEvent
 from .noise.galaxy import galactic_noise
 
@@ -28,12 +30,11 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     :param padding_factor:      factor to stretch length of time traces with zeros
     :return: size_fft (int,0), array freq (float,1) in MHz for rfft()
     """
-    assert padding_factor >= 1    
+    assert padding_factor >= 1
     dt_s      = 1e-6 / f_samp_mhz
     fast_size = sf.next_fast_len(int(padding_factor * sig_size + 0.5))
     # ToDo: this function (or something higher) should properly handle different time bin for each trace
     freqs_mhz = sf.rfftfreq(fast_size, dt_s[0]) * 1e-6
-    #print(f"padding_factor {padding_factor} sig_size {sig_size} ({padding_factor * sig_size +0.5}) fast size {fast_size} freqs_mhz size {len(freqs_mhz)}")
     return fast_size, freqs_mhz
 
 
@@ -42,16 +43,17 @@ class Efield2Voltage:
     Class to compute voltage with GRANDROOT IO
 
     Goals:
-
       * Call simulator of detector units with ROOT data
-      * Call on more than one event (not tested)
-      * Call on some stations of some event (not tested, not sure it would work as is) #TODO:
+      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
+      * Call on more than one event
       * Save output in ROOT format
     """
 
-    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0):
+    def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300'):
 
         self.d_input = groot.DataDirectory(d_input)
+
+        self.du_type = du_type
 
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
@@ -70,14 +72,16 @@ class Efield2Voltage:
 
 
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
-        self.padding_factor = padding_factor               # 
+        self.padding_factor = padding_factor               #
         self.events = f_input_TEfield        # traces and du_pos are stored here
         self.run = f_input_TRun                 # site_long, site_lat info is stored here. Used to define shower frame.
         self.shower = f_input_TShower        # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
-        self.rf_chain = RFChain()                           # loads RF chain. # RK: TODO: load this only if we want to add RF Chain.
-        self.ant_model = AntennaModel()                     # loads antenna models. time consuming. du_type='GP300' (default), 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0,"calibration_smearing_sigma":0,"add_jitter_ns":0}
+        self.rf_chain = RFChain()                            # loads RF chain for GP13
+        self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
+        self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
+        self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0,"calibration_smearing_sigma":0,"add_jitter_ns":0, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -123,7 +127,7 @@ class Efield2Voltage:
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
-        
+
         # self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
         self.du_pos = np.asarray(self.run.du_xyz)[self.event_dus_indices] # (nb_du, 3) antenna position wrt local grand coordinate
 
@@ -134,29 +138,29 @@ class Efield2Voltage:
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
 
-        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
-        self.f_samp_mhz = 1e3/self.dt_ns             # MHz                                             
+        self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
+        self.f_samp_mhz = 1e3/self.dt_ns             # MHz
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)
 
-        self.target_sampling_rate_mhz = self.params["resample_to_mhz"]  # if differetn from 0, will resample the output to the required sampling rate in mhz        
+        self.target_sampling_rate_mhz = self.params["resample_to_mhz"]  # if differetn from 0, will resample the output to the required sampling rate in mhz
         if self.f_samp_mhz[0]==self.target_sampling_rate_mhz :
           self.target_sampling_rate_mhz=0  #no resampling needed
-           
+
         assert  self.target_sampling_rate_mhz >= 0
 
-        self.target_duration_us = self.params["extend_to_us"]        # if different from 0, will adjust padding factor to get a trace of this lenght in us        
+        self.target_duration_us = self.params["extend_to_us"]        # if different from 0, will adjust padding factor to get a trace of this lenght in us
         assert self.target_duration_us >= 0
-    
-        if(self.target_duration_us>0):     
-          self.target_lenght= int(self.target_duration_us*self.f_samp_mhz[0]) 
-          self.padding_factor=self.target_lenght/self.sig_size 
-          logger.debug(f"padding factor adjusted to {self.padding_factor} to reach a duration of {self.target_duration_us} us")                   
+
+        if(self.target_duration_us>0):
+          self.target_lenght= int(self.target_duration_us*self.f_samp_mhz[0])
+          self.padding_factor=self.target_lenght/self.sig_size
+          logger.debug(f"padding factor adjusted to {self.padding_factor} to reach a duration of {self.target_duration_us} us")
         else:
           self.target_lenght=int(self.padding_factor * self.sig_size + 0.5) #add 0.5 to avoid any rounding error for the int conversion
           self.target_duration_us = self.target_lenght/self.f_samp_mhz[0]
-          
-        assert self.padding_factor >= 1      
+
+        assert self.padding_factor >= 1
 
         # common frequencies for all processing in Fourier domain.
         self.fft_size, self.freqs_mhz = get_fastest_size_fft(
@@ -164,12 +168,12 @@ class Efield2Voltage:
             self.f_samp_mhz,
             self.padding_factor,
         )
-        
+
         #TODO: WARNING!. zero padding a signal that does not end in 0 will lead to spectral leakage. A treatment wit Windowing is recomended.
         #TODO: WARNING!. downsampling (decimation) will reduce the bandwidth of the system, and aliasing could ocurr. Formaly, the signal should be low-pass filtered before the downsampling
         # in our use case, we go from 2000Mhz to 500Mhz sampling rate, this means that bandwidth goes from 1000Mhz to 250Mhz.  a (causal and zero phase adusted!) Low pass filter should be aplied.
-        # our RF chain already acts as a filter (the transfer function is 0 at 250Mhz) so if we apply the RF chain, we are safe. If you are not appling the rf chain, aliasing will ocurr. 
-         
+        # our RF chain already acts as a filter (the transfer function is 0 at 250Mhz) so if we apply the RF chain, we are safe. If you are not appling the rf chain, aliasing will ocurr.
+
         logger.debug(f"Electric field lenght is {self.sig_size} samples at {self.f_samp_mhz[0]}, spanning {self.sig_size/self.f_samp_mhz[0]} us.")
         logger.debug(f"With a padding factor of {self.padding_factor} we will take it to {self.target_lenght} samples, spanning {self.target_lenght/self.f_samp_mhz[0]} us.")
         logger.debug(f"However, optimal number of frequency bins to do a fast fft is {len(self.freqs_mhz)} giving traces of {self.fft_size} samples.")
@@ -179,7 +183,7 @@ class Efield2Voltage:
         # container to collect computed Voc and the final voltage in time domain for one event.
         #Matias: Since we now may want longer voltage traces, we can no longer use traces as referecne
         #self.voc = np.zeros_like(self.traces) # time domain
-        self.voc = np.zeros((trace_shape[0], trace_shape[1], self.fft_size), dtype=float) # time domain      
+        self.voc = np.zeros((trace_shape[0], trace_shape[1], self.fft_size), dtype=float) # time domain
         self.voc_f = np.zeros((trace_shape[0], trace_shape[1], len(self.freqs_mhz)), dtype=np.complex64) # frequency domain
         self.vout = np.zeros_like(self.voc) # final voltage in time domain
         self.vout_f = np.zeros_like(self.voc_f) # frequency domain. changes with addition of noise and signal propagation in rf chain.
@@ -196,11 +200,21 @@ class Efield2Voltage:
                 self.fft_size,
                 self.freqs_mhz,
                 self.nb_du,
-                seed=self.seed
+                seed=self.seed,
+                du_type=self.du_type
             )
         # compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.
         if self.params["add_rf_chain"]:
+            #self.rf_chain.compute_for_freqs(self.freqs_mhz)
             self.rf_chain.compute_for_freqs(self.freqs_mhz)
+
+        if self.params["add_rf_chain_nut"]:
+        #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
+            self.rf_chainnut.compute_for_freqs(self.freqs_mhz)
+
+        if self.params["add_rf_chain_gaa"]:
+        #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
+            self.rf_chaingaa.compute_for_freqs(self.freqs_mhz)
 
     def get_leff(self, du_idx):
         """
@@ -285,29 +299,29 @@ class Efield2Voltage:
     #    Return final voltage in time domain after adding noises and propagating signal through RF chain.
     #    """
     #    #self.vout[:] = sf.irfft(self.vout_f)[..., :self.sig_size] #MATIAS: here i will leave the padding, and later truncate to the requested lenght
-    #    self.vout[:] = sf.irfft(self.vout_f) 
+    #    self.vout[:] = sf.irfft(self.vout_f)
 
     def final_resample(self):
         """
         after everything is done, change the sampling rate if needded and adjust to the desired target lenght:
         """
-        
+
         if(self.target_sampling_rate_mhz>0): #if we need to resample
             #compute new number of points
-            ratio=(self.target_sampling_rate_mhz/self.f_samp_mhz[0])        
+            ratio=(self.target_sampling_rate_mhz/self.f_samp_mhz[0])
             m=int(self.fft_size*ratio)
             #now, since we resampled,  we have a new target_lenght
-            self.target_lenght= int(self.target_duration_us*self.target_sampling_rate_mhz)                                
-            logger.info(f"resampling the voltage from {self.f_samp_mhz[0]} to {self.target_sampling_rate_mhz} MHz, new trace lenght is {self.target_lenght} samples")                         
+            self.target_lenght= int(self.target_duration_us*self.target_sampling_rate_mhz)
+            logger.info(f"resampling the voltage from {self.f_samp_mhz[0]} to {self.target_sampling_rate_mhz} MHz, new trace lenght is {self.target_lenght} samples")
             #we use fourier interpolation, becouse its easy!
             self.vout = sf.irfft(self.vout_f, m)*ratio #renormalize the amplitudes
             #MATIAS: TODO: now, we are missing a place to store the new sampling rate!
         elif(self.params["add_noise"] or self.params["add_rf_chain"]): #we know we dont need to resample, but we might need to reproces the Voc (curently stored in vout by compute_voc_event) to take into acount the noise or the chain
-            self.vout[:] = sf.irfft(self.vout_f) 
-               
-        if(self.target_lenght<np.shape(self.vout)[2]):           
-            logger.info(f"truncating output to {self.target_lenght} samples") 
-            self.vout=self.vout[..., :self.target_lenght] 
+            self.vout[:] = sf.irfft(self.vout_f)
+
+        if(self.target_lenght<np.shape(self.vout)[2]):
+            logger.info(f"truncating output to {self.target_lenght} samples")
+            self.vout=self.vout[..., :self.target_lenght]
 
 
     # compute open circuit voltage in one antenna of one event.
@@ -325,22 +339,22 @@ class Efield2Voltage:
         self.get_leff(du_idx)
         #logger.debug(self.ant_leff_sn.model_leff)
         # define E field at antenna position
-        
+
                     #add the calibration noise
         if(self.params["calibration_smearing_sigma"]>0):
           calfactor=np.random.normal(1,self.params["calibration_smearing_sigma"])
-          logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")  
+          logger.debug(f"Antenna {du_idx} smearing calibration factor {calfactor}")
         else:
           calfactor=1.0
-        
+
         e_trace = coord.CartesianRepresentation(
             x=calfactor*self.traces[du_idx, 0],
             y=calfactor*self.traces[du_idx, 1],
             z=calfactor*self.traces[du_idx, 2],
         )
-        
-        
-        
+
+
+
         efield_idx = ElectricField(self.time_samples[du_idx] * 1e-9, e_trace)
 
         # ----- antenna responses -----
@@ -362,7 +376,7 @@ class Efield2Voltage:
 
         # output voltage is time domain. At this stage, vout=voc.
         self.vout[du_idx] = self.voc[du_idx]
-        
+
 
         # Use vout_f for further processing. Add noise and propagate signal through RF chain.
         # voc and voc_f is saved so that they can be used for testing or adding user defined noises and rf chain.
@@ -421,7 +435,16 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
+            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
             self.vout_f[du_idx] *= self.rf_chain.get_tf()
+
+        if self.params["add_rf_chain_nut"]:
+            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
+            self.vout_f[du_idx] *= self.rf_chainnut.get_tf()
+
+        if self.params["add_rf_chain_gaa"]:
+            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
+            self.vout_f[du_idx] *= self.rf_chaingaa.get_tf()
 
         # Final voltage output for antenna with index du_idx
         if self.params["add_noise"] or self.params["add_rf_chain"]:
@@ -429,9 +452,21 @@ class Efield2Voltage:
             # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
             #self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]   #MATIAS: here i will leave the padding, and later truncate to the requested lenght
             self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])
-            
+
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+
+        if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
+            # inverse FFT and remove zero-padding
+            # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+
+        if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
+            # inverse FFT and remove zero-padding
+            # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+
     # compute voltage in all antennas of one event.
-    
+
     def compute_voltage_event(self, event_idx=None, event_number=None, run_number=None):
         """
         Simulate all DU of an event either with index event_idx or with event_number and run_number.
@@ -458,6 +493,7 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
+            #self.multiply(self.rf_chain.get_tf())
             self.multiply(self.rf_chain.get_tf())
 
         ## Final voltage output for antenna with index du_idx #MATIAS: now this is taken care of by the final_resample() function
@@ -466,7 +502,34 @@ class Efield2Voltage:
         #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
         #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
         #    self.final_voltage()   # inverse fourier transform. update self.vout.
-        
+
+        if self.params["add_rf_chain_nut"]:
+            #self.multiply(self.rf_chain.get_tf())
+            self.multiply(self.rf_chainnut.get_tf())
+
+        if self.params["add_rf_chain_gaa"]:
+            #self.multiply(self.rf_chain.get_tf())
+            self.multiply(self.rf_chaingaa.get_tf())
+
+        # Final voltage output for antenna with index du_idx
+        if self.params["add_noise"] or self.params["add_rf_chain"]:
+            # inverse FFT and remove zero-padding
+            # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+            #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+            self.final_voltage()   # inverse fourier transform. update self.vout.
+
+        if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
+        #    # inverse FFT and remove zero-padding
+        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+            self.final_voltage()   # inverse fourier transform. update self.vout.
+
+        if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
+        #    # inverse FFT and remove zero-padding
+        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+            self.final_voltage()   # inverse fourier transform. update self.vout.
+
     # Primary method to compute voltage. 
     # Compute voltage in any one antennas of any one event. If None, voltage for all DUs of all events is computed.
     def compute_voltage(self, 
@@ -587,7 +650,7 @@ class Efield2Voltage:
         self.tt_volt.first_du         = self.du_id[0]
         self.tt_volt.time_seconds     = self.events.time_seconds
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
-        
+
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
 
 
@@ -597,22 +660,22 @@ class Efield2Voltage:
           newsampling=self.f_samp_mhz
           ratio=originalsampling/newsampling
         else:
-          ratio=1.0          
+          ratio=1.0
 
         self.tt_volt.trigger_position=np.ushort(np.asarray(self.events.trigger_position)/ratio)
-                
+
         #apply time jitter
         jitter= self.params["add_jitter_ns"]
         assert jitter >=0
 
         if(jitter>0):
-           logger.info(f"adding {jitter} ns of time jitter to the trigger times.")     
+           logger.info(f"adding {jitter} ns of time jitter to the trigger times.")
            #reinitialize the random number
-           if(self.seed>0): 
+           if(self.seed>0):
              np.random.seed(self.seed*(self.events.event_number+1))
-           
+
            delays=np.round(np.random.normal(0,jitter,size=np.shape(self.events.du_nanoseconds)).astype(int))
-           
+
            du_nanoseconds=np.asarray(self.events.du_nanoseconds)
            du_seconds=np.asarray(self.events.du_seconds)
            du_nanoseconds=self.events.du_nanoseconds+delays
@@ -621,15 +684,15 @@ class Efield2Voltage:
            maskplus= du_nanoseconds >=1e9
            maskminus= du_nanoseconds < 0
            du_nanoseconds[maskplus]-=int(1e9)
-           du_seconds[maskplus]+=int(1)   
+           du_seconds[maskplus]+=int(1)
            du_nanoseconds[maskminus]+=int(1e9)
            du_seconds[maskminus]-=int(1)
-           
+
            self.events.du_nanoseconds=du_nanoseconds
-           self.events.du_seconds=du_seconds  
+           self.events.du_seconds=du_seconds
 
 
-        
+
         self.tt_volt.du_nanoseconds = self.events.du_nanoseconds
         self.tt_volt.du_seconds = self.events.du_seconds
         self.tt_volt.du_id = self.du_id
