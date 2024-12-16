@@ -14,8 +14,7 @@ from grand.dataio.root_trees import * # this is home/grand/grand (at least in do
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
 import matplotlib.pyplot as plt
-# from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
-# from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
+from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)
@@ -147,23 +146,21 @@ def adjust_trigger(trace, CurrentT0s, TPre, TimeBinSize):
     DeltaT = TPre - trigger_time
     ShiftBins = (DeltaT / TimeBinSize).astype(int, copy=False)
 
-    # this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly).
-    mask = ShiftBins < -TPre / TimeBinSize
+    #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly).
+    mask=ShiftBins < -TPre/TimeBinSize
     if mask.any():
         logger.error("some elements needed to be shifted only up to the limt, tpre was too small")
-        ShiftBins[mask] = int(-TPre / TimeBinSize)
+        ShiftBins[mask]= int(-TPre/TimeBinSize)
 
-    # we cannot use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
-    # we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
+    #we cannot use use np.roll, but roll makes re-appear the end of the trace at the begining if we roll to much
+    #we cannot use scipy shift, that lets you state what value to put for the places you roll, on a 3D array
 
-    # TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.
-    # for du_idx in range(trace.shape[0]):
-    #     trace[du_idx] = shift(trace[du_idx], (0, ShiftBins[du_idx]), cval=0)
+    #TODO: There must be a better way to do this without the for loop, but i lost a morning to it and i dont have the time to develop it now. Search for strided_indexing_roll on the web for inspiration.
     for du_idx in range(trace.shape[0]):
-        trace_shift(trace[du_idx], ShiftBins[du_idx])
+        trace[du_idx]=shift(trace[du_idx],(0,ShiftBins[du_idx]),cval=0)
 
-    # we get the correct t0
-    T0s = CurrentT0s - ShiftBins * TimeBinSize
+    #we get the correct t0
+    T0s=CurrentT0s-ShiftBins*TimeBinSize
 
     return T0s, trace
 
@@ -621,6 +618,8 @@ def rawshower2grandroot(trawshower, gt):
     ### Primary energy (GeV)
     # ToDo: it should be a scalar on sim side
     gt.tshower.energy_primary = trawshower.energy_primary[0]
+
+    gt.tshower.energy_em = trawshower.energy_em[0]
 
     ### Shower azimuth (deg, CR convention)
     gt.tshower.azimuth = trawshower.azimuth

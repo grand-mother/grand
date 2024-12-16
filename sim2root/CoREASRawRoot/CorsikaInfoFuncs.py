@@ -186,10 +186,14 @@ def antenna_positions_dict(pathAntennaList):
     generic_id_counter = 1
 
     for name in file[:, 5]:
-        GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after last underscore
+        GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after "ant"
+        ant_match = search(r'ant(\d+)', name, flags=re.IGNORECASE)  # Extract digits after "ant"
 
         if GP_match: # match GP13
             antennaInfo["ID"].append(int(GP_match.group(1))) # Group 1 contains the ID
+
+        elif ant_match: # match GP300 antenna names of "ant???"
+            antennaInfo["ID"].append(int(ant_match.group(1))) # Group 1 contains the ID
 
         else: # Give generic IDs to antennas with other names
             antennaInfo["ID"].append(int(generic_id_counter))
@@ -212,8 +216,9 @@ def get_antenna_position(pathAntennaList, antenna):
         or None if the antenna is not found.
     """
     file = np.genfromtxt(pathAntennaList, dtype="str")
-    gp300_data = np.genfromtxt("GP300.list", dtype="str")
+    gp300_data = np.genfromtxt(pathAntennaList, dtype="str")
 
+    # currently checks the same file, so always passes
     # Filter data based on antenna name
     filtered_data = file[file[:, 5] == antenna]  # Select rows where name matches
     gp300_filtered = gp300_data[gp300_data[:, 5] == antenna]
@@ -222,7 +227,7 @@ def get_antenna_position(pathAntennaList, antenna):
         # Antenna not found in either file
         return None
 
-    # Replace x, y, z positions with the original positions
+    # Replace x, y, z positions with the original positions and convert to m
     x = gp300_filtered[0][2].astype(float) * 10**-2
     y = gp300_filtered[0][3].astype(float) * 10**-2
     z = gp300_filtered[0][4].astype(float) * 10**-2
@@ -245,13 +250,17 @@ def calculate_array_shift(pathAntennaList):
         If the arrays have different shapes, returns None.
     """
     sim_data = np.genfromtxt(pathAntennaList, dtype="str")
-    gp300_data = np.genfromtxt("GP300.list", dtype="str")
+    gp300_data = np.genfromtxt(pathAntennaList, dtype="str")
 
     # Check if data shapes are compatible
+    # currently checks the same file so always passes
     if sim_data.shape != gp300_data.shape:
         print("Sim data shape is not compatible with GP300 layout!")
         return None
 
+    # currently checks the same file so shift is always 0
+    # current version uses variable cores so no shift necessary
+    # utilise this process corsika sims that have core [0,0,0] and shift the antennas instead
     # Calculate average shift for x and y coordinates
     shift_x = np.mean(gp300_data[:, 2].astype(float) * 10**-2 - sim_data[:, 2].astype(float) * 10**-2)
     shift_y = np.mean(gp300_data[:, 3].astype(float) * 10**-2 - sim_data[:, 3].astype(float) * 10**-2)

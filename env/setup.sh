@@ -10,5 +10,6 @@ cd $script_full_path
 
 # download data model for GRAND 
 data/download_data_grand.py
+data/download_new_RFchain.py
 
 cd $call_path

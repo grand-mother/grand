@@ -3,12 +3,13 @@
 ## by Jelena Köhler, @jelenakhlr
 
 import sys
+import numpy as np
 import os
 import glob
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
 sys.path.append("../Common")
-import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
+import sim2root.Common.raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 from optparse import OptionParser
 
 """
@@ -237,6 +238,15 @@ def CoreasToRawRoot(file, simID=None):
   ed_sum = energy_dep[:,9]
 
 
+  Egamma = np.sum(ed_gamma)
+  Eem_ion = np.sum(ed_em_ioniz)
+  Eem_cut = np.sum(ed_em_cut)
+
+  # calculate electromagnetic shower energy and convert to eV
+  Eem = (Egamma + Eem_ion + Eem_cut) * 1e9
+  print("Electromagnetic shower energy:", Eem)
+
+
   ##############################################
 
   EnergyInNeutrinos = 1. # placeholder
@@ -261,6 +271,9 @@ def CoreasToRawRoot(file, simID=None):
   site = read_site(inp_input)
   latitude, longitude, altitude = read_lat_long_alt(site)
 
+  # set altitude to simulations obslevel
+  altitude = CorePosition[2]
+
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
@@ -282,6 +295,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.rnd_seed = RandomSeed
 
   RawShower.energy_in_neutrinos = EnergyInNeutrinos
+  RawShower.energy_em = [Eem]
   RawShower.energy_primary = [Energy]
   RawShower.azimuth = azimuth
   RawShower.zenith = zenith
@@ -410,9 +424,12 @@ def CoreasToRawRoot(file, simID=None):
   #****** load positions ******
   # the list file contains all antenna positions for each antenna ID
   pathAntennaList = f"{path}/SIM{simID}.list"
+
   # store all antenna IDs in ant_IDs
+  # stores the actual antenna names from the coreas -list file
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
-  antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
+  # if antenna name is in the form of "ant???" or "gp_???", stores the digits after "ant" or "gp_", otherwise generic counter from 1
+  antenna_IDs = antenna_positions_dict(pathAntennaList)["ID"] 
 
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
@@ -443,7 +460,7 @@ def CoreasToRawRoot(file, simID=None):
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
     efield = np.loadtxt(tracefile)
     
-    timestamp = efield[:,0] * 10**9 #convert to ns 
+    timestamp = efield[:,0] * 10**9 # convert to ns 
     # coreas uses cgs units, so voltage is in statvolt
     # efield in statvolt / cm
     # 1 statV * 299.792458 V/statV = 1 V
