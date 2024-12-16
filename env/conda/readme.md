@@ -45,7 +45,26 @@ conda activate <my_env>
 conda deactivate
 ```
 
-## Import GRANDLIB environnement for amd64 processor architecture
+## GRANDLIB for IO only
+
+Here is how to define a conda environment to have only the GRANDLIB data reading functionalities in ROOT format and use for example the io event viewer
+
+
+```
+conda create -c conda-forge --name grandio root=6.26 scipy matplotlib -y
+conda activate grandio
+```
+
+Init your grand github package and run event viewer
+
+```
+cd /path/to/grand
+source env/setup.sh
+
+ioroot_3dtraces.py -h
+```
+
+## Import full GRANDLIB environnement for amd64 processor architecture
 
 Start by update your conda and create the GRANDLIB environnement with file conf defined in grand/env/conda 
 
