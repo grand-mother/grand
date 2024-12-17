@@ -294,7 +294,7 @@ class Efield2Voltage:
             antenna_location = coord.LTP(
                 x= self.shower.shower_core_pos[0],  # self.du_pos[du_idx, 0],    # antenna position wrt local grand coordinate
                 y= self.shower.shower_core_pos[1], 
-                z= self.shower.shower_core_pos[1], 
+                z= self.shower.shower_core_pos[2], 
                 frame=self.evt_shower.grand_ref_frame,
             )
         
