@@ -3,6 +3,7 @@
 ## by Jelena Köhler, @jelenakhlr
 
 import sys
+import numpy as np
 import os
 import glob
 import time #to get the unix timestamp
@@ -237,6 +238,15 @@ def CoreasToRawRoot(file, simID=None):
   ed_sum = energy_dep[:,9]
 
 
+  Egamma = np.sum(ed_gamma)
+  Eem_ion = np.sum(ed_em_ioniz)
+  Eem_cut = np.sum(ed_em_cut)
+
+  # calculate electromagnetic shower energy and convert to eV
+  Eem = (Egamma + Eem_ion + Eem_cut) * 1e9
+  print("Electromagnetic shower energy:", Eem)
+
+
   ##############################################
 
   EnergyInNeutrinos = 1. # placeholder
@@ -261,6 +271,9 @@ def CoreasToRawRoot(file, simID=None):
   site = read_site(inp_input)
   latitude, longitude, altitude = read_lat_long_alt(site)
 
+  # set altitude to simulations obslevel
+  altitude = CorePosition[2]
+
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
@@ -282,6 +295,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.rnd_seed = RandomSeed
 
   RawShower.energy_in_neutrinos = EnergyInNeutrinos
+  RawShower.energy_em = [Eem]
   RawShower.energy_primary = [Energy]
   RawShower.azimuth = azimuth
   RawShower.zenith = zenith
