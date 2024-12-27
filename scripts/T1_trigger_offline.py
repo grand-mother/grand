@@ -1,4 +1,4 @@
-#!/pbs/home/x/xtian/.conda/envs/grandlib2304/bin/python3.9
+#!/usr/bin/env python3
 import numpy as np
 import sys
 import grand.dataio.root_trees as rt

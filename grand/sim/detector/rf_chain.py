@@ -183,7 +183,7 @@ class MatchingNetwork(GenericProcessingDU):
         ! 2 Port Network Data from SP1.SP block
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
-        filename = os.path.join("detector", "RFchain_v2", "NewMatchingNetwork"f"{axis_dict[axis]}.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "MatchingNetwork"f"{axis_dict[axis]}.s2p")
 
         return grand_add_path_data(filename)
 
@@ -421,7 +421,7 @@ class LowNoiseAmplifier(GenericProcessingDU):
         Hz  S  dB  R 50.000
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
-        filename = os.path.join("detector", "RFchain_v2", "NewLNA_"f"{axis_dict[axis]}.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "LNA-"f"{axis_dict[axis]}.s2p")
 
         return grand_add_path_data(filename)
 
@@ -705,8 +705,9 @@ class VGAFilter(GenericProcessingDU):
         """
         assert self.gain in [-5, 0, 5, 20]
         logger.info(f"vga gain: {self.gain} dB")
-        filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
-
+        #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
+        filename = os.path.join("detector", "RFchain_v2", "feb+amfitler+biast.s2p")
+        
         return grand_add_path_data(filename)
 
     def compute_for_freqs(self, freqs_mhz):
