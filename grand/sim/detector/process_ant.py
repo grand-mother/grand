@@ -102,6 +102,9 @@ class AntennaProcessing:
         #assert isinstance(self.model_leff, TabulatedAntennaModel)
         self.size_fft = 0
         self.freqs_out_hz = 0
+        self.theta_efield, self.phi_efield = 0,0
+        self.lt = 0
+        self.lp = 0
 
     @classmethod
     def init_interpolation(cls, freq_sampling_mhz, freq_out_mhz):
@@ -160,6 +163,8 @@ class AntennaProcessing:
         direction_cart = CartesianRepresentation(x=direction[0], y=direction[1], z=direction[2])
         direction_sphr = SphericalRepresentation(direction_cart)
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
+        self.theta_efield, self.phi_efield = theta_efield, phi_efield
+        #theta_efield, phi_efield=theta_efield+self.direction_smearing[0], phi_efield+self.direction_smearing[1]
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
         logger.debug(
             f"Source direction (degree): azimuth={float(phi_efield):.1f}, zenith={float(theta_efield):.1f}"
@@ -229,17 +234,17 @@ class AntennaProcessing:
             pre.c_inf * leff_itp_sph[:, pre.idx_itp] + pre.c_sup * leff_itp_sph[:, pre.idx_itp + 1]
         )
         # now add zeros outside leff frequency band and unpack leff theta , phi
-        l_t = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
-        l_t[pre.idx_first : pre.idx_lastp1] = leff_itp[0]
-        l_p = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
-        l_p[pre.idx_first : pre.idx_lastp1] = leff_itp[1]
+        self.l_t = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+        self.l_t[pre.idx_first : pre.idx_lastp1] = leff_itp[0]
+        self.l_p = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+        self.l_p[pre.idx_first : pre.idx_lastp1] = leff_itp[1]
         # fmt: off
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
         c_p, s_p = np.cos(p_rad), np.sin(p_rad)
-        self.l_x = l_t * c_t * c_p - s_p * l_p
-        self.l_y = l_t * c_t * s_p + c_p * l_p
-        self.l_z = -s_t * l_t
+        self.l_x = self.l_t * c_t * c_p - s_p * self.l_p
+        self.l_y = self.l_t * c_t * s_p + c_p * self.l_p
+        self.l_z = -s_t * self.l_t
         # fmt: on
         # del l_t, l_p, c_t, s_t , c_p, s_p
         # Treating Leff as a vector (no change in magnitude) and transforming
@@ -251,7 +256,7 @@ class AntennaProcessing:
         leff_frame_ecef = np.matmul(self.pos.basis.T, self.leff_frame_ant)
         # vector wrt shower frame. ECEF --> Shower
         self.leff_frame_shower = np.matmul(frame.basis, leff_frame_ecef)
-
+        self.leff_frame_ant_sph = np.array([self.l_t, self.l_p])
         return self.leff_frame_shower
 
     def compute_voltage(
