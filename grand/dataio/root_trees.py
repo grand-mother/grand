@@ -14,8 +14,15 @@ import ROOT
 import numpy as np
 import glob
 import array
+import warnings
 
 from collections import defaultdict
+
+# ToDo: Ignore the warning about branches (and all the other ROOT errors :( ) for TChain until an answer in the ROOT forum
+ROOT.gErrorIgnoreLevel = ROOT.kFatal
+
+# Load the C++ macros for vector filling from numpy arrays
+ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
 
 # Conversion between numpy dtype and array.array typecodes
 numpy_to_array_typecodes = {np.dtype('int8'): 'b', np.dtype('int16'): 'h', np.dtype('int32'): 'i', np.dtype('int64'): 'q', np.dtype('uint8'): 'B', np.dtype('uint16'): 'H', np.dtype('uint32'): 'I', np.dtype('uint64'): 'Q', np.dtype('float32'): 'f', np.dtype('float64'): 'd', np.dtype('complex64'): 'F', np.dtype('complex128'): 'D', np.dtype('int16'): 'h'}
@@ -23,6 +30,8 @@ numpy_to_array_typecodes = {np.dtype('int8'): 'b', np.dtype('int16'): 'h', np.dt
 
 # Conversion between C++ type and array.array typecodes
 cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q', 'unsigned char': 'B', 'unsigned short': 'H', 'unsigned int': 'I', 'unsigned long long': 'Q', 'float': 'f', 'double': 'd', 'string': 'u'}
+
+cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype('uint64'), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -86,14 +95,17 @@ class StdVectorList(MutableSequence):
         # If this is a vector of vectors, convert a subvector to list for the return
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[index])):
-                if self.ndim == 2:
-                    return list(self._vector[index])
-                elif self.ndim == 3:
-                    return [list(el) for el in self._vector[index]]
-                elif self.ndim == 4:
-                    return [list(el) for el1 in self._vector[index] for el in el1]
-                else:
-                    return self._vector[index]
+                try:
+                    return np.array(self._vector[index])
+                except:
+                    if self.ndim == 2:
+                        return list(self._vector[index])
+                    elif self.ndim == 3:
+                        return [list(el) for el in self._vector[index]]
+                    elif self.ndim == 4:
+                        return [list(el) for el1 in self._vector[index] for el in el1]
+                    else:
+                        return self._vector[index]
             else:
                 return self._vector[index]
         else:
@@ -135,24 +147,33 @@ class StdVectorList(MutableSequence):
     def __iadd__(self, value):
     # function modified by Jelena to fix the negative issue, use at own risk
         try:
-            if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float") or isinstance(value, np.ndarray):
-                if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+            if isinstance(value, np.ndarray):
+                if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
             else:
-                value = list(value)
-
-            # The list needs to have simple Python types - ROOT.vector does not accept numpy types
-            try:
-                self._vector += value
-            except TypeError:
-                # Slow conversion to simple types. No better idea for now
-                if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
                     if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
                     if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
                     if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                elif not isinstance(value, StdVectorList):
+                    value = list(value)
 
-                self._vector += value
+                # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+                try:
+                    if isinstance(value, StdVectorList):
+                        # ToDo: Maybe faster than +=, but... to be checked
+                        self._vector.assign(value._vector)
+                    else:
+                        self._vector += value
+                except TypeError:
+                    # Slow conversion to simple types. No better idea for now
+                    if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+
+                    self._vector += value
 
         except OverflowError:
             # Handle the OverflowError here, e.g., by logging a message or taking an appropriate action.
@@ -377,6 +398,10 @@ class DataTree:
     _analysis_level: int = 0
     """The analysis level of this tree"""
 
+    ## Is the tree read from TChain
+    is_tchain: bool = False
+    """Is the tree read from TChain"""
+
 
     ## Fields that are not branches
     _nonbranch_fields = [
@@ -396,7 +421,8 @@ class DataTree:
         "_source_datetime",
         "_analysis_level",
         "_modification_history",
-        "__setattr__"
+        "__setattr__",
+        "is_tchain"
     ]
     """Fields that are not branches"""
 
@@ -645,27 +671,45 @@ class DataTree:
         if isinstance(f, ROOT.TFile):
             self._file = f
             self._file_name = self._file.GetName()
-        # If the filename string is given, open/create the ROOT file with this name
-        else:
-            self._file_name = f
-            # print(self._file_name)
-            # If the file with that filename is already opened, use it (do not reopen)
-            if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
-                self._file = f
-            # If not opened, open
+        # If the filename string is given, check if chain, if not open/create the ROOT file with this name
+        elif isinstance(f, str):
+            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
+            flist = glob.glob(f)
+            if len(flist) > 1:
+                f = flist
+            # Otherwise, it was a single file
             else:
-                # If file exists, initially open in the read-only mode (changed during write())
-                if os.path.isfile(self._file_name):
-                    self._file = ROOT.TFile(self._file_name, "read")
-                # If the file does not exist, create it
+                self._file_name = f
+                # print(self._file_name)
+                # If the file with that filename is already opened, use it (do not reopen)
+                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
+                    self._file = f
+                # If not opened, open
                 else:
-                    self._file = ROOT.TFile(self._file_name, "create")
+                    # If file exists, initially open in the read-only mode (changed during write())
+                    if os.path.isfile(self._file_name):
+                        self._file = ROOT.TFile(self._file_name, "read")
+                    # If the file does not exist, create it
+                    else:
+                        self._file = ROOT.TFile(self._file_name, "create")
+        else:
+            raise ValueError(f"Unsupported filename {f}. Can't open/create a file with a tree.")
+
+        # If a list is given, it's a Chain
+        if isinstance(f, list):
+            self.is_tchain = True
+            # Create the TChain
+            self._tree = ROOT.TChain(self._tree_name, self._tree_name)
+            # Assign files to the chain
+            for el in f:
+                self._tree.Add(el)
+
 
     ## Init/readout the tree from a file
     def _set_tree(self, t):
         """Init/readout the tree from a file"""
         # If the ROOT TTree is given, just use it
-        if isinstance(t, ROOT.TTree):
+        if isinstance(t, ROOT.TTree) or isinstance(t, ROOT.TChain):
             self._tree = t
             self._tree_name = t.GetName()
         # If the tree name string is given, open/create the ROOT TTree with this name
@@ -941,7 +985,7 @@ class DataTree:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
                 self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
         else:
-            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch.")
+            raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 
     ## Assign branches to the instance - without calling it, the instance does not show the values read to the TTree
     def assign_branches(self):
@@ -1026,6 +1070,8 @@ class DataTree:
         """Get the meta information as a dictionary"""
 
         metadata = {}
+
+        # ToDo: this should create some lists of values for TChains
 
         for el in tree.GetUserInfo():
             try:
@@ -1413,11 +1459,12 @@ class MotherEventTree(DataTree):
         except:
             current_entry = None
 
-        # Get the detector units branch
-        du_br = self._tree.GetBranch("du_id")
-
         count = self.draw("du_id", "", "goff")
         detector_units = np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
+
+        # Get the detector units branch
+        # It has to be here, not before the draw(), due to a bug in PyROOT
+        du_br = self._tree.GetBranch("du_id")
 
         # If there was an entry read before this action, come back to this entry
         if current_entry is not None:
@@ -1492,7 +1539,7 @@ class TRun(MotherRunTree):
     """Origin of the coordinate system used for the array"""
 
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("int", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Detector unit (antenna) (lat,lon,alt) position
     du_geoid: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
@@ -1598,6 +1645,74 @@ class TRunVoltage(MotherRunTree):
 
         self.create_branches()
 
+## General info on the raw voltage common to all events.
+@dataclass
+class TRunRawVoltage(MotherRunTree):
+    """General info on the voltage common to all events."""
+
+    _type: str = "runrawvoltage"
+
+    _tree_name: str = "trunrawvoltage"
+
+    ## Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual).
+    digi_ctrl: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Control parameters - the list of general parameters that can set the mode of operation, select trigger sources and preset the common coincidence read out time window (Digitizer mode parameters in the manual)."""
+    ## Firmware version
+    firmware_version: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """Firmware version"""
+    ## Nominal trace length in units of samples
+    trace_length: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Nominal trace length in units of samples"""
+    ## ADC sampling frequency in MHz
+    adc_sampling_frequency: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling frequency in MHz"""
+    ## ADC sampling resolution in bits
+    adc_sampling_resolution: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC sampling resolution in bits"""
+    ## ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?
+    adc_input_channels: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC input channels - > 16 BIT WORD (4*4 BITS) LOWEST IS CHANNEL 1, HIGHEST CHANNEL 4. FOR EACH CHANNEL IN THE EVENT WE HAVE: 0: ADC1, 1: ADC2, 2:ADC3, 3:ADC4 4:FILTERED ADC1, 5:FILTERED ADC 2, 6:FILTERED ADC3, 7:FILTERED ADC4. ToDo: decode this?"""
+    ## ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?
+    adc_enabled_channels: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    """ADC enabled channels - LOWEST 4 BITS STATE WHICH CHANNEL IS READ OUT ToDo: Decode this?"""
+    ## Value of the Variable gain amplification on the board
+    gain: StdVectorListDesc = field(default=StdVectorListDesc("vector<int>"))
+    """Value of the Variable gain amplification on the board"""
+    ## Conversion factor from bits to V for ADC
+    adc_conversion: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    """Conversion factor from bits to V for ADC"""
+    ## Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?
+    digi_prepost_trig_windows: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Window parameters - describe Pre Coincidence, Coincidence and Post Coincidence readout windows (Digitizer window parameters in the manual). ToDo: Decode?"""
+    ## Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?
+    channel_properties_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel x properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    ## Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?
+    channel_properties_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel y properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    ## Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?
+    channel_properties_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel z properties - described in Channel property parameters in the manual. ToDo: Decode?"""
+    ## Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    channel_trig_settings_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel x trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    ## Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    channel_trig_settings_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel y trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+    ## Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?
+    channel_trig_settings_z: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self._tree.GetName() == "":
+            self._tree.SetName(self._tree_name)
+        if self._tree.GetTitle() == "":
+            self._tree.SetTitle(self._tree_name)
+
+        self.create_branches()
+
 
 @dataclass
 ## The class for storing ADC traces and associated values for each event
@@ -1639,7 +1754,7 @@ class TADC(MotherEventTree):
     event_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """The T3 trigger number"""
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -1916,7 +2031,7 @@ class TRawVoltage(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -2025,7 +2140,7 @@ class TVoltage(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -2084,7 +2199,7 @@ class TEfield(MotherEventTree):
 
     ## Specific for each Detector Unit
     ## Detector unit (antenna) ID
-    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
+    du_id: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short", "unsigned int"))
     """Detector unit (antenna) ID"""
     ## Unix time of the trigger for this DU
     du_seconds: StdVectorListDesc = field(default=StdVectorListDesc("unsigned int"))
@@ -2456,17 +2571,24 @@ class DataDirectory:
         # Get the file handle list
         self.file_handle_list = self.get_list_of_files_handles()
 
+        # Set the structure type depending on the dir name
+        exp_structure = False
+        if dir_name[:4]=="sim_":
+            sim2root_structure = True
+        elif dir_name[:4]=="exp_":
+            sim2root_structure = False
+            exp_structure = True
+
         if sim2root_structure:
             self.init_sim2root_structure()
+        elif exp_structure:
+            self.init_exp_structure()
         else:
-            logger.warning("Sorry, non sim2root directories not supported yet")
-
-        # Create chains and set them as attributes
-        # self.create_chains()
+            logger.warning("Sorry, non exp or sim2root directories are not supported yet")
 
     def __getattr__(self, name):
         """For non-existing tree files or tree parameters, return None instead of rising an exception"""
-        trees_to_check = ["trun", "trunvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
+        trees_to_check = ["trun", "trunvoltage", "trunrawvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
         if any(s in name for s in trees_to_check):
             return None
         else:
@@ -2480,14 +2602,22 @@ class DataDirectory:
         """Go through the list of files in the directory and open all of them"""
         file_handle_list = []
 
-        for filename in self.file_list:
-            file_handle_list.append(DataFile(filename))
+        # Function returning the tree type and analysis level from the filename. That's how we want to group files.
+        def split_filenames(x):
+            el = Path(x).name.split("_")
+            return el[0], el[2]
+
+        # for filename in self.file_list:
+        from itertools import groupby
+        for key, filenames in groupby(sorted(self.file_list, key=split_filenames), split_filenames):
+            filenames = list(filenames)
+            file_handle_list.append(DataFile(filenames))
 
         return file_handle_list
 
     # Init the instance with sim2root structure files
     def init_sim2root_structure(self):
-
+        self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
         for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
@@ -2496,6 +2626,7 @@ class DataDirectory:
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
                 setattr(self, f"{flistname[:-1]}_l{l}", f)
+                self.file_attrs.append(f"{flistname[:-1]}_l{l}")
                 # Assign the tree with the specific analysis level to the class instance
                 setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
                 if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
@@ -2506,85 +2637,43 @@ class DataDirectory:
                     # Assign the tree with the highest or requested analysis level as default to the class instance
                     setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
-        # tree_types = set()
-        # # Loop through the list of file handles
-        # for i, f in enumerate(self.file_handle_list):
-        #
-        #
-        #     # Collect the tree types
-        #     tree_types.update(*f.tree_types.keys())
-        #
-        #     # Select the highest analysis level trees for each class and store these trees as main attributes
-        #     for key in f.tree_types:
-        #         if key == "run":
-        #             setattr(self, "trun", f.dict_of_trees["trun"])
-        #         else:
-        #             setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-        #             if self.analysis_level>-1:
-        #
-        #
-        #
-        #             max_analysis_level = -1
-        #             for key1 in f.tree_types[key].keys():
-        #                 el = f.tree_types[key][key1]
-        #                 chain_name = el["name"]
-        #                 if "analysis_level" in el:
-        #                     if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-        #                         max_analysis_level = el["analysis_level"]
-        #                         max_anal_chain_name = chain_name
-        #
-        #                         setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-        #
-        #                 if chain_name not in chains_dict:
-        #                     chains_dict[chain_name] = ROOT.TChain(chain_name)
-        #                 chains_dict[chain_name].Add(self.file_list[i])
-        #
-        #                 # In case there is no analysis level info in the tree (old trees), just take the last one
-        #                 if max_analysis_level == -1:
-        #                     max_anal_chain_name = el["name"]
-        #
-        #             tree_class = getattr(thismodule, el["type"])
-        #             setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
+    # Init the instance with exp (gtot) structure files
+    # ToDo: It should be the same as sim2root, but at the moment sim2root has different naming convention
+    def init_exp_structure(self):
+        self.file_attrs = []
+        # Loop through groups of files with tree types expected in the directory
+        for flistname in ["ftruns", "ftrunrawvoltages", "ftadcs", "ftrawvoltages"]:
+        # for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
+            # Assign the list of files with specific tree type to the class instance
+            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            max_level = -1
+            for (l, f) in getattr(self, flistname).items():
+                # Assign the file with the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[:-1]}_l{l}", f)
+                self.file_attrs.append(f"{flistname[:-1]}_l{l}")
+                # Assign the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
+                if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
+                    max_level = l
+                    # Assign the file with the highest or requested analysis level as default to the class instance
+                    # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
+                    setattr(self, f"{flistname[:-1]}", f)
+                    # Assign the tree with the highest or requested analysis level as default to the class instance
+                    setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
-
-    def create_chains(self):
-        chains_dict = {}
-        tree_types = set()
-        # Loop through the list of file handles
-        for i, f in enumerate(self.file_handle_list):
-            # Collect the tree types
-            tree_types.update(*f.tree_types.keys())
-
-            # Select the highest analysis level trees for each class and store these trees as main attributes
-            for key in f.tree_types:
-                if key == "run":
-                    setattr(self, "trun", f.dict_of_trees["trun"])
-                else:
-                    max_analysis_level = -1
-                    for key1 in f.tree_types[key].keys():
-                        el = f.tree_types[key][key1]
-                        chain_name = el["name"]
-                        if "analysis_level" in el:
-                            if el["analysis_level"] > max_analysis_level or el["analysis_level"] == 0:
-                                max_analysis_level = el["analysis_level"]
-                                max_anal_chain_name = chain_name
-
-                                setattr(self, key + "_" + str(el["analysis_level"]), f.dict_of_trees[el["name"]])
-
-                        if chain_name not in chains_dict:
-                            chains_dict[chain_name] = ROOT.TChain(chain_name)
-                        chains_dict[chain_name].Add(self.file_list[i])
-
-                        # In case there is no analysis level info in the tree (old trees), just take the last one
-                        if max_analysis_level == -1:
-                            max_anal_chain_name = el["name"]
-
-                    tree_class = getattr(thismodule, el["type"])
-                    setattr(self, tree_class.get_default_tree_name(), chains_dict[max_anal_chain_name])
-
-    def print(self, recursive=True):
+    def print(self, verbose=True):
         """Prints all the information about all the data"""
-        pass
+        print(f"This DataDirectory instance has:")
+        print(f"  {len(self.file_attrs):<3} file/tree attributes")
+        print(f"  {len(self.file_list):<3} files")
+        print(f"  {len(self.file_handle_list):<3} file chains")
+
+        if verbose:
+            print("\n\033[95;40mProperties of each file attribute:\033[0m")
+            for attr in self.file_attrs:
+                f = getattr(self, attr)
+                print(f"\n\n\033[34;40m{attr}:\033[0m\n")
+                f.print()
 
     def get_list_of_chains(self):
         """Gets list of TTree chains of specific type from the directory"""
@@ -2608,6 +2697,15 @@ class DataFile:
     tree_types = defaultdict(dict)
     """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
 
+    ## Does this instace hold a chain of files
+    is_tchain = False
+    """Does this instace hold a chain of files"""
+
+    ## File list in case this is a chain
+    flist = []
+    """File list in case this is a chain"""
+
+
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""
 
@@ -2615,12 +2713,38 @@ class DataFile:
         self.dict_of_trees = {}
         self.list_of_trees = []
         self.tree_types = defaultdict(dict)
+        self.is_tchain = False
+        self.flist = []
 
         # If a string given, open the file
         if type(filename) is str:
-            f = ROOT.TFile(filename)
-            self.f = f
-            self.filename = filename
+            # Check if a chain - filename string resolves to a list longer than 1 (due to wildcards)
+            flist = glob.glob(filename)
+            self.flist = flist
+            if len(flist) > 1:
+                f = ROOT.TFile(flist[0])
+                self.f = f
+                self.filename = flist[0]
+                self.is_tchain = True
+            # Single file
+            else:
+                f = ROOT.TFile(filename)
+                self.f = f
+                self.filename = filename
+        # If list of files is given, make a TChain
+        elif type(filename) is list:
+            if len(filename) > 1:
+                f = ROOT.TFile(filename[0])
+                self.f = f
+                self.filename = filename[0]
+                self.is_tchain = True
+                self.flist = filename
+            # Single file
+            else:
+                f = ROOT.TFile(filename[0])
+                self.f = f
+                self.filename = filename[0]
+                self.flist = filename
         elif type(filename) is ROOT.TFile:
             self.f = filename
             self.filename = self.f.GetName()
@@ -2636,6 +2760,16 @@ class DataFile:
 
             # Get the basic information about the tree
             tree_info = self.get_tree_info(t)
+
+            # If we want a TChain
+            if self.is_tchain:
+                t = ROOT.TChain(t.GetName(), t.GetName())
+                # Assign files to the chain
+                for el in self.flist:
+                    t.Add(el)
+
+                # Modify the number of events for this TChain
+                tree_info["evt_cnt"] = t.GetEntries()
 
             # Add the tree to a dict for this tree class
             self.tree_types[tree_info["type"]][tree_info["name"]] = tree_info
@@ -2698,7 +2832,17 @@ class DataFile:
     def print(self):
         """Prints the information about the TTrees in the file"""
 
-        print(f"File size: {self.f.GetSize():40}")
+        # If this file is a chain
+        if self.is_tchain:
+            print("This DataFile is a chain of the following files:")
+            print(self.flist)
+            print(f"The first file size: {self.f.GetSize():40}")
+            print("Most of the information below are based on the tree in the first file")
+        else:
+            print("This DataFile refers to the following file:")
+            print(self.flist)
+            print(f"File size: {self.f.GetSize():40}")
+
         print(f"Tree classes found in the file: {str([el for el in self.tree_types.keys()]):40}")
 
         for key in self.tree_types:
