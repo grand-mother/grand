@@ -2,7 +2,9 @@
 
 '''
 Created on 19 juil. 2022
+
 @author: Jean-Marc Colley, CNRS/IN2P3/LPNHE
+
 '''
 import tarfile
 import os
@@ -54,7 +56,7 @@ try:
 except:
     print(f"download failed {LINK_MODEL}")
     sys.exit(1)
-
+    
 # 3- extract
 print("==============================")
 print('Extract tar file')
