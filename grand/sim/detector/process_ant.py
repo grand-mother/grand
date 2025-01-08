@@ -276,6 +276,8 @@ class AntennaProcessing:
         # frame is shower frame. self.frame is antenna frame.
         logger.debug(f"pos {self.pos}")
         if (not np.all(np.isfinite(self.pos))) or (not np.all(np.isfinite(frame))): # which one
+            print("pos",self.pos)
+            print("frame",frame)
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input fft_leff and field are in shower frame.
