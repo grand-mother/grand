@@ -222,6 +222,7 @@ class _FileEventBase:
         d_simu["origin_geoid"] = origin_geoid
         xmax_temp = self.tt_shower.xmax_pos_shc
         d_simu["xmax_pos_shc"] = xmax_temp
+        d_simu["xmax_pos"] = self.tt_shower.xmax_pos
         # FIX parameters
         logger.warn("DC2 FIX to define 'xmax_pos' in DU Frame")
         # DC2 FIX: Xmax don't the right value
