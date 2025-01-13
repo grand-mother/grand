@@ -185,8 +185,11 @@ class _FileEventBase:
         l_idx = [self.idt2idx[idt] for idt in self.du_id]
         o_tevent.init_network(self.du_xyz[l_idx])
         o_tevent.network.name = self.tt_run.site
+        d_sim = self.get_simu_parameters()
+        o_tevent.network.xmax_pos = d_sim["FIX_xmax_pos"]
+        o_tevent.network.core_pos = d_sim["shower_core_pos"]
         shw = self.tt_shower
-        xmax = shw.xmax_pos_shc
+        xmax = o_tevent.network.xmax_pos
         dist_xmax = np.linalg.norm(xmax) / 1000
         o_tevent.info_shower = f"||xmax_pos_shc||={dist_xmax:.1f} km;"
         azi, zenith = shw.azimuth, shw.zenith
@@ -209,9 +212,7 @@ class _FileEventBase:
         :return: dictionary with some raw value of simulation parameters
         """
         d_simu = {}
-        # raw
-        xmax_temp = self.tt_shower.xmax_pos_shc
-        d_simu["xmax_pos_shc"] = xmax_temp
+        # raw parameters
         d_simu["azimuth"] = self.tt_shower.azimuth
         d_simu["zenith"] = self.tt_shower.zenith
         d_simu["energy_primary"] = self.tt_shower.energy_primary
@@ -219,12 +220,15 @@ class _FileEventBase:
         d_simu["magnetic_field"] = self.tt_shower.magnetic_field
         origin_geoid = self.tt_run.origin_geoid
         d_simu["origin_geoid"] = origin_geoid
-        # DC2 bug xmax_pos isn't filled
-        d_simu["xmax_pos"] = self.tt_shower.xmax_pos
-        logger.warn("DC2 FIX to define 'xmax_pos'  in DU Frame")
-        d_simu["FIX_xmax_pos"] = (
-            xmax_temp + d_simu["shower_core_pos"] - np.array([0, 0, origin_geoid[2]])
-        )
+        xmax_temp = self.tt_shower.xmax_pos_shc
+        d_simu["xmax_pos_shc"] = xmax_temp
+        # FIX parameters
+        logger.warn("DC2 FIX to define 'xmax_pos' in DU Frame")
+        # DC2 FIX: Xmax don't the right value
+        # https://github.com/grand-mother/collab-issues/issues/34
+        d_simu["FIX_xmax_pos_grandlib"] = xmax_temp + d_simu["shower_core_pos"]
+        # DC2 FIX: correct value of Xmax 
+        d_simu["FIX_xmax_pos"] = d_simu["FIX_xmax_pos_grandlib"] - np.array([0, 0, origin_geoid[2]])
         return d_simu
 
 
