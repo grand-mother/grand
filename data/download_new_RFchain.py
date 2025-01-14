@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 
 '''
-Created on 19 juil. 2022
+Created on 24 DEC. 2024
 
-@author: Jean-Marc Colley, CNRS/IN2P3/LPNHE
+@author: SN
 
 '''
 import tarfile
@@ -20,7 +20,8 @@ from grand import GRAND_DATA_PATH, grand_add_path_data
 #FILE_MODEL = "grand_model_2207.tar.gz"
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2306.tar.gz"
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/251637/grand_model_190224.tar.gz"
-LINK_MODEL = "https://forge.in2p3.fr/attachments/download/312643/RFchain_V3.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/312643/RFchain_V3.tar.gz"
+LINK_MODEL = "https://forge.in2p3.fr/attachments/download/362478/RF_chain_20241218.tar.gz"
 FILE_MODEL = LINK_MODEL.split("/")[-1]
 # class MyProgressBar():
 #     def __init__(self):

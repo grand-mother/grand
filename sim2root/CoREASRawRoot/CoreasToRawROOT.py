@@ -138,11 +138,11 @@ def CoreasToRawRoot(file, simID=None):
     zenith = read_params(reas_input, "ShowerZenithAngle")
     azimuth = read_params(reas_input, "ShowerAzimuthAngle") + 180 #shift to GRAND conventions
 
-    Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
+    Energy = read_params(reas_input, "PrimaryParticleEnergy") * 1e-9 # in GeV
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
     DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
     DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") / 100 # geometrical distance of shower maximum from core in m
-    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10**-1 # convert from Gauss to mT
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10 ** (-1) # convert from Gauss to mT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
@@ -242,8 +242,8 @@ def CoreasToRawRoot(file, simID=None):
   Eem_ion = np.sum(ed_em_ioniz)
   Eem_cut = np.sum(ed_em_cut)
 
-  # calculate electromagnetic shower energy and convert to eV
-  Eem = (Egamma + Eem_ion + Eem_cut) * 1e9
+  # calculate electromagnetic shower energy and leave them in GeV
+  Eem = (Egamma + Eem_ion + Eem_cut) # in GeV
   print("Electromagnetic shower energy:", Eem)
 
 
@@ -260,7 +260,7 @@ def CoreasToRawRoot(file, simID=None):
 
   print("*****************************************")
   HadronicModel = hadr_interaction
-  LowEnergyModel = "urqmd" # might not be possible to get this info from mpi runs
+  LowEnergyModel = "urqmd" # might not be possibleV to get this info from mpi runs
   print("[WARNING] hard-coded LowEnergyModel", LowEnergyModel)
   print("*****************************************")
 
@@ -339,6 +339,7 @@ def CoreasToRawRoot(file, simID=None):
   
   """
   RawShower.xmax_grams = Xmax
+  RawShower.xmax_distance = DistanceOfShowerMaximum
 
   RawShower.long_pd_gamma = pd_gammas
   RawShower.long_pd_eminus = pd_electrons

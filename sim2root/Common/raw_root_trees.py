@@ -124,7 +124,7 @@ class RawShowerTree(MotherEventTree):
     ### Shower Xmax position in shower coordinates [m]
     _xmax_pos_shc: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float64))
     
-    ### Distance of Xmax  [m] to the ground
+    ### Distance of Xmax  [m] to the ground along the shower axis
     _xmax_distance: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     
     ### Altitude of Xmax  [m]. Its important for the computation of the index of refraction at maximum, and of the cherenkov cone
