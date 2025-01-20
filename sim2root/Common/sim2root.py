@@ -622,6 +622,8 @@ def rawshower2grandroot(trawshower, gt):
     # ToDo: it should be a scalar on sim side
     gt.tshower.energy_primary = trawshower.energy_primary[0]
 
+    # ToDo: fill energy_em for ZHAIRES
+    if len(trawshower.energy_em)==0: trawshower.energy_em = [0]
     gt.tshower.energy_em = trawshower.energy_em[0]
 
     ### Shower azimuth (deg, CR convention)
