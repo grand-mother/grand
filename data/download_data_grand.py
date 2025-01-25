@@ -18,7 +18,11 @@ from grand import GRAND_DATA_PATH, grand_add_path_data
 
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
 #FILE_MODEL = "grand_model_2207.tar.gz"
-LINK_MODEL = "https://forge.in2p3.fr/attachments/download/211902/grand_model_2306.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2306.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/251637/grand_model_190224.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/340302/grand_model_141124.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/211902/grand_model_2306.tar.gz"
+LINK_MODEL = "https://forge.in2p3.fr/attachments/download/362481/grand_model_20241218.tar.gz"
 FILE_MODEL = LINK_MODEL.split("/")[-1]
 # class MyProgressBar():
 #     def __init__(self):
@@ -46,7 +50,7 @@ tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
 
 # 2- download
 print("==============================")
-print("Download data model (~ 452 MB) for GRAND, please wait ...")
+print("Download data model (~ 1GB) for GRAND, please wait ...")
 try:
     request.urlretrieve(LINK_MODEL, tar_file)
     print("Successfully downloaded")

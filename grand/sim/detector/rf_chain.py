@@ -149,7 +149,7 @@ class GenericProcessingDU:
         self.size_sig = (self.nb_freqs - 1) * 2
 
 class MatchingNetwork(GenericProcessingDU):
-    
+
 
     def __init__(self):
         """
@@ -188,7 +188,7 @@ class MatchingNetwork(GenericProcessingDU):
         return grand_add_path_data(filename)
 
     def compute_for_freqs(self, freqs_mhz):
-        
+
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
         assert self.nb_freqs > 0
@@ -263,7 +263,7 @@ class MatchingNetwork(GenericProcessingDU):
 
 
 class gaa_frontend0db(GenericProcessingDU):
-    
+
 
     def __init__(self):
         """
@@ -302,7 +302,7 @@ class gaa_frontend0db(GenericProcessingDU):
         return grand_add_path_data(filename)
 
     def compute_for_freqs(self, freqs_mhz):
-        
+
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
         assert self.nb_freqs > 0
@@ -376,7 +376,7 @@ class gaa_frontend0db(GenericProcessingDU):
         self.ABCD_matrix[:] = ABCD_matrix # this is an A-matrix represented by [A] in the document.
 
 
-        
+
 class LowNoiseAmplifier(GenericProcessingDU):
     """
 
@@ -707,7 +707,7 @@ class VGAFilter(GenericProcessingDU):
         logger.info(f"vga gain: {self.gain} dB")
         #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
         filename = os.path.join("detector", "RFchain_v2", "feb+amfitler+biast.s2p")
-        
+
         return grand_add_path_data(filename)
 
     def compute_for_freqs(self, freqs_mhz):
@@ -856,7 +856,7 @@ class BalunBeforeADC(GenericProcessingDU):
         self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor # this is an A-matrix represented by [A] in the document.
 
 #################################################################################################
-        
+
 class Rfchain_elements_db(GenericProcessingDU):
     def __init__(self, filename="test2.s2p"):
         super().__init__()
@@ -893,34 +893,34 @@ class Rfchain_elements_db(GenericProcessingDU):
         dbs11 = self.sparams[:, 1]
         phs11 = np.deg2rad(self.sparams[:, 2])
         res11, ims11 = db2reim(dbs11, phs11)
-        self.dbs11[:] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)     
-        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       
-        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) 
+        self.dbs11[:] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)
+        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)
+        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz)
         # ----- S21
         dbs21 = self.sparams[:, 3]
         phs21 = np.deg2rad(self.sparams[:, 4])
         res21, ims21 = db2reim(dbs21, phs21)
-        self.dbs21[:] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)     
-        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       
-        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) 
+        self.dbs21[:] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)
+        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)
+        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz)
         # ----- S12
         dbs12 = self.sparams[:, 5]
         phs12 = np.deg2rad(self.sparams[:, 6])
         res12, ims12 = db2reim(dbs12, phs12)
-        self.dbs12[:] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)     
-        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       
-        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) 
+        self.dbs12[:] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)
+        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)
+        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz)
         # ----- S22
         dbs22 = self.sparams[:][:, 7]
         phs22 = np.deg2rad(self.sparams[:, 8])
         res22, ims22 = db2reim(dbs22, phs22)
-        self.dbs22[:] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)     
-        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       
-        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) 
+        self.dbs22[:] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)
+        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)
+        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz)
 
         denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XYZ arms
         denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
-        # for all three ports. shape should be (2, 2, ant ports, nb_freqs)        
+        # for all three ports. shape should be (2, 2, ant ports, nb_freqs)
         ABCD_matrix = s2abcd(self.s11, self.s21, self.s12, self.s22)
         ABCD_matrix *= denorm_factor # denormalizing factor for XYZ arms
         self.ABCD_matrix[:] = ABCD_matrix
@@ -963,45 +963,45 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         dbs11 = self.sparams[:, 1]
         phs11 = self.sparams[:, 2]
         res11, ims11 = db2reim(dbs11, phs11)
-        self.dbs11[:] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)     
-        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       
-        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) 
+        self.dbs11[:] = interpol_at_new_x(freqs_in, dbs11, self.freqs_mhz)
+        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)
+        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz)
         # ----- S21
         dbs21 = self.sparams[:, 3]
         phs21 = self.sparams[:, 4]
         res21, ims21 = db2reim(dbs21, phs21)
-        self.dbs21[:] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)     
-        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       
-        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) 
+        self.dbs21[:] = interpol_at_new_x(freqs_in, dbs21, self.freqs_mhz)
+        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)
+        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz)
         # ----- S12
         dbs12 = self.sparams[:, 5]
         phs12 = self.sparams[:, 6]
         res12, ims12 = db2reim(dbs12, phs12)
-        self.dbs12[:] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)     
-        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       
-        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) 
+        self.dbs12[:] = interpol_at_new_x(freqs_in, dbs12, self.freqs_mhz)
+        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)
+        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz)
         # ----- S22
         dbs22 = self.sparams[:][:, 7]
         phs22 = self.sparams[:, 8]
         res22, ims22 = db2reim(dbs22, phs22)
-        self.dbs22[:] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)     
-        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       
-        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) 
+        self.dbs22[:] = interpol_at_new_x(freqs_in, dbs22, self.freqs_mhz)
+        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)
+        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz)
 
         denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XYZ arms
         denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
-        # for all three ports. shape should be (2, 2, ant ports, nb_freqs)        
+        # for all three ports. shape should be (2, 2, ant ports, nb_freqs)
         ABCD_matrix = s2abcd(self.s11, self.s21, self.s12, self.s22)
         ABCD_matrix *= denorm_factor # denormalizing factor for XYZ arms
         self.ABCD_matrix[:] = ABCD_matrix
-        
-###################################################################################### 
+
+######################################################################################
 
 class Rfchain_elements(GenericProcessingDU):
     def __init__(self, filename="test.s2p"):
         super().__init__()
         self.filename = filename
-        
+
         self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
@@ -1037,41 +1037,41 @@ class Rfchain_elements(GenericProcessingDU):
         angs11 = np.deg2rad(self.sparams[:, 2])
         res11 = mags11 * np.cos(angs11)
         ims11 = mags11 * np.sin(angs11)
-        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       
-        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) 
+        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)
+        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz)
         # ----- S21
         mags21 = self.sparams[:, 3]
         angs21 = np.deg2rad(self.sparams[:, 4])
         res21 = mags21 * np.cos(angs21)
         ims21 = mags21 * np.sin(angs21)
-        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       
-        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) 
+        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)
+        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz)
         # ----- S12
         mags12 = self.sparams[:, 5]
         angs12 = np.deg2rad(self.sparams[:, 6])
         res12 = mags12 * np.cos(angs12)
         ims12 = mags12 * np.sin(angs12)
-        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       
-        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) 
+        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)
+        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz)
         # ----- S22
         mags22 = self.sparams[:, 7]
         angs22 = np.deg2rad(self.sparams[:, 8])
         res22 = mags22 * np.cos(angs22)
         ims22 = mags22 * np.sin(angs22)
-        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       
-        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) 
+        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)
+        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz)
 
         # for all three ports. shape should be (2, 2, ant ports, nb_freqs)
         denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XYZ arms
         denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
-        self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor 
+        self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor
 
 ##############################################################################################
 class Rfchain_elements_rad(GenericProcessingDU):
     def __init__(self, filename="test.s2p"):
         super().__init__()
         self.filename = filename
-        
+
         self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
         self.freqs_in = self.sparams[:, 0] / 1e6 # Hz to MHz
         # shape = (antenna_port, nb_freqs)
@@ -1107,34 +1107,34 @@ class Rfchain_elements_rad(GenericProcessingDU):
         angs11 = self.sparams[:, 2]
         res11 = mags11 * np.cos(angs11)
         ims11 = mags11 * np.sin(angs11)
-        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)       
-        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz) 
+        self.s11[:] = interpol_at_new_x(freqs_in, res11, self.freqs_mhz)
+        self.s11[:] += 1j * interpol_at_new_x(freqs_in, ims11, self.freqs_mhz)
         # ----- S21
         mags21 = self.sparams[:, 3]
         angs21 = self.sparams[:, 4]
         res21 = mags21 * np.cos(angs21)
         ims21 = mags21 * np.sin(angs21)
-        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)       
-        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz) 
+        self.s21[:] = interpol_at_new_x(freqs_in, res21, self.freqs_mhz)
+        self.s21[:] += 1j * interpol_at_new_x(freqs_in, ims21, self.freqs_mhz)
         # ----- S12
         mags12 = self.sparams[:, 5]
         angs12 = self.sparams[:, 6]
         res12 = mags12 * np.cos(angs12)
         ims12 = mags12 * np.sin(angs12)
-        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)       
-        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz) 
+        self.s12[:] = interpol_at_new_x(freqs_in, res12, self.freqs_mhz)
+        self.s12[:] += 1j * interpol_at_new_x(freqs_in, ims12, self.freqs_mhz)
         # ----- S22
         mags22 = self.sparams[:, 7]
         angs22 = self.sparams[:, 8]
         res22 = mags22 * np.cos(angs22)
         ims22 = mags22 * np.sin(angs22)
-        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)       
-        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz) 
+        self.s22[:] = interpol_at_new_x(freqs_in, res22, self.freqs_mhz)
+        self.s22[:] += 1j * interpol_at_new_x(freqs_in, ims22, self.freqs_mhz)
 
         # for all three ports. shape should be (2, 2, ant ports, nb_freqs)
         denorm_factor = np.array([[1, 50], [1/50., 1]]) # denormalizing factor for XYZ arms
         denorm_factor = denorm_factor[..., np.newaxis, np.newaxis]
-        self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor 
+        self.ABCD_matrix[:] = s2abcd(self.s11, self.s21, self.s12, self.s22) * denorm_factor
 
 ###########################################################################################
 
@@ -1164,8 +1164,8 @@ class Zload_arb(GenericProcessingDU):
         dbs = self.sparams[:, 1]
         phs = np.deg2rad(self.sparams[:, 2])
         res, ims = db2reim(dbs, phs)
-        self.s[:] = interpol_at_new_x(freqs_in, res, self.freqs_mhz)       
-        self.s[:] += 1j * interpol_at_new_x(freqs_in, ims, self.freqs_mhz) 
+        self.s[:] = interpol_at_new_x(freqs_in, res, self.freqs_mhz)
+        self.s[:] += 1j * interpol_at_new_x(freqs_in, ims, self.freqs_mhz)
         # Calculation of Zload (Zload = balun+200ohm + ADchip)
         self.Z_load[:] = 50 * (1 + self.s) / (1 - self.s)
 
@@ -1267,11 +1267,11 @@ class RFChain(GenericProcessingDU):
         assert self.lna.nb_freqs > 0
         assert self.lna.ABCD_matrix.shape[-1] > 0
         assert self.lna.nb_freqs==self.balun1.nb_freqs
-        
+
         assert self.matcnet.nb_freqs > 0
         assert self.matcnet.ABCD_matrix.shape[-1] > 0
         assert self.matcnet.nb_freqs==self.balun1.nb_freqs
-        
+
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.V_out_RFchain = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -1282,20 +1282,20 @@ class RFChain(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: balun1 * matching_network * lna.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
         #self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
-        
+
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
         self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -1314,7 +1314,7 @@ class RFChain(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1394,21 +1394,21 @@ class RFChainNut(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         MMM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         self.total_ABCD_matrix_nut[:] = matmul(MMM1, self.lna.ABCD_matrix)
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -1427,7 +1427,7 @@ class RFChainNut(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1456,7 +1456,7 @@ class RFChainNut(GenericProcessingDU):
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
         return self._total_tf
-##################################################################################    
+##################################################################################
 
 class RFChain_gaa(GenericProcessingDU):
     """
@@ -1493,15 +1493,15 @@ class RFChain_gaa(GenericProcessingDU):
         self.V_out_RFchain = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.I_out_RFchain = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.total_ABCD_matrix = np.zeros(self.gaa.ABCD_matrix.shape, dtype=np.complex64)
-        
+
         self.total_ABCD_matrix[:] = self.gaa.ABCD_matrix
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -1520,7 +1520,7 @@ class RFChain_gaa(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1533,7 +1533,7 @@ class RFChain_gaa(GenericProcessingDU):
             ABCD_matrix_2port = self.total_ABCD_matrix[:,:,i,:]
             ABCD_matrix_1port = np.moveaxis(ABCD_matrix_1port, -1, 0) # (2,2,nfreqs) --> (nfreqs,2,2), to compute inverse of ABCD_matrix using np.linalg.inv.
             ABCD_matrix_1port_inv = np.linalg.inv(ABCD_matrix_1port)
-            
+
             self.V_out_RFchain[i] = 2/(self.total_ABCD_matrix[0,0,i,:] + self.total_ABCD_matrix[0,1,i,:]/50 + self.total_ABCD_matrix[1,0,i,:]*50 + self.total_ABCD_matrix[1,1,i,:])
             #V_out_RFchain = ABCD_matrix_1port_inv[:,0,0]*self.V_in_balunA[i] + ABCD_matrix_1port_inv[:,0,1]*self.I_in_balunA[i]
             I_out_RFchain = ABCD_matrix_1port_inv[:,1,0]*self.V_in_balunA[i] + ABCD_matrix_1port_inv[:,1,1]*self.I_in_balunA[i]
@@ -1555,7 +1555,7 @@ class RFChain_gaa(GenericProcessingDU):
         return self._total_tf
 ##########################################################################################
 ###########################################################################################
-    
+
 class RFChain_Balun1(GenericProcessingDU):
     """
     Facade for all elements in RF chain
@@ -1607,20 +1607,20 @@ class RFChain_Balun1(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         self.total_ABCD_matrix_nut[:] = self.balun1.ABCD_matrix
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -1639,7 +1639,7 @@ class RFChain_Balun1(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1668,9 +1668,9 @@ class RFChain_Balun1(GenericProcessingDU):
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
         return self._total_tf
-################################################################################## 
+##################################################################################
 ###########################################################################################
-    
+
 class RFChain_Match_net(GenericProcessingDU):
     """
     Facade for all elements in RF chain
@@ -1722,20 +1722,20 @@ class RFChain_Match_net(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         self.total_ABCD_matrix_nut[:] = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -1754,7 +1754,7 @@ class RFChain_Match_net(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1783,7 +1783,7 @@ class RFChain_Match_net(GenericProcessingDU):
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
         return self._total_tf
-##################################################################################    
+##################################################################################
 
 class RFChain_Cable_Connectors(GenericProcessingDU):
     """
@@ -1836,22 +1836,22 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         MMM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MMM2 = matmul(MMM1, self.lna.ABCD_matrix)
         self.total_ABCD_matrix_nut[:] = matmul(MMM2, self.cable.ABCD_matrix)
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -1870,7 +1870,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1899,7 +1899,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
         return self._total_tf
-##################################################################################  
+##################################################################################
 
 class RFChain_VGA(GenericProcessingDU):
     """
@@ -1952,18 +1952,18 @@ class RFChain_VGA(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -2011,7 +2011,7 @@ class RFChain_VGA(GenericProcessingDU):
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
         return self._total_tf
-##################################################################################    
+##################################################################################
 class RFChain_in_Balun1(GenericProcessingDU):
     """
     Facade for all elements in RF chain
@@ -2063,20 +2063,20 @@ class RFChain_in_Balun1(GenericProcessingDU):
         # Note that this is a matrix multiplication
         # Associative property of matrix multiplication is used, ie. (AB)C = A(BC)
         # Make sure to multiply in this order: lna.ABCD_matrix * balun1.ABCD_matrix * cable.ABCD_matrix * vgaf.ABCD_matrix
-        
+
         MM1 = matmul(self.balun1.ABCD_matrix, self.matcnet.ABCD_matrix)
         MM2 = matmul(MM1, self.lna.ABCD_matrix)
         MM3 = matmul(self.cable.ABCD_matrix, self.vgaf.ABCD_matrix)
         self.total_ABCD_matrix[:] = matmul(MM2, MM3)
-        
+
         self.total_ABCD_matrix_nut[:] = np.ones(self.lna.ABCD_matrix.shape, dtype=np.complex64)
-        
+
         # Calculation of Z_in (this is the total impedence of the RF chain excluding antenna arm. see page 50 of the document.)
         self.Z_load = self.zload.Z_load[np.newaxis, :] # shape (nfreq) --> (1,nfreq) to broadcast with components of ABCD_matrix with shape (2,2,ports,nfreq).
         self.Z_in[:] = (self.total_ABCD_matrix[0,0] * self.Z_load + self.total_ABCD_matrix[0,1])/(self.total_ABCD_matrix[1,0] * self.Z_load + self.total_ABCD_matrix[1,1])
 
         # Once Z_in is calculated, calculate the final total_ABCD_matrix including Balun2.
-        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
+        #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix)
 
         # Antenna Impedance.
         filename = os.path.join("detector", "RFchain_v2", "Z_ant_3.2m.csv")
@@ -2095,7 +2095,7 @@ class RFChain_in_Balun1(GenericProcessingDU):
         Input: Voc_f (in frequency domain)
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
-        RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+        RK Note: name 'vout_f' is a placeholder. Change it with something better.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2126,4 +2126,4 @@ class RFChain_in_Balun1(GenericProcessingDU):
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
         return self._total_tf
-################################################################################## 
+##################################################################################

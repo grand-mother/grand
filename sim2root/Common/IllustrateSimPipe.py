@@ -87,9 +87,9 @@ def plot_core_positions(directory, t_0_shift=False):
   
   corex=np.zeros(nb_events)
   corey=np.zeros(nb_events)
-  corez=np.zeros(nb_events)   
+  corez=np.zeros(nb_events)
 
-   
+
   ####################################################################################
   # start looping over the events
   ####################################################################################
@@ -100,31 +100,29 @@ def plot_core_positions(directory, t_0_shift=False):
       assert isinstance(event_number, int)
       assert isinstance(run_number, int)
       logger.debug(f"Running event_number: {event_number}, run_number: {run_number}")
-      
+
       tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
       
       corex[i]=tshower_l0.shower_core_pos[0]
       corey[i]=tshower_l0.shower_core_pos[1]
       corez[i]=tshower_l0.shower_core_pos[2]
-      myrun=run_number      
-      i=i+1   
+      myrun=run_number
+      i=i+1
 
   # Plot arrival time distribution
-  # Create a figure with subplots to match the other plot 
+  # Create a figure with subplots to match the other plot
   fig, ax1 = plt.subplots(1,1, figsize=(8, 6))
-  
+
   map = ax1.scatter(corex, corey, marker='o', s=20)
   ax1.set_title(f"core positions")
   ax1.set_xlabel("X (northing) (m)")
-  ax1.set_ylabel("Y (westing)(m)")  
+  ax1.set_ylabel("Y (westing)(m)")
   plt.tight_layout()
   if(args.savefig):
     plt.savefig(f"{plot_dir}/plots/CorePositions_{myrun}.png")
     plt.close(fig)
-  else: 
+  else:
     plt.show()
-
-
 
 def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -157,7 +155,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       assert isinstance(event_number, int)
       assert isinstance(run_number, int)
       logger.debug(f"Running event_number: {event_number}, run_number: {run_number}")
-      
+
       tefield_l0.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
       tshower_l0.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
       tefield_l1.get_event(event_number, run_number)           # update traces, du_pos etc for event with event_idx.
@@ -177,7 +175,8 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       trace_voltage = np.asarray(tvoltage_l0.trace, dtype=np.float32)
       trace_ADC_L1= np.asarray(tadc_l1.trace_ch, dtype=np.float32)
       trace_efield_L1= np.asarray(tefield_l1.trace, dtype=np.float32)
-      du_id = np.asarray(tefield_l0.du_id)
+      du_id = np.asarray(tefield_l0.du_id) # MT: used for printing info and saving in voltage tree.
+      # JK: du_id is currently unused - TODO
 
 
       # t0 calculations
@@ -212,7 +211,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       du_xyzs= np.asarray(trun_l0.du_xyz)[event_dus_indices] 
      
 
-      # loop over all stations in the event.          
+      # loop over all stations in the event.
       for du_idx in range(len(du_id)):
         logger.debug(f"Running DU number {du_idx}")
 
@@ -469,6 +468,14 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
     
 
+    #trawefield has the antenna positions in shc, and we need to put them in array coordinates, or this is all messed up.
+    #TODO: This is a flat earth approximation that asumes shower core is in xc,yc,zc of flat cordinate system centered in the array, origin at ground.
+    # and that du_xs are given in a flat shower coordinate system , with origin in the core, but at sea level (in this system the core coordinates are 0,0,groundaltitude)
+    print("Warning: using flat earth approximation for coordinates!. Core:",shower_core)
+    du_xs = du_xs + shower_core[0]
+    du_ys = du_ys + shower_core[1]
+    du_zs = du_zs
+
     # Get indices of the unique du_ids
     # ToDo: sort?
     unique_dus_idx = np.unique(du_ids, return_index=True)[1]
@@ -556,7 +563,7 @@ if __name__ == "__main__":
   else:
     pass
 
-  
+
   plot_core_positions(directory)
   plot_time_map(directory, simulator=args.sim)
   plot_traces_all_levels(directory, t_0_shift=False)

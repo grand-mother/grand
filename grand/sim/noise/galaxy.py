@@ -24,14 +24,14 @@ def interpol_at_new_x(a_x, a_y, new_x):
     )
     return func_interpol(new_x)
 
-def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None):
+def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300'):
     """
     This program is used as a subroutine to complete the calculation and
     expansion of galactic noise
 
     ..Authors:
       PengFei and Xidian group
-
+      Modified by SN including different antenna models for leff
     :param f_lst: select the galactic noise LST at the LST moment
     :    type f_lst: float
     :param size_out: is the extended length
@@ -44,33 +44,86 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None):
     :    type show_flag: boll
     :param seed: if None, values are randomly generated as expected. 
                  if number, same set of randomly generated output. This is useful for testing.
+    : du_type: Calculate the galactic noise for different antenna model simulations.
+                 'GP300' (default) uses hfss simulations for leff
+                 'GP300_nec' uses nec simulations for leff
+                 'Gp300_mat' uses matlab simulations fro leff
     :return: FFT of galactic noise for all DU and components
     :rtype: float(nb du, 3, nb freq)
     """
     # TODO: why lst is an integer ?
     lst = int(f_lst)
+    
+    if du_type == 'GP300':
+        lst = int(f_lst)
+        gala_file = grand_add_path_data("noise/30_250galactic.mat")
+        gala_show = h5py.File(gala_file, "r")
+        gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
+        gala_power_dbm = np.transpose(
+            gala_show["p_narrow_huatu"]
+        )  # SL, dbm per MHz, P=mean(V*V)/imp with imp=100 ohms
+        gala_voltage = np.transpose(
+            gala_show["v_amplitude"]
+        )  # SL, microV per MHz, seems to be Vmax=sqrt(2*mean(V*V)), not std(V)=sqrt(mean(V*V))
+        # gala_power_mag = np.transpose(gala_show["p_narrow"])
+        gala_freq = gala_show["freq_all"]
+        v_amplitude_infile = gala_voltage[:, :, lst - 1]
 
-    gala_file = grand_add_path_data("noise/30_250galactic.mat")
-    gala_show = h5py.File(gala_file, "r")
-    gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
-    gala_power_dbm = np.transpose(
-        gala_show["p_narrow_huatu"]
-    )  # SL, dbm per MHz, P=mean(V*V)/imp with imp=100 ohms
-    gala_voltage = np.transpose(
-        gala_show["v_amplitude"]
-    )  # SL, microV per MHz, seems to be Vmax=sqrt(2*mean(V*V)), not std(V)=sqrt(mean(V*V))
-    # gala_power_mag = np.transpose(gala_show["p_narrow"])
-    gala_freq = gala_show["freq_all"]
-
-    """f_start = 30
-    f_end = 250
-    # TODO: 221 is the number of frequency ? why ? and comment to explain
-    nb_freq = 221
-    v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
-    galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
-    galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
-    galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
-    v_amplitude_infile = gala_voltage[:, :, lst - 1]
+        """f_start = 30
+        f_end = 250
+        # TODO: 221 is the number of frequency ? why ? and comment to explain
+        nb_freq = 221
+        v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
+        galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
+        galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
+        galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
+        v_amplitude_infile = gala_voltage[:, :, lst - 1]
+    
+    elif du_type == 'GP300_nec':
+        gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_nec.npy")
+        gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_nec.npy")
+        gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_nec.npy")
+        gala_file3 = grand_add_path_data("noise/30_250galactic.mat")
+        gala_show = h5py.File(gala_file3, "r")
+        gala_voltage = np.load(gala_file)
+        gala_voltage = np.transpose(gala_voltage, (0, 2, 1)) #micro Volts per MHz (max)
+        gala_power_watt = np.load(gala_file1) 
+        gala_power_watt = np.transpose(gala_power_watt, (0, 2, 1)) #watt per MHz
+        gala_power_dbm = np.load(gala_file2)
+        gala_power_dbm = np.transpose(gala_power_dbm, (0, 2, 1)) # dBm per MHz
+        gala_freq = gala_show["freq_all"]
+        """f_start = 30
+        f_end = 250
+        # TODO: 221 is the number of frequency ? why ? and comment to explain
+        nb_freq = 221
+        v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
+        galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
+        galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
+        galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
+        v_amplitude_infile = gala_voltage[:, :, lst - 1]
+        
+    elif du_type == 'GP300_mat':
+        gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_mat.npy")
+        gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_mat.npy")
+        gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_mat.npy")
+        gala_file3 = grand_add_path_data("noise/30_250galactic.mat")
+        gala_show = h5py.File(gala_file3, "r")
+        gala_voltage = np.load(gala_file)
+        gala_voltage = np.transpose(gala_voltage, (0, 2, 1)) #micro Volts per MHz (max)
+        gala_power_watt = np.load(gala_file1) 
+        gala_power_watt = np.transpose(gala_power_watt, (0, 2, 1)) #watt per MHz
+        gala_power_dbm = np.load(gala_file2)
+        gala_power_dbm = np.transpose(gala_power_dbm, (0, 2, 1)) # dBm per MHz
+        gala_freq = gala_show["freq_all"]
+        """f_start = 30
+        f_end = 250
+        # TODO: 221 is the number of frequency ? why ? and comment to explain
+        nb_freq = 221
+        v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
+        galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
+        galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
+        galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
+        v_amplitude_infile = gala_voltage[:, :, lst - 1]
 
     # SL
     nb_freq = len(freqs_mhz)

@@ -8,7 +8,6 @@ import io
 import numpy as np
 from datetime import datetime
 
-
 # read single values from SIM.reas or RUN.inp
 def find_input_vals(line):
   return search(r'[-+]?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?', line)
@@ -292,13 +291,12 @@ def read_long(pathLongFile):
     n_data_str.writelines(lines[2:(n_steps + 2)])
     n_data_str.seek(0)
     n_data = np.genfromtxt(n_data_str)
-
     # store dE table
     dE_data_str = io.StringIO()
     dE_data_str.writelines(lines[(n_steps + 4):(2 * n_steps + 4)])
     dE_data_str.seek(0)
     dE_data = np.genfromtxt(dE_data_str)
-
+    
     # read out hillas fit
     hillas_parameters = []
     for line in lines:

@@ -1,0 +1,61 @@
+#! /usr/bin/env python3
+
+'''
+Created on 19 juil. 2022
+
+@author: Jean-Marc Colley, CNRS/IN2P3/LPNHE
+
+'''
+import tarfile
+import os
+import sys
+import os.path as osp
+from urllib import request
+#TODO: add progressbar to grand lib
+#import progressbar
+
+from grand import GRAND_DATA_PATH, grand_add_path_data
+
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
+#FILE_MODEL = "grand_model_2207.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2306.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/251637/grand_model_190224.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/340302/grand_model_141124.tar.gz"
+LINK_MODEL = "https://forge.in2p3.fr/attachments/download/362481/grand_model_20241218.tar.gz"
+FILE_MODEL = LINK_MODEL.split("/")[-1]
+
+
+directory = grand_add_path_data('detector')
+specific_file = os.path.join(directory, 'Light_GP300Antenna_nec_Yarm_leff.npz') 
+
+# Check if the specific file exists in the directory
+if os.path.isfile(specific_file):
+    print("==============================")
+    print('Skip download Grand antenna models')
+    sys.exit(0)
+
+tar_file = osp.join(GRAND_DATA_PATH, FILE_MODEL)
+
+# 2- download
+print("==============================")
+print("Download antenna models, RFchain, Galactic noise (~ 1GB) for GRAND, please wait ...")
+try:
+    request.urlretrieve(LINK_MODEL, tar_file)
+    print("Successfully downloaded")
+except:
+    print(f"download failed {LINK_MODEL}")
+    sys.exit(1)
+    
+# 3- extract
+print("==============================")
+print('Extract tar file')
+try:
+    my_tar = tarfile.open(tar_file)
+    my_tar.extractall(grand_add_path_data(''))
+    my_tar.close()
+    os.remove(tar_file)  # delete zipped file are extraction.
+except:
+    print(f"Extract failed '{tar_file}'")
+    sys.exit(1)
+print("Antenna models available in grand/data/detector directory !")
+sys.exit(0) 

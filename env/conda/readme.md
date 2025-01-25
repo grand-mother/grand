@@ -50,6 +50,7 @@ conda deactivate
 Start by update your conda and create the GRANDLIB environnement with file conf defined in grand/env/conda 
 
 ```
+conda config --set channel_priority disabled
 conda env create -n grandlib --file grandlib_amd64.yml
 conda activate grandlib
 ```
@@ -62,6 +63,16 @@ the root package, first clone the package grand
 ```
 git clone https://github.com/grand-mother/grand.git
 cd grand
+source env/setup.sh
+```
+### Compilation failed in other environment
+
+If you have already tried to compile the package in an incorrect environment you must clean the compilation files already produced to start from scratch with `make clean` in `grand/src` directory
+
+```bash
+cd src
+make clean
+cd ..
 source env/setup.sh
 ```
 
