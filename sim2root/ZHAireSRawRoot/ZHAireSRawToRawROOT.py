@@ -12,10 +12,10 @@ from scipy.ndimage.interpolation import shift  #to shift the time trance for the
 
 logging.basicConfig(level=logging.INFO)
 sys.path.append("../Common")
-import AiresInfoFunctionsGRANDROOT as AiresInfo
-import ZHAireSCompressEvent as ZC
-import EventParametersGenerator as EParGen #the functions i use from this file should be moved to root_trees_raw, so that we dont need an additional new file. It will be common to Coreas and ZhAireS.
-import raw_root_trees as RawTrees
+import sim2root.ZHAireSRawRoot.AiresInfoFunctionsGRANDROOT as AiresInfo
+import sim2root.ZHAireSRawRoot.ZHAireSCompressEvent as ZC
+import sim2root.Common.EventParametersGenerator as EParGen #the functions i use from this file should be moved to root_trees_raw, so that we dont need an additional new file. It will be common to Coreas and ZhAireS.
+import sim2root.Common.raw_root_trees as RawTrees
 logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matplotlib
 
 
