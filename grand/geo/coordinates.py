@@ -706,7 +706,10 @@ class Geodetic(GeodeticRepresentation):
             # use setter to replace placeholder coordinates values with the real values.
             # RK: +ve 0 to 360 were only accepted for coordinate transformation. 
             #     Now both +ve and -ve values are accepted for longitudes.
-            longitude = 360+longitude if longitude<0 else longitude 
+            if isinstance(latitude, Number):
+                longitude = 360+longitude if longitude<0 else longitude
+            else:
+                longitude[longitude < 0] += 360
 
             self.latitude = latitude
             self.longitude = longitude
