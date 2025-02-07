@@ -305,6 +305,7 @@ def main():
                 gt.trunefieldsim.run_number = run_number
 
                 gt.trun.site = site
+                gt.trun.data_source = "simulation"
 
                 # Fill the run trees and write
                 # gt.trun.fill()
