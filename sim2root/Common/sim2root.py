@@ -188,6 +188,8 @@ def main():
 
     start_event_number = 0
     end_event_number = 0
+    start_event_time = 0
+    end_event_time = 0
     run_number = 0
     # Namespace for holding output trees
     gt = SimpleNamespace()
@@ -347,6 +349,7 @@ def main():
             # store temporarily the first event number
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
+                start_event_time = trawshower.unix_date
 
             # # This event in file names ordering is kept only for compatibility with DC2 release. It is meaningless and probably better to keep the first and last events as sims are giving them, because maybe... that can tell us some positions in the original sims event list
             # # ToDo: Remove this ordering all together
@@ -361,6 +364,7 @@ def main():
             # else:
 
             end_event_number = gt.tshower.event_number
+            end_event_time = trawshower.unix_date
 
             gt.tshowersim.input_name = Path(filename).stem
 
@@ -413,10 +417,13 @@ def main():
 
             gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
-            # For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
+            # For now (and for the foreseeable future) all DU will have the same bin size at the level of the efield simulator.
             gt.trun.t_bin_size = np.array([trawefield.t_bin_size] * len(du_ids))
 
             gt.trun.site_layout = "star_shape"
+
+            # Fill the start and end events in trun
+            fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, gt.trun)
 
             # Fill and write the TRun
             gt.trun.fill()
@@ -454,6 +461,9 @@ def main():
 
         #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
         gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
+
+        # Fill the start and end events in trun
+        fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, gt.trun)
 
         # Fill and write the TRun
         gt.trun.fill()
@@ -879,7 +889,7 @@ def rename_event_files(clargs, path, start_event_number, end_event_number):
             print(f"Could not find a free filename for {fn_in} until serial number 5s000. Please clean up some files!")
             exit(0)
 
-# Simple shifting of a single x,y,z trace
+## Simple shifting of a single x,y,z trace
 def trace_shift(arr, shift):
     # Shift the array right
     if shift>0:
@@ -893,6 +903,12 @@ def trace_shift(arr, shift):
     else:
         return arr
 
+## Fill the start and end events in trun
+def fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, trun):
+    trun.first_event = start_event_number
+    trun.last_event = end_event_number
+    trun.first_event_time = start_event_time
+    trun.last_event_time = end_event_time
 
 if __name__ == '__main__':
     main()
