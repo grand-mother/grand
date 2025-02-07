@@ -526,11 +526,18 @@ def init_event_trees(out_dir_name, gt):
     gt.tshowersim = TShowerSim((out_dir_name / "showersim.root").as_posix())
     gt.tefield = TEfield((out_dir_name / "efield.root").as_posix())
 
-# Convert the RawShowerTree first entry to run values
+## Convert the RawShowerTree first entry to run values
 def rawshower2grandrootrun(trawshower, gt):
     gt.trunshowersim.run_number = trawshower.run_number
-    ## Name and version of the shower simulator
-    gt.trunshowersim.sim_name = trawshower.sim_name
+    # Name and version of the shower simulator
+    # If there is a single space in sim_name, assume the second part is a version
+    if trawshower.sim_name.count(" ") == 1:
+        sim_name, sim_version = trawshower.sim_name.split()
+        gt.trunshowersim.sim_name = sim_name
+        gt.trunshowersim.sim_version = sim_version
+    # If no single space or more spaces, don't fill the version, put everything as sim_name
+    else:
+        gt.trunshowersim.sim_name = trawshower.sim_name
 
     #### ZHAireS/Coreas
     # * THINNING *
