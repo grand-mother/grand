@@ -187,6 +187,7 @@ def main():
         ext_event_number = int(clargs.start_event)
 
     start_event_number = 0
+    file_start_event_number = 0
     end_event_number = 0
     start_event_time = 0
     end_event_time = 0
@@ -264,7 +265,10 @@ def main():
             trawefield.t_post=DesiredTpost
 
             if events_in_file==1:
-                start_event_number = trawshower.event_number
+                if ext_event_number is not None:
+                    file_start_event_number = end_event_number+1
+                else:
+                    file_start_event_number = trawshower.event_number
 
             # If the first entry on the first file, or dealing with star shape sim
             if (file_num==0 and i==0) or clargs.star_shape:
@@ -350,6 +354,9 @@ def main():
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
                 start_event_time = trawshower.unix_date
+                if ext_event_number is not None:
+                    start_event_number = ext_event_number
+                    file_start_event_number = start_event_number
 
             # # This event in file names ordering is kept only for compatibility with DC2 release. It is meaningless and probably better to keep the first and last events as sims are giving them, because maybe... that can tell us some positions in the original sims event list
             # # ToDo: Remove this ordering all together
@@ -389,7 +396,7 @@ def main():
 
                 # Move the saved event files to proper filenames
                 logger.info("Renaming event files")
-                rename_event_files(clargs, out_dir_name, start_event_number, end_event_number)
+                rename_event_files(clargs, out_dir_name, file_start_event_number, end_event_number)
 
                 # Create the new event files
                 logger.info("Creating new event files")
@@ -481,7 +488,7 @@ def main():
 
     # Rename the created files to appropriate names
     logger.info("Renaming files to proper file names")
-    rename_all_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
+    rename_all_files(clargs, out_dir_name, file_start_event_number, end_event_number, start_run_number)
 
 # Initialise all output trees and their directory
 def init_all_trees(clargs, unix_date, run_number, site, gt):
