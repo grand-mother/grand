@@ -13,6 +13,7 @@ import numpy as np
 from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
+from grand import ECEF, Geodetic, GRANDCS
 import matplotlib.pyplot as plt
 # from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
 # from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
@@ -410,18 +411,20 @@ def main():
 
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
-            du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
-            tdu_ids, tdu_xyzs = du_ids, du_xyzs
+            du_ids, du_xyzs, du_geoids = get_tree_du_id_xyz_geoid(trawefield, trawshower.shower_core_pos, gt.trun.origin_geoid)
+            tdu_ids, tdu_xyzs, tdu_geoids = du_ids, du_xyzs, du_geoids
         # For other files, append du ids and pos to the ones already retrieved
         else:
-            tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
+            tdu_ids, tdu_xyzs, tdu_geoids = get_tree_du_id_xyz_geoid(trawefield, trawshower.shower_core_pos, gt.trun.origin_geoid)
             du_ids = np.append(du_ids, tdu_ids)
             du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
+            du_geoids = np.vstack([du_geoids, tdu_geoids])
 
         # For star shapes, set the trun's du_id/xyz now and fill/write the tree
         if clargs.star_shape:
             gt.trun.du_id = tdu_ids
             gt.trun.du_xyz = np.array(tdu_xyzs)
+            gt.trun.du_geoids = np.array(tdu_geoids)
 
             gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
@@ -461,10 +464,12 @@ def main():
         du_ids = du_ids[sorted_idx]
         # Stack x/y/z together and leave only the ones for unique du_ids, sort
         du_xyzs = du_xyzs[unique_dus_idx][sorted_idx]
+        du_geoids = du_geoids[unique_dus_idx][sorted_idx]
 
         # Assign the du ids and positions to the trun tree
         gt.trun.du_id = du_ids
         gt.trun.du_xyz = du_xyzs
+        gt.trun.du_geoid = du_geoids
         gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
         #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
@@ -607,7 +612,7 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.t_post = trawefield.t_post
 
 
-def get_tree_du_id_and_xyz(trawefield,shower_core):
+def get_tree_du_id_xyz_geoid(trawefield, shower_core, origin_geoid):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
 
@@ -627,7 +632,12 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     # Stack x/y/z together and leave only the ones for unique du_ids
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
-    return np.asarray(du_ids, dtype=np.int32), np.asarray(du_xyzs, dtype=np.float32)
+    # Get lat/lon/alt from xyz
+    origin = Geodetic(latitude=origin_geoid[0], longitude=origin_geoid[1], height=origin_geoid[2])
+    grandcs = GRANDCS(x=du_xs, y=du_ys, z=du_zs, location=origin)
+    du_geoid = np.moveaxis(np.asarray(Geodetic(grandcs), dtype=np.float32), 0, 1)
+
+    return np.asarray(du_ids, dtype=np.int32), np.asarray(du_xyzs, dtype=np.float32), du_geoid
 
 
 # Convert the RawShowerTree entries
