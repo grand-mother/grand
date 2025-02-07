@@ -547,7 +547,7 @@ def rawshower2grandrootrun(trawshower, gt):
     # Generate the simulator for trun
     if "aires" in trawshower.sim_name.lower():
         gt.trun.data_generator = "ZHAireS"
-    elif "corsika" in trawshower.sim_name.lower():
+    elif "coreas" in trawshower.sim_name.lower():
         gt.trun.data_generator = "CoREAS"
 
     # ToDo: Add trun.data_generator_version when it becomes available in rawroot!
