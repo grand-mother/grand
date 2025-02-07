@@ -2367,10 +2367,10 @@ class TRunShowerSim(MotherRunTree):
     """low energy cut for mesons (GeV)"""
     ## low energy cut for nuceleons (GeV)
     lowe_cut_nucleon: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """low energy cut for nuceleons (GeV)"""
-    ## Site for wich the smulation was done
+    """low energy cut for nucleons (GeV)"""
+    ## Site for which the simulation was done
     site: StdStringDesc = field(default=StdStringDesc())
-    """Site for wich the smulation was done"""
+    """Site for which the simulation was done"""
     ## Simulator name (aires/corsika, etc.)
     sim_name: StdStringDesc = field(default=StdStringDesc())
     """Simulator name (aires/corsika, etc.)"""
