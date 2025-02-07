@@ -539,6 +539,15 @@ def rawshower2grandrootrun(trawshower, gt):
     else:
         gt.trunshowersim.sim_name = trawshower.sim_name
 
+    # Generate the simulator for trun
+    if "aires" in trawshower.sim_name.lower():
+        gt.trun.data_generator = "ZHAireS"
+    elif "corsika" in trawshower.sim_name.lower():
+        gt.trun.data_generator = "CoREAS"
+
+    # ToDo: Add trun.data_generator_version when it becomes available in rawroot!
+    gt.trun.data_generator_version = "unknown"
+
     #### ZHAireS/Coreas
     # * THINNING *
     # Thinning energy, relative to primary energy
