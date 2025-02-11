@@ -290,7 +290,7 @@ class Database:
         id_repository = self.get_or_create_key('repository', 'repository', name, description)
         self.sqlalchemysession.flush()
         # Check if repository access exists or not !
-        repo_access = self.sqlalchemysession.query(self.tables()['repository_access']
+        repo_access = self.sqlalchemysession.query(self.tables()['repository']
                                                    ).filter_by(id_repository=id_repository,
                                                                id_protocol=id_protocol).first()
         if repo_access is not None:
