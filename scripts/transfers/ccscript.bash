@@ -22,7 +22,7 @@ nbfiles=5
 nbjobs=8
 
 #time required to run bin2root on one file
-bin2rootduration=15
+bin2rootduration=5
 
 # Notification options q
 mail_user='fleg@lpnhe.in2p3.fr'
@@ -161,7 +161,7 @@ do
 	  l=$((k - nbjobs))
 	  jregid=${jobsid[${l}]}
   fi
-  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 3G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
   jobsid[${k}]=$(echo ${jobsid[${k}]} |awk '{print $NF}')
 	convjobs=$convjobs":"${jobsid[${k}]}
   ((k++))
@@ -179,9 +179,9 @@ else
   fi
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
-  sbatch ${dep} -t 0-00:45 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 2G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
-  sbatch ${dep} -t 0-02:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
-  sbatch -t 0-00:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
+  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
+  sbatch ${dep} -t 0-00:45 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 10G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
+  sbatch -t 0-01:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
 #

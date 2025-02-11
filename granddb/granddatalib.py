@@ -282,11 +282,14 @@ class DataManager:
                 # And the dir must be already present in the target repository
                 # If so, we need to get it locally and use this local copy (to be able to read the files)
                 #localdir = self.get_dataset(directory, repository.name())
+                print(f"directory {directory}")
                 localdir = self.get_dataset(directory)
+                print(f"localdir {localdir}")
                 #TODO: Check that target dir exists
                 if localdir is not None:
                     Tdir = grand.dataio.root_trees.DataDirectory(localdir)
                     for f in Tdir.get_list_of_files():
+                        logger.info(f"registering {f}")
                         self.register_file(localfile=f, dataset=Tdir.dir_name, repository=repository.name(), targetdir=targetdir)
                 else:
                     logger.error(f"Dataset {directory} was not found in repository {repository.name()} thus cannot be registered")

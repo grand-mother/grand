@@ -13,7 +13,7 @@ from sqlalchemy.inspection import inspect
 import grand.manage_log as mlg
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("warning", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 
 def casttodb(value):
@@ -288,9 +288,10 @@ class Database:
         savepoint = self.sqlalchemysession.begin_nested()
         id_protocol = self.get_or_create_key('protocol', 'protocol', protocol, description)
         id_repository = self.get_or_create_key('repository', 'repository', name, description)
+
         self.sqlalchemysession.flush()
         # Check if repository access exists or not !
-        repo_access = self.sqlalchemysession.query(self.tables()['repository_access']
+        repo_access = self.sqlalchemysession.query(self.tables()['repository']
                                                    ).filter_by(id_repository=id_repository,
                                                                id_protocol=id_protocol).first()
         if repo_access is not None:
@@ -301,7 +302,7 @@ class Database:
         else:
             repository_access = {'id_repository': id_repository, 'id_protocol': id_protocol, 'port': port,
                                  'server_name': server, 'paths': path}
-            container = self.tables()['repository_access'](**repository_access)
+            container = self.tables()['repository'](**repository_access)
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
 
@@ -413,6 +414,7 @@ class Database:
                         metatree[field] = value
                         # print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
                     except:
+                        logger.debug(f" Debug : error on meta {meta} field {field} value {value} ")
                         pass
                 # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
                 metatree['tree_name'] = treename
