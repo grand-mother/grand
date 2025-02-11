@@ -1,0 +1,15 @@
+Using "bokeh" project as a base for visualization and creating widget.
+Needs python 3.6 or higher.
+
+$ pip3 install "holoviews[all]"
+	# http://holoviews.org/
+	put /home/ramesh/.local/bin in the PATH so that packages installed there can be accessed.
+	$ cd ~
+	$ subl .bashrc
+	Inside .bashrc, add the following line
+		export PATH=/home/ramesh/.local/bin:$PATH
+
+If above progess fail to install bokeh, install it by
+$ pip3 install bokeh
+	# https://docs.bokeh.org/en/latest/
+	Successfully installed bokeh-2.3.1 pillow-8.2.0
