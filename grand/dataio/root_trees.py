@@ -2586,9 +2586,9 @@ class DataDirectory:
 
         # Set the structure type depending on the dir name
         exp_structure = False
-        if dir_name[:4]=="sim_":
+        if os.path.basename(dir_name)[:4]=="sim_":
             sim2root_structure = True
-        elif dir_name[:4]=="exp_":
+        elif os.path.basename(dir_name)[:4]=="exp_":
             sim2root_structure = False
             exp_structure = True
 
