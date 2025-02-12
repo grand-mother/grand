@@ -1,6 +1,6 @@
 import sys, os, getopt
 import grand.manage_log as mlg
-from granddb.granddatalib import DataManager
+from granddb.datamanager import DataManager
 import argparse
 from icecream import ic
 

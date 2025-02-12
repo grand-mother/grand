@@ -1,4 +1,4 @@
-from granddb.granddatalib import DataManager
+from granddb.datamanager import DataManager
 import os
 import sqlite3
 import argparse
