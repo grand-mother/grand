@@ -609,6 +609,13 @@ class Event:
 
         self.fill_antennas()
 
+        # Set the event number and run number in somewhat ugly way - from the first non None tree
+        for t in [self.tvoltage, self.tefield, self.tshower, self.tsimshower]:
+            if t is not None:
+                self.event_number = t.event_number
+                self.run_number = t.run_number
+                break
+
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self, run_entry_number=None):
         ret = 1
