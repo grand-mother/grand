@@ -240,7 +240,7 @@ class StdVectorListDesc:
             inst += value
         # A vector of vectors was given
         elif isinstance(value, ROOT.vector(inst.vec_type)):
-            vector = value
+            inst._vector = value
         else:
             if "vector" in inst.vec_type:
                 raise ValueError(
