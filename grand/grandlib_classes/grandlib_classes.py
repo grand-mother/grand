@@ -121,6 +121,15 @@ class Timetrace3D:
         # ToDo: t0 is at the moment the trigger time, not the start time...
         self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
 
+    def get_value_at_time(self, time_offset):
+        """Get the signal value at a certain time. Returns 0, if nothing measured at this time"""
+        # If a signal was measured for the requested time value, return it
+        if np.any(self.t_vector == time_offset):
+            return self.trace[:,np.where(self.t_vector == time_offset)[0][0]]
+        # Otherwise, return 0
+        else:
+            return np.zeros(3, np.float32)
+
     @property
     def trace(self):
         """Trace 3D vector (x,y,z)"""
@@ -256,6 +265,10 @@ class Event:
     L: int = 0
     """Event multiplicity"""
 
+    ## Time vector - from the start of singla in first DU to the end in last DU
+    t_vector: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
+    """Time vector - from the start of singla in first DU to the end in last DU"""
+
     # Reconstruction parameters
 
     is_reconstructed: bool = False
@@ -364,6 +377,7 @@ class Event:
         # If the file name was given, init the Event from trees
         if self._file:
             self.fill_event_from_trees()
+            self.fill_t_vector()
 
     @property
     def file(self):
@@ -615,6 +629,9 @@ class Event:
                 self.event_number = t.event_number
                 self.run_number = t.run_number
                 break
+
+        # Fill the time vector
+        self.fill_t_vector()
 
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self, run_entry_number=None):
@@ -1058,6 +1075,31 @@ class Event:
         self.tefield.close_file()
         self.tvoltage.close_file()
         self.trun.close_file()
+
+    def fill_t_vector(self):
+        """Fills the event's time vector"""
+
+        # Get the filled traces
+        filled_vals = [el for el in [self.voltages, self.efields] if el is not None][0]
+
+        # Get the starting time from traces
+        st = np.min([el.t_vector[0] for el in filled_vals])
+        # Get the ending time from traces
+        et = np.max([el.t_vector[0] for el in filled_vals])
+        # Get the min time bin
+        bs = np.min([el.t_bin_size for el in filled_vals])
+
+        self.t_vector = np.arange((et-st)/bs+1)*bs+st
+
+    def get_voltage_at_time(self, t):
+        """Get the voltage signal value in all the DUs at the given time"""
+        return np.array([el.get_value_at_time(t) for el in self.voltages])
+
+    def get_efield_at_time(self, t):
+        """Get the efield signal value in all the DUs at the given time"""
+        return np.array([el.get_value_at_time(t) for el in self.efields])
+
+
 
 class EventList:
     """A class giving access/iteration over multiple events"""
