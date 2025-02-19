@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field, fields
 import numpy as np
 from typing import Any
+from scipy.signal import hilbert
 from grand.dataio.root_trees import *
 from grand.geo.coordinates import *
 import ROOT
@@ -130,6 +131,15 @@ class Timetrace3D:
         else:
             return np.zeros(3, np.float32)
 
+    def get_hilbert_value_at_time(self, time_offset):
+        """Get the signal Hilbert envelope's value at a certain time. Returns 0, if nothing measured at this time"""
+        # If a signal was measured for the requested time value, return it
+        if np.any(self.t_vector == time_offset):
+            return self.hilbert_trace[:,np.where(self.t_vector == time_offset)[0][0]]
+        # Otherwise, return 0
+        else:
+            return np.zeros(3, np.float32)
+
     @property
     def trace(self):
         """Trace 3D vector (x,y,z)"""
@@ -142,6 +152,13 @@ class Timetrace3D:
     @property
     def hilbert_trace(self):
         """Hilbert envelope 3D vector (x,y,z) - not defined in the hardware"""
+        # Calculate the hilbert envelope if not yet calculated
+        if len(self._hilbert_trace[0]) == 0:
+            hx = np.abs(hilbert(self.trace.x))
+            hy = np.abs(hilbert(self.trace.y))
+            hz = np.abs(hilbert(self.trace.z))
+            self._hilbert_trace = CartesianRepresentation(x=hx, y=hy, z=hz)
+
         return self._hilbert_trace
 
     @hilbert_trace.setter
@@ -1076,20 +1093,19 @@ class Event:
         self.tvoltage.close_file()
         self.trun.close_file()
 
-    def fill_t_vector(self):
-        """Fills the event's time vector"""
+    def fill_t_vector(self, resolution=1):
+        """Fills the event's time vector with resolution resolution"""
 
         # Get the filled traces
         filled_vals = [el for el in [self.voltages, self.efields] if el is not None][0]
 
         # Get the starting time from traces
-        st = np.min([el.t_vector[0] for el in filled_vals])
+        t_vectors = [el.t_vector for el in filled_vals]
+        st = np.min(t_vectors)
         # Get the ending time from traces
-        et = np.max([el.t_vector[0] for el in filled_vals])
-        # Get the min time bin
-        bs = np.min([el.t_bin_size for el in filled_vals])
+        et = np.max(t_vectors)
 
-        self.t_vector = np.arange((et-st)/bs+1)*bs+st
+        self.t_vector = np.arange((et-st)/resolution+1)*resolution+st
 
     def get_voltage_at_time(self, t):
         """Get the voltage signal value in all the DUs at the given time"""
@@ -1098,6 +1114,14 @@ class Event:
     def get_efield_at_time(self, t):
         """Get the efield signal value in all the DUs at the given time"""
         return np.array([el.get_value_at_time(t) for el in self.efields])
+
+    def get_hilbert_voltage_at_time(self, t):
+        """Get the voltage signal value in all the DUs at the given time"""
+        return np.array([el.get_hilbert_value_at_time(t) for el in self.voltages])
+
+    def get_hilbert_efield_at_time(self, t):
+        """Get the efield signal value in all the DUs at the given time"""
+        return np.array([el.get_hilbert_value_at_time(t) for el in self.efields])
 
 
 
