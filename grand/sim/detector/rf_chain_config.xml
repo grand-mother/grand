@@ -1,0 +1,56 @@
+<!--
+RF Chain Configuration File
+
+This XML file defines the file paths for various RF chain components 
+(e.g., matching network, LNA, VGA, balun). It replaces hardcoded paths in `rf_chain.py`,
+allowing easier configuration without modifying the Python script.
+
+Key Features:
+- Specifies `.s2p`, `.s1p`, and `.csv` file locations.
+- Supports axis-based file selection (`X`, `Y`, `Z`).
+- Allows enabling/disabling components for flexibility.
+
+Ensure this file is updated correctly when modifying component paths.
+-->
+<RFChainConfiguration>
+    <Components>
+        <Component name="MatchingNetwork">
+            <s2pFile>detector/RFchain_v2/MatchingNetwork{axis}.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="AntennaLNA">
+            <s2pFile>detector/RFchain_v2/antenna_LNA_{axis}_frontend0db.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="LNA">
+            <s2pFile>detector/RFchain_v2/LNA-{axis}.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="BalunIn">
+            <s2pFile>detector/RFchain_v2/balun_in_nut.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="CableConnector">
+            <s2pFile>detector/RFchain_v2/cable+Connector.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="Filter">
+            <s2pFile>detector/RFchain_v2/feb+amfitler+biast.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="BalunBeforeAD">
+            <s2pFile>detector/RFchain_v2/balun_before_ad.s2p</s2pFile>
+            <enabled>true</enabled>
+        </Component>
+        <Component name="S_balun_AD">
+            <s1pFile>detector/RFchain_v2/S_balun_AD.s1p</s1pFile>
+            <enabled>true</enabled>
+        </Component>
+    </Components>
+    <CSVFiles>
+        <CSVFile name="AntennaImpedance">
+            <csvFile>detector/RFchain_v2/Z_ant_3.2m.csv</csvFile>
+            <enabled>true</enabled>
+        </CSVFile>
+    </CSVFiles>
+</RFChainConfiguration>
