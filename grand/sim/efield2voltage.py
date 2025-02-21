@@ -53,22 +53,35 @@ class Efield2Voltage:
 
     def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300'):
 
-        self.d_input = groot.DataDirectory(d_input)
+        # If directory given, use DataDirectory
+        if os.path.isdir(d_input):
+            self.d_input = groot.DataDirectory(d_input)
+            self.f_input = None
+        # If file given, use DataFile
+        elif os.path.isfile(d_input):
+            self.d_input = groot.DataFile(d_input)
+            self.f_input = d_input
+        else:
+            raise IOError("Input file/directory does not exist")
 
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
 
+        self.f_output = f_output
+
         # If output filename given, use it
-        if f_output:
-            self.f_output = f_output
+        # if f_output:
+        #     self.f_output = f_output
         # Otherwise, generate it from tefield filename
-        else:
-            self.f_output = self.d_input.ftefield.filename.replace("efield", "voltage")
+        # else:
+        #     self.f_output = self.d_input.ftefield.filename.replace("efield", "voltage")
 
         # If output directory given, use it
+        self.output_directory = ""
         if output_directory:
-            self.f_output = output_directory + "/" + Path(self.f_output).name
+            self.output_directory = output_directory
+            # self.f_output = output_directory + "/" + Path(self.f_output).name
 
 
         self.du_type = du_type                              # load antenna models
@@ -613,17 +626,29 @@ class Efield2Voltage:
         :    type append_file: bool
         """
         # delete file can take time => start with this action
-        if self.f_output == "":
+        # File name for DataDirecory
+        if self.f_output is None and self.f_input is None:
+            cur_file_name = Path(self.d_input.tefield.get_current_file().GetName()).name
+            # Replace the efield in the file name (first occurence in the string) with voltage
+            cur_f_output = str(Path(self.output_directory) / "voltage".join(cur_file_name.split("efield", 1)))
+            logger.info(f"Output file is {cur_f_output}")
+        # File name change in other cases
+        elif self.f_output is None:
             split_file = os.path.splitext(self.f_input)
-            self.f_output   = split_file[0]+"_voltage.root"
-            logger.info(f"No output file was defined. Output file is automatically defined as {self.f_output}")
-        if not append_file and os.path.exists(self.f_output):
-            logger.info(f"save on a new file and remove existing file {self.f_output}")
-            os.remove(self.f_output)
+            self.f_output  = str(self.output_directory / split_file[0]+"_voltage.root")
+            cur_f_output = self.f_output
+            logger.info(f"No output file was defined. Output file is automatically defined as {cur_f_output}")
+        else:
+            cur_f_output = str(self.output_directory / Path(self.f_output))
+
+        if not append_file and os.path.exists(self.output_directory / self.f_output):
+            cur_f_output = str(self.output_directory / self.f_output)
+            logger.info(f"save on a new file and remove existing file {cur_f_output}")
+            os.remove(cur_f_output)
             time.sleep(1)
 
-        logger.info(f"save result in {self.f_output}")
-        self.tt_volt = groot.TVoltage(self.f_output)
+        logger.info(f"save result in {cur_f_output}")
+        self.tt_volt = groot.TVoltage(cur_f_output)
 
         # Fill voltage object. d_root = events
         self.tt_volt.du_count     = self.nb_du
