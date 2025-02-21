@@ -873,6 +873,10 @@ class DataTree:
         """Set the tree index (necessary for working with friends)"""
         self._tree.SetTreeIndex(value)
 
+    def get_current_file(self):
+        """Get's the current TFile the TTree is in"""
+        return self._tree.GetCurrentFile()
+
     ## Create branches of the TTree based on the class fields
     def create_branches(self, set_if_exists=True):
         """Create branches of the TTree based on the class fields"""
@@ -2780,6 +2784,17 @@ class DataFile:
                 # Assign files to the chain
                 for el in self.flist:
                     t.Add(el)
+
+                # Build the index for this chain - it is not generated automatically from the Trees indices
+                try:
+                    # Assuming en Event tree
+                    t.BuildIndex("run_number", "event_number")
+                # If failed, try as a run tree
+                except:
+                    try:
+                        t.BuildIndex("run_number")
+                    except:
+                        raise("Unable to build index for the tree")
 
                 # Modify the number of events for this TChain
                 tree_info["evt_cnt"] = t.GetEntries()
