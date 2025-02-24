@@ -5,6 +5,7 @@ import os.path
 import scipy.fft as sf
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 from grand import grand_add_path_data
 from logging import getLogger
@@ -96,7 +97,8 @@ def read_config(xml_file):
     return components, csv_files
 
 # Load XML configuration
-xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"  # Ensure absolute path
+# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"  # Ensure absolute path
+xml_file = Path(__file__).parent / "rf_chain_config.xml"  # Ensure absolute path
 components, csv_files = read_config(xml_file)
 
 # Dictionary to map components that depend on axis
@@ -179,7 +181,8 @@ def read_config(xml_file):
 # Load XML configuration
 #xml_file = "rf_chain_config.xml"
 #xml_file = "/home/grand/grand/grand/sim/detector/rf_chain_config.xml"
-xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"
+# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"
+xml_file = Path(__file__).parent / "rf_chain_config.xml"
 components, csv_files = read_config(xml_file)
 
 # Dictionary to map components that depend on axis
