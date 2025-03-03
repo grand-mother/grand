@@ -2,7 +2,7 @@
 
 ## Frequent confusion
 
-The conda environment **does not contain GRANDLIB code**. The conda environment installs the necessary libraries, executables, initializes environment variables to correctly compile the C part of GRANLIB (gull and turtle), please [constraints to use grandlib](https://github.com/grand-mother/grand/wiki#constraints-to-use-grandlib) in GRANDLIB wiki.
+The conda environment **does not contain GRANDLIB code**. The conda environment installs the necessary libraries, executables, initializes environment variables to correctly compile the C part of GRANLIB (gull and turtle), please read [constraints to use grandlib](https://github.com/grand-mother/grand/wiki#constraints-to-use-grandlib) in GRANDLIB wiki.
 
 ## WARNING
 
