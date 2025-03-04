@@ -11,7 +11,7 @@ The conda environment **does not contain GRANDLIB code**. The conda environment 
 
 ## miniconda installation
 
-You need to have conda command installed, the minimal package to have it is miniconda. The [page](https://docs.conda.io/en/latest/miniconda.html) to install miniconda
+You need to have conda command installed, the minimal package to have it is miniconda. The [page](https://www.anaconda.com/docs/getting-started/miniconda/install) to install miniconda
 
 ## conda doc
 
