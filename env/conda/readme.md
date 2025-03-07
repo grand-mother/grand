@@ -83,5 +83,15 @@ python -m pip install -r quality/requirements.txt
 grand_quality_test_cov.bash
 ```
 
+### Install grandlib for ARM cpu with conda
 
+ARM cpu is compatible with the grandlib environment for conda.
+The installation is rather straightforward
+but bugs may occur mostly due to the wrong path which can be solved easily.
+
+1. Create the conda environment and install the python packages. A [guide](https://github.com/grand-mother/grand/tree/master/env/conda/admin) is provided by Jean-Marc.
+2. Install `turtle` and `gull` manully. 
+3. Download the `grand` repository and run the `env/setup.sh`.
+4. Test the installation with `import grand` in python prompt.
+   
 If you encounter a problem write a ticket [here](https://github.com/grand-mother/collaboration-issues/issues)
