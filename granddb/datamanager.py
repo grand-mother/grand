@@ -263,7 +263,7 @@ class DataManager:
         return res
 
     ##Function to register a dataset (i.e directory) into the database.
-    def register_dataset(self, directory,  repository=None, targetdir = None):
+    def register_dataset(self, directory,  repository=None, targetdir = None, again=False):
         import grand.dataio.root_trees
         if repository is None:
             repository = self.referer()
@@ -272,6 +272,13 @@ class DataManager:
 
         if targetdir is None:
             targetdir = directory
+
+        # Ensure that targetdir is a directory and end with trailing /
+        if os.path.isdir(targetdir):
+            targetdir = os.path.join(targetdir, '')
+        else:
+            logger.error(f"For registering, target directory ({targetdir}) must be a directory")
+            return None
 
         if repository is not None:
             # For registering the full path of the dataset must be provided
@@ -282,19 +289,17 @@ class DataManager:
                 # And the dir must be already present in the target repository
                 # If so, we need to get it locally and use this local copy (to be able to read the files)
                 #localdir = self.get_dataset(directory, repository.name())
-                print(f"directory {directory}")
                 localdir = self.get_dataset(directory)
-                print(f"localdir {localdir}")
                 #TODO: Check that target dir exists
                 if localdir is not None:
                     Tdir = grand.dataio.root_trees.DataDirectory(localdir)
                     for f in Tdir.get_list_of_files():
                         logger.info(f"registering {f}")
-                        self.register_file(localfile=f, dataset=Tdir.dir_name, repository=repository.name(), targetdir=targetdir)
+                        self.register_file(localfile=f, dataset=Tdir.dir_name, repository=repository.name(), targetdir=targetdir,again=again)
                 else:
                     logger.error(f"Dataset {directory} was not found in repository {repository.name()} thus cannot be registered")
         else:
-            logger.error(f"No repository found to register file {file}")
+            logger.error(f"No repository found.")
         return directory
 
     ##Function to register a file into the database.
@@ -304,6 +309,7 @@ class DataManager:
     # Returns the path to the file in the repository where the file was registered.
     def register_file(self, localfile, dataset=None, repository=None, targetdir=None, again=False):
         newfilename = None
+
         if targetdir is None or os.path.dirname(targetdir) == os.path.dirname(localfile):
             targetfile = localfile
         else:
@@ -330,7 +336,8 @@ class DataManager:
                     newfilename = localfile
                     # check if dataset is not None. In that case, dataset must be equal to the last part of the targetdir.
                     if dataset is not None:
-                        if os.path.basename(fileexists.parent) !=  dataset:
+                        if os.path.basename(fileexists.parent) !=  os.path.basename(dataset):
+                            logger.error(f"os.path.basename(fileexists.parent) = {os.path.basename(fileexists.parent)}")
                             logger.error(f"Dataset {dataset} is not the name of the last directory of {targetfile} thus cannot be registered")
                             newfilename = None
                             return newfilename

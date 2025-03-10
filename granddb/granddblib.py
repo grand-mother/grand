@@ -17,8 +17,12 @@ mlg.create_output_for_logger("warning", log_stdout=True)
 
 
 def casttodb(value):
-    #print(f'{type(value)} - {value}')
-    if isinstance(value, numpy.uint32):
+    print(f'{type(value)} - {value}')
+    if isinstance(value, numpy.str_):
+        val = repr(value)
+    elif isinstance(value, numpy.bool_):
+        val = int(value)
+    elif isinstance(value, numpy.uint32):
         val = int(value)
     elif isinstance(value, numpy.float32):
         val = float(value)
@@ -26,9 +30,10 @@ def casttodb(value):
         if value.size == 0:
             val = None
         elif value.size == 1:
-            val = value.item()
+            val = casttodb(value.item())
         else:
-            val = value.tolist()
+            #val = value.tolist()
+            val = [casttodb(item) for item in value]
     elif isinstance(value, grand.dataio.root_trees.StdVectorList):
         val =[]
         #postgres cannot store arrays of arrays... so we split (not sure if really correct)!
@@ -36,7 +41,7 @@ def casttodb(value):
             if isinstance(i,numpy.ndarray) or isinstance(i, grand.dataio.root_trees.StdVectorList):
                 val.append(casttodb(i))
             else:
-                val.append(i)
+                val.append(casttodb(i))
 
         #value = [i for i in value]
     elif isinstance(value, str):
@@ -301,7 +306,7 @@ class Database:
         else:
             repository_access = {'id_repository': id_repository, 'id_protocol': id_protocol, 'port': port,
                                  'server_name': server, 'paths': path}
-            container = self.tables()['repository_access'](**repository_access)
+            container = self.tables()['repository'](**repository_access)
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
 
@@ -413,6 +418,7 @@ class Database:
                         metatree[field] = value
                         # print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
                     except:
+                        logger.debug(f" Debug : error on meta {meta} field {field} value {value} ")
                         pass
                 # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
                 metatree['tree_name'] = treename

@@ -7,7 +7,7 @@ logger = mlg.get_logger_for_script(__name__)
 
 class RootFile:
     # Use dict to associate rootfile ttree class to root_tree classe
-    RunTrees = ["trun", "trunefieldsimdata","trunvoltage","trunefieldsim","trunshowersim","trunnoise"]
+    RunTrees = ["trun", "trunefieldsimdata","trunvoltage","trunrawvoltage","trunefieldsim","trunshowersim","trunnoise"]
     EventTrees = ["teventefield", "teventshowersimdata",  "teventshower","teventvoltage",
                   "tadc","trawvoltage","tvoltage","tefield","tshower","tshowersim"]
     TreeToClass = {'trun': groot.TRun,
@@ -23,6 +23,7 @@ class RootFile:
                    'teventshowersimdata': groot.TShower,
                    'teventshowerzhaires': groot.TShowerSim,
                    'tdetectorinfo': groot.TRun,
+                   'trunrawvoltage':  groot.TRunRawVoltage,
                    'trunvoltage':  groot.TRunVoltage,
                    'tadc':  groot.TADC,
                    'trawvoltage':  groot.TRawVoltage,
@@ -89,6 +90,16 @@ class RootFile:
         't_post': 't_post',
         'sim_name': 'sim_name',
         'sim_version': 'sim_version'
+    }
+    trunrawvoltageToDB = {
+        'table': 'trunrawvoltage',
+        'run_number': 'run_number',
+        'trigger_position': 'trigger_position',
+        'firmware_version': 'firmware_version',
+        'adc_sampling_frequency': 'adc_sampling_frequency',
+        'adc_sampling_resolution': 'adc_sampling_resolution',
+        'adc_input_channels_ch': 'adc_input_channels_ch',
+        'adc_enabled_channels_ch': 'adc_enabled_channels_ch'
     }
     trunvoltageToDB = {
         'table': 'trunvoltage',
