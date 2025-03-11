@@ -253,8 +253,10 @@ done
 
 #finally also rsync the database
 # To avoid to transfer the whole database, we will purge the database from old files (already transfered)
-# Get the list of files successfully transfered before the last transfer
-list_id=$(sqlite3 $dbfile "select id from gfiles where success==1 and date<$last_transfer")
+# but we will also purge it from files older than 2 months !
+olderdate=$(date -d "${last_transfer:0:4}-${last_transfer:4:2}-${last_transfer:6:2} -2 months" +"%Y%m%d")
+# Get the list of files successfully transfered before the last transfer or older than 2 months
+list_id=$(sqlite3 $dbfile "select id from gfiles where (success==1 and date<$last_transfer) OR date<$olderdate")
 # Convert it into an array
 ids=()
 for id in $list_id; do ids+=($id) ; done
