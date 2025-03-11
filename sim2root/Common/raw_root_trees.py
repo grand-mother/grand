@@ -47,10 +47,13 @@ class RawShowerTree(MotherEventTree):
 
     _tree_name: str = "trawshower"
     
-    ### Name and version of the shower simulator
+    ### Name of the shower simulator
     _sim_name: StdString = StdString("")
 
-    ###X Event name (the task name, can be usefull to track the original simulation) 
+    ### Version of the shower simulator
+    _sim_version: StdString = StdString("")
+
+    ###X Event name (the task name, can be usefull to track the original simulation)
     _event_name: StdString = StdString("")
 
     ### Event Date  (used to define the atmosphere and/or the magnetic field)
@@ -248,6 +251,18 @@ class RawShowerTree(MotherEventTree):
             raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
     
         self._sim_name.string.assign(value)
+
+    @property
+    def sim_version(self):
+         return str(self._sim_version)
+
+    @sim_version.setter
+    def sim_version(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._sim_version.string.assign(value)
 
     @property
     def rel_thin(self):
@@ -658,8 +673,11 @@ class RawEfieldTree(MotherEventTree):
     _tree_name: str = "trawefield"
 
     #Per Event Things
-    ## Name and version of the electric field simulator
-    _efield_sim: StdString = StdString("")
+    ## Name of the electric field simulator
+    _sim_name: StdString = StdString("")
+
+    ## Version of the electric field simulator
+    _sim_version: StdString = StdString("")
 
     ## Name of the atmospheric index of refraction model
     _refractivity_model: StdString = StdString("")
@@ -712,16 +730,28 @@ class RawEfieldTree(MotherEventTree):
         self._du_count[0] = value
 
     @property
-    def efield_sim(self):
-         return str(self._efield_sim)
+    def sim_name(self):
+         return str(self._sim_name)
     
-    @efield_sim.setter
-    def efield_sim(self, value):
+    @sim_name.setter
+    def sim_name(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
             raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
     
-        self._efield_sim.string.assign(value)
+        self._sim_name.string.assign(value)
+
+    @property
+    def sim_version(self):
+         return str(self._sim_version)
+
+    @sim_version.setter
+    def sim_version(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._sim_version.string.assign(value)
 
     @property
     def refractivity_model(self):
