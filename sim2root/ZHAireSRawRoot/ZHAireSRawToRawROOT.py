@@ -271,7 +271,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 
         RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
         RawShower.xmax_grams = SlantXmax
-        RawShower.xmax_pos_shc = XmaxPosition
+        RawShower.xmax_pos_shc = XmaxPosition - [0,0,GroundAltitude]
         RawShower.xmax_distance = XmaxDistance                 
         RawShower.xmax_alt = XmaxAltitude
         RawShower.hadronic_model = HadronicModel
