@@ -8,7 +8,6 @@ import os
 import glob
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
-sys.path.append("../Common")
 import sim2root.Common.raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 from optparse import OptionParser
 
