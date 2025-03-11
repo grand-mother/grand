@@ -741,6 +741,9 @@ def rawshower2grandroot(trawshower, gt):
     ### Shower Xmax position in shower coordinates [m]
     gt.tshower.xmax_pos_shc = trawshower.xmax_pos_shc
 
+    ### Shower Xmax position in shower coordinates [m]
+    gt.tshower.xmax_pos = trawshower.xmax_pos_shc
+
     ### Distance of Xmax  [m] to the ground
     # gt.tshower.xmax_distance = trawshower.xmax_distance
 
