@@ -543,6 +543,7 @@ def rawshower2grandrootrun(trawshower, gt):
     # If no single space or more spaces, don't fill the version, put everything as sim_name
     else:
         gt.trunshowersim.sim_name = trawshower.sim_name
+        gt.trunshowersim.sim_version = trawshower.sim_version
 
     # Generate the simulator for trun
     if "aires" in trawshower.sim_name.lower():
@@ -598,7 +599,8 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.run_number = trawefield.run_number
 
     ## Name and version of the electric field simulator
-    gt.trunefieldsim.efield_sim = trawefield.efield_sim
+    gt.trunefieldsim.sim_name = trawefield.sim_name
+    gt.trunefieldsim.sim_version = trawefield.sim_version
 
     ## Name of the atmospheric index of refraction model
     gt.trunefieldsim.refractivity_model = trawefield.refractivity_model
