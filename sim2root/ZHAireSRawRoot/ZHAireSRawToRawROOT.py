@@ -205,10 +205,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
        
         #These might be "run parameters"
         Lat,Long=AiresInfo.GetLatLongFromSry(sryfile[0])                                               # 
-        GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #
+        GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #Used
         GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])                                        #   
-        ShowerSimulator=AiresInfo.GetAiresVersionFromSry(sryfile[0])                                   # 
-        ShowerSimulator="Aires "+ShowerSimulator                                                       #
+        ShowerSimulatorVersion=AiresInfo.GetAiresVersionFromSry(sryfile[0])                            #Used 
+        ShowerSimulator="Aires"                                                                        #Used
   
         RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])                        #Used        
         GammaEnergyCut=AiresInfo.GetGammaEnergyCutFromSry(sryfile[0])                                  #Used
@@ -233,7 +233,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ############################################################################################################################
 
         RawShower.run_number = RunID
-        RawShower.sim_name = ShowerSimulator  
+        RawShower.sim_name = str(ShowerSimulator)
+        RawShower.sim_version = str(ShowerSimulatorVersion)          
         RawShower.event_number = EventID
         RawShower.event_name = EventName
         RawShower.event_date = Date
@@ -418,8 +419,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 	    #########################################################################################################################
         # Part I: get the information
         #########################################################################################################################  	
-        FieldSimulator=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])                                  #
-        FieldSimulator="ZHAireS "+FieldSimulator 
+        FieldSimulatorVersion=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])                                  #
+        FieldSimulator="ZHAireS"
         
         #Getting all the information i need for	RawEfield
         #
@@ -457,7 +458,9 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ############################################################################################################################ 
         #Populate what we can
 
-        RawEfield.efield_sim=FieldSimulator
+        RawEfield.sim_version=str(FieldSimulatorVersion)
+        RawEfield.sim_name=str(FieldSimulator)
+        RawEfield.site=str(Site)
               
         RawEfield.refractivity_model = RefractionIndexModel                                       
         RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
