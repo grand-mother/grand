@@ -68,8 +68,10 @@ do
     fi
     #Deternine if output if old sytle or directory type
     if [[ $gtot_options == *"-os"* ]]; then
+      out_is_dir=false
       out_opt="-o ${dest}/${filename%.*}.root"
     else
+      out_is_dir=true
       out_opt="-od ${dest}"
     fi
 
@@ -90,24 +92,25 @@ do
           gtot_extra_option=${gtot_options}
         fi
         #${gtot_path}  ${gtot_extra_option} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
-        ${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} >> ${logfile}
-        conv_status=$?
+        #${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} >> ${logfile}
+        #conv_status=$?
+        # We need to get the name of the directory created in case of new structure. So we extract it from the output and use tee to send the whole output both to log and stdout
+        # in case of old structure, outdest is empty and in case of new structure it contains the directory path
+        outdest=$(${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
+        # Status of conv is the output of the gtot command (so the first pipe)
+        conv_status=${PIPESTATUS[0]}
         ;;
       *)
         #${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
-        ${gtot_path} ${gtot_options} -i ${file}  ${out_opt}>> ${logfile}
-        conv_status=$?
+        #${gtot_path} ${gtot_options} -i ${file}  ${out_opt}>> ${logfile}
+        #conv_status=$?
+        # We need to get the name of the directory created in case of new structure. So we extract it from the output and use tee to send the whole output both to log and stdout
+        outdest=(${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
+        # Status of conv is the output of the gtot command (so the first pipe)
+        conv_status=${PIPESTATUS[0]}
         ;;
     esac
 
-    #if [ $tr == "TR" ]; then
-    #  cp ${file} ${dest}/${filename%.*}.root
-    #  conv_status=0
-    #else
-    #  # Convert file
-    #  ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
-    #  conv_status=$?
-    #fi
 
     if [ "$conv_status" -ne 0 ]; then
       notify=1
@@ -115,15 +118,25 @@ do
       outstatus=$conv_status
     fi
 
+    if [ "$out_is_dir" = "true" ] ; then
+      irods_option='-r '
+      sfile=$outdest
+    else
+       irods_option='-f '
+       sfile=${dest}/${filename%.*}.root
+    fi
     # Put GrandRoot file into irods
-    sfile=${dest}/${filename%.*}.root
+
+    #sfile=${dest}/${filename%.*}.root
     ifile=${sfile/$sps_path/$irods_path}
     ipath=${ifile%/*}
     echo "imkdir -p $ipath" >> ${logfile}
     imkdir -p $ipath >> ${logfile} 2>&1
-    echo "iput -f $sfile $ifile" >> ${logfile}
-    iput -f $sfile $ifile >> ${logfile} 2>&1
+    echo "iput $irods_option $sfile $ifile" >> ${logfile}
+    iput $irods_option $sfile $ifile >> ${logfile} 2>&1
     iput_status=$?
+
+
     if [ "$iput_status" -ne 0 ]; then
       notify=1
       echo "Error ${iput_status} in iput"  |& tee -a ${logfile}
