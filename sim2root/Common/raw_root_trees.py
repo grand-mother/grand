@@ -92,8 +92,8 @@ class RawShowerTree(MotherEventTree):
     # primary injection direction in Shower Coordinates
     primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
-    ### Simulation site name TODO:standardize
-    _site: StdString = StdString("nosite")
+    ### Shower simulation site name TODO:standardize
+    _site: StdString = StdString("")
     ### Simulation site latitude (deg)
     _site_lat : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ### Simulation site longitude (deg)
@@ -451,7 +451,7 @@ class RawShowerTree(MotherEventTree):
 
     @property
     def site(self):
-        """Simulation Site TODO:standarize"""
+        """Shower simulation Site TODO:standarize"""
         return str(self._site)
 
     @site.setter
@@ -679,6 +679,9 @@ class RawEfieldTree(MotherEventTree):
     ## Version of the electric field simulator
     _sim_version: StdString = StdString("")
 
+    ### Efield simulation site name TODO:standardize
+    _site: StdString = StdString("")
+
     ## Name of the atmospheric index of refraction model
     _refractivity_model: StdString = StdString("")
     _refractivity_model_parameters: StdVectorList = field(default_factory=lambda: StdVectorList("double"))    
@@ -752,6 +755,21 @@ class RawEfieldTree(MotherEventTree):
             raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
 
         self._sim_version.string.assign(value)
+
+    @property
+    def site(self):
+        """Efield simulation Site TODO:standarize"""
+        return str(self._site)
+
+    @site.setter
+    def site(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        self._site.string.assign(value)
 
     @property
     def refractivity_model(self):
