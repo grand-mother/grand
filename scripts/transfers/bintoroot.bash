@@ -66,6 +66,13 @@ do
     if [ ! -d $dirlogs  ];then
       mkdir -p $dirlogs >/dev/null 2>&1
     fi
+    #Deternine if output if old sytle or directory type
+    if [[ $gtot_options == *"-os"* ]]; then
+      out_opt="-o ${dest}/${filename%.*}.root"
+    else
+      out_opt="-od ${dest}"
+    fi
+
     #Determine if file is TR (so no conversion) or CD and gp80 so -gc option is required
     tr=$($(echo basename ${file}) |awk -F_ '{print $5}')
     case $tr in
@@ -77,15 +84,18 @@ do
         site=${filename%_*}
         site=$($(echo basename ${file}) |awk -F_ '{print $1}')
         if [ "${site,,}" == "gp80" ]; then
-          gtot_extra_option="-gc -os -rn -ow"
+          #gtot_extra_option="-gc -os -rn -ow"
+          gtot_extra_option=${gtot_options/-g1/-gc}
         else
           gtot_extra_option=${gtot_options}
         fi
-        ${gtot_path}  ${gtot_extra_option} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+        #${gtot_path}  ${gtot_extra_option} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+        ${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} >> ${logfile}
         conv_status=$?
         ;;
       *)
-        ${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+        #${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
+        ${gtot_path} ${gtot_options} -i ${file}  ${out_opt}>> ${logfile}
         conv_status=$?
         ;;
     esac
