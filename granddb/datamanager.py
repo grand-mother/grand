@@ -16,7 +16,7 @@ import getpass
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("warning", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -568,9 +568,9 @@ class DatasourceLocal(Datasource):
                 logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
 
             my_file = None
-            print(f'path {path} file {file} - {(Path(path))}')
+            #print(f'path {path} file {file} - {(Path(path))}')
             liste = list(Path(path).rglob(file))
-            print(f'list {liste}')
+            #print(f'list {liste}')
             for my_file in liste:
                 if my_file.is_dir():
                     found_file = my_file

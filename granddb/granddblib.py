@@ -17,7 +17,7 @@ mlg.create_output_for_logger("warning", log_stdout=True)
 
 
 def casttodb(value):
-    print(f'{type(value)} - {value}')
+    #print(f'{type(value)} - {value}')
     if isinstance(value, numpy.str_):
         val = repr(value)
     elif isinstance(value, numpy.bool_):
@@ -290,28 +290,28 @@ class Database:
     # Returns the id_repository of the corresponding repository
     def register_repository(self, name, protocol, port, server, path, description=""):
         # Check protocol
-        savepoint = self.sqlalchemysession.begin_nested()
         id_protocol = self.get_or_create_key('protocol', 'protocol', protocol, description)
-        id_repository = self.get_or_create_key('repository', 'repository', name, description)
         self.sqlalchemysession.flush()
-        # Check if repository access exists or not !
-        repo_access = self.sqlalchemysession.query(self.tables()['repository']
-                                                   ).filter_by(id_repository=id_repository,
-                                                               id_protocol=id_protocol).first()
-        if repo_access is not None:
-            if set(repo_access.paths) == set(path):
-                pass
-            else:
-                repo_access.paths = path
-        else:
-            repository_access = {'id_repository': id_repository, 'id_protocol': id_protocol, 'port': port,
-                                 'server_name': server, 'paths': path}
-            container = self.tables()['repository'](**repository_access)
+        # Check if repo exists
+        repo = self.sqlalchemysession.query(self.tables()['repository']
+                                                   ).filter_by(repository=name).first()
+        if repo is None:
+            repository={ 'repository': name, 'id_protocol': id_protocol, 'port': port,
+                                 'server_name': server, 'paths': path, 'description': description, }
+            container = self.tables()['repository'](**repository)
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
-
-        savepoint.commit()
+            id_repository = int(getattr(container, 'id_repository'))
+        else:
+            if set(repo.paths) == set(path):
+                pass
+            else:
+                repo.paths = path
+            id_repository = repo.id_repository
+        self.sqlalchemysession.flush()
+        self.sqlalchemysession.commit()
         return id_repository
+
 
     ## @brief Function to register (if necessary) a filename into the database.
     # It will first search if the file is already known in the DB and check the repository.
@@ -545,7 +545,8 @@ class Database:
             idfile = file_exist.id_file
             from sqlalchemy import func
             removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
-            print(removed)
+            #print(removed)
+            logger.info(f"removed old files {removed}")
 
         idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
         if read_file:
