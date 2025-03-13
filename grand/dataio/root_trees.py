@@ -2329,10 +2329,13 @@ class TRunEfieldSim(MotherRunTree):
     t_post: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Finishing time of antenna data collection time window"""
 
-    ## Simulator name (aires/corsika, etc.)
+    ## Site for which the efield simulation was done
+    site: StdStringDesc = field(default=StdStringDesc())
+    """Site for which the efield simulation was done"""
+    ## Efield simulator name (ZHAireS, Corsika, etc.)
     sim_name: StdStringDesc = field(default=StdStringDesc())
     """Simulator name (aires/corsika, etc.)"""
-    ## Simulator version string
+    ## Efield simulator version string
     sim_version: StdStringDesc = field(default=StdStringDesc())
     """Simulator version string"""
 
@@ -2382,10 +2385,10 @@ class TRunShowerSim(MotherRunTree):
     """low energy cut for mesons (GeV)"""
     ## low energy cut for nuceleons (GeV)
     lowe_cut_nucleon: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """low energy cut for nuceleons (GeV)"""
-    ## Site for wich the smulation was done
+    """low energy cut for nucleons (GeV)"""
+    ## Site for which the shower simulation was done
     site: StdStringDesc = field(default=StdStringDesc())
-    """Site for wich the smulation was done"""
+    """Site for which the shower simulation was done"""
     ## Simulator name (aires/corsika, etc.)
     sim_name: StdStringDesc = field(default=StdStringDesc())
     """Simulator name (aires/corsika, etc.)"""
