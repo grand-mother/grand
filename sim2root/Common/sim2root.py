@@ -305,6 +305,14 @@ def main():
                 gt.trunshowersim.run_number = run_number
                 gt.trunefieldsim.run_number = run_number
 
+                # If no site was specified for the trunshowersim, put inside site
+                if trawshower.site == "":
+                    gt.trunshowersim.site = site
+
+                # If no site was specified for the trunefieldsim, put inside site
+                if trawefield.site == "":
+                    gt.trunefieldsim.site = site
+
                 gt.trun.site = site
                 gt.trun.data_source = "simulation"
 
@@ -545,6 +553,8 @@ def rawshower2grandrootrun(trawshower, gt):
         gt.trunshowersim.sim_name = trawshower.sim_name
         gt.trunshowersim.sim_version = trawshower.sim_version
 
+    gt.trunshowersim.site = trawshower.site
+
     # Generate the simulator for trun
     if "aires" in trawshower.sim_name.lower():
         gt.trun.data_generator = "ZHAireS"
@@ -601,6 +611,8 @@ def rawefield2grandrootrun(trawefield, gt):
     ## Name and version of the electric field simulator
     gt.trunefieldsim.sim_name = trawefield.sim_name
     gt.trunefieldsim.sim_version = trawefield.sim_version
+
+    gt.trunefieldsim.site = trawefield.site
 
     ## Name of the atmospheric index of refraction model
     gt.trunefieldsim.refractivity_model = trawefield.refractivity_model
