@@ -16,7 +16,7 @@ import getpass
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("debug", log_stdout=True)
+mlg.create_output_for_logger("warning", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -257,8 +257,12 @@ class DataManager:
         res = None
         # for rep in self.repositories():
         for name, rep in self.repositories().items():
+            print(f'getrepo name = {name} rep={rep} type={type(rep)}')
+
             if rep.name() == repo:
                 res = rep
+                res.id_repository = self._database.get_or_create_key('repository', 'repository',
+                                                                            res.name(), "")
                 break
         return res
 
@@ -309,7 +313,6 @@ class DataManager:
     # Returns the path to the file in the repository where the file was registered.
     def register_file(self, localfile, dataset=None, repository=None, targetdir=None, again=False):
         newfilename = None
-
         if targetdir is None or os.path.dirname(targetdir) == os.path.dirname(localfile):
             targetfile = localfile
         else:
@@ -321,6 +324,9 @@ class DataManager:
             repository = self.referer()
         else:
             repository = self.getrepo(repository)
+            #repository.id_repository =  self._database.get_or_create_key('repository', 'repository', repository.name(), "")
+
+        #print(f'repository name = {repository.repository} / id = {repository.id_repository}')
 
         if repository is not None:
             # For registering the full path of the file must be provided

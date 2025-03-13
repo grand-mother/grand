@@ -303,6 +303,7 @@ class Database:
             self.sqlalchemysession.flush()
             id_repository = int(getattr(container, 'id_repository'))
         else:
+            #id_repository = self.get_or_create_key('repository', 'repository', name, description)
             if set(repo.paths) == set(path):
                 pass
             else:
@@ -545,9 +546,7 @@ class Database:
             idfile = file_exist.id_file
             from sqlalchemy import func
             removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
-            #print(removed)
             logger.info(f"removed old files {removed}")
-
         idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
         if read_file:
             # We read the localfile and not the remote one
