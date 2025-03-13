@@ -30,6 +30,7 @@ clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GR
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
 clparser.add_argument("-s", "--site_name", help="The name of the site", default=None)
+clparser.add_argument("-sl", "--site_layout", help="The layout of the site (eg. GP13, GP80, GAA)", default=None)
 clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
 clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default=None)
 # clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
@@ -177,6 +178,12 @@ def convert_date(date_str):
 
 
 def main():
+
+    # Check if the site layout is defined
+    if not clargs.star_shape and not clargs.site_layout:
+        print("Please provide the simulated site layout as a command line parameter (eg. -sl GP300)")
+        exit(-1)
+
     # Initialise the run number if specified
     ext_run_number = None
     if clargs.run is not None:
@@ -287,8 +294,12 @@ def main():
                 else:
                     site = clargs.site_name
 
-                # Init output trees in the proper directory
-                if file_num==0 and i==0: out_dir_name = init_all_trees(clargs, trawshower.unix_date, run_number, site, gt)
+                # Only for the tist entry of the first file
+                if file_num==0 and i==0:
+                    # Init output trees in the proper directory
+                    out_dir_name = init_all_trees(clargs, trawshower.unix_date, run_number, site, gt)
+                    # Set site_layout to the command line argument
+                    if clargs.site_layout: gt.trun.site_layout = clargs.site_layout
 
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
@@ -439,7 +450,8 @@ def main():
             # For now (and for the foreseeable future) all DU will have the same bin size at the level of the efield simulator.
             gt.trun.t_bin_size = np.array([trawefield.t_bin_size] * len(du_ids))
 
-            gt.trun.site_layout = "star_shape"
+            # Set the site layout to star_shape if not overriden by a command line option
+            if not clargs.site_layout: gt.trun.site_layout = "star_shape"
 
             # Fill the start and end events in trun
             fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, gt.trun)
