@@ -10,6 +10,8 @@ if len(sys.argv)>1:
 else:
     filename = "dummy_example_events.root"
 
+print("Writing events to file", filename)
+
 # How many events to generate?
 event_count = 10
 
