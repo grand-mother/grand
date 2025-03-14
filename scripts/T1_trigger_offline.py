@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import sys
-import grand.dataio.root_trees as rt
+import grand.dataio
 
 def extract_trigger_parameters(trace, trigger_config, baseline=0):
     # Extract the trigger infos from a trace
@@ -103,7 +103,7 @@ dict_trigger_parameter = dict([
 if __name__ == "__main__":
   # Read the traces from experimental data
   fname = sys.argv[1]
-  file = rt.DataFile(fname)
+  file = grand.dataio.DataFile(fname)
   n_entries = file.tadc.get_number_of_entries()
   # Pad zeros at the head of the trace to statify the Tquiet condition
   zero_head = np.zeros(dict_trigger_parameter["t_quiet"] // 2, dtype=int)

@@ -3,8 +3,9 @@
 from dataclasses import dataclass, field, fields
 import numpy as np
 from typing import Any
+from pathlib import Path
 from scipy.signal import hilbert
-from grand.dataio.root_trees import *
+from grand.dataio import TRun, TRawVoltage, TVoltage, TEfield, TShower, DataDirectory, DataFile, grand_tree_list, NotUniqueEvent
 from grand.geo.coordinates import *
 import ROOT
 
@@ -930,7 +931,7 @@ class Event:
             raise TreeExists("The trun TTree already exists!")
 
         # Look for the TRun with the same file and name in the memory
-        for el in globals()["grand_tree_list"]:
+        for el in grand_tree_list:
             # If the TRun with the same file and name in the memory exists, use it
             if type(el)==TRun and el._tree_name== "trun" and el._file_name==filename:
                 self.trun = el
@@ -1099,11 +1100,22 @@ class Event:
         # Get the filled traces
         filled_vals = [el for el in [self.voltages, self.efields] if el is not None][0]
 
-        # Get the starting time from traces
         t_vectors = [el.t_vector for el in filled_vals]
-        st = np.min(t_vectors)
-        # Get the ending time from traces
-        et = np.max(t_vectors)
+
+        # For the same length traces, easy min/max finding with standard numpy array
+        try:
+            t_vectors = np.array(t_vectors)
+            # Get the starting time from traces
+            st = np.min(t_vectors)
+            # Get the ending time from traces
+            et = np.max(t_vectors)
+        # Non-rectangular array -> array of objects -> double search for min/max (slower)
+        except:
+            t_vectors = [el.t_vector.tolist() for el in filled_vals]
+            # Get the starting time from traces
+            st = min(min(t_vectors))
+            # Get the ending time from traces
+            et = max(max(t_vectors))
 
         self.t_vector = np.arange((et-st)/resolution+1)*resolution+st
 

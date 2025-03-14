@@ -3,7 +3,8 @@ import psycopg2
 import psycopg2.extras
 from sshtunnel import SSHTunnelForwarder
 import numpy
-import grand.dataio.root_trees
+
+import grand.dataio.descriptors
 import re
 import granddb.rootdblib as rdb
 from sqlalchemy import create_engine
@@ -34,11 +35,11 @@ def casttodb(value):
             val = value.item()
         else:
             val = value.tolist()
-    elif isinstance(value, grand.dataio.root_trees.StdVectorList):
+    elif isinstance(value, grand.dataio.descriptors.StdVectorList):
         val =[]
         #postgres cannot store arrays of arrays... so we split (not sure if really correct)!
         for i in value:
-            if isinstance(i,numpy.ndarray) or isinstance(i, grand.dataio.root_trees.StdVectorList):
+            if isinstance(i,numpy.ndarray) or isinstance(i, grand.dataio.descriptors.StdVectorList):
                 val.append(casttodb(i))
             else:
                 val.append(i)
