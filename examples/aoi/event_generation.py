@@ -2,7 +2,8 @@
 # Example of Event generation and storing with GRANDlib classes
 # For now it creates an event with _meaningless dummy_ data
 import sys
-from grand.grandlib_classes.grandlib_classes import *
+
+from grand.aoi import *
 
 # The file to store to (preferably should end with ".root" extension)
 if len(sys.argv)>1:
