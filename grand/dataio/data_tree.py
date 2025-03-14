@@ -643,7 +643,10 @@ class DataTree:
             # Or set its address
             else:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
-                self._tree.SetBranchAddress(branch_name, getattr(self, value_name).string)
+                try:
+                    self._tree.SetBranchAddress(branch_name, getattr(self, value_name).string)
+                except:
+                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
         elif isinstance(value, ROOT.string):
             # Create the branch
             if not set_branches:
