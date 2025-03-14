@@ -130,16 +130,25 @@ class DataManager:
                             ds.set_credentials(self._credentials[ds.name()])
                         self._repositories[repo["repository"]] = ds
 
-        # Add remote repositories
-        # TODO: If repo exists from database just add path ?
+        # Add repositories
         if configur.has_section('repositories'):
             for name in configur['repositories']:
+                print(f'read repo {name}')
                 repo = json.loads(configur.get('repositories', name))
-                ds = Datasource(name, repo[0], repo[1], repo[2], repo[3],
+                print(f'datasource {name}, {repo[0]}, {repo[1]}, {repo[2]}, {repo[3]} -- {repo}')
+                # Test if repo already exists (from database)
+                if name in self._repositories:
+                    # So just add the path to the DB repo
+                    for path in repo[3]:
+                        if path not in self._repositories[name].paths():
+                            self._repositories[name].paths().append(path)
+                else:
+                    # Repository not in DB... add it
+                    ds = Datasource(name, repo[0], repo[1], repo[2], repo[3],
                                 self.incoming())
-                if ds.name() in self._credentials.keys():
-                    ds.set_credentials(self._credentials[name])
-                self._repositories[name] = ds
+                    if ds.name() in self._credentials.keys():
+                        ds.set_credentials(self._credentials[name])
+                    self._repositories[name] = ds
 
         # Define referer
         if configur.has_section('registerer'):
@@ -257,12 +266,9 @@ class DataManager:
         res = None
         # for rep in self.repositories():
         for name, rep in self.repositories().items():
-            print(f'getrepo name = {name} rep={rep} type={type(rep)}')
-
             if rep.name() == repo:
                 res = rep
-                res.id_repository = self._database.get_or_create_key('repository', 'repository',
-                                                                            res.name(), "")
+                #res.id_repository = self._database.get_or_create_key('repository', 'repository',res.name(), "")
                 break
         return res
 

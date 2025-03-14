@@ -307,7 +307,7 @@ class Database:
             if set(repo.paths) == set(path):
                 pass
             else:
-                repo.paths = path
+                repo.paths = list(set(path))
             id_repository = repo.id_repository
         self.sqlalchemysession.flush()
         self.sqlalchemysession.commit()
