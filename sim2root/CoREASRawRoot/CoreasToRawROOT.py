@@ -99,6 +99,10 @@ def CoreasToRawRoot(file, simID=None):
     first_interaction = read_first_interaction(log_file) / 100 # height of first interaction - in m
     hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
     coreas_version    = read_coreas_version(log_file)
+
+  corsika_version = read_corsika_version(inp_input)
+
+  
   print("*****************************************")
 
 
@@ -285,7 +289,8 @@ def CoreasToRawRoot(file, simID=None):
 
   # ********** fill RawShower **********
   RawShower.run_number = EventID
-  RawShower.sim_name = coreas_version
+  RawShower.sim_name = str("Corsika")
+  RawShower.sim_version = str(corsika_version)
   RawShower.event_number = RunID
   RawShower.event_name = RunID
   RawShower.event_date = Date
@@ -440,6 +445,8 @@ def CoreasToRawRoot(file, simID=None):
 
   RawEfield.run_number = EventID
   RawEfield.event_number = RunID
+  RawEfield.sim_name = str("CoREAS")
+  RawEfield.sim_version = str(coreas_version)
 
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
