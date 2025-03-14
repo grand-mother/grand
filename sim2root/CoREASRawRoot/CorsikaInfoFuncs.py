@@ -157,7 +157,6 @@ def read_coreas_version(log_file):
                 return str(coreas_version)
             else:
                 coreas_version = "n/a"
-                print("CoREAS version =", coreas_version)
     return str(coreas_version)
 
 
