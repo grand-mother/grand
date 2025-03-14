@@ -171,8 +171,12 @@ def read_corsika_version(inp_file):
                 corsika_version = f"Corsika V{match.group(1)[:1]}.{match.group(1)[1:]}"  # Format version
                 print("Corsika version =", corsika_version)
                 return corsika_version
+            elif "corsika7" in line or "corsika-7" in line:
+                corsika_version = "Corsika V7.X"
+                print("Corsika version =", corsika_version)
+                return corsika_version
 
-    return str(corsika_version)
+    return corsika_version
 
 
 
