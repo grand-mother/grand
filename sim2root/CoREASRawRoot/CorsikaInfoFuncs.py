@@ -161,6 +161,19 @@ def read_coreas_version(log_file):
     return str(coreas_version)
 
 
+# not very realiable
+def read_corsika_version(inp_file):
+    with open(inp_file, mode="r") as datafile:
+        for line in datafile:
+            if "corsika-77550" in line:
+                corsika_version = "Corsika V7.7550"
+                print("Corsika version =", corsika_version)
+                return str(corsika_version)
+            else:
+                corsika_version = "n/a"
+    return str(corsika_version)
+
+
 
 def antenna_positions_dict(pathAntennaList):
     """
