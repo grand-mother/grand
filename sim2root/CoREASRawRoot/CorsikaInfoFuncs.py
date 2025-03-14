@@ -152,8 +152,9 @@ def read_coreas_version(log_file):
     with open(log_file, mode="r") as datafile:
         for line in datafile:
             if "CoREAS V1.4" in line:
-                coreas_version = "CoREAS V1.4"
+                coreas_version = "CoREAS V1.4" 
                 print("CoREAS version =", coreas_version)
+                return str(coreas_version)
             else:
                 coreas_version = "n/a"
                 print("CoREAS version =", coreas_version)
