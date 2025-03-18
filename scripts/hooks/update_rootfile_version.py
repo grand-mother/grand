@@ -8,7 +8,7 @@
 import git
 
 versionfile = "grand/dataio/version"
-watchedfile = ["grand/dataio/root_trees.py"]
+watchedfile = ["grand/dataio/descriptors.py", "grand/dataio/data_handling.py", "grand/dataio/data_tree.py", "grand/dataio/event_trees.py", "grand/dataio/run_trees.py"]
 
 def update_version(repo):
     from os.path import exists

@@ -83,7 +83,7 @@ def CoreasToRawRoot(file, simID=None):
     first_interaction = 1 # height of first interaction - in m
     print("[WARNING] Assuming first interaction at 1m.")
     hadr_interaction  = "Sibyll 2.3d"
-    coreas_version    = "Coreas V1.4"
+    coreas_version    = "1.4"
     print("Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4.")
   elif len(log_file) > 1:
     print("Found", log_file)

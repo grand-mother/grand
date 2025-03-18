@@ -211,7 +211,7 @@ if __name__ == "__main__":
     import numpy as np
     from pathlib import Path
     import grand.manage_log as mlg
-    import grand.dataio.root_trees as groot
+    import grand.dataio
     import grand.geo.coordinates as coord
     from grand.basis.type_trace import ElectricField        
     import scipy.fft as sf
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     #############################################################################################
     #############################################################################################
     #Open file
-    d_input = groot.DataDirectory(args.directory)
+    d_input = grand.dataio.DataDirectory(args.directory)
 
     # Loop through the efield files
     for f_input_file in d_input.ftefields[0].flist:
@@ -286,10 +286,10 @@ if __name__ == "__main__":
            f_output = output_directory + "/" + Path(f_output).name
 
         logger.info(f"save result in {f_output}")
-        out_tefield = groot.TEfield(f_output)
+        out_tefield = grand.dataio.TEfield(f_output)
 
 
-        df_input_file = groot.DataFile(f_input_file)
+        df_input_file = grand.dataio.DataFile(f_input_file)
         tefield = df_input_file.tefield_l0
         entries = tefield.get_number_of_entries()
 
@@ -598,7 +598,7 @@ if __name__ == "__main__":
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
     filename=glob.glob(args.directory+ "/run_*L0*.root")[0]
     filename=filename.replace("L0", "L1")
-    outrun = groot.TRun(filename)    
+    outrun = grand.dataio.TRun(filename)
     outrun.copy_contents(trun)
     if(target_sampling_rate_mhz>0):
       outrun.t_bin_size = [1e3/target_sampling_rate_mhz]*len(outrun.t_bin_size) 
@@ -614,7 +614,7 @@ if __name__ == "__main__":
     #f_output = d_input.ftefield.filename.replace("L0", "L1")
     filename=glob.glob(args.directory+ "/runefieldsim_*L0*.root")[0]
     filename=filename.replace("L0", "L1")
-    outrunefieldsim = groot.TRunEfieldSim(filename)    
+    outrunefieldsim = grand.dataio.TRunEfieldSim(filename)
     outrunefieldsim.copy_contents(trunefieldsim)
     outrunefieldsim.analysis_level = trunefieldsim.analysis_level+1
     
