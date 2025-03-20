@@ -12,6 +12,8 @@ export PATH=$GRAND_ROOT/scripts:$PATH
 echo "add grand/scripts to PATH "
 echo "=============================="
 
+export PATH=$GRAND_ROOT/env:$PATH
+
 export PYTHONPATH=$GRAND_ROOT:$PYTHONPATH
 echo "add grand to PYTHONPATH"
 echo "=============================="
