@@ -655,7 +655,10 @@ class DataTree:
             # Or set its address
             else:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
-                self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
+                try:
+                    self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
+                except:
+                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
         else:
             raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 
