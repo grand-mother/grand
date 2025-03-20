@@ -22,4 +22,4 @@ print('Create VS Code file environment.')
 with open(env_vs_code,"w") as fenv:
     fenv.write(s_env_vs)
     
-    
+sys.exit(0)
