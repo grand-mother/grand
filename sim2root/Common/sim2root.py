@@ -522,7 +522,9 @@ def main():
 def init_all_trees(clargs, unix_date, run_number, site, gt):
 
     # Use date/time from command line argument if specified, otherwise the unix time
-    date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
+    #date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_") #changed to comply with deprecation warning.
+    date,time=datetime.datetime.fromtimestamp(unix_date, datetime.UTC).strftime('%Y%m%d_%H%M%S').split("_")
+
     if clargs.sim_date is not None:
         date = clargs.sim_date
     if clargs.sim_time is not None:
@@ -741,8 +743,8 @@ def rawshower2grandroot(trawshower, gt):
     ### Shower Xmax position in shower coordinates [m]
     gt.tshower.xmax_pos_shc = trawshower.xmax_pos_shc
 
-    ### Shower Xmax position in shower coordinates [m]
-    gt.tshower.xmax_pos = trawshower.xmax_pos_shc
+    ### Shower Xmax position in shower coordinates [m] TODO: to be compueted frmom xmax_pos_shc.
+    #gt.tshower.xmax_pos = 
 
     ### Distance of Xmax  [m] to the ground
     # gt.tshower.xmax_distance = trawshower.xmax_distance
