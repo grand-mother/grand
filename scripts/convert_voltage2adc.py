@@ -23,12 +23,12 @@ import os
 import time
 import argparse
 import logging
-
+import psutil
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from grand import ADC, manage_log
-import grand.dataio.root_trees as rt
+import grand.dataio
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def get_noise_trace(data_dir,
     trace_idx = 0
 
     for i, data_file in enumerate(data_files):
-        df = rt.DataFile(data_file)
+        df = grand.dataio.DataFile(data_file)
         tadc = df.tadc #rt.TADC(data_file)
 
         # Check that data traces contain requested number of samples
@@ -219,6 +219,9 @@ def manage_args():
 
 if __name__ == '__main__':
     logger = manage_log.get_logger_for_script(__file__)
+    pid = os.getpid()
+    process = psutil.Process(pid)    
+    
 
     #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
@@ -239,7 +242,7 @@ if __name__ == '__main__':
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
     #-#-#- Load TVoltage -#-#-#
-    df       = rt.DataDirectory(f_input_dir)
+    df       = grand.dataio.DataDirectory(f_input_dir)
     tvoltage = df.tvoltage
     entries  = tvoltage.get_number_of_entries()
     trun = df.trun
@@ -247,11 +250,12 @@ if __name__ == '__main__':
     # Loop through the voltage files
     for f_input_file in df.ftvoltages[0].flist:
 
-        df_input_file = rt.DataFile(f_input_file)
+        df_input_file = grand.dataio.DataFile(f_input_file)
         tvoltage = df_input_file.tvoltage
         entries = tvoltage.get_number_of_entries()
 
-        logger.info(f'Converting voltage traces from {f_input_file} to ADC traces')
+        logger.info(f'Converting {entries} voltage traces from {f_input_file} to ADC traces')
+        print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
 
         if args.out_file is None:
             # Replace only first occurrences
@@ -263,7 +267,7 @@ if __name__ == '__main__':
             logger.info(f"Overwriting {f_output}") # remove existing file if it already exists
             os.remove(f_output)
             time.sleep(1)
-        tadc = rt.TADC(f_output)
+        tadc = grand.dataio.TADC(f_output)
 
         #-#-#- Initiate ADC object and RNG -#-#-#
         adc = ADC()
@@ -277,6 +281,7 @@ if __name__ == '__main__':
         #-#-#- Perform the conversion for all entries in TVoltage file -#-#-#
         for entry in range(entries):
             logger.info(f'Converting voltage to ADC for entry {entry+1}/{entries}')
+            print(f"Entry Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")            
             tvoltage.get_entry(entry)
             voltage_trace = np.array(tvoltage.trace)
 

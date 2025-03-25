@@ -2,7 +2,7 @@
 
 ## Frequent confusion
 
-The conda environment **does not contain GRANDLIB code**. The conda environment installs the necessary libraries, executables, initializes environment variables to correctly compile the C part of GRANLIB (gull and turtle), please [constraints to use grandlib](https://github.com/grand-mother/grand/wiki#constraints-to-use-grandlib) in GRANDLIB wiki.
+The conda environment **does not contain GRANDLIB code**. The conda environment installs the necessary libraries, executables, initializes environment variables to correctly compile the C part of GRANLIB (gull and turtle), please read [constraints to use grandlib](https://github.com/grand-mother/grand/wiki#constraints-to-use-grandlib) in GRANDLIB wiki.
 
 ## WARNING
 
@@ -11,7 +11,7 @@ The conda environment **does not contain GRANDLIB code**. The conda environment 
 
 ## miniconda installation
 
-You need to have conda command installed, the minimal package to have it is miniconda. The [page](https://docs.conda.io/en/latest/miniconda.html) to install miniconda
+You need to have conda command installed, the minimal package to have it is miniconda. The [page](https://www.anaconda.com/docs/getting-started/miniconda/install) to install miniconda
 
 ## conda doc
 

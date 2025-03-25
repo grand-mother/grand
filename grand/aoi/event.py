@@ -1,243 +1,14 @@
-## The grandlib classes following https://docs.google.com/document/d/1P0AwR3U3MVZyU1ewIobWkJPZmVkxKCAw/edit
-
+# Created by Lech Wiktor Piotrowski at 14/03/2025
 from dataclasses import dataclass, field, fields
+
 import numpy as np
-from typing import Any
-from scipy.signal import hilbert
-from grand.dataio.root_trees import *
-from grand.geo.coordinates import *
 import ROOT
 
-@dataclass
-class Antenna:
-    """A class describing a single antenna"""
-
-    id: int = -1
-    """Antenna ID - the du_id from the trees"""
-
-    ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
-    # position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
-    _position: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-    ## Antenna tilt
-    _tilt: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-    ## Antenna acceleration - this comes from hardware. ToDo: perhaps recalculate to tilt or remove tilt?
-    _acceleration: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-
-    model: Any = 0
-    """The antenna model"""
-
-    # # ToDo: Parameters below come from the hardware, but do we want them here?
-    # ## Atmospheric temperature (read via I2C)
-    # atm_temperature: float = 0
-    # ## Atmospheric pressure
-    # atm_pressure: float = 0
-    # ## Atmospheric humidity
-    # atm_humidity: float = 0
-    # ## Battery voltage
-    # battery_level: float = 0
-    # ## Firmware version
-    # firmware_version: float = 0
-
-    @property
-    def position(self):
-        """Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)"""
-        return self._position
-
-    @position.setter
-    def position(self, v):
-        self._position = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-    @property
-    def tilt(self):
-        """Antenna tilt"""
-        return self._tilt
-
-    @tilt.setter
-    def tilt(self, v):
-        self._tilt = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-    @property
-    def acceleration(self):
-        """Antenna acceleration - this comes from hardware."""
-        return self._acceleration
-
-    @acceleration.setter
-    def acceleration(self, v):
-        self._acceleration = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-
-@dataclass
-class Timetrace3D:
-    """A class for holding x,y,z single antenna traces over time"""
-
-    n_points: int = 0
-    """The trace length"""
-
-    time_step: float = 0
-    """[ns] n_points x step = total timetrace length"""
-
-    t0: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
-    """Start time of the trace as unix time with nanoseconds"""
-
-    trigger_time: np.datetime64 = field(default_factory=lambda: np.datetime64(0, 'ns'))
-    """Trigger time as unix time with nanoseconds"""
-
-    t_bin_size: float = 2
-    """The size of the time bin - the time resolution in ns"""
-
-    du_id: int = -1
-    """The Detector Unit ID"""
-
-    ## Trace vector in X
-    # trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-    ## Trace vector in Y
-    # trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-    ## Trace vector in Z
-    # trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-
-    # ToDo: Allow empty constructor in CartesianRepresentation?
-    ## Trace 3D vector (x,y,z)
-    _trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(0, np.float32), y=np.zeros(0, np.float32), z=np.zeros(0, np.float32)))
-    # _trace1: list = None
-    # trace: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-
-    t_vector: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
-    """The time vector [ns] - generated from the trace length, t0 and t_bin_size"""
-
-    ## *** Hilbert envelopes are currently NOT DEFINED in the data coming from hardware
-    _hilbert_trace: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(0, np.float32), y=np.zeros(0, np.float32), z=np.zeros(0, np.float32)))
-    # ## Hilbert envelope vector in X
-    # hilbert_trace_x: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-    # ## Hilbert envelope vector in X
-    # hilbert_trace_y: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-    # ## Hilbert envelope vector in X
-    # hilbert_trace_z: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float))
-
-    ## ToDo: add additional quantities from the doc?
-
-    ## ToDo: add additional quantities from the trees?
-
-    def calculate_t_vector(self, time_offset):
-        """Calculation of the time vector - should be called manually when all the necessary parameters of the Timetrace3D are set"""
-        # ToDo: t0 is at the moment the trigger time, not the start time...
-        self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
-
-    def get_value_at_time(self, time_offset):
-        """Get the signal value at a certain time. Returns 0, if nothing measured at this time"""
-        # If a signal was measured for the requested time value, return it
-        if np.any(self.t_vector == time_offset):
-            return self.trace[:,np.where(self.t_vector == time_offset)[0][0]]
-        # Otherwise, return 0
-        else:
-            return np.zeros(3, np.float32)
-
-    def get_hilbert_value_at_time(self, time_offset):
-        """Get the signal Hilbert envelope's value at a certain time. Returns 0, if nothing measured at this time"""
-        # If a signal was measured for the requested time value, return it
-        if np.any(self.t_vector == time_offset):
-            return self.hilbert_trace[:,np.where(self.t_vector == time_offset)[0][0]]
-        # Otherwise, return 0
-        else:
-            return np.zeros(3, np.float32)
-
-    @property
-    def trace(self):
-        """Trace 3D vector (x,y,z)"""
-        return self._trace
-
-    @trace.setter
-    def trace(self, v):
-        self._trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-    @property
-    def hilbert_trace(self):
-        """Hilbert envelope 3D vector (x,y,z) - not defined in the hardware"""
-        # Calculate the hilbert envelope if not yet calculated
-        if len(self._hilbert_trace[0]) == 0:
-            hx = np.abs(hilbert(self.trace.x))
-            hy = np.abs(hilbert(self.trace.y))
-            hz = np.abs(hilbert(self.trace.z))
-            self._hilbert_trace = CartesianRepresentation(x=hx, y=hy, z=hz)
-
-        return self._hilbert_trace
-
-    @hilbert_trace.setter
-    def hilbert_trace(self, v):
-        self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-@dataclass
-class Voltage(Timetrace3D):
-    """A class for holding voltage traces + additional information"""
-
-    ## GPS time of the trigger - why would we want it? We have already _trigger_time in Timetrace3D, that is GPS time + nanoseconds
-    # _GPS_trigtime: np.uint32 = 0
-    is_triggered: bool = True
-    """Is this a triggered trace? - not sure if it should be here or in Timetrace3D, or perhaps further up in the event"""
-
-@dataclass
-class Efield(Timetrace3D):
-    """A class for holding Efield traces + additional information"""
-
-    eta: float = 0
-    """Polarization angle of the reconstructed Efield in the shower plane [deg]"""
-
-    a_ratio: float = 0
-    """Ratio of the geomagnetic to charge excess contributions"""
-
-@dataclass
-class Shower:
-    """A class for holding a shower"""
-
-    energy_em: float = 0
-    """Shower from e+- (ie related to radio emission) (GeV)"""
-
-    energy_primary: float = 0
-    """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
-
-    Xmax: float = 0
-    """Shower Xmax [g/cm2]"""
-
-    _Xmaxpos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-    """Shower position in the site's reference frame"""
-
-    azimuth: float = 0
-    """Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")"""
-
-    zenith: float = 0
-    """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
-
-    ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
-    _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-    ## Position of the core on the ground in the site's reference frame
-    _core_ground_pos: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
-
-    @property
-    def Xmaxpos(self):
-        """Shower position in the site's reference frame"""
-        return self._Xmaxpos
-
-    @Xmaxpos.setter
-    def Xmaxpos(self, v):
-        self._Xmaxpos = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-    @property
-    def origin_geoid(self):
-        """Direction of origin"""
-        return self._origin_geoid
-
-    @origin_geoid.setter
-    def origin_geoid(self, v):
-        self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
-    @property
-    def core_ground_pos(self):
-        """Position of the core on the ground in the site's reference frame"""
-        return self._core_ground_pos
-
-    @core_ground_pos.setter
-    def core_ground_pos(self, v):
-        self._core_ground_pos = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
-
+from grand import CartesianRepresentation
+from grand.aoi.timetrace import Voltage, Efield, TreeExists
+from grand.aoi.antenna import Antenna
+from grand.aoi.shower import Shower
+from grand.dataio import DataDirectory, TRun, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
 
 
 @dataclass
@@ -930,7 +701,7 @@ class Event:
             raise TreeExists("The trun TTree already exists!")
 
         # Look for the TRun with the same file and name in the memory
-        for el in globals()["grand_tree_list"]:
+        for el in grand_tree_list:
             # If the TRun with the same file and name in the memory exists, use it
             if type(el)==TRun and el._tree_name== "trun" and el._file_name==filename:
                 self.trun = el
@@ -1099,11 +870,22 @@ class Event:
         # Get the filled traces
         filled_vals = [el for el in [self.voltages, self.efields] if el is not None][0]
 
-        # Get the starting time from traces
         t_vectors = [el.t_vector for el in filled_vals]
-        st = np.min(t_vectors)
-        # Get the ending time from traces
-        et = np.max(t_vectors)
+
+        # For the same length traces, easy min/max finding with standard numpy array
+        try:
+            t_vectors = np.array(t_vectors)
+            # Get the starting time from traces
+            st = np.min(t_vectors)
+            # Get the ending time from traces
+            et = np.max(t_vectors)
+        # Non-rectangular array -> array of objects -> double search for min/max (slower)
+        except:
+            t_vectors = [el.t_vector.tolist() for el in filled_vals]
+            # Get the starting time from traces
+            st = min(min(t_vectors))
+            # Get the ending time from traces
+            et = max(max(t_vectors))
 
         self.t_vector = np.arange((et-st)/resolution+1)*resolution+st
 
@@ -1122,137 +904,3 @@ class Event:
     def get_hilbert_efield_at_time(self, t):
         """Get the efield signal value in all the DUs at the given time"""
         return np.array([el.get_hilbert_value_at_time(t) for el in self.efields])
-
-
-
-class EventList:
-    """A class giving access/iteration over multiple events"""
-
-    ## The instance of the file with TTrees containing the event. ToDo: this should allow for multiple files holding different TTrees and TChains in the future
-    file: ROOT.TFile = None
-    """The instance of the file with TTrees containing the event."""
-
-    directory: DataDirectory = None
-    """The instance of the directory with files with TTrees containing the event."""
-
-    def __init__(self, inp_name, **kwargs):
-        # If TFile was given
-        if isinstance(inp_name, ROOT.TFile):
-            self.file_name = inp_name.GetName()
-            self.file = inp_name
-        # If DataDirectory was given
-        elif isinstance(inp_name, DataDirectory):
-            self.directory_name = inp_name.dir_name
-            self.directory = inp_name
-        # String with file name or directory name was given
-        elif isinstance(inp_name, str):
-            # If file name was given
-            if Path(inp_name).is_file():
-                self.file = ROOT.TFile(inp_name, "read")
-            # If directory name was given
-            elif Path(inp_name).is_dir():
-                self.directory = DataDirectory(inp_name)
-            else:
-                print("Please provide proper file or directory name.")
-                exit()
-
-        # The arguments to be passed to Event.fill_event_from_trees()
-        self.init_kwargs = kwargs
-
-        self.event = Event()
-        self.init_trees = True
-
-        # No need to init trees if using a DataDirectory (which inits the trees)
-        if self.directory:
-            self.init_trees = False
-
-    def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
-        """Get specified event from the event list"""
-
-        # Don't allow specifying entry and event/run at the same time, because... what to chose?
-        if entry_number is not None and (run_number is not None or event_number is not None):
-            print("Please provide only entry_number or event/run_number!")
-            return None
-
-        e = self.event
-
-        if self.file is not None:
-            e.file = self.file
-        elif self.directory is not None:
-            e.directory = self.directory
-        else:
-            print("No directory or file provided!")
-            exit()
-
-        # If entry/event/run number not specified, take the first entry
-        run_entry_number = None
-        if entry_number is None and run_number is None and event_number is None:
-            entry_number = 0
-
-        if entry_number is not None:
-            e._entry_number = entry_number
-        else:
-            if run_number is None:
-                run_number = 0
-            if event_number is not None:
-                e.run_number=run_number
-                e.event_number=event_number
-            else:
-                print("Please provide event_number and run_number, or entry_number")
-                return None
-
-        # Fill the event
-        if fill_event:
-            # Overwrite the init kwargs with kwargs given here
-            if len(kwargs)>0:
-                e.fill_event_from_trees(init_trees=self.init_trees, **kwargs)
-            else:
-                e.fill_event_from_trees(init_trees=self.init_trees, **self.init_kwargs)
-
-            # Don't init trees anymore
-            self.init_trees = False
-
-        return e
-
-    def get_number_of_events(self):
-        """Get the number of events in the list"""
-
-        # ToDo: at the moment assumes the same number of events in all the trees
-        # Read directory if given
-        if self.directory:
-            data_input = self.directory
-        elif self.file:
-            data_input = DataFile(self.file)
-        else:
-            print("Please provide data directory or file.")
-            exit()
-
-        # First, try to get the number of events from tshower
-        if hasattr(data_input, "tshower"):
-            return data_input.tshower.get_entries()
-        elif hasattr(data_input, "tefield"):
-            return data_input.tefield.get_entries()
-        elif hasattr(data_input, "tvoltage"):
-            return data_input.tvoltage.get_entries()
-        elif hasattr(data_input, "trawvoltage"):
-            return data_input.trawvoltage.get_entries()
-        else:
-            print("Can not find any tree to provide the number of events in the file.")
-            return None
-
-    ## Return the iterable over self
-    def __iter__(self):
-        # Always start the iteration with the first entry
-        current_entry = 0
-
-        entries_cnt = self.get_number_of_events()
-
-        while current_entry < entries_cnt:
-            yield self.get_event(entry_number=current_entry)
-            current_entry += 1
-
-
-## Exception risen if the TTree already exists
-class TreeExists(Exception):
-    pass
-

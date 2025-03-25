@@ -10,7 +10,7 @@ import scipy.fft as sf
 from pathlib import Path
 
 import grand.geo.coordinates as coord
-import grand.dataio.root_trees as groot
+import grand.dataio as groot
 from grand.basis.type_trace import ElectricField
 
 from .detector.antenna_model import AntennaModel

@@ -261,7 +261,7 @@ class DataManager:
 
     ##Function to register a dataset (i.e directory) into the database.
     def register_dataset(self, directory,  repository=None, targetdir = None):
-        import grand.dataio.root_trees
+        import grand.dataio
         if repository is None:
             repository = self.referer()
         else:
@@ -282,7 +282,7 @@ class DataManager:
                 localdir = self.get_dataset(directory)
                 #TODO: Check that target dir exists
                 if localdir is not None:
-                    Tdir = grand.dataio.root_trees.DataDirectory(localdir)
+                    Tdir = grand.dataio.DataDirectory(localdir)
                     for f in Tdir.get_list_of_files():
                         self.register_file(localfile=f, dataset=Tdir.dir_name, repository=repository.name(), targetdir=targetdir)
                 else:

@@ -10,7 +10,7 @@ from pathlib import Path
 import os
 import numpy as np
 
-import grand.dataio.root_trees as groot
+import grand.dataio as groot
 from grand import grand_get_path_root_pkg
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Example use of the grandlib classes for stored data read-out
 import sys
-from grand.grandlib_classes.grandlib_classes import *
+from grand.aoi import *
 
 # Avoid printing out whole traces
 np.set_printoptions(threshold=5)

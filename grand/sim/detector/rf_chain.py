@@ -73,7 +73,7 @@ Overview of calculations:
 """
 
 def read_config(xml_file):
-    """ Reads the XML configuration file and returns component settings. """ 
+    """ Reads the XML configuration file and returns component settings. """
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -119,7 +119,7 @@ def get_axis_filename(component_name, axis):
         if not components[component_name]["enabled"]:
             print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
             return None
-        
+
         filename_template = components[component_name]["s2p_file"]
 
         if filename_template is None:
@@ -203,7 +203,7 @@ def get_axis_filename(component_name, axis):
         if not components[component_name]["enabled"]:
             print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
             return None
-        
+
         filename_template = components[component_name]["s2p_file"]
 
         if filename_template is None:

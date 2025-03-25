@@ -152,7 +152,7 @@ def read_coreas_version(log_file):
     with open(log_file, mode="r") as datafile:
         for line in datafile:
             if "CoREAS V1.4" in line:
-                coreas_version = "CoREAS V1.4" 
+                coreas_version = "1.4" 
                 print("CoREAS version =", coreas_version)
                 return str(coreas_version)
             else:
@@ -160,17 +160,23 @@ def read_coreas_version(log_file):
     return str(coreas_version)
 
 
-# not very realiable
 def read_corsika_version(inp_file):
+    corsika_version = "n/a"
+    pattern = r"corsika-(\d+)"  # regex pattern to match 'corsika-' followed by the version digits
+
     with open(inp_file, mode="r") as datafile:
         for line in datafile:
-            if "corsika-77550" in line:
-                corsika_version = "Corsika V7.7550"
+            match = re.search(pattern, line)
+            if match:
+                corsika_version = f"{match.group(1)[:1]}.{match.group(1)[1:]}"  # Format version
                 print("Corsika version =", corsika_version)
-                return str(corsika_version)
-            else:
-                corsika_version = "n/a"
-    return str(corsika_version)
+                return corsika_version
+            elif "corsika7" in line or "corsika-7" in line:
+                corsika_version = "7.X"
+                print("Corsika version =", corsika_version)
+                return corsika_version
+
+    return corsika_version
 
 
 

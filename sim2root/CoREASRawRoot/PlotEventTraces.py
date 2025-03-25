@@ -3,7 +3,7 @@
 import numpy as np
 import sys
 import os
-from grand.dataio.root_trees import *
+from grand.dataio import TRun, TRunEfieldSim, TRunShowerSim, TVoltage, TEfield, TShower, TShowerSim
 from types import SimpleNamespace
 import matplotlib.pyplot as plt
 

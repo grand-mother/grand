@@ -9,12 +9,14 @@ import time
 from pathlib import Path
 
 import numpy as np
+import glob
+import datetime
 
-from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
+from grand.dataio import TRun, TRunEfieldSim, TRunShowerSim, TEfield, TShower, TShowerSim
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
-from grand import ECEF, Geodetic, GRANDCS
-import matplotlib.pyplot as plt
+from grand import Geodetic, GRANDCS
+# import matplotlib.pyplot as plt
 # from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
 # from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
 
@@ -520,7 +522,9 @@ def main():
 def init_all_trees(clargs, unix_date, run_number, site, gt):
 
     # Use date/time from command line argument if specified, otherwise the unix time
-    date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
+    #date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_") #changed to comply with deprecation warning.
+    date,time=datetime.datetime.fromtimestamp(unix_date, datetime.UTC).strftime('%Y%m%d_%H%M%S').split("_")
+
     if clargs.sim_date is not None:
         date = clargs.sim_date
     if clargs.sim_time is not None:
@@ -692,8 +696,7 @@ def rawshower2grandroot(trawshower, gt):
     # ToDo: it should be a scalar on sim side
     gt.tshower.energy_primary = trawshower.energy_primary[0]
 
-    # ToDo: fill energy_em for ZHAIRES
-    if len(trawshower.energy_em)==0: trawshower.energy_em = [0]
+    # Fill energy_em (GeV)
     gt.tshower.energy_em = trawshower.energy_em[0]
 
     ### Shower azimuth (deg, CR convention)
@@ -739,6 +742,9 @@ def rawshower2grandroot(trawshower, gt):
 
     ### Shower Xmax position in shower coordinates [m]
     gt.tshower.xmax_pos_shc = trawshower.xmax_pos_shc
+
+    ### Shower Xmax position in shower coordinates [m] TODO: to be compueted frmom xmax_pos_shc.
+    #gt.tshower.xmax_pos = 
 
     ### Distance of Xmax  [m] to the ground
     # gt.tshower.xmax_distance = trawshower.xmax_distance

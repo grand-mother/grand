@@ -17,7 +17,7 @@ authors: @mtueros @jelenakhlr
 March 2024
 """
 
-import grand.dataio.root_trees as groot 
+import grand.dataio as groot
 # import the rest of the guardians of the galaxy:
 import grand.manage_log as mlg
 import raw_root_trees as RawTrees # this is here in Common
