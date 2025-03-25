@@ -122,6 +122,8 @@ class StdVectorList(MutableSequence):
     # function modified by Jelena to fix the negative issue, use at own risk
         try:
             if isinstance(value, np.ndarray):
+                # Do not set empty values
+                if value.size==0: return
                 # Sometimes, for example, int is given in place of unsigned int, and C++ fuction does not convert it, so python conversion is needed
                 value = value.astype(cpp_to_numpy_typecodes[self.basic_vec_type])
                 if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
@@ -129,6 +131,8 @@ class StdVectorList(MutableSequence):
                 if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
             else:
                 if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
+                    # Do not set empty values
+                    if not value: return
                     if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
                     if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
                     if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
@@ -138,6 +142,8 @@ class StdVectorList(MutableSequence):
                 # The list needs to have simple Python types - ROOT.vector does not accept numpy types
                 try:
                     if isinstance(value, StdVectorList):
+                        # Do not set empty values
+                        if not value: return
                         # ToDo: Maybe faster than +=, but... to be checked
                         self._vector.assign(value._vector)
                     else:
@@ -206,6 +212,8 @@ class StdVectorListDesc:
         # This is needed for default init as a field of an upper class
         if isinstance(value, StdVectorListDesc):
             value = getattr(obj, self.attrname)
+            # Do not set empty values
+            if not value: return
         inst = getattr(obj, self.attrname)
         vector = inst._vector
         # A list was given
