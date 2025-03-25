@@ -52,6 +52,9 @@ class MotherEventTree(DataTree):
         # Fill the tree
         self._tree.Fill()
 
+        # If there is no entry list, create it
+        if not self._entry_list:
+            self.fill_entry_list()
         # Add the current run_number and event_number to the entry_list
         self._entry_list.append((self.run_number, self.event_number))
 
@@ -215,6 +218,9 @@ class MotherEventTree(DataTree):
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
         """Check if specified run_number/event_number already exist in the tree"""
+        # If there is no entry list, create it
+        if not self._entry_list:
+            self.fill_entry_list()
         # If the entry list does not exist, the event is unique
         if self._entry_list and (self.run_number, self.event_number) in self._entry_list:
             return False
