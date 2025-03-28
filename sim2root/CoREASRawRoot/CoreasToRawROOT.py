@@ -147,6 +147,14 @@ def CoreasToRawRoot(file, simID=None):
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
+    # calculate Xmax cartesian position
+    # set spherical system vector in m and radians
+    Xmax_sph = np.array([DistanceOfShowerMaximum, np.deg2rad(zenith), np.deg2rad(azimuth)])
+    # simply transform from spherical to cartesian to recover the cartesian position of Xmax
+    Xmax_NWU = np.array([Xmax_sph[0] * np.sin(Xmax_sph[1]) * np.cos(Xmax_sph[2]), \
+                         Xmax_sph[0] * np.sin(Xmax_sph[1]) * np.sin(Xmax_sph[2]), \
+                         Xmax_sph[0] * np.cos(Xmax_sph[1])])
+
   else:
     #theta_GRAND = theta_Corsika
     zenith = read_params(inp_input, "THETAP")
@@ -342,6 +350,7 @@ def CoreasToRawRoot(file, simID=None):
   """
   RawShower.xmax_grams = Xmax
   RawShower.xmax_distance = DistanceOfShowerMaximum
+  RawShower.xmax_pos_shc = Xmax_NWU
 
   RawShower.long_pd_gamma = pd_gammas
   RawShower.long_pd_eminus = pd_electrons
