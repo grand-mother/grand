@@ -107,7 +107,7 @@ p.wait()
 #####################################################################################################################################################
 logging.debug(" Trying to produce DC2efields") 
 
-cmd=PYTHONINTERPRETER+" "+PRODUCEDC2Efield+" "+INPUTDIR+" --add_noise_uVm 22 --add_jitter_ns 5 --seed 1234 --calibration_smearing_sigma 0.075 --target_duration_us 2.058 --target_sampling_rate_mhz 500"
+cmd=PYTHONINTERPRETER+" "+PRODUCEDC2Efield+" "+INPUTDIR+" --add_noise_uVm 22 --add_jitter_ns 5 --seed 1234 --calibration_smearing_sigma 0.075 --target_duration_us 2.048 --target_sampling_rate_mhz 500"
 print("about to run:" + cmd)
 p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True,text=True)
 for line in p.stdout:
