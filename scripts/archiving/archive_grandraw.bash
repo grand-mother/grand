@@ -8,12 +8,32 @@ archive_root_dir="/sps/grand/prod_grand/archiving"
 archive_root_name="doi+10.25520+in2p3.archive.grand"
 irods_path='/grand/home/trirods/data/archives/'
 # The former script to create archive needed java 8 (some used libs are not available in java versions > 8) but is now corrected
-#javabin='/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.422.b05-2.el9.x86_64/jre/bin/java'
-javabin='java'
+javabin='/usr/lib/jvm/jre-1.8.0-openjdk/bin/java'
+#javabin='java'
+
+delay=""
+
+while getopts ":d:" option; do
+   case $option in
+      d)
+         delay=${OPTARG};;
+      :)
+         printf "option -${OPTARG} need an argument\n"
+         exit 1;;
+      ?) # Invalid option
+         printf "Error: Invalid option -${OPTARG}\n"
+         exit 1;;
+   esac
+
+done
+if [ -z "$delay" ]; then
+    echo "Error: The -m option is required."
+    exit 1
+fi
 
 # Get the year and month for 2 month ago
 read year month << DATE_COMMAND
- $(date --date="TODAY -2 month" "+%Y %m")
+ $(date --date="TODAY -${delay} month" "+%Y %m")
 DATE_COMMAND
 
 # Define dir to search
@@ -28,31 +48,43 @@ do
   outfile=${archive_root_name}.${site}.${date}
 	outdir="${archive_root_dir}/${site}/${outfile}"
 	logfile=${outdir}-$(date "+%Y_%m_%d_%H%M%S").log
-	fileslist=${archive_root_dir}/${site}/list_files_${site}
+	fileslist=${archive_root_dir}/${site}/list_files_${site}.${date}
+	sourcedir=${datadir}/${site}/raw/${dir}/
+	flagarchived="ARCHIVED"
+
+	#Check not yet archived
+  if [ -e "${sourcedir}${flagarchived}" ]; then
+    echo "${sourcedir} seems already archived... skip" |tee -a ${logfile}
+    continue
+  fi
+
+
   # ensure that directory exists
 	mkdir -p ${archive_root_dir}/${site} > /dev/null 2>&1
 
   # Check that file containing the list of files to archive (${fileslist}) does not exists
   # if it exists it should mean that another process is still running, so skip
   if [ -f ${fileslist} ]; then
-    break
+    echo "${fileslist} exists... skip"
+    continue
   fi
   # touch file immediately to "lock" the process (find command should last)
   touch ${fileslist}
-  find ${datadir}/${site}/raw/${dir}/ -name "*.bin" >> ${fileslist}
+  #find ${datadir}/${site}/raw/${dir}/ -name "*.bin" >> ${fileslist}
+  find ${sourcedir} -name "*.bin" >> ${fileslist}
   list=$(cat ${fileslist})
 
   # If no files to archive then skip
   if [ "${list}" == "" ]; then
-    echo "No files"
+    echo "No files in ${fileslist} ${list}"
     rm ${fileslist}
-    break
+    continue
   else
     echo "Archiving $month $year for $site"
     echo "Archiving $month $year for $site" >> ${logfile}
   fi
-
   # Create the archive
+  echo "$javabin -jar createAIP.jar --configfile=config.properties.${site} --listobjects=${fileslist} -i ${outfile} >> ${logfile} 2>&1"
   $javabin -jar createAIP.jar --configfile=config.properties.${site} --listobjects=${fileslist} -i ${outfile} >> ${logfile} 2>&1
   createaip_status=$?
 
@@ -81,13 +113,14 @@ do
         echo "remove ${outdir}.tar" >> ${logfile}
         rm ${outdir}.tar >> ${logfile} 2>&1
         echo "Raw data of ${year}/${month} from ${site} archived " >> ${logfile}
+        touch ${sourcedir}${flagarchived}
 
-        echo "compress files" >> ${logfile}
-        while IFS= read -r line
-        do
-          echo "gzip ${line}"
-          gzip $line
-        done < "${fileslist}"
+        #echo "compress files" >> ${logfile}
+        #while IFS= read -r line
+        #do
+        #  echo "gzip ${line}"
+        #  gzip $line
+        #done < "${fileslist}"
 
         rm ${fileslist}
 
