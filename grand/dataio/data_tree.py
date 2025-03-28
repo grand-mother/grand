@@ -4,6 +4,7 @@ import glob
 import os
 from dataclasses import dataclass, field
 from logging import getLogger
+import weakref
 import ROOT
 
 import numpy as np
@@ -316,7 +317,8 @@ class DataTree:
             if field[0] == "_" and hasattr(self, field[1:]) == False and isinstance(self.__dict__[field], StdVectorList):
                 print("not set for", field)
 
-        self.__setattr__ = self.mod_setattr
+        self.__setattr__ = weakref.proxy(self.mod_setattr)
+        # self.__setattr__ = self.mod_setattr
 
     ## Return the iterable over self
     def __iter__(self):
@@ -655,7 +657,10 @@ class DataTree:
             # Or set its address
             else:
                 # self._tree.SetBranchAddress(value.name[1:], getattr(self, value.name).string)
-                self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
+                try:
+                    self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
+                except:
+                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
         else:
             raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 

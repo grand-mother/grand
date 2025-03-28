@@ -181,13 +181,15 @@ if __name__ == "__main__":
     # specific logger definition for script because __mane__ is "__main__" !
     logger = mlg.get_logger_for_script(__file__)
 
-    logger.info("Computing voltage from the input electric field.")
-
+    logger.info("Computing voltage from the input electric field")
+    
     args = manage_args()
 
     # If no output directory given, define it as input directory
     if args.out_directory is None:
         args.out_directory = args.directory
+
+    logger.debug(args.directory)
 
     # define a handler for logger : standard only
     mlg.create_output_for_logger(args.verbose, log_stdout=True)
