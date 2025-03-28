@@ -7,6 +7,7 @@ datadir="/sps/grand/data"
 archive_root_dir="/sps/grand/prod_grand/archiving"
 archive_root_name="doi+10.25520+in2p3.archive.grand"
 irods_path='/grand/home/trirods/data/archives/'
+representation="/representations/representation1/data"
 # The former script to create archive needed java 8 (some used libs are not available in java versions > 8) but is now corrected
 javabin='/usr/lib/jvm/jre-1.8.0-openjdk/bin/java'
 #javabin='java'
@@ -27,8 +28,8 @@ while getopts ":d:" option; do
 
 done
 if [ -z "$delay" ]; then
-    echo "Error: The -m option is required."
-    exit 1
+    echo "Error: The -m option is missing. We will use the default value = 2"
+    delay=2
 fi
 
 # Get the year and month for 2 month ago
@@ -50,6 +51,8 @@ do
 	logfile=${outdir}-$(date "+%Y_%m_%d_%H%M%S").log
 	fileslist=${archive_root_dir}/${site}/list_files_${site}.${date}
 	sourcedir=${datadir}/${site}/raw/${dir}/
+	parentdir=$(dirname "$sourcedir")
+
 	flagarchived="ARCHIVED"
 
 	#Check not yet archived
@@ -76,7 +79,7 @@ do
 
   # If no files to archive then skip
   if [ "${list}" == "" ]; then
-    echo "No files in ${fileslist} ${list}"
+    echo "No files in ${fileslist} ${list}...skip"
     rm ${fileslist}
     continue
   else
@@ -89,14 +92,14 @@ do
   createaip_status=$?
 
   if [ "$createaip_status" -eq 0 ]; then
+    #link the dir to be archived
+    mkdir -p ${outdir}/${representation}/${parentdir}
+    ln -s ${sourcedir} ${outdir}/${representation}/${parentdir}
     echo "Archive ready to tar" >> ${logfile}
-    tar -cf ${outdir}.tar ${outdir}
+    tar -chf ${outdir}.tar ${outdir}
     tar_status=$?
     if [ "$tar_status" -eq 0 ]; then
-      echo "remove temp dir ${outdir}" >> ${logfile}
-      rm -rf ${outdir} >> ${logfile} 2>&1
       echo "Archive tared" >> ${logfile}
-
       echo "Push ${outdir}.tar to irods" >> ${logfile}
       # Push file into irods
       sfile=${outdir}.tar
@@ -110,6 +113,8 @@ do
 
       if [ "$iput_status" -eq 0 ]; then
         #clean everything
+        echo "remove temp dir ${outdir}" >> ${logfile}
+        rm -rf ${outdir} >> ${logfile} 2>&1
         echo "remove ${outdir}.tar" >> ${logfile}
         rm ${outdir}.tar >> ${logfile} 2>&1
         echo "Raw data of ${year}/${month} from ${site} archived " >> ${logfile}
@@ -137,30 +142,4 @@ do
 
 done
 
-exit 0
-
-
-
-
-
-
-if [ "$iput_status" -eq 0 ]; then
-	# tar gz the month if older than 6 months
-
-	if [ "$diffdate" -gt 180 ];then
-	        echo compress
-		gzip $sfile
-		gzip_status=$?
-		mv ${sfile}.gz ${datadir}/${site}/raw/${dir}/${site}_bin_${date}.tgz
-		#tar -czvf ${datadir}/${site}/raw/${dir}/${site}_bin_${date}.tgz -T list_files_${site}
-		#tar_status=$?
-	        if [ "$gzip_status" -eq 0 ];then
-	                echo erase
-			xargs rm <list_files_${site}
-	        fi
-	fi
-fi
-rm -rf archs/${site}/${outfile}
-#rm $sfile
-echo "Month archived.">> ${logfile}
 
