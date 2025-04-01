@@ -109,15 +109,14 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
         gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_nec.npy")
         gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_nec.npy")
         gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_nec.npy")
-        gala_file3 = grand_add_path_data("noise/30_250galactic.mat")
-        gala_show = h5py.File(gala_file3, "r")
         gala_voltage = np.load(gala_file)
         gala_voltage = np.transpose(gala_voltage, (0, 2, 1)) #micro Volts per MHz (max)
         gala_power_watt = np.load(gala_file1) 
         gala_power_watt = np.transpose(gala_power_watt, (0, 2, 1)) #watt per MHz
         gala_power_dbm = np.load(gala_file2)
         gala_power_dbm = np.transpose(gala_power_dbm, (0, 2, 1)) # dBm per MHz
-        gala_freq = gala_show["freq_all"]
+        gala_freq1 = np.arange(30.,251.)
+        gala_freq = gala_freq1.reshape(221, 1)
         """f_start = 30
         f_end = 250
         # TODO: 221 is the number of frequency ? why ? and comment to explain
@@ -132,15 +131,14 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
         gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_mat.npy")
         gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_mat.npy")
         gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_mat.npy")
-        gala_file3 = grand_add_path_data("noise/30_250galactic.mat")
-        gala_show = h5py.File(gala_file3, "r")
         gala_voltage = np.load(gala_file)
         gala_voltage = np.transpose(gala_voltage, (0, 2, 1)) #micro Volts per MHz (max)
         gala_power_watt = np.load(gala_file1) 
         gala_power_watt = np.transpose(gala_power_watt, (0, 2, 1)) #watt per MHz
         gala_power_dbm = np.load(gala_file2)
         gala_power_dbm = np.transpose(gala_power_dbm, (0, 2, 1)) # dBm per MHz
-        gala_freq = gala_show["freq_all"]
+        gala_freq1 = np.arange(30.,251.)
+        gala_freq = gala_freq1.reshape(221, 1)
         """f_start = 30
         f_end = 250
         # TODO: 221 is the number of frequency ? why ? and comment to explain

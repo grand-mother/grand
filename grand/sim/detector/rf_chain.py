@@ -5,6 +5,7 @@ import os.path
 import scipy.fft as sf
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 from grand import grand_add_path_data
 from logging import getLogger
@@ -72,7 +73,7 @@ Overview of calculations:
 """
 
 def read_config(xml_file):
-    """ Reads the XML configuration file and returns component settings. """ 
+    """ Reads the XML configuration file and returns component settings. """
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -96,7 +97,8 @@ def read_config(xml_file):
     return components, csv_files
 
 # Load XML configuration
-xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"  # Ensure absolute path
+# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"  # Ensure absolute path
+xml_file = Path(__file__).parent / "rf_chain_config.xml"  # Ensure absolute path
 components, csv_files = read_config(xml_file)
 
 # Dictionary to map components that depend on axis
@@ -117,7 +119,7 @@ def get_axis_filename(component_name, axis):
         if not components[component_name]["enabled"]:
             print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
             return None
-        
+
         filename_template = components[component_name]["s2p_file"]
 
         if filename_template is None:
@@ -179,7 +181,8 @@ def read_config(xml_file):
 # Load XML configuration
 #xml_file = "rf_chain_config.xml"
 #xml_file = "/home/grand/grand/grand/sim/detector/rf_chain_config.xml"
-xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"
+# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"
+xml_file = Path(__file__).parent / "rf_chain_config.xml"
 components, csv_files = read_config(xml_file)
 
 # Dictionary to map components that depend on axis
@@ -200,7 +203,7 @@ def get_axis_filename(component_name, axis):
         if not components[component_name]["enabled"]:
             print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
             return None
-        
+
         filename_template = components[component_name]["s2p_file"]
 
         if filename_template is None:
