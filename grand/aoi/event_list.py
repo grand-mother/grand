@@ -16,7 +16,7 @@ class EventList:
     directory: DataDirectory = None
     """The instance of the directory with files with TTrees containing the event."""
 
-    def __init__(self, inp_name, **kwargs):
+    def __init__(self, inp_name, start_event = None, start_entry = None, **kwargs):
         # If TFile was given
         if isinstance(inp_name, ROOT.TFile):
             self.file_name = inp_name.GetName()
@@ -36,6 +36,12 @@ class EventList:
             else:
                 print("Please provide proper file or directory name.")
                 exit()
+
+        if start_event is not None and start_entry is not None:
+            print("Please provide only start event or start entry.")
+            exit()
+        self.start_event = start_event
+        self.start_entry = start_entry
 
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
@@ -86,9 +92,9 @@ class EventList:
         if fill_event:
             # Overwrite the init kwargs with kwargs given here
             if len(kwargs)>0:
-                e.fill_event_from_trees(init_trees=self.init_trees, **kwargs)
+                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, **kwargs)
             else:
-                e.fill_event_from_trees(init_trees=self.init_trees, **self.init_kwargs)
+                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, **self.init_kwargs)
 
             # Don't init trees anymore
             self.init_trees = False
@@ -123,11 +129,32 @@ class EventList:
 
     ## Return the iterable over self
     def __iter__(self):
-        # Always start the iteration with the first entry
-        current_entry = 0
+        # If this is the first event, and start_entry was specified
+        if self.start_entry:
+            current_entry = self.start_entry
+        else:
+            # Always start the iteration with the first entry
+            current_entry = 0
 
         entries_cnt = self.get_number_of_events()
 
         while current_entry < entries_cnt:
-            yield self.get_event(entry_number=current_entry)
+            # If this is the first event, and start_entry was specified
+            if current_entry == 0 and self.start_event:
+                self.event._entry_number = None
+                yield self.get_event(event_number=self.start_event)
+                # ToDo: We need to get the entry for this event. This is a dirty hack, to check which tree is available
+                if self.event.tvoltage:
+                    current_entry = self.event.tvoltage._tree.GetReadEntry()
+                elif self.event.tefield:
+                    current_entry = self.event.tefield._tree.GetReadEntry()
+                elif self.event.tshower:
+                    current_entry = self.event.tshower._tree.GetReadEntry()
+                else:
+                    print("No tree available to iterate on")
+                    exit()
+            else:
+                # Standard iterations
+                yield self.get_event(entry_number=current_entry)
+
             current_entry += 1
