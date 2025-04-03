@@ -217,6 +217,7 @@ class Event:
             self.file_tshower = self.directory.ftshower_l1.f
             self.tshower = self.directory.tshower_l1
         if self.directory.ftshower_l0:
+            self.file_tsimshower = self.directory.ftshower_l0.f
             self.tsimshower = self.directory.tshower_l0
 
 
@@ -355,7 +356,7 @@ class Event:
                     self.tefield = None
 
         # Check the Shower file existence
-        if self.file_tshower:
+        if self.file_tshower or self.file_tsimshower:
             # If initialising trees requested
             if init_trees:
                 # Check the Shower tree existence
