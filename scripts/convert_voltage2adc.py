@@ -118,7 +118,7 @@ def get_noise_trace(data_dir,
         # Check that data traces contain requested number of samples
         # tadc.get_entry(0)
         tadc._tree.GetBranch("adc_samples_count_ch").GetEntry(0)
-        n_samples_data = tadc.adc_samples_count_ch[0][1]*2 #TODO: tempfix
+        n_samples_data = tadc.adc_samples_count_ch[0][1] #TODO: tempfix
 
         if n_samples_data == n_samples/2:
             extend_noise_trace = True
