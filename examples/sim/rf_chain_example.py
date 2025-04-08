@@ -45,7 +45,8 @@ def plot(args="galactic", savefig=False, **kwargs):
 
         lst = int(lst)
 
-        gala_file = grand_add_path_data("noise/30_250galactic.mat")
+        # gala_file = grand_add_path_data("noise/30_250galactic.mat")
+        gala_file = grand_add_path_data("noise/PG_ALL_jifen.mat")
         gala_show = h5py.File(gala_file, "r")
         gala_psd_dbm   = np.transpose(gala_show["psd_narrow_huatu"])
         # SL, dbm per MHz, P=mean(V*V)/imp with imp=100 ohms
