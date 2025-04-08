@@ -32,8 +32,8 @@ logger = mlg.get_logger_for_script(__file__)
 mlg.create_output_for_logger("debug", log_stdout=True)
 
 # To Run:
-#   python3 plot_noise.py galactic_noise
-#   options: [galactic, vswr, lna, vga, cable, rf_chain]
+#   python3 rf_chain_example.py galactic
+#   options: [galactic, lna balun_after_lna cable vga balun_before_adc rf_chain]
 
 def plot(args="galactic", savefig=False, **kwargs):
 
@@ -306,6 +306,8 @@ def plot(args="galactic", savefig=False, **kwargs):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
+        plt.show()
+
     if args=="balun_after_lna":
 
         print("Parameters of Balun after LNA")
@@ -475,6 +477,8 @@ def plot(args="galactic", savefig=False, **kwargs):
         plt.grid(ls='--', alpha=0.3)
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
+
+        plt.show()
 
     if args=='cable':
         print("Parameters of cable and connector")
@@ -688,6 +692,8 @@ def plot(args="galactic", savefig=False, **kwargs):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
+        plt.show()
+
     if args=='vga':
         print("Parameters of VGA and filter")
 
@@ -900,6 +906,8 @@ def plot(args="galactic", savefig=False, **kwargs):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
+        plt.show()
+
     if args=='balun_before_adc':
         print("Parameters of Balun before ADC")
 
@@ -1068,6 +1076,8 @@ def plot(args="galactic", savefig=False, **kwargs):
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
+        plt.show()
+
     if args=='rf_chain':
 
         print("Parameters of total RF Chain")
@@ -1163,14 +1173,16 @@ def plot(args="galactic", savefig=False, **kwargs):
         plt.tight_layout()
         plt.title(f"VGA gain: {gain} dB")
 
+        plt.show()
+
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
         description="Parser to select which noise quantity to plot. \
-        To Run: ./plot_noise.py <plot_option>. \
-        <plot_option>: galactic, vswr, lna, vga, cable, rf_chain. \
+        To Run: ./rf_chain_example.py <plot_option>. \
+        <plot_option>: galactic, lna balun_after_lna cable vga balun_before_adc rf_chain. \
         Add --lst <int> for galactic noise. i.e ./plot_noise.py galactic --lst 18."
         )
     parser.add_argument(
