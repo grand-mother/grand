@@ -16,7 +16,7 @@ import getpass
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("warning", log_stdout=True)
+mlg.create_output_for_logger("errors", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -133,9 +133,7 @@ class DataManager:
         # Add repositories
         if configur.has_section('repositories'):
             for name in configur['repositories']:
-                print(f'read repo {name}')
                 repo = json.loads(configur.get('repositories', name))
-                print(f'datasource {name}, {repo[0]}, {repo[1]}, {repo[2]}, {repo[3]} -- {repo}')
                 # Test if repo already exists (from database)
                 if name in self._repositories:
                     # So just add the path to the DB repo
@@ -306,6 +304,7 @@ class DataManager:
                     for f in Tdir.get_list_of_files():
                         logger.info(f"registering {f}")
                         self.register_file(localfile=f, dataset=Tdir.dir_name, repository=repository.name(), targetdir=targetdir,again=again)
+                    del localdir
                 else:
                     logger.error(f"Dataset {directory} was not found in repository {repository.name()} thus cannot be registered")
         else:
@@ -580,13 +579,18 @@ class DatasourceLocal(Datasource):
                 logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
 
             my_file = None
-            #print(f'path {path} file {file} - {(Path(path))}')
-            liste = list(Path(path).rglob(file))
-            #print(f'list {liste}')
-            for my_file in liste:
-                if my_file.is_dir():
-                    found_file = my_file
-                    break
+            # In case of many files the following code can override the system's file descriptor limit because rglob open all the files !
+            #liste = list(Path(path).rglob(file))
+            #            for my_file in liste:
+            #                if my_file.is_dir():
+            #                    found_file = my_file
+            #                    break
+
+            #thus replaced by direct assignement
+            my_file = Path(path) / file
+            if my_file.is_dir():
+                found_file = my_file
+
 
             if my_file is None:
                 logger.debug(f"Dataset {file}  not found in localdir {path}")
@@ -595,13 +599,19 @@ class DatasourceLocal(Datasource):
             for path in self.paths():
                 logger.debug(f"search in localdir {path} for dataset {file}")
 
-                #my_file = Path(path + file)
+                # Same remark as previously about rglob which keeps files/dirs open
+                # liste = list(Path(path).rglob(file))
+                # for my_file in liste:
+                #    if my_file.is_dir():
+                #        found_file = my_file
+                #        break
+
                 my_file = None
-                liste = list(Path(path).rglob(file))
-                for my_file in liste:
-                    if my_file.is_dir():
-                        found_file = my_file
-                        break
+                my_file = Path(path) / file
+                if my_file.is_dir():
+                    found_file = my_file
+                    break
+
                 if not my_file is None and my_file.is_dir():
                     break
                 else:

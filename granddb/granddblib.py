@@ -13,7 +13,7 @@ from sqlalchemy.inspection import inspect
 import grand.manage_log as mlg
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("warning", log_stdout=True)
+mlg.create_output_for_logger("info", log_stdout=True)
 
 
 def casttodb(value):
@@ -382,11 +382,11 @@ class Database:
             logger.debug(f"File name {filename} registered")
             # self.sqlalchemysession.flush()
 
-        return idfile, isnewfile
+        return idfile, isnewfile, id_dataset
 
     ## @brief Function to register (if necessary) the content of a file into the database.
     # It will first read the file and walk along datas to determine what has to be registered
-    def register_filecontent(self, file, idfile):
+    def register_filecontent(self, file, idfile, id_dataset):
         # We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
         # Ugly but no other efficient way to do (checking in the DB before insertion is too time consuming).
         eventlist = []
@@ -417,7 +417,12 @@ class Database:
                         if field == "comment":
                             field = "comments"
                         metatree[field] = value
-                        # print(meta + "/" + field + " = " + str(getattr(rfile.TreeList[treename], meta)) + "/" + str(value))
+                        metatree['tree_name'] = treename
+                        #Get the number of events for events trees (set to 0 for run trees)
+                        if treetype in rfile.EventTrees:
+                            metatree['number_of_events'] = rfile.TreeList[treename].get_number_of_entries()
+                        else:
+                            metatree['number_of_events'] = 0
                     except:
                         logger.debug(f" Debug : error on meta {meta} field {field} value {value} ")
                         pass
@@ -428,11 +433,32 @@ class Database:
                 # self.sqlalchemysession.flush()
                 # If table not defined in rootdblib for this tree then no content to record.
                 st = time.time()
+
+                #Lets see if events exists but from other files in same dataset
+                #First get the dataset
+                #dataset_result = self.sqlalchemysession.query(getattr(self._tables['file'], 'id_dataset')).filter(self._tables['file'].id_file == idfile).first()
+                #id_dataset = dataset_result[0]
+                if id_dataset is None:
+                    pass
+                else:
+                    # Get events corresponding to files in the same dataset
+                    eventlist = (self.sqlalchemysession.query(getattr(self._tables['events'], 'run_number'),
+                                                              getattr(self._tables['events'], 'event_number'))
+                                 .distinct(getattr(self._tables['events'], 'run_number'),getattr(self._tables['events'], 'event_number'))
+                                 .join(self._tables['file'])
+                                 .filter(self._tables['file'].id_dataset == id_dataset).all())
+                    #print(f'{file} {idfile} {len(eventlist)}')
+
+
+
+                    #events.run_number, events.event_number).join(file).filter(File.id_dataset == id_dataset).all()
+
                 if table is not None:
+                    # Registering of events trees
                     if treetype in rfile.EventTrees:
                         # For events we iterates over event_number and run_number
                         for event, run in rfile.TreeList[treename].get_list_of_events():
-                            # MOVE TEST eventlist her to avoid reading for nothing
+                            # NEED TO CHECK THAT INFOS NOT ALREADY PRESENT IN DB FROM ANOTHER FILE IN SAME DATASET
 
                             if ((table != "events") or ([run, event] not in eventlist)):
                                 if table == "events":
@@ -449,6 +475,7 @@ class Database:
                                             value = self.get_or_create_fk(table, field, value)
                                         ttrees[treename][(run, event)][field] = value
                                     else:
+                                        # TODO: Change id_file and tree_name into arrays and add values
                                         ttrees[treename][(run, event)]['id_file'] = idfile
                                         ttrees[treename][(run, event)]['tree_name'] = treename
 
@@ -519,10 +546,10 @@ class Database:
 
     ## @brief Function to register a file into the database.
     def register_file(self, orgfilename, newfilename, dataset, id_repository, provider, targetdir=None):
-        idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetdir)
+        idfile, read_file, id_dataset = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetdir)
         if read_file:
             # We read the localfile and not the remote one
-            self.register_filecontent(orgfilename, idfile)
+            self.register_filecontent(orgfilename, idfile, id_dataset)
             # self.register_filecontent(newfilename,idfile)
         else:
             logger.info(f"file {orgfilename} already registered.")
@@ -547,10 +574,10 @@ class Database:
             from sqlalchemy import func
             removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
             logger.info(f"removed old files {removed}")
-        idfile, read_file = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
+        idfile, read_file, id_dataset = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
         if read_file:
             # We read the localfile and not the remote one
-            self.register_filecontent(orgfilename, idfile)
+            self.register_filecontent(orgfilename, idfile, id_dataset)
             # self.register_filecontent(newfilename,idfile)
         else:
             logger.info(f"file {orgfilename} already registered.")

@@ -45,7 +45,8 @@ class RootFile:
 #        '_modification_software_version' : 'id_modification_software_version',
         '_source_datetime' : 'source_datetime',
         '_analysis_level' : 'analysis_level',
-        '_modification_history' : 'modification_history'
+        '_modification_history' : 'modification_history',
+        '_number_of_events' : 'number_of_events'
     }
 
     trunToDB = {
@@ -125,16 +126,16 @@ class RootFile:
         't_post': 't_post',
         #        't_bin_size': 't_bin_size'
     }
-    tefieldToDB = {
-        'table': 'events',
-        'run_number': 'run_number',
-        'event_number': 'event_number',
-        'time_seconds': 'time_seconds',
-        'time_nanoseconds': 'time_nanoseconds',
-        'event_type': 'event_type',
-        'du_count': 'du_count',
-        'du_id': 'du_id'
-    }
+    # tefieldToDB = {
+    #     'table': 'events',
+    #     'run_number': 'run_number',
+    #     'event_number': 'event_number',
+    #     'time_seconds': 'time_seconds',
+    #     'time_nanoseconds': 'time_nanoseconds',
+    #     'event_type': 'event_type',
+    #     'du_count': 'du_count',
+    #     'du_id': 'du_id'
+    # }
     tshowersimToDB = {
         'table': 'tshowersim',
         'run_number': 'run_number',
@@ -165,30 +166,30 @@ class RootFile:
         #'long_neutrino': 'long_neutrino',
         'event_weight': 'event_weight'
     }
-    tadcToDB = {
-        'table': 'events',
-        'run_number': 'run_number',
-        'event_number': 'event_number',
-#        'event_size': 'event_size',
-#        't3_number': 't3_number',
-        'first_du': 'first_du',
-        'time_seconds': 'time_seconds',
-        'time_nanoseconds': 'time_nanoseconds',
-        'event_type': 'event_type',
-#        'event_version': 'event_version',
-        'du_count': 'du_count',
-        'du_id': 'du_id'
-    }
-    trawvoltageToDB = {
-        'table': 'events',
-        'run_number': 'run_number',
-        'event_number': 'event_number',
-        'first_du': 'first_du',
-        'time_seconds': 'time_seconds',
-        'time_nanoseconds': 'time_nanoseconds',
-        'du_count': 'du_count',
-        'du_id': 'du_id'
-    }
+#     tadcToDB = {
+#         'table': 'events',
+#         'run_number': 'run_number',
+#         'event_number': 'event_number',
+# #        'event_size': 'event_size',
+# #        't3_number': 't3_number',
+#         'first_du': 'first_du',
+#         'time_seconds': 'time_seconds',
+#         'time_nanoseconds': 'time_nanoseconds',
+#         'event_type': 'event_type',
+# #        'event_version': 'event_version',
+#         'du_count': 'du_count',
+#         'du_id': 'du_id'
+#     }
+#     trawvoltageToDB = {
+#         'table': 'events',
+#         'run_number': 'run_number',
+#         'event_number': 'event_number',
+#         'first_du': 'first_du',
+#         'time_seconds': 'time_seconds',
+#         'time_nanoseconds': 'time_nanoseconds',
+#         'du_count': 'du_count',
+#         'du_id': 'du_id'
+#     }
     tvoltageToDB = {
 #        'table': 'tvoltage',
 #        'run_number': 'run_number',
