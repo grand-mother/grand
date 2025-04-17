@@ -20,7 +20,8 @@ from grand import GRAND_DATA_PATH, grand_add_path_data
 #FILE_MODEL = "grand_model_2207.tar.gz"
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/201909/grand_model_2306.tar.gz"
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/251637/grand_model_190224.tar.gz"
-LINK_MODEL = "https://forge.in2p3.fr/attachments/download/340302/grand_model_141124.tar.gz"
+#LINK_MODEL = "https://forge.in2p3.fr/attachments/download/340302/grand_model_141124.tar.gz"
+LINK_MODEL = "https://forge.in2p3.fr/attachments/download/362481/grand_model_20241218.tar.gz"
 FILE_MODEL = LINK_MODEL.split("/")[-1]
 
 

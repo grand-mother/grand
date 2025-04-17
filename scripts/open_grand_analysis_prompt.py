@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-# Opens the GRAND ROOT directory with a DataDirectory class and leaves the prompt open, so the user can work with the opened directory
+# Opens the GRAND ROOT directory with an EventList class and leaves the prompt open, so the user can work with the events
 
 import argparse
 import os
@@ -28,10 +28,20 @@ if args.nv:
 else:
     verbose=True
 
+# Read the file name from command line
+if len(sys.argv) > 1:
+    dir_name = sys.argv[1]
+else:
+    print("Please provide a GRAND data output directory")
+    exit()
+
+print("Reading directory", dir_name)
+
 # Construct the command based on the arguments
-command = f"from grand.dataio import *; d = DataDirectory('{args.dirname}');"
+command = f"from grand.grandlib_classes.grandlib_classes import *; el = EventList('{args.dirname}');"
 if not args.s:
-    command+=f" print(f'\\n\\033[0;31mOpened directory {args.dirname} as d\\033[0m\\n'); d.print(verbose={verbose})"
+    command+=f" print(f'\\n\\033[0;31mCreated a list of events in directory {args.dirname} as el\\033[0m\\n');"
+    command += " print('You can now iterate through events with, for example:\\n\\nfor i,e in enumerate(el):\\n  print(e.event_number)\\n  ...')"
  
 os.execlp(interp, interp, '-i', '-c', command)
 

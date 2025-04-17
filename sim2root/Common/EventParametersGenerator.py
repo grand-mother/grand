@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import raw_root_trees as RawTrees
+import sim2root.Common.raw_root_trees as RawTrees
       
 #Author: Matias Tueros, with ChatGP3 help for documentation and error handling. it was Mar 24th 2023 in Barracas, Buenos Aires, Argentina
 def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, CorePosition, ArrayName, EventWeight=1, EventUnixTime=200854852, EventUnixNanosecond=0, OutMode="a", TestedPositions="None"):

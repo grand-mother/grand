@@ -176,8 +176,7 @@ if __name__ == "__main__":
     import numpy as np
 
     import grand.manage_log as mlg
-    #from grand import Efield2Voltage
-    from grand.sim.efield2voltage import Efield2Voltage
+    from grand import Efield2Voltage
 
     # specific logger definition for script because __mane__ is "__main__" !
     logger = mlg.get_logger_for_script(__file__)
@@ -197,17 +196,17 @@ if __name__ == "__main__":
     seed = None if args.seed==-1 else args.seed
     logger.info(f"seed used for random number generator is {seed}.")
 
-    # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor)
+    # signal = Efield2Voltage(args.file.name, args.out_file, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
     signal = Efield2Voltage(args.directory, args.out_file, output_directory=args.out_directory, seed=seed, padding_factor=args.padding_factor, du_type=args.du_type)
     signal.params["add_noise"]    = args.no_noise
     signal.params["add_rf_chain"] = args.no_rf_chain
     signal.params["lst"]          = args.lst
-    signal.params["add_rf_chain_nut"] = args.rf_chain_nut
-    signal.params["add_rf_chain_gaa"] = args.rf_chain_gaa
     signal.params["resample_to_mhz"]=args.target_sampling_rate_mhz
     signal.params["extend_to_us"]=args.target_duration_us
     signal.params["calibration_smearing_sigma"]=args.calibration_smearing_sigma
     signal.params["add_jitter_ns"]=args.add_jitter_ns
+    signal.params["add_rf_chain_nut"] = args.rf_chain_nut
+    signal.params["add_rf_chain_gaa"] = args.rf_chain_gaa
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
     signal.compute_voltage()    # saves automatically

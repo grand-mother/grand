@@ -2,13 +2,16 @@
 # Example of Event generation and storing with GRANDlib classes
 # For now it creates an event with _meaningless dummy_ data
 import sys
-from grand.grandlib_classes.grandlib_classes import *
+
+from grand.aoi import *
 
 # The file to store to (preferably should end with ".root" extension)
 if len(sys.argv)>1:
     filename = sys.argv[1]
 else:
     filename = "dummy_example_events.root"
+
+print("Writing events to file", filename)
 
 # How many events to generate?
 event_count = 10

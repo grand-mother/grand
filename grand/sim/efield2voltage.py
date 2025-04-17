@@ -10,7 +10,7 @@ import scipy.fft as sf
 from pathlib import Path
 
 import grand.geo.coordinates as coord
-import grand.dataio.root_trees as groot
+import grand.dataio as groot
 from grand.basis.type_trace import ElectricField
 
 from .detector.antenna_model import AntennaModel
@@ -35,6 +35,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     fast_size = sf.next_fast_len(int(padding_factor * sig_size + 0.5))
     # ToDo: this function (or something higher) should properly handle different time bin for each trace
     freqs_mhz = sf.rfftfreq(fast_size, dt_s[0]) * 1e-6
+    #print(f"padding_factor {padding_factor} sig_size {sig_size} ({padding_factor * sig_size +0.5}) fast size {fast_size} freqs_mhz size {len(freqs_mhz)}")
     return fast_size, freqs_mhz
 
 
@@ -44,44 +45,57 @@ class Efield2Voltage:
 
     Goals:
       * Call simulator of detector units with ROOT data
-      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
       * Call on more than one event
+      * Call on some stations of some event (not tested, not sure it would work as is) #TODO:
+      * Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type='GP300' (using hfss simulations), 'GP300_nec' (using nec simulations), 'GP300_mat' (using matlab simulations), 'Horizon'
       * Save output in ROOT format
     """
 
     def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300'):
 
-        self.d_input = groot.DataDirectory(d_input)
-
-        self.du_type = du_type
+        # If directory given, use DataDirectory
+        if os.path.isdir(d_input):
+            self.d_input = groot.DataDirectory(d_input)
+            self.f_input = None
+        # If file given, use DataFile
+        elif os.path.isfile(d_input):
+            self.d_input = groot.DataFile(d_input)
+            self.f_input = d_input
+        else:
+            raise IOError("Input file/directory does not exist")
 
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
 
+        self.f_output = f_output
+
         # If output filename given, use it
-        if f_output:
-            self.f_output = f_output
+        # if f_output:
+        #     self.f_output = f_output
         # Otherwise, generate it from tefield filename
-        else:
-            self.f_output = self.d_input.ftefield.filename.replace("efield", "voltage")
+        # else:
+        #     self.f_output = self.d_input.ftefield.filename.replace("efield", "voltage")
 
         # If output directory given, use it
+        self.output_directory = ""
         if output_directory:
-            self.f_output = output_directory + "/" + Path(self.f_output).name
+            self.output_directory = output_directory
+            # self.f_output = output_directory + "/" + Path(self.f_output).name
 
 
+        self.du_type = du_type                              # load antenna models
         self.seed = seed                                    # used to generate same set of random numbers. (gal noise)
         self.padding_factor = padding_factor               #
         self.events = f_input_TEfield        # traces and du_pos are stored here
         self.run = f_input_TRun                 # site_long, site_lat info is stored here. Used to define shower frame.
         self.shower = f_input_TShower        # shower info (like energy, theta, phi, xmax etc) are stored here.
         self.events_list = self.events.get_list_of_events() # [[evt0, run0], [evt1, run0], ...[evt0, runN], ...]
-        self.rf_chain = RFChain()                            # loads RF chain for GP13
+        self.rf_chain = RFChain()                           # loads RF chain for GP13
         self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
         self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
         self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "resample_to_mhz":0, "extend_to_us":0,"calibration_smearing_sigma":0,"add_jitter_ns":0, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
+        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
@@ -377,7 +391,6 @@ class Efield2Voltage:
         # output voltage is time domain. At this stage, vout=voc.
         self.vout[du_idx] = self.voc[du_idx]
 
-
         # Use vout_f for further processing. Add noise and propagate signal through RF chain.
         # voc and voc_f is saved so that they can be used for testing or adding user defined noises and rf chain.
         self.vout_f[du_idx, 0] = self.ant_leff_sn.voc_f
@@ -435,7 +448,6 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
-            #self.vout_f[du_idx] *= self.rf_chain.get_tf()
             self.vout_f[du_idx] *= self.rf_chain.get_tf()
 
         if self.params["add_rf_chain_nut"]:
@@ -450,23 +462,19 @@ class Efield2Voltage:
         if self.params["add_noise"] or self.params["add_rf_chain"]:
             # inverse FFT and remove zero-padding
             # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-            #self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]   #MATIAS: here i will leave the padding, and later truncate to the requested lenght
-            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])
-
-            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])#[:, : self.sig_size]
 
         if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
             # inverse FFT and remove zero-padding
             # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])#[:, : self.sig_size]
 
         if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
             # inverse FFT and remove zero-padding
             # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])[:, : self.sig_size]
+            self.vout[du_idx] = sf.irfft(self.vout_f[du_idx])#[:, : self.sig_size]
 
     # compute voltage in all antennas of one event.
-
     def compute_voltage_event(self, event_idx=None, event_number=None, run_number=None):
         """
         Simulate all DU of an event either with index event_idx or with event_number and run_number.
@@ -493,15 +501,7 @@ class Efield2Voltage:
 
         # ----- Add RF chain -----
         if self.params["add_rf_chain"]:
-            #self.multiply(self.rf_chain.get_tf())
             self.multiply(self.rf_chain.get_tf())
-
-        ## Final voltage output for antenna with index du_idx #MATIAS: now this is taken care of by the final_resample() function
-        #if self.params["add_noise"] or self.params["add_rf_chain"]:
-        #    # inverse FFT and remove zero-padding
-        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
-        #    self.final_voltage()   # inverse fourier transform. update self.vout.
 
         if self.params["add_rf_chain_nut"]:
             #self.multiply(self.rf_chain.get_tf())
@@ -511,25 +511,25 @@ class Efield2Voltage:
             #self.multiply(self.rf_chain.get_tf())
             self.multiply(self.rf_chaingaa.get_tf())
 
-        # Final voltage output for antenna with index du_idx
-        if self.params["add_noise"] or self.params["add_rf_chain"]:
-            # inverse FFT and remove zero-padding
-            # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-            #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
-            self.final_voltage()   # inverse fourier transform. update self.vout.
-
-        if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
-        #    # inverse FFT and remove zero-padding
-        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
-            self.final_voltage()   # inverse fourier transform. update self.vout.
-
-        if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
-        #    # inverse FFT and remove zero-padding
-        #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
-        #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
-            self.final_voltage()   # inverse fourier transform. update self.vout.
-
+        # # Final voltage output for antenna with index du_idx
+        # if self.params["add_noise"] or self.params["add_rf_chain"]:
+        #     # inverse FFT and remove zero-padding
+        #     # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        #     #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+        #     self.final_voltage()   # inverse fourier transform. update self.vout.
+        #
+        # if self.params["add_noise"] or self.params["add_rf_chain_nut"]:
+        # #    # inverse FFT and remove zero-padding
+        # #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        # #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+        #     self.final_voltage()   # inverse fourier transform. update self.vout.
+        #
+        # if self.params["add_noise"] or self.params["add_rf_chain_gaa"]:
+        # #    # inverse FFT and remove zero-padding
+        # #    # WARNING: do not used sf.irfft(fft_vlna, self.sig_size) to remove padding
+        # #    #self.vout = sf.irfft(self.vout_f)[..., :self.sig_size]
+        #     self.final_voltage()   # inverse fourier transform. update self.vout.
+        
     # Primary method to compute voltage. 
     # Compute voltage in any one antennas of any one event. If None, voltage for all DUs of all events is computed.
     def compute_voltage(self, 
@@ -626,17 +626,29 @@ class Efield2Voltage:
         :    type append_file: bool
         """
         # delete file can take time => start with this action
-        if self.f_output == "":
+        # File name for DataDirecory
+        if self.f_output is None and self.f_input is None:
+            cur_file_name = Path(self.d_input.tefield.get_current_file().GetName()).name
+            # Replace the efield in the file name (first occurence in the string) with voltage
+            cur_f_output = str(Path(self.output_directory) / "voltage".join(cur_file_name.split("efield", 1)))
+            logger.info(f"Output file is {cur_f_output}")
+        # File name change in other cases
+        elif self.f_output is None:
             split_file = os.path.splitext(self.f_input)
-            self.f_output   = split_file[0]+"_voltage.root"
-            logger.info(f"No output file was defined. Output file is automatically defined as {self.f_output}")
-        if not append_file and os.path.exists(self.f_output):
-            logger.info(f"save on a new file and remove existing file {self.f_output}")
-            os.remove(self.f_output)
+            self.f_output  = str(self.output_directory / split_file[0]+"_voltage.root")
+            cur_f_output = self.f_output
+            logger.info(f"No output file was defined. Output file is automatically defined as {cur_f_output}")
+        else:
+            cur_f_output = str(self.output_directory / Path(self.f_output))
+
+        if not append_file and os.path.exists(self.output_directory / self.f_output):
+            cur_f_output = str(self.output_directory / self.f_output)
+            logger.info(f"save on a new file and remove existing file {cur_f_output}")
+            os.remove(cur_f_output)
             time.sleep(1)
 
-        logger.info(f"save result in {self.f_output}")
-        self.tt_volt = groot.TVoltage(self.f_output)
+        logger.info(f"save result in {cur_f_output}")
+        self.tt_volt = groot.TVoltage(cur_f_output)
 
         # Fill voltage object. d_root = events
         self.tt_volt.du_count     = self.nb_du

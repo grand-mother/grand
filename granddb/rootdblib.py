@@ -1,5 +1,5 @@
 import ROOT
-import grand.dataio.root_trees as groot
+import grand.dataio as groot
 import grand.manage_log as mlg
 import os
 logger = mlg.get_logger_for_script(__name__)

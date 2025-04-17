@@ -17,7 +17,7 @@ authors: @mtueros @jelenakhlr
 March 2024
 """
 
-import grand.dataio.root_trees as groot 
+import grand.dataio as groot
 # import the rest of the guardians of the galaxy:
 import grand.manage_log as mlg
 import raw_root_trees as RawTrees # this is here in Common
@@ -57,21 +57,19 @@ def manage_args():
         default="info",
         help="logger verbosity."
     )
+    parser.add_argument( 
+        "--savefig",
+        action="store_true",
+        default=False,
+        help="save figures to files insted of displaying them."
+    )
     parser.add_argument(
-     "--savefig",
-     action="store_true",
-     default=False,
-     help="save figures to files insted of displaying them."
-     )
-    parser.add_argument(
-     "--sim",
-     default="None",
-     help="specify simulator: Coreas vs. Zhaires"
-     )
+        "--sim",
+        default="None",
+        help="specify simulator: Coreas vs. Zhaires"
+        )
     # retrieve argument
     return parser.parse_args()
-
-
 
 def plot_core_positions(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -109,7 +107,6 @@ def plot_core_positions(directory, t_0_shift=False):
       corey[i]=tshower_l0.shower_core_pos[1]
       corez[i]=tshower_l0.shower_core_pos[2]
       myrun=run_number
-
       i=i+1
 
   # Plot arrival time distribution
@@ -126,8 +123,6 @@ def plot_core_positions(directory, t_0_shift=False):
     plt.close(fig)
   else:
     plt.show()
-
-
 
 def plot_traces_all_levels(directory, t_0_shift=False):
   d_input = groot.DataDirectory(directory)
@@ -180,7 +175,8 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       trace_voltage = np.asarray(tvoltage_l0.trace, dtype=np.float32)
       trace_ADC_L1= np.asarray(tadc_l1.trace_ch, dtype=np.float32)
       trace_efield_L1= np.asarray(tefield_l1.trace, dtype=np.float32)
-      du_id = np.asarray(tefield_l0.du_id)
+      du_id = np.asarray(tefield_l0.du_id) # MT: used for printing info and saving in voltage tree.
+      # JK: du_id is currently unused - TODO
 
 
       # t0 calculations
@@ -215,7 +211,7 @@ def plot_traces_all_levels(directory, t_0_shift=False):
       du_xyzs= np.asarray(trun_l0.du_xyz)[event_dus_indices] 
      
 
-      # loop over all stations in the event.          
+      # loop over all stations in the event.
       for du_idx in range(len(du_id)):
         logger.debug(f"Running DU number {du_idx}")
 

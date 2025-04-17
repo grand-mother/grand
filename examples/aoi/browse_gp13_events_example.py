@@ -1,57 +1,53 @@
 #!/usr/bin/python
-# This is an example for displaying traces using the Analysis Oriented Interface for the sim2root based data.
-
-from grand.grandlib_classes.grandlib_classes import *
+# This is an example for displaying traces using the Analysis Oriented Interface. Works only for the first GP13 data.
+from grand.aoi import *
 import sys
 import ROOT
 
 def main():
 
 	# Read the file name from command line
-	if len(sys.argv)>1: dir_name = sys.argv[1]
-	else:
-		print("Please provide a sim2root output directory")
-		exit()
+	if len(sys.argv)>1: file_name = sys.argv[1]
+	# Or use a default GP13 file
+	else: file_name = "GRAND.TEST-RAW.20230307174423.001.root"
 
-	print("Reading directory", dir_name)
+	print("Reading file", file_name)
 
 	# Create the EventList with the specified file, and tell it to use TRawVoltage tree as the voltage source
-	el = EventList(dir_name)
+	el = EventList(file_name, use_trawvoltage=True)
+
+	# First just get the first event, to draw the layout
+	e = el.get_event()
+	# Generating convenient array from antenna positions
+	positions = np.array([[ant.position.x[0], ant.position.y[0]] for ant in e.antennas])
 
 	# ROOT drawing of positions
-	c2 = ROOT.TCanvas("c_pos", "c_pos", 500, 500)
+	c2 = arrays2canvas(positions[:, 0], positions[:, 1])
+	ROOT.gPad.Modified()
+	ROOT.gPad.Update()
 
 	# ROOT canvas for traces
 	c1 = ROOT.TCanvas("c", "c", 1500, 500)
 
 	# Iterate through all the events
 	for i,e in enumerate(el):
-		print(f"Event {i}, du_id {e.efields[0].du_id}, time {e.efields[0].t0}")
-
-		# Generating convenient array from antenna positions
-		positions = np.array([[ant.position.x[0], ant.position.y[0]] for ant in e.antennas])
-		g_pos = arrays2graph(positions[:, 0], positions[:, 1])
-		c2.cd()
-		g_pos.Draw("A*")
-		ROOT.gPad.Modified()
-		ROOT.gPad.Update()
+		print(f"Event {i}, du_id {e.voltages[0].du_id}, time {e.voltages[0].t0}")
 
 		# Get the traces
-		t = e.efields[0].t_vector
-		x = e.efields[0].trace.x
-		y = e.efields[0].trace.y
-		z = e.efields[0].trace.z
+		t = e.voltages[0].t_vector
+		x = e.voltages[0].trace.x
+		y = e.voltages[0].trace.y
+		z = e.voltages[0].trace.z
 		
 		# Turn traces into plots
 		gx = arrays2graph(t, x)
 		gy = arrays2graph(t, y)
 		gz = arrays2graph(t, z)
-
-		gz.SetTitle(f"Event {i}, du_id {e.efields[0].du_id}, time {e.efields[0].t0}")
+		
+		gz.SetTitle(f"Event {i}, du_id {e.voltages[0].du_id}, time {e.voltages[0].t0}")
 		gz.GetXaxis().SetTitle("Time [ns]")
-		gz.GetYaxis().SetTitle("Efield [V]")
-
-		c1.cd()
+		gz.GetYaxis().SetTitle("Raw voltage [V]")
+		
 		gz.Draw("AL")
 		gx.SetLineColor(2)
 		gx.Draw("same L")

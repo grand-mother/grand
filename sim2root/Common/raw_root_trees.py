@@ -4,31 +4,13 @@ Read/Write python interface to GRAND data (real and simulated) stored in Cern RO
 This is the interface for accessing GRAND ROOT TTrees that do not require the user (reader/writer of the TTrees) to have any knowledge of ROOT. It also hides the internals from the data generator, so that the changes in the format are not concerning the user.
 """
 
-from logging import getLogger
 import sys
-import datetime
-import os
-
 import ROOT
-import numpy as np
-import glob
-
-from collections import defaultdict
-
-# This import changes in Python 3.10
-if sys.version_info.major >= 3 and sys.version_info.minor < 10:
-    from collections import MutableSequence
-else:
-    from collections.abc import MutableSequence
-        
-from dataclasses import dataclass, field    
-
-thismodule = sys.modules[__name__]
+from dataclasses import dataclass, field
 
 #from grand.io.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
 #sys.path.append("../../grand/dataio/")  #matias: i need this to make it work on my system. got to figure it out 
-#from root_trees import *
-from grand.dataio.root_trees import *
+from grand.dataio import *
 
 
 ###########################################################################################################################################################################################################
@@ -47,10 +29,13 @@ class RawShowerTree(MotherEventTree):
 
     _tree_name: str = "trawshower"
     
-    ### Name and version of the shower simulator
+    ### Name of the shower simulator
     _sim_name: StdString = StdString("")
 
-    ###X Event name (the task name, can be usefull to track the original simulation) 
+    ### Version of the shower simulator
+    _sim_version: StdString = StdString("")
+
+    ###X Event name (the task name, can be usefull to track the original simulation)
     _event_name: StdString = StdString("")
 
     ### Event Date  (used to define the atmosphere and/or the magnetic field)
@@ -89,8 +74,8 @@ class RawShowerTree(MotherEventTree):
     # primary injection direction in Shower Coordinates
     primary_inj_dir_shc: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
 
-    ### Simulation site name TODO:standardize
-    _site: StdString = StdString("nosite")
+    ### Shower simulation site name TODO:standardize
+    _site: StdString = StdString("")
     ### Simulation site latitude (deg)
     _site_lat : np.ndarray = field(default_factory=lambda: np.zeros(1, np.float32))
     ### Simulation site longitude (deg)
@@ -124,7 +109,7 @@ class RawShowerTree(MotherEventTree):
     ### Shower Xmax position in shower coordinates [m]
     _xmax_pos_shc: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float64))
     
-    ### Distance of Xmax  [m] to the ground
+    ### Distance of Xmax  [m] to the ground along the shower axis
     _xmax_distance: np.ndarray = field(default_factory=lambda: np.zeros(1, np.float64))
     
     ### Altitude of Xmax  [m]. Its important for the computation of the index of refraction at maximum, and of the cherenkov cone
@@ -248,6 +233,18 @@ class RawShowerTree(MotherEventTree):
             raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
     
         self._sim_name.string.assign(value)
+
+    @property
+    def sim_version(self):
+         return str(self._sim_version)
+
+    @sim_version.setter
+    def sim_version(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._sim_version.string.assign(value)
 
     @property
     def rel_thin(self):
@@ -436,7 +433,7 @@ class RawShowerTree(MotherEventTree):
 
     @property
     def site(self):
-        """Simulation Site TODO:standarize"""
+        """Shower simulation Site TODO:standarize"""
         return str(self._site)
 
     @site.setter
@@ -658,8 +655,14 @@ class RawEfieldTree(MotherEventTree):
     _tree_name: str = "trawefield"
 
     #Per Event Things
-    ## Name and version of the electric field simulator
-    _efield_sim: StdString = StdString("")
+    ## Name of the electric field simulator
+    _sim_name: StdString = StdString("")
+
+    ## Version of the electric field simulator
+    _sim_version: StdString = StdString("")
+
+    ### Efield simulation site name TODO:standardize
+    _site: StdString = StdString("")
 
     ## Name of the atmospheric index of refraction model
     _refractivity_model: StdString = StdString("")
@@ -712,16 +715,43 @@ class RawEfieldTree(MotherEventTree):
         self._du_count[0] = value
 
     @property
-    def efield_sim(self):
-         return str(self._efield_sim)
+    def sim_name(self):
+         return str(self._sim_name)
     
-    @efield_sim.setter
-    def efield_sim(self, value):
+    @sim_name.setter
+    def sim_name(self, value):
         # Not a string was given
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
             raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
     
-        self._efield_sim.string.assign(value)
+        self._sim_name.string.assign(value)
+
+    @property
+    def sim_version(self):
+         return str(self._sim_version)
+
+    @sim_version.setter
+    def sim_version(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required.")
+
+        self._sim_version.string.assign(value)
+
+    @property
+    def site(self):
+        """Efield simulation Site TODO:standarize"""
+        return str(self._site)
+
+    @site.setter
+    def site(self, value):
+        # Not a string was given
+        if not (isinstance(value, str) or isinstance(value, ROOT.std.string)):
+            raise ValueError(
+                f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
+            )
+
+        self._site.string.assign(value)
 
     @property
     def refractivity_model(self):
