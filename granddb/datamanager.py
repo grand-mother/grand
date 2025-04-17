@@ -16,7 +16,7 @@ import getpass
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("errors", log_stdout=True)
+mlg.create_output_for_logger("error", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -310,6 +310,20 @@ class DataManager:
         else:
             logger.error(f"No repository found.")
         return directory
+
+    def new_register_dataset(self,directory,repository=None, provider=None):
+        if repository is None:
+            repository = self.referer()
+        else:
+            repository = self.getrepo(repository)
+
+        if provider is None:
+            provider = self.provider()
+
+
+        self.database().register_dataset(directory,repository.id_repository,provider)
+
+
 
     ##Function to register a file into the database.
     # The file MUST be present in the target repository and the full path must be given.

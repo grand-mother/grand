@@ -17,7 +17,7 @@ if args.config[0] == '/':
     config_path = args.config
 else:
     config_path = os.path.dirname(__file__)+"/"+args.config
-ic(config_path)
+#ic(config_path)
 dm = DataManager(config_path)
 if args.repository == '':
     repo_name = None
@@ -30,11 +30,11 @@ for dir in args.dirs:
         #from os import listdir
         #from os.path import isfile, join
         onlyfiles = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
-        ic(onlyfiles)
+#        ic(onlyfiles)
         for file in onlyfiles:
             lfile=os.path.join(dir,file)
             dataset=os.path.basename(os.path.normpath(dir))
-            ic(dataset)
+#            ic(dataset)
             dm.register_file(localfile=lfile, dataset=dataset, repository=repo_name, again=True)
     except Exception as e:
         logger.error(f'Error when importing {file}. Skipping.')
