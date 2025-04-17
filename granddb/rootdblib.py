@@ -5,7 +5,7 @@ import os
 logger = mlg.get_logger_for_script(__name__)
 #mlg.create_output_for_logger("debug", log_stdout=True)
 
-class RootFile:
+class RootFile():
     # Use dict to associate rootfile ttree class to root_tree classe
     RunTrees = ["trun", "trunefieldsimdata","trunvoltage","trunrawvoltage","trunefieldsim","trunshowersim","trunnoise"]
     EventTrees = ["teventefield", "teventshowersimdata",  "teventshower","teventvoltage",
@@ -37,16 +37,18 @@ class RootFile:
                    }
 
     metaToDB = {
-        '_type' : 'id_tree_type',
-        '_tree_name' : 'tree_name',
-        '_comment' : 'comment',
-        '_creation_datetime' : 'creation_datetime',
-        '_modification_software' : 'id_modification_software',
-#        '_modification_software_version' : 'id_modification_software_version',
-        '_source_datetime' : 'source_datetime',
-        '_analysis_level' : 'analysis_level',
-        '_modification_history' : 'modification_history',
-        '_number_of_events' : 'number_of_events'
+        'type' : 'id_tree_type',
+        #'tree_name' : 'tree_name',
+        'name' : 'tree_name',
+        'comment' : 'comments',
+        'creation_datetime' : 'creation_datetime',
+        'modification_software' : 'id_modification_software',
+#        'modification_software_version' : 'id_modification_software_version',
+        'source_datetime' : 'source_datetime',
+        'analysis_level' : 'analysis_level',
+        'modification_history' : 'modification_history',
+        #'number_of_events' : 'number_of_events',
+        'evt_cnt' : 'number_of_events'
     }
 
     trunToDB = {
@@ -190,7 +192,7 @@ class RootFile:
 #         'du_count': 'du_count',
 #         'du_id': 'du_id'
 #     }
-    tvoltageToDB = {
+#    tvoltageToDB = {
 #        'table': 'tvoltage',
 #        'run_number': 'run_number',
 #        'event_number': 'event_number',
@@ -198,7 +200,7 @@ class RootFile:
 #        'time_seconds': 'time_seconds',
 #        'time_nanoseconds': 'time_nanoseconds',
 #        'du_count': 'du_count'
-    }
+#    }
     tshowerToDB = {
         'table': 'tshower',
         'run_number': 'run_number',
@@ -326,20 +328,32 @@ class RootFile:
     def __init__(self, f_name):
         self.filename = f_name
         self.TreeList.clear()
-        self.file = ROOT.TFile(f_name)
-        for key in self.file.GetListOfKeys():
-            tname = key.GetName()
-            #Names of trees should start with their type followed by _ and whatever
-            # so we extract the type of the tree to get the correct class
-            ttype = tname.split('_', 1)[0]
-
-            if ttype in self.TreeToClass:
-                self.TreeList[tname] = self.TreeToClass[ttype](f_name)
+        #self.file = ROOT.TFile(f_name)
+        self.file = groot.DataFile(f_name)
+        for treename in self.file.dict_of_trees.keys():
+            if treename in self.TreeToClass:
+                self.TreeList[treename] = self.TreeToClass[treename](f_name)
             else:
-                logger.warning(f"{ttype} is unknown")
+                logger.warning(f"{treename} is unknown")
 
 
+        #for key in self.file.GetListOfKeys():
+        #   tname = key.GetName()
+        #    #Names of trees should start with their type followed by _ and whatever
+        #    # so we extract the type of the tree to get the correct class
+        #    ttype = tname.split('_', 1)[0]
 
+        #    if ttype in self.TreeToClass:
+        #        self.TreeList[tname] = self.TreeToClass[ttype](f_name)
+        #    else:
+        #        logger.warning(f"{ttype} is unknown")
+
+
+    def get_tree(self, treename):
+        treetype = self.file.get_tree_info(treename)["type"]
+        class_to_instantiate = getattr(groot, treetype)
+        obj = class_to_instantiate(self.filename)
+        return obj
 
     def copy_content_to(self, file):
         for treename in self.TreeList:
@@ -384,3 +398,19 @@ def sanitize_name(name):
 def timestamp_to_date_time(timestamp):
     import time
     return time.strftime("%Y%m%d", time.gmtime(float(timestamp))), time.strftime("%H%M%S", time.gmtime(float(timestamp)))
+
+class Dataset(groot.DataDirectory):
+    full_path: str = None
+    dataset_name: str = None
+    comment: str = None
+    dataset_original_name: str = None
+    id_dataset: int = None
+
+    def __init__(self,dir_name):
+        super().__init__(dir_name)
+        self.full_path=self.dir_name
+        self.dataset_name=os.path.basename(self.full_path)
+        trun=getattr(self, 'trun')
+        self.comment=getattr(trun, 'comment')
+        self.dataset_original_name=os.path.basename(self.comment.split("from file ")[-1].strip())
+

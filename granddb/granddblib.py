@@ -1,4 +1,6 @@
 import time
+from datetime import datetime
+
 import psycopg2
 import psycopg2.extras
 from sshtunnel import SSHTunnelForwarder
@@ -11,9 +13,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.inspection import inspect
 import grand.manage_log as mlg
+import os
+from sqlalchemy import func
+
+from granddb.rootdblib import Dataset, RootFile
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("info", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 
 def casttodb(value):
@@ -46,6 +52,8 @@ def casttodb(value):
         #value = [i for i in value]
     elif isinstance(value, str):
         val = value.strip().strip('\t').strip('\n')
+    elif isinstance(value, datetime):
+        val = value
     else:
         val = value
     return val
@@ -320,7 +328,6 @@ class Database:
     # and false if the file was already registered. This is usefull to know if the metadata of the file needs to be read
     # or not
     def register_filename(self, filename, newfilename, dataset, id_repository, provider, targetfile=None):
-        import os
         register_file = False
         isnewfile = False
         idfile = None
@@ -383,6 +390,9 @@ class Database:
             # self.sqlalchemysession.flush()
 
         return idfile, isnewfile, id_dataset
+
+
+
 
     ## @brief Function to register (if necessary) the content of a file into the database.
     # It will first read the file and walk along datas to determine what has to be registered
@@ -559,8 +569,6 @@ class Database:
     # It will first search the registered file and will remove it from the database before registering it again as a new file
     # Usefull when reprocessing or correcting a file
     def register_again_file(self, orgfilename, newfilename, dataset, id_repository, provider, targetfile=None):
-        import os
-
         if targetfile is None:
             targetfile = newfilename
         if dataset is not None:
@@ -571,7 +579,7 @@ class Database:
             filename=os.path.basename(targetfile),id_dataset=id_dataset).first()
         if file_exist is not None:
             idfile = file_exist.id_file
-            from sqlalchemy import func
+
             removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
             logger.info(f"removed old files {removed}")
         idfile, read_file, id_dataset = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
@@ -582,3 +590,242 @@ class Database:
         else:
             logger.info(f"file {orgfilename} already registered.")
         self.sqlalchemysession.commit()
+
+
+    def register_dataset(self, directory, id_repository, provider):
+        # Open the datadir
+        #datadir=grand.dataio.root_trees.DataDirectory(os.path.normpath(directory))
+        dataset=Dataset(os.path.normpath(directory))
+        self.register_dataset_name(dataset, id_repository)
+        self.register_dataset_content(dataset, id_repository,provider)
+        self.sqlalchemysession.commit()
+
+
+    def register_dataset_name(self, dataset, id_repository):
+        #Search if dataset already exists
+        ret = self.sqlalchemysession.query(getattr(self._tables['dataset'], 'id_dataset')).filter_by(dataset_name=dataset.dataset_name).all()
+        if len(ret)==0:
+            #Dataset does not exists. We create it
+            container = self.tables()['dataset'](dataset_name=dataset.dataset_name, original_name=dataset.dataset_original_name,description=dataset.comment)
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+            dataset.id_dataset = int(getattr(container, 'id_dataset'))
+            logger.info(f"dataset {dataset.dataset_name} from {dataset.dataset_original_name} registered with id_dataset {dataset.id_dataset}.")
+        else:
+            #dataset exists : Get it
+            dataset.id_dataset = int(ret[0][0])
+
+        #Search if dataset registered in that repo
+        filt = {}
+        filt['id_dataset'] = str(casttodb(dataset.id_dataset))
+        filt['id_repository'] = str(casttodb(id_repository))
+        ret = self.sqlalchemysession.query(getattr(self._tables['dataset_location'], 'id_dataset')).filter_by(**filt).all()
+        # If dataset not registered in the repository then register it
+        if len(ret) == 0:
+            dataset_path=os.path.normpath(dataset.full_path)
+            container = self.tables()['dataset_location'](id_dataset=dataset.id_dataset,
+                                                          id_repository=id_repository,
+                                                          path=dataset_path,
+                                                          description="")
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+
+    def register_dataset_content(self, dataset, id_repository,provider):
+        for file in dataset.get_list_of_files():
+            logger.info(f"registering {file}")
+            file_exist = self.sqlalchemysession.query(self.tables()['file']).filter_by(
+                                                        filename=os.path.basename(file),
+                                                        id_dataset=dataset.id_dataset).first()
+            if file_exist is not None:
+                idfile = file_exist.id_file
+                removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
+                logger.info(f"removed old files {removed}")
+            idfile = self.new_register_filename(file, dataset, id_repository,provider)
+            self.new_register_filecontent(file, idfile, dataset)
+            #TODO: Register file content
+
+
+
+    ## @brief Function to register (if necessary) a filename in a dataset into the database.
+    # It will first search if the file is already known in the DB and check the repository.
+    # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e it's a new file)
+    # and false if the file was already registered. This is usefull to know if the metadata of the file needs to be read
+    # or not
+    def new_register_filename(self, filename, dataset, id_repository, provider):
+        id_provider = self.get_or_create_key('provider', 'provider', provider)
+        size_bytes = os.path.getsize(filename)
+        container = self.tables()['file'](id_dataset=dataset.id_dataset,
+                                                  filename=os.path.basename(filename),
+                                                  description='autodesc',
+                                                  original_name=dataset.dataset_original_name,
+                                                  id_provider=id_provider,
+                                                  file_size=size_bytes
+                                                  )
+        self.sqlalchemysession.add(container)
+        self.sqlalchemysession.flush()
+        idfile = container.id_file
+        container = self.tables()['file_location'](id_file=idfile, id_repository=id_repository, path=filename,
+                                                       description="")
+        self.sqlalchemysession.add(container)
+        logger.debug(f"File name {filename} registered")
+        return idfile
+
+
+
+
+    ## @brief Function to register (if necessary) the content of a file into the database.
+    # It will first read the file and walk along datas to determine what has to be registered
+    def new_register_filecontent(self, file, idfile, dataset):
+        # We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
+        # Ugly but no other efficient way to do (checking in the DB before insertion is too time consuming).
+        eventlist = []
+        # ttrees will be a dict of trees to add. key is the tree name and value is a dict with all values for the tree.
+        ttrees = {}
+        # tables = {}
+        #rfile = grand.dataio.root_trees.DataFile(str(file))
+        rfile = RootFile(str(file))
+
+        #-----
+#        for treename in rfile.file.dict_of_trees.keys():
+#            #treetype = rfile.file.get_tree_info(treename)["type"]
+#            #print(f'tree {treename} tree type {rfile.file.get_tree_info(treename)["type"]}')
+#            if hasattr(rfile, treename + "ToDB"):
+#                table = getattr(rfile, treename + "ToDB").get('table')
+#                #print(f'table is {table}')
+#                #print(f'rfile.file.dict_of_trees is {rfile.file.dict_of_trees}')
+#                #print(f'rfile.file.tree_types is {rfile.file.tree_types}')
+#                #print(f'tree type is {type(rfile.file.dict_of_trees[treename])} rfile.TreeList[treename] is of type {type(rfile.TreeList[treename])}')
+#                #for key, value in rfile.file.tree_types.items():
+#                #    #print(f'key is {key} and value is {value}')
+#                #    class_to_instantiate = getattr(grand.dataio.root_trees, key)
+#                #    obj = class_to_instantiate(file)
+#                #    #print(f'obj type is {type(obj)}')
+#            #    class_to_instantiate = getattr(grand.dataio.root_trees, treetype)
+#            #    obj = class_to_instantiate(file)
+#                if treename in rfile.EventTrees:
+#                    obj=rfile.get_tree(treename)
+#                    for event, run in obj.get_list_of_events():
+#                        print(f'run is {run} event is {event}')
+#        return 0
+#        #-----
+
+
+        tablemeta = "file_content"
+
+        # We iterate over all trees
+        for treename in rfile.file.dict_of_trees.keys():
+            logger.debug(f" Debug reading tree {treename}")
+            #treetype = treename.split('_', 1)[0]
+            treetype = rfile.file.get_tree_info(treename)["type"].lower()
+            #treetype = treename
+            metatree = {}
+
+            # we first register meta info for all trees
+            for meta, field in rfile.metaToDB.items():
+                # try/except to avoid stopping when metadata is not present in root file
+                try:
+                    rawvalue = rfile.file.get_tree_info(treename)[meta]
+                    # skip if datetime is not correct type
+                    if (field == "source_datetime" or field == "creation_datetime") and type(rawvalue) is not datetime:
+                        logger.debug(f'value: {rawvalue} has wrong type {type(rawvalue)} for field {field}')
+                        pass
+                    else:
+                        value = casttodb(rawvalue)
+                        metatree[field] = value
+
+                    # If foreign key then replace value by the corresponding key
+                    if field.find('id_') >= 0:
+                        value = self.get_or_create_fk(tablemeta, field, rawvalue)
+                        metatree[field] = value
+
+                    #metatree['tree_name'] = treename
+                except:
+                    logger.debug(f" Debug : error on meta {meta} field {field} value {value} ")
+                    pass
+
+            # metatree['number_of_events'] = rfile.file.get_tree_info(treename)['evt_cnt']
+            metatree['id_file'] = idfile
+            # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
+            metatree['tree_name'] = treename
+            container = self.tables()[tablemeta](**metatree)
+            self.sqlalchemysession.add(container)
+            self.sqlalchemysession.flush()
+
+
+            # We register the content only for known and identified trees defined in rootdblib
+            if hasattr(rfile, treetype + "ToDB"):
+                # Determine in which table of the database infos should go
+                table = getattr(rfile, treetype + "ToDB").get('table')
+                # table = getattr(rfile, treetype + "ToDB")['table']
+                ttrees[treename] = {}
+                id_dataset = dataset.id_dataset
+                st = time.time()
+
+                if table is not None:
+                    # Registering of events trees
+                    treeobject = rfile.get_tree(treename)
+                    if treetype in rfile.EventTrees:
+                        # For events we iterates over event_number and run_number
+                        #for event, run in rfile.TreeList[treename].get_list_of_events():
+                        for event, run in treeobject.get_list_of_events():
+                            # NEED TO CHECK THAT INFOS NOT ALREADY PRESENT IN DB FROM ANOTHER FILE IN SAME DATASET
+
+                            if ((table != "events") or ([run, event] not in eventlist)):
+                                if table == "events":
+                                    eventlist.append([run, event])
+
+                                if not (run, event) in ttrees[treename]:
+                                    ttrees[treename][(run, event)] = {}
+                                #rfile.TreeList[treename].get_event(event, run)
+                                treeobject.get_event(event, run)
+                                for param, field in getattr(rfile, treetype + "ToDB").items():
+                                    if param != "table":
+                                        #value = casttodb(getattr(rfile.TreeList[treename], param))
+                                        value = casttodb(getattr(treeobject, param))
+                                        # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
+                                        if field.startswith('id_'):
+                                            value = self.get_or_create_fk(table, field, value)
+                                        ttrees[treename][(run, event)][field] = value
+                                    else:
+                                        ttrees[treename][(run, event)]['id_file'] = idfile
+                                        ttrees[treename][(run, event)]['tree_name'] = treename
+
+                                container = self.tables()[table](**ttrees[treename][(run, event)])
+                                self.sqlalchemysession.add(container)
+
+
+
+                    # For runs we iterates over run_number
+                    elif treename in rfile.RunTrees:
+                        #for run in rfile.TreeList[treename].get_list_of_runs():
+                        for run in treeobject.get_list_of_runs():
+                            if run not in ttrees[treename]:
+                                ttrees[treename][run] = {}
+
+                            #rfile.TreeList[treename].get_run(run)
+                            treeobject.get_run(run)
+                            for param, field in getattr(rfile, treetype + "ToDB").items():
+                                if param != "table":
+                                    try:
+                                        #value = casttodb(getattr(rfile.TreeList[treename], param))
+                                        value = casttodb(getattr(treeobject, param))
+                                        # Il foreign key (i.e. starts with id_) then register value in foreign table and return the key instead of value
+                                        if field.startswith('id_'):
+                                            value = self.get_or_create_fk(table, field, value)
+                                        ttrees[treename][run][field] = value
+                                    except:
+                                        #logger.warning(
+                                        #    f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
+                                        logger.warning(
+                                            f"Error in getting {param} for {treeobject.__class__.__name__}")
+                                else:
+                                    ttrees[treename][run]['id_file'] = idfile
+                                    ttrees[treename][run]['tree_name'] = treename
+
+                            container = self.tables()[table](**ttrees[treename][run])
+                            self.sqlalchemysession.add(container)
+                        # self.sqlalchemysession.flush()
+                    treeobject.stop_using()
+                et = time.time()
+                elapsed_time = et - st
+                logger.debug(f"execution time {elapsed_time} seconds")
