@@ -1,4 +1,4 @@
-This section regroups the different libraries to interact with datas and database in Grand.
+This section regroups the different libraries used to interact with datas and database in Grand.
 
 # DataManager
 
