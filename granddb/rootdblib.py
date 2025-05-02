@@ -1,11 +1,10 @@
-import ROOT
 import grand.dataio as groot
 import grand.manage_log as mlg
 import os
 logger = mlg.get_logger_for_script(__name__)
 #mlg.create_output_for_logger("debug", log_stdout=True)
 
-class RootFile():
+class RootFile:
     # Use dict to associate rootfile ttree class to root_tree classe
     RunTrees = ["trun", "trunefieldsimdata","trunvoltage","trunrawvoltage","trunefieldsim","trunshowersim","trunnoise"]
     EventTrees = ["teventefield", "teventshowersimdata",  "teventshower","teventvoltage",
@@ -411,6 +410,7 @@ class Dataset(groot.DataDirectory):
         self.full_path=self.dir_name
         self.dataset_name=os.path.basename(self.full_path)
         trun=getattr(self, 'trun')
-        self.comment=getattr(trun, 'comment')
-        self.dataset_original_name=os.path.basename(self.comment.split("from file ")[-1].strip())
+        if trun is not None:
+            self.comment=getattr(trun, 'comment')
+            self.dataset_original_name=os.path.basename(self.comment.split("from file ")[-1].strip())
 

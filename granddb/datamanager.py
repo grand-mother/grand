@@ -3,7 +3,7 @@ import scp
 import paramiko
 import json
 from configparser import ConfigParser
-import urllib.request
+import urllib.request, urllib.error
 import os
 import shutil
 from granddb.granddblib import Database
@@ -11,6 +11,7 @@ import socket
 import grand.manage_log as mlg
 import copy
 import getpass
+import grand.dataio
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__name__)
@@ -27,7 +28,7 @@ mlg.create_output_for_logger("error", log_stdout=True)
 ## @brief Class for managing datas.
 # It will read an inifile where localdirs and different datasources are defined.
 # The first localdir will be used as an incoming directory (i.e. all files searched in distant location and found will
-# be copied in this incoming directory.
+# be copied in this incoming directory).
 # The inifile will have the following structure :
 # @verbatim
 # [general]
@@ -39,7 +40,7 @@ mlg.create_output_for_logger("error", log_stdout=True)
 # [credentials]
 # Repo1 = ["user","keyfile"]
 # [database]
-# localdb = ["host", port, "dbname", "user", "password", "sshtunnel_server", sshtunnel_port, "sshtunnel_credentials" ]]
+# localdb = ["host", port, "dbname", "user", "password", "sshtunnel_server", sshtunnel_port, "sshtunnel_credentials" ]
 # [registerer]
 # repo2 = "/path/to/repo"
 # @endverbatim
@@ -70,7 +71,7 @@ class DataManager:
                 if name == "socket_timeout":
                     socket.setdefaulttimeout(int(ref))
 
-        if self._provider == None:
+        if self._provider is None:
             logger.error(f"Config file ({self._file}) must have a [general] section with a provider value")
             exit(1)
 
@@ -100,7 +101,8 @@ class DataManager:
             # But instead of localhost and localdir we use the name of the machine
             try:
                 hostname = socket.getfqdn(os.environ["HOSTNAME"])
-            except:
+            except Exception as e:
+                logger.debug(f"Exception occurred while getting hostname: {e}. Will use 'localhost' instead.")
                 hostname = "localhost"
             self._repositories["localdir"] = Datasource("localdir", "local", hostname, "", dirlist, self.incoming())
         else:
@@ -204,8 +206,8 @@ class DataManager:
     def get(self, file, repository=None, path=None, grab=True):
         res = None
         # Check if file is a simple name or full path name
-        if (os.path.dirname(file) != ""):
-            if (not (path is None) and (path !=  os.path.dirname(file))):
+        if os.path.dirname(file) != "":
+            if not (path is None) and (path != os.path.dirname(file)):
                 logger.warning(f"path given in filename ({os.path.dirname(file)}) and in repository path ({path}) are different ! The path {os.path.dirname(file)} from file will be used !")
             path = os.path.dirname(file)
             file = os.path.basename(file)
@@ -229,8 +231,8 @@ class DataManager:
     def get_dataset(self, directory, repository=None, path=None):
         res = None
         # Check if directory is a simple name or full path name
-        if (os.path.dirname(directory) != ""):
-            if (not (path is None) and (path !=  os.path.dirname(directory))):
+        if os.path.dirname(directory) != "":
+            if not (path is None) and (path != os.path.dirname(directory)):
                 logger.warning(f"path given in dataset ({os.path.dirname(directory)}) and in repository path ({path}) are different ! The path {os.path.dirname(directory)} from dataset will be used !")
             path = os.path.dirname(os.path.normpath(directory))
             directory = os.path.basename(os.path.normpath(directory))
@@ -272,7 +274,6 @@ class DataManager:
 
     ##Function to register a dataset (i.e directory) into the database.
     def register_dataset(self, directory,  repository=None, targetdir = None, again=False):
-        import grand.dataio.root_trees
         if repository is None:
             repository = self.referer()
         else:
@@ -298,9 +299,8 @@ class DataManager:
                 # If so, we need to get it locally and use this local copy (to be able to read the files)
                 #localdir = self.get_dataset(directory, repository.name())
                 localdir = self.get_dataset(directory)
-                #TODO: Check that target dir exists
                 if localdir is not None:
-                    Tdir = grand.dataio.root_trees.DataDirectory(localdir)
+                    Tdir = grand.dataio.DataDirectory(localdir)
                     for f in Tdir.get_list_of_files():
                         logger.info(f"registering {f}")
                         self.register_file(localfile=f, dataset=Tdir.dir_name, repository=repository.name(), targetdir=targetdir,again=again)
@@ -319,7 +319,6 @@ class DataManager:
 
         if provider is None:
             provider = self.provider()
-
 
         self.database().register_dataset(directory,repository.id_repository,provider)
 
@@ -592,7 +591,7 @@ class DatasourceLocal(Datasource):
             if not my_path.exists():
                 logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
 
-            my_file = None
+            #my_file = None
             # In case of many files the following code can override the system's file descriptor limit because rglob open all the files !
             #liste = list(Path(path).rglob(file))
             #            for my_file in liste:
@@ -620,7 +619,7 @@ class DatasourceLocal(Datasource):
                 #        found_file = my_file
                 #        break
 
-                my_file = None
+
                 my_file = Path(path) / file
                 if my_file.is_dir():
                     found_file = my_file
@@ -657,44 +656,91 @@ class DatasourceLocal(Datasource):
 # @date Sept 2022
 class DatasourceSsh(Datasource):
     # function to set up the ssh connection. If recurse=True (default) then in case of failure the passwords will be asked and a second attempt will be made.
-    # If recurse=False (at the second attempt) then in case of failure a error message is raised and the return is set to none (which will made the search skipped)
-    def set_client(self, recurse=True):
-        try:
-            client = paramiko.SSHClient()
-            if self.credentials().keyfile() != "" and recurse is True:
-                self.credentials()._keypasswd = getpass.getpass(prompt="Please give password to decrypt keyfile " + self.credentials().keyfile() + ": ")
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(hostname=self.server(),
-                       port=self.port() if self.port() != "" else None,
-                       username=self.credentials().user() if self.credentials().user() != "" else None,
-                       password=self.credentials().password() if self.credentials().password() != "" else None,
-                       key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
-                       passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
-        except paramiko.AuthenticationException as e:
-            if recurse :
-                self.credentials()._password = getpass.getpass(prompt="Please give password for user " + self.credentials().user() + " @ " + self.server() + ":")
-                client = self.set_client(False)
-            else:
-                logger.error(f"Authentication error {e} during connection to {self.server()}")
-                client = None
-        except paramiko.SSHException as e:
-            if recurse :
-                self.credentials()._password = getpass.getpass(prompt="Please give password for user " + self.credentials().user() + " @ " + self.server() + ":")
-                client = self.set_client(False)
-            else:
-                logger.error(f"Error {e} during connection to {self.server()}")
-                client = None
-        return client
+    # If recurse=False (at the second attempt) then in case of failure an error message is raised and the return is set to none (which will made the search skipped)
+    def set_client(self, max_retries=2, timeout=10):
+        """
+        Set up an SSH connection using paramiko, with up to `max_retries` attempts.
+        """
+        client = None
+        for attempt in range(max_retries):
+            try:
+                # Initialize SSH client
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                # Connect with credentials
+                client.connect(
+                    hostname=self.server(),
+                    port=self.port() or None,
+                    username=self.credentials().user() or None,
+                    password=self.credentials().password() or None,
+                    key_filename=self.credentials().keyfile() or None,
+                    passphrase=self.credentials().keypasswd() or None,
+                    timeout=timeout,
+                )
+
+                # Successfully connected
+                return client
+
+            except paramiko.AuthenticationException as e:
+                logger.error(f"Authentication error: {e} during connection to {self.server()} (attempt {attempt + 1})")
+                if attempt < max_retries - 1:  # Retry only if attempts remain
+                    self.credentials()._password = getpass.getpass(
+                        prompt=f"Please provide password for user {self.credentials().user()} @ {self.server()}: "
+                    )
+                else:
+                    logger.error(f"All authentication attempts for {self.server()} have failed.")
+                    break
+
+            except paramiko.SSHException as e:
+                logger.error(f"SSH error: {e} during connection to {self.server()}. Aborting.")
+                break
+
+            finally:
+                # Ensure cleanup on failure
+                if client and not client.get_transport().is_active():
+                    client.close()
+
+        return None  # Return None if all attempts fail
+
+    # def set_client(self, recurse=True):
+    #     try:
+    #         client = paramiko.SSHClient()
+    #         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    #         if self.credentials().keyfile() != "" and recurse is True:
+    #             self.credentials()._keypasswd = getpass.getpass(prompt="Please give password to decrypt keyfile " + self.credentials().keyfile() + ": ")
+    #
+    #         client.connect(hostname=self.server(),
+    #                    port=self.port() if self.port() != "" else None,
+    #                    username=self.credentials().user() if self.credentials().user() != "" else None,
+    #                    password=self.credentials().password() if self.credentials().password() != "" else None,
+    #                    key_filename=self.credentials().keyfile() if self.credentials().keyfile() != "" else None,
+    #                    passphrase=self.credentials().keypasswd() if self.credentials().keypasswd() != "" else None)
+    #     except paramiko.AuthenticationException as e:
+    #         if recurse :
+    #             self.credentials()._password = getpass.getpass(prompt="Please give password for user " + self.credentials().user() + " @ " + self.server() + ":")
+    #             client = self.set_client(False)
+    #         else:
+    #             logger.error(f"Authentication error {e} during connection to {self.server()}")
+    #             client = None
+    #     except paramiko.SSHException as e:
+    #         if recurse :
+    #             self.credentials()._password = getpass.getpass(prompt="Please give password for user " + self.credentials().user() + " @ " + self.server() + ":")
+    #             client = self.set_client(False)
+    #         else:
+    #             logger.error(f"Error {e} during connection to {self.server()}")
+    #             client = None
+    #     return client
 
     def get(self, file, path=None, grab=True):
-        import getpass
+        #import getpass
         localfile = None
         client = self.set_client()
         if not(client is None):
             if not (path is None):
                 logger.debug(f"search {file} in {path} @ {self.name()}")
                 localfile = self.get_file(client, path, file, grab=grab)
-                if (localfile is None):
+                if localfile is None:
                     logger.debug(f"file {file} not found in {path} @ {self.name()}")
             else:
                 for path in self.paths():
@@ -712,14 +758,14 @@ class DatasourceSsh(Datasource):
 
 
     def get_dataset(self, file, path=None):
-        import getpass
+        #import getpass
         localfile = None
         client = self.set_client()
         if not(client is None):
             if not (path is None):
                 logger.debug(f"search {file} in {path} @ {self.name()}")
                 localfile = self.get_dir(client, path, file)
-                if (localfile is None):
+                if localfile is None:
                     logger.debug(f"Dataset {file} not found in {path} @ {self.name()}")
             else:
                 for path in self.paths():
@@ -774,10 +820,10 @@ class DatasourceSsh(Datasource):
             scpp = scp.SCPClient(client.get_transport(), sanitize=lambda x: x)
             # Get all files if not already present
             for file in files:
-                filename = os.path.basename(file)
+                filename = os.path.basename(str(file))
                 if not os.path.exists((self.incoming() + dataset + "/" + filename)):
                     logger.debug(f"copy {filename} to {self.incoming()}{dataset}")
-                    scpp.get(file, self.incoming() + dataset )
+                    scpp.get(str(file), self.incoming() + dataset )
                 else:
                     logger.debug(f"File {filename} already exists in  {self.incoming()}{dataset}")
             #scpp.get(lines[0].strip('\n') + '/*', self.incoming() + file )
@@ -835,12 +881,12 @@ class DatasourceHttp(Datasource):
         return localfile
 
     def get_file(self, url, file, grab=True):
-        #import socket
         localfile = None
         try:
-            #socket.setdefaulttimeout(10)
             #TODO check grab and test url
-            urllib.request.urlretrieve(url, self.incoming() + file)
+            local_path = os.path.join(self.incoming(), file)
+            urllib.request.urlretrieve(url, local_path)
+            #urllib.request.urlretrieve(url, self.incoming() + file)
             logger.debug(f"file found in repository {url}")
             localfile = self.incoming() + file
 
@@ -851,6 +897,8 @@ class DatasourceHttp(Datasource):
                 logger.error(f"http error searching repository {url} : {str(e.code)}  {e.msg}")
         except urllib.error.URLError as e:
             logger.error(f"url error searching repository {url} :  {str(e.reason)}")
+        except Exception as e:
+            logger.error(f"Unexpected error while accessing {url}: {str(e)}")
         #except:
         #    print("file not found in repository " + url)
         return localfile

@@ -1,14 +1,14 @@
-import time
+import time, getpass
 from datetime import datetime
-
+from urllib.parse import quote_plus
 import psycopg2
 import psycopg2.extras
 from sshtunnel import SSHTunnelForwarder
 import numpy
-import grand.dataio.root_trees
+import grand.dataio
 import re
 import granddb.rootdblib as rdb
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.inspection import inspect
@@ -40,11 +40,11 @@ def casttodb(value):
         else:
             #val = value.tolist()
             val = [casttodb(item) for item in value]
-    elif isinstance(value, grand.dataio.root_trees.StdVectorList):
+    elif isinstance(value, grand.dataio.StdVectorList):
         val =[]
         #postgres cannot store arrays of arrays... so we split (not sure if really correct)!
         for i in value:
-            if isinstance(i,numpy.ndarray) or isinstance(i, grand.dataio.root_trees.StdVectorList):
+            if isinstance(i,numpy.ndarray) or isinstance(i, grand.dataio.StdVectorList):
                 val.append(casttodb(i))
             else:
                 val.append(casttodb(i))
@@ -72,27 +72,71 @@ class Database:
     _tables = {}
     dbconnection = None  # psycopg2 connect
     sqlalchemysession = None  # sqlalchemy session
+    _engine = None
 
     # _cred : Credentials
 
     def __init__(self, host, port, dbname, user, passwd, sshserv="", sshport=22, cred=None):
         self._host = host
-        if port == "":
-            self._port = 5432
-        else:
-            self._port = port
+        #if port == "":
+        #    self._port = 5432
+        #else:
+        #    self._port = port
+        self._port = 5432 if not port else port
         self._dbname = dbname
         self._user = user
         self._passwd = passwd
         self._sshserv = sshserv
-        if sshport == "":
-            self._sshport = 22
-        else:
-            self._sshport = sshport
+        #if sshport == "":
+        #    self._sshport = 22
+        #else:
+        #    self._sshport = sshport
+        self._sshport = 22 if not sshport else sshport
         self._cred = cred
 
-        if self._sshserv != "" and self._cred is not None:
-            # TODO: Check credentials for ssh tunnel and ask for passwds
+        if self._sshserv and self._cred is not None:
+            self.configure_ssh_tunnel("key")
+        
+        self.initialize_engine()
+
+    def initialize_engine(self):
+        connection_uri = (
+        f"postgresql+psycopg2://{quote_plus(self._user)}:{quote_plus(self.passwd())}"
+        f"@{self.host()}:{self.port()}/{self._dbname}"
+        )
+        self._engine = create_engine(connection_uri)
+        #engine = create_engine(
+        #    'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + str(
+        #        self.port()) + '/' + self._dbname)
+        base = automap_base()
+
+        base.prepare(self._engine, reflect=True)
+        self.sqlalchemysession = Session(self._engine,autoflush=False)
+        #self.sqlalchemysession.no_autoflush = True
+        # Generate table mappings
+        inspection = inspect(self._engine)
+        for table in inspection.get_table_names():
+            # for table in engine.table_names(): #this is obsolete
+            self._tables[table] = getattr(base.classes, table)
+
+    def close(self):
+        if self.dbconnection:
+            self.dbconnection.close()
+        if self.sqlalchemysession:
+            self.sqlalchemysession.close()
+        #if self.server:
+        #    self.server.stop(force=True)
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception as e:
+            print(f"Exception during cleanup: {str(e)}")
+
+    def configure_ssh_tunnel(self,methode):
+        try_again = False
+        try:
+            #First try with key
             self.server = SSHTunnelForwarder(
                 (self._sshserv, self.sshport()),
                 ssh_username=self._cred.user(),
@@ -101,30 +145,44 @@ class Database:
                 allow_agent=True
             )
             self.server.start()
-            local_port = str(self.server.local_bind_port)
-            self._host = "127.0.0.1"
-            self._port = local_port
 
-        # self.connect()
+        except Exception as e:
+            logger.error(f"Failed to configure tunnel with key: {e}")
+            logger.info(f"Try with passwd")
+            try_again = True
 
-        engine = create_engine(
-            'postgresql+psycopg2://' + self.user() + ':' + self.passwd() + '@' + self.host() + ':' + str(
-                self.port()) + '/' + self._dbname)
-        Base = automap_base()
+        if try_again:
+            try:
+                pwd = self.ask_for_pwd()
+                self.server = SSHTunnelForwarder(
+                    ssh_address_or_host=(self._sshserv, self.sshport()),
+                    ssh_username=self._cred.user(),
+                    ssh_password=pwd,
+                    remote_bind_address=(self._host, self._port),
+                    allow_agent=True,
+                    local_bind_address=('127.0.0.1', 0)
+                )
+                self.server.start()
+            except Exception as e:
+                logger.error(f"Failed to configure tunnel with passwd: {e}")
+                logger.error(f"Exiting")
+                exit(1)
+                #raise RuntimeError("Failed to configure tunnel") from e
 
-        Base.prepare(engine, reflect=True)
-        self.sqlalchemysession = Session(engine,autoflush=False)
-        #self.sqlalchemysession.no_autoflush = True
-        inspection = inspect(engine)
-        for table in inspection.get_table_names():
-            # for table in engine.table_names(): #this is obsolete
-            self._tables[table] = getattr(Base.classes, table)
+        local_port = str(self.server.local_bind_port)
+        self._host = "127.0.0.1"
+        self._port = int(local_port)
+        logger.info(f"Tunnel established. Local port: {self.server.local_bind_port}")
 
-    def __del__(self):
-        # self.session.flush()
-        # self.session.close()
-        self.dbconnection.close()
-        # self.server.stop(force=True)
+    def ask_for_pwd(self):
+        # Prompt for password (does not show input on the screen)
+        pwd = getpass.getpass(f"Enter your SSH password for {self._cred.user()}: ").strip()
+        while not pwd:  # Ensure a password is entered
+            print("Password cannot be empty. Please try again.")
+            pwd = getpass.getpass("Enter your SSH password: ").strip()
+
+        # Return the gathered credentials
+        return pwd
 
     def connect(self):
         self.dbconnection = psycopg2.connect(
@@ -164,16 +222,33 @@ class Database:
     def tables(self):
         return self._tables
 
-    def select(self, query):
+    def select(self, query, params=None):
         try:
             self.connect()
-            cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.execute(query)
-            record = cursor.fetchall()
-            cursor.close()
+            with self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                cursor.execute(query, params)
+                return cursor.fetchall()
         except psycopg2.DatabaseError as e:
-            logger.error(f"Error {e}")
-        return record
+            logger.error(f"Database error: {e}")
+            raise RuntimeError("Failed to execute query") from e
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise RuntimeError("An unexpected error occurred") from e
+        finally:
+            if self.dbconnection:
+                self.dbconnection.close()
+
+    #def select(self, query):
+    #    record = None
+    #    try:
+    #        self.connect()
+    #        cursor = self.dbconnection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    #        cursor.execute(query)
+    #        record = cursor.fetchall()
+    #        cursor.close()
+    #    except psycopg2.DatabaseError as e:
+    #        logger.error(f"Error {e}")
+    #    return record
 
     def execute_sql(self, query):
         try:
@@ -223,41 +298,43 @@ class Database:
     # protocol - character varying - protocol name to access the server
     # id_repository - integer - id_repository
     def get_repos(self):
-        record = None
         # Intergogation using simple psycopg2 query to directly get a dict
         query = "select * from get_repos()"
         record = self.select(str(query))
         return record
 
     ## Search a file in DB.
-    # Search first file with provided filename. If not found, search file with original_name = filename
+    # Search files with provided filename. If not found, search file with original_name = filename
     # returns the filename and the different locations for it
     def SearchFile(self, filename):
         result = []
-        file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'],
-                                            self.tables()['repository']) \
-            .join(self.tables()['file_location'],
-                  self.tables()['file_location'].id_file == self.tables()['file'].id_file) \
-            .join(self.tables()['repository'],
-                  self.tables()['repository'].id_repository == self.tables()['file_location'].id_repository) \
-            .filter(self.tables()['file'].filename == filename) \
-            .order_by(self.tables()['repository'].id_repository) \
-            .all()
-
-        if len(file) == 0:
+        try:
             file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'],
                                                 self.tables()['repository']) \
                 .join(self.tables()['file_location'],
                       self.tables()['file_location'].id_file == self.tables()['file'].id_file) \
                 .join(self.tables()['repository'],
                       self.tables()['repository'].id_repository == self.tables()['file_location'].id_repository) \
-                .filter(self.tables()['file'].original_name == filename) \
+                .filter(or_(self.tables()['file'].filename == filename, self.tables()['file'].original_name == filename)) \
                 .order_by(self.tables()['repository'].id_repository) \
                 .all()
 
-        for record in file:
-            logger.debug(f"file {record.file.filename} found in repository {record.repository.repository} at path {record.file_location.path}")
-            result.append([record.file.filename, record.repository.repository, record.file_location.path, record.file.id_file])
+            # if len(file) == 0:
+            #     file = self.sqlalchemysession.query(self.tables()['file'], self.tables()['file_location'],
+            #                                         self.tables()['repository']) \
+            #         .join(self.tables()['file_location'],
+            #               self.tables()['file_location'].id_file == self.tables()['file'].id_file) \
+            #         .join(self.tables()['repository'],
+            #               self.tables()['repository'].id_repository == self.tables()['file_location'].id_repository) \
+            #         .filter(self.tables()['file'].original_name == filename) \
+            #         .order_by(self.tables()['repository'].id_repository) \
+            #         .all()
+
+            for record in file:
+                logger.debug(f"file {record.file.filename} found in repository {record.repository.repository} at path {record.file_location.path}")
+                result.append([record.file.filename, record.repository.repository, record.file_location.path, record.file.id_file])
+        except Exception as e:
+            logger.error(f"An error occurred during SearchFile execution: {e}")
         return result
 
     ## @brief For parameter <param> of value <value> in table <table> this function will check if the param is a foreign key and if yes it will
@@ -281,8 +358,7 @@ class Database:
     def get_or_create_key(self, table, field, value, description=""):
         idfk = None
         if value is not None and value != "":
-            filt = {}
-            filt[field] = str(casttodb(value))
+            filt = {field: str(casttodb(value))}
             ret = self.sqlalchemysession.query(getattr(self._tables[table], 'id_' + table)).filter_by(**filt).all()
             if len(ret) == 0:
                 filt['description'] = description
@@ -324,7 +400,7 @@ class Database:
 
     ## @brief Function to register (if necessary) a filename into the database.
     # It will first search if the file is already known in the DB and check the repository.
-    # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e it's a new file)
+    # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e. it's a new file)
     # and false if the file was already registered. This is usefull to know if the metadata of the file needs to be read
     # or not
     def register_filename(self, filename, newfilename, dataset, id_repository, provider, targetfile=None):
@@ -336,9 +412,7 @@ class Database:
             targetfile = newfilename
         if dataset is not None:
             id_dataset = self.get_or_create_key('dataset', 'dataset_name', os.path.basename(dataset))
-            filt = {}
-            filt['id_dataset'] = str(casttodb(id_dataset))
-            filt['id_repository'] = str(casttodb(id_repository))
+            filt = {'id_dataset': str(casttodb(id_dataset)), 'id_repository': str(casttodb(id_repository))}
             ret = self.sqlalchemysession.query(getattr(self._tables['dataset_location'], 'id_dataset')).filter_by(
                 **filt).all()
             if len(ret) == 0:
@@ -398,7 +472,7 @@ class Database:
     # It will first read the file and walk along datas to determine what has to be registered
     def register_filecontent(self, file, idfile, id_dataset):
         # We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
-        # Ugly but no other efficient way to do (checking in the DB before insertion is too time consuming).
+        # Ugly but no other efficient way to do (checking in the DB before insertion is too time-consuming).
         eventlist = []
         # ttrees will be a dict of trees to add. key is the tree name and value is a dict with all values for the tree.
         ttrees = {}
@@ -420,6 +494,7 @@ class Database:
                 metatree['id_file'] = idfile
                 for meta, field in rfile.metaToDB.items():
                     # try/except to avoid stopping when metadata is not present in root file
+                    value=None
                     try:
                         value = casttodb(getattr(rfile.TreeList[treename], meta))
                         if field.find('id_') >= 0:
@@ -433,8 +508,8 @@ class Database:
                             metatree['number_of_events'] = rfile.TreeList[treename].get_number_of_entries()
                         else:
                             metatree['number_of_events'] = 0
-                    except:
-                        logger.debug(f" Debug : error on meta {meta} field {field} value {value} ")
+                    except Exception as e:
+                        logger.debug(f" Debug : error on meta {meta} field {field} value {value} : {e}")
                         pass
                 # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
                 metatree['tree_name'] = treename
@@ -466,11 +541,11 @@ class Database:
                 if table is not None:
                     # Registering of events trees
                     if treetype in rfile.EventTrees:
-                        # For events we iterates over event_number and run_number
+                        # For events, we iterate over event_number and run_number
                         for event, run in rfile.TreeList[treename].get_list_of_events():
                             # NEED TO CHECK THAT INFOS NOT ALREADY PRESENT IN DB FROM ANOTHER FILE IN SAME DATASET
 
-                            if ((table != "events") or ([run, event] not in eventlist)):
+                            if (table != "events") or ([run, event] not in eventlist):
                                 if table == "events":
                                     eventlist.append([run, event])
 
@@ -521,7 +596,7 @@ class Database:
                         # print(container.id_treename)
                         # idtree = "id_"+treename
 
-                    # For runs we iterates over run_number
+                    # For runs, we iterate over run_number
                     elif treename in rfile.RunTrees:
                         for run in rfile.TreeList[treename].get_list_of_runs():
                             if run not in ttrees[treename]:
@@ -536,9 +611,9 @@ class Database:
                                         if field.startswith('id_'):
                                             value = self.get_or_create_fk(table, field, value)
                                         ttrees[treename][run][field] = value
-                                    except:
+                                    except Exception as e:
                                         logger.warning(
-                                            f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
+                                            f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__} : {e}")
                                 else:
                                     ttrees[treename][run]['id_file'] = idfile
                                     ttrees[treename][run]['tree_name'] = treename
@@ -595,17 +670,20 @@ class Database:
     def register_dataset(self, directory, id_repository, provider):
         # Open the datadir
         #datadir=grand.dataio.root_trees.DataDirectory(os.path.normpath(directory))
-        dataset=Dataset(os.path.normpath(directory))
-        self.register_dataset_name(dataset, id_repository)
-        self.register_dataset_content(dataset, id_repository,provider)
-        self.sqlalchemysession.commit()
+        if os.path.isdir(directory):
+            dataset=Dataset(os.path.normpath(directory))
+            self.register_dataset_name(dataset, id_repository)
+            self.register_dataset_content(dataset, id_repository,provider)
+            self.sqlalchemysession.commit()
+        else:
+            logger.error(f"{directory} is not a directory.")
 
 
     def register_dataset_name(self, dataset, id_repository):
         #Search if dataset already exists
         ret = self.sqlalchemysession.query(getattr(self._tables['dataset'], 'id_dataset')).filter_by(dataset_name=dataset.dataset_name).all()
         if len(ret)==0:
-            #Dataset does not exists. We create it
+            #Dataset does not exist. We create it
             container = self.tables()['dataset'](dataset_name=dataset.dataset_name, original_name=dataset.dataset_original_name,description=dataset.comment)
             self.sqlalchemysession.add(container)
             self.sqlalchemysession.flush()
@@ -616,9 +694,7 @@ class Database:
             dataset.id_dataset = int(ret[0][0])
 
         #Search if dataset registered in that repo
-        filt = {}
-        filt['id_dataset'] = str(casttodb(dataset.id_dataset))
-        filt['id_repository'] = str(casttodb(id_repository))
+        filt = {'id_dataset': str(casttodb(dataset.id_dataset)), 'id_repository': str(casttodb(id_repository))}
         ret = self.sqlalchemysession.query(getattr(self._tables['dataset_location'], 'id_dataset')).filter_by(**filt).all()
         # If dataset not registered in the repository then register it
         if len(ret) == 0:
@@ -648,7 +724,7 @@ class Database:
 
     ## @brief Function to register (if necessary) a filename in a dataset into the database.
     # It will first search if the file is already known in the DB and check the repository.
-    # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e it's a new file)
+    # Returns the id_file for the file and a boolean True if the file was not previously in the DB (i.e. it's a new file)
     # and false if the file was already registered. This is usefull to know if the metadata of the file needs to be read
     # or not
     def new_register_filename(self, filename, dataset, id_repository, provider):
@@ -677,7 +753,7 @@ class Database:
     # It will first read the file and walk along datas to determine what has to be registered
     def new_register_filecontent(self, file, idfile, dataset):
         # We store run_number-event_number list to avoid to record them twice in event table (and produce an error due to unicity).
-        # Ugly but no other efficient way to do (checking in the DB before insertion is too time consuming).
+        # Ugly but no other efficient way to do (checking in the DB before insertion is too time-consuming).
         eventlist = []
         # ttrees will be a dict of trees to add. key is the tree name and value is a dict with all values for the tree.
         ttrees = {}
@@ -723,11 +799,12 @@ class Database:
             # we first register meta info for all trees
             for meta, field in rfile.metaToDB.items():
                 # try/except to avoid stopping when metadata is not present in root file
+                value=None
                 try:
                     rawvalue = rfile.file.get_tree_info(treename)[meta]
                     # skip if datetime is not correct type
                     if (field == "source_datetime" or field == "creation_datetime") and type(rawvalue) is not datetime:
-                        logger.debug(f'value: {rawvalue} has wrong type {type(rawvalue)} for field {field}')
+                        logger.debug(f'value: {rawvalue} has wrong type {type(rawvalue)} for field {field}. Skip')
                         pass
                     else:
                         value = casttodb(rawvalue)
@@ -739,8 +816,8 @@ class Database:
                         metatree[field] = value
 
                     #metatree['tree_name'] = treename
-                except:
-                    logger.debug(f" Debug : error on meta {meta} field {field} value {value} ")
+                except Exception as e:
+                    logger.debug(f" Debug : error on meta {meta} field {field} value {value} : {e}")
                     pass
 
             # metatree['number_of_events'] = rfile.file.get_tree_info(treename)['evt_cnt']
@@ -758,19 +835,19 @@ class Database:
                 table = getattr(rfile, treetype + "ToDB").get('table')
                 # table = getattr(rfile, treetype + "ToDB")['table']
                 ttrees[treename] = {}
-                id_dataset = dataset.id_dataset
+                #id_dataset = dataset.id_dataset
                 st = time.time()
 
                 if table is not None:
                     # Registering of events trees
                     treeobject = rfile.get_tree(treename)
                     if treetype in rfile.EventTrees:
-                        # For events we iterates over event_number and run_number
+                        # For events, we iterate over event_number and run_number
                         #for event, run in rfile.TreeList[treename].get_list_of_events():
                         for event, run in treeobject.get_list_of_events():
                             # NEED TO CHECK THAT INFOS NOT ALREADY PRESENT IN DB FROM ANOTHER FILE IN SAME DATASET
 
-                            if ((table != "events") or ([run, event] not in eventlist)):
+                            if (table != "events") or ([run, event] not in eventlist):
                                 if table == "events":
                                     eventlist.append([run, event])
 
@@ -795,7 +872,7 @@ class Database:
 
 
 
-                    # For runs we iterates over run_number
+                    # For runs, we iterate over run_number
                     elif treename in rfile.RunTrees:
                         #for run in rfile.TreeList[treename].get_list_of_runs():
                         for run in treeobject.get_list_of_runs():
@@ -813,11 +890,11 @@ class Database:
                                         if field.startswith('id_'):
                                             value = self.get_or_create_fk(table, field, value)
                                         ttrees[treename][run][field] = value
-                                    except:
+                                    except Exception as e:
                                         #logger.warning(
                                         #    f"Error in getting {param} for {rfile.TreeList[treename].__class__.__name__}")
                                         logger.warning(
-                                            f"Error in getting {param} for {treeobject.__class__.__name__}")
+                                            f"Error in getting {param} for {treeobject.__class__.__name__}: {e}")
                                 else:
                                     ttrees[treename][run]['id_file'] = idfile
                                     ttrees[treename][run]['tree_name'] = treename
