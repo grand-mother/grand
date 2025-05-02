@@ -271,7 +271,6 @@ done
 # finally create a new DB with only the last files. We set the remote db name to ${tag}_${site}_dbfile.db
 dirdb=$(dirname $dbfile)
 dbname="${tag}_${site}_dbfile.db"
-
 sqlite3 $dbfile "vacuum main into '${dirdb}/${dbname}'"
 
 # no remotedatadir specified on rsync command line, as it's already the defined restricted directory in ccin2p3:~/.ssh/authorized_keys
