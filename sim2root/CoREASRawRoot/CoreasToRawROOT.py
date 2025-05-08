@@ -17,7 +17,6 @@ python3 CoreasToRawRoot <directory with Coreas Sim>
 
 for more info, refer to the readme
 """
-# TODO: add check for shift core vs shift array
 
 # add option parser to allow for reading either a single file or a full directory
 parser = OptionParser()
@@ -59,8 +58,7 @@ def CoreasToRawRoot(file, simID=None):
   print("Checking subdirectories for *.dat files (traces).")
   available_traces = glob.glob(f"{path}/SIM{simID}_coreas/*.dat")
   if len(available_traces) == 0:
-    print("No traces found. Please check path and try again.")
-    sys.exit()
+    sys.exit("No traces found. Please check path and try again.")
   else:
     print("Found", len(available_traces), "*.dat files (traces).")
      
@@ -83,7 +81,7 @@ def CoreasToRawRoot(file, simID=None):
     first_interaction = 1 # height of first interaction - in m
     print("[WARNING] Assuming first interaction at 1m.")
     hadr_interaction  = "Sibyll 2.3d"
-    coreas_version    = "Coreas V1.4"
+    coreas_version    = "1.4"
     print("Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4.")
   elif len(log_file) > 1:
     print("Found", log_file)
@@ -99,6 +97,10 @@ def CoreasToRawRoot(file, simID=None):
     first_interaction = read_first_interaction(log_file) / 100 # height of first interaction - in m
     hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
     coreas_version    = read_coreas_version(log_file)
+
+  corsika_version = read_corsika_version(inp_input)
+
+  
   print("*****************************************")
 
 
@@ -144,6 +146,14 @@ def CoreasToRawRoot(file, simID=None):
     FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10 ** (-1) # convert from Gauss to mT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
+
+    # calculate Xmax cartesian position
+    # set spherical system vector in m and radians
+    Xmax_sph = np.array([DistanceOfShowerMaximum, np.deg2rad(zenith), np.deg2rad(azimuth)])
+    # simply transform from spherical to cartesian to recover the cartesian position of Xmax
+    Xmax_NWU = np.array([Xmax_sph[0] * np.sin(Xmax_sph[1]) * np.cos(Xmax_sph[2]), \
+                         Xmax_sph[0] * np.sin(Xmax_sph[1]) * np.sin(Xmax_sph[2]), \
+                         Xmax_sph[0] * np.cos(Xmax_sph[1])])
 
   else:
     #theta_GRAND = theta_Corsika
@@ -285,7 +295,8 @@ def CoreasToRawRoot(file, simID=None):
 
   # ********** fill RawShower **********
   RawShower.run_number = EventID
-  RawShower.sim_name = coreas_version
+  RawShower.sim_name = str("Corsika")
+  RawShower.sim_version = str(corsika_version)
   RawShower.event_number = RunID
   RawShower.event_name = RunID
   RawShower.event_date = Date
@@ -339,6 +350,7 @@ def CoreasToRawRoot(file, simID=None):
   """
   RawShower.xmax_grams = Xmax
   RawShower.xmax_distance = DistanceOfShowerMaximum
+  RawShower.xmax_pos_shc = Xmax_NWU
 
   RawShower.long_pd_gamma = pd_gammas
   RawShower.long_pd_eminus = pd_electrons
@@ -440,6 +452,8 @@ def CoreasToRawRoot(file, simID=None):
 
   RawEfield.run_number = EventID
   RawEfield.event_number = RunID
+  RawEfield.sim_name = str("CoREAS")
+  RawEfield.sim_version = str(coreas_version)
 
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
@@ -536,28 +550,24 @@ def CoreasToRawRoot(file, simID=None):
   return RunID
 
 
-
 if __name__ == "__main__":
   # * # * # * # * # * # * # * # * # * # *
   # convert multiple showers in one directory
   if options.directory:
     path = f"{options.directory}/"
     # find reas files in directory
-    if glob.glob(path + "SIM??????.reas"):
-        available_reas_files = glob.glob(path + "SIM??????.reas")
-    else:
-        print("No showers found. Please check your input and try again.")
-        sys.exit()
+    available_reas_files = glob.glob(path + "SIM??????.reas")
+    if not available_reas_files:
+        sys.exit("Error: No showers found in the specified directory. Please check your input and try again.")
     
     # get simIDs from the found reas files
     for reas_file in available_reas_files:
         shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
         if shower_match:
             simID = shower_match.group(1)
-            print(f"run number: {simID}")
+            print(f"Run number: {simID}")
         else:
-            print(f"No simID found for {reas_file}. Please check your input and try again.")
-            sys.exit()
+            sys.exit(f"Error: No simID found for {reas_file}. Please check your input and try again.")
         CoreasToRawRoot(reas_file, simID)
 
   # * # * # * # * # * # * # * # * # * # *
@@ -569,12 +579,13 @@ if __name__ == "__main__":
     if shower_match:
       simID = shower_match.group(1)
     else:
-      print("Shower not found. Please check your input and try again.")
-      sys.exit()
+      sys.exit("Error: Shower not found in the specified file. Please check your input and try again.")
     # run the script
     CoreasToRawRoot(file, simID)
 
   # * # * # * # * # * # * # * # * # * # *
   # print help if options are not specified correctly
   else:
+    print("Error: No valid options specified. Please provide either a directory or a file to convert.")
     parser.print_help()
+    sys.exit()

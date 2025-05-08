@@ -32,8 +32,12 @@ from . import turtle
 from grand import grand_get_path_root_pkg
 
 logger = getLogger(__name__)
-# add protection against casting complex to real
-warnings.filterwarnings(action="error", category=np.ComplexWarning)
+# add protection against casting complex to real. Need to try due to numpy versions incompatibilities
+try:
+    warnings.filterwarnings(action="error", category=np.ComplexWarning)
+# After numpy 1.25. In principle the np.ComplexWarning should still be accessible, but in 2.2.5 it isn't
+except:
+    warnings.filterwarnings(action="error", category=np.exceptions.ComplexWarning)
 
 DATADIR: Final = grand_get_path_root_pkg() + "/data"  # for geoid_undulation egm96.png file.
 

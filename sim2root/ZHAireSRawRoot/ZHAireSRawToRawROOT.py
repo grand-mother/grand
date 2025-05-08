@@ -205,10 +205,10 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
        
         #These might be "run parameters"
         Lat,Long=AiresInfo.GetLatLongFromSry(sryfile[0])                                               # 
-        GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #
+        GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #Used
         GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])                                        #   
-        ShowerSimulator=AiresInfo.GetAiresVersionFromSry(sryfile[0])                                   # 
-        ShowerSimulator="Aires "+ShowerSimulator                                                       #
+        ShowerSimulatorVersion=AiresInfo.GetAiresVersionFromSry(sryfile[0])                            #Used 
+        ShowerSimulator="Aires"                                                                        #Used
   
         RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])                        #Used        
         GammaEnergyCut=AiresInfo.GetGammaEnergyCutFromSry(sryfile[0])                                  #Used
@@ -233,7 +233,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ############################################################################################################################
 
         RawShower.run_number = RunID
-        RawShower.sim_name = ShowerSimulator  
+        RawShower.sim_name = str(ShowerSimulator)
+        RawShower.sim_version = str(ShowerSimulatorVersion)          
         RawShower.event_number = EventID
         RawShower.event_name = EventName
         RawShower.event_date = Date
@@ -269,8 +270,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         RawShower.atmos_altitude.append(Atmosaltitude)
 
         RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
-        RawShower.xmax_grams = SlantXmax
-        RawShower.xmax_pos_shc = XmaxPosition
+        RawShower.xmax_grams = SlantXmax            
+        RawShower.xmax_pos_shc = [XmaxPosition[0],XmaxPosition[1],XmaxPosition[2]-GroundAltitude]
         RawShower.xmax_distance = XmaxDistance                 
         RawShower.xmax_alt = XmaxAltitude
         RawShower.hadronic_model = HadronicModel
@@ -289,6 +290,22 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         RawShower.lowe_cut_meson = MesonEnergyCut
         RawShower.lowe_cut_nucleon = NucleonEnergyCut              
 
+        #Here i will accumulate the electromagnetic energy. Note that I will estimate the electromagnetic energy in the cascade as:
+        # the sum of e+/e- energy deposit (table 7905)  (Eem_ion)
+        # the sum of the energy discarded from the sim in low energy e+/e- (table 7705) (Eem_cut)
+        # the sum of the energy discarded from the sim in low energy (table 7501) gammas (Egamma)
+        # the sum of the gamma energy deposit (table 7801) (for completeness...this table is usually empty)
+        # the amount of energy in e+/e- arriving at ground. (summed to Eem_cut)  
+        # the amount of energy in gammas arriving at ground. (summed to Egamma)
+        Eem=0
+        Egamma = 0
+        Eem_ion = 0
+        Eem_cut = 0
+        Ehadr_cut = 0
+        Ehadr_ion = 0
+        Emu_ion = 0
+        Emu_cut =0
+        Enu=0
         
         #METAZHAireS (I propose to pass this to a separate tree and section) @TODO: This is repeated in RawMeta, and should be only there.
         EventParametersFile= InputFolder+"/"+TaskName+".EventParameters"
@@ -338,16 +355,17 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         table=AiresInfo.GetLongitudinalTable(InputFolder,6796,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_ed_depth=np.array(table.T[0], dtype=np.float32) 
         RawShower.long_ed_neutrino=np.array(table.T[1], dtype=np.float32)
+        Enu=np.sum(RawShower.long_ed_neutrino)
 
         #In order to compute the calorimetric/invisible energy of the cascade we need the energy arriving at ground level.
         #In CORSIKA, this is stored at the last bin of the Cut tables so i add it as an extra line to the table.        
         table=AiresInfo.GetLongitudinalTable(InputFolder,7501,Slant=True,Precision="Simple",TaskName=TaskName)
         ground=AiresInfo.GetLongitudinalTable(InputFolder,5001,Slant=True,Precision="Simple",TaskName=TaskName)
         ground[0]=GroundDepth
-        table=np.vstack((table,ground))
-                                    
+        table=np.vstack((table,ground))                                    
         RawShower.long_ed_gamma_cut=np.array(table.T[1], dtype=np.float32)        
-
+        Egamma=np.sum(RawShower.long_ed_gamma_cut)
+        
         #In order to compute the calorimetric/invisible energy of the cascade we need the energy arriving at ground level.
         #In CORSIKA, this is stored at the last bin of the Cut tables so i add it as an extra line to the table.  
         table=AiresInfo.GetLongitudinalTable(InputFolder,7705,Slant=True,Precision="Simple",TaskName=TaskName)
@@ -355,6 +373,7 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ground[0]=GroundDepth
         table=np.vstack((table,ground))                                                          
         RawShower.long_ed_e_cut=np.array(table.T[1], dtype=np.float32)
+        Eem_cut=np.sum(RawShower.long_ed_e_cut)
 
         #In order to compute the calorimetric/invisible energy of the cascade we need the energy arriving at ground level.
         #In CORSIKA, this is stored at the last bin of the Cut tables so i add it as an extra line to the table.          
@@ -362,7 +381,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ground=AiresInfo.GetLongitudinalTable(InputFolder,5207,Slant=True,Precision="Simple",TaskName=TaskName)
         ground[0]=GroundDepth
         table=np.vstack((table,ground))                            
-        RawShower.long_ed_mu_cut=np.array(table.T[1], dtype=np.float32) 
+        RawShower.long_ed_mu_cut=np.array(table.T[1], dtype=np.float32)
+        Emu_cut=np.sum(RawShower.long_ed_mu_cut) 
                 
         ##I will add as hadr other cherged, other neutral (becouse aires for energy cut has fewer categories)
         #This means tables: 7591 and 7592
@@ -381,22 +401,39 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ground+=AiresInfo.GetLongitudinalTable(InputFolder,5213,Slant=True,Precision="Simple",TaskName=TaskName) #kaons
         ground[0]=GroundDepth
         table=np.vstack((table,ground))        
-        RawShower.long_ed_hadr_cut=np.array(table.T[1], dtype=np.float32)              
+        RawShower.long_ed_hadr_cut=np.array(table.T[1], dtype=np.float32)
+        Ehad_cut=np.sum(RawShower.long_ed_hadr_cut)              
                          
         table=AiresInfo.GetLongitudinalTable(InputFolder,7801,Slant=True,Precision="Simple",TaskName=TaskName)                      
-        RawShower.long_ed_gamma_ioniz=np.array(table.T[1], dtype=np.float32)        
+        RawShower.long_ed_gamma_ioniz=np.array(table.T[1], dtype=np.float32)
+        Egamma+=np.sum(RawShower.long_ed_gamma_ioniz)       
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,7905,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_ed_e_ioniz=np.array(table.T[1], dtype=np.float32) 
+        Eem_ioniz=np.sum(RawShower.long_ed_e_ioniz)
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,7907,Slant=True,Precision="Simple",TaskName=TaskName)                      
-        RawShower.long_ed_mu_ioniz=np.array(table.T[1], dtype=np.float32) 
+        RawShower.long_ed_mu_ioniz=np.array(table.T[1], dtype=np.float32)
+        Emu_ioniz=np.sum(RawShower.long_ed_mu_ioniz) 
 
         ##I will add as hadr other cherged, other neutral (becouse aires for energy cut has fewer categories)
         #This means tables: 7891 and 7892        
         table=AiresInfo.GetLongitudinalTable(InputFolder,7891,Slant=True,Precision="Simple",TaskName=TaskName)                      
         table=AiresInfo.GetLongitudinalTable(InputFolder,7892,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_ed_hadr_ioniz=np.array(table.T[1], dtype=np.float32) 
+        Ehad_ioniz=np.sum(RawShower.long_ed_hadr_ioniz)
+
+        ## 
+        # calculate electromagnetic shower energy and leave them in GeV
+        Eem = (Egamma + Eem_ioniz + Eem_cut) # in GeV
+
+        logging.debug("Electromagnetic shower energy:"+str(Eem) + " " + str(Eem/Energy))
+        logging.debug("       Hadronic shower energy:"+str(Ehad_cut+Ehad_ioniz) + " " + str((Ehad_cut+Ehad_ioniz)/Energy))
+        logging.debug("         Muonic shower energy:"+str(Emu_cut+Emu_ioniz) + " " + str((Emu_cut+Emu_ioniz)/Energy))        
+        logging.debug("       Neutrino shower energy:"+str(EnergyInNeutrinos) + " " + str(EnergyInNeutrinos/Energy))  
+        logging.debug("               Energy Balance:"+str(Eem+Ehad_cut+Ehad_ioniz+Emu_cut+Emu_ioniz+EnergyInNeutrinos) + " " + str((Eem+Ehad_cut+Ehad_ioniz+Emu_cut+Emu_ioniz+EnergyInNeutrinos)/Energy))  
+                
+        RawShower.energy_em=[Eem]   
               
         RawShower.fill()
         RawShower.write()
@@ -418,8 +455,8 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 	    #########################################################################################################################
         # Part I: get the information
         #########################################################################################################################  	
-        FieldSimulator=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])                                  #
-        FieldSimulator="ZHAireS "+FieldSimulator 
+        FieldSimulatorVersion=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])                                  #
+        FieldSimulator="ZHAireS"
         
         #Getting all the information i need for	RawEfield
         #
@@ -457,7 +494,9 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ############################################################################################################################ 
         #Populate what we can
 
-        RawEfield.efield_sim=FieldSimulator
+        RawEfield.sim_version=str(FieldSimulatorVersion)
+        RawEfield.sim_name=str(FieldSimulator)
+        RawEfield.site=str(Site)
               
         RawEfield.refractivity_model = RefractionIndexModel                                       
         RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
@@ -691,27 +730,14 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
 	##############################################################################################################################
 
     if(NLongitudinal):
-        #the gammas table
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteSlantDepth(HDF5handle, RunID, EventID, table.T[0])
-        SimShower.SimShowerWriteNgammas(HDF5handle, RunID, EventID, table.T[1])
-
         #the eplusminus table, in vertical, to store also the vertical depth
         table=AiresInfo.GetLongitudinalTable(InputFolder,1205,Slant=False,Precision="Simple",TaskName=TaskName)
         SimShower.SimShowerWriteVerticalDepth(HDF5handle, RunID, EventID, table.T[0])
         SimShower.SimShowerWriteNeplusminus(HDF5handle, RunID, EventID, table.T[1])
 
-        #the e plus (yes, the positrons)
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1006,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteNeplus(HDF5handle, RunID, EventID, table.T[1])
-
         #the mu plus mu minus
         table=AiresInfo.GetLongitudinalTable(InputFolder,1207,Slant=True,Precision="Simple",TaskName=TaskName)
         SimShower.SimShowerWriteNmuplusminus(HDF5handle, RunID, EventID, table.T[1])
-
-        #the mu plus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1007,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteNmuplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the pi plus pi munus
         table=AiresInfo.GetLongitudinalTable(InputFolder,1211,Slant=True,Precision="Simple",TaskName=TaskName)
@@ -721,9 +747,6 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         table=AiresInfo.GetLongitudinalTable(InputFolder,1011,Slant=True,Precision="Simple",TaskName=TaskName)
         SimShower.SimShowerWriteNpiplus(HDF5handle, RunID, EventID, table.T[1])
 
-        #and the all charged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1291,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteNallcharged(HDF5handle, RunID, EventID, table.T[1])
 
 	##############################################################################################################################
 	# Energy LONGITUDINAL TABLES (very important to veryfy the energy balance of the cascade, and to compute the invisible energy)
