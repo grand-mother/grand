@@ -436,6 +436,7 @@ def main():
             tdu_ids, tdu_xyzs, tdu_geoids = du_ids, du_xyzs, du_geoids
         # For other files, append du ids and pos to the ones already retrieved
         else:
+            # ToDo: POSSIBLE BUG! Maybe nonunique du_ids are added, as the du_ids already in the list are not checked (?)
             tdu_ids, tdu_xyzs, tdu_geoids = get_tree_du_id_xyz_geoid(trawefield, trawshower.shower_core_pos, gt.trun.origin_geoid)
             du_ids = np.append(du_ids, tdu_ids)
             du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
