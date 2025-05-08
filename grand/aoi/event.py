@@ -35,6 +35,9 @@ class Event:
     antennas: list = None
     """Antennas participating in the event"""
 
+    _all_antennas: dict = None
+    """All antennas in the run - a workaround for lack of antennas in GP300"""
+
     # voltages: list[Voltage] = None
     voltages: list = None
     """Voltages from different antennas"""
@@ -197,7 +200,6 @@ class Event:
     @directory.setter
     def directory(self, value):
         """A directory that contains all the files with TTrees"""
-
         # If the _file is not yet TFile, make it so
         if not isinstance(value, DataDirectory):
             self._directory = DataDirectory(value)
@@ -219,6 +221,10 @@ class Event:
         if self.directory.ftshower_l0:
             self.file_tsimshower = self.directory.ftshower_l0.f
             self.tsimshower = self.directory.tshower_l0
+        if self.directory.ftrawvoltages and not self.file_tvoltage:
+            self.file_tvoltage = self.directory.ftrawvoltage.f
+            self.tvoltage = self.directory.trawvoltage
+
 
 
     @property
@@ -231,7 +237,7 @@ class Event:
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True):
+    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True, gp300_workaround=True):
         """Fill this event from trees
         :param simshower: how to treat the TShower existing in the file, as sim values or reconstructed values
         :type simshower: bool
@@ -410,7 +416,7 @@ class Event:
                     # Make tsimshower really None
                     self.tsimshower = None
 
-        self.fill_antennas()
+        self.fill_antennas(gp300_workaround=True)
 
         # Set the event number and run number in somewhat ugly way - from the first non None tree
         for t in [self.tvoltage, self.tefield, self.tshower, self.tsimshower]:
@@ -459,24 +465,92 @@ class Event:
         return ret
 
     ## Fill event's antennas
-    def fill_antennas(self):
+    def fill_antennas(self, gp300_workaround=True):
         """Fill event's antennas"""
         self.antennas = []
 
-        # Fill the antenna part
-        if self.tefield is not None: event_dus_indices = self.tefield.get_dus_indices_in_run(self.trun)
-        elif self.tvoltage is not None: event_dus_indices = self.tvoltage.get_dus_indices_in_run(self.trun)
-        for i in range(len(event_dus_indices)):
-            a = Antenna()
-            ant_ind = int(event_dus_indices[i])
-            a.id = self.trun.du_id[ant_ind]
-            a.position.x = self.trun.du_xyz[ant_ind][0]
-            a.position.y = self.trun.du_xyz[ant_ind][1]
-            a.position.z = self.trun.du_xyz[ant_ind][2]
-            a.tilt.x = self.trun.du_tilt[ant_ind][0]
-            a.tilt.y = self.trun.du_tilt[ant_ind][1]
+        # For GP300 for now, get the GPS coordinates for each DU and calculate the x/y/z here
+        if gp300_workaround and "GP300" in self.site or "GP80" in self.site:
+            # If
+            if not self._all_antennas:
+                print("GP300 workaround: calculating all antennas positions")
+                from grand import ECEF, Geodetic, GRANDCS
+                # Get the tree we are using
+                cur_tree = None
+                if self.tefield is not None: cur_tree = self.tefield
+                elif self.tvoltage is not None: cur_tree = self.tvoltage
+                else:
+                    raise "Can't calculate antennas positions"
+                # Get the coordinates for all DUs from all events
+                count = cur_tree.draw("du_id:gps_lat:gps_long:gps_alt", "", "goff")
+                if count == -1:
+                    raise "Can't get antenna positions from the ROOT file"
 
-            self.antennas.append(a)
+                du_ids = np.array(np.frombuffer(cur_tree.get_v1(), dtype=np.float64, count=count)).astype(np.int32)
+                du_lats = np.array(np.frombuffer(cur_tree.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
+                du_lons = np.array(np.frombuffer(cur_tree.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
+                du_alts = np.array(np.frombuffer(cur_tree.get_v4(), dtype=np.float64, count=count)).astype(np.float32)
+
+                # Get indices of the unique du_ids
+                # ToDo: sort?
+                unique_dus_idx = np.unique(du_ids, return_index=True)[1]
+                # Leave only the unique du_ids
+                du_ids = du_ids[unique_dus_idx]
+                du_lats = du_lats[unique_dus_idx]
+                du_lons = du_lons[unique_dus_idx]
+                du_alts = du_alts[unique_dus_idx]
+
+                # Get lat/lon/alt from xyz
+                origin = Geodetic(latitude=40.95068711, longitude=93.96977396, height=1200)
+
+                geod_ant = Geodetic(latitude=du_lats, longitude=du_lons, height=du_alts)
+                grandcs  = GRANDCS(geod_ant, location=origin)
+
+                self._all_antennas = {}
+
+                for i in range(len(du_ids)):
+                    a = Antenna()
+                    a.id = du_ids[i]
+                    a.position.x = grandcs[0,i]
+                    a.position.y = grandcs[1,i]
+                    a.position.z = grandcs[2,i]
+                    a.tilt.x = 0
+                    a.tilt.y = 0
+
+                    self._all_antennas[a.id] = a
+
+
+            # Fill the antenna part
+            if self.tefield is not None: event_dus = self.tefield.du_id
+            elif self.tvoltage is not None: event_dus = self.tvoltage.du_id
+            for du_id in event_dus:
+                a = Antenna()
+                a.id = du_id
+                print(du_id)
+                a.position.x = self._all_antennas[du_id].position.x
+                a.position.y = self._all_antennas[du_id].position.y
+                a.position.z = self._all_antennas[du_id].position.z
+                a.tilt.x = self._all_antennas[du_id].tilt.x
+                a.tilt.y = self._all_antennas[du_id].tilt.y
+
+                self.antennas.append(a)
+
+
+        else:
+            # Fill the antenna part
+            if self.tefield is not None: event_dus_indices = self.tefield.get_dus_indices_in_run(self.trun)
+            elif self.tvoltage is not None: event_dus_indices = self.tvoltage.get_dus_indices_in_run(self.trun)
+            for i in range(len(event_dus_indices)):
+                a = Antenna()
+                ant_ind = int(event_dus_indices[i])
+                a.id = self.trun.du_id[ant_ind]
+                a.position.x = self.trun.du_xyz[ant_ind][0]
+                a.position.y = self.trun.du_xyz[ant_ind][1]
+                a.position.z = self.trun.du_xyz[ant_ind][2]
+                a.tilt.x = self.trun.du_tilt[ant_ind][0]
+                a.tilt.y = self.trun.du_tilt[ant_ind][1]
+
+                self.antennas.append(a)
 
 
     ## Fill part of the event from the Voltage tree
