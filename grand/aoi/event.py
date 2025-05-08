@@ -471,16 +471,21 @@ class Event:
 
         # For GP300 for now, get the GPS coordinates for each DU and calculate the x/y/z here
         if gp300_workaround and "GP300" in self.site or "GP80" in self.site:
-            # If
+
+            # Get the tree we are using
+            cur_tree = None
+            if self.tefield is not None:
+                cur_tree = self.tefield
+            elif self.tvoltage is not None:
+                cur_tree = self.tvoltage
+            else:
+                raise "Can't calculate antennas positions"
+
+            # If this is the first time we calculate antennas positions
             if not self._all_antennas:
                 print("GP300 workaround: calculating all antennas positions")
                 from grand import ECEF, Geodetic, GRANDCS
-                # Get the tree we are using
-                cur_tree = None
-                if self.tefield is not None: cur_tree = self.tefield
-                elif self.tvoltage is not None: cur_tree = self.tvoltage
-                else:
-                    raise "Can't calculate antennas positions"
+
                 # Get the coordinates for all DUs from all events
                 count = cur_tree.draw("du_id:gps_lat:gps_long:gps_alt", "", "goff")
                 if count == -1:
@@ -521,8 +526,14 @@ class Event:
 
 
             # Fill the antenna part
-            if self.tefield is not None: event_dus = self.tefield.du_id
-            elif self.tvoltage is not None: event_dus = self.tvoltage.du_id
+            event_dus = cur_tree.du_id
+            if self._entry_number is not None:
+                # ToDo: Handle ret
+                ret = cur_tree.get_entry(self._entry_number)
+            else:
+                # ToDo: Handle ret
+                ret = cur_tree.get_event(self.event_number, self.run_number)
+
             for du_id in event_dus:
                 a = Antenna()
                 a.id = du_id
@@ -581,6 +592,7 @@ class Event:
             else:
                 tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
             v.n_points = len(tx)
+            # ToDo: That's the trigger time for now, and should be the start time of the trace
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
             v.t_bin_size = self._t_bin_size
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
@@ -597,6 +609,8 @@ class Event:
             v.calculate_t_vector(min_t0)
 
             v.du_id = self.tvoltage.du_id[i]
+
+            v.trigger_time = np.datetime64(self.tvoltage.du_seconds[i] * 1000000000 + self.tvoltage.du_nanoseconds[i], "ns")
 
             self.voltages.append(v)
 
