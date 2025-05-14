@@ -10,7 +10,11 @@ irods_path='/grand/home/trirods/data/archives/'
 representation="/representations/representation1/data"
 # The former script to create archive needed java 8 (some used libs are not available in java versions > 8) but is now corrected
 javabin='/usr/lib/jvm/jre-1.8.0-openjdk/bin/java'
+
 #javabin='java'
+SCRIPT_PATH=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+echo "Script in ${SCRIPT_PATH}"
+cd $SCRIPT_PATH
 
 delay=""
 
@@ -52,7 +56,8 @@ do
 	fileslist=${archive_root_dir}/${site}/list_files_${site}.${date}
 	sourcedir=${datadir}/${site}/raw/${dir}/
 	parentdir=$(dirname "$sourcedir")
-
+  createAIP=${SCRIPT_PATH}/createAIP.jar
+  config_file=${SCRIPT_PATH}/config.properties.${site}
 	flagarchived="ARCHIVED"
 
 	#Check not yet archived
@@ -87,8 +92,8 @@ do
     echo "Archiving $month $year for $site" >> ${logfile}
   fi
   # Create the archive
-  echo "$javabin -jar createAIP.jar --configfile=config.properties.${site} --listobjects=${fileslist} -i ${outfile} >> ${logfile} 2>&1"
-  $javabin -jar createAIP.jar --configfile=config.properties.${site} --listobjects=${fileslist} -i ${outfile} >> ${logfile} 2>&1
+  echo "$javabin -jar ${createAIP} --configfile=${config_file} --listobjects=${fileslist} -i ${outfile} >> ${logfile} 2>&1"
+  $javabin -jar ${createAIP} --configfile=${config_file} --listobjects=${fileslist} -i ${outfile} >> ${logfile} 2>&1
   createaip_status=$?
 
   if [ "$createaip_status" -eq 0 ]; then
