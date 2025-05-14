@@ -23,7 +23,7 @@ import os
 import time
 import argparse
 import logging
-
+import psutil
 import numpy as np
 # import matplotlib.pyplot as plt
 
@@ -219,6 +219,9 @@ def manage_args():
 
 if __name__ == '__main__':
     logger = manage_log.get_logger_for_script(__file__)
+    pid = os.getpid()
+    process = psutil.Process(pid)    
+    
 
     #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
@@ -253,7 +256,8 @@ if __name__ == '__main__':
         tvoltage = df_input_file.tvoltage
         entries = tvoltage.get_number_of_entries()
 
-        logger.info(f'Converting voltage traces from {f_input_file} to ADC traces')
+        logger.info(f'Converting {entries} voltage traces from {f_input_file} to ADC traces')
+        print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
 
         if args.out_file is None:
             # Replace only first occurrences
@@ -279,6 +283,7 @@ if __name__ == '__main__':
         #-#-#- Perform the conversion for all entries in TVoltage file -#-#-#
         for entry in range(entries):
             logger.info(f'Converting voltage to ADC for entry {entry+1}/{entries}')
+            print(f"Entry Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")            
             tvoltage.get_entry(entry)
             voltage_trace = np.array(tvoltage.trace)
 
