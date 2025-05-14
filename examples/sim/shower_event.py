@@ -1,9 +1,6 @@
-#from grand import LTP, CartesianRepresentation
-#from grand import grand_add_path_data
-#from grand import AntennaModel, AntennaProcessing, ShowerEvent
-#import grand.dataio.root_trees as groot
-from grand.sim.detector.process_ant import AntennaProcessing
-from grand.sim.shower.gen_shower import ShowerEvent
+from grand import LTP, CartesianRepresentation
+from grand import grand_add_path_data
+from grand import AntennaModel, AntennaProcessing, ShowerEvent
 import grand.dataio as groot
 from grand.basis.type_trace import ElectricField
 

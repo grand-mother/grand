@@ -238,6 +238,8 @@ if __name__ == '__main__':
     logger.info( manage_log.string_begin_script() )
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
+    logger.info(f'Converting voltage traces from {f_input_file} to ADC traces')
+
     #-#-#- Load TVoltage -#-#-#
     df       = grand.dataio.DataDirectory(f_input_dir)
     tvoltage = df.tvoltage
