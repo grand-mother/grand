@@ -30,7 +30,7 @@ event_list = tefield.get_list_of_events()
 # Work on the first event
 event_number, run_number = event_list[0][0], event_list[0][1]
 tefield.get_event(event_number, run_number)
-tshower.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
+tshower.get_event(event_number, run_number)           # update shower info (theta, phi, xmax etc.) for event with event_idx.
 trun.get_run(run_number)
 # get shower info
 shower.origin_geoid  = trun.origin_geoid  # [lat, lon, height]

@@ -11,8 +11,8 @@ from pathlib import Path
 
 from grand import ShowerEvent
 from grand import grand_get_path_root_pkg
-import grand.dataio as groot
 from grand import GRANDCS, LTP
+import grand.dataio as groot
 
 class ShowerTest(TestCase):
     """Unit tests for the shower module"""
