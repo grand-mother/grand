@@ -509,6 +509,8 @@ def CoreasToRawRoot(file, simID=None):
 
     # Antenna positions in showers's referential in [m]
     ant_position_x, ant_position_y, ant_position_z = get_antenna_position(pathAntennaList, antenna)
+    # shift antenna z coordinate to array level
+    ant_position_z = ant_position_z - altitude
     RawEfield.du_x.append(ant_position_x.astype(float))
     RawEfield.du_y.append(ant_position_y.astype(float))
     RawEfield.du_z.append(ant_position_z.astype(float))
