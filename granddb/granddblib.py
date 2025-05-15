@@ -96,6 +96,17 @@ class Database:
 
         if self._sshserv and self._cred is not None:
             self.configure_ssh_tunnel("key")
+            #self.server = SSHTunnelForwarder(
+            #    (self._sshserv, self.sshport()),
+            #    ssh_username=self._cred.user(),
+            #    ssh_pkey=self._cred.keyfile(),
+            #    remote_bind_address=(self._host, self._port),
+            #    allow_agent=True
+            #)
+            #self.server.start()
+            #local_port = str(self.server.local_bind_port)
+            #self._host = "127.0.0.1"
+            #self._port = int(local_port)
         
         self.initialize_engine()
 
@@ -122,8 +133,8 @@ class Database:
     def close(self):
         if self.dbconnection:
             self.dbconnection.close()
-        if self.sqlalchemysession:
-            self.sqlalchemysession.close()
+        #if self.sqlalchemysession:
+        #    self.sqlalchemysession.close()
         #if self.server:
         #    self.server.stop(force=True)
 

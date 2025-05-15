@@ -141,9 +141,9 @@ def read_HADRONIC_INTERACTION(log_file):
             if "S I B Y L L  2.3d" in line:
                 hadr_interaction = "Sibyll 2.3d"
                 print("hadronic interaction model =", hadr_interaction)
+                return str(hadr_interaction)
             else:
                 hadr_interaction = "n/a"
-                print("hadronic interaction model =", hadr_interaction)
     return str(hadr_interaction)
 
 
@@ -152,12 +152,31 @@ def read_coreas_version(log_file):
     with open(log_file, mode="r") as datafile:
         for line in datafile:
             if "CoREAS V1.4" in line:
-                coreas_version = "CoREAS V1.4"
+                coreas_version = "1.4" 
                 print("CoREAS version =", coreas_version)
+                return str(coreas_version)
             else:
                 coreas_version = "n/a"
-                print("CoREAS version =", coreas_version)
     return str(coreas_version)
+
+
+def read_corsika_version(inp_file):
+    corsika_version = "n/a"
+    pattern = r"corsika-(\d+)"  # regex pattern to match 'corsika-' followed by the version digits
+
+    with open(inp_file, mode="r") as datafile:
+        for line in datafile:
+            match = re.search(pattern, line)
+            if match:
+                corsika_version = f"{match.group(1)[:1]}.{match.group(1)[1:]}"  # Format version
+                print("Corsika version =", corsika_version)
+                return corsika_version
+            elif "corsika7" in line or "corsika-7" in line:
+                corsika_version = "7.X"
+                print("Corsika version =", corsika_version)
+                return corsika_version
+
+    return corsika_version
 
 
 

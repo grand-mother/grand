@@ -3,10 +3,8 @@ TEMPLATE WITH LOGGER INITIALISED
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 import grand.manage_log as mlg
-import grand.num.signal as gsig
 
 # specific logger definition for script because __mane__ is "__main__" !
 logger = mlg.get_logger_for_script(__file__)

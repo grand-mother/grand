@@ -1,26 +1,13 @@
 #! /usr/bin/env python
-from grand.geo import geomagnet, topography
-from grand.geo.geomagnet import Geomagnet
-#from grand import (
-#    Coordinates,
-#    CartesianRepresentation,
-#    SphericalRepresentation,
-#    GeodeticRepresentation,
-#    topography,
-#)
-from grand.geo.coordinates import (
+from grand import (
     Coordinates,
     CartesianRepresentation,
     SphericalRepresentation,
     GeodeticRepresentation,
-    ECEF,
-    Geodetic,
-    GRANDCS,
-    LTP
+    topography,
 )
-
-#from grand import ECEF, Geodetic, GRANDCS, LTP
-#from grand import Geomagnet
+from grand import ECEF, Geodetic, GRANDCS, LTP
+from grand import Geomagnet
 from grids import (
     create_grid_univ,
 )  # GRAND_tools rep https://github.com/kumikokotera/GRAND_tools. Add GRAND_tools/grid_shape rep to PYTHONPATH

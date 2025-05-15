@@ -8,12 +8,7 @@ import os.path as osp
 import numpy as np
 from matplotlib import pyplot as plt
 
-#from grand import Geodetic, LTP, GRANDCS
-from grand.geo.coordinates import (
-    Geodetic,
-    GRANDCS,
-    LTP
-)
+from grand import Geodetic, LTP, GRANDCS
 from grand.simu.du.process_ant import AntennaProcessing
 from grand.simu.shower.gen_shower import ShowerEvent
 from grand.io.file_leff import TabulatedAntennaModel
