@@ -1,15 +1,18 @@
 #!/bin/bash -l
-
-# path to gtot
+#gtot_path='/sps/grand/prod_grand/DB_TESTS/gtot/cmake-build-release/gtot'
 gtot_path='/pbs/home/p/prod_grand/softs/gtot/cmake-build-release/gtot'
-# path to script to register convertion results
-register_convertion='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_convert.py'
-# path to script to register root file into the DB
-register_root='/pbs/home/p/prod_grand/softs/grand/granddb/register_file_in_db.py'
-config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
+script_path="$(readlink -f "${BASH_SOURCE[0]}")"
+script_dir=$(dirname $script_path)
+grand_dir=${script_dir%/scripts/transfers}
+register_convertion="${grand_dir}/scripts/transfers/register_convert.py"
+register_root="${grand_dir}/granddb/register_file_in_db.py"
+register_dir="${grand_dir}/granddb/register_dir_in_db.py"
+config_file="${grand_dir}/granddb/config.ini"
 sps_path='/sps/grand/'
 irods_path='/grand/home/trirods/'
 submit_base_name=''
+
+
 # Get tag and database file to use
 while getopts ":d:g:n:" option; do
   case $option in
@@ -30,24 +33,13 @@ done
 
 shift $(($OPTIND - 1))
 
-#export PLATFORM=redhat-9-x86_64
-cd /pbs/home/p/prod_grand/softs/grand
+cd ${grand_dir}/
 source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
-
-
-#Export some env to make irods works
-#export LOADEDMODULES=DataManagement/irods/4.3.1
-#export TRIRODS_DATA_DIR=/grand/home/trirods/data
-#export BASH_ENV=/usr/share/Modules/init/bash
-#export LD_LIBRARY_PATH=/pbs/throng/grand/soft/lib/:/pbs/software/redhat-9-x86_64/irods/4.3.1/lib:/pbs/software/redhat-9-x86_64/irods/irods-externals/4.3.1/lib
-#export PATH=/pbs/throng/grand/soft/miniconda3/condabin:/pbs/throng/grand/soft/bin/:/pbs/throng/grand/bin/:/opt/software/rfio-hpss/prod/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/opt/ccin2p3/bin:/pbs/software/redhat-9-x86_64/irods/utils:/pbs/software/redhat-9-x86_64/irods/4.3.1/bin:.
-#export _LMFILES_=/pbs/software/modulefiles/redhat-9-x86_64/DataManagement/irods/4.3.1
-#export IRODS_PLUGINS_HOME=/pbs/software/redhat-9-x86_64/irods/4.3.1/lib/plugins
-#export MODULEPATH=/etc/scl/modulefiles:/pbs/software/modulefiles/redhat-9-x86_64:/etc/modulefiles
 conda activate /sps/grand/software/conda/grandlib_2409
 source env/setup.sh
-cd /pbs/home/p/prod_grand/softs/grand/scripts/transfers
+cd ${grand_dir}/scripts/transfers
 export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
+
 
 notify=0
 for file in "$@"
@@ -96,68 +88,96 @@ do
         #conv_status=$?
         # We need to get the name of the directory created in case of new structure. So we extract it from the output and use tee to send the whole output both to log and stdout
         # in case of old structure, outdest is empty and in case of new structure it contains the directory path
-        outdest=$(${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
+        echo "RUN ${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep \"Creating directory\" |  awk '{print $NF}'"
+        outdest=$(${gtot_path}  ${gtot_extra_option} ${out_opt} -i ${file} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
+        #outdest=$(${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
         # Status of conv is the output of the gtot command (so the first pipe)
         conv_status=${PIPESTATUS[0]}
         ;;
       *)
+        gtot_extra_option=${gtot_options}
         #${gtot_path} ${gtot_options} -i ${file} -o ${dest}/${filename%.*}.root >> ${logfile}
         #${gtot_path} ${gtot_options} -i ${file}  ${out_opt}>> ${logfile}
         #conv_status=$?
         # We need to get the name of the directory created in case of new structure. So we extract it from the output and use tee to send the whole output both to log and stdout
-        outdest=(${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
+        echo "RUN ${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep \"Creating directory\" |  awk '{print $NF}'"
+        outdest=$(${gtot_path}  ${gtot_extra_option} ${out_opt} -i ${file}  |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
+        #outdest=(${gtot_path}  ${gtot_extra_option} -i ${file} ${out_opt} |tee -a ${logfile} |grep "Creating directory" |  awk '{print $NF}')
         # Status of conv is the output of the gtot command (so the first pipe)
         conv_status=${PIPESTATUS[0]}
         ;;
     esac
 
 
-    if [ "$conv_status" -ne 0 ]; then
+
+    if [ "$conv_status" -ne 0 ] || ([ -z "${outdest//[[:space:]]/}" ] && [ "$out_is_dir" = "true" ]) ; then
       notify=1
       echo "Error ${conv_status} in conversion."  |& tee -a ${logfile}
       outstatus=$conv_status
-    fi
-
-    if [ "$out_is_dir" = "true" ] ; then
-      irods_option='-r '
-      sfile=$outdest
     else
-       irods_option='-f '
-       sfile=${dest}/${filename%.*}.root
-    fi
-    # Put GrandRoot file into irods
 
-    #sfile=${dest}/${filename%.*}.root
-    ifile=${sfile/$sps_path/$irods_path}
-    ipath=${ifile%/*}
-    echo "imkdir -p $ipath" >> ${logfile}
-    imkdir -p $ipath >> ${logfile} 2>&1
-    echo "iput $irods_option $sfile $ifile" >> ${logfile}
-    iput $irods_option $sfile $ifile >> ${logfile} 2>&1
-    iput_status=$?
+      if [ "$out_is_dir" = "true" ] ; then
+        irods_option='-rf '
+        sfile=$outdest
+
+      else
+         irods_option='-f '
+         sfile=${dest}/${filename%.*}.root
+      fi
+      # Put GrandRoot file into irods
+
+      #sfile=${dest}/${filename%.*}.root
+      ifile=${sfile/$sps_path/$irods_path}
+      ipath=${ifile%/*}
+      echo "imkdir -p $ipath" >> ${logfile}
+      imkdir -p $ipath >> ${logfile} 2>&1
+      echo "iput $irods_option $sfile $ipath" >> ${logfile}
+      iput $irods_option $sfile $ipath >> ${logfile} 2>&1
+      iput_status=$?
 
 
-    if [ "$iput_status" -ne 0 ]; then
-      notify=1
-      echo "Error ${iput_status} in iput"  |& tee -a ${logfile}
-      outstatus=$iput_status
-    fi
-    # Register conversion result into the database
-    echo "Register convertion" >> ${logfile}
-    echo "Run ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}"  |& tee -a ${logfile}
-    python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
-    # Register root file into db
-    if [ $tr != "TR" ]; then
-      echo "register file ${dest}/${filename%.*}.root in database" >> ${logfile}
-      echo "Run python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root " |& tee -a ${logfile}
-      python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
-      register_status=$?
-      if [ "$register_status" -ne 0 ]; then
+      if [ "$iput_status" -ne 0 ]; then
         notify=1
-        echo "Error ${register_status} in registration" |& tee -a ${logfile}
-        outstatus=$register_status
+        echo "Error ${iput_status} in iput"  |& tee -a ${logfile}
+        outstatus=$iput_status
+      fi
+      # Register conversion result into the database
+      echo "Register convertion" >> ${logfile}
+      echo "Run ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}"  |& tee -a ${logfile}
+      python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
+
+      # Register root file into db
+      if [ $tr != "TR" ]; then
+          if [ "$out_is_dir" = "true" ] ; then
+                  echo "register directory ${sfile} in database" >> ${logfile}
+                  echo "Run python3 ${register_dir} -c ${config_file} -r "CCIN2P3" ${sfile} " |& tee -a ${logfile}
+                  python3 ${register_dir} -c ${config_file} -r "CCIN2P3" ${sfile} >> ${logfile} 2>&1
+          else
+                  echo "register file ${sfile} in database" >> ${logfile}
+                  echo "Run python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${sfile} " |& tee -a ${logfile}
+                  python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${sfile} >> ${logfile} 2>&1
+          fi
+          register_status=$?
+          if [ "$register_status" -ne 0 ]; then
+                  notify=1
+                  echo "Error ${register_status} in registration" |& tee -a ${logfile}
+                  outstatus=$register_status
+          fi
+
       fi
     fi
+#    if [ $tr != "TR" ]; then
+#      echo "register file ${dest}/${filename%.*}.root in database" >> ${logfile}
+#      echo "Run python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root " |& tee -a ${logfile}
+#      python3 ${register_root} -c ${config_file} -r "CCIN2P3" ${dest}/${filename%.*}.root >> ${logfile} 2>&1
+#      register_status=$?
+#      if [ "$register_status" -ne 0 ]; then
+#        notify=1
+#        echo "Error ${register_status} in registration" |& tee -a ${logfile}
+#        outstatus=$register_status
+#      fi
+#    fi
+
   fi
 done
 
