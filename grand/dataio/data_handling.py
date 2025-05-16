@@ -35,20 +35,22 @@ class DataDirectory:
         # Get the file handle list
         self.file_handle_list = self.get_list_of_files_handles()
 
-        # Set the structure type depending on the dir name
-        exp_structure = False
-        if os.path.basename(dir_name)[:4]=="sim_":
-            sim2root_structure = True
-        elif os.path.basename(dir_name)[:4]=="exp_":
-            sim2root_structure = False
-            exp_structure = True
+        self.init_structure()
 
-        if sim2root_structure:
-            self.init_sim2root_structure()
-        elif exp_structure:
-            self.init_exp_structure()
-        else:
-            logger.warning("Sorry, non exp or sim2root directories are not supported yet")
+        # # Set the structure type depending on the dir name
+        # exp_structure = False
+        # if os.path.basename(dir_name)[:4]=="sim_":
+        #     sim2root_structure = True
+        # elif os.path.basename(dir_name)[:4]=="exp_":
+        #     sim2root_structure = False
+        #     exp_structure = True
+        #
+        # if sim2root_structure:
+        #     self.init_sim2root_structure()
+        # elif exp_structure:
+        #     self.init_exp_structure()
+        # else:
+        #     logger.warning("Sorry, non exp or sim2root directories are not supported yet")
 
     def __getattr__(self, name):
         """For non-existing tree files or tree parameters, return None instead of rising an exception"""
@@ -80,12 +82,35 @@ class DataDirectory:
         return file_handle_list
 
     # Init the instance with sim2root structure files
+    def init_structure(self):
+        self.file_attrs = []
+        # Loop through groups of files with tree types expected in the directory
+        for flistname in ["ftruns", "ftrunrawvoltages", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
+            # Assign the list of files with specific tree type to the class instance
+            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            max_level = -1
+            for (l, f) in getattr(self, flistname).items():
+                # Assign the file with the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[:-1]}_l{l}", f)
+                self.file_attrs.append(f"{flistname[:-1]}_l{l}")
+                # Assign the tree with the specific analysis level to the class instance
+                setattr(self, f"{flistname[1:-1]}_l{l}", getattr(f, f"{flistname[1:-1]}_l{l}"))
+                if (l>max_level and self.analysis_level==-1) or l==self.analysis_level:
+                    max_level = l
+                    # Assign the file with the highest or requested analysis level as default to the class instance
+                    # ToDo: This may assign all files until it goes to the max level. Probably could be avoided
+                    setattr(self, f"{flistname[:-1]}", f)
+                    # Assign the tree with the highest or requested analysis level as default to the class instance
+                    setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
+
+    # Init the instance with sim2root structure files
     def init_sim2root_structure(self):
         self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
         for flistname in ["ftruns", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
             # Assign the list of files with specific tree type to the class instance
-            setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            # setattr(self, flistname, {int(Path(el.filename).name.split("_")[2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+            setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
