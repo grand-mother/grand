@@ -183,38 +183,33 @@ class DataDirectory:
 class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
 
-    ## Holds all the trees in the file, by tree name
-    dict_of_trees = {}
-    """Holds all the trees in the file, by tree name"""
-    ## Holds the list of trees in the file, but just with maximal level
-    list_of_trees = []
-    """Holds the list of trees in the file, but just with maximal level"""
-    ## Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
-    tree_types = defaultdict(dict)
-    """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
-
-    ## List of tree instances
-    tree_instances = []
-    """List of tree instances"""
-
-    ## Does this instace hold a chain of files
-    is_tchain = False
-    """Does this instace hold a chain of files"""
-
-    ## File list in case this is a chain
-    flist = []
-    """File list in case this is a chain"""
-
-
     def __init__(self, filename):
         """filename can be either a string or a ROOT.TFile"""
 
         # Need to init here, so that different instances do not share the same data
+        ## Holds all the trees in the file, by tree name
         self.dict_of_trees = {}
+        """Holds all the trees in the file, by tree name"""
+
+        ## Holds the list of trees in the file, but just with maximal level
         self.list_of_trees = []
+        """Holds the list of trees in the file, but just with maximal level"""
+
+        ## List of tree instances
+        self.tree_instances = []
+        """List of tree instances"""
+
+        ## Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
         self.tree_types = defaultdict(dict)
+        """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
+
+        ## Does this instace hold a chain of files
         self.is_tchain = False
+        """Does this instace hold a chain of files"""
+
+        ## File list in case this is a chain
         self.flist = []
+        """File list in case this is a chain"""
 
         # If a string given, open the file
         if type(filename) is str:
