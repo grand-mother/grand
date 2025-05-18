@@ -19,6 +19,8 @@ cpp_to_array_typecodes = {'char': 'b', 'short': 'h', 'int': 'i', 'long long': 'q
 cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 'int': np.dtype('int32'), 'long long': np.dtype('int64'), 'unsigned char': np.dtype('uint8'), 'unsigned short': np.dtype('uint16'), 'unsigned int': np.dtype('uint32'), 'unsigned long long': np.dtype('uint64'), 'float': np.dtype('float32'), 'double': np.dtype('float64'), 'string': np.dtype('U')}
 
 
+high_root_version = ROOT.gROOT.GetVersionInt()>=63600
+
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
     from collections import MutableSequence
@@ -70,6 +72,9 @@ class StdVectorList(MutableSequence):
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[index])):
                 try:
+                    # Conversion of char arrays with numpy gives a bool array :/ Need to go with the looping
+                    if "char" in self.basic_vec_type:
+                        raise
                     return np.array(self._vector[index])
                 except:
                     if self.ndim == 2:
@@ -145,17 +150,45 @@ class StdVectorList(MutableSequence):
                         # Do not set empty values
                         if not value: return
                         # ToDo: Maybe faster than +=, but... to be checked
-                        self._vector.assign(value._vector)
+                        if high_root_version:
+                            try:
+                                # That will not work if we have different types of value and self._vector
+                                self._vector += value._vector
+                            except:
+                                # For different types, convert the type with numpy, but it won't simply work for chars
+
+                                # For chars is ugly, using a special function
+                                if "char" in value.basic_vec_type.split()[-1]:
+                                    self._vector.assign(np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+                                else:
+                                    self._vector.assign(np.array(value._vector).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+
+                        else:
+                            self._vector += value._vector
+                            # self._vector.assign(value._vector)
                     else:
                         self._vector += value
                 except TypeError:
-                    # Slow conversion to simple types. No better idea for now
-                    if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
-                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                    if high_root_version:
+                        # Slow conversion to simple types. No better idea for now
+                        if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                            if self.ndim == 1:
+                                value = list(value)
+                            if self.ndim == 2:
+                                value = [list(el) for el in value]
+                            if self.ndim == 3: value = [[list(el1) for el1 in el] for el in value]
+                            self._vector += value
+                    else:
+                        if "char" in value.basic_vec_type.split()[-1]:
+                            self._vector += chars_to_uint8_array(value._vector)
+                        elif self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                            if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                            if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                            if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                            # self._vector.assign(value)
+                            self._vector += value
 
-                    self._vector += value
+
 
         except OverflowError:
             # Handle the OverflowError here, e.g., by logging a message or taking an appropriate action.
@@ -338,6 +371,27 @@ class StdStringDesc:
         inst = getattr(obj, self.attrname)
 
         inst.assign(value)
+
+from collections.abc import Iterable
+
+def chars_to_uint8_array(nested_chars):
+    # 1) Remember the original shape
+    shape = np.shape(nested_chars)
+
+    # 2) Flatten arbitrarily-nested lists of single‐char strings
+    def _flatten(xs):
+        for x in xs:
+            if (isinstance(x, Iterable) or "std.vector" in str(type(x))) and not isinstance(x, (str, bytes)):
+                yield from _flatten(x)
+            else:
+                yield x
+
+    # 3) Build one bytes object via Latin-1 encoding
+    flat_str = ''.join(_flatten(nested_chars))
+    buf = flat_str.encode('latin-1')
+
+    # 4) View that buffer as uint8 and restore shape
+    return np.frombuffer(buf, dtype=np.uint8).reshape(shape)
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
