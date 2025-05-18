@@ -35,6 +35,8 @@ class DataDirectory:
         # Get the file handle list
         self.file_handle_list = self.get_list_of_files_handles()
 
+        self.tree_file_types = ["ftruns", "ftrunrawvoltages", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]
+
         self.init_structure()
 
         # # Set the structure type depending on the dir name
@@ -85,7 +87,7 @@ class DataDirectory:
     def init_structure(self):
         self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
-        for flistname in ["ftruns", "ftrunrawvoltages", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]:
+        for flistname in self.tree_file_types:
             # Assign the list of files with specific tree type to the class instance
             setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
             max_level = -1
@@ -172,6 +174,11 @@ class DataDirectory:
         """Prints list of TTree chains of specific type from the directory"""
         pass
 
+    def close(self):
+        """Close all the files of the directory"""
+        for f in self.file_handle_list:
+            f.close()
+
 ## Class holding the information about GRAND TTrees in the specified file
 class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
@@ -185,6 +192,10 @@ class DataFile:
     ## Holds dict of tree types, each containing a dict of tree names with tree meta-data as values
     tree_types = defaultdict(dict)
     """Holds dict of tree types, each containing a dict of tree names with tree meta-data as values"""
+
+    ## List of tree instances
+    tree_instances = []
+    """List of tree instances"""
 
     ## Does this instace hold a chain of files
     is_tchain = False
@@ -278,7 +289,6 @@ class DataFile:
 
         # Select the highest analysis level trees for each class and store these trees as main attributes
         # Loop through tree types
-        self.tree_instances = []
         # ToDo: make sure that this is for the instance, not the class
         self.max_tree_instance = None
         for key in self.tree_types:
