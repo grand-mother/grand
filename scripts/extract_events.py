@@ -4,6 +4,7 @@
 
 import argparse
 from pathlib import Path
+import shutil
 import grand.dataio
 from grand.dataio import DataDirectory
 
@@ -16,6 +17,7 @@ def main():
     parser.add_argument('source_events_list_file', metavar='<source_events_list_file>', type=str, help='A file with a list of source events to extract. The format is dir_path,run_num,event_num')
     parser.add_argument('target_dirname', metavar='<dirname>', type=str, help='The target directory to store the extracted events in')
     parser.add_argument("-c", "--comment", help="Comment to add to the target directory name", default=None)
+    parser.add_argument("-ow", "--overwrite", action='store_true', help="Overwrite the target directory", default=False)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -27,8 +29,14 @@ def main():
             print('No events in the source file.')
             exit(1)
 
+    target_dir_path = Path(args.target_dirname)
+
+    # Delete the directory if overwrite requested
+    if target_dir_path.is_dir() and args.overwrite:
+        shutil.rmtree(target_dir_path)
+
     # Create the target directory if it doesn't exist
-    Path(args.target_dirname).mkdir(exist_ok=True)
+    target_dir_path.mkdir(exist_ok=True)
 
     # Init the target DataDirectory
     target_dir = DataDirectory(args.target_dirname)
