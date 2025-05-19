@@ -9,11 +9,14 @@ import time
 from pathlib import Path
 
 import numpy as np
+import glob
+import datetime
 
-from grand.dataio.root_trees import * # this is home/grand/grand (at least in docker) or ../../grand
+from grand.dataio import TRun, TRunEfieldSim, TRunShowerSim, TEfield, TShower, TShowerSim
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
-import matplotlib.pyplot as plt
+from grand import Geodetic, GRANDCS
+# import matplotlib.pyplot as plt
 # from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
 # from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
 
@@ -29,6 +32,7 @@ clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GR
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
 clparser.add_argument("-s", "--site_name", help="The name of the site", default=None)
+clparser.add_argument("-sl", "--site_layout", help="The layout of the site (eg. GP13, GP80, GAA)", default=None)
 clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
 clparser.add_argument("-t", "--sim_time", help="The time of the simulation", default=None)
 # clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default="19000101")
@@ -176,6 +180,12 @@ def convert_date(date_str):
 
 
 def main():
+
+    # Check if the site layout is defined
+    if not clargs.star_shape and not clargs.site_layout:
+        print("Please provide the simulated site layout as a command line parameter (eg. -sl GP300)")
+        exit(-1)
+
     # Initialise the run number if specified
     ext_run_number = None
     if clargs.run is not None:
@@ -187,7 +197,10 @@ def main():
         ext_event_number = int(clargs.start_event)
 
     start_event_number = 0
+    file_start_event_number = 0
     end_event_number = 0
+    start_event_time = 0
+    end_event_time = 0
     run_number = 0
     # Namespace for holding output trees
     gt = SimpleNamespace()
@@ -262,7 +275,10 @@ def main():
             trawefield.t_post=DesiredTpost
 
             if events_in_file==1:
-                start_event_number = trawshower.event_number
+                if ext_event_number is not None:
+                    file_start_event_number = end_event_number+1
+                else:
+                    file_start_event_number = trawshower.event_number
 
             # If the first entry on the first file, or dealing with star shape sim
             if (file_num==0 and i==0) or clargs.star_shape:
@@ -280,8 +296,12 @@ def main():
                 else:
                     site = clargs.site_name
 
-                # Init output trees in the proper directory
-                if file_num==0 and i==0: out_dir_name = init_all_trees(clargs, trawshower.unix_date, run_number, site, gt)
+                # Only for the tist entry of the first file
+                if file_num==0 and i==0:
+                    # Init output trees in the proper directory
+                    out_dir_name = init_all_trees(clargs, trawshower.unix_date, run_number, site, gt)
+                    # Set site_layout to the command line argument
+                    if clargs.site_layout: gt.trun.site_layout = clargs.site_layout
 
                 # Convert the RawShower entries
                 rawshower2grandrootrun(trawshower, gt)
@@ -298,7 +318,16 @@ def main():
                 gt.trunshowersim.run_number = run_number
                 gt.trunefieldsim.run_number = run_number
 
+                # If no site was specified for the trunshowersim, put inside site
+                if trawshower.site == "":
+                    gt.trunshowersim.site = site
+
+                # If no site was specified for the trunefieldsim, put inside site
+                if trawefield.site == "":
+                    gt.trunefieldsim.site = site
+
                 gt.trun.site = site
+                gt.trun.data_source = "simulation"
 
                 # Fill the run trees and write
                 # gt.trun.fill()
@@ -347,6 +376,10 @@ def main():
             # store temporarily the first event number
             if file_num==0 and i==0:
                 start_event_number = gt.tshower.event_number
+                start_event_time = trawshower.unix_date
+                if ext_event_number is not None:
+                    start_event_number = ext_event_number
+                    file_start_event_number = start_event_number
 
             # # This event in file names ordering is kept only for compatibility with DC2 release. It is meaningless and probably better to keep the first and last events as sims are giving them, because maybe... that can tell us some positions in the original sims event list
             # # ToDo: Remove this ordering all together
@@ -361,6 +394,7 @@ def main():
             # else:
 
             end_event_number = gt.tshower.event_number
+            end_event_time = trawshower.unix_date
 
             gt.tshowersim.input_name = Path(filename).stem
 
@@ -385,7 +419,7 @@ def main():
 
                 # Move the saved event files to proper filenames
                 logger.info("Renaming event files")
-                rename_event_files(clargs, out_dir_name, start_event_number, end_event_number)
+                rename_event_files(clargs, out_dir_name, file_start_event_number, end_event_number)
 
                 # Create the new event files
                 logger.info("Creating new event files")
@@ -398,25 +432,31 @@ def main():
 
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
-            du_ids, du_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
-            tdu_ids, tdu_xyzs = du_ids, du_xyzs
+            du_ids, du_xyzs, du_geoids = get_tree_du_id_xyz_geoid(trawefield, trawshower.shower_core_pos, gt.trun.origin_geoid)
+            tdu_ids, tdu_xyzs, tdu_geoids = du_ids, du_xyzs, du_geoids
         # For other files, append du ids and pos to the ones already retrieved
         else:
-            tdu_ids, tdu_xyzs = get_tree_du_id_and_xyz(trawefield,trawshower.shower_core_pos)
+            tdu_ids, tdu_xyzs, tdu_geoids = get_tree_du_id_xyz_geoid(trawefield, trawshower.shower_core_pos, gt.trun.origin_geoid)
             du_ids = np.append(du_ids, tdu_ids)
             du_xyzs = np.vstack([du_xyzs, tdu_xyzs])
+            du_geoids = np.vstack([du_geoids, tdu_geoids])
 
         # For star shapes, set the trun's du_id/xyz now and fill/write the tree
         if clargs.star_shape:
             gt.trun.du_id = tdu_ids
             gt.trun.du_xyz = np.array(tdu_xyzs)
+            gt.trun.du_geoids = np.array(tdu_geoids)
 
             gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
-            # For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
+            # For now (and for the foreseeable future) all DU will have the same bin size at the level of the efield simulator.
             gt.trun.t_bin_size = np.array([trawefield.t_bin_size] * len(du_ids))
 
-            gt.trun.site_layout = "star_shape"
+            # Set the site layout to star_shape if not overriden by a command line option
+            if not clargs.site_layout: gt.trun.site_layout = "star_shape"
+
+            # Fill the start and end events in trun
+            fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, gt.trun)
 
             # Fill and write the TRun
             gt.trun.fill()
@@ -446,14 +486,19 @@ def main():
         du_ids = du_ids[sorted_idx]
         # Stack x/y/z together and leave only the ones for unique du_ids, sort
         du_xyzs = du_xyzs[unique_dus_idx][sorted_idx]
+        du_geoids = du_geoids[unique_dus_idx][sorted_idx]
 
         # Assign the du ids and positions to the trun tree
         gt.trun.du_id = du_ids
         gt.trun.du_xyz = du_xyzs
+        gt.trun.du_geoid = du_geoids
         gt.trun.du_tilt = np.zeros(shape=(len(du_ids), 2), dtype=np.float32)
 
         #For now (and for the forseable future) all DU will have the same bin size at the level of the efield simulator.
         gt.trun.t_bin_size = [trawefield.t_bin_size]*len(du_ids)
+
+        # Fill the start and end events in trun
+        fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, gt.trun)
 
         # Fill and write the TRun
         gt.trun.fill()
@@ -471,13 +516,15 @@ def main():
 
     # Rename the created files to appropriate names
     logger.info("Renaming files to proper file names")
-    rename_all_files(clargs, out_dir_name, start_event_number, end_event_number, start_run_number)
+    rename_all_files(clargs, out_dir_name, file_start_event_number, end_event_number, start_run_number)
 
 # Initialise all output trees and their directory
 def init_all_trees(clargs, unix_date, run_number, site, gt):
 
     # Use date/time from command line argument if specified, otherwise the unix time
-    date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_")
+    #date, time = datetime.datetime.utcfromtimestamp(unix_date).strftime('%Y%m%d_%H%M%S').split("_") #changed to comply with deprecation warning.
+    date,time=datetime.datetime.fromtimestamp(unix_date, datetime.UTC).strftime('%Y%m%d_%H%M%S').split("_")
+
     if clargs.sim_date is not None:
         date = clargs.sim_date
     if clargs.sim_time is not None:
@@ -508,11 +555,30 @@ def init_event_trees(out_dir_name, gt):
     gt.tshowersim = TShowerSim((out_dir_name / "showersim.root").as_posix())
     gt.tefield = TEfield((out_dir_name / "efield.root").as_posix())
 
-# Convert the RawShowerTree first entry to run values
+## Convert the RawShowerTree first entry to run values
 def rawshower2grandrootrun(trawshower, gt):
     gt.trunshowersim.run_number = trawshower.run_number
-    ## Name and version of the shower simulator
-    gt.trunshowersim.sim_name = trawshower.sim_name
+    # Name and version of the shower simulator
+    # If there is a single space in sim_name, assume the second part is a version
+    if trawshower.sim_name.count(" ") == 1:
+        sim_name, sim_version = trawshower.sim_name.split()
+        gt.trunshowersim.sim_name = sim_name
+        gt.trunshowersim.sim_version = sim_version
+    # If no single space or more spaces, don't fill the version, put everything as sim_name
+    else:
+        gt.trunshowersim.sim_name = trawshower.sim_name
+        gt.trunshowersim.sim_version = trawshower.sim_version
+
+    gt.trunshowersim.site = trawshower.site
+
+    # Generate the simulator for trun
+    if "aires" in trawshower.sim_name.lower():
+        gt.trun.data_generator = "ZHAireS"
+    elif "coreas" in trawshower.sim_name.lower():
+        gt.trun.data_generator = "CoREAS"
+
+    # ToDo: Add trun.data_generator_version when it becomes available in rawroot!
+    gt.trun.data_generator_version = "unknown"
 
     #### ZHAireS/Coreas
     # * THINNING *
@@ -559,7 +625,10 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.run_number = trawefield.run_number
 
     ## Name and version of the electric field simulator
-    gt.trunefieldsim.efield_sim = trawefield.efield_sim
+    gt.trunefieldsim.sim_name = trawefield.sim_name
+    gt.trunefieldsim.sim_version = trawefield.sim_version
+
+    gt.trunefieldsim.site = trawefield.site
 
     ## Name of the atmospheric index of refraction model
     gt.trunefieldsim.refractivity_model = trawefield.refractivity_model
@@ -573,7 +642,7 @@ def rawefield2grandrootrun(trawefield, gt):
     gt.trunefieldsim.t_post = trawefield.t_post
 
 
-def get_tree_du_id_and_xyz(trawefield,shower_core):
+def get_tree_du_id_xyz_geoid(trawefield, shower_core, origin_geoid):
     # *** Store the DU's to run - they needed to be collected from all events ***
     # Get the ids and positions from all the events
 
@@ -593,7 +662,12 @@ def get_tree_du_id_and_xyz(trawefield,shower_core):
     # Stack x/y/z together and leave only the ones for unique du_ids
     du_xyzs = np.column_stack([du_xs, du_ys, du_zs])[unique_dus_idx]
 
-    return np.asarray(du_ids, dtype=np.int32), np.asarray(du_xyzs, dtype=np.float32)
+    # Get lat/lon/alt from xyz
+    origin = Geodetic(latitude=origin_geoid[0], longitude=origin_geoid[1], height=origin_geoid[2])
+    grandcs = GRANDCS(x=du_xs, y=du_ys, z=du_zs, location=origin)
+    du_geoid = np.moveaxis(np.asarray(Geodetic(grandcs), dtype=np.float32), 0, 1)
+
+    return np.asarray(du_ids, dtype=np.int32), np.asarray(du_xyzs, dtype=np.float32), du_geoid
 
 
 # Convert the RawShowerTree entries
@@ -622,8 +696,7 @@ def rawshower2grandroot(trawshower, gt):
     # ToDo: it should be a scalar on sim side
     gt.tshower.energy_primary = trawshower.energy_primary[0]
 
-    # ToDo: fill energy_em for ZHAIRES
-    if len(trawshower.energy_em)==0: trawshower.energy_em = [0]
+    # Fill energy_em (GeV)
     gt.tshower.energy_em = trawshower.energy_em[0]
 
     ### Shower azimuth (deg, CR convention)
@@ -669,6 +742,9 @@ def rawshower2grandroot(trawshower, gt):
 
     ### Shower Xmax position in shower coordinates [m]
     gt.tshower.xmax_pos_shc = trawshower.xmax_pos_shc
+
+    ### Shower Xmax position in shower coordinates [m] TODO: to be compueted frmom xmax_pos_shc.
+    #gt.tshower.xmax_pos = 
 
     ### Distance of Xmax  [m] to the ground
     # gt.tshower.xmax_distance = trawshower.xmax_distance
@@ -879,7 +955,7 @@ def rename_event_files(clargs, path, start_event_number, end_event_number):
             print(f"Could not find a free filename for {fn_in} until serial number 5s000. Please clean up some files!")
             exit(0)
 
-# Simple shifting of a single x,y,z trace
+## Simple shifting of a single x,y,z trace
 def trace_shift(arr, shift):
     # Shift the array right
     if shift>0:
@@ -893,6 +969,12 @@ def trace_shift(arr, shift):
     else:
         return arr
 
+## Fill the start and end events in trun
+def fill_star_end_event_in_run(start_event_number, end_event_number, start_event_time, end_event_time, trun):
+    trun.first_event = start_event_number
+    trun.last_event = end_event_number
+    trun.first_event_time = start_event_time
+    trun.last_event_time = end_event_time
 
 if __name__ == '__main__':
     main()

@@ -29,7 +29,7 @@ else:
     verbose=True
 
 # Construct the command based on the arguments
-command = f"from grand.dataio.root_trees import *; d = DataDirectory('{args.dirname}');"
+command = f"from grand.dataio import *; d = DataDirectory('{args.dirname}');"
 if not args.s:
     command+=f" print(f'\\n\\033[0;31mOpened directory {args.dirname} as d\\033[0m\\n'); d.print(verbose={verbose})"
  
