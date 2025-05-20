@@ -72,7 +72,7 @@ class Handling3dTraces:
         self.nperseg = 512
         self.traces = np.zeros((nb_du, 3, nb_sample))
         self.idx2idt = range(nb_du)
-        self.t_start_ns = np.zeros((nb_du), dtype=np.int64)
+        self.t_start_ns = np.zeros((nb_du), dtype=np.float64)
         self.t_samples = np.zeros((nb_du, nb_sample), dtype=np.float64)
         self.f_samp_mhz = 0.0
         self.idt2idx = {}
@@ -95,7 +95,10 @@ class Handling3dTraces:
         # computing by user and store in object
         self.t_max = None
         self.v_max = None
-
+        # default full range
+        self.range_plot = [0,-1]
+        self.ylim_plot = []
+        
     ### INTERNAL
 
     ### INIT/SETTER
@@ -119,10 +122,10 @@ class Handling3dTraces:
         if du_id is None:
             du_id = list(range(traces.shape[0]))
         if t_start_ns is None:
-            t_start_ns = np.zeros(traces.shape[0], dtype=np.float32)
+            t_start_ns = np.zeros(traces.shape[0], dtype=np.float64)
         self.idx2idt = du_id
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.idx2idt)}
-        self.t_start_ns = t_start_ns
+        self.t_start_ns = t_start_ns.astype(np.float64)
         if isinstance(f_samp_mhz, (int, float)):
             self.f_samp_mhz = np.ones(len(du_id)) * f_samp_mhz
         else:
@@ -194,15 +197,12 @@ class Handling3dTraces:
         if self.t_samples.size == 0:
             delta_ns = 1e3 / self.f_samp_mhz
             nb_sample = self.traces.shape[2]
-            # to use numpy broadcast I need to transpose
-            t_trace = (
-                np.outer(
-                    np.arange(0, nb_sample, dtype=np.float64),
-                    delta_ns * np.ones(self.traces.shape[0]),
-                )
-                + self.t_start_ns
+            self.t_samples = np.outer(
+                delta_ns * np.ones(self.traces.shape[0], dtype=np.float64),
+                np.arange(0, nb_sample, dtype=np.float64),
             )
-            self.t_samples = t_trace.transpose()
+            # add (nb_du,nb_sample) + (nb_du,1)
+            self.t_samples += self.t_start_ns[:, None]
             logger.info(f"shape t_samples =  {self.t_samples.shape}")
 
     def keep_only_trace_with_ident(self, l_idt):
@@ -227,6 +227,7 @@ class Handling3dTraces:
             self.idt2idx[ident] = idx
         self.traces = self.traces[l_idx]
         self.t_start_ns = self.t_start_ns[l_idx]
+        self.f_samp_mhz = self.f_samp_mhz[l_idx]
         if self.t_samples.shape[0] > 0:
             self.t_samples = self.t_samples[l_idx]
         if self.network:
@@ -343,7 +344,7 @@ class Handling3dTraces:
         """
         return np.linalg.norm(self.traces, axis=1)
 
-    def get_tmax_vmax(self, hilbert=True, interpol="auto"):
+    def get_tmax_vmax(self, hilbert=True, interpol="parab"):
         """Return time where norm of the amplitude of the Hilbert tranform  is max
 
         :param hilbert: True for Hilbert envelop else norm L2
@@ -461,14 +462,18 @@ class Handling3dTraces:
         s_title += f"\n$F_{{sampling}}$={self.f_samp_mhz[idx]} MHz"
         s_title += f"; {self.get_size_trace()} samples"
         plt.title(s_title)
+        s_start = self.range_plot[0]
+        s_end = self.range_plot[1]
         a_sigma = np.zeros(3, dtype=np.float32)
+        if self.ylim_plot != []:
+            plt.ylim(self.ylim_plot)
         for idx_axis, axis in enumerate(self.axis_name):
             if str(idx_axis) in to_draw:
                 m_sig = np.std(self.traces[idx, idx_axis, -100:])
                 a_sigma[idx_axis] = m_sig
                 plt.plot(
-                    self.t_samples[idx],
-                    self.traces[idx, idx_axis],
+                    self.t_samples[idx,s_start:s_end],
+                    self.traces[idx, idx_axis,s_start:s_end],
                     self._color[idx_axis],
                     label=axis + r", $\sigma_{noise}\approx$" + f"{m_sig:.1e}",
                 )

@@ -13,6 +13,7 @@ from matplotlib.backend_bases import MouseButton
 from scipy.spatial import Delaunay
 
 
+
 logger = getLogger(__name__)
 
 
@@ -44,6 +45,8 @@ class DetectorUnitNetwork:
         self.du_pos = np.zeros((nb_du, 3))
         self.idx2idt = np.arange(nb_du)
         self.area_km2 = -1
+        self.xmax_pos = None
+        self.core_pos = None
 
     def init_pos_id(self, du_pos, du_id=None):
         """Init object with array DU position and identifier
@@ -210,6 +213,16 @@ class DetectorUnitNetwork:
             cmap=my_cmaps,
         )
         fig.colorbar(scm, label=unit)
+        if self.core_pos is not None:
+            plt.plot(self.core_pos[0], self.core_pos[1], marker="*", color="green", markersize=20)
+            if self.xmax_pos is not None:
+                delta = self.xmax_pos[:2] - self.core_pos[:2]
+                delta /= np.linalg.norm(delta)
+                delta *= 1000
+                plt.arrow(
+                    self.core_pos[0], self.core_pos[1], delta[0], delta[1], color="green", width=50
+                )
+        
         xlabel = "North [m]  (azimuth=0°) =>"
         if traces is not None:
             xlabel += f"\n{traces.info_shower}"
