@@ -95,7 +95,10 @@ class Handling3dTraces:
         # computing by user and store in object
         self.t_max = None
         self.v_max = None
-
+        # default full range
+        self.range_plot = [0,-1]
+        self.ylim_plot = []
+        
     ### INTERNAL
 
     ### INIT/SETTER
@@ -459,14 +462,18 @@ class Handling3dTraces:
         s_title += f"\n$F_{{sampling}}$={self.f_samp_mhz[idx]} MHz"
         s_title += f"; {self.get_size_trace()} samples"
         plt.title(s_title)
+        s_start = self.range_plot[0]
+        s_end = self.range_plot[1]
         a_sigma = np.zeros(3, dtype=np.float32)
+        if self.ylim_plot != []:
+            plt.ylim(self.ylim_plot)
         for idx_axis, axis in enumerate(self.axis_name):
             if str(idx_axis) in to_draw:
                 m_sig = np.std(self.traces[idx, idx_axis, -100:])
                 a_sigma[idx_axis] = m_sig
                 plt.plot(
-                    self.t_samples[idx],
-                    self.traces[idx, idx_axis],
+                    self.t_samples[idx,s_start:s_end],
+                    self.traces[idx, idx_axis,s_start:s_end],
                     self._color[idx_axis],
                     label=axis + r", $\sigma_{noise}\approx$" + f"{m_sig:.1e}",
                 )
