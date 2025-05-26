@@ -5,6 +5,8 @@ The main functionnalities of this module is
 * provide a numpy container of traces by event, with method get_obj_handling3dtraces()
 
 """
+from functools import lru_cache
+
 
 import os.path
 from logging import getLogger
@@ -126,7 +128,7 @@ class _FileEventBase:
         self.tt_shower.get_event(event_number, run_number)
         self.tt_run.get_run(run_number)
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.tt_run.du_id)}
-        self.t_bin_size = np.asarray(self.tt_run.t_bin_size)
+        self.t_bin_size = np.asarray(self.tt_run.t_bin_size, dtype=np.float64)
         self.du_xyz = np.asarray(self.tt_run.du_xyz)
         self.traces = np.asarray(self.tt_event.trace)
         self.sig_size = self.traces.shape[-1]
@@ -159,10 +161,10 @@ class _FileEventBase:
         """
         return nanosecond between 0s to 2s max
         """
-        du_s = np.array(self.tt_event.du_seconds)
+        du_s = np.array(self.tt_event.du_seconds, dtype=np.float64)
         min_sec = du_s.min()
-        du_ns = np.array(self.tt_event.du_nanoseconds) + 1000000000 * (du_s - min_sec)
-        return du_ns
+        du_ns = np.array(self.tt_event.du_nanoseconds, dtype=np.float64) + 1e9 * (du_s - min_sec)
+        return du_ns, min_sec
 
     def get_obj_handling3dtraces(self):
         """
@@ -173,17 +175,21 @@ class _FileEventBase:
             f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
         )
         du_id = np.array(self.tt_event.du_id)
+        t0_ns, t_ref_s = self.get_du_nanosec_ordered()
         o_tevent.init_traces(
             self.traces,
             du_id,
-            self.get_du_nanosec_ordered(),
+            t0_ns,
             self.get_sampling_freq_mhz()[0],
         )
         l_idx = [self.idt2idx[idt] for idt in self.du_id]
         o_tevent.init_network(self.du_xyz[l_idx])
         o_tevent.network.name = self.tt_run.site
+        d_sim = self.get_simu_parameters()
+        o_tevent.network.xmax_pos = d_sim["FIX_xmax_pos"]
+        o_tevent.network.core_pos = d_sim["shower_core_pos"]
         shw = self.tt_shower
-        xmax = shw.xmax_pos_shc
+        xmax = o_tevent.network.xmax_pos
         dist_xmax = np.linalg.norm(xmax) / 1000
         o_tevent.info_shower = f"||xmax_pos_shc||={dist_xmax:.1f} km;"
         azi, zenith = shw.azimuth, shw.zenith
@@ -192,12 +198,47 @@ class _FileEventBase:
         o_tevent.info_shower += f" energy_primary={nrj:.1e} GeV"
         return o_tevent
 
+    def get_simu_parameters(self):
+        """Return dictionary of simulation parameters
+
+        Parameters returned from TRun (same name) without transformation
+          * xmax_pos_shc
+          * azimuth
+          * zenith
+          * energy_primary
+
+        :param f_name: string ROOT path/file_name
+        :param idx_evt: integer
+        :return: dictionary with some raw value of simulation parameters
+        """
+        d_simu = {}
+        # raw parameters
+        d_simu["azimuth"] = self.tt_shower.azimuth
+        d_simu["zenith"] = self.tt_shower.zenith
+        d_simu["energy_primary"] = self.tt_shower.energy_primary
+        d_simu["shower_core_pos"] = self.tt_shower.shower_core_pos
+        d_simu["magnetic_field"] = self.tt_shower.magnetic_field
+        origin_geoid = self.tt_run.origin_geoid
+        d_simu["origin_geoid"] = origin_geoid
+        xmax_temp = self.tt_shower.xmax_pos_shc
+        d_simu["xmax_pos_shc"] = xmax_temp
+        d_simu["xmax_pos"] = self.tt_shower.xmax_pos
+        # FIX parameters
+        logger.warn("DC2 FIX to define 'xmax_pos' in DU Frame")
+        # DC2 FIX: Xmax don't the right value
+        # https://github.com/grand-mother/collab-issues/issues/34
+        d_simu["FIX_xmax_pos_grandlib"] = xmax_temp + d_simu["shower_core_pos"]
+        # DC2 FIX: correct value of Xmax 
+        d_simu["FIX_xmax_pos"] = d_simu["FIX_xmax_pos_grandlib"] - np.array([0, 0, origin_geoid[2]])
+        return d_simu
+
 
 #
 # public function class
 #
 
 
+@lru_cache(maxsize=None)
 def get_file_event(f_name):
     """Event factory
 
@@ -249,12 +290,7 @@ def get_simu_parameters(f_name, idx_evt=0):
     """
     event_files = get_file_event(f_name)
     event_files.load_event_idx(idx_evt)
-    d_simu = {}
-    d_simu["xmax_pos_shc"] = event_files.tt_shower.xmax_pos_shc
-    d_simu["azimuth"] = event_files.tt_shower.azimuth
-    d_simu["zenith"] = event_files.tt_shower.zenith
-    d_simu["energy_primary"] = event_files.tt_shower.energy_primary
-    return d_simu
+    return event_files.get_simu_parameters()
 
 
 class FileEfield(_FileEventBase):

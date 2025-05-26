@@ -1,6 +1,6 @@
 import sys, os, getopt
 import grand.manage_log as mlg
-from granddatalib import DataManager
+from granddb.datamanager import DataManager
 import argparse
 logger = mlg.get_logger_for_script(__name__)
 
@@ -23,7 +23,8 @@ else:
     repo_name = args.repository
 for file in args.files:
     try:
-        dm.register_file(file, repo_name)
+        logger.info(f'Register ${file}')
+        dm.register_file(localfile=file, dataset=None, repository=repo_name, again=True)
     except Exception as e:
         logger.error(f'Error when importing {file}. Skipping.')
         logger.error(f'Error was {e}.')

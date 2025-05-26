@@ -339,7 +339,7 @@ if __name__ == '__main__':
             #-#-#- Save adc trace to TADC file -#-#-#
             tadc.copy_contents(tvoltage)
             # print(f"Memory after copy: {process.memory_info().rss / 1024 ** 2:.2f} MB")
-            entries  = tadc.get_number_of_entries()
+            entries_adc = tadc.get_number_of_entries()
             tadc.trace_ch = adc_trace
             # print(f"Memory after tracemod: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
