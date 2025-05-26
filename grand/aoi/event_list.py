@@ -115,13 +115,14 @@ class EventList:
             exit()
 
         # First, try to get the number of events from tshower
-        if hasattr(data_input, "tshower"):
+        # if hasattr(data_input, "tshower"):
+        if hasattr(data_input, "tshower") and data_input.tshower:
             return data_input.tshower.get_entries()
-        elif hasattr(data_input, "tefield"):
+        elif hasattr(data_input, "tefield") and data_input.tefield:
             return data_input.tefield.get_entries()
-        elif hasattr(data_input, "tvoltage"):
+        elif hasattr(data_input, "tvoltage") and data_input.tvoltage:
             return data_input.tvoltage.get_entries()
-        elif hasattr(data_input, "trawvoltage"):
+        elif hasattr(data_input, "trawvoltage") and data_input.trawvoltage:
             return data_input.trawvoltage.get_entries()
         else:
             print("Can not find any tree to provide the number of events in the file.")

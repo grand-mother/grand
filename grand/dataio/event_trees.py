@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 
 import numpy as np
+import ROOT
 
 from grand.dataio import DataTree, TTreeScalarDesc, NotUniqueEvent, grand_tree_list, TRun, logger, StdVectorListDesc, StdStringDesc, TTreeArrayDesc
 
@@ -168,6 +169,9 @@ class MotherEventTree(DataTree):
     def print_list_of_events(self):
         """List events in the tree together with runs"""
         count = self._tree.Draw("event_number:run_number", "", "goff")
+        # Remove the Draw() generated histogram from current file to prevent saving
+        if tmph := ROOT.gDirectory.Get("htemp"):
+            tmph.SetDirectory(0)
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
         print("List of events in the tree:")
@@ -179,6 +183,9 @@ class MotherEventTree(DataTree):
     def get_list_of_events(self):
         """Gets list of events in the tree together with runs"""
         count = self._tree.Draw("event_number:run_number", "", "goff")
+        # Remove the Draw() generated histogram from current file to prevent saving
+        if tmph := ROOT.gDirectory.Get("htemp"):
+            tmph.SetDirectory(0)
         events = self._tree.GetV1()
         runs = self._tree.GetV2()
         return [(int(events[i]), int(runs[i])) for i in range(count)]
@@ -214,6 +221,9 @@ class MotherEventTree(DataTree):
             v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count))
             v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count))
             self._entry_list = [(int(el[0]), int(el[1])) for el in zip(v1, v2)]
+        # Remove the Draw() generated histogram from current file to prevent saving
+        if tmph := ROOT.gDirectory.Get("htemp"):
+            tmph.SetDirectory(0)
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
@@ -246,6 +256,9 @@ class MotherEventTree(DataTree):
         for i in traces_suffixes:
             cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
             traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
+            # Remove the Draw() generated histogram from current file to prevent saving
+            if tmph := ROOT.gDirectory.Get("htemp"):
+                tmph.SetDirectory(0)
 
         return traces_lengths
 
