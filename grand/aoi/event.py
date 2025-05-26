@@ -537,7 +537,6 @@ class Event:
             for du_id in event_dus:
                 a = Antenna()
                 a.id = du_id
-                print(du_id)
                 a.position.x = self._all_antennas[du_id].position.x
                 a.position.y = self._all_antennas[du_id].position.y
                 a.position.z = self._all_antennas[du_id].position.z
