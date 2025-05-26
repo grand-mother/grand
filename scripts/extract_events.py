@@ -103,6 +103,11 @@ def main():
     # Loop through all the DataFiles in the target directory
     # Loop through all the trees in the current file
     for key,target_tree in dict_of_trees.items():
+        # Build the tree index
+        if "Run" in target_tree.type:
+            target_tree.build_index("run_number")
+        else:
+            target_tree.build_index("run_number", "event_number")
         # Write the tree (this also closes the file, and in 1 tree per file scheme it is OK)
         # ToDo: this should be just target_tree.write(), but then I get an error "corrupted double-linked list" at exit
         target_tree._tree.GetCurrentFile().Write()
