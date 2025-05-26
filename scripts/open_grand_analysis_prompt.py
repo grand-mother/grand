@@ -6,12 +6,13 @@ import os
 import sys
 
 # Create the argument parser
-parser = argparse.ArgumentParser(description='Open a GRAND directory in an IPython or Python shell.')
+parser = argparse.ArgumentParser(description='Open a GRAND directory as an EventList in an IPython or Python shell.')
 
 # Add the command-line options
 parser.add_argument('-p', action='store_true', help='Use Python instead of IPython')
 parser.add_argument('-s', action='store_true', help='Do not print any initial output')
 parser.add_argument('-nv', action='store_true', help='Do not print verbose output')
+parser.add_argument('-trv', "--use_trawvoltage", action='store_true', help='Use TRawVoltage instead of TVoltage')
 parser.add_argument('dirname', metavar='<dirname>', type=str, help='The GRAND ROOT directory to load')
 
 # Parse the arguments
@@ -38,7 +39,7 @@ else:
 print("Reading directory", dir_name)
 
 # Construct the command based on the arguments
-command = f"from grand.grandlib_classes.grandlib_classes import *; el = EventList('{args.dirname}');"
+command = f"from grand.aoi import *; el = EventList('{args.dirname}', use_trawvoltage={args.use_trawvoltage});"
 if not args.s:
     command+=f" print(f'\\n\\033[0;31mCreated a list of events in directory {args.dirname} as el\\033[0m\\n');"
     command += " print('You can now iterate through events with, for example:\\n\\nfor i,e in enumerate(el):\\n  print(e.event_number)\\n  ...')"
