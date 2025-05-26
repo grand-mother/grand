@@ -470,7 +470,7 @@ class Event:
         self.antennas = []
 
         # For GP300 for now, get the GPS coordinates for each DU and calculate the x/y/z here
-        if gp300_workaround and "GP300" in self.site or "GP80" in self.site:
+        if gp300_workaround and "GP300" in self.site or "GP80" in self.site or "GP13" in self.site:
 
             # Get the tree we are using
             cur_tree = None
