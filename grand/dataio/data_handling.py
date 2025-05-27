@@ -307,6 +307,7 @@ class DataFile:
                 elif max_analysis_level == -1:
                     max_anal_tree_name = el["name"]
                     max_anal_tree_type = el["type"]
+                    self.max_tree_instance = tree_instance
 
                 traces_lenghts = self._get_traces_lengths(tree_instance)
                 if traces_lenghts is not None:
