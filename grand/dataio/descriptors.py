@@ -179,7 +179,7 @@ class StdVectorList(MutableSequence):
                             if self.ndim == 3: value = [[list(el1) for el1 in el] for el in value]
                             self._vector += value
                     else:
-                        if "char" in value.basic_vec_type.split()[-1]:
+                        if isinstance(value, StdVectorList) and "char" in value.basic_vec_type.split()[-1]:
                             self._vector += chars_to_uint8_array(value._vector)
                         elif self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
                             if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
