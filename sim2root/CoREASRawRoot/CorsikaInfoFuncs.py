@@ -107,6 +107,16 @@ def read_site(input_file):
         site = atmos
     return site
 
+def read_lat_long_alt(site):
+    #from site param only
+    if site == "Dunhuang":
+        latitude, longitude, altitude = [40.142132, 94.661880, 114200] # alt in cm
+    elif site == "Lenghu":
+        latitude, longitude, altitude = [38.7348, 93.3306, 280000] # alt in cm
+    else:
+        latitude, longitude, altitude = []
+    return latitude, longitude, altitude
+
 
 
 def read_first_interaction(log_file):
@@ -131,9 +141,9 @@ def read_HADRONIC_INTERACTION(log_file):
             if "S I B Y L L  2.3d" in line:
                 hadr_interaction = "Sibyll 2.3d"
                 print("hadronic interaction model =", hadr_interaction)
+                return str(hadr_interaction)
             else:
                 hadr_interaction = "n/a"
-                print("hadronic interaction model =", hadr_interaction)
     return str(hadr_interaction)
 
 
@@ -142,12 +152,31 @@ def read_coreas_version(log_file):
     with open(log_file, mode="r") as datafile:
         for line in datafile:
             if "CoREAS V1.4" in line:
-                coreas_version = "CoREAS V1.4"
+                coreas_version = "1.4" 
                 print("CoREAS version =", coreas_version)
+                return str(coreas_version)
             else:
                 coreas_version = "n/a"
-                print("CoREAS version =", coreas_version)
     return str(coreas_version)
+
+
+def read_corsika_version(inp_file):
+    corsika_version = "n/a"
+    pattern = r"corsika-(\d+)"  # regex pattern to match 'corsika-' followed by the version digits
+
+    with open(inp_file, mode="r") as datafile:
+        for line in datafile:
+            match = re.search(pattern, line)
+            if match:
+                corsika_version = f"{match.group(1)[:1]}.{match.group(1)[1:]}"  # Format version
+                print("Corsika version =", corsika_version)
+                return corsika_version
+            elif "corsika7" in line or "corsika-7" in line:
+                corsika_version = "7.X"
+                print("Corsika version =", corsika_version)
+                return corsika_version
+
+    return corsika_version
 
 
 
@@ -176,10 +205,14 @@ def antenna_positions_dict(pathAntennaList):
     generic_id_counter = 1
 
     for name in file[:, 5]:
-        GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after last underscore
+        GP_match = search(r'gp_(\d+)', name, flags=re.IGNORECASE)  # Extract digits after "ant"
+        ant_match = search(r'ant(\d+)', name, flags=re.IGNORECASE)  # Extract digits after "ant"
 
         if GP_match: # match GP13
             antennaInfo["ID"].append(int(GP_match.group(1))) # Group 1 contains the ID
+
+        elif ant_match: # match GP300 antenna names of "ant???"
+            antennaInfo["ID"].append(int(ant_match.group(1))) # Group 1 contains the ID
 
         else: # Give generic IDs to antennas with other names
             antennaInfo["ID"].append(int(generic_id_counter))
@@ -191,21 +224,68 @@ def antenna_positions_dict(pathAntennaList):
 
 def get_antenna_position(pathAntennaList, antenna):
     """
-    get the position for one antenna from SIM??????.list
-    .list files are structured like "AntennaPosition = x y z name"
+    Get the position (x, y, z) for a specific antenna from SIM??????.list
 
+    Args:
+        pathAntennaList: Path to the ".list" file containing antenna positions.
+        antenna: Name of the antenna for which to retrieve the position.
+
+    Returns:
+        A tuple containing (x, y, z) coordinates for the specified antenna, 
+        or None if the antenna is not found.
     """
-    file = np.genfromtxt(pathAntennaList, dtype = "str")
-    # get antenna positions from file
-    # file[:,0] and file[:,1] are useless (they are simply "AntennaPosition" and "=")
-    # get the x, y and z positions
-    x = file[:,2].astype(float) * 10**-2 # convert to m
-    y = file[:,3].astype(float) * 10**-2 # convert to m
-    z = file[:,4].astype(float) * 10**-2 # convert to m
-    # get the names of the antennas
-    name = file[:,5]
+    file = np.genfromtxt(pathAntennaList, dtype="str")
+    gp300_data = np.genfromtxt(pathAntennaList, dtype="str")
+
+    # currently checks the same file, so always passes
+    # Filter data based on antenna name
+    filtered_data = file[file[:, 5] == antenna]  # Select rows where name matches
+    gp300_filtered = gp300_data[gp300_data[:, 5] == antenna]
+
+    if len(filtered_data) == 0 or len(gp300_filtered) == 0:
+        # Antenna not found in either file
+        return None
+
+    # Replace x, y, z positions with the original positions and convert to m
+    x = gp300_filtered[0][2].astype(float) * 10**-2
+    y = gp300_filtered[0][3].astype(float) * 10**-2
+    z = gp300_filtered[0][4].astype(float) * 10**-2
 
     return x, y, z
+
+
+
+def calculate_array_shift(pathAntennaList):
+    """
+    Calculates the average shift between two antenna position arrays.
+
+    Args:
+        sim_data: A NumPy array containing antenna positions from the SIM file.
+        gp300_data: A NumPy array containing antenna positions from the GP300 file.
+
+    Returns:
+        A tuple (shift_x, shift_y) representing the average offset between 
+        the two arrays in meters for x and y coordinates, respectively.
+        If the arrays have different shapes, returns None.
+    """
+    sim_data = np.genfromtxt(pathAntennaList, dtype="str")
+    gp300_data = np.genfromtxt(pathAntennaList, dtype="str")
+
+    # Check if data shapes are compatible
+    # currently checks the same file so always passes
+    if sim_data.shape != gp300_data.shape:
+        print("Sim data shape is not compatible with GP300 layout!")
+        return None
+
+    # currently checks the same file so shift is always 0
+    # current version uses variable cores so no shift necessary
+    # utilise this process corsika sims that have core [0,0,0] and shift the antennas instead
+    # Calculate average shift for x and y coordinates
+    shift_x = np.mean(gp300_data[:, 2].astype(float) * 10**-2 - sim_data[:, 2].astype(float) * 10**-2)
+    shift_y = np.mean(gp300_data[:, 3].astype(float) * 10**-2 - sim_data[:, 3].astype(float) * 10**-2)
+
+    return shift_x, shift_y
+
 
 
 
@@ -220,23 +300,7 @@ def read_long(pathLongFile):
     TODO: fix hillas_parameter - something's not working yet
     """
     with open(pathLongFile, mode="r") as file:
-        # create a temporary file to write the corrected contents
-        temp_file = io.StringIO()
-
-        for line in file:
-            # use a regex to search for a minus sign that is not part of an exponent
-            if search(r"(?<!e)(-)(?=\d)", line):
-                # if the minus sign is not part of an exponent, replace it with a space and a minus sign
-                line = line.replace("-", " -")
-            # write the corrected line to the temporary file
-            temp_file.write(line)
-
-        # set the file pointer to the beginning of the temporary file
-        temp_file.seek(0)
-
-        # read the contents of the temporary file into a list of strings
-        lines = temp_file.readlines()
-
+        lines=file.readlines()
 
 
     n_steps = int(lines[0].rstrip().split()[3])
@@ -253,13 +317,19 @@ def read_long(pathLongFile):
     dE_data = np.genfromtxt(dE_data_str)
     
     # read out hillas fit
-    hillas_parameter = []
-    # for line in lines:
-    #     if bool(search("PARAMETERS", line)):
-    #         hillas_parameter = [float(x) for x in line.split()[2:]]
-    #     if bool(search("CHI", line)):
-    #         hillas_parameter.append(float(line.split()[2]))
-
-
+    hillas_parameters = []
+    for line in lines:
+        if bool(search("PARAMETERS", line)):
+            parts = line.split()
+            param1, param2, xmax, param4, param5, param6 = parts[2], parts[3], parts[4], parts[5], parts[6], parts[7]
+            hillas_parameters.append(xmax)
+        if bool(search("CHI", line)):
+            chi = float(line.split()[2])
+            hillas_parameters.append(chi)
+    print("Hillas parameters have been stored.")
+    print("Xmax: ", hillas_parameters[0])
+    print("Chi: ", hillas_parameters[1])
     print("The file", pathLongFile, "has been separated into energy deposit and particle distribution.")
-    return n_data, dE_data, hillas_parameter
+
+    return n_data, dE_data, hillas_parameters
+

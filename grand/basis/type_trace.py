@@ -12,7 +12,6 @@ from grand.geo.coordinates import (
     GRANDCS,
     CartesianRepresentation,
 )
-#from grand.dataio import io_node as io  # , ECEF, LTP
 
 
 logger = getLogger(__name__)
@@ -81,6 +80,7 @@ class ElectricField:
             node.write("frame", self.frame)
     """
 
+
 @dataclass
 class Voltage:
     t: np.ndarray  # [s]
@@ -120,5 +120,3 @@ class Voltage:
         node.write("t", self.t, dtype="f4")
         node.write("V", self.V, dtype="f4")
     """
-
-

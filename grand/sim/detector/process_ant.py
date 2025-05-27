@@ -102,13 +102,16 @@ class AntennaProcessing:
         #assert isinstance(self.model_leff, TabulatedAntennaModel)
         self.size_fft = 0
         self.freqs_out_hz = 0
+        self.theta_efield, self.phi_efield = 0,0
+        self.lt = 0
+        self.lp = 0
 
     @classmethod
     def init_interpolation(cls, freq_sampling_mhz, freq_out_mhz):
         pre = PreComputeInterpol()
         pre.init_linear_interpol(freq_sampling_mhz, freq_out_mhz)
         cls.pre_cpt = pre
-        logger.debug(pre)
+        #logger.debug(pre)
 
     def set_out_freq_mhz(self, a_freq):
         """
@@ -160,8 +163,10 @@ class AntennaProcessing:
         direction_cart = CartesianRepresentation(x=direction[0], y=direction[1], z=direction[2])
         direction_sphr = SphericalRepresentation(direction_cart)
         theta_efield, phi_efield = direction_sphr.theta, direction_sphr.phi
+        self.theta_efield, self.phi_efield = theta_efield, phi_efield
+        #theta_efield, phi_efield=theta_efield+self.direction_smearing[0], phi_efield+self.direction_smearing[1]
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
-        logger.info(
+        logger.debug(
             f"Source direction (degree): azimuth={float(phi_efield):.1f}, zenith={float(theta_efield):.1f}"
         )
         # logger.debug(f"{theta_efield.r}")
@@ -191,7 +196,7 @@ class AntennaProcessing:
         # fft
         # logger.info(efield.e_xyz.info())
         e_xyz = efield.e_xyz
-        logger.debug(e_xyz.shape)
+        logger.debug(f"e_xyz.shape:{e_xyz.shape}")
         # Leff ref frequency  [Hz]
         freq_ref_hz = self.model_leff.frequency
         # frequency [Hz] with padding
@@ -229,17 +234,17 @@ class AntennaProcessing:
             pre.c_inf * leff_itp_sph[:, pre.idx_itp] + pre.c_sup * leff_itp_sph[:, pre.idx_itp + 1]
         )
         # now add zeros outside leff frequency band and unpack leff theta , phi
-        l_t = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
-        l_t[pre.idx_first : pre.idx_lastp1] = leff_itp[0]
-        l_p = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
-        l_p[pre.idx_first : pre.idx_lastp1] = leff_itp[1]
+        self.l_t = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+        self.l_t[pre.idx_first : pre.idx_lastp1] = leff_itp[0]
+        self.l_p = np.zeros(self.freqs_out_hz.shape[0], dtype=np.complex64)
+        self.l_p[pre.idx_first : pre.idx_lastp1] = leff_itp[1]
         # fmt: off
         t_rad, p_rad = np.deg2rad(theta_efield), np.deg2rad(phi_efield)
         c_t, s_t = np.cos(t_rad), np.sin(t_rad)
         c_p, s_p = np.cos(p_rad), np.sin(p_rad)
-        self.l_x = l_t * c_t * c_p - s_p * l_p
-        self.l_y = l_t * c_t * s_p + c_p * l_p
-        self.l_z = -s_t * l_t
+        self.l_x = self.l_t * c_t * c_p - s_p * self.l_p
+        self.l_y = self.l_t * c_t * s_p + c_p * self.l_p
+        self.l_z = -s_t * self.l_t
         # fmt: on
         # del l_t, l_p, c_t, s_t , c_p, s_p
         # Treating Leff as a vector (no change in magnitude) and transforming
@@ -251,7 +256,7 @@ class AntennaProcessing:
         leff_frame_ecef = np.matmul(self.pos.basis.T, self.leff_frame_ant)
         # vector wrt shower frame. ECEF --> Shower
         self.leff_frame_shower = np.matmul(frame.basis, leff_frame_ecef)
-
+        self.leff_frame_ant_sph = np.array([self.l_t, self.l_p])
         return self.leff_frame_shower
 
     def compute_voltage(
@@ -269,25 +274,32 @@ class AntennaProcessing:
         :type frame:
         """
         # frame is shower frame. self.frame is antenna frame.
-        print("pos",self.pos)
+        logger.debug(f"pos {self.pos}")
         if (not np.all(np.isfinite(self.pos))) or (not np.all(np.isfinite(frame))): # which one
+            print("pos",self.pos)
+            print("frame",frame)
             raise MissingFrameError("missing antenna or shower frame")
 
         # Compute the voltage. input fft_leff and field are in shower frame.
         leff_f = self.effective_length(xmax, efield, frame)
-        logger.debug(leff_f.shape)
+        logger.debug(f"leff_f.shape {leff_f.shape}")
         # E is CartesianRepresentation
         fft_e = efield.get_fft(self.size_fft)
         logger.debug(f"size_fft leff={leff_f.shape}")
-        logger.debug(f"size_fft efield={leff_f.shape}")
+        logger.debug(f"size_fft efield={fft_e.shape}")
         # convol e_xyz field by Leff in Fourier space
         self.voc_f = (
             fft_e[0] * leff_f[0] + fft_e[1] * leff_f[1] + fft_e[2] * leff_f[2]
         )
         # inverse FFT and remove zero-padding
-        voc = sf.irfft(self.voc_f)[: efield.e_xyz.shape[1]]
-        # WARNING do not used : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])
-        t = efield.a_time
-        logger.debug(f"time : {t.dtype} {t.shape}")
+        #voc = sf.irfft(self.voc_f)[: efield.e_xyz.shape[1]]
+        voc = sf.irfft(self.voc_f) #we do not want to remove the zero padding any more. 
+        # WARNING do not use : sf.irfft(self.fft_resp_volt, efield.e_xyz.shape[1])
+        
+        dt= np.round(efield.get_delta_time_s(),decimals=15) #this is to remove floating point garbage that can eventually appear caused due to be working in seconds, very deep into the floar pecision. Should be good to femtoseconds
+        t=np.arange(0, len(voc)*dt, dt) + efield.a_time[0]
+        
+        
+        logger.debug(f"time : {t.dtype} {t.shape} {dt}")
         logger.debug(f"volt : {voc.dtype} {voc.shape}")
         return Voltage(t=t, V=voc)

@@ -84,4 +84,95 @@ grand_quality_test_cov.bash
 ```
 
 
+## Creating a grandlib conda environement from scratch
+You can create a conda environement for grandlib using the following recipie :
+
+### Create a conda environnement for ROOT version 6.30.4 :
+```
+conda create -c conda-forge --name grandlib_root_6.30 root==6.30.4
+```
+### Activate your new environnement
+```
+conda activate grandlib_root_6.30
+```
+### Export your new environnement into a yaml file
+```
+conda env export >grandlib_root_6.30.yml
+```
+### Edit your yaml file to add the requested libs
+Add the following lines to the file (check /grand/env/conda/grandlib_amd64.yml for position) :
+```
+- pip:
+  - appjar
+  - asdf
+  - asdf-standard
+  - asdf-transform-schemas
+  - asdf-unit-schemas
+  - asteval
+  - astroid
+  - astropy
+  - astropy-iers-data
+  - awkward
+  - awkward-cpp
+  - bcrypt
+  - black
+  - click
+  - contourpy
+  - coverage
+  - cramjam
+  - cryptography
+  - cycler
+  - dill
+  - fonttools
+  - fsspec
+  - future
+  - greenlet
+  - h5py
+  - iniconfig
+  - isort
+  - jmespath
+  - kiwisolver
+  - lazy-object-proxy
+  - lmfit
+  - lxml
+  - matplotlib
+  - mccabe
+  - mypy
+  - mypy-extensions
+  - pandas
+  - paramiko
+  - pathspec
+  - pillow
+  - plotly
+  - pluggy
+  - psycopg2-binary
+  - py
+  - pyerfa
+  - pylint
+  - pynacl
+  - pyparsing
+  - pytest
+  - scipy
+  - scp
+  - semantic-version
+  - sqlalchemy
+  - sshtunnel
+  - tenacity
+  - tokenize-rt
+  - toml
+  - tomlkit
+  - tzdata
+  - uncertainties
+  - uproot
+  - wrapt
+```
+### Deactivate your conda env and recreate one from the new file
+
+```
+conda deactivate
+conda env create -n grandlib_root_6.30_complete --file grandlib_root_6.30.yml
+conda activate grandlib_root_6.30_complete
+```
+
+
 If you encounter a problem write a ticket [here](https://github.com/grand-mother/collaboration-issues/issues)

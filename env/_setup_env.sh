@@ -9,7 +9,8 @@ echo "add grand/quality to PATH"
 echo "=============================="
 
 export PATH=$GRAND_ROOT/scripts:$PATH
-echo "add grand/scripts to PATH "
+export PATH=$GRAND_ROOT/examples/dataio:$PATH
+echo "add scripts to PATH "
 echo "=============================="
 
 export PATH=$GRAND_ROOT/env:$PATH
@@ -17,3 +18,8 @@ export PATH=$GRAND_ROOT/env:$PATH
 export PYTHONPATH=$GRAND_ROOT:$PYTHONPATH
 echo "add grand to PYTHONPATH"
 echo "=============================="
+
+
+export AIRESBINDIR=${HOME}/aires/bin
+echo "add AIRESBINDIR"
+echo "============================="

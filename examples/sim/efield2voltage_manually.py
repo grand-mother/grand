@@ -100,6 +100,10 @@ def style2(f_input, f_output):
     signal.save_voltage()
 
 if __name__ == "__main__":
+
+    print("This script is not working at the moment. To check on how to convert Efield to Voltage, please check scripts/convert_efield2voltage.py")
+    exit(0)
+
     import argparse
     import numpy as np
     import grand.manage_log as mlg
@@ -111,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "file",
         help="Efield input data file in GRANDROOT format.",
-        type=argparse.FileType("r"),
+        # type=argparse.FileType("r"),
     )
     parser.add_argument(
         "-o",

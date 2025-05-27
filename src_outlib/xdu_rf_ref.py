@@ -438,35 +438,62 @@ def gala(lst, N, f0, f1, show_flag):
     # f0 is the frequency resolution, f1 is the frequency point of the unilateral spectrum
     # % ----------------------output - ---------------------------------- %
     # v_complex_double, galactic_v_time
-
-    GALAshowFile = ".//30_250galactic.mat"
-    GALAshow = h5py.File(GALAshowFile, 'r')
-    GALApsd_dbm = np.transpose(GALAshow['psd_narrow_huatu'])
-    GALApower_dbm = np.transpose(GALAshow['p_narrow_huatu'])
-    GALAvoltage = np.transpose(GALAshow['v_amplitude'])
-    GALApower_mag = np.transpose(GALAshow['p_narrow'])
-    GALAfreq = GALAshow['freq_all']
+    
+    lst = int(lst)
+        
+    #10 * np.log10(psd_watt_Hz) + 30 (convert from Watt/Hz -> dBm/Hz)
+    gala_file = grand_add_path_data(".//PG_ALL_jifen.mat")
+    Zant_file = grand_add_path_data(".//Z_ant_3.2m.csv")
+    gala_show = h5py.File(gala_file, "r")
+    gala_power = np.array(gala_show["PG_ALL_jifen"]) #shape (24,3,221)
+    gala_power = np.transpose(gala_power, (2, 0, 1)) #Watt/Hz, shape (221,24,3)
+    gala_psd_dbm = 10 * np.log10(gala_power) + 30 # dBm/Hz , shape (221,24,3)
+    gala_power_dbm = 10 * np.log10(1e6*gala_power) + 30 #dBm, shape (221,24,3)
+    Poc2X = 1e6*gala_power[:,:,0] #W
+    Poc2Y = 1e6*gala_power[:,:,1] #W
+    Poc2Z = 1e6*gala_power[:,:,2] #W
+    zant = np.loadtxt(Zant_file, delimiter=",", skiprows=1)  # Skip header row if it exists
+    # Extract real and imaginary parts and construct complex numbers
+    zant_complex = np.column_stack([
+        zant[:, 1] + 1j * zant[:, 2],  # Z(1,1)
+        zant[:, 3] + 1j * zant[:, 4],  # Z(2,2)
+        zant[:, 5] + 1j * zant[:, 6]   # Z(3,3)
+    ])
+    R = np.real(zant_complex)
+    R_reshaped = R.T
+    RantX = R_reshaped[0, :]
+    RantY = R_reshaped[1, :]
+    RantZ = R_reshaped[2, :]
+    Voc2X = 4*Poc2X*RantX[:, np.newaxis]
+    Voc2Y = 4*Poc2Y*RantY[:, np.newaxis]
+    Voc2Z = 4*Poc2Z*RantZ[:, np.newaxis]
+    VocX = 1e6*np.sqrt(Voc2X) # in uV
+    VocY = 1e6*np.sqrt(Voc2Y) # in uV
+    VocZ = 1e6*np.sqrt(Voc2Z) # in uV
+    gala_voltage = np.stack((VocX, VocY, VocZ), axis=1)
+    gala_freq1 = np.arange(30.,251.)
+    gala_freq = gala_freq1.reshape(221, 1)
 
     if show_flag == 1:
         plt.figure(figsize=(9, 3))
         plt.rcParams['font.sans-serif'] = ['Times New Roman']
         plt.subplot(1, 3, 1)
         for g in range(3):
-            plt.plot(GALAfreq, GALApsd_dbm[:, g, lst])
+            plt.plot(gala_freq, gala_psd_dbm[:, lst, g])
         plt.legend(["port X", "port Y", "port Z"], loc='upper right')
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("PSD(dBm/Hz)", fontsize=15)
         plt.title("Galactic Noise PSD", fontsize=15)
         plt.subplot(1, 3, 2)
         for g in range(3):
-            plt.plot(GALAfreq, GALApower_dbm[:, g, lst])
+            plt.plot(gala_freq, gala_power_dbm[:, lst, g])
         plt.legend(["port X", "port Y", "port Z"], loc='upper right')
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Power(dBm)", fontsize=15)
         plt.title("Galactic Noise Power", fontsize=15)
         plt.subplot(1, 3, 3)
         for g in range(3):
-            plt.plot(GALAfreq, GALAvoltage[:, g, lst])
+            plt.plot(gala_freq, gala_voltage[:, g, lst])
         plt.legend(["port X", "port Y", "port Z"], loc='upper right')
         plt.xlabel("Frequency(MHz)", fontsize=15)
         plt.ylabel("Voltage(uV)", fontsize=15)

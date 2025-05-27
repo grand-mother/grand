@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import raw_root_trees as RawTrees
+import sim2root.Common.raw_root_trees as RawTrees
       
 #Author: Matias Tueros, with ChatGP3 help for documentation and error handling. it was Mar 24th 2023 in Barracas, Buenos Aires, Argentina
 def GenerateEventParametersFile(EventName, Primary, Energy, Zenith, Azimuth, CorePosition, ArrayName, EventWeight=1, EventUnixTime=200854852, EventUnixNanosecond=0, OutMode="a", TestedPositions="None"):
@@ -248,14 +248,14 @@ def GenerateRawMetaTree(EventParametersFile,RunID,EventID,OutputFileName):
       TestedPositions=GetTestedPositionsFromParametersFile(EventParametersFile)
 
     else:
-      logging.critical("Input EventParametersFile file not found, {} using default values".format(EventParametersFile))
+      print("Input EventParametersFile file not found, {} using default values".format(EventParametersFile))
       # return i will not return, in order to be able to handle old sims. I will asign default or dummy values to the required variables
       ArrayName="Unknown"  
       CorePosition=(0,0,0)
       UnixSecond=1
       UnixNano=1
       EventWeight=1
-      TestedCores=[]       
+      TestedPositions=[]       
 
     RawMeta = RawTrees.RawMetaTree(OutputFileName)
     RawMeta.run_number = RunID

@@ -4,16 +4,17 @@ import os
 import glob
 import logging
 import numpy as np
-#import datetime #to get the unix timestamp
+import datetime #to get the unix timestamp
 import time #to get the unix timestamp
+import matplotlib.pyplot as plt
+from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
 
 
 logging.basicConfig(level=logging.INFO)
-sys.path.append("../Common")
-import AiresInfoFunctionsGRANDROOT as AiresInfo
-import ZHAireSCompressEvent as ZC
-import EventParametersGenerator as EParGen #the functions i use from this file should be moved to root_trees_raw, so that we dont need an additional new file. It will be common to Coreas and ZhAireS.
-import raw_root_trees as RawTrees
+import sim2root.ZHAireSRawRoot.AiresInfoFunctionsGRANDROOT as AiresInfo
+import sim2root.ZHAireSRawRoot.ZHAireSCompressEvent as ZC
+import sim2root.Common.EventParametersGenerator as EParGen #the functions i use from this file should be moved to root_trees_raw, so that we dont need an additional new file. It will be common to Coreas and ZhAireS.
+import sim2root.Common.raw_root_trees as RawTrees
 logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matplotlib
 
 
@@ -24,16 +25,28 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matp
 #TODO ASAP: Get Refractivity Model parameters from the sry (unfortunatelly these are not reported in the sry, this will have to wait to the next version of zhaires hopefully after ICRC 2023)
 #Maybe move them to the function call for now, and remove the unused Longitudinal switches?
 
-def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="LookForIt", EventName="UseTaskName"): 
+def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=0,ForcedTPost=0, TriggerSim=False): 
     '''
     This routine will read a ZHAireS simulation located in InputFolder and put it in the Desired OutputFileName. 
     
-    RunID is the ID of the run the event is going to be associated with.
+    RunID is the ID of the run the event is going to be associated with. If RunID is "SuitYourself" it will try to divide EventID by 1000 and pick the floor number.
     
-    EventID is the ID of the Event is going to be associated with.
+    EventID is the ID of the Event is going to be associated with. If EventID is "LookForIt" it will asume that the event ID is the last digits of the .sry file,  after the _ and before the .sry extension
     
     TaskName is what ZHAireS uses to name all the output files. And it generally the same as the "EventName". If you want to change the Name of the event when you store it, you can use the "EventName" optional parameter
     If you dont specify a TaskName, it will look for any .sry file in the directory. There should be only one .sry file on the folder for the script to work correctly
+    
+    OutputFileName is where you want to save the RawRootFile. If you select "GRANDConvention" it will attempt to apply the GRAND data storage convention.
+    
+    [site]_[date]_[time]_[run_number]_[mod]_[extra], taking the data from the sry and its file name, asuming it is extra_*.sry,  
+    
+    ForcedTPre forces the tpre of the trace to be the given number in ns, by adding or 0 or removing bins at the start of the trace when necessary
+    ForcedTPost forces the tpost of the trace to be the given number in ns, by adding or 0 or removing bins at the end of the trace when necessary
+    
+    TriggerSim modifies the time window so that the t0 indicates the position of the maximum of the electric field vector, and this is exactly after the desired TPre (ore -TimeWindowMin) time
+    
+    Note that TPre is -TimeWindowMin from ZHAireS (so its usually positive)
+    
     
     The routine is designed for events simulated with ZHAireS 1.0.30a or later.
     
@@ -49,7 +62,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
     - 2) All the a##.trace files produced by ZHAireS with the electric field output (you have to have run your sims with CoREASOutput On)
     - 3) a TaskName.EventParameters file , where the event meta-ZHAireS data is stored (for example the core position used to  generate this particular event, the "ArrayName", the event weight, the event time and nanosecond etc.
     - 4) Optional: the necesary longitudinal tables file. If they dont exist, but the TaskName.idf file is present and  and Aires is installed in the system, AiresInfoFunctions will take care of it.
-    -  
+    - 5) In the input file, antenna names must be of the format A+number of antena, i.e., A1, A2....A100...etc 
 
     The script output is the shower reference frame: this means a cartesian coordinate system with the shower core at 0,0, GroundAltitude (masl).
     Electric fields are output on the X,Y and Z directions in this coordinate system.
@@ -58,6 +71,8 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
     #Nice to have Feature: If EventID is decideded to be just a number, get the next correlative EventID (with respect to the last inside the file) if no EventID is specified
 	
     #The function will write three main sections: ShowerSim, EfieldSim and MetaInfo. 
+    DoPlot=True
+    
     #
     SimShowerInfo=True
     SimEfieldInfo=True 
@@ -113,17 +128,39 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         return -1
    
     TaskName=AiresInfo.GetTaskNameFromSry(sryfile[0])
-   
+    Date=AiresInfo.GetDateFromSry(sryfile[0]).strip()                   #used  
+    Site=AiresInfo.GetSiteFromSry(sryfile[0]).strip()      #strip is for removing white spaces and carriage returns before and after             #used
+    HadronicModel=AiresInfo.GetHadronicModelFromSry(sryfile[0]).strip()         #Used       
+    
     #TODO:idf file is optional in principle, so i dont check for it for now. I should check for the existance of all the required table files and if anyone is missing, check for the existance of the idf file
     idffile=[InputFolder+"/"+EventName+".idf"]
 
     #provide the advertised functionality for TaskName
     if EventName=="UseTaskName":
       EventName=TaskName
+
+    #provide the advertised funcionality for for EventID
+    if EventID=="LookForIt":
+      EventID=extract_event_number(sryfile[0])    
+    
+    #provide the advertised funcionality for for RunID
+    if RunID=="SuitYourself":
+      RunID=int(EventID)//1000
+      
+    #provide advertised functionality for OutputFileName  
+    if OutputFileName=="GRANDConvention":
+      extra=extract_extra(sryfile[0])
+      date=convert_date(Date)
+      OutputFileName=Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)+".rawroot"
+      directory_path="sim_"+Site+"_"+date+"_1200_"+str(RunID)+"_"+HadronicModel+"_"+extra+"_"+str(EventID)
+      OutputFileName=directory_path+"/"+OutputFileName
+      if not os.path.exists(directory_path):
+        # If the directory doesn't exist, create it
+        os.makedirs(directory_path)
     
     logging.info("###")
     logging.info("###")
-    logging.info("### Starting with event "+EventName+" in "+ InputFolder+" to add to "+OutputFileName) 
+    logging.info("### Starting with event "+EventName+" in "+ InputFolder+" to add to "+OutputFileName +" as Event " + str(EventID) + " of Run " + str(RunID) ) 
 	
 	###########################################################################################################	
     #Root Sanity Checks 
@@ -154,13 +191,12 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         XmaxPosition= [float(XmaxX)*1000.0, float(XmaxY)*1000.0, float(XmaxZ)*1000.0]
         SlantXmax=AiresInfo.GetSlantXmaxFromSry(sryfile[0])                 #Used        
         InjectionAltitude=AiresInfo.GetInjectionAltitudeFromSry(sryfile[0]) #Used                         
-        Date=AiresInfo.GetDateFromSry(sryfile[0])                           #Used
+        
         t1=time.strptime(Date.strip(),"%d/%b/%Y")
         Date = time.strftime("%Y-%m-%d",t1) #adapted to iso
         UnixDate = int(time.mktime(t1))                                     #Used
         FieldIntensity,FieldInclination,FieldDeclination=AiresInfo.GetMagneticFieldFromSry(sryfile[0]) #Used
         AtmosphericModel=AiresInfo.GetAtmosphericModelFromSry(sryfile[0])                              #Used
-        HadronicModel=AiresInfo.GetHadronicModelFromSry(sryfile[0])                                    #Used
         LowEnergyModel="Aires-Geisha"		                                                           #Used  #TODO eventualy: Unhardcode This
         EnergyInNeutrinos=AiresInfo.GetEnergyFractionInNeutrinosFromSry(sryfile[0])                    #Used
         EnergyInNeutrinos=EnergyInNeutrinos*Energy #to Convert to GeV
@@ -169,11 +205,10 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
        
         #These might be "run parameters"
         Lat,Long=AiresInfo.GetLatLongFromSry(sryfile[0])                                               # 
-        GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #
-        GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])
-        Site=AiresInfo.GetSiteFromSry(sryfile[0])                                                      #   
-        ShowerSimulator=AiresInfo.GetAiresVersionFromSry(sryfile[0])                                   # 
-        ShowerSimulator="Aires "+ShowerSimulator                                                       #
+        GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])                                  #Used
+        GroundDepth=AiresInfo.GetGroundDepthFromSry(sryfile[0])                                        #   
+        ShowerSimulatorVersion=AiresInfo.GetAiresVersionFromSry(sryfile[0])                            #Used 
+        ShowerSimulator="Aires"                                                                        #Used
   
         RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])                        #Used        
         GammaEnergyCut=AiresInfo.GetGammaEnergyCutFromSry(sryfile[0])                                  #Used
@@ -198,7 +233,8 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         ############################################################################################################################
 
         RawShower.run_number = RunID
-        RawShower.sim_name = ShowerSimulator  
+        RawShower.sim_name = str(ShowerSimulator)
+        RawShower.sim_version = str(ShowerSimulatorVersion)          
         RawShower.event_number = EventID
         RawShower.event_name = EventName
         RawShower.event_date = Date
@@ -222,6 +258,11 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         AngleB=np.deg2rad(180-np.rad2deg(AngleA)-np.rad2deg(AngleC))
         sideb=sidec*np.sin(AngleB)/np.sin(AngleC)       
         RawShower.primary_inj_point_shc = [(sideb*np.sin(np.deg2rad(Zenith))*np.cos(np.deg2rad(Azimuth)),sideb*np.sin(np.deg2rad(Zenith))*np.sin(np.deg2rad(Azimuth)),sideb*np.cos(np.deg2rad(Zenith)))]  #TODO: test multiple primaries        
+        RawShower.site = str(Site) #TODO: Standarize
+        RawShower.site_alt=GroundAltitude   #TODO: For now this will do, but we will have a problem when sims take into account round earth influence on zenith, and maybe topography.
+        RawShower.site_lat=Lat              #TODO: For now this will do, but we will have a problem when sims take into account very big sites (when the simulation magnetic field depends on core position for example).
+        RawShower.site_lon=Long             #TODO: For now this will do, but we will have a problem when sims take into account very big sites.
+        
         RawShower.atmos_model = str(AtmosphericModel) #TODO: Standarize
         #TODO:atmos_model_param  # Atmospheric model parameters: TODO: Think about this. Different models and softwares can have different parameters
         RawShower.atmos_density.append(Atmosdensity)
@@ -229,8 +270,8 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         RawShower.atmos_altitude.append(Atmosaltitude)
 
         RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
-        RawShower.xmax_grams = SlantXmax
-        RawShower.xmax_pos_shc = XmaxPosition
+        RawShower.xmax_grams = SlantXmax            
+        RawShower.xmax_pos_shc = [XmaxPosition[0],XmaxPosition[1],XmaxPosition[2]-GroundAltitude]
         RawShower.xmax_distance = XmaxDistance                 
         RawShower.xmax_alt = XmaxAltitude
         RawShower.hadronic_model = HadronicModel
@@ -249,14 +290,37 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         RawShower.lowe_cut_meson = MesonEnergyCut
         RawShower.lowe_cut_nucleon = NucleonEnergyCut              
 
+        #Here i will accumulate the electromagnetic energy. Note that I will estimate the electromagnetic energy in the cascade as:
+        # the sum of e+/e- energy deposit (table 7905)  (Eem_ion)
+        # the sum of the energy discarded from the sim in low energy e+/e- (table 7705) (Eem_cut)
+        # the sum of the energy discarded from the sim in low energy (table 7501) gammas (Egamma)
+        # the sum of the gamma energy deposit (table 7801) (for completeness...this table is usually empty)
+        # the amount of energy in e+/e- arriving at ground. (summed to Eem_cut)  
+        # the amount of energy in gammas arriving at ground. (summed to Egamma)
+        Eem=0
+        Egamma = 0
+        Eem_ion = 0
+        Eem_cut = 0
+        Ehadr_cut = 0
+        Ehadr_ion = 0
+        Emu_ion = 0
+        Emu_cut =0
+        Enu=0
         
-        #METAZHAireS (I propose to pass this to a separate tree and section
-        #RawShower.shower_core_pos=np.array(CorePosition) # shower core position 
+        #METAZHAireS (I propose to pass this to a separate tree and section) @TODO: This is repeated in RawMeta, and should be only there.
+        EventParametersFile= InputFolder+"/"+TaskName+".EventParameters"
+        
+        CorePosition=np.array(EParGen.GetCorePositionFromParametersFile(EventParametersFile))       
+        
+        ##Move core position so its relative to the earth surface
+        #!CorePosition[2]=CorePosition[2]+GroundAltitude         #we decided array coordinates origin are at ground level
+
+        RawShower.shower_core_pos=CorePosition # shower core position 
 
         #Fill the tables
         table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=False,Precision="Simple",TaskName=TaskName)               
         RawShower.long_pd_depth=np.array(table.T[0], dtype=np.float32) 
-        RawShower.long_pd_gammas==np.array(table.T[1], dtype=np.float32)
+        RawShower.long_pd_gammas=np.array(table.T[1], dtype=np.float32)
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,1005,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_slantdepth=np.array(table.T[0], dtype=np.float32)
@@ -291,16 +355,17 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         table=AiresInfo.GetLongitudinalTable(InputFolder,6796,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_ed_depth=np.array(table.T[0], dtype=np.float32) 
         RawShower.long_ed_neutrino=np.array(table.T[1], dtype=np.float32)
+        Enu=np.sum(RawShower.long_ed_neutrino)
 
         #In order to compute the calorimetric/invisible energy of the cascade we need the energy arriving at ground level.
         #In CORSIKA, this is stored at the last bin of the Cut tables so i add it as an extra line to the table.        
         table=AiresInfo.GetLongitudinalTable(InputFolder,7501,Slant=True,Precision="Simple",TaskName=TaskName)
         ground=AiresInfo.GetLongitudinalTable(InputFolder,5001,Slant=True,Precision="Simple",TaskName=TaskName)
         ground[0]=GroundDepth
-        table=np.vstack((table,ground))
-                                    
+        table=np.vstack((table,ground))                                    
         RawShower.long_ed_gamma_cut=np.array(table.T[1], dtype=np.float32)        
-
+        Egamma=np.sum(RawShower.long_ed_gamma_cut)
+        
         #In order to compute the calorimetric/invisible energy of the cascade we need the energy arriving at ground level.
         #In CORSIKA, this is stored at the last bin of the Cut tables so i add it as an extra line to the table.  
         table=AiresInfo.GetLongitudinalTable(InputFolder,7705,Slant=True,Precision="Simple",TaskName=TaskName)
@@ -308,6 +373,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         ground[0]=GroundDepth
         table=np.vstack((table,ground))                                                          
         RawShower.long_ed_e_cut=np.array(table.T[1], dtype=np.float32)
+        Eem_cut=np.sum(RawShower.long_ed_e_cut)
 
         #In order to compute the calorimetric/invisible energy of the cascade we need the energy arriving at ground level.
         #In CORSIKA, this is stored at the last bin of the Cut tables so i add it as an extra line to the table.          
@@ -315,7 +381,8 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         ground=AiresInfo.GetLongitudinalTable(InputFolder,5207,Slant=True,Precision="Simple",TaskName=TaskName)
         ground[0]=GroundDepth
         table=np.vstack((table,ground))                            
-        RawShower.long_ed_mu_cut=np.array(table.T[1], dtype=np.float32) 
+        RawShower.long_ed_mu_cut=np.array(table.T[1], dtype=np.float32)
+        Emu_cut=np.sum(RawShower.long_ed_mu_cut) 
                 
         ##I will add as hadr other cherged, other neutral (becouse aires for energy cut has fewer categories)
         #This means tables: 7591 and 7592
@@ -334,22 +401,39 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         ground+=AiresInfo.GetLongitudinalTable(InputFolder,5213,Slant=True,Precision="Simple",TaskName=TaskName) #kaons
         ground[0]=GroundDepth
         table=np.vstack((table,ground))        
-        RawShower.long_ed_hadr_cut=np.array(table.T[1], dtype=np.float32)              
+        RawShower.long_ed_hadr_cut=np.array(table.T[1], dtype=np.float32)
+        Ehad_cut=np.sum(RawShower.long_ed_hadr_cut)              
                          
         table=AiresInfo.GetLongitudinalTable(InputFolder,7801,Slant=True,Precision="Simple",TaskName=TaskName)                      
-        RawShower.long_ed_gamma_ioniz=np.array(table.T[1], dtype=np.float32)        
+        RawShower.long_ed_gamma_ioniz=np.array(table.T[1], dtype=np.float32)
+        Egamma+=np.sum(RawShower.long_ed_gamma_ioniz)       
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,7905,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_ed_e_ioniz=np.array(table.T[1], dtype=np.float32) 
+        Eem_ioniz=np.sum(RawShower.long_ed_e_ioniz)
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,7907,Slant=True,Precision="Simple",TaskName=TaskName)                      
-        RawShower.long_ed_mu_ioniz=np.array(table.T[1], dtype=np.float32) 
+        RawShower.long_ed_mu_ioniz=np.array(table.T[1], dtype=np.float32)
+        Emu_ioniz=np.sum(RawShower.long_ed_mu_ioniz) 
 
         ##I will add as hadr other cherged, other neutral (becouse aires for energy cut has fewer categories)
         #This means tables: 7891 and 7892        
         table=AiresInfo.GetLongitudinalTable(InputFolder,7891,Slant=True,Precision="Simple",TaskName=TaskName)                      
         table=AiresInfo.GetLongitudinalTable(InputFolder,7892,Slant=True,Precision="Simple",TaskName=TaskName)                      
         RawShower.long_ed_hadr_ioniz=np.array(table.T[1], dtype=np.float32) 
+        Ehad_ioniz=np.sum(RawShower.long_ed_hadr_ioniz)
+
+        ## 
+        # calculate electromagnetic shower energy and leave them in GeV
+        Eem = (Egamma + Eem_ioniz + Eem_cut) # in GeV
+
+        logging.debug("Electromagnetic shower energy:"+str(Eem) + " " + str(Eem/Energy))
+        logging.debug("       Hadronic shower energy:"+str(Ehad_cut+Ehad_ioniz) + " " + str((Ehad_cut+Ehad_ioniz)/Energy))
+        logging.debug("         Muonic shower energy:"+str(Emu_cut+Emu_ioniz) + " " + str((Emu_cut+Emu_ioniz)/Energy))        
+        logging.debug("       Neutrino shower energy:"+str(EnergyInNeutrinos) + " " + str(EnergyInNeutrinos/Energy))  
+        logging.debug("               Energy Balance:"+str(Eem+Ehad_cut+Ehad_ioniz+Emu_cut+Emu_ioniz+EnergyInNeutrinos) + " " + str((Eem+Ehad_cut+Ehad_ioniz+Emu_cut+Emu_ioniz+EnergyInNeutrinos)/Energy))  
+                
+        RawShower.energy_em=[Eem]   
               
         RawShower.fill()
         RawShower.write()
@@ -362,18 +446,17 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
     #ZHAIRES DEPENDENT
     ending_e = "/a*.trace"
     tracefiles=glob.glob(InputFolder+ending_e)
-    #print(tracefiles)
     tracefiles=sorted(tracefiles, key=lambda x:int(x.split(".trace")[0].split("/a")[-1]))
         
-    if(SimEfieldInfo and len(tracefiles)>0):
+    if(SimEfieldInfo ):
 
         RawEfield = RawTrees.RawEfieldTree(OutputFileName)                                                                 
         
 	    #########################################################################################################################
         # Part I: get the information
         #########################################################################################################################  	
-        FieldSimulator=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])                                  #
-        FieldSimulator="ZHAireS "+FieldSimulator 
+        FieldSimulatorVersion=AiresInfo.GetZHAireSVersionFromSry(sryfile[0])                                  #
+        FieldSimulator="ZHAireS"
         
         #Getting all the information i need for	RawEfield
         #
@@ -390,7 +473,15 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         #RefrIndex=R0*np.exp(Atmostable.T[0]*RefractionIndexParameters[1]/1000)        
         Atmosrefractivity=R0*np.exp(Atmosaltitude*RefractionIndexParameters[1]/1000.0)
 
-        AntennaN,IDs,antx,anty,antz,antt=AiresInfo.GetAntennaInfoFromSry(sryfile[0])
+
+        if(len(tracefiles)>0):
+          AntennaN,IDs,antx,anty,antz,antt=AiresInfo.GetAntennaInfoFromSry(sryfile[0])
+        else:
+          IDs=[-1] 
+          antx=[-1] 
+          anty=[-1] 
+          antz=[-1]
+          antt=[-1]
         ############################################################################################################################# 
         # Fill RawEfield part
         ############################################################################################################################ 
@@ -403,15 +494,25 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         ############################################################################################################################ 
         #Populate what we can
 
-        RawEfield.efield_sim=FieldSimulator
+        RawEfield.sim_version=str(FieldSimulatorVersion)
+        RawEfield.sim_name=str(FieldSimulator)
+        RawEfield.site=str(Site)
               
         RawEfield.refractivity_model = RefractionIndexModel                                       
         RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
          
         RawEfield.atmos_refractivity.append(Atmosrefractivity)                                 
+               
+        if ForcedTPre!=0:
+          RawEfield.t_pre = ForcedTPre
+        else:
+          RawEfield.t_pre = -TimeWindowMin                                                           
         
-        RawEfield.t_pre = TimeWindowMin                                                           
-        RawEfield.t_post = TimeWindowMax                                                          
+        if ForcedTPost!=0:
+          RawEfield.t_post = ForcedTPost
+        else:
+          RawEfield.t_post = TimeWindowMax                                                          
+        
         RawEfield.t_bin_size = TimeBinSize                                                              
         
         ############################################################################################################################ 
@@ -419,14 +520,16 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         ############################################################################################################################        
 
         if(IDs[0]==-1 and antx[0]==-1 and anty[0]==-1 and antz[0]==-1 and antt[0]==-1):
-	         logging.critical("hey, no antennas found in event sry "+ str(EventID)+" SimEfield not produced")       
-
+            logging.critical("hey, no antennas found in event sry "+ str(EventID)+" bin size "+str(RawEfield.t_bin_size))  
+                              
+            RawEfield.fill()
+            RawEfield.write()            
         else:		
 
             #convert to 32 bits so it takes less space 
-            antx=np.array(antx, dtype=np.float32)
-            anty=np.array(anty, dtype=np.float32)
-            antz=np.array(antz, dtype=np.float32)
+            antx=np.array(antx, dtype=np.float32)+CorePosition[0]    #convertto array cs
+            anty=np.array(anty, dtype=np.float32)+CorePosition[1]    #convert to array cs
+            antz=np.array(antz, dtype=np.float32)-GroundAltitude     #array coorinate system origin is at ground level
             antt=np.array(antt, dtype=np.float32)
    
             #TODO: check that the number of trace files found is coincidient with the number of antennas found from the sry  
@@ -447,18 +550,139 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
 
                 t_0= antt[ant_number]  
                 
-                DetectorID = IDs[ant_number]                                                
+                DetectorID = IDs[ant_number]
+
+                #Remove all non-digit characters from the string
+                digits_only = ''.join(filter(str.isdigit, DetectorID))                                  
                 
                 #print("DetectorID",DetectorID,"AntennaN",AntennaN[ant_number],"ant_number",ant_number,"pos",ant_position,"t0",t_0)
 
                 if(int(AntennaN[ant_number])!=ant_number+1):
                   logging.critical("Warning, check antenna numbers and ids, it seems there is a problem "+str(AntennaN)+" "+str(ant_number+1))
-                
 
+
+                #Just for plotting
+                if(DoPlot):
+                    Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
+                    mytime=np.arange(t_0+TimeWindowMin,t_0+TimeWindowMax-1,TimeBinSize)
+                    if(len(mytime)>len(Etotal)):
+                       mytime=mytime[0:len(Etotal)]
+                    else:
+                       Etotal=Etotal[0:len(mytime)]   
+                    plt.plot(mytime,Etotal,label="Original Trace",linewidth=6)
+                    plt.axvline(t_0,label="Original Trigger Time",color="blue")
+
+                ############################################################################################################################
+                # adjust the trace lenght to force the requested tpre and tpost
+                ###########################################################################################################################
+                #print("before:",np.shape(efield),-TimeWindowMin,TimeWindowMax, (-TimeWindowMin+TimeWindowMax)/RawEfield.t_bin_size)
+                
+                if ForcedTPre!=0:
+                  DeltaTimePre=ForcedTPre+TimeWindowMin
+                  DeltaBinsPre=int(np.round(DeltaTimePre/RawEfield.t_bin_size))
+                else:
+                  DeltaBinsPre=0                    
+                  
+                if ForcedTPost!=0:
+                  DeltaTimePost=ForcedTPost-TimeWindowMax
+                  DeltaBinsPost=int(np.round(DeltaTimePost/RawEfield.t_bin_size))
+                else:
+                  DeltaBinsPost=0  
+                               
+                if DeltaBinsPre<0 :
+                  efield=efield[-DeltaBinsPre:]
+                  logging.debug("We have to remove "+str(-DeltaBinsPre)+" bins at the start of efield")
+                  DeltaBinsPre=0
+                  
+                if DeltaBinsPost<0 :
+                  efield=efield[:DeltaBinsPost]   
+                  logging.debug("We have to remove "+str(-DeltaBinsPost)+" bins at the end of efield")
+                  DeltaBinsPost=0
+               
+                if DeltaBinsPost>0 or DeltaBinsPre>0:
+                  npad = ((DeltaBinsPre, DeltaBinsPost), (0 , 0))
+                  efield=np.pad(efield, npad, 'constant')          #TODO. Here I could pad using the "linear_ramp" mode, and pad wit a value that slowly aproached 0.
+                  logging.debug("We have to add "+str(DeltaBinsPre)+" bins at the start of efield")
+                  logging.debug("We have to add "+str(DeltaBinsPost)+" bins at the end of efield")
+                  
+                #Check that we achieved the correct length (rounding errors can leave us one bin short or long (TODO:we lack a definition of what to do if the times are not a multiple of tbinsize.)
+                DesiredTraceLenght=int((RawEfield.t_pre+RawEfield.t_post)/TimeBinSize)
+                
+                if(len(efield[:,1])>DesiredTraceLenght):
+                  efield=efield[:DesiredTraceLenght,:]
+                if(len(efield[:,1])<DesiredTraceLenght):
+                  delta=DesiredTraceLenght-len(efield[:,1])
+                  #print("delta",delta)
+                  efield=np.pad(efield, ((0,delta),(0,0)), 'constant')
+                  
+                #print("after:",np.shape(efield),ForcedTPre,ForcedTPost, (ForcedTPre+ForcedTPost)/TimeBinSize)  
+
+                ####################################   
+                #At this point, the traces are ensued to have a length between ForcedTpost and a ForcedTpre, and RawEfield.t_pre has the correct time before the original t0
+                ####################################
+
+                #this is just for plotting
+                if(DoPlot):
+                    Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
+                    mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post,TimeBinSize)
+                    if(len(mytime)>len(Etotal)):
+                       mytime=mytime[0:len(Etotal)]
+                    else:
+                       Etotal=Etotal[0:len(mytime)]   
+                    plt.plot(mytime,Etotal,label="Extended Trace",linewidth=4)
+                    plt.axvline(t_0,label="Extended Trigger Time",color="orange")
+               
+                #now lets process a "trigger" algorithm that will modify where the trace is located. 
+                if(TriggerSim):
+                
+                  Etotal = np.linalg.norm(efield[:,1:], axis=1) #make the modulus (the 1 is to remove the time)
+                  trigger_index = np.argmax(Etotal)                    #look where the maximum happens
+                  trigger_time=trigger_index*TimeBinSize
+                  
+                  #If we need to shift the trigger time (the trigger time needs to be equal to tpre
+                  if(trigger_time!=ForcedTPre):
+                     
+                     DeltaT=RawEfield.t_pre - trigger_time       
+                     ShiftBins=int(DeltaT/TimeBinSize)
+                     #print("we need to shift the trace "+ str(DeltaT)+" ns or "+str(ShiftBins)+" Time bins")
+                     
+                     #this is to assure that, if the maximum is found too late in the trace, we dont move outside of the original time window (normally, peaks are late in the time window, if you set the time window correctly). 
+                     if(ShiftBins < -RawEfield.t_pre/TimeBinSize):
+                       ShiftBins= int(-RawEfield.t_pre/TimeBinSize)
+                     
+                     #we could use roll, but roll makes appear the end of the trace at the begining if we roll to much
+                     #efield=np.roll(efield,-ShiftBins,axis=0)
+                     #Etotal=np.roll(Etotal,-ShiftBins,axis=0)  
+                     #so we use scipy shift, that lets you state what value to put for the places you roll
+                     
+                     efield=shift(efield,(ShiftBins,0),cval=0)                     
+                     t_0=t_0-ShiftBins*TimeBinSize
+                     
+                     #this is just for plotting
+                     if(DoPlot):  
+                         Etotal=shift(Etotal,ShiftBins,cval=0)
+                         mytime=np.arange(t_0-RawEfield.t_pre,t_0+RawEfield.t_post,TimeBinSize)
+                         #plt.plot(np.array(efield[:,1]))
+                         #plt.plot(np.array(efield[:,2]))
+                         #plt.plot(np.array(efield[:,3]))
+                         if(len(mytime)>len(Etotal)):
+                            mytime=mytime[0:len(Etotal)]
+                         else:
+                            Etotal=Etotal[0:len(mytime)] 
+                         plt.plot(mytime, Etotal,label="Shifted Trace")
+                         plt.axvline(t_0,label="Shifted TriggerTime",color="green",linewidth=5)
+                         plt.axvline(mytime[int(800/TimeBinSize)],color="red",label="Required TriggerTime")
+                         plt.legend()
+
+                  if(DoPlot):
+                    plt.show()  
+                
                 ############################################################################################################################# 
                 # Part II: Fill RawEfield	 
                 ############################################################################################################################ 
-                RawEfield.du_id.append(int(AntennaN[ant_number]))          
+                
+                #RawEfield.du_id.append(int(AntennaN[ant_number]))
+                RawEfield.du_id.append(int(digits_only)) #TODO:assuming antena names are of the format A+number of antenna! This is a quick fix          
                 RawEfield.du_name.append(DetectorID)
                 RawEfield.t_0.append(t_0)            
 
@@ -479,7 +703,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
             #print("Wrote RawEfield")
 
     else:
-        logging.critical("no trace files found in "+InputFolder+"Skipping SimEfield") #TODO: handle this exeption more elegantly
+        logging.critical("no trace files found in "+InputFolder+" Skipping SimEfield") #TODO: handle this exeption more elegantly
 
 
     #############################################################################################################################
@@ -506,27 +730,14 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
 	##############################################################################################################################
 
     if(NLongitudinal):
-        #the gammas table
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1001,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteSlantDepth(HDF5handle, RunID, EventID, table.T[0])
-        SimShower.SimShowerWriteNgammas(HDF5handle, RunID, EventID, table.T[1])
-
         #the eplusminus table, in vertical, to store also the vertical depth
         table=AiresInfo.GetLongitudinalTable(InputFolder,1205,Slant=False,Precision="Simple",TaskName=TaskName)
         SimShower.SimShowerWriteVerticalDepth(HDF5handle, RunID, EventID, table.T[0])
         SimShower.SimShowerWriteNeplusminus(HDF5handle, RunID, EventID, table.T[1])
 
-        #the e plus (yes, the positrons)
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1006,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteNeplus(HDF5handle, RunID, EventID, table.T[1])
-
         #the mu plus mu minus
         table=AiresInfo.GetLongitudinalTable(InputFolder,1207,Slant=True,Precision="Simple",TaskName=TaskName)
         SimShower.SimShowerWriteNmuplusminus(HDF5handle, RunID, EventID, table.T[1])
-
-        #the mu plus
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1007,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteNmuplus(HDF5handle, RunID, EventID, table.T[1])
 
         #the pi plus pi munus
         table=AiresInfo.GetLongitudinalTable(InputFolder,1211,Slant=True,Precision="Simple",TaskName=TaskName)
@@ -536,9 +747,6 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         table=AiresInfo.GetLongitudinalTable(InputFolder,1011,Slant=True,Precision="Simple",TaskName=TaskName)
         SimShower.SimShowerWriteNpiplus(HDF5handle, RunID, EventID, table.T[1])
 
-        #and the all charged
-        table=AiresInfo.GetLongitudinalTable(InputFolder,1291,Slant=True,Precision="Simple",TaskName=TaskName)
-        SimShower.SimShowerWriteNallcharged(HDF5handle, RunID, EventID, table.T[1])
 
 	##############################################################################################################################
 	# Energy LONGITUDINAL TABLES (very important to veryfy the energy balance of the cascade, and to compute the invisible energy)
@@ -725,10 +933,7 @@ def ZHAireSRawToRawROOT(OutputFileName, RunID, EventID, InputFolder, TaskName="L
         SimShower.SimShowerWriteEnergyDist_allcharged(HDF5handle, RunID, EventID, table.T[1])
 
     logging.info("### The event written was " + EventName)
-
-    # f.Close()
-    # print("****************CLOSED!")
-    
+   
     if(CompressedInput==True):
       logging.info("Hopefully deleting the uncompressed files " + EventName)
       ZC.ZHAireSCompressEvent(InputFolder,"delete")
@@ -763,24 +968,70 @@ def CheckIfEventIDIsUnique(EventID, f):
     return True
 
 
+def extract_event_number(file_path):
+    # Get the base name of the file without the extension
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
 
+    # Split the file name using underscores
+    parts = file_name.split('_')
+
+    # The EventNumber is the last part of the split
+    event_number = parts[-1]
+
+    return event_number
+
+def extract_extra(file_path):
+    # Get the base name of the file without the extension
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+
+    # Split the file name using underscores
+    parts = file_name.split('_')
+
+    # The extra is the first part of the split
+    extra = parts[0]
+
+    return extra
+
+def convert_date(date_str):
+    # Convert input string to a struct_time object
+    date_struct = time.strptime(date_str, "%d/%b/%Y")
+
+    # Format the struct_time object as a string in YYYYMMDD format
+    formatted_date = time.strftime("%Y%m%d", date_struct)
+
+    return formatted_date
+    
+    
 if __name__ == '__main__':
 
-	if (len(sys.argv)>6 or len(sys.argv)<6) :
-		print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID and output filename...nothing more, nothing less!")
-		print("i.e ZHAiresRawToRawROOT ./MyshowerDir standard RunID EventID MyFile.root")
-		print("i.e. python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 3  GP10_192745211400_SD075V.root")
-		mode="exit"
+    if len(sys.argv)==6 :
+        InputFolder=sys.argv[1]
+        mode=sys.argv[2]
+        RunID=int(sys.argv[3])
+        try:
+         EventID=int(sys.argv[4])
+        except:
+         EventID=sys.argv[4]  
+        
+        OutputFileName=sys.argv[5]
+	    
+    elif len(sys.argv)==2:
+        InputFolder=sys.argv[1]
+        mode="standard"
+        RunID="SuitYourself"
+        EventID="LookForIt"
+        OutputFileName="GRANDConvention"	
+    else:
+        print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID and output filename...nothing more, nothing less!")
+        print("i.e ZHAiresRawToRawROOT ./MyshowerDir standard RunID EventID MyFile.root")
+        print("i.e. python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 3  GP10_192745211400_SD075V.root")
+        print("or point me to a directory and i will take care of the rest automatically as i see fit.")
+        mode="exit"
 
-	elif len(sys.argv)==6 :
-		InputFolder=sys.argv[1]
-		mode=sys.argv[2]
-		RunID=int(sys.argv[3])
-		EventID=int(sys.argv[4])
-		OutputFileName=sys.argv[5]
 
-	if(mode=="standard"): 
-		ZHAireSRawToRawROOT(OutputFileName,RunID,EventID, InputFolder)
+
+    if(mode=="standard"): 
+        ZHAireSRawToRawROOT(InputFolder, OutputFileName, RunID, EventID)
 
 	#elif(mode=="full"):
 
@@ -790,9 +1041,9 @@ if __name__ == '__main__':
 	
 	#	ZHAireSRawToRawROOT(OutputFileName,RunID,EventID, InputFolder, SimEfieldInfo=True, NLongitudinal=False, ELongitudinal=False, NlowLongitudinal=False, ElowLongitudinal=False, EdepLongitudinal=False, LateralDistribution=False, EnergyDistribution=False)
 
-	else:
+    else:
 
-		print("please enter the mode: standard (full or minimal still not implemented")
+        print("please enter the mode: standard (full or minimal still not implemented")
 	
  
 

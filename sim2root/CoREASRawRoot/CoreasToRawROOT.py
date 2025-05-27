@@ -3,12 +3,12 @@
 ## by Jelena Köhler, @jelenakhlr
 
 import sys
+import numpy as np
 import os
 import glob
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
-sys.path.append("../Common")
-import raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
+import sim2root.Common.raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 from optparse import OptionParser
 
 """
@@ -58,8 +58,7 @@ def CoreasToRawRoot(file, simID=None):
   print("Checking subdirectories for *.dat files (traces).")
   available_traces = glob.glob(f"{path}/SIM{simID}_coreas/*.dat")
   if len(available_traces) == 0:
-    print("No traces found. Please check path and try again.")
-    sys.exit()
+    sys.exit("No traces found. Please check path and try again.")
   else:
     print("Found", len(available_traces), "*.dat files (traces).")
      
@@ -79,25 +78,29 @@ def CoreasToRawRoot(file, simID=None):
   if len(log_file) == 0:
     print("[WARNING] No log file found in this directory. Using dummy values for first interaction.")
 
-    first_interaction = 100 # height of first interaction - in m
-    print("Assuming first interaction at 100m.")
+    first_interaction = 1 # height of first interaction - in m
+    print("[WARNING] Assuming first interaction at 1m.")
     hadr_interaction  = "Sibyll 2.3d"
-    coreas_version    = "Coreas V1.4"
+    coreas_version    = "1.4"
     print("Assuming hadronic interaction model Sibyll 2.3d and Coreas Version V1.4.")
   elif len(log_file) > 1:
     print("Found", log_file)
     print("[WARNING] More than one log file found in directory. Only log file", log_file[0], "will be used.")
     log_file = log_file[0]
-    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    first_interaction = read_first_interaction(log_file) / 100 # height of first interaction - in m
     hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
     coreas_version    = read_coreas_version(log_file)
   else:
     print("Found", log_file)
     log_file = log_file[0]
     print("Extracting info from log file", log_file, "for GRANDroot.")
-    first_interaction = read_first_interaction(log_file) * 100 # height of first interaction - in m
+    first_interaction = read_first_interaction(log_file) / 100 # height of first interaction - in m
     hadr_interaction  = read_HADRONIC_INTERACTION(log_file)
     coreas_version    = read_coreas_version(log_file)
+
+  corsika_version = read_corsika_version(inp_input)
+
+  
   print("*****************************************")
 
 
@@ -111,9 +114,9 @@ def CoreasToRawRoot(file, simID=None):
   # Part B.I.i: get the information from Coreas input files
   #########################################################################################################################   
   # from reas file
-  CoreCoordinateNorth = read_params(reas_input, "CoreCoordinateNorth") * 100 # convert to m
-  CoreCoordinateWest = read_params(reas_input, "CoreCoordinateWest") * 100 # convert to m
-  CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") * 100 # convert to m
+  CoreCoordinateNorth = read_params(reas_input, "CoreCoordinateNorth") / 100 # convert to m
+  CoreCoordinateWest = read_params(reas_input, "CoreCoordinateWest") / 100 # convert to m
+  CoreCoordinateVertical = read_params(reas_input, "CoreCoordinateVertical") / 100 # convert to m
   CorePosition = [CoreCoordinateNorth, CoreCoordinateWest, CoreCoordinateVertical]
 
   TimeResolution = read_params(reas_input, "TimeResolution") * 10**9 #convert to ns
@@ -121,7 +124,7 @@ def CoreasToRawRoot(file, simID=None):
   AutomaticTimeBoundaries = read_params(reas_input, "AutomaticTimeBoundaries") * 10**9 #convert to ns
   TimeLowerBoundary = read_params(reas_input, "TimeLowerBoundary") * 10**9 # convert to ns
   TimeUpperBoundary = read_params(reas_input, "TimeUpperBoundary") * 10**9 # convert to ns
-  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale") * 100 # convert to m
+  ResolutionReductionScale = read_params(reas_input, "ResolutionReductionScale") / 100 # convert to m
 
   GroundLevelRefractiveIndex = read_params(reas_input, "GroundLevelRefractiveIndex") # refractive index at 0m asl
 
@@ -134,19 +137,29 @@ def CoreasToRawRoot(file, simID=None):
 
   if read_params(reas_input, "ShowerZenithAngle"):
     zenith = read_params(reas_input, "ShowerZenithAngle")
-    azimuth = read_params(reas_input, "ShowerAzimuthAngle")
+    azimuth = read_params(reas_input, "ShowerAzimuthAngle") + 180 #shift to GRAND conventions
 
-    Energy = read_params(reas_input, "PrimaryParticleEnergy") # in GeV
+    Energy = read_params(reas_input, "PrimaryParticleEnergy") * 1e-9 # in GeV
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
     DepthOfShowerMaximum = read_params(reas_input, "DepthOfShowerMaximum") # slant depth in g/cm^2
-    DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") * 100 # geometrical distance of shower maximum from core in m
-    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10**-1 # convert from Gauss to mT
+    DistanceOfShowerMaximum = read_params(reas_input, "DistanceOfShowerMaximum") / 100 # geometrical distance of shower maximum from core in m
+    FieldIntensity = read_params(reas_input, "MagneticFieldStrength") * 10 ** (-1) # convert from Gauss to mT
     FieldInclination = read_params(reas_input, "MagneticFieldInclinationAngle") # in degrees, >0: in northern hemisphere, <0: in southern hemisphere
     GeomagneticAngle = read_params(reas_input, "GeomagneticAngle") # in degrees
 
+    # calculate Xmax cartesian position
+    # set spherical system vector in m and radians
+    Xmax_sph = np.array([DistanceOfShowerMaximum, np.deg2rad(zenith), np.deg2rad(azimuth)])
+    # simply transform from spherical to cartesian to recover the cartesian position of Xmax
+    Xmax_NWU = np.array([Xmax_sph[0] * np.sin(Xmax_sph[1]) * np.cos(Xmax_sph[2]), \
+                         Xmax_sph[0] * np.sin(Xmax_sph[1]) * np.sin(Xmax_sph[2]), \
+                         Xmax_sph[0] * np.cos(Xmax_sph[1])])
+
   else:
+    #theta_GRAND = theta_Corsika
     zenith = read_params(inp_input, "THETAP")
-    azimuth = read_params(inp_input, "PHIP")
+    #azimuth_GRAND = 180 - azimuth_Corsika
+    azimuth = 180 - read_params(inp_input, "PHIP")
 
     Energy = read_params(inp_input, "ERANGE") # in GeV
     Primary = read_params(inp_input, "PRMPAR") # as defined in CORSIKA
@@ -199,8 +212,10 @@ def CoreasToRawRoot(file, simID=None):
   pathLongFile = f"{path}/DAT{simID}.long"
 
   # the long file has an annoying setup, which I (very inelegantly) circumvent with this function:
-  n_data, dE_data, hillas_parameter = read_long(pathLongFile)
-  # there's an issue with the hillas_parameter in read_long, but also there seems to be a general issue with the hillas parameter in these files
+  n_data, dE_data, hillas_parameters = read_long(pathLongFile)
+  
+  Xmax = hillas_parameters[0] # Coreas & GRAND: g/cm^2
+  Chi_hillas = hillas_parameters[1]
 
   #**** particle distribution
   particle_dist = n_data
@@ -232,6 +247,15 @@ def CoreasToRawRoot(file, simID=None):
   ed_sum = energy_dep[:,9]
 
 
+  Egamma = np.sum(ed_gamma)
+  Eem_ion = np.sum(ed_em_ioniz)
+  Eem_cut = np.sum(ed_em_cut)
+
+  # calculate electromagnetic shower energy and leave them in GeV
+  Eem = (Egamma + Eem_ion + Eem_cut) # in GeV
+  print("Electromagnetic shower energy:", Eem)
+
+
   ##############################################
 
   EnergyInNeutrinos = 1. # placeholder
@@ -245,18 +269,24 @@ def CoreasToRawRoot(file, simID=None):
 
   print("*****************************************")
   HadronicModel = hadr_interaction
-  LowEnergyModel = "urqmd" # might not be possible to get this info from mpi runs
+  LowEnergyModel = "urqmd" # might not be possibleV to get this info from mpi runs
   print("[WARNING] hard-coded LowEnergyModel", LowEnergyModel)
   print("*****************************************")
 
   # TODO: find injection altitude in TPlotter.h/cpp
-  InjectionAltitude = 100.
+  InjectionAltitude = 1.
   print("[WARNING] InjectionAltitude is hardcoded")
+
+  site = read_site(inp_input)
+  latitude, longitude, altitude = read_lat_long_alt(site)
+
+  # set altitude to simulations obslevel
+  altitude = CorePosition[2]
 
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + RunID +".root"
+  OutputFileName = "Coreas_" + RunID +".rawroot"
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -264,9 +294,10 @@ def CoreasToRawRoot(file, simID=None):
   SimCoreasShower = RawTrees.RawCoreasTree(OutputFileName)
 
   # ********** fill RawShower **********
-  RawShower.run_number = RunID
-  RawShower.sim_name = coreas_version
-  RawShower.event_number = EventID
+  RawShower.run_number = EventID
+  RawShower.sim_name = str("Corsika")
+  RawShower.sim_version = str(corsika_version)
+  RawShower.event_number = RunID
   RawShower.event_name = RunID
   RawShower.event_date = Date
   RawShower.unix_date = UnixDate
@@ -274,16 +305,23 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.rnd_seed = RandomSeed
 
   RawShower.energy_in_neutrinos = EnergyInNeutrinos
+  RawShower.energy_em = [Eem]
   RawShower.energy_primary = [Energy]
   RawShower.azimuth = azimuth
   RawShower.zenith = zenith
   RawShower.primary_type = [str(Primary)]
   RawShower.primary_inj_alt_shc = [InjectionAltitude]
   RawShower.atmos_model = str(AtmosphericModel)
-
+  RawShower.site = site
   RawShower.magnetic_field = np.array([FieldInclination,FieldDeclination,FieldIntensity])
   RawShower.hadronic_model = HadronicModel
   RawShower.low_energy_model = LowEnergyModel
+
+  #* site specs *
+  RawShower.site = site
+  RawShower.site_lat = latitude
+  RawShower.site_lon = longitude
+  RawShower.site_alt = altitude
 
   # * THINNING *
   RawShower.rel_thin = Thin[0]
@@ -299,7 +337,7 @@ def CoreasToRawRoot(file, simID=None):
   RawShower.lowe_cut_meson = MesonEnergyCut # and hadrons
   RawShower.lowe_cut_nucleon = NucleonEnergyCut # same as meson and hadron cut
 
-  RawShower.shower_core_pos = np.array(CorePosition)
+  
 
 
   """
@@ -310,6 +348,9 @@ def CoreasToRawRoot(file, simID=None):
   Some fields will be missing here and some fields will be missing for ZhaireS.
   
   """
+  RawShower.xmax_grams = Xmax
+  RawShower.xmax_distance = DistanceOfShowerMaximum
+  RawShower.xmax_pos_shc = Xmax_NWU
 
   RawShower.long_pd_gamma = pd_gammas
   RawShower.long_pd_eminus = pd_electrons
@@ -341,11 +382,40 @@ def CoreasToRawRoot(file, simID=None):
   
   RawShower.first_interaction = first_interaction
 
+  pathAntennaList = f"{path}/SIM{simID}.list"
+  core_shift_x, core_shift_y = calculate_array_shift(pathAntennaList)
+  
+  #the array coordinate system has its origin at ground level
+  print("[WARNING] antenna altitude is hard coded to 0")
+  RawShower.shower_core_pos = np.array(CorePosition) + np.array([core_shift_x, core_shift_y,-CorePosition[2]])
+  print("SHOWER CORE POS:", RawShower.shower_core_pos)
   RawShower.fill()
   RawShower.write()
 
 
   # *** fill MetaShower *** 
+  ###########################################################################################################################
+  # Part B.II.iii: Create and fill the RawMetaEfield Tree
+  ############################################################################################################################
+  #There are facilities in Common to build an EventParameters file with all this info and then read the info from the file
+  #It will come handy in the future if you test several core positions before running the sim, for storing the tested core positions
+  #and giving a weight to the event.
+  print("***RawMeta***")
+    
+  RawMeta = RawTrees.RawMetaTree(OutputFileName)
+  RawMeta.run_number = RunID
+  RawMeta.event_number = EventID
+
+  print("[WARNING] array_name is hardcoded")
+  RawMeta.array_name = "GP300"
+  RawMeta.shower_core_pos=RawShower.shower_core_pos  #MT this is twice in the file, i have the idea it should only be here (for me the core position is "meta" to the shower sim, but it looks like is an input for coreas, so i keep both)
+  RawMeta.unix_second=GPSSecs
+  RawMeta.unix_nanosecond=GPSNanoSecs
+  print("[WARNING] event_weight is hardcoded")  
+  RawMeta.event_weight=1 
+  print("******")
+  RawMeta.fill()
+  RawMeta.write()  
 
 
   #########################################################################################################################
@@ -366,9 +436,12 @@ def CoreasToRawRoot(file, simID=None):
   #****** load positions ******
   # the list file contains all antenna positions for each antenna ID
   pathAntennaList = f"{path}/SIM{simID}.list"
+
   # store all antenna IDs in ant_IDs
+  # stores the actual antenna names from the coreas -list file
   antenna_names = antenna_positions_dict(pathAntennaList)["name"]
-  antenna_IDs   = antenna_positions_dict(pathAntennaList)["ID"] 
+  # if antenna name is in the form of "ant???" or "gp_???", stores the digits after "ant" or "gp_", otherwise generic counter from 1
+  antenna_IDs = antenna_positions_dict(pathAntennaList)["ID"] 
 
   ############################################################################################################################
   # Part B.II.ii: Create and fill the RawEfield Tree
@@ -377,8 +450,10 @@ def CoreasToRawRoot(file, simID=None):
   #****** fill shower info ******
   RawEfield = RawTrees.RawEfieldTree(OutputFileName)
 
-  RawEfield.run_number = RunID
-  RawEfield.event_number = EventID
+  RawEfield.run_number = EventID
+  RawEfield.event_number = RunID
+  RawEfield.sim_name = str("CoREAS")
+  RawEfield.sim_version = str(coreas_version)
 
   RawEfield.refractivity_model = RefractionIndexModel                                       
   RawEfield.refractivity_model_parameters = RefractionIndexParameters                       
@@ -399,24 +474,25 @@ def CoreasToRawRoot(file, simID=None):
     # the files are setup like [timestamp, x polarization, y polarization, z polarization]
     efield = np.loadtxt(tracefile)
     
-    timestamp = efield[:,0] * 10**9 #convert to ns 
-    trace_x = efield[:,1]
-    trace_y = efield[:,2]
-    trace_z = efield[:,3]
-    
+    timestamp = efield[:,0] * 10**9 # convert to ns 
+    # coreas uses cgs units, so voltage is in statvolt
+    # efield in statvolt / cm
+    # 1 statV * 299.792458 V/statV = 1 V
+    # 1 statV * 299.792458 * 1e6 V/statV = 1 microV
+    trace_x = efield[:,1]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
+    trace_y = efield[:,2]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
+    trace_z = efield[:,3]* 299.792458 * 1e6 * 100 # convert to micro Volts / m
+
+
+
     # define time params:
     t_length = len(timestamp)
-    t_0 = timestamp[0] + t_length/2
-    t_pre = -t_length/2
-    t_post = t_length/2
-
-    # # timewindow min and max vary for each trace
-    # TimeWindowMin = timestamp[0]
-    # TimeWindowMax = timestamp[:-1]
-
-    # RawEfield.TimeWindowMin.append(TimeWindowMin)
-    # RawEfield.TimeWindowMax.append(TimeWindowMax)
-
+    t_0 = timestamp[0] + t_length/2 * TimeBinSize
+    t_pre  = 800#ns
+    t_pre = t_length/2 * TimeBinSize
+    t_post = t_length/2 * TimeBinSize
+    
+    # add to ROOT tree
     # in Zhaires converter: AntennaN[ant_ID]
     RawEfield.du_name.append(str(antenna))
     RawEfield.du_id.append(int(antenna_IDs[index]))
@@ -432,19 +508,23 @@ def CoreasToRawRoot(file, simID=None):
     RawEfield.trace_z.append(trace_z.astype(float))
 
     # Antenna positions in showers's referential in [m]
-    ant_position = get_antenna_position(pathAntennaList, antenna)
-    RawEfield.du_x.append(ant_position[0][index].astype(float))
-    RawEfield.du_y.append(ant_position[1][index].astype(float))
-    RawEfield.du_z.append(ant_position[2][index].astype(float))
+    ant_position_x, ant_position_y, ant_position_z = get_antenna_position(pathAntennaList, antenna)
+    # shift antenna z coordinate to array level
+    ant_position_z = ant_position_z - altitude
+    RawEfield.du_x.append(ant_position_x.astype(float))
+    RawEfield.du_y.append(ant_position_y.astype(float))
+    RawEfield.du_z.append(ant_position_z.astype(float))
     
   print("******")
   RawEfield.fill()
   RawEfield.write()
 
+
+  
+
   #############################################################
   # fill SimCoreasShower with all leftover info               #
-  #############################################################
-  
+  #############################################################    
   # store all leftover information here
   SimCoreasShower.AutomaticTimeBoundaries = AutomaticTimeBoundaries
   SimCoreasShower.ResolutionReductionScale = ResolutionReductionScale
@@ -472,28 +552,24 @@ def CoreasToRawRoot(file, simID=None):
   return RunID
 
 
-
 if __name__ == "__main__":
   # * # * # * # * # * # * # * # * # * # *
   # convert multiple showers in one directory
   if options.directory:
     path = f"{options.directory}/"
     # find reas files in directory
-    if glob.glob(path + "SIM??????.reas"):
-        available_reas_files = glob.glob(path + "SIM??????.reas")
-    else:
-        print("No showers found. Please check your input and try again.")
-        sys.exit()
+    available_reas_files = glob.glob(path + "SIM??????.reas")
+    if not available_reas_files:
+        sys.exit("Error: No showers found in the specified directory. Please check your input and try again.")
     
     # get simIDs from the found reas files
     for reas_file in available_reas_files:
         shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
         if shower_match:
             simID = shower_match.group(1)
-            print(f"run number: {simID}")
+            print(f"Run number: {simID}")
         else:
-            print(f"No simID found for {reas_file}. Please check your input and try again.")
-            sys.exit()
+            sys.exit(f"Error: No simID found for {reas_file}. Please check your input and try again.")
         CoreasToRawRoot(reas_file, simID)
 
   # * # * # * # * # * # * # * # * # * # *
@@ -505,12 +581,13 @@ if __name__ == "__main__":
     if shower_match:
       simID = shower_match.group(1)
     else:
-      print("Shower not found. Please check your input and try again.")
-      sys.exit()
+      sys.exit("Error: Shower not found in the specified file. Please check your input and try again.")
     # run the script
     CoreasToRawRoot(file, simID)
 
   # * # * # * # * # * # * # * # * # * # *
   # print help if options are not specified correctly
   else:
+    print("Error: No valid options specified. Please provide either a directory or a file to convert.")
     parser.print_help()
+    sys.exit()

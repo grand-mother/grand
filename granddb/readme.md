@@ -1,4 +1,4 @@
-This section regroups the different libraries to interact with datas in Grand.
+This section regroups the different libraries used to interact with datas and database in Grand.
 
 # DataManager
 
@@ -63,8 +63,8 @@ The get(filename) function fill perform the following actions :
  
 Usage example:
 
-    import granddb.granddatalib as granddatalib
-    dm = granddatalib.DataManager('config.ini')
+    import granddb.datamanager as datamanager
+    dm = datamanager.DataManager('config.ini')
     file="Coarse3.root"
     print(dm.get(file))
 

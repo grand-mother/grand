@@ -13,7 +13,9 @@ The code will convert the specified CoREAS simulation into GRANDROOT format.
 
 
 ## How to run the whole CoreasToRawRoot + sim2root + efield2voltage
-`python3 coreas_pipeline.py -d <directory with Coreas Sim>`
+`python3 coreas_pipeline.py -d <directory with Coreas Sim>`\
+optional: specify an output directory as well:\
+`python3 coreas_pipeline.py -d <directory with Coreas Sim> -o <output directory>`\
 
 
 ## Overview
