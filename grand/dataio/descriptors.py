@@ -20,6 +20,7 @@ cpp_to_numpy_typecodes = {'char': np.dtype('int8'), 'short': np.dtype('int16'), 
 
 
 high_root_version = ROOT.gROOT.GetVersionInt()>=63600
+higher_root_version = ROOT.gROOT.GetVersionInt()>=63004
 
 # This import changes in Python 3.10
 if sys.version_info.major >= 3 and sys.version_info.minor < 10:
@@ -124,69 +125,105 @@ class StdVectorList(MutableSequence):
 
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
-    # function modified by Jelena to fix the negative issue, use at own risk
         try:
-            if isinstance(value, np.ndarray):
-                # Do not set empty values
-                if value.size==0: return
-                # Sometimes, for example, int is given in place of unsigned int, and C++ fuction does not convert it, so python conversion is needed
-                value = value.astype(cpp_to_numpy_typecodes[self.basic_vec_type])
-                if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
-                if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
-                if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
-            else:
-                if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
-                    # Do not set empty values
-                    if not value: return
-                    if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                    if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                    if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
-                elif not isinstance(value, StdVectorList):
-                    value = list(value)
-
-                # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+            if higher_root_version:
                 try:
                     if isinstance(value, StdVectorList):
-                        # Do not set empty values
-                        if not value: return
-                        # ToDo: Maybe faster than +=, but... to be checked
                         if high_root_version:
-                            try:
-                                # That will not work if we have different types of value and self._vector
-                                self._vector += value._vector
-                            except:
-                                # For different types, convert the type with numpy, but it won't simply work for chars
-
-                                # For chars is ugly, using a special function
-                                if "char" in value.basic_vec_type.split()[-1]:
-                                    self._vector.assign(np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
-                                else:
-                                    self._vector.assign(np.array(value._vector).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
-
+                            self._vector.assign(value._vector)
                         else:
                             self._vector += value._vector
-                            # self._vector.assign(value._vector)
                     else:
+                        self._vector.assign(value)
+                    return self
+                except:
+                    try:
+                        if isinstance(value, StdVectorList):
+                            if "char" in value.basic_vec_type.split()[-1]:
+                                if high_root_version:
+                                    self._vector.assign(np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+                                else:
+                                    self._vector += np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
+                            else:
+                                try:
+                                    self._vector.assign(value._vector)
+                                except:
+                                    self._vector += value._vector
+                        else:
+                            self._vector.assign(np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+                        return self
+                    except Exception as e:
+                        # Basically only for ROOT <6.36 for 3D lists that can't be converted to arrays (traces of non-homogenous lenght)
+                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+
                         self._vector += value
-                except TypeError:
-                    if high_root_version:
-                        # Slow conversion to simple types. No better idea for now
-                        if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
-                            if self.ndim == 1:
-                                value = list(value)
-                            if self.ndim == 2:
-                                value = [list(el) for el in value]
-                            if self.ndim == 3: value = [[list(el1) for el1 in el] for el in value]
+
+                        return self
+            else:
+                # For ROOT <6.30.06
+                if isinstance(value, np.ndarray):
+                    # Do not set empty values
+                    if value.size==0: return
+                    # Sometimes, for example, int is given in place of unsigned int, and C++ fuction does not convert it, so python conversion is needed
+                    value = value.astype(cpp_to_numpy_typecodes[self.basic_vec_type])
+                    if self.ndim == 1: ROOT.fill_vec_1D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                    if self.ndim == 2: ROOT.fill_vec_2D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                    if self.ndim == 3: ROOT.fill_vec_3D[self.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), self._vector)
+                else:
+                    if (isinstance(value, list) and self.basic_vec_type.split()[-1] == "float"):
+                        # Do not set empty values
+                        if not value: return
+                        if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                        if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                        if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                    elif not isinstance(value, StdVectorList):
+                        value = list(value)
+
+                    # The list needs to have simple Python types - ROOT.vector does not accept numpy types
+                    try:
+                        if isinstance(value, StdVectorList):
+                            # Do not set empty values
+                            if not value: return
+                            # ToDo: Maybe faster than +=, but... to be checked
+                            if high_root_version:
+                                try:
+                                    # That will not work if we have different types of value and self._vector
+                                    self._vector += value._vector
+                                except:
+                                    # For different types, convert the type with numpy, but it won't simply work for chars
+
+                                    # For chars is ugly, using a special function
+                                    if "char" in value.basic_vec_type.split()[-1]:
+                                        self._vector.assign(np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+                                    else:
+                                        self._vector.assign(np.array(value._vector).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+
+                            else:
+                                self._vector += value._vector
+                                # self._vector.assign(value._vector)
+                        else:
                             self._vector += value
-                    else:
-                        if isinstance(value, StdVectorList) and "char" in value.basic_vec_type.split()[-1]:
-                            self._vector += chars_to_uint8_array(value._vector)
-                        elif self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
-                            if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
-                            if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
-                            if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
-                            # self._vector.assign(value)
-                            self._vector += value
+                    except TypeError:
+                        if high_root_version:
+                            # Slow conversion to simple types. No better idea for now
+                            if self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                                if self.ndim == 1:
+                                    value = list(value)
+                                if self.ndim == 2:
+                                    value = [list(el) for el in value]
+                                if self.ndim == 3: value = [[list(el1) for el1 in el] for el in value]
+                                self._vector += value
+                        else:
+                            if "char" in value.basic_vec_type.split()[-1]:
+                                self._vector += chars_to_uint8_array(value._vector)
+                            elif self.basic_vec_type.split()[-1] in ["int", "long", "short", "char", "float"]:
+                                if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
+                                if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]
+                                if self.ndim == 3: value = [[array.array(cpp_to_array_typecodes[self.basic_vec_type], el1) for el1 in el] for el in value]
+                                # self._vector.assign(value)
+                                self._vector += value
 
 
 
@@ -392,6 +429,41 @@ def chars_to_uint8_array(nested_chars):
 
     # 4) View that buffer as uint8 and restore shape
     return np.frombuffer(buf, dtype=np.uint8).reshape(shape)
+
+def convert_deepest_lists_to_arrays(data):
+    """
+    Recursively traverse a nested list structure and convert only
+    the deepest lists (which contain non-lists) into numpy arrays.
+    """
+    if isinstance(data, list):
+        # If elements are not lists themselves, this is the deepest level
+        if not any(isinstance(el, list) for el in data):
+            return np.array(data)
+        else:
+            return [convert_deepest_lists_to_arrays(el) for el in data]
+    else:
+        return data  # Base case: not a list
+
+def split_2d_arrays_to_rows(data):
+    """
+    Traverse `data`, and for every 2D numpy array found,
+    replace it with a list of its 1D row arrays.
+    """
+    if isinstance(data, np.ndarray):
+        if data.ndim == 2:
+            # turn M×N array into [array(shape=(N,)), …]
+            return [row for row in data]
+        else:
+            # leave arrays of other dims untouched
+            return data
+
+    elif isinstance(data, list):
+        # recurse into each element of the list
+        return [split_2d_arrays_to_rows(el) for el in data]
+
+    else:
+        # any non‐list, non‐ndarray is passed through
+        return data
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
