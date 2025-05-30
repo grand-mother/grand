@@ -450,7 +450,7 @@ class DataTree:
             args = args[1:]
         # File exists, so reopen the file in the update mode in case it was read only
         else:
-            self._file.ReOpen("update")
+            ret = self._file.ReOpen("update")
 
         # ToDo: For now, I don't know how to do that: Check if the entries in possible tree in the file do not already contain entries from the current tree
 
@@ -458,7 +458,8 @@ class DataTree:
         if len(args) < 2:
             args = ["", ROOT.TObject.kWriteDelete]
         # ToDo: make sure that the tree has different name than the trees existing in the file!
-        self._tree.Write(*args)
+        # self._tree.Write(*args)
+        self._tree.GetCurrentFile().Write(*args)
 
         # If TFile was created here, close it
         if (creating_file and close_file) or force_close_file:
