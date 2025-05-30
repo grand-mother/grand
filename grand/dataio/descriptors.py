@@ -134,7 +134,10 @@ class StdVectorList(MutableSequence):
                         else:
                             self._vector += value._vector
                     else:
-                        self._vector.assign(value)
+                        if high_root_version:
+                            self._vector.assign(value)
+                        else:
+                            self._vector += value
                     return self
                 except:
                     try:
