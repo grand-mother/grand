@@ -601,9 +601,9 @@ class RawShowerTree(MotherEventTree):
 
     @cpu_time.setter
     def cpu_time(self, value):
-        self._cpu_time = np.array(value).astype(np.float32)
+        self._cpu_time = np.array([value]).astype(np.float32)
         self._tree.SetBranchAddress("cpu_time", self._cpu_time)
-        
+
 
 
     @property
