@@ -125,6 +125,11 @@ class StdVectorList(MutableSequence):
 
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
+        # To avoid memory leak when getting a numpy array
+        if isinstance(value, np.ndarray):
+            fill_stdvectorlist_with_array(self, value)
+            return self
+
         try:
             if higher_root_version:
                 try:
@@ -143,17 +148,25 @@ class StdVectorList(MutableSequence):
                     try:
                         if isinstance(value, StdVectorList):
                             if "char" in value.basic_vec_type.split()[-1]:
-                                if high_root_version:
-                                    self._vector.assign(np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
-                                else:
-                                    self._vector += np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
+                                tmp_array = np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
+                                fill_stdvectorlist_with_array(self, tmp_array)
+                                return self
+                                # if high_root_version:
+                                #     tmp_array = np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
+                                #     fill_stdvectorlist_with_array(self, tmp_array)
+                                #     self._vector.assign()
+                                # else:
+                                #     self._vector += np.array(chars_to_uint8_array(value._vector)).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
                             else:
                                 try:
                                     self._vector.assign(value._vector)
                                 except:
                                     self._vector += value._vector
                         else:
-                            self._vector.assign(np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
+                            tmp_array = np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type])
+                            fill_stdvectorlist_with_array(self, tmp_array)
+
+                            # self._vector.assign(np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
                         return self
                     except Exception as e:
                         # Basically only for ROOT <6.36 for 3D lists that can't be converted to arrays (traces of non-homogenous lenght)
@@ -467,6 +480,18 @@ def split_2d_arrays_to_rows(data):
     else:
         # any non‐list, non‐ndarray is passed through
         return data
+
+# Fills the StdVectorList's vector with numpy array using C++ functions to avoid a memory leak
+def fill_stdvectorlist_with_array(target, value):
+    if isinstance(value, np.ndarray):
+        # Do not set empty values
+        if value.size == 0: return
+        # Sometimes, for example, int is given in place of unsigned int, and C++ fuction does not convert it, so python conversion is needed
+        value = value.astype(cpp_to_numpy_typecodes[target.basic_vec_type])
+        if target.ndim == 1: ROOT.fill_vec_1D[target.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), target._vector)
+        if target.ndim == 2: ROOT.fill_vec_2D[target.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), target._vector)
+        if target.ndim == 3: ROOT.fill_vec_3D[target.basic_vec_type](np.ascontiguousarray(value), np.array(value.shape).astype(np.int32), target._vector)
+
 
 ## Exception raised when an already existing event/run is added to a tree
 class NotUniqueEvent(Exception):
