@@ -239,9 +239,13 @@ def main():
         #     out_filename = clargs.output_filename
 
         # Read the raw trees from the file
-        trawshower = RawTrees.RawShowerTree(filename)
-        trawefield = RawTrees.RawEfieldTree(filename)
-        trawmeta = RawTrees.RawMetaTree(filename)
+        try:
+            trawshower = RawTrees.RawShowerTree(filename)
+            trawefield = RawTrees.RawEfieldTree(filename)
+            trawmeta = RawTrees.RawMetaTree(filename)
+        except OSError:
+            print("Failed to read raw file", filename)
+            continue
 
         nentries = trawshower.get_entries()
 
