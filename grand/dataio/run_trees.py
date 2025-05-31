@@ -59,7 +59,7 @@ class MotherRunTree(DataTree):
         # Make sure we have an int
         run_no = int(run_no)
         # Try to get the run from the tree
-        res = self._tree.GetEntryWithIndex(run_no)
+        res = self._tree.GetEntryWithIndex(int(run_no))
         # If no such entry, return
         if res == 0 or res == -1:
             logger.error(f"No run with run number {run_no}. Please provide a proper number.")
