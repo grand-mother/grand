@@ -40,8 +40,8 @@ class MotherRunTree(DataTree):
     ## List runs in the tree
     def print_list_of_runs(self):
         """List runs in the tree"""
-        count = self._tree.Draw("run_number", "", "goff")
-        runs = self._tree.GetV1()
+        count = self.draw("run_number", "", "goff")
+        runs = self.get_v1()
         print("List of runs in the tree:")
         for i in range(count):
             print(int(runs[i]))
@@ -49,8 +49,8 @@ class MotherRunTree(DataTree):
     ## Gets list of runs in the tree together
     def get_list_of_runs(self):
         """Gets list of runs in the tree together"""
-        count = self._tree.Draw("run_number", "", "goff")
-        runs = self._tree.GetV1()
+        count = self.draw("run_number", "", "goff")
+        runs = self.get_v1()
         return [int(runs[i]) for i in range(count)]
 
     # Readout the TTree entry corresponding to the run
@@ -59,7 +59,7 @@ class MotherRunTree(DataTree):
         # Make sure we have an int
         run_no = int(run_no)
         # Try to get the run from the tree
-        res = self._tree.GetEntryWithIndex(run_no)
+        res = self._tree.GetEntryWithIndex(int(run_no))
         # If no such entry, return
         if res == 0 or res == -1:
             logger.error(f"No run with run number {run_no}. Please provide a proper number.")
@@ -69,6 +69,19 @@ class MotherRunTree(DataTree):
 
         return res
 
+    ## Check if the TTree has an entry with the given run number
+    def has_run(self, run_no):
+        """Check if the TTree has an entry with the given run number"""
+        # Make sure we have an int
+        run_no = int(run_no)
+        # Try to get the run from the tree
+        res = self._tree.GetEntryNumberWithIndex(run_no)
+        # If no such entry, return
+        if res == -1:
+            return False
+        else:
+            return True
+
     def build_index(self, run_id):
         """Build the tree index (necessary for working with friends)"""
         self._tree.BuildIndex(run_id)
@@ -77,8 +90,8 @@ class MotherRunTree(DataTree):
     def fill_entry_list(self):
         """Fills the entry list from the tree"""
         # Fill the entry list if there are some entries in the tree
-        if (count := self._tree.Draw("run_number", "", "goff")) > 0:
-            v1 = np.array(np.frombuffer(self._tree.GetV1(), dtype=np.float64, count=count))
+        if (count := self.draw("run_number", "", "goff")) > 0:
+            v1 = np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count))
             self._entry_list = [int(el) for el in v1]
 
     ## Check if specified run_number/event_number already exist in the tree

@@ -194,7 +194,7 @@ class MotherEventTree(DataTree):
     def get_event(self, ev_no, run_no=0):
         """Readout the TTree entry corresponding to the event and run"""
         # Try to get the requested entry
-        res = self._tree.GetEntryWithIndex(run_no, ev_no)
+        res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
         # If no such entry, return
         if res == 0 or res == -1:
             logger.error(
@@ -205,6 +205,17 @@ class MotherEventTree(DataTree):
         self.assign_branches()
 
         return res
+
+    ## Check if the TTree has an entry with the given event and run number
+    def has_event(self, ev_no, run_no=0):
+        """Check if the TTree has an entry with the given event and run number"""
+        # Try to get the requested entry
+        res = self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no))
+        # If no such entry, return
+        if res == -1:
+            return False
+        else:
+            return True
 
     ## Builds index based on run_id and evt_id for the TTree
     def build_index(self, run_id, evt_id):

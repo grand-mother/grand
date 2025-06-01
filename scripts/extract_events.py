@@ -5,6 +5,7 @@
 import argparse
 from pathlib import Path
 import shutil
+from collections import defaultdict
 import grand.dataio
 from grand.dataio import DataDirectory
 
@@ -47,6 +48,9 @@ def main():
     # Dict of generated trees
     dict_of_trees = {}
 
+    # List of run numbers
+    list_of_runs = defaultdict(set)
+
     # Loop through the source events
     for source_event in source_events_list:
         # Extract the dir name, run_number and event_number
@@ -84,15 +88,17 @@ def main():
                     if not getattr(target_dir, source_tree_name):
                         # Create the tree and its file
                         create_file_tree(target_dir, source_tree_name, source_tree)
-                    else:
-                        # If run already exists in the ttree, don't add it
-                        # ToDo: Should be modified to change the start/end event/date with new events coming
-                        if "Run" in source_tree.type:
-                            continue
 
                     # Get the target tree from the target directory
                     target_tree = getattr(target_dir, source_tree_name, source_tree)
 
+                    # If run already exists in the ttree, don't add it
+                    # ToDo: Should be modified to change the start/end event/date with new events coming
+                    if "Run" in source_tree.type:
+                        if target_tree.has_run(run_num) or run_num in list_of_runs[target_tree.tree_name]:
+                            continue
+                        else:
+                            list_of_runs[target_tree.tree_name].add(run_num)
 
                     # Copy the contents of the source tree current run/event into the target tree
                     target_tree.copy_contents(source_tree)
@@ -137,7 +143,7 @@ def create_file_tree(target_dir, tree_name, source_tree):
     else:
         parts = tree_name.split("_")
         # Replace the date and event numbers
-        file_name = f"{parts[0][1:]}_{target_dir.cur_time_string}_{0-0}_{parts[1].upper()}_0000.root"
+        file_name = f"{parts[0][1:]}_{target_dir.cur_time_string}_0-0_{parts[1].upper()}_0000.root"
 
     # Get the tree class for this tree type
     tree_class = getattr(grand.dataio, source_tree.type)

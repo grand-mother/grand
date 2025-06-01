@@ -17,6 +17,9 @@ class EventList:
     """The instance of the directory with files with TTrees containing the event."""
 
     def __init__(self, inp_name, start_event = None, start_entry = None, **kwargs):
+
+        self.event_list = None
+
         # If TFile was given
         if isinstance(inp_name, ROOT.TFile):
             self.file_name = inp_name.GetName()
@@ -30,9 +33,11 @@ class EventList:
             # If file name was given
             if Path(inp_name).is_file():
                 self.file = ROOT.TFile(inp_name, "read")
+                self.event_list = self.file.get_max_list_of_events()
             # If directory name was given
             elif Path(inp_name).is_dir():
                 self.directory = DataDirectory(inp_name)
+                self.event_list = self.directory.get_max_list_of_events()
             else:
                 print("Please provide proper file or directory name.")
                 exit()
@@ -92,9 +97,9 @@ class EventList:
         if fill_event:
             # Overwrite the init kwargs with kwargs given here
             if len(kwargs)>0:
-                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, **kwargs)
+                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **kwargs)
             else:
-                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, **self.init_kwargs)
+                e.fill_event_from_trees(init_trees=self.init_trees, event_number = event_number, run_number = run_number, **self.init_kwargs)
 
             # Don't init trees anymore
             self.init_trees = False
@@ -130,32 +135,36 @@ class EventList:
 
     ## Return the iterable over self
     def __iter__(self):
-        # If this is the first event, and start_entry was specified
-        if self.start_entry:
-            current_entry = self.start_entry
-        else:
-            # Always start the iteration with the first entry
-            current_entry = 0
+        for event_num, run_num in self.event_list:
+            yield self.get_event(event_number=event_num, run_number=run_num)
 
-        entries_cnt = self.get_number_of_events()
-
-        while current_entry < entries_cnt:
-            # If this is the first event, and start_entry was specified
-            if current_entry == 0 and self.start_event:
-                self.event._entry_number = None
-                yield self.get_event(event_number=self.start_event)
-                # ToDo: We need to get the entry for this event. This is a dirty hack, to check which tree is available
-                if self.event.tvoltage:
-                    current_entry = self.event.tvoltage._tree.GetReadEntry()
-                elif self.event.tefield:
-                    current_entry = self.event.tefield._tree.GetReadEntry()
-                elif self.event.tshower:
-                    current_entry = self.event.tshower._tree.GetReadEntry()
-                else:
-                    print("No tree available to iterate on")
-                    exit()
-            else:
-                # Standard iterations
-                yield self.get_event(entry_number=current_entry)
-
-            current_entry += 1
+        # # If this is the first event, and start_entry was specified
+        # if self.start_entry:
+        #     current_entry = self.start_entry
+        # else:
+        #     # Always start the iteration with the first entry
+        #     current_entry = 0
+        #
+        #
+        # entries_cnt = self.get_number_of_events()
+        #
+        # while current_entry < entries_cnt:
+        #     # If this is the first event, and start_entry was specified
+        #     if current_entry == 0 and self.start_event:
+        #         self.event._entry_number = None
+        #         yield self.get_event(event_number=self.start_event)
+        #         # ToDo: We need to get the entry for this event. This is a dirty hack, to check which tree is available
+        #         if self.event.tvoltage:
+        #             current_entry = self.event.tvoltage._tree.GetReadEntry()
+        #         elif self.event.tefield:
+        #             current_entry = self.event.tefield._tree.GetReadEntry()
+        #         elif self.event.tshower:
+        #             current_entry = self.event.tshower._tree.GetReadEntry()
+        #         else:
+        #             print("No tree available to iterate on")
+        #             exit()
+        #     else:
+        #         # Standard iterations
+        #         yield self.get_event(entry_number=current_entry)
+        #
+        #     current_entry += 1

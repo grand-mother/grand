@@ -179,6 +179,16 @@ class DataDirectory:
         for f in self.file_handle_list:
             f.close()
 
+    def get_max_list_of_events(self):
+        """Gets the max list of event,run from all the trees"""
+
+        trees_to_check = ["tadc", "trawvoltage", "tvoltage", "tefield", "tshower", "tshowersim"]
+        # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
+        for level in range(10):
+            for tree in trees_to_check:
+                if tree_inst := getattr(self, f"{tree}_l{level}"):
+                    return tree_inst.get_list_of_events()
+
 ## Class holding the information about GRAND TTrees in the specified file
 class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
@@ -458,3 +468,13 @@ class DataFile:
         for t in self.tree_instances:
             t.stop_using()
         self.f.Close()
+
+    def get_max_list_of_events(self):
+        """Gets the max list of event,run from all the trees"""
+
+        trees_to_check = ["tadc", "trawvoltage", "tvoltage", "tefield", "tshower", "tshowersim"]
+        # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
+        for level in range(10):
+            for tree in trees_to_check:
+                if tree_inst := getattr(self, f"{tree}_l{level}"):
+                    return tree_inst.get_list_of_events()

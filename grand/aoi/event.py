@@ -3,12 +3,15 @@ from dataclasses import dataclass, field, fields
 
 import numpy as np
 import ROOT
+from pathlib import Path
+import shutil
 
 from grand import CartesianRepresentation
 from grand.aoi.timetrace import Voltage, Efield, TreeExists
 from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
-from grand.dataio import DataDirectory, TRun, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
+from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
+import grand.dataio
 
 
 @dataclass
@@ -126,6 +129,9 @@ class Event:
     trun: TRun = None
     """DOI's TRun tree containing all run information"""
 
+    trunrawvoltage: TRunRawVoltage = None
+    """DOI's TRunRawVoltage tree containing voltage run information"""
+
     tvoltage: TVoltage = None
     """DOI's TVoltage/TRawVoltage tree containing voltage information"""
 
@@ -142,6 +148,9 @@ class Event:
 
     file_trun: ROOT.TFile = None
     """TRun file"""
+
+    file_trunrawvoltage: ROOT.TFile = None
+    """TRunRawVoltage file"""
 
     file_tvoltage: ROOT.TFile = None
     """TVoltage file"""
@@ -162,6 +171,11 @@ class Event:
 
     auto_file_close: bool = True
     """Close files automatically after event write? - slower writing but less maitanance by the user"""
+
+    # Lists of trees
+    _run_trees: list = None
+    _event_trees: list = None
+    _trees: list = None
 
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
@@ -187,6 +201,7 @@ class Event:
 
         # Set all the tree files as this file
         self.file_trun = self._file
+        self.file_trunrawvoltage = self._file
         self.file_tvoltage = self._file
         self.file_tefield = self._file
         self.file_tshower = self._file
@@ -209,6 +224,9 @@ class Event:
         # Set all the tree files as this file and trees as file's trees
         self.file_trun = self.directory.ftrun.f
         self.trun = self.directory.trun
+        if self.directory.ftrunrawvoltage:
+            self.file_trunrawvoltage = self.directory.ftrunrawvoltage.f
+            self.trunrawvoltage = self.directory.trunrawvoltage
         if self.directory.ftvoltages:
             self.file_tvoltage = self.directory.ftvoltage.f
             self.tvoltage = self.directory.tvoltage
@@ -243,7 +261,7 @@ class Event:
         :type simshower: bool
         """
         # Check if any of the files exist
-        if not self._file and not self.file_trun and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
+        if not self._file and not self.file_trun and not self.file_trunrawvoltage and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
             print("No files provided to init from. Aborting.")
             return False
 
@@ -268,6 +286,7 @@ class Event:
                 self.run_number = run_number
             if event_number is not None:
                 self.event_number = event_number
+                self._entry_number = None
 
         # *** Check what TTrees are available and fill according to their availability
 
@@ -289,6 +308,27 @@ class Event:
                 print("Run information loaded.")
             else:
                 print("No Run tree. Run information will not be available.")
+
+        # Check the TRunRawVoltage file existence
+        if self.file_trunrawvoltage is not None:
+            # If initialising trees requested
+            if init_trees:
+                # Check the TRunRawVoltage tree existence
+                if trunrawvoltage := self.file_trunrawvoltage.Get("trunrawvoltage"):
+                    self.trunrawvoltage = TRunRawVoltage(_tree=trunrawvoltage)
+                else:
+                    print("No TRunRawVoltage tree. RunRawVoltage information will not be available.")
+                    # Make trunrawvoltage really None
+                    self.trunrawvoltage = None
+
+        # If self.trunrawvoltage was successfully initialised
+        if self.trunrawvoltage is not None:
+            # Fill part of the event from trunrawvoltage
+            ret = self.fill_event_from_runrawvoltagetree(run_entry_number=run_entry_number)
+            if ret:
+                print("RunRawVoltage information loaded.")
+            else:
+                print("No RunRawVoltage tree. RunRawVoltage information will not be available.")
 
         if self.file_tvoltage:
             # Use standard voltage tree
@@ -428,6 +468,11 @@ class Event:
         # Fill the time vector
         self.fill_t_vector()
 
+        # Fill the tree lists
+        self._run_trees = [self.trun, self.trunrawvoltage]
+        self._event_trees = [self.tvoltage, self.tefield, self.tshower, self.tsimshower]
+        self._trees = self._run_trees + self._event_trees
+
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self, run_entry_number=None):
         ret = 1
@@ -463,6 +508,25 @@ class Event:
             self.is_starshape = True
 
         return ret
+
+    ## Fill part of the event from the Run tree
+    def fill_event_from_runrawvoltagetree(self, run_entry_number=None):
+        # For star shape, the run entry number should be the same as event entry number
+        if self.is_starshape and run_entry_number is None and self.run_number is None:
+            run_entry_number = self._entry_number
+
+        # If run number not provided in any way, get the first entry
+        if run_entry_number is None and self.run_number is None:
+            run_entry_number = 0
+
+        # Read the event into the class
+        if run_entry_number is None:
+            ret = self.trunrawvoltage.get_run(self.run_number)
+        else:
+            ret = self.trunrawvoltage.get_entry(run_entry_number)
+
+        return ret
+
 
     ## Fill event's antennas
     def fill_antennas(self, gp300_workaround=True):
@@ -741,21 +805,85 @@ class Event:
         print("\t{:<30} {:>30}".format("Traces lengths:", str([len(tr.trace[0]) for tr in self.efields])))
         print("\t{:<30} {:>30}".format("Traces first values:", str([tr.trace[0][0] for tr in self.efields])))
 
-    ## Write the Event to a file
-    def write(self, common_filename=None, shower_filename=None, efields_filename=None, voltages_filename=None, run_filename=None, overwrite=False):
+    ## Write the Event to a file/directory
+    def write(self, common_filename=None, shower_filename=None, efields_filename=None, voltages_filename=None, run_filename=None, overwrite=False, out_dir=None):
 
-        # Give common_filename to all the filenames if not specified
-        if common_filename:
-            if not shower_filename: shower_filename = common_filename
-            if not efields_filename: efields_filename = common_filename
-            if not voltages_filename: voltages_filename = common_filename
-            if not run_filename: run_filename = common_filename
+        # *** Writing to the current files (no output directory provided or same as current) ***
 
-        # Invoke saving for each part
-        self.write_shower(shower_filename)
-        self.write_efields(efields_filename)
-        self.write_voltages(voltages_filename)
-        self.write_run(run_filename)
+        if out_dir is None or (isinstance(out_dir, str) and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory.dir_name==out_dir.dir_name):
+            # Give common_filename to all the filenames if not specified
+            if common_filename:
+                if not shower_filename: shower_filename = common_filename
+                if not efields_filename: efields_filename = common_filename
+                if not voltages_filename: voltages_filename = common_filename
+                if not run_filename: run_filename = common_filename
+
+            # Invoke saving for each part
+            self.write_shower(shower_filename)
+            self.write_efields(efields_filename)
+            self.write_voltages(voltages_filename)
+            self.write_run(run_filename)
+
+        # *** Output directory was given ***
+        else:
+            # target_dir = None
+            if isinstance(out_dir, str):
+                target_dir_path = Path(out_dir)
+
+                # Delete the directory if overwrite requested
+                if target_dir_path.is_dir() and overwrite:
+                    shutil.rmtree(target_dir_path)
+
+                # Create the target directory if it doesn't exist
+                target_dir_path.mkdir(exist_ok=True)
+
+                # Init the target DataDirectory
+                target_dir = DataDirectory(out_dir)
+            else:
+                target_dir = out_dir
+
+            if not isinstance(target_dir, DataDirectory):
+                print("ERROR: out_dir must be of type DataDirectory or string")
+                exit(1)
+
+            # Go through all the run trees
+            # ToDo: Add trunrawvoltage
+            for source_tree in self._trees:
+                # print("source_tree:", source_tree, self._trees)
+                # Skip non-existing trees
+                if not source_tree: continue
+
+                # Check if the tree exists in the target directory
+                source_tree_name = source_tree.tree_name
+                if not getattr(target_dir, source_tree_name):
+                    # Create the tree and its file
+                    create_file_tree(target_dir, source_tree_name, source_tree)
+
+                # Get the target tree from the target directory
+                target_tree = getattr(target_dir, source_tree_name)
+
+                # For run trees, don't add the run if it is already in the target tree
+                if source_tree in self._run_trees and target_tree.has_run(self.run_number): continue
+
+                # For event trees, don't add the run,event if it is already in the target tree
+                if source_tree in self._event_trees and target_tree.has_event(self.event_number, self.run_number): continue
+
+                # Copy the current event
+                target_tree.copy_contents(source_tree)
+                # Fill the target tree
+                target_tree.fill()
+
+                # Build index
+                # For run trees
+                if source_tree in self._run_trees:
+                    target_tree.build_index("run_number")
+                else:
+                    target_tree.build_index("run_number", "event_number")
+
+                # Write the tree
+                print("Writing", target_tree.tree_name)
+                # target_tree._tree.GetCurrentFile().Write("", ROOT.TObject.kWriteDelete)
+                target_tree.write(force_close_file=True)
 
     ## Write the run to a file
     def write_run(self, filename, overwrite=False):
@@ -992,3 +1120,36 @@ class Event:
     def get_hilbert_efield_at_time(self, t):
         """Get the efield signal value in all the DUs at the given time"""
         return np.array([el.get_hilbert_value_at_time(t) for el in self.efields])
+
+
+# Create the tree and its file
+def create_file_tree(target_dir, tree_name, source_tree):
+
+    # Check if the time string was already generated
+    if not hasattr(target_dir, "cur_time_string"):
+        # Generate the time string and store it
+        from datetime import datetime
+        setattr(target_dir, "cur_time_string", datetime.now().strftime("%Y%m%d_%H%M%S"))
+
+    # Generate the file name
+
+    # If run file
+    if tree_name[:4]=="trun":
+        # Replace the run number
+        file_name = f"{tree_name[1:]}_00000_L{source_tree.analysis_level}_0000.root"
+    else:
+        # Replace the date and event numbers
+        file_name = f"{tree_name[1:]}_{target_dir.cur_time_string}_0-0_L{source_tree.analysis_level}_0000.root"
+
+    # Get the tree class for this tree type
+    tree_class = getattr(grand.dataio, source_tree.type)
+
+    # Create the tree instance
+    tree_instance = tree_class(_tree_name=source_tree.tree_name, _file_name=target_dir.dir_name+"/"+file_name)
+
+    # Copy/create some metadata
+    tree_instance.analysis_level = source_tree.analysis_level
+    tree_instance.modification_software = "extract_events.py"
+
+    # Attach the tree instance to the DataDirectory
+    setattr(target_dir, tree_name, tree_instance)
