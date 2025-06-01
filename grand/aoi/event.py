@@ -10,7 +10,7 @@ from grand import CartesianRepresentation
 from grand.aoi.timetrace import Voltage, Efield, TreeExists
 from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
-from grand.dataio import DataDirectory, TRun, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
+from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
 import grand.dataio
 
 
@@ -129,6 +129,9 @@ class Event:
     trun: TRun = None
     """DOI's TRun tree containing all run information"""
 
+    trunrawvoltage: TRunRawVoltage = None
+    """DOI's TRunRawVoltage tree containing voltage run information"""
+
     tvoltage: TVoltage = None
     """DOI's TVoltage/TRawVoltage tree containing voltage information"""
 
@@ -145,6 +148,9 @@ class Event:
 
     file_trun: ROOT.TFile = None
     """TRun file"""
+
+    file_trunrawvoltage: ROOT.TFile = None
+    """TRunRawVoltage file"""
 
     file_tvoltage: ROOT.TFile = None
     """TVoltage file"""
@@ -195,6 +201,7 @@ class Event:
 
         # Set all the tree files as this file
         self.file_trun = self._file
+        self.file_trunrawvoltage = self._file
         self.file_tvoltage = self._file
         self.file_tefield = self._file
         self.file_tshower = self._file
@@ -217,6 +224,9 @@ class Event:
         # Set all the tree files as this file and trees as file's trees
         self.file_trun = self.directory.ftrun.f
         self.trun = self.directory.trun
+        if self.directory.ftrunrawvoltage:
+            self.file_trunrawvoltage = self.directory.ftrunrawvoltage.f
+            self.trunrawvoltage = self.directory.trunrawvoltage
         if self.directory.ftvoltages:
             self.file_tvoltage = self.directory.ftvoltage.f
             self.tvoltage = self.directory.tvoltage
@@ -251,7 +261,7 @@ class Event:
         :type simshower: bool
         """
         # Check if any of the files exist
-        if not self._file and not self.file_trun and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
+        if not self._file and not self.file_trun and not self.file_trunrawvoltage and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
             print("No files provided to init from. Aborting.")
             return False
 
@@ -298,6 +308,27 @@ class Event:
                 print("Run information loaded.")
             else:
                 print("No Run tree. Run information will not be available.")
+
+        # Check the TRunRawVoltage file existence
+        if self.file_trunrawvoltage is not None:
+            # If initialising trees requested
+            if init_trees:
+                # Check the TRunRawVoltage tree existence
+                if trunrawvoltage := self.file_trunrawvoltage.Get("trunrawvoltage"):
+                    self.trunrawvoltage = TRunRawVoltage(_tree=trunrawvoltage)
+                else:
+                    print("No TRunRawVoltage tree. RunRawVoltage information will not be available.")
+                    # Make trunrawvoltage really None
+                    self.trunrawvoltage = None
+
+        # If self.trunrawvoltage was successfully initialised
+        if self.trunrawvoltage is not None:
+            # Fill part of the event from trunrawvoltage
+            ret = self.fill_event_from_runrawvoltagetree(run_entry_number=run_entry_number)
+            if ret:
+                print("RunRawVoltage information loaded.")
+            else:
+                print("No RunRawVoltage tree. RunRawVoltage information will not be available.")
 
         if self.file_tvoltage:
             # Use standard voltage tree
@@ -438,7 +469,7 @@ class Event:
         self.fill_t_vector()
 
         # Fill the tree lists
-        self._run_trees = [self.trun]
+        self._run_trees = [self.trun, self.trunrawvoltage]
         self._event_trees = [self.tvoltage, self.tefield, self.tshower, self.tsimshower]
         self._trees = self._run_trees + self._event_trees
 
@@ -477,6 +508,25 @@ class Event:
             self.is_starshape = True
 
         return ret
+
+    ## Fill part of the event from the Run tree
+    def fill_event_from_runrawvoltagetree(self, run_entry_number=None):
+        # For star shape, the run entry number should be the same as event entry number
+        if self.is_starshape and run_entry_number is None and self.run_number is None:
+            run_entry_number = self._entry_number
+
+        # If run number not provided in any way, get the first entry
+        if run_entry_number is None and self.run_number is None:
+            run_entry_number = 0
+
+        # Read the event into the class
+        if run_entry_number is None:
+            ret = self.trunrawvoltage.get_run(self.run_number)
+        else:
+            ret = self.trunrawvoltage.get_entry(run_entry_number)
+
+        return ret
+
 
     ## Fill event's antennas
     def fill_antennas(self, gp300_workaround=True):
@@ -1085,11 +1135,9 @@ def create_file_tree(target_dir, tree_name, source_tree):
 
     # If run file
     if tree_name[:4]=="trun":
-        print("tree_name", tree_name, source_tree.file_name, source_tree.analysis_level)
         # Replace the run number
         file_name = f"{tree_name[1:]}_00000_L{source_tree.analysis_level}_0000.root"
     else:
-        print("tree_name", tree_name, source_tree.file_name, source_tree.analysis_level)
         # Replace the date and event numbers
         file_name = f"{tree_name[1:]}_{target_dir.cur_time_string}_0-0_L{source_tree.analysis_level}_0000.root"
 
