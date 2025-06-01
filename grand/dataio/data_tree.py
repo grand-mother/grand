@@ -492,9 +492,17 @@ class DataTree:
         self.assign_branches()
         return res
 
-    def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0):
+    def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0, delete_temp_histogram=True):
         """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX()."""
-        return self._tree.Draw(varexp, selection, option, nentries, firstentry)
+
+        count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
+
+        # Delete the temporary histogram created by draw, so it is not saved in a file
+        if delete_temp_histogram:
+            if tmph := ROOT.gDirectory.Get("htemp"):
+                tmph.SetDirectory(0)
+
+        return count
 
     def get_v1(self):
         '''Get first vector of results from draw()'''
