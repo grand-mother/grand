@@ -53,8 +53,8 @@ and mount the volume with `-v ${SSH_AUTH_SOCK}:/ssh-agent`
 ## Datamanager
 When instantiated, a datamanager object will read it's configuration from the ini file. If a database is declared, it will connect to the DB to get a list of eventual other repositories.
 
-### The get function
-The get(filename) function fill perform the following actions :
+### The get_file function
+The get_file(filename) function fill perform the following actions :
 - Search if a file called < filename > exists in localdirs (and subdirs). 
   - If yes, returns the path to the first file found.
   - If no, recursively search for the file in the various repositories.
@@ -66,24 +66,26 @@ Usage example:
     import granddb.datamanager as datamanager
     dm = datamanager.DataManager('config.ini')
     file="Coarse3.root"
-    print(dm.get(file))
+    print(dm.get_file(file))
 
 Search can be restricted/forced on only one repository by specifiying the repository name as second argument to the get function:
 
-    print(dm.get(file, "CCIN2P3"))
+    print(dm.get_file(file, "CCIN2P3"))
 
 In this case, only the specified repository is searched, and if the file is found it's copied into the incoming directory. If the file was already present in the incoming directory, it will be overwritten.
 
 Search can also be restricted to a directory in a specified repository (use the desired directory path as third argument). In that case, the path has not to be declared in the config.ini file. This allows you to retreive a "one time shot" file from a specific location.
 
-    dm.get(file, "CC", "/sps/trend/fleg/")
+    dm.get_file(file, "CC", "/sps/trend/fleg/")
 
 This is also works with localdir (but in that case the file is not copied into the incoming directory, the path to the file is simply returned)
 
     file = 'main.py'
-    dm.get(file, "localdir")
-    dm.get(file, "localdir","../venv/lib/python3.8/site-packages/pip/_internal/cli/")
+    dm.get_file(file, "localdir")
+    dm.get_file(file, "localdir","../venv/lib/python3.8/site-packages/pip/_internal/cli/")
 
+### The get_dataset function
+The get_dataset function works like the get_file function but deals with a directory (and retreive the dirctory and its content).
 
 ### The search function
 
