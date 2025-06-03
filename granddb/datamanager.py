@@ -17,7 +17,7 @@ import grand.dataio
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("debug", log_stdout=True)
+mlg.create_output_for_logger("warning", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -539,7 +539,7 @@ class DatasourceLocal(Datasource):
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Will use path defined in config.ini !")
+                logger.debug(f"path {path}  not found (seems not exists) ! Will use path defined in config.ini !")
                 path=self.path()
 
             my_file = None
@@ -590,7 +590,7 @@ class DatasourceLocal(Datasource):
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Will use {self.path()} path defined in config.ini !")
+                logger.debug(f"path {path}  not found (seems not exists) ! Will use {self.path()} path defined in config.ini !")
                 path=self.path()
 
             #my_file = None
