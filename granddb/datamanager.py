@@ -17,7 +17,7 @@ import grand.dataio
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("error", log_stdout=True)
+mlg.create_output_for_logger("debug", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -539,7 +539,8 @@ class DatasourceLocal(Datasource):
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
+                logger.warning(f"path {path}  not found (seems not exists) ! Will use path defined in config.ini !")
+                path=self.path()
 
             my_file = None
             liste = list(Path(path).rglob(file))
@@ -589,15 +590,16 @@ class DatasourceLocal(Datasource):
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
+                logger.warning(f"path {path}  not found (seems not exists) ! Will use {self.path()} path defined in config.ini !")
+                path=self.path()
 
             #my_file = None
             # In case of many files the following code can override the system's file descriptor limit because rglob open all the files !
             #liste = list(Path(path).rglob(file))
-            #            for my_file in liste:
-            #                if my_file.is_dir():
-            #                    found_file = my_file
-            #                    break
+            #for my_file in liste:
+            #    if my_file.is_dir():
+            #    found_file = my_file
+            #    break
 
             #thus replaced by direct assignement
             my_file = Path(path) / file
@@ -633,7 +635,7 @@ class DatasourceLocal(Datasource):
         if not found_file is None:
             logger.debug(f"Dataset found in localdir {found_file}")
 
-        return str(found_file)
+        return found_file
 
     def copy(self, pathfile, destfile = None):
         if destfile is None:
@@ -887,8 +889,15 @@ class DatasourceHttp(Datasource):
             local_path = os.path.join(self.incoming(), file)
             urllib.request.urlretrieve(url, local_path)
             #urllib.request.urlretrieve(url, self.incoming() + file)
-            logger.debug(f"file found in repository {url}")
-            localfile = self.incoming() + file
+            #logger.debug(f"file found in repository {url}")
+            #localfile = self.incoming() + file
+            if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+                logger.debug(f"file found in repository {url}")
+                localfile = self.incoming() + file
+            else:
+                logger.debug(f"file not found in repository {url}")
+                os.remove(local_path)
+
 
         except urllib.error.HTTPError as e:
             if e.code == 404:
