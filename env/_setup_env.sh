@@ -13,6 +13,8 @@ export PATH=$GRAND_ROOT/examples/dataio:$PATH
 echo "add scripts to PATH "
 echo "=============================="
 
+export PATH=$GRAND_ROOT/env:$PATH
+
 export PYTHONPATH=$GRAND_ROOT:$PYTHONPATH
 echo "add grand to PYTHONPATH"
 echo "=============================="
