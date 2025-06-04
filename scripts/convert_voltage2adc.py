@@ -141,7 +141,7 @@ def get_noise_trace(data_dir,
         for entry in entries_sel:
             # print(f"mem4: {process.memory_info().rss / 1024 ** 2:.2f} MB")
             # res = tadc.get_entry(entry)
-            res = trace_branch.GetEntry(entry)
+            res = trace_branch.GetEntry(int(entry))
             # print(f"mem5: {process.memory_info().rss / 1024 ** 2:.2f} MB", res)
             trace = np.array(tadc.trace_ch)[0,:,:n_samples]
 
