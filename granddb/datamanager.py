@@ -17,7 +17,7 @@ import grand.dataio
 logger = mlg.get_logger_for_script(__name__)
 
 # define a handler for logger : standard only
-mlg.create_output_for_logger("error", log_stdout=True)
+mlg.create_output_for_logger("warning", log_stdout=True)
 
 #logger = log.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -195,7 +195,7 @@ class DataManager:
         return self.database().SearchFile(filename)
 
     def exists(self, file, repository=None, path=None):
-        if self.get(file, repository, path, grab=False) is None:
+        if self.get_file(file, repository, path, grab=False) is None:
             return False
         else:
             return True
@@ -203,7 +203,7 @@ class DataManager:
     ## Get a file from the repositories.
     # If repo or path given, then directly search there.
     # If not, search first in localdirs and then in remote repositories. First match is returned.
-    def get(self, file, repository=None, path=None, grab=True):
+    def get_file(self, file, repository=None, path=None, grab=True):
         res = None
         # Check if file is a simple name or full path name
         if os.path.dirname(file) != "":
@@ -217,12 +217,12 @@ class DataManager:
             rep = self.getrepo(repository)
             if not (rep is None):
                 logger.debug(f"search in repository {rep.name()} {path}")
-                res = rep.get(file, path, grab=grab)
+                res = rep.get_file(file, path, grab=grab)
         # if no repo specified, we search everywhere
         else:
             for name, rep in self.repositories().items():
                 logger.debug(f"search in repository {rep.name()} {path}")
-                res = rep.get(file, path, grab=grab)
+                res = rep.get_file(file, path, grab=grab)
                 logger.debug(f"res is {res}")
                 if not (res is None):
                     break
@@ -354,7 +354,7 @@ class DataManager:
                 logger.error(f"For registering, local filename ({localfile}) must be a full path ")
             else:
                 # And the file must be already present in the target repository and in the local directory
-                fileexists = self.get(targetfile, repository.name(), grab=False)
+                fileexists = self.get_file(targetfile, repository.name(), grab=False)
                 #TODO: Check file exists in
                 if fileexists :
                     newfilename = localfile
@@ -384,11 +384,11 @@ class DataManager:
         if len(path) == 0:
             logger.error(f"For registering, filename ({filename}) must be a full path ")
         else:
-            file = self.get(filename,repository,path)
+            file = self.get_file(filename, repository, path)
             #file = filename
             if file is not None:
                 # If filename in referer repository then keep it
-                newfilename = self.get(filename,self.referer().name(),path)
+                newfilename = self.get_file(filename, self.referer().name(), path)
 
                 if newfilename is None:
                     newfilename = self.referer().copy(file)
@@ -513,7 +513,7 @@ class Datasource:
     # Actual method is implemented in subclasses.
     # The path to the local copy of the file is returned for further access.
     # If no file is found then None is returned.
-    def get(self, file, path=None):
+    def get_file(self, file, path=None):
         logger.warning(f"get method for protocol {self.protocol()} not implemented for repository {self.name()}")
         return None
 
@@ -532,14 +532,15 @@ class Datasource:
 # @date Sept 2022
 class DatasourceLocal(Datasource):
     ## Search for file in local directories and return the path to the first corresponding file found.
-    def get(self, file, path=None, grab=True):
+    def get_file(self, file, path=None, grab=True):
         # TODO : Check that path is in self.paths(), if not then copy in incoming ?
         found_file = None
         # Path is given : we only search in that path
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
+                logger.debug(f"path {path}  not found (seems not exists) ! Will use path defined in config.ini !")
+                path=self.path()
 
             my_file = None
             liste = list(Path(path).rglob(file))
@@ -589,15 +590,16 @@ class DatasourceLocal(Datasource):
         if not (path is None):
             my_path = Path(path)
             if not my_path.exists():
-                logger.warning(f"path {path}  not found (seems not exists) ! Check that it is mounted if you run in docker !")
+                logger.debug(f"path {path}  not found (seems not exists) ! Will use {self.path()} path defined in config.ini !")
+                path=self.path()
 
             #my_file = None
             # In case of many files the following code can override the system's file descriptor limit because rglob open all the files !
             #liste = list(Path(path).rglob(file))
-            #            for my_file in liste:
-            #                if my_file.is_dir():
-            #                    found_file = my_file
-            #                    break
+            #for my_file in liste:
+            #    if my_file.is_dir():
+            #    found_file = my_file
+            #    break
 
             #thus replaced by direct assignement
             my_file = Path(path) / file
@@ -633,7 +635,7 @@ class DatasourceLocal(Datasource):
         if not found_file is None:
             logger.debug(f"Dataset found in localdir {found_file}")
 
-        return str(found_file)
+        return found_file
 
     def copy(self, pathfile, destfile = None):
         if destfile is None:
@@ -732,20 +734,20 @@ class DatasourceSsh(Datasource):
     #             client = None
     #     return client
 
-    def get(self, file, path=None, grab=True):
+    def get_file(self, file, path=None, grab=True):
         #import getpass
         localfile = None
         client = self.set_client()
         if not(client is None):
             if not (path is None):
                 logger.debug(f"search {file} in {path} @ {self.name()}")
-                localfile = self.get_file(client, path, file, grab=grab)
+                localfile = self._get_file(client, path, file, grab=grab)
                 if localfile is None:
                     logger.debug(f"file {file} not found in {path} @ {self.name()}")
             else:
                 for path in self.paths():
                     logger.debug(f"search {file} in {path}@ {self.name()}")
-                    localfile = self.get_file(client, path, file,grab=grab)
+                    localfile = self._get_file(client, path, file,grab=grab)
                     if not (localfile is None):
                         break
                     else:
@@ -784,7 +786,7 @@ class DatasourceSsh(Datasource):
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
     # If file is not found, then None is returned.
 
-    def get_file(self, client, path, file, grab=True):
+    def _get_file(self, client, path, file, grab=True):
         localfile = None
         #stdin, stdout, stderr = client.exec_command('ls ' + path + file)
         #lines = list(map(lambda s: s.strip(), stdout.readlines()))
@@ -863,32 +865,39 @@ class DatasourceHttp(Datasource):
     # If file is found, it will be copied in the incoming local directory and the path to the local file is returned.
     # If file is not found, then None is returned.
     # TODO: implement authentification
-    def get(self, file, path=None, grab=True):
+    def get_file(self, file, path=None, grab=True):
         localfile = None
         if not (path is None):
             url = self._protocol + '://' + self.server() + '/' + path + '/' + file
-            localfile = self.get_file(url, file,grab)
+            localfile = self._get_file(url, file,grab)
 
 
         else:
             for path in self.paths():
                 url = self._protocol + '://' + self.server() + '/' + path + '/' + file
-                localfile = self.get_file(url, file, grab)
+                localfile = self._get_file(url, file, grab)
                 if not (localfile is None):
                     break
 
 
         return localfile
 
-    def get_file(self, url, file, grab=True):
+    def _get_file(self, url, file, grab=True):
         localfile = None
         try:
             #TODO check grab and test url
             local_path = os.path.join(self.incoming(), file)
             urllib.request.urlretrieve(url, local_path)
             #urllib.request.urlretrieve(url, self.incoming() + file)
-            logger.debug(f"file found in repository {url}")
-            localfile = self.incoming() + file
+            #logger.debug(f"file found in repository {url}")
+            #localfile = self.incoming() + file
+            if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+                logger.debug(f"file found in repository {url}")
+                localfile = self.incoming() + file
+            else:
+                logger.debug(f"file not found in repository {url}")
+                os.remove(local_path)
+
 
         except urllib.error.HTTPError as e:
             if e.code == 404:
