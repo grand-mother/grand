@@ -344,15 +344,41 @@ def main():
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
             rawmeta2grandroot(trawmeta, gt)
 
-            # Change the trace lenght as specified in the comand line
-            # trace = np.moveaxis(np.array([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z]), 0,1).astype(np.float32)
-            # Slightly faster than the above
-            trace = np.stack([trawefield.trace_x, trawefield.trace_y, trawefield.trace_z], 1, dtype=np.float32)
-            ext_t_0, trace=adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
+            #Function to catch when trace is not an array
+            def ensure_2d_trace_component(component_trace_data):
+                ct_arr = np.asarray(component_trace_data)
+                if ct_arr.ndim == 1:
+                    # Reshape 1D array (n_samples,) to 2D array (1, n_samples)
+                    logger.warning(f"Trace component Shape: {ct_arr.shape}")
+                    print(f"Trace component Shape: {ct_arr.shape}")
+                    return ct_arr.reshape(1, -1)
+                elif ct_arr.ndim == 0: # Should not happen for traces
+                    logger.error(f"Trace component is scalar! Shape: {ct_arr.shape}. This is unexpected.")
+                    # Return an empty 2D array of appropriate shape, e.g. (1,0) or (0,0)
+                    # Or handle as an error. For now, (1,0) to allow stacking if other components are similar.
+                    return np.empty((1,0), dtype=ct_arr.dtype) 
+                # If 2D or more, assume it's (n_du, n_samples) or similar, return as is.
+                # np.stack will later complain if shapes are not compatible.
+                return ct_arr
+                
+            tx = ensure_2d_trace_component(trawefield.trace_x)
+            ty = ensure_2d_trace_component(trawefield.trace_y)
+            tz = ensure_2d_trace_component(trawefield.trace_z)
 
-            # trawefield.trace_x=trace[:,0,:]
-            # trawefield.trace_y=trace[:,1,:]
-            # trawefield.trace_z=trace[:,2,:]
+            # np.stack requires input arrays to have the same shape.
+            # logger.debug(f"Event {trawshower.event_number}: Shapes before stack - tx: {tx.shape}, ty: {ty.shape}, tz: {tz.shape}")
+
+            try:
+                trace = np.stack([tx, ty, tz], axis=1).astype(np.float32)
+            except ValueError as e:
+                logger.error(f"Failed to stack trace components for event {trawshower.event_number}. Shapes - tx: {tx.shape}, ty: {ty.shape}, tz: {tz.shape}. Error: {e}")
+                # Skip this event or handle error appropriately
+                continue 
+
+            # Change the trace lenght as specified in the comand line                                
+            ext_t_0, trace_adjusted = adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
+            # It's good practice to use the returned adjusted trace
+            trace = trace_adjusted
 
             # Convert the RawEfieldTree entries
             rawefield2grandroot(trawefield, gt, ext_trace=trace, ext_t_0=ext_t_0)
