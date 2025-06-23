@@ -32,7 +32,8 @@ class EventList:
         elif isinstance(inp_name, str):
             # If file name was given
             if Path(inp_name).is_file():
-                self.file = ROOT.TFile(inp_name, "read")
+                self.file = DataFile(ROOT.TFile(inp_name, "read"))
+                # self.file = ROOT.TFile(inp_name, "read")
                 self.event_list = self.file.get_max_list_of_events()
             # If directory name was given
             elif Path(inp_name).is_dir():
@@ -69,7 +70,7 @@ class EventList:
         e = self.event
 
         if self.file is not None:
-            e.file = self.file
+            e.file = self.file.f
         elif self.directory is not None:
             e.directory = self.directory
         else:

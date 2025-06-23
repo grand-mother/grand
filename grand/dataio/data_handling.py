@@ -476,5 +476,8 @@ class DataFile:
         # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
         for level in range(10):
             for tree in trees_to_check:
-                if tree_inst := getattr(self, f"{tree}_l{level}"):
-                    return tree_inst.get_list_of_events()
+                try:
+                    if tree_inst := getattr(self, f"{tree}_l{level}"):
+                            return tree_inst.get_list_of_events()
+                except:
+                    pass
