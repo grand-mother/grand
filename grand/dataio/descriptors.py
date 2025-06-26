@@ -76,7 +76,7 @@ class StdVectorList(MutableSequence):
                     # Conversion of char arrays with numpy gives a bool array :/ Need to go with the looping
                     if "char" in self.basic_vec_type:
                         raise
-                    return np.array(self._vector[index])
+                    return np.array(self._vector[index]).tolist()
                 except:
                     if self.ndim == 2:
                         return list(self._vector[index])
