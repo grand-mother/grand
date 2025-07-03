@@ -274,6 +274,12 @@ class StdVectorList(MutableSequence):
         # The number of dimensions of this vector
         self.ndim = self.vec_type.count("vector") + 1
 
+    def asnumpy(self):
+        """
+        Simple conversion to numpy array. If the initial shape is correct is up to the user
+        """
+        return np.array(self._vector)
+
 
 class StdVectorListDesc:
     """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
