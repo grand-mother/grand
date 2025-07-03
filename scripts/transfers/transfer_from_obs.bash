@@ -13,7 +13,7 @@
 site='GP80'
 
 # Start date for transfer (all files older than this date will be skipped
-first_transfer='20241102'
+first_transfer='20250624'
 
 # skip open files (if set to false the opened files will be transfered into /tmp)
 declare -A defskipopenfiles
