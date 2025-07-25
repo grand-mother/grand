@@ -1,0 +1,335 @@
+from grand.dataio import TADC, TEfield, TVoltage, TRawVoltage
+import psycopg2
+from psycopg2.extras import execute_values
+import glob
+import os
+from collections import defaultdict
+import matplotlib.pyplot as plt
+from datetime import datetime, timezone
+from concurrent.futures import ProcessPoolExecutor
+from grand.aoi import *
+from functools import wraps
+import inspect
+import random
+import time
+import grand.manage_log as mlg
+import sqlite3
+import argparse
+import granddb.monitoring_dbconf as monitoring_dbconf
+
+
+
+
+def with_db_cursor(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        max_retries=3
+        backoff_base=0.1
+        jitter=0.1
+        retries = 0
+        while retries <= max_retries:
+            try:
+                with psycopg2.connect(**monitoring_dbconf.DB_CONFIG) as conn:
+                    with conn.cursor() as cur:
+                        sig = inspect.signature(func)
+                        params = sig.parameters
+                        #inject_args = {}
+                        #if 'cur' in params: inject_args['cur'] = cur
+                        #if 'conn' in params: inject_args['conn'] = conn
+                        #bound = sig.bind_partial(*args, **kwargs)
+                        #bound.apply_defaults()
+                        #bound.arguments.update(inject_args)
+                        #return func(*bound.args, **bound.kwargs)
+                        expects_conn = 'conn' in params
+                        return func(cur, conn, *args, **kwargs) if expects_conn else func(cur, *args, **kwargs)
+
+            except psycopg2.errors.DeadlockDetected as e:
+                logger.info("deadlock: retry")
+                conn.rollback()
+                if retries >= max_retries:
+                    logger.error(f"deadlock... end after {retries} retries")
+                    raise
+                sleep_time = backoff_base * (2 ** retries)
+                sleep_time += random.uniform(0, jitter * sleep_time)
+                time.sleep(sleep_time)
+                retries += 1
+                continue
+            except Exception:
+                # Immediately re-raise non-retryable exceptions
+                logger.error("unexpected error")
+                conn.rollback()
+                raise
+
+    return wrapper
+
+
+def monitor_file(rfile):
+    trace_stats = defaultdict(lambda: {"sum": None, "count": 0, "ts_list":[]})
+    temp_stats = defaultdict(lambda: {"sum_temp": 0.0, "sum_batt": 0.0, "count": 0,"ts_list":[]})
+
+    if Path(rfile).is_file():
+        run=TRun(rfile)
+        tree=TRawVoltage(rfile)
+    elif Path(rfile).is_dir():
+        d = DataDirectory(rfile)
+        run = d.trun
+        tree = d.trawvoltage
+    run.get_entry(0)
+
+    #print(f"t_bin_size = {run.t_bin_size[0]} ")
+
+    #For this part we keep the same database connection because it needs a lot of queries
+    with psycopg2.connect(**monitoring_dbconf.DB_CONFIG) as conn:
+            with conn.cursor() as cur:
+                for i, event in enumerate(tree):
+                    for j in range(len(event.du_id)):
+                        du=event.du_id[j]
+                        gps_time = event.gps_time[j]
+                        dt = datetime.fromtimestamp(gps_time, tz=timezone.utc)
+                        #keys for env data (group by minutes) and spectra (group by hours)
+                        hour_bin = dt.replace(minute=0, second=0, microsecond=0)
+                        minute_bin = dt.replace(second=0, microsecond=0)
+                        key_temp = (minute_bin, du)
+                        key_spec = (hour_bin, du)
+
+                        #Fill env table
+                        if not temp_stats[key_temp]["ts_list"]:
+                            temp_stats[key_temp]["ts_list"]=get_mesures_ts_list(cur, minute_bin,du)
+
+                        if not trace_stats[key_spec]["ts_list"]:
+                            trace_stats[key_spec]["ts_list"]=get_spectres_ts_list(cur ,hour_bin,du)
+
+                        if not temp_stats[key_temp]["ts_list"] or gps_time not in temp_stats[key_temp]["ts_list"]:
+                            temp = event.gps_temp[j]
+                            batt = event.battery_level[j]
+                            temp_stats[key_temp]["ts_list"].append(gps_time)
+                            temp_stats[key_temp]["sum_temp"] += temp
+                            temp_stats[key_temp]["sum_batt"] += batt
+                            temp_stats[key_temp]["count"] += 1
+
+            if not trace_stats[key_spec]["ts_list"] or gps_time not in trace_stats[key_spec]["ts_list"]:
+                trace_stats[key_spec]["ts_list"].append(gps_time)
+                trace = np.array(event.trace_ch[j])
+                #Fill spec table only for traces = 1024 long (so FFT is 512)
+                if trace[0].size == 1024:
+                    if trace_stats[key_spec]["sum"] is None:
+                        trace_stats[key_spec]["sum"] = trace.copy()
+                    else:
+                        trace_stats[key_spec]["sum"] += trace
+                    trace_stats[key_spec]["count"] += 1
+
+    rows_temp = []
+    for (minute_bin, du_id), stats in temp_stats.items():
+        if stats["count"] and stats["sum_temp"] and stats["sum_batt"]:
+            rows_temp.append((
+                minute_bin,
+                 du_id,
+                 stats["sum_temp"] / stats["count"],
+                 stats["sum_batt"] / stats["count"],
+                 stats["count"],
+                 temp_stats[(minute_bin,du_id)]["ts_list"]
+            ))
+
+    save_temps(rows_temp)
+
+    rows_spec = []
+    for (hour_bin, du_id), stats in trace_stats.items():
+        if stats["count"]>0:
+            mean_traces = stats["sum"] / stats["count"]
+            fft_vals = np.fft.fft(mean_traces, axis=1)
+            freqs = np.fft.fftfreq(mean_traces.shape[1], d=run.t_bin_size[0]/mean_traces.shape[1])
+
+            positive_freqs = freqs[:mean_traces.shape[1] // 2]
+            if (len(positive_freqs) not in frequency_list):
+                save_freqs(positive_freqs)
+            #magnitude = 2.0 / mean_trace.shape[1] * np.abs(fft_vals[:, :mean_trace.shape[1] // 2])
+
+            magnitude = np.abs(fft_vals[:, :mean_traces.shape[1] // 2])
+
+            rows_spec.append((
+                hour_bin,
+                du_id,
+                magnitude.shape[1],
+                magnitude[0].tolist(),
+                magnitude[1].tolist(),
+                magnitude[2].tolist(),
+                magnitude[3].tolist(),
+                stats["count"],
+                trace_stats[(hour_bin,du_id)]["ts_list"]
+            ))
+
+    save_spectres(rows_spec)
+
+
+def get_mesures_ts_list(cur, ts, du_id):
+    cur.execute("""
+        SELECT ts_list
+        FROM mesures
+        WHERE datetime = %s
+        AND du_id = %s
+    """, (ts, du_id))
+    result = cur.fetchone()
+    ts_list = result[0] if result and result[0] else []
+    return ts_list
+
+def get_spectres_ts_list(cur,ts,du_id):
+    cur.execute("""
+        SELECT ts_list
+        FROM spectres
+        WHERE datetime = %s
+        AND du_id = %s
+    """, (ts,du_id))
+    result = cur.fetchone()
+    ts_list = result[0] if result and result[0] else []
+    return ts_list
+
+@with_db_cursor
+def save_temps(cur, conn, rows_temp):
+    if len(rows_temp) > 0:
+        query = """
+            INSERT INTO mesures (datetime, du_id, temperature, voltage, weight, ts_list)
+            VALUES %s
+            ON CONFLICT (datetime, du_id) DO UPDATE
+            SET
+                temperature = ((mesures.temperature * mesures.weight) + (EXCLUDED.temperature * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
+                voltage = ((mesures.voltage * mesures.weight) + (EXCLUDED.voltage * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
+                weight = mesures.weight + EXCLUDED.weight, 
+                ts_list = (
+                SELECT ARRAY(
+                    SELECT DISTINCT val
+                    FROM unnest(array_cat(mesures.ts_list, EXCLUDED.ts_list)) AS val
+                    ORDER BY val
+                    )
+                ) 
+            
+            ;
+        """
+        execute_values(cur, query, rows_temp)
+        conn.commit()
+
+
+@with_db_cursor
+def save_spectres(cur, conn, rows_spec):
+        query = """ 
+        INSERT INTO spectres (datetime, du_id, len, powers_0, powers_1, powers_2, powers_3, weight,ts_list)
+        VALUES %s 
+        ON CONFLICT (datetime, du_id) DO UPDATE
+        SET
+            powers_0 = (
+                SELECT ARRAY(
+                    SELECT
+                        (old * spectres.weight + new * EXCLUDED.weight) / (spectres.weight + EXCLUDED.weight)
+                    FROM unnest(spectres.powers_0) WITH ORDINALITY AS old_vals(old, i)
+                    JOIN unnest(EXCLUDED.powers_0) WITH ORDINALITY AS new_vals(new, j)
+                    ON i = j
+                )
+            ),
+            powers_1 = (
+                SELECT ARRAY(
+                    SELECT
+                        (old * spectres.weight + new * EXCLUDED.weight) / (spectres.weight + EXCLUDED.weight)
+                    FROM unnest(spectres.powers_1) WITH ORDINALITY AS old_vals(old, i)
+                    JOIN unnest(EXCLUDED.powers_1) WITH ORDINALITY AS new_vals(new, j)
+                    ON i = j
+                )
+            ),
+            powers_2 = (
+                SELECT ARRAY(
+                    SELECT
+                        (old * spectres.weight + new * EXCLUDED.weight) / (spectres.weight + EXCLUDED.weight)
+                    FROM unnest(spectres.powers_2) WITH ORDINALITY AS old_vals(old, i)
+                    JOIN unnest(EXCLUDED.powers_2) WITH ORDINALITY AS new_vals(new, j)
+                    ON i = j
+                    )
+                ),
+            powers_3 = (
+                SELECT ARRAY(
+                    SELECT
+                        (old * spectres.weight + new * EXCLUDED.weight) / (spectres.weight + EXCLUDED.weight)
+                    FROM unnest(spectres.powers_3) WITH ORDINALITY AS old_vals(old, i)
+                    JOIN unnest(EXCLUDED.powers_3) WITH ORDINALITY AS new_vals(new, j)
+                    ON i = j
+                    )
+                ),
+            weight = spectres.weight + EXCLUDED.weight,
+            ts_list = (
+            SELECT ARRAY(
+                SELECT DISTINCT val
+                FROM unnest(array_cat(spectres.ts_list, EXCLUDED.ts_list)) AS val
+                ORDER BY val
+                )
+            ) ;
+        """
+        execute_values(cur, query, rows_spec)
+        conn.commit()
+
+@with_db_cursor
+def get_freqs(cur):
+    cur.execute("SELECT len FROM frequences")
+    rows = cur.fetchall()
+    frequency_list = [row[0] for row in rows]
+    return frequency_list
+
+@with_db_cursor
+def save_freqs(cur, conn, positive_freqs):
+        query = """
+        INSERT INTO frequences (len, freq)
+        VALUES %s
+        ON CONFLICT (len) DO NOTHING;
+        """
+        argfreq=[]
+        argfreq.append((len(positive_freqs.tolist()),positive_freqs.tolist()))
+        execute_values(cur, query, argfreq)
+        conn.commit()
+
+
+
+def get_files(tag):
+    with psycopg2.connect(**monitoring_dbconf.MDB_CONFIG) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT  DISTINCT regexp_replace(regexp_replace(t.target, 'raw', 'GrandRoot'), '/[^/]+$', '') || '/' || c.root_filename AS full_path
+            FROM convertion c,transfer t
+            WHERE c.id_raw_file = t.id_raw_file
+            AND t.tag = %s
+            AND retcode = 0
+            AND root_filename LIKE %s
+            """, (tag,'GP80%_MD_%-10s-%.root'))
+            results = cur.fetchall()
+            #file_list = result #if result and result[0] else []
+
+
+    return [result[0] for result in results]
+
+def process_file(filepath):
+    logger.info(f"Found file: {filepath}")
+    monitor_file(filepath)
+
+
+
+
+if __name__ == "__main__":
+    logger = mlg.get_logger_for_script(__name__)
+    mlg.create_output_for_logger("info", log_stdout=True)
+
+    argParser = argparse.ArgumentParser()
+    argParser.add_argument("-t", "--tag", required=True, help="Tag for the files to register")
+    args = argParser.parse_args()
+    tag = args.tag
+
+    #folder = "/data/sshfscca/"
+    #folder = "/sps/grand/data/gp80/GrandRoot/2025/06/"
+    #pattern = os.path.join(folder, "GP80*_MD_*-10s-*.root")
+    filepaths=get_files(tag)
+
+    frequency_list = get_freqs()
+    MAX_PROCESSES = max(1,min(32, (os.cpu_count() or 1)) - 4)
+
+    #for filepath in sorted(glob.glob(pattern), key=os.path.getmtime):
+    #filepaths = sorted(glob.glob(pattern))
+    with ProcessPoolExecutor(max_workers=MAX_PROCESSES) as executor:
+        results = executor.map(process_file, filepaths)
+        for result in results:  # This will raise any exceptions from workers
+            pass  # or handle results if needed
+    logger.info(f"End of monitoring")
+
