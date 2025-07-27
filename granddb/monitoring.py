@@ -1,3 +1,16 @@
+"""
+@file        monitoring.py
+@brief       Read newly recorded files from the main database and process them to record monitoring informations
+             in the monitoring database.
+@details     For now process only GP80 files (wait for uniform naming to identify monitoring files).
+             The program is designed to launch several processes in order to parallelize jobs (but limited by deadlocks
+             when accessing the database).
+@author      Fleg
+@date        2025-07
+@version     1.0.0
+@project     GRAND
+"""
+
 from grand.dataio import TADC, TEfield, TVoltage, TRawVoltage
 import psycopg2
 from psycopg2.extras import execute_values
@@ -19,11 +32,11 @@ import granddb.monitoring_dbconf as monitoring_dbconf
 
 
 
-
+## Decorator to handle database connection (open, commit, close and retry in case of deadlock)
 def with_db_cursor(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        max_retries=3
+        max_retries=5
         backoff_base=0.1
         jitter=0.1
         retries = 0
@@ -33,22 +46,16 @@ def with_db_cursor(func):
                     with conn.cursor() as cur:
                         sig = inspect.signature(func)
                         params = sig.parameters
-                        #inject_args = {}
-                        #if 'cur' in params: inject_args['cur'] = cur
-                        #if 'conn' in params: inject_args['conn'] = conn
-                        #bound = sig.bind_partial(*args, **kwargs)
-                        #bound.apply_defaults()
-                        #bound.arguments.update(inject_args)
-                        #return func(*bound.args, **bound.kwargs)
                         expects_conn = 'conn' in params
                         return func(cur, conn, *args, **kwargs) if expects_conn else func(cur, *args, **kwargs)
 
             except psycopg2.errors.DeadlockDetected as e:
-                logger.info("deadlock: retry")
                 conn.rollback()
                 if retries >= max_retries:
                     logger.error(f"deadlock... end after {retries} retries")
                     raise
+                else:
+                    logger.info("deadlock: retry {retries}")
                 sleep_time = backoff_base * (2 ** retries)
                 sleep_time += random.uniform(0, jitter * sleep_time)
                 time.sleep(sleep_time)
@@ -62,7 +69,8 @@ def with_db_cursor(func):
 
     return wrapper
 
-
+## Function to read a monitoring file, extract usefull datas, calculate average over bucket time
+# (every minute for Temp and Voltage and every hour for spectra) and save it into the DB
 def monitor_file(rfile):
     trace_stats = defaultdict(lambda: {"sum": None, "count": 0, "ts_list":[]})
     temp_stats = defaultdict(lambda: {"sum_temp": 0.0, "sum_batt": 0.0, "count": 0,"ts_list":[]})
@@ -78,7 +86,8 @@ def monitor_file(rfile):
 
     #print(f"t_bin_size = {run.t_bin_size[0]} ")
 
-    #For this part we keep the same database connection because it needs a lot of queries
+    #For this part we keep the same database connection open because it requests a lot of queries select and reopen a
+    # new connection for each one would be too long
     with psycopg2.connect(**monitoring_dbconf.DB_CONFIG) as conn:
             with conn.cursor() as cur:
                 for i, event in enumerate(tree):
@@ -92,13 +101,17 @@ def monitor_file(rfile):
                         key_temp = (minute_bin, du)
                         key_spec = (hour_bin, du)
 
-                        #Fill env table
+                        # Fill env table
+                        # Get mesures already registered into the dababase if they exists
                         if not temp_stats[key_temp]["ts_list"]:
                             temp_stats[key_temp]["ts_list"]=get_mesures_ts_list(cur, minute_bin,du)
 
                         if not trace_stats[key_spec]["ts_list"]:
                             trace_stats[key_spec]["ts_list"]=get_spectres_ts_list(cur ,hour_bin,du)
 
+                        # If new measures are not yet registered then append them
+                        # If measures exists for this exact timestamp (gps_time) then skip (means that we are reprocessing an already
+                        # processed file or directory
                         if not temp_stats[key_temp]["ts_list"] or gps_time not in temp_stats[key_temp]["ts_list"]:
                             temp = event.gps_temp[j]
                             batt = event.battery_level[j]
@@ -107,17 +120,19 @@ def monitor_file(rfile):
                             temp_stats[key_temp]["sum_batt"] += batt
                             temp_stats[key_temp]["count"] += 1
 
-            if not trace_stats[key_spec]["ts_list"] or gps_time not in trace_stats[key_spec]["ts_list"]:
-                trace_stats[key_spec]["ts_list"].append(gps_time)
-                trace = np.array(event.trace_ch[j])
-                #Fill spec table only for traces = 1024 long (so FFT is 512)
-                if trace[0].size == 1024:
-                    if trace_stats[key_spec]["sum"] is None:
-                        trace_stats[key_spec]["sum"] = trace.copy()
-                    else:
-                        trace_stats[key_spec]["sum"] += trace
-                    trace_stats[key_spec]["count"] += 1
+                        if not trace_stats[key_spec]["ts_list"] or gps_time not in trace_stats[key_spec]["ts_list"]:
+                            trace_stats[key_spec]["ts_list"].append(gps_time)
+                            trace = np.array(event.trace_ch[j])
+                            #Fill spec table only for traces = 1024 long (so FFT is 512)
+                            if trace[0].size == 1024:
+                                if trace_stats[key_spec]["sum"] is None:
+                                    trace_stats[key_spec]["sum"] = trace.copy()
+                                else:
+                                    trace_stats[key_spec]["sum"] += trace
+                                trace_stats[key_spec]["count"] += 1
 
+    # Build the table of data to be recoreded in the database (so we will do the insert in a single request).
+    # Calculate the average over the time buckets. First for temps and then for spectras.
     rows_temp = []
     for (minute_bin, du_id), stats in temp_stats.items():
         if stats["count"] and stats["sum_temp"] and stats["sum_batt"]:
@@ -130,20 +145,24 @@ def monitor_file(rfile):
                  temp_stats[(minute_bin,du_id)]["ts_list"]
             ))
 
+    # Save the temps/voltages into the database (here the connection will be managed directly by the function to keep it
+    # as short as possible to limit locking and free database connections as soon as possible.
     save_temps(rows_temp)
 
+    # Same as previous but for spectras
     rows_spec = []
     for (hour_bin, du_id), stats in trace_stats.items():
         if stats["count"]>0:
+            # Calculate the FFT
             mean_traces = stats["sum"] / stats["count"]
             fft_vals = np.fft.fft(mean_traces, axis=1)
             freqs = np.fft.fftfreq(mean_traces.shape[1], d=run.t_bin_size[0]/mean_traces.shape[1])
-
             positive_freqs = freqs[:mean_traces.shape[1] // 2]
+            # If frequencies not yet in the database then save it.
             if (len(positive_freqs) not in frequency_list):
                 save_freqs(positive_freqs)
             #magnitude = 2.0 / mean_trace.shape[1] * np.abs(fft_vals[:, :mean_trace.shape[1] // 2])
-
+            # Keep only positives frequencies
             magnitude = np.abs(fft_vals[:, :mean_traces.shape[1] // 2])
 
             rows_spec.append((
@@ -160,7 +179,7 @@ def monitor_file(rfile):
 
     save_spectres(rows_spec)
 
-
+## Function to get the recorded mesures (temps, volts) from the DB at a timestamp bucket (ts) and for a du_id
 def get_mesures_ts_list(cur, ts, du_id):
     cur.execute("""
         SELECT ts_list
@@ -172,6 +191,7 @@ def get_mesures_ts_list(cur, ts, du_id):
     ts_list = result[0] if result and result[0] else []
     return ts_list
 
+## Function to get the recorded spectras from the DB at a timestamp bucket (ts) and for a du_id
 def get_spectres_ts_list(cur,ts,du_id):
     cur.execute("""
         SELECT ts_list
@@ -183,6 +203,9 @@ def get_spectres_ts_list(cur,ts,du_id):
     ts_list = result[0] if result and result[0] else []
     return ts_list
 
+## Function to write into the database the table of mesures
+## If some mesures already exists in the database for this time bucket (e.g. comming from another file previously treated)
+## then calculate the average between existing and new data
 @with_db_cursor
 def save_temps(cur, conn, rows_temp):
     if len(rows_temp) > 0:
@@ -207,7 +230,9 @@ def save_temps(cur, conn, rows_temp):
         execute_values(cur, query, rows_temp)
         conn.commit()
 
-
+## Function to write into the database the table of spectras
+## If some mesures already exists in the database for this time bucket (e.g. comming from another file previously treated)
+## then calculate the average between existing and new data
 @with_db_cursor
 def save_spectres(cur, conn, rows_spec):
         query = """ 
@@ -263,6 +288,7 @@ def save_spectres(cur, conn, rows_spec):
         execute_values(cur, query, rows_spec)
         conn.commit()
 
+## Function to get the frequencies list from the database.
 @with_db_cursor
 def get_freqs(cur):
     cur.execute("SELECT len FROM frequences")
@@ -270,6 +296,7 @@ def get_freqs(cur):
     frequency_list = [row[0] for row in rows]
     return frequency_list
 
+## Function to record the frequencies list into the database.
 @with_db_cursor
 def save_freqs(cur, conn, positive_freqs):
         query = """
@@ -283,7 +310,11 @@ def save_freqs(cur, conn, positive_freqs):
         conn.commit()
 
 
-
+## Function to query the main database (MDB) to get the list of files (or directories) converted after a transfer.
+## This is needed to interface the monitoring with the automatic conversion pipeline. This pipeline will call the
+## monitoring program (passing the tag of the process).
+## TODO: When gp80 and gaa will have an unique way to identify monitoring data then the filter will have to be adapted.
+## For now, we use GP80%_MD_%-10s-%.root (so this programm will works only for gp80 files).
 def get_files(tag):
     with psycopg2.connect(**monitoring_dbconf.MDB_CONFIG) as conn:
         with conn.cursor() as cur:
@@ -298,15 +329,12 @@ def get_files(tag):
             results = cur.fetchall()
             #file_list = result #if result and result[0] else []
 
-
     return [result[0] for result in results]
 
+## Process launcher
 def process_file(filepath):
     logger.info(f"Found file: {filepath}")
     monitor_file(filepath)
-
-
-
 
 if __name__ == "__main__":
     logger = mlg.get_logger_for_script(__name__)
@@ -317,16 +345,21 @@ if __name__ == "__main__":
     args = argParser.parse_args()
     tag = args.tag
 
-    #folder = "/data/sshfscca/"
-    #folder = "/sps/grand/data/gp80/GrandRoot/2025/06/"
+    #folder = "/sps/grand/data/gp80/GrandRoot/2025/07/"
     #pattern = os.path.join(folder, "GP80*_MD_*-10s-*.root")
+    #filepaths = sorted(glob.glob(pattern))
+
     filepaths=get_files(tag)
+    # We shuffle the list to avoid processing concurrently 2 files concerning the same bucket of time (and limit
+    # the risks of deadlock when accessing the database)
+    random.shuffle(filepaths)
 
     frequency_list = get_freqs()
-    MAX_PROCESSES = max(1,min(32, (os.cpu_count() or 1)) - 4)
 
-    #for filepath in sorted(glob.glob(pattern), key=os.path.getmtime):
-    #filepaths = sorted(glob.glob(pattern))
+    # Limitation on the number of parallel processes. Must be the correct balance between performances and risks of
+    # deadlocks or database max connexions
+    MAX_PROCESSES = max(1,min(8, (os.cpu_count() or 1)) - 1)
+
     with ProcessPoolExecutor(max_workers=MAX_PROCESSES) as executor:
         results = executor.map(process_file, filepaths)
         for result in results:  # This will raise any exceptions from workers
