@@ -194,7 +194,9 @@ class MotherEventTree(DataTree):
     def get_event(self, ev_no, run_no=0):
         """Readout the TTree entry corresponding to the event and run"""
         # Try to get the requested entry
-        res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
+        # res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
+        # The above should work, but there is a bug in ROOT
+        res = self._tree.GetEntry(self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no)))
         # If no such entry, return
         if res == 0 or res == -1:
             logger.error(
