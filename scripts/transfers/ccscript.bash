@@ -9,6 +9,7 @@
 bin2root='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/bintoroot.bash'
 register_transfers='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfer.bash'
 refresh_mat_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/refresh_mat_views.bash'
+monitoring_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/run_monitoring.bash'
 update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
 tar_logs_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/tar_logs.bash'
 config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
@@ -180,8 +181,9 @@ else
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
   sbatch ${dep} -t 0-00:45 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 2G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
-  sbatch ${dep} -t 0-02:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
-  sbatch -t 0-00:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
+  sbatch ${dep} -o ${submit_dir}/monitoring_${tag}.log ${monitoring_script} -t ${tag}
+  #sbatch ${dep} -t 0-02:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
+  sbatch -t 0-03:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 
 #
