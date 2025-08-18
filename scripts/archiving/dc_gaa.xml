@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource xmlns="http://datacite.org/schema/kernel-4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.4/metadata.xsd">
+<identifier>
+	<identifier identifierType="DOI">doi+10.25520+in2p3.archive+grand+gaa</identifier>
+</identifier>
+<titles>
+	<title xml:lang="EN">Grand Raw Files from GAA</title>
+</titles>
+<creators>
+	<creator>
+		<creatorName nameType="Organizational">Grand Observatory</creatorName>
+		<nameIdentifier>Grand Observatory</nameIdentifier>
+	</creator>
+</creators>
+<publisher>Grand Observatory</publisher>
+<publicationYear>2024</publicationYear>
+<resourceType resourceTypeGeneral="Dataset">Grand raw files</resourceType>
+<descriptions>
+	<description xml:lang="EN">Grand Raw Data from GAA Observatory</description>
+</descriptions>
+<subjects>
+	<subject subjectScheme="wikidata">radio astronomy cosmics rays neutrinos</subject>
+</subjects>
+<dates>
+	<date dateType="Copyrighted">2024</date>
+</dates>
+<geoLocations>
+	<geoLocation>
+		<geoLocationPlace>Argentina</geoLocationPlace>
+	</geoLocation>
+</geoLocations>
+</resource>

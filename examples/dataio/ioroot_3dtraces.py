@@ -113,6 +113,8 @@ def main():
         o_tevent.plot_all_traces_as_image()
     if args.footprint:
         o_tevent.plot_footprint_4d_max()
+        hilbert = args.file.name.find('efield') < 0
+        o_tevent.get_tmax_vmax(hilbert)
         o_tevent.plot_footprint_val_max()
     if args.time_val:
         o_tevent.plot_footprint_time_slider()

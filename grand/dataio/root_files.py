@@ -15,7 +15,7 @@ from typing import Optional
 import numpy as np
 import ROOT
 
-import grand.dataio.root_trees as groot
+import grand.dataio as groot
 from grand.basis.traces_event import Handling3dTraces
 
 logger = getLogger(__name__)

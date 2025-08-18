@@ -8,7 +8,7 @@ from pathlib import Path
 import os
 
 import grand.dataio.root_files as RFile
-import grand.dataio.root_trees as groot
+import grand.dataio as groot
 from grand import grand_get_path_root_pkg
 
 #TODO: (JMC) almost all tests are broken by new version of GRANDROOT file, needs to have a set of coherent ROOT for test 

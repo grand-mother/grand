@@ -23,12 +23,12 @@ import os
 import time
 import argparse
 import logging
-
+import psutil
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from grand import ADC, manage_log
-import grand.dataio.root_trees as rt
+import grand.dataio
 
 logger = logging.getLogger(__name__)
 
@@ -97,13 +97,28 @@ def get_noise_trace(data_dir,
     noise_trace = np.empty( (n_traces,3,n_samples),dtype=int )
     trace_idx = 0
 
+    # print(f"mem1: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
     for i, data_file in enumerate(data_files):
-        df = rt.DataFile(data_file)
+
+        if i < n_traces % n_files:
+            n_entries_sel = n_traces // n_files + 1
+        else:
+            n_entries_sel = n_traces // n_files
+
+        if n_entries_sel == 0: continue
+
+        # print(f"mem2: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+        df = grand.dataio.DataFile(data_file)
         tadc = df.tadc #rt.TADC(data_file)
 
+        # tadc = grand.dataio.TADC(data_file)
+        # print(f"mem3: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
         # Check that data traces contain requested number of samples
-        tadc.get_entry(0)
-        n_samples_data = tadc.adc_samples_count_ch[0][1]*2 #TODO: tempfix
+        # tadc.get_entry(0)
+        tadc._tree.GetBranch("adc_samples_count_ch").GetEntry(0)
+        n_samples_data = tadc.adc_samples_count_ch[0][1] #TODO: tempfix
 
         if n_samples_data == n_samples/2:
             extend_noise_trace = True
@@ -116,17 +131,18 @@ def get_noise_trace(data_dir,
         # Select random entries from TADC
         # NOTE: assumed that each entry corresponds to a single DU with ADC channels (0,1,2)=(X,Y,Z)
         n_entries_tot = tadc.get_number_of_entries()
-        
-        if i < n_traces % n_files:
-            n_entries_sel = n_traces // n_files + 1
-        else:
-            n_entries_sel = n_traces // n_files
-        
+
         entries_sel = rng.integers(0,high=n_entries_tot,size=n_entries_sel)
         logger.debug(f'Selected {n_entries_sel} random traces from {data_file}')
-        
+
+        trace_branch = tadc._tree.GetBranch("trace_ch")
+        du_id_branch = tadc._tree.GetBranch("du_id")
+
         for entry in entries_sel:
-            tadc.get_entry(entry)
+            # print(f"mem4: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            # res = tadc.get_entry(entry)
+            res = trace_branch.GetEntry(int(entry))
+            # print(f"mem5: {process.memory_info().rss / 1024 ** 2:.2f} MB", res)
             trace = np.array(tadc.trace_ch)[0,:,:n_samples]
 
             #-- START OF ADDITION TO EXTEND NOISE TRACES --#
@@ -138,6 +154,7 @@ def get_noise_trace(data_dir,
                 extend_condition = False
 
                 # Only extend with data from same DU
+                du_id_branch.GetEntry(int(entry))
                 du_id = tadc.du_id[0] 
 
                 # Only extend the original trace with a new trace
@@ -169,6 +186,7 @@ def get_noise_trace(data_dir,
             noise_trace[trace_idx] = trace
             trace_idx += 1
         df.close()
+        # print(f"mem8: {process.memory_info().rss / 1024 ** 2:.2f} MB")
     return noise_trace
 
 
@@ -219,6 +237,9 @@ def manage_args():
 
 if __name__ == '__main__':
     logger = manage_log.get_logger_for_script(__file__)
+    pid = os.getpid()
+    process = psutil.Process(pid)    
+    
 
     #-#-#- Get parser arguments -#-#-#
     args      = manage_args()
@@ -238,83 +259,110 @@ if __name__ == '__main__':
     logger.info( manage_log.string_begin_script() )
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
-    logger.info(f'Converting voltage traces from {f_input_file} to ADC traces')
-
     #-#-#- Load TVoltage -#-#-#
-    df       = rt.DataDirectory(f_input_dir)
+    df       = grand.dataio.DataDirectory(f_input_dir)
     tvoltage = df.tvoltage
     entries  = tvoltage.get_number_of_entries()
     trun = df.trun
 
-    #-#-#- Prepare TADC -#-#-#
-    if os.path.exists(f_output):
-        logger.info(f"Overwriting {f_output}") # remove existing file if it already exists
-        os.remove(f_output)
-        time.sleep(1)
-    tadc = rt.TADC(f_output)
-    
-    #-#-#- Initiate ADC object and RNG -#-#-#
-    adc = ADC()
-    
-    rng = np.random.default_rng(args.seed)
-    if noise_dir is not None:
-        logger.info(f'Set RNG seed to {args.seed}')
-        logger.info(f'Adding random measured noise traces from data files in {noise_dir}')
-    
+    # Loop through the voltage files
+    for f_input_file in df.ftvoltages[0].flist:
 
-    #-#-#- Perform the conversion for all entries in TVoltage file -#-#-#
-    for entry in range(entries):
-        logger.info(f'Converting voltage to ADC for entry {entry+1}/{entries}')
-        tvoltage.get_entry(entry)
-        voltage_trace = np.array(tvoltage.trace)
+        df_input_file = grand.dataio.DataFile(f_input_file)
+        tvoltage = df_input_file.tvoltage
+        entries = tvoltage.get_number_of_entries()
 
-        event_number = tvoltage.event_number
-        run_number = tvoltage.run_number
-        trun.get_run(run_number)
-        event_dus_indices = tvoltage.get_dus_indices_in_run(trun)
-        dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns. 
-        f_samp_mhz = 1e3/dt_ns                                 # MHz  
-        input_sampling_rate_mhz = f_samp_mhz[0]                # and here we asume all sampling rates are the same!. In any case, we are asuming all the ADCs are the same...        
+        logger.info(f'Converting {entries} voltage traces from {f_input_file} to ADC traces')
+        print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
 
-        #-#-#- Downsample if needed -#-#-# (this could be added to the "process" method to hide it from the public, and add input_sampling_rate as input to process.
-        #plt.plot(voltage_trace[1][1],label="in")
-        if( input_sampling_rate_mhz != adc.sampling_rate):         
-           voltage_trace=adc.downsample(voltage_trace,input_sampling_rate_mhz)
-           #plt.plot(voltage_trace[1][1],label="downsampled")
-        #-#-#- Get noise trace if requested -#-#-#
+        if args.out_file is None:
+            # Replace only first occurrences
+            f_output = "adc".join(f_input_file.split("voltage", 1))
+            f_output = "L1".join(f_output.split("L0", 1))
+
+        #-#-#- Prepare TADC -#-#-#
+        if os.path.exists(f_output):
+            logger.info(f"Overwriting {f_output}") # remove existing file if it already exists
+            os.remove(f_output)
+            time.sleep(1)
+        tadc = grand.dataio.TADC(f_output)
+
+        #-#-#- Initiate ADC object and RNG -#-#-#
+        adc = ADC()
+
+        rng = np.random.default_rng(args.seed)
         if noise_dir is not None:
-            noise_trace = get_noise_trace(noise_dir,
-                                          voltage_trace.shape[0],
-                                          n_samples=voltage_trace.shape[2],
-                                          rng=rng)
-        #-#-#- Convert voltage trace to adc trace -#-#-#
-        adc_trace = adc.process(voltage_trace,
-                                noise_trace=noise_trace)
+            logger.info(f'Set RNG seed to {args.seed}')
+            logger.info(f'Adding random measured noise traces from data files in {noise_dir}')
 
-        #plt.plot(adc_trace[1][1],label="adc")
-        #plt.show()
-        #-#-#- Save adc trace to TADC file -#-#-#
-        tadc.copy_contents(tvoltage)
-        entries  = tadc.get_number_of_entries()
-        tadc.trace_ch = adc_trace
-        
 
-        #modify the trigger position if needed. TODO: This will have at some point to be replaced by a real trigger algorithm
-        if(input_sampling_rate_mhz != adc.sampling_rate):
-          originalsampling=input_sampling_rate_mhz
-          newsampling=adc.sampling_rate
-          ratio=originalsampling/newsampling
-        else:
-          ratio=1.0   
-        
-        tadc.trigger_position=np.ushort(np.asarray(tvoltage.trigger_position)/ratio)
+        #-#-#- Perform the conversion for all entries in TVoltage file -#-#-#
+        for entry in range(entries):
+            logger.info(f'Converting voltage to ADC for entry {entry+1}/{entries}')
+            # print(f"Entry Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
+            res = tvoltage.get_entry(entry)
+            # print(f"Memory 1: {process.memory_info().rss / 1024 ** 2:.2f} MB", res)
+            # voltage_trace = np.array(tvoltage.trace, copy=True)
+            voltage_trace = np.array(tvoltage.trace)
+            # print(f"Memory 2: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
-        tadc.fill()
-        logger.debug(f'ADC trace for (run,event) = {tvoltage.run_number, tvoltage.event_number} written to TADC')
-    
+            event_number = tvoltage.event_number
+            run_number = tvoltage.run_number
+            trun.get_run(run_number)
+            # print(f"Memory 2_1: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            event_dus_indices = tvoltage.get_dus_indices_in_run(trun)
+            dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
+            f_samp_mhz = 1e3/dt_ns                                 # MHz
+            input_sampling_rate_mhz = f_samp_mhz[0]                # and here we asume all sampling rates are the same!. In any case, we are asuming all the ADCs are the same...
+            # print(f"Memory 3: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            #-#-#- Downsample if needed -#-#-# (this could be added to the "process" method to hide it from the public, and add input_sampling_rate as input to process.
+            #plt.plot(voltage_trace[1][1],label="in")
+            if( input_sampling_rate_mhz != adc.sampling_rate):
+               voltage_trace=adc.downsample(voltage_trace,input_sampling_rate_mhz)
+               #plt.plot(voltage_trace[1][1],label="downsampled")
+            #-#-#- Get noise trace if requested -#-#-#
+            # print(f"Memory before get noise: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            if noise_dir is not None:
+                noise_trace = get_noise_trace(noise_dir,
+                                              voltage_trace.shape[0],
+                                              n_samples=voltage_trace.shape[2],
+                                              rng=rng)
 
-    tadc.analysis_level = tadc.analysis_level+1
-    tadc.write()
-    logger.info(f'Succesfully saved TADC to {f_output}')
+            # print(f"Memory after get noise: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            #-#-#- Convert voltage trace to adc trace -#-#-#
+            adc_trace = adc.process(voltage_trace,
+                                    noise_trace=noise_trace)
+            # print(f"Memory after adding noise: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
+            #plt.plot(adc_trace[1][1],label="adc")
+            #plt.show()
+            #-#-#- Save adc trace to TADC file -#-#-#
+            tadc.copy_contents(tvoltage)
+            # print(f"Memory after copy: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            entries_adc = tadc.get_number_of_entries()
+            tadc.trace_ch = adc_trace
+            # print(f"Memory after tracemod: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
+
+            #modify the trigger position if needed. TODO: This will have at some point to be replaced by a real trigger algorithm
+            if(input_sampling_rate_mhz != adc.sampling_rate):
+              originalsampling=input_sampling_rate_mhz
+              newsampling=adc.sampling_rate
+              ratio=originalsampling/newsampling
+            else:
+              ratio=1.0
+
+            tadc.trigger_position=np.ushort(np.asarray(tvoltage.trigger_position)/ratio)
+            # print(f"Memory after trig mod: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
+            tadc.fill()
+            # print(f"Memory after fill: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+            logger.debug(f'ADC trace for (run,event) = {tvoltage.run_number, tvoltage.event_number} written to TADC')
+
+
+        tadc.analysis_level = tadc.analysis_level+1
+        tadc.write()
+        logger.info(f'Succesfully saved TADC to {f_output}')
+
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
     logger.info( manage_log.string_end_script() )
