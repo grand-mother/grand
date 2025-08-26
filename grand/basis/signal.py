@@ -192,7 +192,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     return fastest_size_fft, freqs_mhz
 
 
-def interpol_at_new_x(a_x, a_y, new_x):
+def interpol_at_new_x(a_x, a_y, new_x, kind="cubic"):
     """
     #RK: This function is copied to galaxy.py and rf_chain.py where it is used. Remove it from here if it is not used anywhere else.
 
@@ -207,6 +207,6 @@ def interpol_at_new_x(a_x, a_y, new_x):
     """
     assert a_x.shape[0] > 0
     func_interpol = interpolate.interp1d(
-        a_x, a_y, "cubic", bounds_error=False, fill_value=(0.0, 0.0)
+        a_x, a_y, kind, bounds_error=False, fill_value=(0.0, 0.0)
     )
     return func_interpol(new_x)
