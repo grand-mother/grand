@@ -53,7 +53,6 @@ class GalacticAntComponent:
         self.freqs_mhz = freqs_mhz
         self.nb_freq = len(freqs_mhz)
         self.size_out = size_out
-        print("size out", size_out)
         self._interpolate_asd()
         # rfft "backward" normalization
         # see documentation
