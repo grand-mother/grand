@@ -20,15 +20,15 @@ AND also
 
 import h5py
 import numpy as np
+import matplotlib.pyplot as plt
+
 from grand import grand_add_path_data
 
 
 def get_asd_galactic_ant_model(du_type="GP300"):
-    """return ASD of galactic noise
-    
-    Return ASD of galactic noise through antenna of type "du_type", unit uV/sqrt(Hz).
-    ASD is return for local sideral time "lst" sampling at "freqs_mhz"
-    
+    """Return ASD of galactic signal through antenna of type "du_type", unit uV/sqrt(Hz).
+
+
     ..Authors:
       PengFei and Xidian group
       Modified by SN including different antenna models for leff
@@ -114,6 +114,7 @@ def get_asd_galactic_ant_model(du_type="GP300"):
         galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
         galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
     elif du_type == "GP300_mat":
+        print(du_type)
         gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_mat.npy")
         gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_mat.npy")
         gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_mat.npy")
@@ -133,10 +134,32 @@ def get_asd_galactic_ant_model(du_type="GP300"):
         galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
         galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
         galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
-    
+
     ##########################################################################
     # Here v_amplitude_infile is given in unit [uV/sqrt(Hz)] for all "du_type"
     ##########################################################################
     asd_ant_galactic = gala_voltage
     return gala_freq, asd_ant_galactic
 
+
+def plot_check_psd_models(lst, axis):
+    f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
+    f_nec, asd_nec = get_asd_galactic_ant_model("GP300_nec")
+    f_matlab, asd_matlab = get_asd_galactic_ant_model("GP300_mat")
+
+    plt.figure()
+    plt.title(f"Model PSD galactic at LST {lst}, axis {axis}")
+    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst - 1] ** 2, label="Model HFSS")
+    plt.semilogy(f_nec[1:-2], asd_nec[1:-2, axis, lst - 1] ** 2, label="Model NEC")
+    plt.semilogy(f_matlab[1:-2], asd_matlab[1:-2, axis, lst - 1] ** 2, "*", label="Model Matlab")
+    plt.xlabel("Frequency [MHz]")
+    plt.ylabel(r"PSD: [$\mu V^2/Hz$]")
+    plt.grid()
+    plt.legend()
+
+
+if __name__ == "__main__":
+    plot_check_psd_models(18, 0)
+    plot_check_psd_models(18, 1)
+    plot_check_psd_models(18, 2)
+    plt.show()

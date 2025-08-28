@@ -179,7 +179,7 @@ if __name__ == "__main__":
     evt = Handling3dTraces("Simulation galactic component")
     evt.init_traces(traces, f_samp_mhz=fs_hz * 1e-6)
     evt.set_unit_axis("$\mu V$", "dir", "galactic")
-    evt.plot_trace_idx(0)
-    evt.plot_psd_trace_idx(0)
+    evt.plot_trace_idx(5)
+    evt.plot_psd_trace_idx(5)
 
     plt.show()
