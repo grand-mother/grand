@@ -108,7 +108,7 @@ def get_asd_galactic_ant_model(du_type="GP300"):
         """f_start = 30
         f_end = 250
         # TODO: 221 is the number of frequency ? why ? and comment to explain
-        nb_frv_amplitude_infile = gala_voltage[:, :, lst - 1]eq = 221
+        nb_frv_amplitude_infile = gala_voltage[:, :, lst]eq = 221
         v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
         galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
         galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
@@ -144,14 +144,15 @@ def get_asd_galactic_ant_model(du_type="GP300"):
 
 def plot_check_psd_models(lst, axis):
     f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
+    print(asd_hfss.shape)
     f_nec, asd_nec = get_asd_galactic_ant_model("GP300_nec")
     f_matlab, asd_matlab = get_asd_galactic_ant_model("GP300_mat")
 
     plt.figure()
     plt.title(f"Model PSD galactic at LST {lst}, axis {axis}")
-    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst - 1] ** 2, label="Model HFSS")
-    plt.semilogy(f_nec[1:-2], asd_nec[1:-2, axis, lst - 1] ** 2, label="Model NEC")
-    plt.semilogy(f_matlab[1:-2], asd_matlab[1:-2, axis, lst - 1] ** 2, "*", label="Model Matlab")
+    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst] ** 2, label="Model HFSS")
+    plt.semilogy(f_nec[1:-2], asd_nec[1:-2, axis, lst] ** 2, label="Model NEC")
+    plt.semilogy(f_matlab[1:-2], asd_matlab[1:-2, axis, lst] ** 2, "*", label="Model Matlab")
     plt.xlabel("Frequency [MHz]")
     plt.ylabel(r"PSD: [$\mu V^2/Hz$]")
     plt.grid()

@@ -38,7 +38,7 @@ class GalacticAntComponent:
 
     def _interpolate_asd(self):
         # define LST
-        asd_mod = self.asd_mod[:, :, self.lst - 1]
+        asd_mod = self.asd_mod[:, :, self.lst]
         nb_freq = len(self.freqs_mhz)
         asd = np.zeros((nb_freq, 3))
         asd[:, 0] = interpol_at_new_x(self.f_mod[:, 0], asd_mod[:, 0], self.freqs_mhz, "linear")
@@ -94,9 +94,9 @@ class GalacticAntComponent:
     def plot_psd_model(self, lst):
         plt.figure()
         plt.title(f"Model PSD galactic component at LST {self.lst}")
-        plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 0, lst - 1] ** 2, label="axis 0")
-        plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 1, lst - 1] ** 2, label="axis 1")
-        plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 2, lst - 1] ** 2, label="axis 2")
+        plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 0, lst] ** 2, label="axis 0")
+        plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 1, lst] ** 2, label="axis 1")
+        plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 2, lst] ** 2, label="axis 2")
         plt.xlabel("Frequency [MHz]")
         plt.ylabel(r"PSD: [$\mu V^2/Hz$]")
         plt.grid()
@@ -138,7 +138,7 @@ class GalacticAntComponent:
         plt.title(f"PSD trace at LST {self.lst} and model for axis {axis}")
         # remove mode 0 and Nyquist
         plt.semilogy(freq[1:-2], psd[1:-2], label="Welch PSD trace")
-        psd_mod = self.asd_mod[1:-2, axis, self.lst - 1] ** 2
+        psd_mod = self.asd_mod[1:-2, axis, self.lst] ** 2
         plt.semilogy(self.f_mod[1:-2], psd_mod, label="model")
         plt.xlim([20, 260])
         plt.ylim([psd_mod.min(), psd_mod.max()])
