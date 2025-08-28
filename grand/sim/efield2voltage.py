@@ -19,7 +19,8 @@ from .detector.rf_chain import RFChain
 from .detector.rf_chain import RFChainNut
 from .detector.rf_chain import RFChain_gaa
 from .shower.gen_shower import ShowerEvent
-from .noise.galaxy import galactic_noise
+from .noise.galatic_ant_component import GalacticAntComponent
+from ipyparallel import logger
 
 logger = getLogger(__name__)
 
@@ -97,6 +98,7 @@ class Efield2Voltage:
         self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
         self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
+        self.galaxy = GalacticAntComponent(du_type)
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
         """
@@ -129,22 +131,23 @@ class Efield2Voltage:
         logger.info(f"Running on event_number: {self.event_number}, run_number: {self.run_number}")
 
         self.events.get_event(self.event_number, self.run_number)           # update traces, du_pos etc for event with event_idx.
-        self.shower.get_event(self.event_number, self.run_number)           # update shower info (theta, phi, xmax etc) for event with event_idx.
+        self.shower.get_event(self.event_number, self.run_number)          # update shower info (theta, phi, xmax etc) for event with event_idx.
+        logger.info(f"Start read Efield trace")
         if self.previous_run != self.run_number:                      # load only for new run.
             self.run.get_run(self.run_number)                         # update run info to get site latitude and longitude.
             self.previous_run = self.run_number
-
+        logger.info(f"End Efield trace")
         # stack efield traces
         self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        logger.info(f"Efied to numpy array")
         trace_shape = self.traces.shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
         self.nb_du = trace_shape[0]
         self.sig_size = trace_shape[-1]
-
         # self.du_pos = np.asarray(self.run.du_xyz) # (nb_du, 3) antenna position wrt local grand coordinate
         self.du_pos = np.asarray(self.run.du_xyz)[self.event_dus_indices] # (nb_du, 3) antenna position wrt local grand coordinate
-
+        logger.info(f"retrieve DU pos")
         # shower information like theta, phi, xmax etc for one event.
         shower = ShowerEvent()
         shower.origin_geoid  = self.run.origin_geoid # [lat, lon, height]
@@ -208,15 +211,9 @@ class Efield2Voltage:
         )
         # Compute galactic noise.
         if self.params["add_noise"]:
-            # lst: local sideral time, galactic noise max at 18h
-            self.fft_noise_gal_3d = galactic_noise(
-                self.params["lst"],
-                self.fft_size,
-                self.freqs_mhz,
-                self.nb_du,
-                seed=self.seed,
-                du_type=self.du_type
-            )
+            lst = round(self.params["lst"])%24
+            self.galaxy.set_lst_freq_size_out(lst, self.freqs_mhz, self.fft_size)
+            self.fft_noise_gal_3d = self.galaxy.get_rfft_gal_ant(self.nb_du)
         # compute total transfer function of RF chain. Can be computed only once in __init__ if length of time traces does not change between events.
         if self.params["add_rf_chain"]:
             #self.rf_chain.compute_for_freqs(self.freqs_mhz)
@@ -414,6 +411,7 @@ class Efield2Voltage:
         """
         # update event. Provide either integer event_idx, or event_number and run_number.
         self.get_event(event_idx, event_number, run_number)
+        logger.info(f"nb DU {self.nb_du}")
         for du_idx in range(self.nb_du):
             self.compute_voc_du(du_idx)
 
@@ -568,7 +566,9 @@ class Efield2Voltage:
                     message = "There are no events in the file! Exiting."
                     logger.error(message)
                     raise Exception(message)
-                for evt_idx in range(nb_events):
+                logger.info(" =================== DEBUG MAX 5 events")
+                loop_nb = min(5,nb_events)
+                for evt_idx in range(loop_nb):
                     self.compute_voltage_event(event_idx=evt_idx) # event_number and run_number is None
                     self.final_resample()
                     self.save_voltage(append_file)
