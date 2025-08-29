@@ -144,9 +144,11 @@ def get_asd_galactic_ant_model(du_type="GP300"):
 
 def plot_check_psd_models(lst, axis):
     f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
-    print(asd_hfss.shape)
+    print("HFSS shape :", asd_hfss.shape)
     f_nec, asd_nec = get_asd_galactic_ant_model("GP300_nec")
+    print("NEC shape :",asd_nec.shape)
     f_matlab, asd_matlab = get_asd_galactic_ant_model("GP300_mat")
+    print("Matlab shape :",asd_matlab.shape)
 
     plt.figure()
     plt.title(f"Model PSD galactic at LST {lst}, axis {axis}")
@@ -158,9 +160,54 @@ def plot_check_psd_models(lst, axis):
     plt.grid()
     plt.legend()
 
+def plot_check_lst_sum_models(model="GP300"):
+    _, asd = get_asd_galactic_ant_model(model)
+    print("asd shape :", asd.shape)
+    plt.figure()
+    plt.title(f"Sum PSD ({model} model) for each axis")
+    psd = asd[1:-1]**2
+    psd_sum = psd.sum(axis=0)
+    l_col=["k","y","b"]
+    lst = range(24)
+    for i_a in range(3):
+        plt.plot(lst, psd_sum[i_a],color=l_col[i_a], label=f"idx axis={i_a}")
+        print(psd_sum[i_a])
+    plt.plot(lst, psd.sum(axis=(0,1)), "-*",label=f"Total all axis")
+    print(psd.sum(axis=(0,1)))
+    plt.vlines(18, 200, 3200, label="idx 18")
+    plt.ylabel("$\sum{PSD}$")
+    plt.xlabel("index LST")
+    plt.grid()
+    plt.legend()
+
+def plot_check_lst_models(lst, axis):
+    f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
+    print("HFSS shape :", asd_hfss.shape)
+    
+    def sum_psd(axis, lst):
+        return (asd_hfss[1:-2, axis, lst] ** 2).sum()
+    
+    plt.figure()
+    plt.title(f"Model PSD galactic HFSS, axis {axis}")
+    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst-1] ** 2,color='k', label=f"LST idx={lst-1}, sum={sum_psd(axis, lst-1)}")
+    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst] ** 2,color='y', label=f"LST idx={lst}, sum={sum_psd(axis, lst)}")
+    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst+1] ** 2,color='b', label=f"LST idx={lst+1}, sum={sum_psd(axis, lst+1)}")
+    plt.xlabel("Frequency [MHz]")
+    plt.ylabel(r"PSD: [$\mu V^2/Hz$]")
+    plt.grid()
+    plt.legend()
 
 if __name__ == "__main__":
-    plot_check_psd_models(18, 0)
-    plot_check_psd_models(18, 1)
-    plot_check_psd_models(18, 2)
+    # plot_check_psd_models(18, 0)
+    # plot_check_psd_models(18, 1)
+    # plot_check_psd_models(18, 2)
+    # plot_check_lst_models(1,1)
+    # plot_check_lst_models(17,0)
+    # plot_check_lst_models(19,0)
+    # plot_check_lst_models(17,1)
+    # plot_check_lst_models(19,1)
+    # plot_check_lst_models(17,2)
+    # plot_check_lst_models(19,2)
+    plot_check_lst_sum_models("GP300")
+    
     plt.show()
