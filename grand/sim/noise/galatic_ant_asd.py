@@ -142,6 +142,15 @@ def get_asd_galactic_ant_model(du_type="GP300"):
     return gala_freq, asd_ant_galactic
 
 
+def save_asd_galaxy(du_type, pf_name):
+    fq, asd = get_asd_galactic_ant_model(du_type)
+    t_asd = np.dtype({'names':['fq','asd'], 'formats':['f4','(3,24)f4'], 'titles':['MHz','uV/sqrt(Hz)']})
+    sa_asd = np.zeros(len(fq),dtype=t_asd)
+    sa_asd["fq"] = np.squeeze(fq)
+    sa_asd["asd"] = asd
+    np.save(pf_name,sa_asd)
+         
+
 def plot_check_psd_models(lst, axis):
     f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
     print("HFSS shape :", asd_hfss.shape)
@@ -200,7 +209,7 @@ def plot_check_lst_models(lst, axis):
 if __name__ == "__main__":
     # plot_check_psd_models(18, 0)
     # plot_check_psd_models(18, 1)
-    # plot_check_psd_models(18, 2)
+    plot_check_psd_models(18, 2)
     # plot_check_lst_models(1,1)
     # plot_check_lst_models(17,0)
     # plot_check_lst_models(19,0)
@@ -209,5 +218,6 @@ if __name__ == "__main__":
     # plot_check_lst_models(17,2)
     # plot_check_lst_models(19,2)
     plot_check_lst_sum_models("GP300")
+    save_asd_galaxy("GP300", "ASD_galaxy_ant_HFSS")
     
     plt.show()
