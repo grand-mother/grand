@@ -10,12 +10,12 @@ Goal of refactoring:
 
 So 
 * Separate ASD computing (this module) and noise generation (galactic_ant_component.py) 
-* Add class to perform the computing of ASD only one time during simulation
 
 AND also
 * Replace cubic interpolation by linear, more safe
 * Simply check between what content of model galactic noise files and what we used finally 
 * Add plot function in same module
+* Create a file format for ASD
 """
 
 import h5py
@@ -28,20 +28,16 @@ from grand import grand_add_path_data
 def get_asd_galactic_ant_model(du_type="GP300"):
     """Return ASD of galactic signal through antenna of type "du_type", unit uV/sqrt(Hz).
 
-
     ..Authors:
       PengFei and Xidian group
       Modified by SN including different antenna models for leff
-    :param lst: select the galactic noise LST at the LST moment
-    :    type f_lst: int
-    :param freqs_mhz: array of output frequencies
-    :    type freqs_mhz: float (nb freq,)
-    : du_type: Calculate the galactic noise for different antenna model simulations.
+
+    :param du_type: Calculate the galactic noise for different antenna model simulations.
                  'GP300' (default) uses hfss simulations for leff
                  'GP300_nec' uses nec simulations for leff
                  'Gp300_mat' uses matlab simulations fro leff
-    :return: [uV/sqrt(Hz)] ASD of galactic noise through antenna of type "du_type"
-    :rtype: float(nb_freq, 3)
+    :return: ([MHz], [uV/sqrt(Hz)]) frequency, ASD of galactic noise through antenna of type "du_type"
+    :rtype: float(nb_freq), float(nb_freq, axis=3, lst=24)
     """
     if du_type == "GP300":
         gala_file = grand_add_path_data("noise/PG_ALL_jifen.mat")
@@ -144,20 +140,23 @@ def get_asd_galactic_ant_model(du_type="GP300"):
 
 def save_asd_galaxy(du_type, pf_name):
     fq, asd = get_asd_galactic_ant_model(du_type)
-    t_asd = np.dtype({'names':['fq','asd'], 'formats':['f4','(3,24)f4'], 'titles':['MHz','uV/sqrt(Hz)']})
-    sa_asd = np.zeros(len(fq),dtype=t_asd)
+    # Create a NumPy structured array
+    t_asd = np.dtype(
+        {"names": ["fq", "asd"], "formats": ["f4", "(3,24)f4"], "titles": ["MHz", "uV/sqrt(Hz)"]}
+    )
+    sa_asd = np.zeros(len(fq), dtype=t_asd)
     sa_asd["fq"] = np.squeeze(fq)
     sa_asd["asd"] = asd
-    np.save(pf_name,sa_asd)
-         
+    np.save(pf_name, sa_asd)
+
 
 def plot_check_psd_models(lst, axis):
     f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
     print("HFSS shape :", asd_hfss.shape)
     f_nec, asd_nec = get_asd_galactic_ant_model("GP300_nec")
-    print("NEC shape :",asd_nec.shape)
+    print("NEC shape :", asd_nec.shape)
     f_matlab, asd_matlab = get_asd_galactic_ant_model("GP300_mat")
-    print("Matlab shape :",asd_matlab.shape)
+    print("Matlab shape :", asd_matlab.shape)
 
     plt.figure()
     plt.title(f"Model PSD galactic at LST {lst}, axis {axis}")
@@ -169,42 +168,60 @@ def plot_check_psd_models(lst, axis):
     plt.grid()
     plt.legend()
 
+
 def plot_check_lst_sum_models(model="GP300"):
     _, asd = get_asd_galactic_ant_model(model)
     print("asd shape :", asd.shape)
     plt.figure()
     plt.title(f"Sum PSD ({model} model) for each axis")
-    psd = asd[1:-1]**2
+    psd = asd[1:-1] ** 2
     psd_sum = psd.sum(axis=0)
-    l_col=["k","y","b"]
+    l_col = ["k", "y", "b"]
     lst = range(24)
     for i_a in range(3):
-        plt.plot(lst, psd_sum[i_a],color=l_col[i_a], label=f"idx axis={i_a}")
+        plt.plot(lst, psd_sum[i_a], color=l_col[i_a], label=f"idx axis={i_a}")
         print(psd_sum[i_a])
-    plt.plot(lst, psd.sum(axis=(0,1)), "-*",label=f"Total all axis")
-    print(psd.sum(axis=(0,1)))
+    plt.plot(lst, psd.sum(axis=(0, 1)), "-*", label=f"Total all axis")
+    print(psd.sum(axis=(0, 1)))
     plt.vlines(18, 200, 3200, label="idx 18")
     plt.ylabel("$\sum{PSD}$")
     plt.xlabel("index LST")
     plt.grid()
     plt.legend()
 
+
 def plot_check_lst_models(lst, axis):
     f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
     print("HFSS shape :", asd_hfss.shape)
-    
+
     def sum_psd(axis, lst):
         return (asd_hfss[1:-2, axis, lst] ** 2).sum()
-    
+
     plt.figure()
     plt.title(f"Model PSD galactic HFSS, axis {axis}")
-    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst-1] ** 2,color='k', label=f"LST idx={lst-1}, sum={sum_psd(axis, lst-1)}")
-    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst] ** 2,color='y', label=f"LST idx={lst}, sum={sum_psd(axis, lst)}")
-    plt.semilogy(f_hfss[1:-2], asd_hfss[1:-2, axis, lst+1] ** 2,color='b', label=f"LST idx={lst+1}, sum={sum_psd(axis, lst+1)}")
+    plt.semilogy(
+        f_hfss[1:-2],
+        asd_hfss[1:-2, axis, lst - 1] ** 2,
+        color="k",
+        label=f"LST idx={lst-1}, sum={sum_psd(axis, lst-1)}",
+    )
+    plt.semilogy(
+        f_hfss[1:-2],
+        asd_hfss[1:-2, axis, lst] ** 2,
+        color="y",
+        label=f"LST idx={lst}, sum={sum_psd(axis, lst)}",
+    )
+    plt.semilogy(
+        f_hfss[1:-2],
+        asd_hfss[1:-2, axis, lst + 1] ** 2,
+        color="b",
+        label=f"LST idx={lst+1}, sum={sum_psd(axis, lst+1)}",
+    )
     plt.xlabel("Frequency [MHz]")
     plt.ylabel(r"PSD: [$\mu V^2/Hz$]")
     plt.grid()
     plt.legend()
+
 
 if __name__ == "__main__":
     # plot_check_psd_models(18, 0)
@@ -219,5 +236,5 @@ if __name__ == "__main__":
     # plot_check_lst_models(19,2)
     plot_check_lst_sum_models("GP300")
     save_asd_galaxy("GP300", "ASD_galaxy_ant_HFSS")
-    
+
     plt.show()
