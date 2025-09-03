@@ -42,6 +42,7 @@ fi
 
 
 cd /pbs/home/p/prod_grand/softs/grand/
+source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
 conda activate /sps/grand/software/conda/grandlib_test
 source env/setup.sh 
 cd granddb/
