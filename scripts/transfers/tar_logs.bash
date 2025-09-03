@@ -27,7 +27,7 @@ monthend=$(date -d "$(date +%y-%m-1) - $((${monthbefore}-1)) month")
 datetag="$(date -d "$(date +%y-%m-1) - ${monthbefore} month" +%Y-%m)"
 dateprevtag="$(date -d "$(date +%y-%m-1) - $((${monthbefore}+1)) month" +%Y-%m)"
 
-find /sps/grand/data/${site}/logs/ -type f -newermt "${monthstart}"  -and -not -newermt "${monthend}" -and -not -name '*.tgz' -and -not -name '*.tar' -and -not -name '*.gz' | head -3000 |xargs tar --remove-files -uvf /sps/grand/data/${site}/logs/logs_${datetag}.tar
+find /sps/grand/data/${site}/logs/ -type f -newermt "${monthstart}"  -and -not -newermt "${monthend}" -and -not -name '*.tgz' -and -not -name '*.tar' -and -not -name '*.gz' | head -1000 |xargs tar --remove-files -uvf /sps/grand/data/${site}/logs/logs_${datetag}.tar
 
 if [ -f /sps/grand/data/${site}/logs/logs_${dateprevtag}.tar ];
 then
