@@ -15,6 +15,9 @@ site='GP80'
 # Start date for transfer (all files older than this date will be skipped
 first_transfer='20250624'
 
+# Define the number of days BEFORE the last transfer to search for new files
+look_back_time=30
+
 # skip open files (if set to false the opened files will be transfered into /tmp)
 declare -A defskipopenfiles
 defskipopenfiles["gaa"]=false
@@ -129,6 +132,9 @@ fi
 # Last date of files already registered
 last_transfer=$(sqlite3 $dbfile "select max(date) from gfiles;")
 last_transfer=$(( last_transfer > first_transfer ? last_transfer : first_transfer ))
+
+# Add a lookback time to search files also in the past (in case old files were added after last transfer)
+last_transfer=$(date -d "${last_transfer} -${look_back_time} days" +%Y%m%d)
 
 #tag to identify files treated in the current run
 tag=$(date +'%Y%m%d%H%M%S')
