@@ -28,12 +28,17 @@ from grand.basis.signal import interpol_at_new_x
 
 
 class GalacticAntComponent:
-    """Component of the galactic signal through antenna"""
+    """Component of the galactic signal through antenna
 
-    def __init__(self, du_type):
-        freq, asd = get_asd_galactic_ant_model(du_type)
-        self.f_mod = freq
-        self.asd_mod = asd
+    1) define model with set_model_name() or set_model_file()
+    2) define LST, freq sampling, size trace with set_lst_freq_size_out()
+    3) create a random galactic signal with get_rfft_gal_ant() or get_traces_gal_ant()
+
+    """
+
+    def __init__(self):
+        self.f_mod = None
+        self.asd_mod = None
         self.asd = None
 
     def _interpolate_asd(self):
@@ -45,6 +50,16 @@ class GalacticAntComponent:
         asd[:, 1] = interpol_at_new_x(self.f_mod[:, 0], asd_mod[:, 1], self.freqs_mhz, "linear")
         asd[:, 2] = interpol_at_new_x(self.f_mod[:, 0], asd_mod[:, 2], self.freqs_mhz, "linear")
         self.asd = asd
+
+    def set_model_name(self, m_name):
+        freq, asd = get_asd_galactic_ant_model(m_name)
+        self.f_mod = freq
+        self.asd_mod = asd
+
+    def set_model_file(self, pn_model):
+        m_asd = np.load(pn_model)
+        self.f_mod = m_asd["fq"]
+        self.asd_mod = m_asd["asd"]
 
     def set_lst_freq_size_out(self, lst, freqs_mhz, size_out):
         """Define LST, out frequency, size of trace"""

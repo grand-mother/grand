@@ -109,6 +109,10 @@ def get_asd_galactic_ant_model(du_type="GP300"):
         galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
         galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
         galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
+        # JM Colley, see
+        # https://github.com/grand-mother/collab-issues/issues/38#issue-3362385896
+        # NEC model not yet valid
+        gala_voltage = None
     elif du_type == "GP300_mat":
         print(du_type)
         gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_mat.npy")
@@ -130,6 +134,10 @@ def get_asd_galactic_ant_model(du_type="GP300"):
         galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
         galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
         galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
+        # JM Colley, see
+        # https://github.com/grand-mother/collab-issues/issues/38#issue-3362385896
+        # MATLAB model not yet valid
+        gala_voltage = None
 
     ##########################################################################
     # Here v_amplitude_infile is given in unit [uV/sqrt(Hz)] for all "du_type"
