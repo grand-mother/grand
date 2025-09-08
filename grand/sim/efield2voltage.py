@@ -129,7 +129,7 @@ class Efield2Voltage:
 
         assert isinstance(self.event_number, int)
         assert isinstance(self.run_number, int)
-        logger.info(f"Running on event_number: {self.event_number}, run_number: {self.run_number}")
+        logger.info(f"======================\nRunning on event_number: {self.event_number}, run_number: {self.run_number}")
 
         self.events.get_event(self.event_number, self.run_number)           # update traces, du_pos etc for event with event_idx.
         self.shower.get_event(self.event_number, self.run_number)          # update shower info (theta, phi, xmax etc) for event with event_idx.
@@ -139,7 +139,8 @@ class Efield2Voltage:
             self.previous_run = self.run_number
         logger.info(f"End Efield trace")
         # stack efield traces
-        self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        #self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        self.traces = self.events.trace.asnumpy().astype(np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
         logger.info(f"Efied to numpy array")
         trace_shape = self.traces.shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
@@ -567,8 +568,9 @@ class Efield2Voltage:
                     message = "There are no events in the file! Exiting."
                     logger.error(message)
                     raise Exception(message)
-                logger.info(" =================== DEBUG MAX 5 events")
-                loop_nb = min(5,nb_events)
+                #logger.info(" =================== DEBUG MAX 5 events")
+                #loop_nb = min(40,nb_events)
+                loop_nb = nb_events
                 for evt_idx in range(loop_nb):
                     self.compute_voltage_event(event_idx=evt_idx) # event_number and run_number is None
                     self.final_resample()
