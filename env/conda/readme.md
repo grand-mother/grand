@@ -54,7 +54,7 @@ Start by update your conda and create the GRANDLIB environnement with file conf 
 ```
 conda config --set channel_priority disabled
 conda env create -f reqmt_grandenv_2509.yml
-conda activate grandlib
+conda activate grandenv_2509
 ```
 
 `reqmt_grandenv_2509.yml` is present in the directory of this readme.md . 
