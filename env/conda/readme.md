@@ -60,7 +60,7 @@ conda activate grandenv_2509
 `reqmt_grandenv_2509.yml` is present in the directory of this readme.md . 
 In this requirement the library version are fixed with the aim that the entire GRAND community truly has an identical environment. This can cause an availability problem for certain distribution, in this case start to remove patch (last number), example
 
-`matplotlib=3.10.6`
+`matplotlib=3.10`
 
 see if necessary minor (second number)
 
