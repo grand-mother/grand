@@ -138,12 +138,14 @@ def get_asd_galactic_ant_model(du_type="GP300"):
         # https://github.com/grand-mother/collab-issues/issues/38#issue-3362385896
         # MATLAB model not yet valid
         gala_voltage = None
-
+    else:
+        raise
+    # gala_voltage is in fact in [uV/sqrt(MegaHz)]
+    asd_gal_uV_sqrt_Hz = gala_voltage/1000
     ##########################################################################
-    # Here v_amplitude_infile is given in unit [uV/sqrt(Hz)] for all "du_type"
+    # for all "du_type" ASD must be given in [uV/sqrt(Hz)] 
     ##########################################################################
-    asd_ant_galactic = gala_voltage
-    return gala_freq, asd_ant_galactic
+    return gala_freq, asd_gal_uV_sqrt_Hz
 
 
 def save_asd_galaxy(du_type, pf_name):
@@ -234,7 +236,7 @@ def plot_check_lst_models(lst, axis):
 if __name__ == "__main__":
     # plot_check_psd_models(18, 0)
     # plot_check_psd_models(18, 1)
-    plot_check_psd_models(18, 2)
+    #plot_check_psd_models(18, 2)
     # plot_check_lst_models(1,1)
     # plot_check_lst_models(17,0)
     # plot_check_lst_models(19,0)

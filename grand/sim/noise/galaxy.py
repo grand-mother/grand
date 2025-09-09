@@ -188,5 +188,22 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
     return v_complex
 
 
-
+if __name__ == "__main__":
+    import scipy.fft as sf
+    from grand.basis.traces_event import Handling3dTraces
+    import matplotlib.pyplot as plt
+    
+    size_out = 4096 * 2
+    fs_hz = 2_000_000_000
+    freqs_mhz = sf.rfftfreq(size_out, 1 / fs_hz) * 1e-6
+    v_complex = galactic_noise(1, 8192, freqs_mhz, 10, du_type='GP300')
+    trace_gal = sf.irfft(v_complex)    
+    
+    evt = Handling3dTraces("Simulation galactic component")
+    evt.init_traces(trace_gal, f_samp_mhz=fs_hz * 1e-6)
+    evt.set_unit_axis("$\mu V$", "dir", "galactic")
+    evt.plot_trace_idx(5)
+    evt.plot_psd_trace_idx(5)
+    plt.show()
+    
 

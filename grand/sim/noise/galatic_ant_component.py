@@ -108,7 +108,7 @@ class GalacticAntComponent:
 
     def plot_psd_model(self, lst):
         plt.figure()
-        plt.title(f"Model PSD galactic component at LST {self.lst}")
+        plt.title(f"Model PSD galactic component at LST {lst}")
         plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 0, lst] ** 2, label="axis 0")
         plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 1, lst] ** 2, label="axis 1")
         plt.semilogy(self.f_mod[1:-2], self.asd_mod[1:-2, 2, lst] ** 2, label="axis 2")
@@ -173,13 +173,14 @@ class GalacticAntComponent:
 
 
 if __name__ == "__main__":
-    gen_gal = GalacticAntComponent("GP300")
+    gen_gal = GalacticAntComponent()
+    gen_gal.set_model_name("GP300")
     size_out = 4096 * 2
     fs_hz = 2_000_000_000
     freqs_mhz = sf.rfftfreq(size_out, 1 / fs_hz) * 1e-6
     print(freqs_mhz[-1])
     gen_gal.set_lst_freq_size_out(2, freqs_mhz, size_out)
-    gen_gal.plot_psd_model(2)
+    gen_gal.plot_psd_model(1)
     # gen_gal.plot_psd_inter()
     # gen_gal.plot_psd_trace()
     # gen_gal.plot_check_trace(0)
