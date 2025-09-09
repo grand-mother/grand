@@ -135,7 +135,8 @@ class Efield2Voltage:
             self.previous_run = self.run_number
 
         # stack efield traces
-        self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+        #self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins
+        self.traces = self.events.trace.asnumpy().astype(np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)        
         trace_shape = self.traces.shape  # (nb_du, 3, tbins of a trace)
         self.du_id = np.asarray(self.events.du_id)         # used for printing info and saving in voltage tree.
         self.event_dus_indices = self.events.get_dus_indices_in_run(self.run)
@@ -568,7 +569,8 @@ class Efield2Voltage:
                     message = "There are no events in the file! Exiting."
                     logger.error(message)
                     raise Exception(message)
-                for evt_idx in range(nb_events):
+                # JMC
+                for evt_idx in range(40):
                     self.compute_voltage_event(event_idx=evt_idx) # event_number and run_number is None
                     self.final_resample()
                     self.save_voltage(append_file)
