@@ -569,8 +569,7 @@ class Efield2Voltage:
                     message = "There are no events in the file! Exiting."
                     logger.error(message)
                     raise Exception(message)
-                # JMC
-                for evt_idx in range(40):
+                for evt_idx in range(nb_events):
                     self.compute_voltage_event(event_idx=evt_idx) # event_number and run_number is None
                     self.final_resample()
                     self.save_voltage(append_file)
