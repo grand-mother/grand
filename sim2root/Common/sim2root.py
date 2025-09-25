@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 ## Conversion of GRANDRaw ROOT files coming from simulators to GRANDROOT files
 ## by Lech Wiktor Piotrowski
 
