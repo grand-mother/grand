@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # An example of using DataFile for ROOT file reading
 import numpy as np
 import sys
