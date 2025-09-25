@@ -131,6 +131,10 @@ def monitor_file(rfile):
                                     trace_stats[key_spec]["sum"] += trace
                                 trace_stats[key_spec]["count"] += 1
 
+
+    # Close the tree files
+    run.close_file()
+    tree.close_file()
     # Build the table of data to be recoreded in the database (so we will do the insert in a single request).
     # Calculate the average over the time buckets. First for temps and then for spectras.
     rows_temp = []

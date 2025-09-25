@@ -128,9 +128,9 @@ class _FileEventBase:
         self.tt_shower.get_event(event_number, run_number)
         self.tt_run.get_run(run_number)
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.tt_run.du_id)}
-        self.t_bin_size = np.asarray(self.tt_run.t_bin_size, dtype=np.float64)
-        self.du_xyz = np.asarray(self.tt_run.du_xyz)
-        self.traces = np.asarray(self.tt_event.trace)
+        self.t_bin_size = self.tt_run.t_bin_size.asnumpy().astype(np.float64)
+        self.du_xyz = self.tt_run.du_xyz.asnumpy()
+        self.traces = self.tt_event.trace.asnumpy()
         self.sig_size = self.traces.shape[-1]
 
     def get_du_count(self):
@@ -161,9 +161,9 @@ class _FileEventBase:
         """
         return nanosecond between 0s to 2s max
         """
-        du_s = np.array(self.tt_event.du_seconds, dtype=np.float64)
+        du_s = self.tt_event.du_seconds.asnumpy().astype(np.float64)
         min_sec = du_s.min()
-        du_ns = np.array(self.tt_event.du_nanoseconds, dtype=np.float64) + 1e9 * (du_s - min_sec)
+        du_ns = self.tt_event.du_nanoseconds.asnumpy().astype(np.float64) + 1e9 * (du_s - min_sec)
         return du_ns, min_sec
 
     def get_obj_handling3dtraces(self):
@@ -174,7 +174,7 @@ class _FileEventBase:
         o_tevent = Handling3dTraces(
             f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
         )
-        du_id = np.array(self.tt_event.du_id)
+        du_id = self.tt_event.du_id.asnumpy()
         t0_ns, t_ref_s = self.get_du_nanosec_ordered()
         o_tevent.init_traces(
             self.traces,
