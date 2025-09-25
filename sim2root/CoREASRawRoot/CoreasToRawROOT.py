@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 ## Conversion of Coreas simulations to GRANDRaw ROOT files
 ## by Jelena Köhler, @jelenakhlr
 
