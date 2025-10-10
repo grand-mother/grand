@@ -1,10 +1,11 @@
 """
 Manage ROOT file of type event : Efield, voltage
-The main functionnalities of this module is 
+The main functionnalities of this module is
 * to synchronize the relevant TTree (tshower , trun) on the same event
 * provide a numpy container of traces by event, with method get_obj_handling3dtraces()
 
 """
+
 from functools import lru_cache
 
 
@@ -39,7 +40,6 @@ def _get_ttree_in_file(f_root):
 
 
 class _FileEventBase:
-
     """
     Goals of the class:
 
@@ -101,9 +101,9 @@ class _FileEventBase:
         if self.idx_event == idx:
             return
         self.idx_event = idx
-        self.event_number = self.l_events[idx][0]
-        self.run_number = self.l_events[idx][1]
-        self._load_event_identifier(self.event_number, self.run_number)
+        event_number = self.l_events[idx][0]
+        run_number = self.l_events[idx][1]
+        self._load_event_identifier(event_number, run_number)
 
     def load_next_event(self):
         """
@@ -115,12 +115,18 @@ class _FileEventBase:
             return False
         return self.load_event_idx(idx)
 
+    def load_nb_event_run(self, event_number, run_number):
+        self.idx_event = self.l_events.index((event_number, run_number))
+        self._load_event_identifier(event_number, run_number)
+
     def _load_event_identifier(self, event_number, run_number):
         """
         Load traces/pos of event/run event_number/run_number
         :param event_number:
         :param run_number:
         """
+        self.event_number = event_number
+        self.run_number = run_number
         logger.info(f"load event: {event_number} of run  {run_number}")
         self.tt_event.get_event(event_number, run_number)
         self.du_id = self.tt_event.du_id
@@ -172,7 +178,7 @@ class _FileEventBase:
         """
         s_file = os.path.basename(self.f_name)
         o_tevent = Handling3dTraces(
-            f"{s_file}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
+            f"{s_file},IDX={self.idx_event}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
         )
         du_id = self.tt_event.du_id.asnumpy()
         t0_ns, t_ref_s = self.get_du_nanosec_ordered()
@@ -224,11 +230,11 @@ class _FileEventBase:
         d_simu["xmax_pos_shc"] = xmax_temp
         d_simu["xmax_pos"] = self.tt_shower.xmax_pos
         # FIX parameters
-        logger.warn("DC2 FIX to define 'xmax_pos' in DU Frame")
+        # logger.warn("DC2 FIX to define 'xmax_pos' in DU Frame")
         # DC2 FIX: Xmax don't the right value
         # https://github.com/grand-mother/collab-issues/issues/34
         d_simu["FIX_xmax_pos_grandlib"] = xmax_temp + d_simu["shower_core_pos"]
-        # DC2 FIX: correct value of Xmax 
+        # DC2 FIX: correct value of Xmax
         d_simu["FIX_xmax_pos"] = d_simu["FIX_xmax_pos_grandlib"] - np.array([0, 0, origin_geoid[2]])
         return d_simu
 
