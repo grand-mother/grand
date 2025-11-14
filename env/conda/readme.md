@@ -66,6 +66,19 @@ see if necessary minor (second number)
 
 `matplotlib=3`
 
+### Additionnal packages for data base
+
+if necessary, for specific data base activities.
+
+```
+pip install -r reqmt_db.txt
+```
+
+`reqmt_db.txt` is in grand/env/conda directory like `reqmt_grandenv_2509.yml`.
+
+
+### Clone grand package and initialisation
+
 Then initialize GRANDLIB package and GULL/TURTLE compilation, this is where compatibility issues with ARM processors, like Apple's Mx, begin.
 
 In the root package, first clone the package grand
