@@ -160,7 +160,8 @@ def monitor_file(rfile):
             # Calculate the FFT
             mean_traces = stats["sum"] / stats["count"]
             fft_vals = np.fft.fft(mean_traces, axis=1)
-            freqs = np.fft.fftfreq(mean_traces.shape[1], d=run.t_bin_size[0]/mean_traces.shape[1])
+            # t_bin_size in nanosec (so 10⁹) and we want freqs in Mhz (10⁶) so need to divide by 1000
+            freqs = np.fft.fftfreq(mean_traces.shape[1], d=run.t_bin_size[0] / 1000.0)
             positive_freqs = freqs[:mean_traces.shape[1] // 2]
             # If frequencies not yet in the database then save it.
             if (len(positive_freqs) not in frequency_list):
