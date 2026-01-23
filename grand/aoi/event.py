@@ -10,7 +10,7 @@ from grand import CartesianRepresentation
 from grand.aoi.timetrace import Voltage, Efield, TreeExists
 from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
-from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
+from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent, TRecons 
 import grand.dataio
 
 
@@ -290,6 +290,15 @@ class Event:
 
         # *** Check what TTrees are available and fill according to their availability
 
+        #if self.trecons is not None:
+            # If initialising trees requested
+        #    if init_trees:
+                # Check the TRecons tree existence
+        #        if trecons:= self.trecons.Get("trecons"):
+        #            self.trecons = TRecons(_tree=trecons)
+        #        else:
+        #            print("No TRecons tree. Reconstructed event information will not be available.")
+        #            self.trecons = None
         # If initialising trees requested
         if init_trees:
             # Check the Run tree existence
