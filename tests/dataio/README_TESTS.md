@@ -11,12 +11,12 @@ tests/dataio/
 ├── conftest.py                  ✅ COMPLETE - Shared fixtures and ROOT mocks
 ├── test_protocol.py             ✅ COMPLETE - URL/SSL utilities (converted to pytest)
 ├── test_descriptors.py          ✅ COMPLETE - Core descriptor classes
-├── test_data_tree.py            ⏳ TODO - DataTree base class
-├── test_run_trees.py            ⏳ TODO - Run-level tree classes
-├── test_event_trees.py          ⏳ TODO - Event-level tree classes
-├── test_data_handling.py        ⏳ TODO - DataDirectory/DataFile
+├── test_data_tree.py            ✅ COMPLETE - DataTree base class (30+ tests)
+├── test_run_trees.py            ✅ COMPLETE - Run-level tree classes (50+ tests)
+├── test_event_trees.py          ✅ COMPLETE - Event-level tree classes (60+ tests)
+├── test_data_handling.py        ✅ COMPLETE - DataDirectory/DataFile (20+ tests)
 ├── test_root_files.py           📝 EXISTS (needs pytest conversion)
-├── test_integration.py          ⏳ TODO - End-to-end workflows
+├── test_integration.py          ✅ COMPLETE - End-to-end workflows (25+ tests)
 └── README_TESTS.md              📖 This file
 ```
 

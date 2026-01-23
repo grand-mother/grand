@@ -43,7 +43,7 @@ class RootFilesTest(TestCase):
 
     def test_get_file_event1(self):
         if not (self.voltage_file).exists():
-            os.system(f"python ../../scripts/grand_sim_e2v.py {self.efield_file} -o {self.voltage_file}")
+            os.system(f"python /home/lpnhe/grand/scripts/convert_efield2voltage.py {self.efield_file} -o {self.voltage_file}")
         self.assertTrue((self.efield_file).exists())
         self.assertTrue((self.voltage_file).exists())
 
