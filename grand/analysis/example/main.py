@@ -1,13 +1,8 @@
 import pandas as pd
 import numpy as np
 import re
-import grand.analysis.signals as sig
-import grand.analysis.fitting as fit
-import grand.analysis.constants as cons
-import grand.analysis.energy_reco as en
+from grand.analysis import *
 from grand.dataio import TRecons, TRawVoltage, TRun
-import grand.analysis.coords.array_shower as co
-import grand.analysis.geom.angles as an
 import config as conf
 
 

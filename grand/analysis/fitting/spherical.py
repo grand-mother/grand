@@ -156,3 +156,52 @@ def compute_Xsource_cartesian_coords(theta_swf, phi_swf, r_xmax, groundAltitude=
     Xsource = np.column_stack((-r_xmax*K[0], -r_xmax*K[1], groundAltitude-r_xmax*K[2]))
     return Xsource
 
+def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltitude, cr=cons.c_light):
+    """
+    Compute the expected arrival times at each antenna based on the Spherical Wave Front (SWF) model.
+
+    The emission point (Xsource) is located at a distance r_xsource along the direction opposite
+    to the shower propagation, referenced from the ground altitude. Arrival times are computed
+    assuming straight-line propagation with an average refraction index.
+
+    Parameters
+    ----------
+    theta : float
+        Polar angle of the shower direction (radians).
+    phi : float
+        Azimuth angle of the shower direction (radians).
+    r_xsource : float
+        Distance from the shower maximum (emission point) to the reference point at the ground (meters).
+    t_s : float
+        Emission time of the source (seconds).
+    Xants : np.ndarray
+        Antenna positions in the detector reference frame, shape (N, 3).
+    groundAltitude : float, optional
+        Ground altitude in meters (default: cons.groundAltitude).
+    cr : float, optional
+        Propagation speed of the signal (default: speed of light).
+
+    Returns
+    -------
+    np.ndarray
+        Expected arrival times at each antenna, shape (N,).
+
+    Notes
+    -----
+    - The Xsource is defined relative to (0, 0, groundAltitude), which serves as the reference point
+      for the detector coordinate system.
+    - n_average is the effective refractive index between the emission point and each antenna, 
+      computed using `phy.ZHSEffectiveRefractionIndex`.
+    - This function is intended for use in SWF-based reconstructions of shower events.
+    """
+    nants = Xants.shape[0]
+    ct = np.cos(theta); st = np.sin(theta); cp = np.cos(phi); sp = np.sin(phi)
+    K = np.array([-st*cp, -st*sp, -ct])
+    Xsource = -r_xsource * K + np.array([0., 0., groundAltitude])
+    tants = np.zeros(nants)
+    for i in range(nants):
+        n_average = phy.ZHSEffectiveRefractionIndex(Xsource, Xants[i, :])
+        dX = Xants[i, :] - Xsource
+        tants[i] = t_s + n_average / cr * np.linalg.norm(dX)
+    return tants
+
