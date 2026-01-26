@@ -185,14 +185,6 @@ def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltit
     -------
     np.ndarray
         Expected arrival times at each antenna, shape (N,).
-
-    Notes
-    -----
-    - The Xsource is defined relative to (0, 0, groundAltitude), which serves as the reference point
-      for the detector coordinate system.
-    - n_average is the effective refractive index between the emission point and each antenna, 
-      computed using `phy.ZHSEffectiveRefractionIndex`.
-    - This function is intended for use in SWF-based reconstructions of shower events.
     """
     nants = Xants.shape[0]
     ct = np.cos(theta); st = np.sin(theta); cp = np.cos(phi); sp = np.sin(phi)
