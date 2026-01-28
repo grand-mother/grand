@@ -123,3 +123,30 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
     # Extract best-fit parameters from minimization result
     theta_adf, phi_adf, delta_omega, amplitude = result.x
     return theta_adf, phi_adf, delta_omega, amplitude
+
+def ADF_fun(l_ant, amplitude, omega_cr, delta_omega):
+    """
+    Compute a simple model of the ADF for a shower on all omega values.
+    Don't consider geomagnetic effect (very low) and average cherenkov angle along all eta values
+
+    Parameters:
+    -----------
+    l_ant : float
+        Mean distance from the antennas to the shower source (in meters). 
+    amplitude : float
+        Scaling factor of the ADF.
+    omega_cr : float
+        Mean Cherenkov opening angle (in radians).
+    delta_omega : float
+        Width parameter of the ADF.
+
+    Returns:
+    --------
+    omega : np.ndarray
+        Array of angles (in radians) over which the ADF is evaluated.
+    f_adf : np.ndarray
+        Corresponding ADF amplitudes at each angle.
+    """
+    omega = np.linspace(0,3,200) * np.pi / 180
+    f_adf = amplitude/l_ant / (1.+4.*( ((np.tan(omega)/np.tan(omega_cr))**2 - 1. )/delta_omega)**2)
+    return(omega,f_adf)

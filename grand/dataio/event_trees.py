@@ -1041,6 +1041,7 @@ class TRecons(MotherEventTree):
     ## Emission time from SWF (in seconds)
     t_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Reconstructed shower emission point (Xsource) in GRAND detector frame (in meters)
+    ## Coordinate system: NWU, origin at layout center
     ## x = r_xmax * sin(theta_swf) * cos(phi_swf)
     ## y = r_xmax * sin(theta_swf) * sin(phi_swf)
     ## z = r_xmax * cos(theta_swf)

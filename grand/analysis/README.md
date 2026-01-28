@@ -25,7 +25,9 @@ This module contains analysis tools for the **reconstruction of events in direct
 
 - **`example`** – Example script `main.py` directly applicable to the 73 selected candidates (`Flagged_events_July_October.txt`).  
   The script processes the ROOT files (stores peak times and amplitudes), applies the reconstruction (on ADC data), and computes the energy.  
-
-  In this example, a file `_gp13_65_rtksort.txt` is provided, corresponding to the RTK positions of the antennas (better reconstruction results).  
   The results of the reconstruction are stored in `recons_CR_candidates.root`.
+
+  – In this example, a file `_gp13_65_rtksort.txt` is provided, corresponding to the RTK positions of the antennas (better reconstruction results).  
+
+  – `display.py` script that loops over reconstructed events and displays the amplitude profile with the ADF fit and the reconstructed footprint on the ground.
 

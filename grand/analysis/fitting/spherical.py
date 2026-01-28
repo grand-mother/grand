@@ -97,10 +97,17 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     # Parameter bounds for the differential evolution
     bounds = [[theta_pwf-5*np.pi/180,theta_pwf+5*np.pi/180],
                 [phi_pwf-5*np.pi/180,phi_pwf+5*np.pi/180], 
-                [-15.6e3 - 12.3e3/np.cos(np.pi - theta_pwf),-6.1e3 - 15.4e3/np.cos(np.pi - theta_pwf)],
-                [(6.1e3 + 15.4e3/np.cos(np.pi - theta_pwf)) / cons.c_light, 0]] 
+                [0, 2000000],
+                [-2000000/cons.c_light, 0]]
+    #            [-15.6e3 - 12.3e3/np.cos(np.pi - theta_pwf),-6.1e3 - 15.4e3/np.cos(np.pi - theta_pwf)],
+    #            [(6.1e3 + 15.4e3/np.cos(np.pi - theta_pwf)) / cons.c_light, 0]] 
     
-
+    #bounds = [[np.deg2rad(0),np.deg2rad(180)],
+    #        [np.deg2rad(0),np.deg2rad(360)], 
+    #        [0, 2000000],
+    #        [-2000000/cons.c_light, 0]]
+    
+    
     # Run the minimization
     if sigma is None: 
         result = differential_evolution(
@@ -115,7 +122,7 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
 
     else:
         result = differential_evolution(
-            lambda p: SWF_loss(p[0], p[1], p[2], p[3], Xants, tants, sigma),
+            lambda p: SWF_loss(p[0], p[1], p[2], p[3], Xants, tants),
             bounds=bounds,
             maxiter=maxiter,
             tol=1e-6,
