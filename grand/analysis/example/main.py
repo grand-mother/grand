@@ -1,8 +1,14 @@
 import pandas as pd
+import os
 import numpy as np
 import re
-from grand.analysis import *
-from grand.dataio import TRecons, TRawVoltage, TRun
+import grand.analysis.signals as sig
+import grand.analysis.fitting as fit
+import grand.analysis.constants as cons
+import grand.analysis.energy_reco as en
+import grand.analysis.coords.array_shower as co
+import grand.analysis.geom as geom
+from grand.dataio import TRecons, TRawVoltage
 import config as conf
 
 
@@ -48,10 +54,10 @@ def read_event_list(txt_file, start_line, stop_line='None'):
 
 # ---------------------------------------------------------------
 # Load RTK antenna positions from text file
-# Convert antenna IDs to int, store x (East), y (North), z (DAQ)
+# Convert antenna IDs to int, store x (East), y (North), z (sea level)
 # ---------------------------------------------------------------
 file_path = conf.antenna_file
-column_names = ['antenna_ID', 'x', 'y', 'z'] #'x' is East, 'y' is North, 'z' DAQ level (1231m) 
+column_names = ['antenna_ID', 'x', 'y', 'z'] 
 antenna_position = pd.read_csv(file_path, sep='\s+', names=column_names, header=None)
 antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int) 
 
@@ -99,12 +105,13 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     peak_amps = np.array([sig.get_peak_amplitude(voltage_trace[i], channels=[1,2,3]) 
                           for i in range(num_antennas)])
     
-    #print('peak amps', peak_amps)
+    print('peak amps', peak_amps)
     
     t0_all = sig.compute_t0(t_adc) 
     peak_time = np.array([sig.get_peak_time(voltage_trace[i], t0_all[i], channels=[1,2,3]) 
                           for i in range(num_antennas)])
 
+    print('peak times', peak_time)
     # ----------------------------------------------------------------
     # Map DU IDs to their positions (X, Y, Z) in GRAND reference frame
     # ----------------------------------------------------------------
@@ -112,9 +119,9 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
 
     du_positions_ev = antenna_position[antenna_position['antenna_ID'].isin(du_ids)]
     du_positions_ev = du_positions_ev.set_index('antenna_ID').loc[du_ids]
-    x_coords = du_positions_ev['y'].astype(float).values
-    y_coords = -du_positions_ev['x'].astype(float).values
-    z_coords = du_positions_ev['z'].astype(float).values + cons.groundAltitude
+    x_coords = du_positions_ev['y'].astype(float).values #North
+    y_coords = -du_positions_ev['x'].astype(float).values #West
+    z_coords = du_positions_ev['z'].astype(float).values + cons.groundAltitude #DAQ level
 
     Xants = np.column_stack((x_coords, y_coords, z_coords))
 
@@ -166,7 +173,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     trecons.chi2_swf = chi2_swf
     Xsource = np.asarray(trecons.Xsource)[0]
 
-    l_ant = an.distance_source_antenna(Xants, Xsource)
+    l_ant = geom.distance_source_antenna(Xants, Xsource)
    
     # ---------------------------------------------------------------
     # Angular Distribution Function (ADF) reconstruction
@@ -179,7 +186,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     # ---------------------------------------------------------------
     # Electromagnetic energy reconstruction 
     # ---------------------------------------------------------------
-    sin_alpha = an.sin_geomag_angle(theta_adf, phi_adf, B=cons.Bn)
+    sin_alpha = geom.sin_geomag_angle(theta_adf, phi_adf, B=cons.Bn)
     energy_elm = en.recons_energy_from_voltage(scaling_factor, sin_alpha)
 
     # Store ADF and energy results and in TRecons
