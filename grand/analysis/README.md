@@ -29,3 +29,4 @@ This module contains analysis tools for the **reconstruction of events in direct
   In this example, a file `_gp13_65_rtksort.txt` is provided, corresponding to the RTK positions of the antennas (better reconstruction results).  
   The results of the reconstruction are stored in `recons_CR_candidates.root`.
 
+- **`cramer_rao_bounds`** - Main **CRB functions** used in the reconstruction pipeline to estimate the order of magnitude of errors.
