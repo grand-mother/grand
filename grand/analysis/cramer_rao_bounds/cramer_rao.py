@@ -1,3 +1,5 @@
+# Created by Sebastian Castro-Isern on 20/01/2026
+
 import numpy                              as np 
 import grand.analysis.constants           as cons
 import grand.analysis.fitting.adf         as adf
