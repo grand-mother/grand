@@ -5,3 +5,7 @@
 !readme.md
 !*.py
 !.gitignore
+
+# allow this spescific small precomputed file for galactic noise
+!noise/
+!noise/galactic_PL_per_Hz_gp13_GP300.npy

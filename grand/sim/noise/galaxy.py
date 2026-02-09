@@ -56,14 +56,14 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
     
     if du_type == 'GP300':
         lst = int(f_lst)
-        gala_file = grand_add_path_data("noise/PG_ALL_jifen.mat")
+        gala_file = grand_add_path_data("noise/galactic_PL_per_Hz_gp13_GP300.npy")
         Zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
-        gala_show = h5py.File(gala_file, "r")
-        gala_power = np.array(gala_show["PG_ALL_jifen"])
-        gala_power = np.transpose(gala_power, (2, 0, 1)) #Watt/Hz
-        Poc2X = 1e6*gala_power[:,:,0] #W
-        Poc2Y = 1e6*gala_power[:,:,1] #W
-        Poc2Z = 1e6*gala_power[:,:,2] #W
+        gala_power = np.load(gala_file) #Watt/Hz (221,72,3)
+        Poc = gala_power[:, ::3, :] #W/Hz (221,24,3)
+        #gala_power = np.transpose(gala_power, (2, 0, 1)) #Watt/Hz
+        Poc2X = 1e6*Poc[:,:,0] #W X-port
+        Poc2Y = 1e6*Poc[:,:,1] #W Y-port
+        Poc2Z = 1e6*Poc[:,:,2] #W Z-port
     
         zant = np.loadtxt(Zant_file, delimiter=",", skiprows=1)  # Skip header row if it exists
         # Extract real and imaginary parts and construct complex numbers
