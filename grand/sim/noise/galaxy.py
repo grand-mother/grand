@@ -183,7 +183,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
     rng   = np.random.default_rng(seed)     
     amp   = rng.normal(loc=0, scale=v_amplitude[np.newaxis,...], size=(nb_ant, 3, nb_freq))
     phase = 2 * np.pi * rng.random(size=(nb_ant, 3, nb_freq))
-    v_complex = np.abs(amp * size_out / 2) * np.exp(1j * phase)
+    v_complex = np.abs(amp * size_out / np.sqrt(2)) * np.exp(1j * phase)
 
     return v_complex
 
