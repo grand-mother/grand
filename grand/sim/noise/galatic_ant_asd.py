@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from grand import grand_add_path_data
 
 
-def get_asd_galactic_ant_model(du_type="GP300"):
+def get_asd_galactic_ant_model(du_type="GP300", f_gala_power="galactic_PL_per_Hz_gp13_GP300.npy"):
     """Return ASD of galactic signal through antenna of type "du_type", unit uV/sqrt(Hz).
 
     ..Authors:
@@ -40,14 +40,29 @@ def get_asd_galactic_ant_model(du_type="GP300"):
     :rtype: float(nb_freq), float(nb_freq, axis=3, lst=24)
     """
     if du_type == "GP300":
-        gala_file = grand_add_path_data("noise/PG_ALL_jifen.mat")
-        Zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
-        gala_show = h5py.File(gala_file, "r")
-        gala_power = np.array(gala_show["PG_ALL_jifen"])
-        gala_power = np.transpose(gala_power, (2, 0, 1))  # Watt/Hz
-        Poc2X = 1e6 * gala_power[:, :, 0]  # W
-        Poc2Y = 1e6 * gala_power[:, :, 1]  # W
-        Poc2Z = 1e6 * gala_power[:, :, 2]  # W
+        if f_gala_power.find(".mat") > 0:
+            print(".mat")
+            #gala_file = grand_add_path_data("noise/PG_ALL_jifen.mat")
+            gala_file = grand_add_path_data(f"noise/{f_gala_power}")
+            Zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
+            gala_show = h5py.File(gala_file, "r")
+            gala_power = np.array(gala_show["PG_ALL_jifen"])
+            gala_power = np.transpose(gala_power, (2, 0, 1))  # Watt/Hz
+            Poc2X = 1e6 * gala_power[:, :, 0]  # W
+            Poc2Y = 1e6 * gala_power[:, :, 1]  # W
+            Poc2Z = 1e6 * gala_power[:, :, 2]  # W
+        elif f_gala_power.find(".npy") > 0:
+            gala_file = grand_add_path_data(f"noise/{f_gala_power}")
+            Zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
+            gala_power = np.load(gala_file) #Watt/Hz (221,72,3)
+            Poc = gala_power[:, ::3, :] #W/Hz (221,24,3)
+            #gala_power = np.transpose(gala_power, (2, 0, 1)) #Watt/Hz
+            Poc2X = 1e6*Poc[:,:,0] #W X-port
+            Poc2Y = 1e6*Poc[:,:,1] #W Y-port
+            Poc2Z = 1e6*Poc[:,:,2] #W Z-port
+        else:
+            raise
+        
 
         zant = np.loadtxt(Zant_file, delimiter=",", skiprows=1)  # Skip header row if it exists
         # Extract real and imaginary parts and construct complex numbers
@@ -160,7 +175,7 @@ def save_asd_galaxy(du_type, pf_name):
     np.save(pf_name, sa_asd)
 
 
-def plot_check_psd_models(lst, axis):
+def plot_check_psd_models_ant(lst, axis):
     f_hfss, asd_hfss = get_asd_galactic_ant_model("GP300")
     print("HFSS shape :", asd_hfss.shape)
     f_nec, asd_nec = get_asd_galactic_ant_model("GP300_nec")
@@ -179,11 +194,28 @@ def plot_check_psd_models(lst, axis):
     plt.legend()
 
 
+def plot_check_psd_models(lst, axis):
+    file_mat = "PG_ALL_jifen.mat"
+    file_npy = "galactic_PL_per_Hz_gp13_GP300.npy"
+    f_mat, asd_mat = get_asd_galactic_ant_model("GP300", file_mat)
+    f_npy, asd_npy = get_asd_galactic_ant_model("GP300", file_npy)
+    
+    plt.figure()
+    plt.title(f"ASD galactic at LST {lst}, axis {axis}")
+    plt.semilogy(f_mat[1:-2], asd_mat[1:-2, axis, lst] ** 2, label=file_mat)
+    plt.semilogy(f_npy[1:-2], asd_npy[1:-2, axis, lst] ** 2, label=file_npy)
+    plt.xlabel("Frequency [MHz]")
+    plt.ylabel(r"$\mu V/\sqrt{Hz}$")
+    plt.grid()
+    plt.legend()
+
 def plot_check_lst_sum_models(model="GP300"):
-    _, asd = get_asd_galactic_ant_model(model)
+    #f_gala = "PG_ALL_jifen.mat"
+    f_gala = "galactic_PL_per_Hz_gp13_GP300.npy"
+    _, asd = get_asd_galactic_ant_model(model, f_gala)
     print("asd shape :", asd.shape)
     plt.figure()
-    plt.title(f"Sum PSD ({model} model) for each axis")
+    plt.title(f"Sum PSD ({model} model) for each axis\n{f_gala}")
     psd = asd[1:-1] ** 2
     psd_sum = psd.sum(axis=0)
     l_col = ["k", "y", "b"]
@@ -193,7 +225,7 @@ def plot_check_lst_sum_models(model="GP300"):
         print(psd_sum[i_a])
     plt.plot(lst, psd.sum(axis=(0, 1)), "-*", label=f"Total all axis")
     print(psd.sum(axis=(0, 1)))
-    plt.vlines(18, 200, 3200, label="idx 18")
+    #plt.vlines(18, 200, 3200, label="idx 18")
     plt.ylabel("$\sum{PSD}$")
     plt.xlabel("index LST")
     plt.grid()
@@ -234,9 +266,9 @@ def plot_check_lst_models(lst, axis):
 
 
 if __name__ == "__main__":
-    # plot_check_psd_models(18, 0)
-    # plot_check_psd_models(18, 1)
-    #plot_check_psd_models(18, 2)
+    plot_check_psd_models(18, 0)
+    plot_check_psd_models(18, 1)
+    plot_check_psd_models(18, 2)
     # plot_check_lst_models(1,1)
     # plot_check_lst_models(17,0)
     # plot_check_lst_models(19,0)
@@ -244,7 +276,7 @@ if __name__ == "__main__":
     # plot_check_lst_models(19,1)
     # plot_check_lst_models(17,2)
     # plot_check_lst_models(19,2)
-    plot_check_lst_sum_models("GP300")
-    save_asd_galaxy("GP300", "ASD_galaxy_ant_HFSS")
+    #plot_check_lst_sum_models("GP300")
+    #save_asd_galaxy("GP300", "ASD_galaxy_ant_HFSS")
 
     plt.show()
