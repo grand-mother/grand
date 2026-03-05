@@ -1,0 +1,82 @@
+# the profile to use when running the pipeline on slurm at ccin2p3
+
+# all the values defined here can be overloaded by command-line arguments to
+# snakemake, see
+# https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
+
+#use-conda: true
+
+# SLURM configuration
+executor: slurm
+
+# max number of slurm jobs on the queue (hard limit at ccin2p3 is 5000)
+jobs: 1000
+# max allowed cores for a single job. We use 32 as a default because it seems a
+# good compromise betwee max allowed cores in the SLURM partition (128) and
+# waiting time in the queue. NOTE If using a reservation, set this to 128.
+cores: 32
+# slum options
+default-resources:
+  slurm_partition: htc #flash
+  slurm_account: grand
+  slurm_extra: "--licenses=sps"  # note the double "'
+  runtime: 8
+  mem_mb: 1000
+#  tmpdir: ""
+  extra: "'--licenses=sps'"
+  database_slots: 15
+  irods_slots: 3
+  bin2root_slots: 1
+# max allowed resources for a single group job
+resources:
+  irods_limits: 3
+  database_limits: 15
+  bin2root_limits: 15
+  # 150GB is a hard limit on htc partition
+#  mem_mb: 1400
+  # 1440 minutes = 1 day
+#  runtime: 1440
+set-resource-scopes:
+  # This configuration informs Snakemake that the specified runtime resource
+  # should be treated within the context of each job group rather than globally.
+  # For example, if the runtime is set to 1 day, each job group can run for a
+  # maximum of 1 day independently. Without this setting, the total runtime for
+  # all submitted job groups would be limited to 1 day, which could lead to
+  # unintended job scheduling constraints.
+  runtime: local
+
+# simple scheduler speeding up the job selection process
+scheduler: greedy
+
+#default-storage-provider: fs
+#shared-fs-usage:
+#  - persistence
+#  - software-deployment
+#  - sources
+#  - source-cache
+## $TMPDIR is someting like /scratch/users/<u>/<user>
+#local-storage-prefix: "$TMPDIR"
+## Within compute nodes, /tmp is mounted to /scratch/slurm.<jobid>.<taskid>/tmp
+## and erased on job completion. See
+## https://doc.cc.in2p3.fr/fr/Computing/slurm/submit.html#environnement-et-limites
+#remote-job-local-storage-prefix: "/tmp"
+## those 2 options mitigate the potential slowness of the /sps/ztf partition
+#max-inventory-time: 300
+#latency-wait: 60
+
+slurm:
+  # job name format
+  job-name: "smk.{rule}.{wildcards}"
+
+
+# Jobs grouping. We define groups (irods, database and bin2root)
+# If a rule is attached to a group then jobs from this rule will be submitted in slurm inside the same job
+# The max number of jobs to group in the same submission is determined by group-components
+groups:
+  - irods=irods
+  - database=database
+  - bin2root=bin2root
+group-components:
+  irods: 5
+  database: 2
+  bin2root: 2

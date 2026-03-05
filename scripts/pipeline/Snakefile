@@ -1,0 +1,344 @@
+# Snakemake Grand production pipeline
+# Should be launched with :
+# conda activate /sps/grand/prod_grand/conda/snake
+# snakemake --directory /sps/grand/prod_grand/DB_TESTS/TEST_SLURM/data/gp80/logs/ \
+# --snakefile  /sps/grand/prod_grand/DB_TESTS/grand/scripts/pipeline/Snakefile \
+# --config dbfile=/sps/grand/prod_grand/DB_TESTS/TEST_SLURM/20250905224520_GP80_dbfile.db \
+# --cores 1 --profile ccin2p3 --keep-going \
+# --restart-times 5
+
+
+# Steps:
+# 0) Get list of files to process
+# 1) Register transfer of files (all bin files)
+# 2) convert bin to root (individual bin files, max 50 in parallel)
+# 3) Push to irods (individual root files, max 5 process in parralel)
+# 4) Register convertion to database (individual root files, max 5 in parallel)
+# 5) Register root files to database (individual root files, max 5 in parallel)
+# 6) Refresh materialized views (after all previous steps)
+# 7) Run monitoring (after bin to root convertion of all files)
+# 8) Archive (after bin to root convertion of all files)
+# 9) Clean logs (after all previous steps)
+# 10) Notify (after all steps)
+
+import os,sys
+import subprocess
+import pipeline_setup as p
+import re
+
+current_workdir = os.getcwd()
+
+
+data_dir=p.pipeline_config["data_dir"]
+conda_init = p.pipeline_config["conda_init"]
+conda_lib = p.pipeline_config["conda_lib"]
+grandlib_path = p.pipeline_config["grandlib_path"]
+register_transfer = p.pipeline_config["register_transfer"]
+register_convert = p.pipeline_config["register_convert"]
+register_in_db = p.pipeline_config["register_in_db"]
+default_config = p.pipeline_config["default_config"]
+pipeline_path = p.pipeline_config["pipeline_path"]
+irods_path = p.pipeline_config["irods_path"]
+dbfile=config["dbfile"]
+
+########################
+# STEP 0 – Extract files from sqlite DB
+########################
+basename = os.path.basename(dbfile)
+tag = basename.split("_", 1)[0]
+current_workdir = os.getcwd()
+tmpdirectory = current_workdir+"/.snakemake/tmp/snakemake_run_"+tag
+os.makedirs(tmpdirectory, exist_ok=True)
+
+### TODO : REMOVE THE LIMIT 10 IN SQL QUERY in get_files_from_db.py
+def get_files(db_file):
+    query = subprocess.check_output(
+    ["python3", p.pipeline_config["pipeline_path"]+"/get_files_from_db.py","-d",dbfile],
+    text=True).strip()
+    return eval(query)
+
+def get_files_test():
+    import glob
+    files = glob.glob("/sps/grand/prod_grand/DB_TESTS/TEST_SLURM/data/gp80/raw/2026/02/*")
+    return files
+
+def get_file_info(filename):
+    pattern = r'^([A-Z0-9]+)_(\d{4})(\d{2})\d{2}_.*?_([A-Z]{2})_'
+    match = re.match(pattern, filename)
+
+    if match:
+        site = match.group(1).lower()  # gp80
+        year = match.group(2)           # 2025
+        month = match.group(3)          # 09
+        mode = match.group(4)           # MD
+        return {"site": site, "year": year, "month": month, "mode": mode}
+    else:
+        raise ValueError(f"Filename format incorrect: {filename}")
+
+
+#SAMPLES = {f: f for f in get_files(dbfile)}
+# Get the list of abspath to files which need to be treated
+SAMPLES = get_files(dbfile)
+#SAMPLES = get_files_test()
+
+# Create a mapping: basename -> full path
+SAMPLE_MAP = {os.path.basename(f): f for f in SAMPLES}
+
+localrules: all,register_transfers,   refresh_matviews,cleanup_tmpdir, notify_user
+########################
+# RULE ALL
+########################
+rule all:
+    input:
+         f"{tmpdirectory}/notified"
+
+
+########################
+# STEP 1 – Register transferred files in DB (run ONCE)
+########################
+rule register_transfers:
+    input:
+        f"{dbfile}"
+    output:
+        f"{tmpdirectory}/transfert_registered"
+    retries: 3 # 1 initial + 3 retries = 4 attempts total
+    resources:
+        # Exponential scaling: 500, 1000, 2000, 4000 MB
+        mem_mb=lambda wildcards, attempt: 500 * (2 ** (attempt - 1)),
+        # Exponential scaling: 5, 10, 20, 40 minutes
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        tmpdir="",
+        slurm=False
+    params:
+        jobname = lambda wildcards: f"register_transfers_{tag}"
+    shell:
+        """
+        source {conda_init}
+        conda run -p {conda_lib} bash -c '
+            cd {grandlib_path}
+            export PATH=${conda_lib}/bin/:$PATH
+            source env/setup.sh
+            python3 {register_transfer} -d {dbfile} -t {tag} -c {default_config} 2>&1 >>   {output}
+        '
+        """
+
+
+########################
+# STEP 2 – Convert BIN → ROOT (max 50 parallel)
+########################
+# Rule to convert files into GrandRoot format. Destination of the converted files will goes to a temporary file
+# Wait for registration at previous step is done to run ( so we have registered = ancient(f"{tmpdir}/transfert_registered") as input)
+
+rule bin2root:
+   input:
+        filepath = lambda wildcards: SAMPLE_MAP[wildcards.file],
+        registered = ancient(f"{tmpdirectory}/transfert_registered")
+   output:
+        f"{tmpdirectory}/{{file}}_processed"
+   retries: 2
+   group: "bin2root"
+   resources:
+        mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        tmpdir="",
+        bin2root_limits=1
+   shell:
+        """
+        {pipeline_path}/gtot_out.bash -l {output}.log  {input.filepath} 2>&1 >> {output} && bin=$(basename {input.filepath}) && echo binfile=$bin >> {output}
+        """
+
+
+
+
+########################
+# STEP 3 – Push ROOT files to iRODS (max 5)
+########################
+# Push the generated files into irods
+rule push_to_irods:
+    input:
+        f"{tmpdirectory}/{{file}}_processed"
+    output:
+        f"{tmpdirectory}/{{file}}_pushed"
+    threads: 1
+    retries: 2
+    group: "irods"
+    resources:
+        mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        irods_limits=1
+    params:
+        info=lambda wildcards: get_file_info(wildcards.file)
+    shell:
+        """
+        source=$(cat {input} |grep outdest |awk -F= '{{print $2}}')
+        dest="{irods_path}/{params.info[site]}/{params.info[year]}/{params.info[month]}"
+        bash {pipeline_path}/push_to_irods.bash -s "$source" -d "$dest" > {output}.log && cat {output}.log > {output}
+        """
+
+
+########################
+# STEP 4 – Register convert results to DB (max 5)
+########################
+# Register all the produced files into the database
+rule register_convert_in_db:
+    input:
+        f"{tmpdirectory}/{{file}}_processed"
+    output:
+        f"{tmpdirectory}/{{file}}_convreg"
+    retries: 3
+    group: "database"
+    resources:
+        mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        database_limits=1
+    shell:
+#        """
+#        source=$(cat {input} |grep outdest |awk -F= '{{print $2}}')
+#        echo "$source " > {output}
+#        """
+        """
+        source {conda_init}
+        conda run -p {conda_lib} bash -c '
+            cd {grandlib_path}
+            export PATH=${conda_lib}/bin/:$PATH
+            source env/setup.sh
+            source {input}
+            python3 {register_convert} -s $convstatus -i $binfile -o $outdest  -c {default_config} -l $logfile 2>&1 >>  {output}.log && echo $outdest >> {output} 
+        '
+        """
+
+
+########################
+# STEP 5 – Register ROOT file in DB (max 5)
+########################
+# Register all the produced files into the database
+rule register_in_db:
+    input:
+        f"{tmpdirectory}/{{file}}_convreg"
+        #expand(f"{tmpdirectory}/{{file}}_convreg", file=SAMPLE_MAP.keys())
+    output:
+        f"{tmpdirectory}/{{file}}_registered"
+    retries: 2
+    threads: 1
+    group: "database"
+    resources:
+        mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        database_limits=1
+    shell:
+        """
+        source {conda_init}
+        conda run -p {conda_lib} bash -c '
+            cd {grandlib_path}
+            export PATH=${conda_lib}/bin/:$PATH
+            source env/setup.sh
+            file_to_register=$(cat {input})
+            echo $file_to_register >> {tmpdirectory}/registering.log
+            python3  {register_in_db}  -c {default_config} -r "CCIN2P3" $file_to_register 2>&1 >> {output}.log && touch {output}
+        '
+        """
+
+
+
+########################
+# STEP 6 – Refresh materialized views
+########################
+rule refresh_matviews:
+    input:
+        #f"{tmpdirectory}/{{file}}_registered"
+        expand(f"{tmpdirectory}/{{file}}_registered", file=SAMPLE_MAP.keys())
+    ## Add registered
+    output:
+        f"{tmpdirectory}/refreshed"
+        #f"{tmpdirectory}/{{file}}_refreshed"
+    threads: 1
+    resources:
+        slurm=False  # Exécuter localement
+    shell:
+        """
+        source {conda_init}
+        conda run -p {conda_lib} bash -c '
+            cd {grandlib_path}
+            export PATH=${conda_lib}/bin/:$PATH
+            source env/setup.sh
+            python3 granddb/refresh_mat_views.py -c {default_config} >> {output}.log && touch {output}
+        '
+        """
+        #echo {input}  refreshed >> {output}"
+        #"/pbs/home/p/prod_grand/softs/grand/scripts/transfers/refresh_mat_views.bash"
+
+########################
+# STEP 7 – Run monitoring script
+########################
+rule monitoring:
+    input:
+        #f"{tmpdirectory}/convert_registered"
+        #expand(f"{tmpdirectory}/{{file}}_convreg", file=SAMPLE_MAP.keys())
+        f"{tmpdirectory}/{{file}}_convreg"
+    output:
+        f"{tmpdirectory}/{{file}}_monitoring.done"
+    threads: 1
+    retries: 2
+    group: "database"
+    resources:
+        #slurm=False  # Exécuter localement
+        mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        database_limits=1
+    shell:
+        """
+        filepath_to_monitor=$(cat {input})
+        filename=$(basename $filepath_to_monitor)
+        if [[ "$filename" =~ ^GP80.*_MD_.*-10s-.*\.root$ ]]; then
+            source {conda_init}
+            conda run -p {conda_lib} bash -c '
+                cd {grandlib_path}
+                export PATH=${conda_lib}/bin/:$PATH
+                source env/setup.sh
+                file_to_monitor=$(cat {input})
+                echo $file_to_monitor >> {tmpdirectory}/monitoring.log
+                python3 granddb/monitoring_site.py -f $file_to_monitor 2>&1 >> {output}.log && touch {output}
+            '
+        else
+            echo "skip $filename because not MD" >> {tmpdirectory}/monitoring.log && touch {output}
+            exit 0
+        fi
+        """
+
+
+########################
+# STEP 8 – Archive (after bin to root convertion of all files)
+########################
+
+########################
+# STEP 9 – Clean logs
+########################
+rule cleanup_tmpdir:
+    input:
+        f"{tmpdirectory}/refreshed",
+#        f"{tmpdirectory}/monitoring.done",
+        expand(f"{tmpdirectory}/{{file}}_monitoring.done", file=SAMPLE_MAP.keys())
+# commented to avoid push during tests
+#        ,
+#        expand(f"{tmpdirectory}/{{file}}_pushed", file=SAMPLE_MAP.keys())
+    output:
+        f"{tmpdirectory}/CLEANED_UP"
+    resources:
+        slurm=False  # Exécuter localement
+    shell:
+        "echo done > {output}"
+#       "rm -rf {tmpdirectory}/*; echo done > {output}"
+
+########################
+# STEP 10 – Send email notification
+########################
+rule notify_user:
+    input:
+        f"{tmpdirectory}/CLEANED_UP"
+    output:
+        f"{tmpdirectory}/notified"
+    resources:
+        slurm=False  # Exécuter localement
+    shell:
+        "echo email_sent >> {output}"
+#        "python send_notification_email.py && touch {output}"
