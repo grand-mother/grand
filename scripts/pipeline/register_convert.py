@@ -21,7 +21,7 @@ dm = DataManager(config_path)
 logfile = os.path.normpath(args.logfile)
 myfile = dm.database().sqlalchemysession.query(dm.database().tables()['rawfile']).filter_by(filename=args.file).first()
 if not myfile:
-    print("Error file not registered")
+    print(f"Error file {args.file} not registered")
     exit(0)
 else:
     id_raw_file = myfile.id_raw_file

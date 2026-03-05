@@ -18,7 +18,6 @@ dm = DataManager(config_path)
 
 db = args.database
 tag = args.tag
-
 connection = sqlite3.connect(db)
 connection.row_factory = sqlite3.Row
 cursor = connection.cursor()

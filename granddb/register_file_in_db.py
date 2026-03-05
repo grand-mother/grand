@@ -3,6 +3,7 @@ import grand.manage_log as mlg
 from granddb.datamanager import DataManager
 import argparse
 logger = mlg.get_logger_for_script(__name__)
+mlg.create_output_for_logger("warning", log_stdout=True)
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-c", "--config", default="config.ini", help="Config file to use")
@@ -23,8 +24,10 @@ else:
     repo_name = args.repository
 for file in args.files:
     try:
-        logger.info(f'Register ${file}')
+        logger.info(f'Register the file  ${file}')
         dm.register_file(localfile=file, dataset=None, repository=repo_name, again=True)
+        #Explicitely exit to avoid deadlock due to ROOT !
+        os._exit(0)
     except Exception as e:
         logger.error(f'Error when importing {file}. Skipping.')
         logger.error(f'Error was {e}.')
