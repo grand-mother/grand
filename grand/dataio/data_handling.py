@@ -73,7 +73,10 @@ class DataDirectory:
         # Function returning the tree type and analysis level from the filename. That's how we want to group files.
         def split_filenames(x):
             el = Path(x).name.split("_")
-            return el[0], el[2]
+            if len(el)==4:
+                return el[0], el[2]
+            else:
+                return el[0], el[4]
 
         # for filename in self.file_list:
         from itertools import groupby
@@ -89,7 +92,9 @@ class DataDirectory:
         # Loop through groups of files with tree types expected in the directory
         for flistname in self.tree_file_types:
             # Assign the list of files with specific tree type to the class instance
+            # setattr(self, flistname, {int(Path(el).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
             setattr(self, flistname, {int(Path(el.filename).name.split("_")[-2][1:]): el for el in self.file_handle_list if Path(el.filename).name.startswith(flistname[2:-1]+"_")})
+
             max_level = -1
             for (l, f) in getattr(self, flistname).items():
                 # Assign the file with the tree with the specific analysis level to the class instance
@@ -238,6 +243,7 @@ class DataFile:
                 self.filename = filename
         # If list of files is given, make a TChain
         elif type(filename) is list:
+
             if len(filename) > 1:
                 f = ROOT.TFile(filename[0])
                 self.f = f
