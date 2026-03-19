@@ -279,6 +279,13 @@ class DataFile:
                 for el in self.flist:
                     t.Add(el)
 
+                # Need to tell ROOT what buffer size to use for Draw - this is approximated by the total number of DUs
+                # ToDo: probably better to switch all the 1D GetV...() to RDataFrame::AsNumpy, to save memory
+                t.SetEstimate(t.GetEntries())
+                count = t.Draw("Length$(du_id)", "", "goff")
+                total_elements = int(np.sum(np.frombuffer(t.GetV1(), dtype=np.float64, count=count)))
+                t.SetEstimate(total_elements+1)
+
                 # Build the index for this chain - it is not generated automatically from the Trees indices
                 try:
                     # Assuming en Event tree
