@@ -231,8 +231,8 @@ class MotherEventTree(DataTree):
             tree = self._tree
         # Fill the entry list if there are some entries in the tree
         if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
-            v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count))
-            v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count))
+            v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count)).astype(int)
+            v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count)).astype(int)
             self._entry_list = [(int(el[0]), int(el[1])) for el in zip(v1, v2)]
         # Remove the Draw() generated histogram from current file to prevent saving
         if tmph := ROOT.gDirectory.Get("htemp"):
