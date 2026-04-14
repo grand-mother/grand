@@ -51,10 +51,13 @@ def main():
     # List of run numbers
     list_of_runs = defaultdict(set)
 
+    copied_event_num = 0
+
     # Loop through the source events
     for source_event in source_events_list:
         # Extract the dir name, run_number and event_number
         print("Copying event:", source_event)
+        copied_event_num += 1
         dp, run_num, event_num = source_event.split(',')
         # Transform the directory path to absolute
         dp = str(Path(dp).resolve())
@@ -104,6 +107,13 @@ def main():
                     target_tree.copy_contents(source_tree)
                     target_tree.fill()
                     dict_of_trees[target_tree._tree.GetName()] = target_tree
+                    print("Found!", source_tree_name, run_num, event_num, target_tree.get_entries())
+                else:
+                    print("Event/run not found", run_num, event_num)
+
+    print("Copied events count:", copied_event_num)
+
+    written_event_num = 0
 
     # Write all the target trees
     # Loop through all the DataFiles in the target directory
@@ -117,9 +127,12 @@ def main():
         # Write the tree (this also closes the file, and in 1 tree per file scheme it is OK)
         # ToDo: this should be just target_tree.write(), but then I get an error "corrupted double-linked list" at exit
         target_tree._tree.GetCurrentFile().Write()
+        written_event_num += 1
         # target_tree.write()
 
     # target_dir.close()
+
+    print("Written events count:", written_event_num)
 
     print("Done")
 
