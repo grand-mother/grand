@@ -6,6 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 import numpy as np
 import ROOT
+import datetime
 
 from grand.dataio import logger, DataTree, MotherEventTree
 import grand.dataio
@@ -296,6 +297,19 @@ class DataFile:
                         t.BuildIndex("run_number")
                     except:
                         raise("Unable to build index for the tree")
+
+                # Set metadata from the first TTree in the TChain
+                temp_metadata = self.get_tree_info(t).keys()
+                for key,value in tree_info.items():
+                    if key not in temp_metadata:
+                        if isinstance(value,str):
+                            t.GetUserInfo().Add(ROOT.TNamed(key, value))
+                        else:
+                            print(key, value, type(value))
+                            if isinstance(value, datetime.datetime):
+                                t.GetUserInfo().Add(ROOT.TParameter(int)(key, int(value.timestamp())))
+                            else:
+                                t.GetUserInfo().Add(ROOT.TParameter(int)(key, value))
 
                 # Modify the number of events for this TChain
                 tree_info["evt_cnt"] = t.GetEntries()
