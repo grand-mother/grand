@@ -4,6 +4,9 @@ grand/version.py
 # Ignore shared libraries
 *.so
 
+# Ignore static libraries
+*.a
+
 # Ignore Python bytecode
 __pycache__
 *.pyc
@@ -12,6 +15,8 @@ __pycache__
 # jupyterlab checkpoints
 .ipynb_checkpoints
 
+# Ignore Zig install folder
+.zig/
 
 
 
@@ -64,7 +69,7 @@ docs/apidoc-only/sphinx/source/grand.*
 /stored_data.root
 /ecl.txt
 
-# mac 
+# mac
 .DS_Store
 
 *.pyc
