@@ -32,41 +32,55 @@ def include(path, **opts):
     args.append("-I" + str(INC_DIR))
     args.append("-DFILE=struct FILE")
 
-    ast = parse_file(str(path), use_cpp = True, cpp_args = args)
+    ast = parse_file(str(path), use_cpp=True, cpp_args=args)
     generator = c_generator.CGenerator()
     header = generator.visit(ast)
     ffi.cdef(header)
+
 
 include(SRC_DIR / "grand.h")
 
 
 def configure():
-    if platform.system() == "Darwin":
-        rpath = rpath = ["-Wl,-rpath,@loader_path/../lib"]
-    else:
-        rpath = ["-Wl,-rpath,$ORIGIN/../lib"]
-
     with open(SRC_DIR / "grand.c") as f:
-        ffi.set_source("grand._core",
+        ffi.set_source(
+            "grand._core",
             f.read(),
-            libraries = ["turtle", "gull"],
-            include_dirs = [str(INC_DIR), str(SRC_DIR)],
-            library_dirs = [str(LIB_DIR)],
-            extra_link_args = rpath
+            extra_objects=[
+                str(LIB_DIR / "libturtle.a"),
+                str(LIB_DIR / "libgull.a"),
+            ],
+            include_dirs=[str(INC_DIR), str(SRC_DIR)],
         )
+
 
 configure()
 
 
 def build():
-    TMP_DIR.mkdir(parents = True, exist_ok = True)
-    PACKAGE_PATH.mkdir(parents = True, exist_ok = True)
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    PACKAGE_PATH.mkdir(parents=True, exist_ok=True)
 
     os.chdir(TMP_DIR)
-    module = Path(ffi.compile(verbose=False))
+    module = Path(ffi.compile(verbose=True))
     module = module.rename(PACKAGE_PATH / "_core.abi3.so")
+
+    # Strip all rpaths on macOS — not needed for static linking
+    if platform.system() == "Darwin":
+        import subprocess
+        import sysconfig
+
+        conda_lib = str(Path(sysconfig.get_path("stdlib")).parent.parent / "lib")
+        result = subprocess.run(
+            ["otool", "-l", str(module)], capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines():
+            if "path" in line and conda_lib in line:
+                subprocess.run(
+                    ["install_name_tool", "-delete_rpath", conda_lib, str(module)],
+                    capture_output=True,
+                )
 
 
 if __name__ == "__main__":
     build()
-
