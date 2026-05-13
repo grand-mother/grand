@@ -22,7 +22,7 @@ __pycache__
 
 # Ignore build and dist temporaries
 dist
-src/build*
+src/build/*
 *.egg-info
 *.whl
 
