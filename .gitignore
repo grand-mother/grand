@@ -15,9 +15,9 @@ __pycache__
 # jupyterlab checkpoints
 .ipynb_checkpoints
 
-# Ignore Zig install folder
+# Ignore Zig install folder and zig-cache folder
 .zig/
-
+.zig-cache/
 
 
 # Ignore build and dist temporaries
