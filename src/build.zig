@@ -1,10 +1,43 @@
+//! This Zig build script compile the two C library required by GRANDLib
+//! (gull and turtle) into static libraries that are then used in GRANDLib
+//! C code and exported to python via cffi.
 const std = @import("std");
+const Version = std.SemanticVersion;
+const builtin = @import("builtin");
 
-pub fn build(b: *std.Build) void {
+const zig16: []const u8 = "0.16.0";
+const zig17: []const u8 = "0.17.0";
+
+const zig_version = builtin.zig_version;
+const zig_version_range: Version.Range = .{
+    .min = Version.parse(zig16) catch unreachable,
+    .max = Version.parse(zig17) catch unreachable,
+};
+
+// Comptime check that the Zig compiler version being used to compile this
+// script meets the targeted version. If not, emits a compile error.
+// This force the required Zig version to be 0.16.X as Zig is still in an
+// "early" development stage and backward compatibility is not expected
+// before version 1.0.
+comptime {
+    if (!zig_version_range.includesVersion(zig_version)) {
+        const error_msg = std.fmt.comptimePrint("Requires Zig version between {s} and {s}, got {d}.{d}.{d}\n", .{
+            zig16,
+            zig17,
+            zig_version.major,
+            zig_version.minor,
+            zig_version.patch,
+        });
+        @compileError(error_msg);
+    }
+}
+
+// Entry point of the build script.
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // libturtle
+    // Add turtle to the build graph to be compiled as a static library.
     const turtle = b.addLibrary(.{
         .name = "turtle",
         .linkage = .static,
@@ -42,7 +75,7 @@ pub fn build(b: *std.Build) void {
     turtle.root_module.addIncludePath(b.path("build/turtle/src"));
     turtle.root_module.addIncludePath(b.path("build/turtle/src/deps"));
 
-    // libgull
+    // Add gull to the build graph to be compiled as a static library.
     const gull = b.addLibrary(.{
         .name = "gull",
         .linkage = .static,
@@ -64,37 +97,9 @@ pub fn build(b: *std.Build) void {
     gull.root_module.addIncludePath(b.path("build/gull/include"));
     gull.root_module.addIncludePath(b.path("build/turtle/include"));
 
-    // install libs and headers
+    // Install libraries and headers files
     b.installArtifact(turtle);
     b.installArtifact(gull);
     b.installFile("build/turtle/include/turtle.h", "include/turtle.h");
     b.installFile("build/gull/include/gull.h", "include/gull.h");
-
-    //    // grand/_core.abi3.so via zig cc
-    //
-    //    _ = b.run(&.{ "mkdir", "-p", "build/grand" });
-    //
-    //    //    const python_include = "/Users/mregeard/anaconda3/envs/grand/include/python3.9";
-    //    const python_include = b.run(&.{ "python3", "-c", "import sysconfig; print(sysconfig.get_path('include'), end='')" });
-    //
-    //    const compile_core = b.addSystemCommand(&.{
-    //        "zig",      "cc",
-    //        "-target",  "x86_64-macos",
-    //        "-std=c99", "-include",
-    //        "stdlib.h", "-include",
-    //        "string.h", "-include",
-    //        "math.h",   "-O3",
-    //        "-shared",  "-fPIC",
-    //        "-undefined",                     "dynamic_lookup", // ← macOS: let Python symbols resolve at runtime
-    //        "-Wl,-rpath,@loader_path/../lib", "-I",
-    //        "build/turtle/include",           "-I",
-    //        "build/gull/include",             "-I",
-    //        python_include,                   "grand.c",
-    //        "-L",                             "build/lib",
-    //        "-lturtle",                       "-lgull",
-    //        "-o", "build/grand/_core.abi3.so", // ← exact name, no lib prefix
-    //    });
-    //    compile_core.step.dependOn(&b.addInstallArtifact(turtle, .{}).step);
-    //    compile_core.step.dependOn(&b.addInstallArtifact(gull, .{}).step);
-    //    b.getInstallStep().dependOn(&compile_core.step);
 }
