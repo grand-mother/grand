@@ -62,7 +62,7 @@ def build():
     PACKAGE_PATH.mkdir(parents=True, exist_ok=True)
 
     os.chdir(TMP_DIR)
-    module = Path(ffi.compile(verbose=True))
+    module = Path(ffi.compile(verbose=False))
     module = module.rename(PACKAGE_PATH / "_core.abi3.so")
 
     # Strip all rpaths on macOS — not needed for static linking
