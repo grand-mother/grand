@@ -1,7 +1,5 @@
-"""
-Install script for grand.
-Usage: python install.py
-"""
+# Install script for GRANDlib.
+# Usage: python install.py
 
 import os
 import subprocess
@@ -10,22 +8,110 @@ import sys
 import platform
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Self
 import urllib.request
 import tarfile
+import re
+
+
+class InvalidVersion(Exception):
+    pass
+
+
+@dataclass(order=True)
+class Version:
+    """Software version.
+
+    This class store software version. Largely inspired by Zig `std.SemanticVersion`.
+
+    Notes
+    -----
+    For now the pre-release and build specific tags are not supported.
+
+    Parameters
+    ----------
+    major: int
+        Major version number.
+    minor: int
+        Minor version number.
+    patch: int
+        Patch version number.
+    """
+
+    major: int
+    minor: int
+    patch: int
+
+    @classmethod
+    def parse(cls, input_str: str) -> Self:
+        """Parse the version from a string.
+
+        Parameters
+        ----------
+        input_str: str
+            String containing the version to be parsed.
+        """
+        required = re.split(r"[+\-]", input_str)
+        required = required[0]
+
+        # Parse required major, minor and patch numbers.
+        ver_split = required.split(".")
+        if len(ver_split) != 3:
+            raise InvalidVersion(
+                f"Expected version format to be `Major.minor.patch`, got {required}."
+            )
+        kwargs = {}
+        kwargs["major"] = int(ver_split[0])
+        kwargs["minor"] = int(ver_split[1])
+        kwargs["patch"] = int(ver_split[2])
+        return cls(**kwargs)
+
+    def __str__(self):
+        """String representation."""
+        s = f"{self.major}.{self.minor}.{self.patch}"
+        return s
+
+
+@dataclass
+class Range:
+    """Version range.
+
+    Parameters
+    ----------
+    min: Version
+        Minimum version.
+    max: Verison
+        Maximum version.
+    """
+
+    min: Version
+    max: Version
+
+    def includes_version(self: Self, ver: Version) -> bool:
+        if self.min > ver:
+            return False
+        if self.max < ver:
+            return False
+        return True
 
 
 TURTLE_URL = "https://github.com/niess/turtle.git"
 GULL_URL = "https://github.com/niess/gull.git"
-TURTLE_TAG = "v0.8"
 GULL_TAG = "286ace5"
+TURTLE_VERSION = "v0.9"
 
-ZIG_VERSION = "0.16.0"
+ZIG_VERSION_RANGE = Range(min=Version.parse("0.16.0"), max=Version.parse("0.17.0"))
 ZIG_DL_URL = "https://ziglang.org/download/"
+ZIG_VERSION = "0.16.0"
 
 
 @dataclass
 class Config:
+    """Installation configuration class.
+
+    This class bundles paths that are being used during the installation.
+    """
+
     root_dir: Path = field(default_factory=lambda: Path(__file__).parent)
     zig_bin: Optional[str] = None
 
@@ -51,9 +137,22 @@ class Config:
 
 
 def clone_repos(cfg: Config):
+    """Clone turtle and gull C libraries github repository.
+
+    Notes
+    -----
+    Here we do not checkout to turtle v0.8, as done in the other installation
+    method. This is because we need `png.h` in the deps directory to compile.
+    We instead use version v0.9 which meets such requirement.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     cfg.build_dir.mkdir(parents=True, exist_ok=True)
 
-    # turtle — clone specific tag directly
+    # Clone turtle v0.9
     turtle_dir = cfg.build_dir / "turtle"
     if not turtle_dir.exists():
         print("Cloning turtle...")
@@ -62,6 +161,8 @@ def clone_repos(cfg: Config):
                 [
                     "git",
                     "clone",
+                    "--branch",
+                    TURTLE_VERSION,
                     TURTLE_URL,
                     str(turtle_dir),
                 ],
@@ -73,7 +174,7 @@ def clone_repos(cfg: Config):
     else:
         print("turtle already cloned, skipping.")
 
-    # gull — clone full then checkout specific commit
+    # Clone gull and checkout to commit 286ace5
     gull_dir = cfg.build_dir / "gull"
     if not gull_dir.exists():
         print("Cloning gull...")
@@ -105,11 +206,19 @@ def clone_repos(cfg: Config):
 
 
 def install_zig(cfg: Config):
+    """Install the Zig compiler.
 
+    Check if a Zig compiler is installed and if the version mathced
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     system = platform.system()
     machine = platform.machine()
 
-    # check if zig is already available
+    # Check if zig is already available
     zig_bin = shutil.which("zig")
     if zig_bin is not None:
         print(f"Found zig executable at {zig_bin}...")
@@ -119,22 +228,25 @@ def install_zig(cfg: Config):
             .strip()
         )
         print(f"Zig version: {version}")
-        if version == ZIG_VERSION:
+        if ZIG_VERSION_RANGE.includes_version(Version.parse(version)):
             print(f"Zig version {version} matches the requirement.")
             cfg.zig_bin = zig_bin
             return
         print(
-            f"Found zig version: {version}, but requires zig version {ZIG_VERSION}..."
+            f"Found zig version: {version}, but requires zig version between {
+                ZIG_VERSION_RANGE.min
+            } and {ZIG_VERSION_RANGE.max}..."
         )
 
-    # also check if we already downloaded it
+    # If no Zig compiler is found in the PATH or is its version does match,
+    # check if there is a Zig version in the .zig folder of the root dir
     existing = list(cfg.zig_path.glob("zig-*/zig")) if cfg.zig_path.exists() else []
     if existing:
         cfg.zig_bin = str(existing[0])
         print(f"Using previously downloaded Zig at {cfg.zig_bin}")
         return
 
-    # download zig
+    # Otherwise, download Zig
     arch = "aarch64" if machine in ("arm64", "aarch64") else "x86_64"
     if system == "Darwin":
         url = f"{ZIG_DL_URL}{ZIG_VERSION}/zig-{arch}-macos-{ZIG_VERSION}.tar.xz"
@@ -176,6 +288,17 @@ def install_zig(cfg: Config):
 
 
 def verify_zig_signature(cfg: Config, tarball: Path, url: str):
+    """Verify Zig compiler signature to avoid corrupted data.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    tarball: Path
+        The tarball to check.
+    url: str
+       The base url to fetch the signature.
+    """
     import minisign
 
     ZIG_PUBLIC_KEY = "RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
@@ -205,9 +328,22 @@ def verify_zig_signature(cfg: Config, tarball: Path, url: str):
 
 
 def build_c_libs(cfg: Config):
-    # Note: Zig targets the current OS version by default which may differ
-    # from cffi's deployment target, causing linker warnings. These are
-    # harmless for static linking and can be ignored.
+    """Build the C libraries.
+
+    Invoke the Zig compiler to build the C libraries using the build script
+    located at `src/build.zig`.
+
+    Notes
+    -----
+    Zig targets the current OS version by default, which may differ from cffi's
+    deployement target, causing linker warnings. These are harmless for static
+    linking and can be ignored.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     print("Building C libraries with Zig...")
     subprocess.run(
         [
@@ -223,6 +359,16 @@ def build_c_libs(cfg: Config):
 
 
 def build_python_ext(cfg: Config):
+    """Build the python C extension.
+
+    Run the python script `src/build_core.py` to build the python C extension
+    using cffi.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     print("Building Python extension with cffi...")
     env = os.environ.copy()
     env["LDFLAGS"] = ""
@@ -242,6 +388,13 @@ def build_python_ext(cfg: Config):
 
 
 def copy_files(cfg: Config):
+    """Copy build file to stable location.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     print("Copying `_core.abi3.so` to grand/...")
     shutil.copy(str(cfg.build_dir / "grand" / "_core.abi3.so"), str(cfg.grand_dir))
 
@@ -251,6 +404,13 @@ def copy_files(cfg: Config):
 
 
 def install_package(cfg: Config):
+    """Install GRANDlib as a python library.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     print("Installing grand package...")
     subprocess.run(
         [
@@ -267,6 +427,13 @@ def install_package(cfg: Config):
 
 
 def cleanup(cfg: Config):
+    """Cleanup build artefacts.
+
+    Parameters
+    ----------
+    cfg: Config
+       Install configuration.
+    """
     print("Cleaning up build artifacts...")
     shutil.rmtree(cfg.build_dir, ignore_errors=True)
     shutil.rmtree(cfg.src_dir / ".zig-cache", ignore_errors=True)
@@ -274,7 +441,7 @@ def cleanup(cfg: Config):
 
 
 if __name__ == "__main__":
-    print("=== Installing grand ===")
+    print("=== Installing GRANDlib ===")
     cfg = Config()
     try:
         clone_repos(cfg)
