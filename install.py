@@ -113,7 +113,8 @@ class Config:
     """
 
     root_dir: Path = field(default_factory=lambda: Path(__file__).parent)
-    zig_bin: Optional[str] = None
+    zig_bin: Optional[Path] = None
+    download: bool = True
 
     @property
     def src_dir(self) -> Path:
@@ -219,7 +220,10 @@ def install_zig(cfg: Config):
     machine = platform.machine()
 
     # Check if zig is already available
-    zig_bin = shutil.which("zig")
+    zig_bin = cfg.zig_bin
+    if zig_bin is None:
+        zig_bin = shutil.which("zig")
+
     if zig_bin is not None:
         print(f"Found zig executable at {zig_bin}...")
         version = (
@@ -237,6 +241,10 @@ def install_zig(cfg: Config):
                 ZIG_VERSION_RANGE.min
             } and {ZIG_VERSION_RANGE.max}..."
         )
+
+    if cfg.download is False:
+        print("Skipping Zig download...")
+        return
 
     # If no Zig compiler is found in the PATH or is its version does match,
     # check if there is a Zig version in the .zig folder of the root dir
@@ -437,12 +445,59 @@ def cleanup(cfg: Config):
     print("Cleaning up build artifacts...")
     shutil.rmtree(cfg.build_dir, ignore_errors=True)
     shutil.rmtree(cfg.src_dir / ".zig-cache", ignore_errors=True)
-    print("Done.")
+    print("Cleaning done.")
 
 
-if __name__ == "__main__":
-    print("=== Installing GRANDlib ===")
+def check_args(argv):
+    """Trim command line arguments if necessary.
+
+    Parameters
+    ----------
+    argv: list of str
+        The command line arguments.
+    """
+    if len(argv) == 1:
+        return None
+    return argv[1:]
+
+
+def parse_args(args, cfg: Config):
+    """Parse the command line arguments and set config flags is necessary.
+
+    Parameters
+    ----------
+    args: list od str
+        Command line arguments, python script name trimmed.
+    cfg: Config
+        Install configuration.
+    """
+    if "--no-download" in args:
+        cfg.download = False
+    if "--zig" in args:
+        cfg.zig_bin = Path(args[args.index("--zig") + 1])
+    if "--help" or "-h" in args:
+        usage()
+        sys.exit(0)
+
+
+def usage():
+    """Print usage."""
+    options = [
+        ("--no-download", "Do not download the Zig compiler"),
+        ("--zig [path]", "Use specific Zig binary located at [path]"),
+        ("-h, --help", "Show this help message"),
+    ]
+    print("info: Usage: python install.py [options]\n")
+    print("Options:")
+    for name, desc in options:
+        print(f"  {name:<28}{desc}")
+
+
+def main():
+    args = check_args(sys.argv)
     cfg = Config()
+    parse_args(args, cfg)
+    print("=== Installing GRANDlib ===")
     try:
         clone_repos(cfg)
         install_zig(cfg)
@@ -451,7 +506,12 @@ if __name__ == "__main__":
         copy_files(cfg)
         install_package(cfg)
     except Exception:
+        print("Error encounter!")
         cleanup(cfg)
         raise
     cleanup(cfg)
     print("=== Done ===")
+
+
+if __name__ == "__main__":
+    main()
