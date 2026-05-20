@@ -1,6 +1,7 @@
 # Building and installing GRANDlib
 
-To intall GRANDlib, we recommend using virtual environments.
+To intall GRANDlib, we recommend using virtual environments. The following example showcase
+`conda` virtual environment but similar command exist for `venv`.
 To do so, execute the following commands in the terminal:
 
 ```bash
