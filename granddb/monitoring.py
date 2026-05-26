@@ -73,15 +73,21 @@ def with_db_cursor(func):
 # (every minute for Temp and Voltage and every hour for spectra) and save it into the DB
 def monitor_file(rfile):
     trace_stats = defaultdict(lambda: {"sum": None, "count": 0, "ts_list":[]})
-    temp_stats = defaultdict(lambda: {"sum_temp": 0.0, "sum_batt": 0.0, "count": 0,"ts_list":[]})
+    mesures_stats = defaultdict(lambda: {"sum_temp": 0.0, "sum_batt": 0.0, "sum_stdev0" : 0.0 , "sum_stdev1" : 0.0 , "sum_stdev2" : 0.0 ,  "sum_stdev3" : 0.0 ,"count": 0,"ts_list":[]})
 
     if Path(rfile).is_file():
         run=TRun(rfile)
         tree=TRawVoltage(rfile)
+        adctree = TADC(rfile)
     elif Path(rfile).is_dir():
         d = DataDirectory(rfile)
         run = d.trun
         tree = d.trawvoltage
+        adctree = d.adc
+
+    if (not next(iter(adctree)).enable_trigger_10s[0]):
+        return
+    
     run.get_entry(0)
 
     #print(f"t_bin_size = {run.t_bin_size[0]} ")
@@ -98,13 +104,13 @@ def monitor_file(rfile):
                         #keys for env data (group by minutes) and spectra (group by hours)
                         hour_bin = dt.replace(minute=0, second=0, microsecond=0)
                         minute_bin = dt.replace(second=0, microsecond=0)
-                        key_temp = (minute_bin, du)
+                        key_mesures = (minute_bin, du)
                         key_spec = (hour_bin, du)
 
                         # Fill env table
                         # Get mesures already registered into the dababase if they exists
-                        if not temp_stats[key_temp]["ts_list"]:
-                            temp_stats[key_temp]["ts_list"]=get_mesures_ts_list(cur, minute_bin,du)
+                        if not mesures_stats[key_mesures]["ts_list"]:
+                            mesures_stats[key_mesures]["ts_list"]=get_mesures_ts_list(cur, minute_bin,du)
 
                         if not trace_stats[key_spec]["ts_list"]:
                             trace_stats[key_spec]["ts_list"]=get_spectres_ts_list(cur ,hour_bin,du)
@@ -112,25 +118,28 @@ def monitor_file(rfile):
                         # If new measures are not yet registered then append them
                         # If measures exists for this exact timestamp (gps_time) then skip (means that we are reprocessing an already
                         # processed file or directory
-                        if not temp_stats[key_temp]["ts_list"] or gps_time not in temp_stats[key_temp]["ts_list"]:
+                        if not mesures_stats[key_mesures]["ts_list"] or gps_time not in mesures_stats[key_mesures]["ts_list"]:
                             temp = event.gps_temp[j]
                             batt = event.battery_level[j]
-                            temp_stats[key_temp]["ts_list"].append(gps_time)
-                            temp_stats[key_temp]["sum_temp"] += temp
-                            temp_stats[key_temp]["sum_batt"] += batt
-                            temp_stats[key_temp]["count"] += 1
+                            mesures_stats[key_mesures]["ts_list"].append(gps_time)
+                            mesures_stats[key_mesures]["sum_temp"] += temp
+                            mesures_stats[key_mesures]["sum_batt"] += batt
+                            mesures_stats[key_mesures]["count"] += 1
 
                         if not trace_stats[key_spec]["ts_list"] or gps_time not in trace_stats[key_spec]["ts_list"]:
                             trace_stats[key_spec]["ts_list"].append(gps_time)
                             trace = np.array(event.trace_ch[j])
                             #Fill spec table only for traces = 1024 long (so FFT is 512)
-                            if trace[0].size == 1024:
+                            if trace[0].size == 1024 or trace[0].size == 512:
                                 if trace_stats[key_spec]["sum"] is None:
                                     trace_stats[key_spec]["sum"] = trace.copy()
                                 else:
                                     trace_stats[key_spec]["sum"] += trace
                                 trace_stats[key_spec]["count"] += 1
-
+                                mesures_stats[key_mesures]["sum_stdev0"] += float(np.std(trace[0]*8192/900000, axis=0))
+                                mesures_stats[key_mesures]["sum_stdev1"] += float(np.std(trace[1]*8192/900000, axis=0))
+                                mesures_stats[key_mesures]["sum_stdev2"] += float(np.std(trace[2]*8192/900000, axis=0))
+                                mesures_stats[key_mesures]["sum_stdev3"] += float(np.std(trace[3]*8192/900000, axis=0))
 
     # Close the tree files
     run.close_file()
@@ -138,15 +147,19 @@ def monitor_file(rfile):
     # Build the table of data to be recoreded in the database (so we will do the insert in a single request).
     # Calculate the average over the time buckets. First for temps and then for spectras.
     rows_temp = []
-    for (minute_bin, du_id), stats in temp_stats.items():
+    for (minute_bin, du_id), stats in mesures_stats.items():
         if stats["count"] and stats["sum_temp"] and stats["sum_batt"]:
             rows_temp.append((
                 minute_bin,
-                 du_id,
-                 stats["sum_temp"] / stats["count"],
-                 stats["sum_batt"] / stats["count"],
-                 stats["count"],
-                 temp_stats[(minute_bin,du_id)]["ts_list"]
+                du_id,
+                stats["sum_temp"] / stats["count"],
+                stats["sum_batt"] / stats["count"] - 90.825,
+                stats["count"],
+                mesures_stats[(minute_bin,du_id)]["ts_list"],
+                stats["sum_stdev0"] / stats["count"],
+                stats["sum_stdev1"] / stats["count"],
+                stats["sum_stdev2"] / stats["count"],
+                stats["sum_stdev3"] / stats["count"]
             ))
 
     # Save the temps/voltages into the database (here the connection will be managed directly by the function to keep it
@@ -160,8 +173,8 @@ def monitor_file(rfile):
             # Calculate the FFT
             mean_traces = stats["sum"] / stats["count"]
             fft_vals = np.fft.fft(mean_traces, axis=1)
-            # t_bin_size in nanosec (so 10⁹) and we want freqs in Mhz (10⁶) so need to divide by 1000
-            freqs = np.fft.fftfreq(mean_traces.shape[1], d=run.t_bin_size[0] / 1000.0)
+            #t_bin_size in nanosec (so 10⁹) and we want freqs in Mhz (10⁶) so need to divide by 1000
+            freqs = np.fft.fftfreq(mean_traces.shape[1], d=run.t_bin_size[0]/1000.0 )
             positive_freqs = freqs[:mean_traces.shape[1] // 2]
             # If frequencies not yet in the database then save it.
             if (len(positive_freqs) not in frequency_list):
@@ -215,12 +228,16 @@ def get_spectres_ts_list(cur,ts,du_id):
 def save_temps(cur, conn, rows_temp):
     if len(rows_temp) > 0:
         query = """
-            INSERT INTO mesures (datetime, du_id, temperature, voltage, weight, ts_list)
+            INSERT INTO mesures (datetime, du_id, temperature, voltage, weight, ts_list, stdev0,stdev1,stdev2,stdev3)
             VALUES %s
             ON CONFLICT (datetime, du_id) DO UPDATE
             SET
                 temperature = ((mesures.temperature * mesures.weight) + (EXCLUDED.temperature * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
                 voltage = ((mesures.voltage * mesures.weight) + (EXCLUDED.voltage * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
+                stdev0 = ((mesures.stdev0 * mesures.weight) + (EXCLUDED.stdev0 * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
+                stdev1 = ((mesures.stdev1 * mesures.weight) + (EXCLUDED.stdev1 * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
+                stdev2 = ((mesures.stdev2 * mesures.weight) + (EXCLUDED.stdev2 * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
+                stdev3 = ((mesures.stdev3 * mesures.weight) + (EXCLUDED.stdev3 * EXCLUDED.weight)) / (mesures.weight + EXCLUDED.weight),
                 weight = mesures.weight + EXCLUDED.weight, 
                 ts_list = (
                 SELECT ARRAY(
@@ -330,7 +347,7 @@ def get_files(tag):
             AND t.tag = %s
             AND retcode = 0
             AND root_filename LIKE %s
-            """, (tag,'GP80%_MD_%-10s-%.root'))
+            """, (tag,'GP80%_MD_%.root'))
             results = cur.fetchall()
             #file_list = result #if result and result[0] else []
 
@@ -355,6 +372,7 @@ if __name__ == "__main__":
     #filepaths = sorted(glob.glob(pattern))
 
     filepaths=get_files(tag)
+    logger.info(f"Files to process : {filepaths}")
     # We shuffle the list to avoid processing concurrently 2 files concerning the same bucket of time (and limit
     # the risks of deadlock when accessing the database)
     random.shuffle(filepaths)
@@ -370,4 +388,5 @@ if __name__ == "__main__":
         for result in results:  # This will raise any exceptions from workers
             pass  # or handle results if needed
     logger.info(f"End of monitoring")
+
 
