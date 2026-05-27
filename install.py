@@ -496,7 +496,8 @@ def usage():
 def main():
     args = check_args(sys.argv)
     cfg = Config()
-    parse_args(args, cfg)
+    if args is not None:
+        parse_args(args, cfg)
     print("=== Installing GRANDlib ===")
     try:
         clone_repos(cfg)
