@@ -606,6 +606,15 @@ class TADC(MotherEventTree):
     notch_filters_no_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned char>"))
     """Notch filter number"""
 
+    ## Correlation x value from NUTRIG
+    correlation_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Correlation x value from NUTRIG"""
+
+    ## Correlation y value from NUTRIG
+    correlation_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    """Correlation y value from NUTRIG"""
+
+
 
 @dataclass
 ## The class for storing voltage traces and associated values for each event
@@ -716,6 +725,14 @@ class TRawVoltage(MotherEventTree):
     ## Voltage traces for channels 1,2,3,4 in muV
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
     """Voltage traces for channels 1,2,3,4 in muV"""
+
+    ## Correlation x value from NUTRIG
+    correlation_x: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Correlation x value from NUTRIG"""
+
+    ## Correlation y value from NUTRIG
+    correlation_y: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """Correlation y value from NUTRIG"""
 
 
 @dataclass
