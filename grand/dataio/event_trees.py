@@ -607,11 +607,11 @@ class TADC(MotherEventTree):
     """Notch filter number"""
 
     ## Correlation x value from NUTRIG
-    correlation_x: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    correlation_x: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Correlation x value from NUTRIG"""
 
     ## Correlation y value from NUTRIG
-    correlation_y: StdVectorListDesc = field(default=StdVectorListDesc("vector<unsigned short>"))
+    correlation_y: StdVectorListDesc = field(default=StdVectorListDesc("unsigned short"))
     """Correlation y value from NUTRIG"""
 
 
