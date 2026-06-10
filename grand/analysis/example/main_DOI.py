@@ -57,8 +57,8 @@ def read_event_list(txt_file, start_line, stop_line='None'):
 # Convert antenna IDs to int, store x (East), y (North), z (sea level)
 # ---------------------------------------------------------------
 file_path = conf.antenna_file
-column_names = ['antenna_ID', 'x', 'y', 'z'] 
-antenna_position = pd.read_csv(file_path, sep='\s+', names=column_names, header=None)
+column_names = ['antenna_ID', 'x', 'y', 'z'] #'x' is East, 'y' is North, 'z' DAQ level (1231m) 
+antenna_position = pd.read_csv(file_path, sep=r'\s+', names=column_names, header=None)
 antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int) 
 
 # ---------------------------------------------------------------
@@ -152,7 +152,17 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     # Store PWF results
     trecons.zenith_pwf = theta_pwf_rad
     trecons.azimuth_pwf = phi_pwf_rad
-    trecons.chi2_pwf = chi2_pwf_reduced
+    trecons.chi2_pwf = chi2_pwf
+
+    # ---------------------------------------------------------------
+    # CRB calculation for PWF
+    # ---------------------------------------------------------------
+    stds_pwf = crb.CRB_PWF(
+        theta_pwf_rad, phi_pwf_rad, Xants
+    )
+
+    trecons.crb_zenith_pwf = stds_pwf[0]
+    trecons.crb_azimuth_pwf = stds_pwf[1]
 
     # ---------------------------------------------------------------
     # Spherical Wave Fit (SWF)
@@ -189,7 +199,17 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     sin_alpha = geom.sin_geomag_angle(theta_adf, phi_adf, B=cons.Bn)
     energy_elm = en.recons_energy_from_voltage(scaling_factor, sin_alpha)
 
-    # Store ADF and energy results and in TRecons
+    # ---------------------------------------------------------------
+    # CRB calculations for ADF and SWF
+    # ---------------------------------------------------------------
+
+    stds = crb.CRB_ADF_SWF(
+        theta_swf_rad, phi_swf_rad, r_xmax, t_s,
+        theta_adf, phi_adf, delta_omega, scaling_factor,
+        Xants
+    )
+
+    # Store ADF, energy results and CRB in TRecons
     trecons.zenith_adf = theta_adf
     trecons.azimuth_adf = phi_adf
     trecons.width = delta_omega
@@ -201,6 +221,17 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.adf_amplitude = amplitude_model
     trecons.distance_source_antenna = l_ant
     trecons.energy_elm_voltage = energy_elm
+
+    # Store CRB results
+    trecons.crb_zenith_adf = stds[4]
+    trecons.crb_azimuth_adf = stds[5]
+    trecons.crb_width = stds[6]
+    trecons.crb_scaling_factor = stds[7]
+    trecons.crb_zenith_swf = stds[0]
+    trecons.crb_azimuth_swf = stds[1]
+    trecons.crb_r_xmax = stds[2]
+    trecons.crb_t_s = stds[3]
+
 
     # ---------------------------------------------------------------
     # Fill the reconstruction tree for this event
@@ -220,20 +251,26 @@ t_recons = TShower(f"{conf.output}")
 for ev_no, run_no in t_recons.get_list_of_events():
     t_recons.get_event(ev_no, run_no)
     
-    print("__________________PWF__________________")
-    print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_pwf)}, phi={np.rad2deg(t_recons.azimuth_pwf)}, chi2_pwf={t_recons.chi2_pwf}")
+    # print("__________________PWF__________________")
+    # print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_pwf)}, phi={np.rad2deg(t_recons.azimuth_pwf)}, chi2_pwf={t_recons.chi2_pwf}")
 
-    print("__________________SWF__________________")
-    print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_swf)}, phi={np.rad2deg(t_recons.azimuth_swf)}, " 
-          f"t_s={t_recons.t_s}, r_xsource={t_recons.r_xmax}, chi2_swf={t_recons.chi2_swf},"
-          f"Xsource={t_recons.Xsource}")
+    # print("__________________SWF__________________")
+    # print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_swf)}, phi={np.rad2deg(t_recons.azimuth_swf)}, " 
+    #       f"t_s={t_recons.t_s}, r_xsource={t_recons.r_xmax}, chi2_swf={t_recons.chi2_swf},"
+    #       f"Xsource={t_recons.Xsource}")
     
-    print("__________________ADF__________________")
-    print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_adf)}, phi={np.rad2deg(t_recons.azimuth_adf)}, " 
-          f"width={t_recons.width}, scaling={t_recons.scaling_factor}, chi2_adf={t_recons.chi2_adf}, energy elm={t_recons.energy_elm_voltage},"
-          f"omega={np.rad2deg(t_recons.omega)},"
-          f"omega cherenkov={np.rad2deg(t_recons.omega_cr)},"
-          f"eta={np.rad2deg(t_recons.eta)},"
-          f"amplitude model={t_recons.adf_amplitude},"
-          f"l_ant={t_recons.distance_source_antenna}"
-          )
+    # print("__________________ADF__________________")
+    # print(f"Event {ev_no} Run {run_no}: zenith={np.rad2deg(t_recons.zenith_adf)}, phi={np.rad2deg(t_recons.azimuth_adf)}, " 
+    #       f"width={t_recons.width}, scaling={t_recons.scaling_factor}, chi2_adf={t_recons.chi2_adf}, energy elm={t_recons.energy_elm_voltage},"
+    #       f"omega={np.rad2deg(t_recons.omega)},"
+    #       f"omega cherenkov={np.rad2deg(t_recons.omega_cr)},"
+    #       f"eta={np.rad2deg(t_recons.eta)},"
+    #       f"amplitude model={t_recons.adf_amplitude},"
+    #       f"l_ant={t_recons.distance_source_antenna}"
+    #   )
+    
+    print("\n\n____________________________________")
+    print(f"Event {ev_no} Run {run_no}")
+    print(f"\nPWF Values and uncertainties:\n Zenith: {np.rad2deg(t_recons.zenith_pwf)} ± {np.rad2deg(t_recons.crb_zenith_pwf)} deg\n Azimuth: {np.rad2deg(t_recons.azimuth_pwf)} ± {np.rad2deg(t_recons.crb_azimuth_pwf)} deg")
+    print(f"\nSWF Values and uncertainties:\n Zenith: {np.rad2deg(t_recons.zenith_swf)} ± {np.rad2deg(t_recons.crb_zenith_swf)} deg\n Azimuth: {np.rad2deg(t_recons.azimuth_swf)} ± {np.rad2deg(t_recons.crb_azimuth_swf)} deg\n r_xmax: {t_recons.r_xmax} ± {t_recons.crb_r_xmax} m\n t_s: {t_recons.t_s} ± {t_recons.crb_t_s} s")
+    print(f"\nADF Values and uncertainties:\n Zenith: {np.rad2deg(t_recons.zenith_adf)} ± {np.rad2deg(t_recons.crb_zenith_adf)} deg\n Azimuth: {np.rad2deg(t_recons.azimuth_adf)} ± {np.rad2deg(t_recons.crb_azimuth_adf)} deg\n Width: {t_recons.width} ± {t_recons.crb_width}\n Scaling factor: {t_recons.scaling_factor} ± {t_recons.crb_scaling_factor}")

@@ -1080,4 +1080,25 @@ class TRecons(MotherEventTree):
     energy_elm_voltage:  TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
 
-   
+    ## Cramér-Rao (lower) bound (CRB)
+    ## CRB of shower zenith angle from ADF (in radians)
+    crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower azimuth angle from ADF (in radians)
+    crb_azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of scaling factor A from ADF fit
+    crb_scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of width parameter from ADF fit (delta_omega)
+    crb_width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower zenith from SWF (in rad)
+    crb_zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower azimuth from SWF (in rad)
+    crb_azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of distance between the reconstructed Xsource and the origin = layout center (in meters)
+    crb_r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of emission time from SWF (in seconds)
+    crb_t_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower zenith from PWF (in radians)
+    crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower azimuth from PWF (in radians)
+    crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+

@@ -31,3 +31,5 @@ This module contains analysis tools for the **reconstruction of events in direct
 
   – `display.py` script that loops over reconstructed events and displays the amplitude profile with the ADF fit and the reconstructed footprint on the ground.
 
+- **`cramer_rao_bounds`** - Main **CRB functions** used in the reconstruction pipeline to estimate the order of magnitude of errors.
+
