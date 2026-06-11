@@ -237,7 +237,8 @@ def install_zig(cfg: Config):
             cfg.zig_bin = zig_bin
             return
         print(
-            f"Found zig version: {version}, but requires zig version between {ZIG_VERSION_RANGE.min} and {ZIG_VERSION_RANGE.max}..."
+            f"""Found zig version: {version}, but requires zig version
+            between {ZIG_VERSION_RANGE.min} and {ZIG_VERSION_RANGE.max}..."""
         )
 
     if cfg.download is False:
