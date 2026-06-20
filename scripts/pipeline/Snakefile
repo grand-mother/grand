@@ -39,6 +39,7 @@ register_in_db = p.pipeline_config["register_in_db"]
 default_config = p.pipeline_config["default_config"]
 pipeline_path = p.pipeline_config["pipeline_path"]
 irods_path = p.pipeline_config["irods_path"]
+send_notification_email = p.pipeline_config["send_notification_email"]
 dbfile=config["dbfile"]
 
 ########################
@@ -49,8 +50,6 @@ tag = basename.split("_", 1)[0]
 current_workdir = os.getcwd()
 tmpdirectory = current_workdir+"/.snakemake/tmp/snakemake_run_"+tag
 os.makedirs(tmpdirectory, exist_ok=True)
-
-### TODO : REMOVE THE LIMIT 10 IN SQL QUERY in get_files_from_db.py
 def get_files(db_file):
     query = subprocess.check_output(
     ["python3", p.pipeline_config["pipeline_path"]+"/get_files_from_db.py","-d",dbfile],
@@ -83,8 +82,11 @@ SAMPLES = get_files(dbfile)
 
 # Create a mapping: basename -> full path
 SAMPLE_MAP = {os.path.basename(f): f for f in SAMPLES}
+print("*************************************************")
+print(SAMPLE_MAP)
+print("*************************************************")
 
-localrules: all,register_transfers,   refresh_matviews,cleanup_tmpdir, notify_user
+localrules: all, cleanup_tmpdir, notify_user
 ########################
 # RULE ALL
 ########################
@@ -102,23 +104,26 @@ rule register_transfers:
     output:
         f"{tmpdirectory}/transfert_registered"
     retries: 3 # 1 initial + 3 retries = 4 attempts total
+    threads: 1
     resources:
         # Exponential scaling: 500, 1000, 2000, 4000 MB
         mem_mb=lambda wildcards, attempt: 500 * (2 ** (attempt - 1)),
         # Exponential scaling: 5, 10, 20, 40 minutes
         runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
-        tmpdir="",
-        slurm=False
-    params:
-        jobname = lambda wildcards: f"register_transfers_{tag}"
+        slurm=False,
+#        tmpdir="",
+#    params:
+#        jobname = lambda wildcards: f"register_transfers_{tag}"
     shell:
         """
         source {conda_init}
         conda run -p {conda_lib} bash -c '
             cd {grandlib_path}
-            export PATH=${conda_lib}/bin/:$PATH
+            export PATH={conda_lib}/bin/:$PATH
             source env/setup.sh
-            python3 {register_transfer} -d {dbfile} -t {tag} -c {default_config} 2>&1 >>   {output}
+            echo "run {conda_lib}/bin/python3"
+            {conda_lib}/bin/python3 {register_transfer} -d {dbfile} -t {tag} -c {default_config} 2>&1 >> {output}.log && touch {output}
+            echo "Done"
         '
         """
 
@@ -132,15 +137,16 @@ rule register_transfers:
 rule bin2root:
    input:
         filepath = lambda wildcards: SAMPLE_MAP[wildcards.file],
-        registered = ancient(f"{tmpdirectory}/transfert_registered")
+        #registered = ancient(f"{tmpdirectory}/transfert_registered")
+        registered = f"{tmpdirectory}/transfert_registered"
    output:
         f"{tmpdirectory}/{{file}}_processed"
-   retries: 2
+   retries: 3
    group: "bin2root"
    resources:
         mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
         runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
-        tmpdir="",
+#        tmpdir="",
         bin2root_limits=1
    shell:
         """
@@ -160,7 +166,7 @@ rule push_to_irods:
     output:
         f"{tmpdirectory}/{{file}}_pushed"
     threads: 1
-    retries: 2
+    retries: 3
     group: "irods"
     resources:
         mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
@@ -186,7 +192,7 @@ rule register_convert_in_db:
     output:
         f"{tmpdirectory}/{{file}}_convreg"
     retries: 3
-    group: "database"
+#    group: "database"
     resources:
         mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
         runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
@@ -200,10 +206,10 @@ rule register_convert_in_db:
         source {conda_init}
         conda run -p {conda_lib} bash -c '
             cd {grandlib_path}
-            export PATH=${conda_lib}/bin/:$PATH
+            export PATH={conda_lib}/bin/:$PATH
             source env/setup.sh
             source {input}
-            python3 {register_convert} -s $convstatus -i $binfile -o $outdest  -c {default_config} -l $logfile 2>&1 >>  {output}.log && echo $outdest >> {output} 
+            {conda_lib}/bin/python3 {register_convert} -s $convstatus -i $binfile -o $outdest  -c {default_config} -l $logfile 2>&1 >>  {output}.log && echo $outdest >> {output} 
         '
         """
 
@@ -218,9 +224,9 @@ rule register_in_db:
         #expand(f"{tmpdirectory}/{{file}}_convreg", file=SAMPLE_MAP.keys())
     output:
         f"{tmpdirectory}/{{file}}_registered"
-    retries: 2
+    retries: 3
     threads: 1
-    group: "database"
+#    group: "database"
     resources:
         mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
         runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
@@ -230,11 +236,11 @@ rule register_in_db:
         source {conda_init}
         conda run -p {conda_lib} bash -c '
             cd {grandlib_path}
-            export PATH=${conda_lib}/bin/:$PATH
+            export PATH={conda_lib}/bin/:$PATH
             source env/setup.sh
             file_to_register=$(cat {input})
             echo $file_to_register >> {tmpdirectory}/registering.log
-            python3  {register_in_db}  -c {default_config} -r "CCIN2P3" $file_to_register 2>&1 >> {output}.log && touch {output}
+            {conda_lib}/bin/python3  {register_in_db}  -c {default_config} -r "CCIN2P3" $file_to_register 2>&1 >> {output}.log && touch {output}
         '
         """
 
@@ -252,16 +258,19 @@ rule refresh_matviews:
         f"{tmpdirectory}/refreshed"
         #f"{tmpdirectory}/{{file}}_refreshed"
     threads: 1
+    retries: 2
     resources:
-        slurm=False  # Exécuter localement
+        mem_mb=lambda wildcards, attempt: 2000 * (2 ** (attempt - 1)),
+        runtime=lambda wildcards, attempt: 5 * (2 ** (attempt - 1)),
+        database_limits=1
     shell:
         """
         source {conda_init}
         conda run -p {conda_lib} bash -c '
             cd {grandlib_path}
-            export PATH=${conda_lib}/bin/:$PATH
+            export PATH={conda_lib}/bin/:$PATH
             source env/setup.sh
-            python3 granddb/refresh_mat_views.py -c {default_config} >> {output}.log && touch {output}
+           {conda_lib}/bin/python3 granddb/refresh_mat_views.py -c {default_config} >> {output}.log && touch {output}
         '
         """
         #echo {input}  refreshed >> {output}"
@@ -289,15 +298,15 @@ rule monitoring:
         """
         filepath_to_monitor=$(cat {input})
         filename=$(basename $filepath_to_monitor)
-        if [[ "$filename" =~ ^GP80.*_MD_.*-10s-.*\.root$ ]]; then
+        if [[ "$filename" =~ ^GP80.*_MD_.*-10s-.*root$ ]]; then
             source {conda_init}
             conda run -p {conda_lib} bash -c '
                 cd {grandlib_path}
-                export PATH=${conda_lib}/bin/:$PATH
+                export PATH={conda_lib}/bin/:$PATH
                 source env/setup.sh
                 file_to_monitor=$(cat {input})
                 echo $file_to_monitor >> {tmpdirectory}/monitoring.log
-                python3 granddb/monitoring_site.py -f $file_to_monitor 2>&1 >> {output}.log && touch {output}
+                {conda_lib}/bin/python3 granddb/monitoring_site.py -f $file_to_monitor 2>&1 >> {output}.log && touch {output}
             '
         else
             echo "skip $filename because not MD" >> {tmpdirectory}/monitoring.log && touch {output}
@@ -316,18 +325,22 @@ rule monitoring:
 rule cleanup_tmpdir:
     input:
         f"{tmpdirectory}/refreshed",
-#        f"{tmpdirectory}/monitoring.done",
         expand(f"{tmpdirectory}/{{file}}_monitoring.done", file=SAMPLE_MAP.keys())
-# commented to avoid push during tests
-#        ,
-#        expand(f"{tmpdirectory}/{{file}}_pushed", file=SAMPLE_MAP.keys())
+        ,
+        expand(f"{tmpdirectory}/{{file}}_pushed", file=SAMPLE_MAP.keys())
+        ,
+        expand(f"{tmpdirectory}/{{file}}_registered", file=SAMPLE_MAP.keys())
+        ,
+        expand(f"{tmpdirectory}/{{file}}_convreg", file=SAMPLE_MAP.keys())
+        ,
+        expand(f"{tmpdirectory}/{{file}}_processed", file=SAMPLE_MAP.keys())
     output:
         f"{tmpdirectory}/CLEANED_UP"
     resources:
         slurm=False  # Exécuter localement
     shell:
-        "echo done > {output}"
-#       "rm -rf {tmpdirectory}/*; echo done > {output}"
+#        "echo done > {output}"
+        "rm -rf {tmpdirectory}/*; echo done > {output}"
 
 ########################
 # STEP 10 – Send email notification
@@ -342,3 +355,21 @@ rule notify_user:
     shell:
         "echo email_sent >> {output}"
 #        "python send_notification_email.py && touch {output}"
+
+
+#onstart:
+#    shell("""
+#        python3 {send_notification_email} -s "Pipeline starting with {dbfile}"  -r fleg@lpnhe.in2p3.fr -b "Pipeline starting with {dbfile}"
+#        """)
+
+onsuccess:
+    shell("""
+        REPORT=$(python3 {pipeline_path}/snakemake_report.py {log} 2>/dev/null || echo "Could not generate report")
+        python3 {send_notification_email} -s "✅ Pipeline finished successfully with {dbfile}" -b "$REPORT" -r fleg@lpnhe.in2p3.fr
+    """)
+
+onerror:
+    shell("""
+        REPORT=$(python3 {pipeline_path}/snakemake_report.py {log} 2>/dev/null || echo "Could not generate report")
+        python3 {send_notification_email} -s "❌ Pipeline FAILED with {dbfile}" -b "$REPORT" -r fleg@lpnhe.in2p3.fr
+    """)

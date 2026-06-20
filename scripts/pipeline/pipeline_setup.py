@@ -17,6 +17,7 @@ pipeline_config["python_interpreter"]=pipeline_config["conda_lib"]+pipeline_conf
 pipeline_config["default_config"]=pipeline_config["pipeline_path"]+"/"+pipeline_config["default_config"]
 pipeline_config["register_transfer"]=pipeline_config["pipeline_path"]+"/"+pipeline_config["register_transfer"]
 pipeline_config["register_convert"]=pipeline_config["pipeline_path"]+"/"+pipeline_config["register_convert"]
+pipeline_config["send_notification_email"]=pipeline_config["pipeline_path"]+"/"+pipeline_config["send_notification_email"]
 
 pipeline_config["register_in_db"]=pipeline_config["grandlib_path"]+"/"+pipeline_config["register_in_db"]
 
