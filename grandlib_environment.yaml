@@ -18,7 +18,7 @@ dependencies:
   - bzip2
   - c-ares
   - ca-certificates
-  - cairo>
+  - cairo
   - certifi
   - cffi
   - cfitsio
@@ -44,7 +44,7 @@ dependencies:
   - freetype
   - fribidi
   - ftgl
-  - gdk-pixbuf>
+  - gdk-pixbuf
   - gettext
   - giflib
   - gl2ps
@@ -56,7 +56,7 @@ dependencies:
   - gtk2
   - gts
   - harfbuzz
-  - icu>
+  - icu
   - idna
   - importlib-metadata
   - importlib_metadata
@@ -99,8 +99,8 @@ dependencies:
   - libtiff
   - libwebp
   - libwebp-base
-  - libxml2>
-  - libzlib>
+  - libxml2
+  - libzlib
   - llvmlite
   - lz4-c
   - markupsafe
