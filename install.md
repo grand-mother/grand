@@ -5,7 +5,7 @@ To intall GRANDlib, we recommend using virtual environments. The following examp
 To do so, execute the following commands in the terminal:
 
 ```bash
-conda create -f grandlib_environment.yaml
+conda env create -f grandlib_environment.yaml
 conda activate grand
 ```
 
