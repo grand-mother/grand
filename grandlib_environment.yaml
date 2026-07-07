@@ -147,7 +147,7 @@ dependencies:
   - pyrsistent
   - pysocks
   - pythia8
-  - python
+  - python=3.13
   - python-dateutil
   - python-fastjsonschema
   - python-json-logger
@@ -159,7 +159,7 @@ dependencies:
   - rfc3339-validator
   - rfc3986-validator
   - rhash
-  - root
+  - root=6.36
   - root_base
   - scipy
   - scitokens-cpp
