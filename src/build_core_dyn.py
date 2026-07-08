@@ -4,6 +4,8 @@ from pathlib import Path
 import platform
 from pycparser import parse_file, c_generator
 import sys
+import subprocess
+import sysconfig
 
 
 SRC_DIR = Path(__file__).parent.resolve()
@@ -42,15 +44,19 @@ include(SRC_DIR / "grand.h")
 
 
 def configure():
+    if platform.system() == "Darwin":
+        rpath = rpath = ["-Wl,-rpath,@loader_path/../lib"]
+    else:
+        rpath = ["-Wl,-rpath,$ORIGIN/../lib"]
+
     with open(SRC_DIR / "grand.c") as f:
         ffi.set_source(
             "grand._core",
             f.read(),
-            extra_objects=[
-                str(LIB_DIR / "libturtle.a"),
-                str(LIB_DIR / "libgull.a"),
-            ],
+            libraries=["turtle", "gull"],
             include_dirs=[str(INC_DIR), str(SRC_DIR)],
+            library_dirs=[str(LIB_DIR)],
+            extra_link_args=rpath,
         )
 
 
@@ -65,21 +71,23 @@ def build():
     module = Path(ffi.compile(verbose=False))
     module = module.rename(PACKAGE_PATH / "_core.abi3.so")
 
-    # Strip all rpaths on macOS — not needed for static linking
-    if platform.system() == "Darwin":
-        import subprocess
-        import sysconfig
+    # Strip conda rpath
+    conda_lib = str(Path(sysconfig.get_path("stdlib")).parent.parent / "lib")
 
-        conda_lib = str(Path(sysconfig.get_path("stdlib")).parent.parent / "lib")
+    if platform.system() == "Darwin":
+        # Remove duplicate rpaths on macOS
         result = subprocess.run(
             ["otool", "-l", str(module)], capture_output=True, text=True
         )
+        seen = False
         for line in result.stdout.splitlines():
             if "path" in line and conda_lib in line:
-                subprocess.run(
-                    ["install_name_tool", "-delete_rpath", conda_lib, str(module)],
-                    capture_output=True,
-                )
+                if seen:
+                    subprocess.run(
+                        ["install_name_tool", "-delete_rpath", conda_lib, str(module)]
+                    )
+                else:
+                    seen = True  # keep first occurrence, delete the rest
 
 
 if __name__ == "__main__":
