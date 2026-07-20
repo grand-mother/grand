@@ -16,7 +16,7 @@ class EventList:
     directory: DataDirectory = None
     """The instance of the directory with files with TTrees containing the event."""
 
-    def __init__(self, inp_name, start_event = None, start_entry = None, **kwargs):
+    def __init__(self, inp_name, start_event = None, start_entry = None, tefield_level = None, **kwargs):
 
         self.event_list = None
 
@@ -52,7 +52,7 @@ class EventList:
         # The arguments to be passed to Event.fill_event_from_trees()
         self.init_kwargs = kwargs
 
-        self.event = Event()
+        self.event = Event(tefield_level = tefield_level)
         self.init_trees = True
 
         # No need to init trees if using a DataDirectory (which inits the trees)

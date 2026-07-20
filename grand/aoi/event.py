@@ -177,6 +177,9 @@ class Event:
     _event_trees: list = None
     _trees: list = None
 
+    # Choose the level of the efield
+    tefield_level: int  = None
+
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
@@ -232,7 +235,11 @@ class Event:
             self.tvoltage = self.directory.tvoltage
         if self.directory.ftefield:
             self.file_tefield = self.directory.ftefield.f
-            self.tefield = self.directory.tefield
+            # If the efield level was not specified, use the default one
+            if self.tefield_level is None:
+                self.tefield = self.directory.tefield
+            else:
+                self.tefield = getattr(self.directory, f"tefield_l{self.tefield_level}")
         if self.directory.ftshower_l1:
             self.file_tshower = self.directory.ftshower_l1.f
             self.tshower = self.directory.tshower_l1
@@ -255,7 +262,7 @@ class Event:
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True, gp300_workaround=True):
+    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True, gp300_workaround=True, tefield_level=None):
         """Fill this event from trees
         :param simshower: how to treat the TShower existing in the file, as sim values or reconstructed values
         :type simshower: bool
@@ -382,8 +389,12 @@ class Event:
         if self.file_tefield:
             # If initialising trees requested
             if init_trees:
+                tree_name = "tefield"
+                # If specific tree level was requested
+                if tefield_level:
+                    tree_name += f"_{tefield_level}"
                 # Check the Efield tree existence
-                if tefield := self.file_tefield.Get("tefield"):
+                if tefield := self.file_tefield.Get(tree_name):
                     self.tefield = TEfield(_tree=tefield)
                 else:
                     print("No Efield tree. Efield information will not be available.")
