@@ -776,6 +776,8 @@ class Event:
         shower.origin_geoid = self.trun.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
         shower.core_ground_pos = tree.shower_core_pos
+        ## Magnetic field in the place of shower
+        shower.magnetic_field = tree.magnetic_field
 
         return ret
 
