@@ -637,6 +637,21 @@ class Event:
 
                 self.antennas.append(a)
 
+                self._all_antennas = {}
+
+            # ToDo: it seems that all antennas of the array may be needed in AOI, so perhaps they should be advanced from an internal variable
+            for i in range(len(self.trun.du_id)):
+                a = Antenna()
+                a.id = self.trun.du_id[i]
+                a.position.x = self.trun.du_xyz[i][0]
+                a.position.y = self.trun.du_xyz[i][1]
+                a.position.z = self.trun.du_xyz[i][2]
+                a.tilt.x = 0
+                a.tilt.y = 0
+
+                self._all_antennas[a.id] = a
+
+
 
     ## Fill part of the event from the Voltage tree
     def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
