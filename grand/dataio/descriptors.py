@@ -352,7 +352,16 @@ class TTreeScalarDesc:
             value = getattr(obj, self.attrname)
         inst = getattr(obj, self.attrname)
 
-        inst[0] = value
+        # Newer python gives a list, while older a scalar. Need to handle both for compatibility
+        arr = np.asarray(value)
+        if arr.ndim == 0:
+            scalar = arr.item()
+        elif arr.size == 1:
+            scalar = arr.reshape(-1)[0].item()
+        else:
+            raise ValueError(f"{self.name} expects a scalar or length-1 value, got shape {arr.shape}")
+
+        inst[0] = scalar
 
 
 class TTreeArrayDesc:
