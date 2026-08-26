@@ -12,6 +12,7 @@ from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
 import grand.dataio
+from line_profiler import profile
 
 
 @dataclass
@@ -676,10 +677,15 @@ class Event:
         for i in range(trace_cnt):
             # Fill the voltage trace part
             v = Voltage()
+            # trr = self.tvoltage.trace[i]
             if not use_trawvoltage:
-                tx = self.tvoltage.trace[i][0]
+                trace = self.tvoltage.trace[i]
+                # tx = self.tvoltage.trace[i][0]
+                tx = trace[0]
             else:
-                tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
+                trace = self.tvoltage.trace_ch[i]
+                # tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
+                tx = trace[trawvoltage_channels[0]]
             v.n_points = len(tx)
             # ToDo: That's the trigger time for now, and should be the start time of the trace
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
@@ -688,11 +694,15 @@ class Event:
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
             if not use_trawvoltage:
-                v.trace.y = self.tvoltage.trace[i][1]
-                v.trace.z = self.tvoltage.trace[i][2]
+                v.trace.y = trace[1]
+                v.trace.z = trace[2]
+                # v.trace.y = self.tvoltage.trace[i][1]
+                # v.trace.z = self.tvoltage.trace[i][2]
             else:
-                v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
-                v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
+                # v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
+                # v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
+                v.trace.y = trace[trawvoltage_channels[1]]
+                v.trace.z = trace[trawvoltage_channels[2]]
 
             # Generate the time array
             v.calculate_t_vector(min_t0)
@@ -737,14 +747,18 @@ class Event:
         # Loop through traces
         for i in range(len(self.tefield.trace)):
             v = Efield()
-            tx = self.tefield.trace[i][0]
+            trace = self.tefield.trace[i]
+            # tx = self.tefield.trace[i][0]
+            tx = trace[0]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
-            v.trace.y = self.tefield.trace[i][1]
-            v.trace.z = self.tefield.trace[i][2]
+            # v.trace.y = self.tefield.trace[i][1]
+            # v.trace.z = self.tefield.trace[i][2]
+            v.trace.y = trace[1]
+            v.trace.z = trace[2]
 
             # Generate the time array
             v.calculate_t_vector(min_t0)
