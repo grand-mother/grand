@@ -789,6 +789,8 @@ class Event:
             ret = tree.get_entry(self._entry_number)
         else:
             ret = tree.get_event(self.event_number, self.run_number)
+        ## Shower primary particle type
+        shower.primary_type = tree.primary_type
         ## Shower energy from e+- (ie related to radio emission) (GeV)
         shower.energy_em = tree.energy_em
         ## Shower total energy of the primary (including muons, neutrinos, ...) (GeV)

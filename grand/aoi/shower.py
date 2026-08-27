@@ -10,6 +10,9 @@ from grand import CartesianRepresentation
 class Shower:
     """A class for holding a shower"""
 
+    primary_type: str = ""
+    """Shower primary particle type, such as proton, Fe, etc."""
+
     energy_em: float = 0
     """Shower from e+- (ie related to radio emission) (GeV)"""
 
