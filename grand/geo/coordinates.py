@@ -470,6 +470,11 @@ class CartesianRepresentation(Coordinates):
         return obj
 
     def info(self):
+        r"""Prints a short description of the object, for interactive use.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         ret = f"CartesianRepresentation: shape {self.shape}, min:{np.min(self)} max:{np.max(self)}"
         return ret
 
@@ -504,14 +509,29 @@ class CartesianRepresentation(Coordinates):
         self[2] = v
 
     def cartesian_to_spherical(self):
+        r"""Returns this vector as a :class:`SphericalRepresentation`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         theta, phi, r = _cartesian_to_spherical(self[0], self[1], self[2])
         return SphericalRepresentation(theta=theta, phi=phi, r=r)
 
     def cartesian_to_horizontal(self):
+        r"""Returns this vector as a :class:`HorizontalRepresentation`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         azi, ele, norm = _cartesian_to_horizontal(self[0], self[1], self[2])
         return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
 
     def norm(self):
+        r"""Returns the Euclidean length of the vector, in metres.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         return np.linalg.norm(self)
 
 
@@ -612,10 +632,20 @@ class SphericalRepresentation(Coordinates):
         self[2] = v
 
     def spherical_to_cartesian(self):
+        r"""Returns this vector as a :class:`CartesianRepresentation`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         x, y, z = _spherical_to_cartesian(self[0], self[1], self[2])
         return CartesianRepresentation(x=x, y=y, z=z)
 
     def spherical_to_horizontal(self):
+        r"""Returns this vector as a :class:`HorizontalRepresentation`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         azi, ele, norm = _spherical_to_horizontal(self[0], self[1], self[2])
         return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
 
@@ -702,10 +732,20 @@ class HorizontalRepresentation(Coordinates):
         self[2] = v
 
     def horizontal_to_cartesian(self):
+        r"""Returns this vector as a :class:`CartesianRepresentation`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         x, y, z = _horizontal_to_cartesian(self[0], self[1], self[2])
         return CartesianRepresentation(x=x, y=y, z=z)
 
     def horizontal_to_spherical(self):
+        r"""Returns this vector as a :class:`SphericalRepresentation`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         th, phi, r = _horizontal_to_spherical(self[0], self[1], self[2])
         return SphericalRepresentation(theta=th, phi=phi, r=r)
 
@@ -962,15 +1002,35 @@ class Geodetic(GeodeticRepresentation):
             )
 
     def geodetic_to_horizontal(self):
+        r"""Returns this position in horizontal coordinates.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         pass
 
     def geodetic_to_ecef(self):
+        r"""Returns this position in the :class:`ECEF` frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         return ECEF(self)
 
     def geodetic_to_grandcs(self):
+        r"""Returns this position in the :class:`GRANDCS` array frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         return GRANDCS(self)
 
     def geodetic_to_ltp(self, ltp):
+        r"""Returns this position in a local tangent plane, :class:`LTP`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         ecef = ECEF(self)
         pos_v = np.vstack(
             (ecef.x - ltp.location.x, ecef.y - ltp.location.y, ecef.z - ltp.location.z)
@@ -1091,12 +1151,27 @@ class ECEF(CartesianRepresentation):
             raise TypeError(type(x), "x, y, and z type must be either int, float, np.ndarray.")
 
     def ecef_to_geodetic(self, reference="GEOID"):
+        r"""Returns this position as latitude, longitude and height.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         return Geodetic(self, reference=reference)
 
     def ecef_to_grandcs(self):
+        r"""Returns this position in the :class:`GRANDCS` array frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         return GRANDCS(self)
 
     def ecef_to_ltp(self, ltp):
+        r"""Returns this position in a local tangent plane, :class:`LTP`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         self = copy(self)
         pos_v = np.vstack(
             (self.x - ltp.location.x, self.y - ltp.location.y, self.z - ltp.location.z)
@@ -1212,6 +1287,11 @@ class Horizontal(HorizontalRepresentation):
         return super().__new__(cls, azimuth, elevation, norm)
 
     def horizontal_to_ecef(self):
+        r"""Returns this direction in the :class:`ECEF` frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         rel = np.deg2rad(self.elevation)
         raz = np.deg2rad(self.azimuth)
         ce = np.cos(rel)
@@ -1235,10 +1315,20 @@ class Horizontal(HorizontalRepresentation):
         return ECEF(x=x, y=y, z=z)
 
     def horizontal_to_geodetic(self):
+        r"""Returns this direction as a geodetic position.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         ecef = self.horizontal_to_ecef()
         return Geodetic(ecef)
 
     def horizontal_to_grandcs(self):
+        r"""Returns this direction in the :class:`GRANDCS` array frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         ecef = self.horizontal_to_ecef()
         return GRANDCS(ecef)
 
@@ -1419,6 +1509,11 @@ class LTP(CartesianRepresentation):
             self.z = z
 
     def ltp_to_ltp(self, ltp):
+        r"""Returns this vector in another local tangent plane.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.
         ecef = ECEF(self)
         pos_v = np.array(
@@ -1430,17 +1525,32 @@ class LTP(CartesianRepresentation):
         return LTP(x=x, y=y, z=z, frame=ltp)
 
     def ltp_to_grandcs(self):
+        r"""Returns this vector in the :class:`GRANDCS` array frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # just instantiating a GRANDCS CS to get it's basis and location. x, y, z values does not matter.
         self = copy(self)
         gcs = GRANDCS(x=0, y=0, z=0)
         self.ltp_to_ltp(gcs)
 
     def ltp_to_ecef(self):
+        r"""Returns this vector in the :class:`ECEF` frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # Basis forms a rotational matrix. Transpose is the inverse of rotational matrix (real).
         # Use inverse (transpose) of rotational matrix to convert from GRANDCS to ECEF.
         return ECEF(self)
 
     def ltp_to_geodetic(self, reference="GEOID"):
+        r"""Returns this vector as a geodetic position.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # Convert from GRANDCS to ECEF, then from ECEF to Geodetic.
         ecef = ECEF(self)
         return Geodetic(ecef, reference=reference)
@@ -1517,15 +1627,30 @@ class GRANDCS(LTP):
         )
 
     def grandcs_to_ecef(self):
+        r"""Returns this vector in the :class:`ECEF` frame.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # Basis forms a rotational matrix. Transpose is the inverse of rotational matrix (real).
         # Use inverse (transpose) of rotational matrix to convert from GRANDCSCS to ECEF.
         return self.ltp_to_ecef()
 
     def grandcs_to_geodetic(self, reference="GEOID"):
+        r"""Returns this vector as a geodetic position.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # Convert from GRANDCSCS to ECEF, then from ECEF to Geodetic.
         return self.ltp_to_geodetic(reference=reference)
 
     def grandcs_to_ltp(self, ltp):
+        r"""Returns this vector in a local tangent plane, :class:`LTP`.
+
+        Every conversion between a local frame and geodetic passes through
+        :class:`ECEF`; see :doc:`/coordinates`.
+        """
         # Convert from GRANDCSCS to ECEF, then from ECEF to Geodetic.
         return self.ltp_to_ltp(ltp)
 
