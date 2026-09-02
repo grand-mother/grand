@@ -1,0 +1,57 @@
+# One environment for running, building, testing and documenting GRANDlib.
+#
+# Consolidates four lists that had drifted apart: env/conda/reqmt_grandenv_2509.yml
+# (runtime), quality/requirements.txt (test + lint, pip), env/docker_*/requirements.txt
+# (a third set, the only one carrying numba and lmfit), and docs dependencies, which
+# nothing declared at all.
+#
+#     conda env create -f env/conda/grand-dev.yml
+#     conda activate grand-dev
+#     source env/setup.sh          # compiles TURTLE and GULL via src/Makefile
+#     pytest
+#
+# Database work needs the separate overlay in reqmt_db.txt; most users do not.
+name: grand-dev
+channels:
+  - conda-forge
+dependencies:
+  # --- runtime (from reqmt_grandenv_2509.yml) ---
+  - python=3.12
+  - root=6.36.04
+  - numpy                  # was implicit via scipy; stated so it is a decision
+  - scipy=1.16.1
+  - matplotlib=3.10.6
+  - h5py=3.14.0
+  - uproot=5.6.5
+  - joblib=1.5.2
+  - asdf=4.5.0
+  - ipympl
+  # --- build: src/build_core.py imports these; src/Makefile needs a toolchain ---
+  - cffi                   # ABSENT from reqmt_grandenv_2509.yml
+  - pycparser              # ABSENT
+  - c-compiler             # ABSENT; TURTLE and GULL are compiled from source
+  - make                   # ABSENT
+  # --- test and quality (was quality/requirements.txt, installed by pip) ---
+  - pytest
+  - pytest-cov
+  - coverage
+  - pylint
+  - mypy
+  - black
+  - ruff
+  # --- documentation (nothing declared these before) ---
+  - sphinx
+  - sphinx_rtd_theme
+  - sphinx-copybutton
+  - numpydoc
+  - myst-parser
+  - jupyter-sphinx
+  - ipykernel
+  # --- needed by work now in flight ---
+  - lmfit                  # docker list only, never in conda
+  - numba                  # docker list only, never in conda
+  # snakemake is NOT here: conda-forge has no `snakemake-minimal` for this
+  # platform, and the reprocessing pipeline (dev_reprocessing) is the only
+  # thing that needs it.  It belongs in a pipeline overlay, not the core
+  # development environment -- most contributors never run Snakemake.
+  - pip

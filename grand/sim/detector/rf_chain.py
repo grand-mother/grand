@@ -253,9 +253,46 @@ def interpol_at_new_x(a_x, a_y, new_x):
     return np.interp(new_x, a_x, a_y)
 
 def db2reim(dB, phase):
-    """Convert quantity given in deciBel to a complex number.
-    :param dB: input quantity in deciBel
-    :param phase: phase of the input quantity in radians.
+    r"""Returns the real and imaginary parts of a quantity given in decibels.
+
+    A magnitude in decibels and a phase describe a complex number in polar
+    form.  This converts that pair to Cartesian form, using the voltage
+    convention :math:`|z| = 10^{dB/20}` rather than the power convention
+    :math:`10^{dB/10}`, because the S-parameters this module reads are
+    measured as voltage ratios by a vector network analyser.
+
+    Parameters
+    ----------
+    dB : array_like
+        Magnitude in decibels.
+    phase : array_like
+        Phase in **radians**.  Note the unit: the tabulated S-parameter
+        files store degrees, so callers convert with :func:`numpy.deg2rad`
+        before calling this.
+
+    Returns
+    -------
+    re : ndarray
+        Real part.
+    im : ndarray
+        Imaginary part.
+
+    Examples
+    --------
+    A 0 dB magnitude is unit modulus, so a quarter-turn of phase lands on
+    the imaginary axis:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.detector.rf_chain import db2reim
+
+        re, im = db2reim(np.array([0.0, -20.0]), np.array([0.0, np.pi/2]))
+        print("re =", np.round(re, 6))
+        print("im =", np.round(im, 6))
+
+    The second entry shows the voltage convention: -20 dB is a factor of
+    ten in amplitude, not a factor of a hundred.
     """
     mag = 10 ** (dB / 20)
 
@@ -265,7 +302,72 @@ def db2reim(dB, phase):
     return re, im
 
 def s2abcd(s11, s21, s12, s22):
-    """this is a normalized A-matrix represented by [a] in the document."""
+    r"""Returns the normalised ABCD matrix of a two-port from its S-parameters.
+
+    Scattering parameters are what a vector network analyser measures, but
+    they do not cascade: the S-matrix of two networks in series is not the
+    product of their S-matrices.  The ABCD (transmission) representation
+    does cascade, which is the whole reason for this conversion — it is what
+    lets :class:`RFChain` obtain the response of the complete chain by
+    multiplying the matrices of the LNA, the baluns, the cable and the
+    VGA-plus-filter in order.
+
+    The normalised form returned here assumes equal reference impedances at
+    both ports, which holds for the 50 :math:`\Omega` measurements this
+    module reads.
+
+    Parameters
+    ----------
+    s11, s21, s12, s22 : array_like
+        The four complex scattering parameters, each of shape ``(n_freq,)``.
+        Obtain them from tabulated magnitude and phase with
+        :func:`db2reim`.
+
+    Returns
+    -------
+    ndarray
+        The ABCD matrix, shape ``(2, 2, n_freq)``, whose entries are
+
+        .. math::
+
+           A = \frac{(1+S_{11})(1-S_{22}) + S_{12}S_{21}}{2S_{21}},\quad
+           B = \frac{(1+S_{11})(1+S_{22}) - S_{12}S_{21}}{2S_{21}},
+
+           C = \frac{(1-S_{11})(1-S_{22}) - S_{12}S_{21}}{2S_{21}},\quad
+           D = \frac{(1-S_{11})(1+S_{22}) + S_{12}S_{21}}{2S_{21}}.
+
+    Notes
+    -----
+    A matched, lossless through-line has :math:`S_{11}=S_{22}=0` and
+    :math:`S_{12}=S_{21}=1`, for which the ABCD matrix is the identity —
+    the check in the example below, and a useful invariant for any test of
+    this function.
+
+    Examples
+    --------
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.detector.rf_chain import s2abcd
+
+        one  = np.ones(3, dtype=complex)
+        zero = np.zeros(3, dtype=complex)
+        abcd = s2abcd(zero, one, one, zero)          # ideal through-line
+
+        print("shape:", abcd.shape)
+        print("identity at every frequency:",
+              np.allclose(abcd, np.eye(2)[:, :, None]))
+
+    See Also
+    --------
+    matmul : cascades two ABCD matrices.
+    RFChain.compute_for_freqs : builds the full chain from its stages.
+
+    References
+    ----------
+    Section 8.3 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_,
+    and the Xidian University RF-chain note cited in the module docstring.
+    """
     return np.asarray([
         [((1+s11)*(1-s22) + s12*s21)/(2*s21), ((1+s11)*(1+s22) - s12*s21)/(2*s21)],
         [((1-s11)*(1-s22) - s12*s21)/(2*s21), ((1-s11)*(1+s22) + s12*s21)/(2*s21)]

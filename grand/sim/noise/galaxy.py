@@ -25,31 +25,83 @@ def interpol_at_new_x(a_x, a_y, new_x):
     return func_interpol(new_x)
 
 def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300'):
-    """
-    This program is used as a subroutine to complete the calculation and
-    expansion of galactic noise
+    r"""Returns the Fourier-domain voltage induced in each antenna arm by Galactic noise.
+
+    The Galactic radio background is computed from LFMap sky brightness
+    temperatures, folded through the response of a GRAND HorizonAntenna and
+    tabulated over frequency (30-250 MHz) and local sidereal time (0-24 h).
+    This routine reads that table and returns one realisation of the induced
+    voltage spectrum for each antenna and each of the three arms.
+
+    Spatial coherence between neighbouring detection units is **not**
+    modelled — it is expected to be small given the sparsity of the array —
+    so each unit receives an independent realisation of the sky-averaged
+    noise.
+
+    Parameters
+    ----------
+    f_lst : float
+        Local sidereal time, in hours.  Truncated to an integer index into
+        the tabulated LST axis; see the note below.
+    size_out : int
+        Length of the padded time trace the spectrum will be transformed
+        back into.  It enters the normalisation of the returned amplitude.
+    freqs_mhz : ndarray, shape (n_freq,)
+        Output frequency axis, in MHz.  The tabulated model is interpolated
+        onto it.
+    nb_ant : int
+        Number of detection units to generate realisations for.
+    seed : int or None, optional
+        Seed for the random generator.  ``None`` (the default) gives an
+        independent realisation on every call; a fixed value makes the
+        output reproducible, which is what the tests rely on.
+    du_type : {'GP300', 'GP300_nec', 'GP300_mat'}, optional
+        Which antenna-response simulation to use for the effective length:
+        HFSS by default, or the NEC or MATLAB variants.
+
+    Returns
+    -------
+    ndarray, shape (nb_ant, 3, n_freq)
+        Complex voltage spectrum per antenna and arm, ordered X, Y, Z.
+
+    Notes
+    -----
+    **The implementation and the published description differ.**  Section
+    8.2 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_ states
+    that the module "mimics the variability of the Galactic noise by
+    multiplying, for each DU, the sky-averaged value of the noise by a
+    different random value of its *phase* for each antenna arm and at each
+    frequency" — that is, a fixed modulus with a randomised phase.  The code
+    below also randomises the modulus, drawing it from a normal distribution
+    scaled by the tabulated amplitude and taking the absolute value.  The
+    two agree in mean power and differ in their fluctuations.  Which is
+    intended has not been settled; it is tracked as part of the
+    galactic-noise decision in the repository overhaul.
+
+    ``f_lst`` is truncated rather than interpolated, so an LST of 18.9 h is
+    treated as 18 h.  The ``TODO`` in the body marks the same point.
+
+    Examples
+    --------
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.noise.galaxy import galactic_noise
+
+        freqs = np.linspace(30.0, 250.0, 221)
+        v = galactic_noise(18.0, 1024, freqs, nb_ant=4, seed=0)
+
+        print("shape (n_ant, 3 arms, n_freq):", v.shape)
+        print("median |V| per arm (uV/MHz):",
+              np.round(np.median(np.abs(v), axis=(0, 2)), 3))
+
+    The Z arm is the one with vertical orientation and sees less of the sky
+    than the horizontal X and Y arms; Fig. 7 of the paper shows the
+    resulting difference across LST.
 
     ..Authors:
-      PengFei and Xidian group
-      Modified by SN including different antenna models for leff
-    :param f_lst: select the galactic noise LST at the LST moment
-    :    type f_lst: float
-    :param size_out: is the extended length
-    :    type size_out: int
-    :param freqs_mhz: array of output frequencies
-    :    type freqs_mhz: float (nb freq,)
-    :param nb_ant: number of antennas
-    :    type nb_ant: int
-    :param show_flag: print figure
-    :    type show_flag: boll
-    :param seed: if None, values are randomly generated as expected. 
-                 if number, same set of randomly generated output. This is useful for testing.
-    : du_type: Calculate the galactic noise for different antenna model simulations.
-                 'GP300' (default) uses hfss simulations for leff
-                 'GP300_nec' uses nec simulations for leff
-                 'Gp300_mat' uses matlab simulations fro leff
-    :return: FFT of galactic noise for all DU and components
-    :rtype: float(nb du, 3, nb freq)
+      PengFei and Xidian group.
+      Modified by SN to support several antenna models for the effective length.
     """
     # TODO: why lst is an integer ?
     lst = int(f_lst)

@@ -24,11 +24,68 @@ from .noise.galaxy import galactic_noise
 logger = getLogger(__name__)
 
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
-    """
-    :param sig_size:            length of time traces (samples)
-    :param f_samp_mhz:          sampling frequency in MHz. ex: 2000 MHz for dt_ns=0.5
-    :param padding_factor:      factor to stretch length of time traces with zeros
-    :return: size_fft (int,0), array freq (float,1) in MHz for rfft()
+    r"""Returns an FFT-friendly transform length and its frequency axis.
+
+    Real FFTs are fastest at lengths whose prime factorisation is small, so
+    rather than transforming ``sig_size`` samples directly this rounds up to
+    the next such length via :func:`scipy.fft.next_fast_len` and returns the
+    matching one-sided frequency axis for :func:`scipy.fft.rfft`.  Padding
+    to a longer length also improves the frequency resolution of the result,
+    which is what ``padding_factor`` is for.
+
+    Parameters
+    ----------
+    sig_size : int
+        Length of the time traces, in samples.
+    f_samp_mhz : ndarray
+        Sampling frequency in MHz, e.g. 2000 MHz for a 0.5 ns bin.  An
+        array is expected and **only its first element is used**: the
+        routine assumes every trace in the event shares one time binning.
+    padding_factor : float, optional
+        Factor by which to stretch the traces with zeros before
+        transforming.  Must be at least 1; the default of 1 pads only as far
+        as the next fast length.
+
+    Returns
+    -------
+    fast_size : int
+        The transform length actually to use, ``>= padding_factor*sig_size``.
+    freqs_mhz : ndarray
+        Frequency axis in MHz, of length ``fast_size//2 + 1``, matching the
+        output of :func:`scipy.fft.rfft` at that length.
+
+    Raises
+    ------
+    AssertionError
+        If ``padding_factor`` is less than 1.
+
+    Examples
+    --------
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.efield2voltage import get_fastest_size_fft
+
+        n, freqs = get_fastest_size_fft(1000, np.array([2000.0]))
+        print("padded length:", n)                 # 1000 is already 2^3 x 5^3
+        print("frequency bins:", freqs.size, "| Nyquist:", freqs[-1], "MHz")
+
+    Doubling the padding halves the bin spacing:
+
+    .. jupyter-execute::
+
+        n2, freqs2 = get_fastest_size_fft(1000, np.array([2000.0]),
+                                          padding_factor=2)
+        print("padded length:", n2)
+        print("bin spacing: %.3f -> %.3f MHz" % (freqs[1], freqs2[1]))
+
+    Notes
+    -----
+    That only ``f_samp_mhz[0]`` is read is a real limitation, not an
+    oversight in this docstring: an event whose detection units record at
+    different sampling rates would silently get the first unit's frequency
+    axis applied to all of them.  The ``ToDo`` in the body marks the same
+    point.
     """
     assert padding_factor >= 1
     dt_s      = 1e-6 / f_samp_mhz

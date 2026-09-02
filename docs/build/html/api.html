@@ -1,0 +1,1208 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API reference &mdash; GRANDlib 0.0</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=c922754e"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Code architecture" href="architecture.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GRANDlib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coordinates.html">Coordinate systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodel.html">The data model</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Code architecture</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-grand.geo.coordinates">Geometry</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.Coordinates"><code class="docutils literal notranslate"><span class="pre">Coordinates</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.info"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.x"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.y"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.z"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.z</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_spherical"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.cartesian_to_spherical()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_horizontal"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.cartesian_to_horizontal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation.norm"><code class="docutils literal notranslate"><span class="pre">CartesianRepresentation.norm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.theta"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.phi"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.phi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.r"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.r</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_cartesian"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.spherical_to_cartesian()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_horizontal"><code class="docutils literal notranslate"><span class="pre">SphericalRepresentation.spherical_to_horizontal()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.azimuth"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.azimuth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.elevation"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.elevation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.norm"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.norm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_cartesian"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.horizontal_to_cartesian()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_spherical"><code class="docutils literal notranslate"><span class="pre">HorizontalRepresentation.horizontal_to_spherical()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.Horizontal"><code class="docutils literal notranslate"><span class="pre">Horizontal</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Horizontal.horizontal_to_ecef"><code class="docutils literal notranslate"><span class="pre">Horizontal.horizontal_to_ecef()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Horizontal.horizontal_to_geodetic"><code class="docutils literal notranslate"><span class="pre">Horizontal.horizontal_to_geodetic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Horizontal.horizontal_to_grandcs"><code class="docutils literal notranslate"><span class="pre">Horizontal.horizontal_to_grandcs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.HorizontalVector"><code class="docutils literal notranslate"><span class="pre">HorizontalVector</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.ECEF"><code class="docutils literal notranslate"><span class="pre">ECEF</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.ECEF.ecef_to_geodetic"><code class="docutils literal notranslate"><span class="pre">ECEF.ecef_to_geodetic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.ECEF.ecef_to_grandcs"><code class="docutils literal notranslate"><span class="pre">ECEF.ecef_to_grandcs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.ECEF.ecef_to_ltp"><code class="docutils literal notranslate"><span class="pre">ECEF.ecef_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.Geodetic"><code class="docutils literal notranslate"><span class="pre">Geodetic</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_horizontal"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_horizontal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_ecef"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_ecef()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_grandcs"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_grandcs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Geodetic.geodetic_to_ltp"><code class="docutils literal notranslate"><span class="pre">Geodetic.geodetic_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.LTP"><code class="docutils literal notranslate"><span class="pre">LTP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_ltp"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_ltp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_grandcs"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_grandcs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_ecef"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_ecef()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.LTP.ltp_to_geodetic"><code class="docutils literal notranslate"><span class="pre">LTP.ltp_to_geodetic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.GRANDCS"><code class="docutils literal notranslate"><span class="pre">GRANDCS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ecef"><code class="docutils literal notranslate"><span class="pre">GRANDCS.grandcs_to_ecef()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.GRANDCS.grandcs_to_geodetic"><code class="docutils literal notranslate"><span class="pre">GRANDCS.grandcs_to_geodetic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ltp"><code class="docutils literal notranslate"><span class="pre">GRANDCS.grandcs_to_ltp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.Reference"><code class="docutils literal notranslate"><span class="pre">Reference</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Reference.ELLIPSOID"><code class="docutils literal notranslate"><span class="pre">Reference.ELLIPSOID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.geo.coordinates.Reference.GEOID"><code class="docutils literal notranslate"><span class="pre">Reference.GEOID</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.coordinates.geoid_undulation"><code class="docutils literal notranslate"><span class="pre">geoid_undulation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.geomagnet.field"><code class="docutils literal notranslate"><span class="pre">field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.geo.geomagnet.Geomagnet"><code class="docutils literal notranslate"><span class="pre">Geomagnet</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-grand.sim.efield2voltage">Simulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.efield2voltage.get_fastest_size_fft"><code class="docutils literal notranslate"><span class="pre">get_fastest_size_fft()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.get_event"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.get_event()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.get_leff"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.get_leff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.get_time_samples"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.get_time_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.add"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.multiply"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.multiply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.final_resample"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.final_resample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_du"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voc_du()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_event"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voc_event()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_du"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voltage_du()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_event"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voltage_event()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.compute_voltage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.efield2voltage.Efield2Voltage.save_voltage"><code class="docutils literal notranslate"><span class="pre">Efield2Voltage.save_voltage()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.detector.process_ant.MissingFrameError"><code class="docutils literal notranslate"><span class="pre">MissingFrameError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_first"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_first</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_lastp1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_itp"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.idx_itp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_inf"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.c_inf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_sup"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.c_sup</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.init_linear_interpol()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol"><code class="docutils literal notranslate"><span class="pre">PreComputeInterpol.get_linear_interpol()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.model_leff"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.model_leff</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.pos"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.pos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.pre_cpt"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.pre_cpt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.init_interpolation"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.init_interpolation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.set_out_freq_mhz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.effective_length"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.effective_length()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.process_ant.AntennaProcessing.compute_voltage"><code class="docutils literal notranslate"><span class="pre">AntennaProcessing.compute_voltage()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.noise.galaxy.interpol_at_new_x"><code class="docutils literal notranslate"><span class="pre">interpol_at_new_x()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.noise.galaxy.galactic_noise"><code class="docutils literal notranslate"><span class="pre">galactic_noise()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.sim.detector.adc.ADC"><code class="docutils literal notranslate"><span class="pre">ADC</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.adc.ADC.downsample"><code class="docutils literal notranslate"><span class="pre">ADC.downsample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.sim.detector.adc.ADC.process"><code class="docutils literal notranslate"><span class="pre">ADC.process()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-grand.basis.type_trace">Basis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grand.basis.type_trace.ElectricField"><code class="docutils literal notranslate"><span class="pre">ElectricField</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.a_time"><code class="docutils literal notranslate"><span class="pre">ElectricField.a_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.e_xyz"><code class="docutils literal notranslate"><span class="pre">ElectricField.e_xyz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.pos_xyz"><code class="docutils literal notranslate"><span class="pre">ElectricField.pos_xyz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.frame"><code class="docutils literal notranslate"><span class="pre">ElectricField.frame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.get_fft"><code class="docutils literal notranslate"><span class="pre">ElectricField.get_fft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.get_delta_time_s"><code class="docutils literal notranslate"><span class="pre">ElectricField.get_delta_time_s()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.ElectricField.get_nb_sample"><code class="docutils literal notranslate"><span class="pre">ElectricField.get_nb_sample()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grand.basis.type_trace.Voltage"><code class="docutils literal notranslate"><span class="pre">Voltage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.Voltage.t"><code class="docutils literal notranslate"><span class="pre">Voltage.t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.Voltage.V"><code class="docutils literal notranslate"><span class="pre">Voltage.V</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.Voltage.get_fft"><code class="docutils literal notranslate"><span class="pre">Voltage.get_fft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.Voltage.get_delta_time_s"><code class="docutils literal notranslate"><span class="pre">Voltage.get_delta_time_s()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grand.basis.type_trace.Voltage.get_nb_sample"><code class="docutils literal notranslate"><span class="pre">Voltage.get_nb_sample()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GRANDlib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>Generated from the docstrings.  Coverage is uneven — of 554 functions and
+methods in the package, 61% carry some docstring, 17% document their
+parameters and none carry a worked example.  Phase 7 of the overhaul brings
+all of them to one standard.</p>
+<section id="module-grand.geo.coordinates">
+<span id="geometry"></span><h2>Geometry<a class="headerlink" href="#module-grand.geo.coordinates" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>units:</dt><dd><ul class="simple">
+<li><p>energy: GeV</p></li>
+<li><p>time  : nanosecond</p></li>
+<li><p>length: m</p></li>
+<li><p>voltage: microVolt</p></li>
+<li><p>Efield: microVolt/m</p></li>
+<li><p>Bfield: nanoTesla</p></li>
+<li><p>angles: degree</p></li>
+<li><p>grammage: g/cm2</p></li>
+<li><p>Density: g/cm3</p></li>
+<li><p>frequency: Hz</p></li>
+<li><p>resistance: Ohm</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Coordinates">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Coordinates" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a></p>
+<p>Generic container for a coordinates object
+This object created is a standard np.ndarray of size (3, n)
+where 3 is for 3D coordinates and n is the number of entries.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">CartesianRepresentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.Coordinates" title="grand.geo.coordinates.Coordinates"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coordinates</span></code></a></p>
+<p>Generic container for cartesian coordinates</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.info">
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.info" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.x">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.y">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.z">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">z</span></span><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.z" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.cartesian_to_spherical">
+<span class="sig-name descname"><span class="pre">cartesian_to_spherical</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.cartesian_to_spherical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_spherical" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.cartesian_to_horizontal">
+<span class="sig-name descname"><span class="pre">cartesian_to_horizontal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.cartesian_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.cartesian_to_horizontal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.CartesianRepresentation.norm">
+<span class="sig-name descname"><span class="pre">norm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#CartesianRepresentation.norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.CartesianRepresentation.norm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">SphericalRepresentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#SphericalRepresentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.Coordinates" title="grand.geo.coordinates.Coordinates"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coordinates</span></code></a></p>
+<p>Generic container for spherical coordinates</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.theta">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">theta</span></span><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.theta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.phi">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">phi</span></span><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.phi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.r">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">r</span></span><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.r" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.spherical_to_cartesian">
+<span class="sig-name descname"><span class="pre">spherical_to_cartesian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#SphericalRepresentation.spherical_to_cartesian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_cartesian" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.SphericalRepresentation.spherical_to_horizontal">
+<span class="sig-name descname"><span class="pre">spherical_to_horizontal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#SphericalRepresentation.spherical_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.SphericalRepresentation.spherical_to_horizontal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">HorizontalRepresentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalRepresentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.Coordinates" title="grand.geo.coordinates.Coordinates"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coordinates</span></code></a></p>
+<p>Generic container for horizontal coordinates.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.azimuth">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">azimuth</span></span><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.azimuth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.elevation">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">elevation</span></span><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.elevation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.norm">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">norm</span></span><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.norm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.horizontal_to_cartesian">
+<span class="sig-name descname"><span class="pre">horizontal_to_cartesian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalRepresentation.horizontal_to_cartesian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_cartesian" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalRepresentation.horizontal_to_spherical">
+<span class="sig-name descname"><span class="pre">horizontal_to_spherical</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalRepresentation.horizontal_to_spherical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalRepresentation.horizontal_to_spherical" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Horizontal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Geodetic([[38.88849],</span> <span class="pre">[92.28605],</span> <span class="pre">[2920.522]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation" title="grand.geo.coordinates.HorizontalRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">HorizontalRepresentation</span></code></a></p>
+<p>Generic container for horizontal coordinates.</p>
+<p>azimuth  : angle (deg) starting from true North towards East.
+elevation: angle (deg) from horizontal plane towards zenith.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal.horizontal_to_ecef">
+<span class="sig-name descname"><span class="pre">horizontal_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal.horizontal_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal.horizontal_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal.horizontal_to_geodetic">
+<span class="sig-name descname"><span class="pre">horizontal_to_geodetic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal.horizontal_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal.horizontal_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Horizontal.horizontal_to_grandcs">
+<span class="sig-name descname"><span class="pre">horizontal_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Horizontal.horizontal_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Horizontal.horizontal_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.HorizontalVector">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">HorizontalVector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#HorizontalVector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.HorizontalVector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.HorizontalRepresentation" title="grand.geo.coordinates.HorizontalRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">HorizontalRepresentation</span></code></a></p>
+<p>This class has been merged into Horizontal class
+by adding ‘vector’ attribute to reduce code duplication.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">ECEF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">CartesianRepresentation</span></code></a></p>
+<p>Generic container for Earth-Centered Earth-Fixed (ECEF) coordinate system.
+Center of Earth is the origin of this frame.</p>
+<p>ECEF is a right-handed Cartesian coordinate system with the origin at the
+Earth’s center. This coordinate frame is fixed with respect to the Earth
+(i.e., rotates along with the Earth). Units are in meters. The three axis are
+defined as follows:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>x :   Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).</p></li>
+<li><p>y :   Passes through the equator 90 degrees east of the Prime Meridian (latitude = 0, longitude = 90 degrees).</p></li>
+<li><p>z :   Passes through the North Pole (latitude = 90 degrees, longitude = any value).</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Reason to have __new__ and __init__ is to store obstime as instance attribute.
+obstime will be saved as class attribute if only __new__ is used. This means
+if obstime is modified for one case anywhere during calculation, obstime for
+all cases will be modified.</p>
+</dd>
+<dt class="field-even">Todo<span class="colon">:</span></dt>
+<dd class="field-even"><p>find an elegant way to do this.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF.ecef_to_geodetic">
+<span class="sig-name descname"><span class="pre">ecef_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF.ecef_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF.ecef_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF.ecef_to_grandcs">
+<span class="sig-name descname"><span class="pre">ecef_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF.ecef_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF.ecef_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.ECEF.ecef_to_ltp">
+<span class="sig-name descname"><span class="pre">ecef_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#ECEF.ecef_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.ECEF.ecef_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GeodeticRepresentation</span></code></p>
+<p>Generic container for Geodetic coordinate system. Center of this frame
+is the center of Earth.</p>
+<dl class="simple">
+<dt>Latitude:   Angle north and south of the equator. +ve in the northern hemisphere,</dt><dd><p>-ve in the southern hemisphere. Range: -90 deg (South Pole)
+to +90 deg (North Pole). In equator, latitude = 0.</p>
+</dd>
+<dt>Longitude:  Angle east and west of the Prime Meridian. The Prime Meridian</dt><dd><p>is a north-south line that passes through Greenwich, UK.
++ve to the east of the Prime Meridian, -ve to the west.
+Range: 0 deg to 360 deg positive or negative.
+Note that coordinate transformation is possible for +ve 0 to 360 deg.
+So negative values are changed to positive by adding 360.</p>
+</dd>
+<dt>Height:     Also called altitude or elevation, this represents the height above</dt><dd><p>the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
+mathematical surface defined by a semi-major axis and a semi-minor axis.
+The most common values for these two parameters are defined by
+the World Geodetic Standard 1984 (WGS-84). The WGS-84 ellipsoid is
+intended to correspond to mean sea level. A Geodetic height of zero
+therefore roughly corresponds to sea level, with positive values increasing
+away from the Earth’s center. The theoretical range of height values is
+from the center of the Earth (about -6,371km) to positive infinity.</p>
+</dd>
+<dt>Imp:</dt><dd><p>It was necessary to divide __new__ into __new__ and __init__ to keep track
+of reference attribute. Using __new__ only caused reference to be a class
+attribute. So, if you change reference (as a class attribute) in any part
+of the code, reference for all instances changes resulting in a wrong calculation.
+To save reference as instance attribute instead of class attribute,
+__init__ is necessary. Same approach is used in LTP.
+Todo: There might be an elegant way to do this.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_horizontal">
+<span class="sig-name descname"><span class="pre">geodetic_to_horizontal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_horizontal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_horizontal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_ecef">
+<span class="sig-name descname"><span class="pre">geodetic_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_grandcs">
+<span class="sig-name descname"><span class="pre">geodetic_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Geodetic.geodetic_to_ltp">
+<span class="sig-name descname"><span class="pre">geodetic_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Geodetic.geodetic_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Geodetic.geodetic_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">LTP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">CartesianRepresentation</span></code></a></p>
+<p>Calculates basis and orgin at a given latitude and longitude.
+Basis and origin is calculated in ECEF frame.
+‘location’ and ‘orientation’ are required.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_ltp">
+<span class="sig-name descname"><span class="pre">ltp_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_grandcs">
+<span class="sig-name descname"><span class="pre">ltp_to_grandcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_grandcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_grandcs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_ecef">
+<span class="sig-name descname"><span class="pre">ltp_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.LTP.ltp_to_geodetic">
+<span class="sig-name descname"><span class="pre">ltp_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#LTP.ltp_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.LTP.ltp_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">GRANDCS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><code class="xref py py-class docutils literal notranslate"><span class="pre">LTP</span></code></a></p>
+<p>Class for the GRANDCS coordinate system (cs). This class instantiate coordinates
+in GRANDCS’s coordinate frame. Input can be either x, y, z coordinates value
+in GRANDCS’s cs or coordinates in ECEF or Geodetic system.</p>
+<p>If the input coordinates are in ECEF or Geodetic (or any coordinate system
+other than GRANDCS’s cs) following procedure is performed. Convert everything
+to ECEF frame to do all initial calculations and then finally project the
+positional vector from GRANDCS’s cs origin to it’s basis vectors. Basis for NWU GRANDCS’s
+cs is calculated based on GRANDCS’s origin. Basis forms a rotational matrix.
+Transpose of the rotational matrix is it’s inverse. Basis in this case are unit
+vectors in ECEF frame that describes the NWU direction from GRANDCS’s origin
+(also in ECEF frame). To convert other cs to GRANDCS’s cs, first transform the
+coordinates in ECEF frame, then shift the origin of coordinates from
+ECEF’s origin to GRANDCS’s origin. Now you get a positional vector from GRANDCS’s origin
+in ECEF frame. Take a dot product of this positional vector with the NWU basis unit
+vectors to get the coordinates in GRANDCS coordinate system.</p>
+<p>Use inverse (transpose) of rotational matrix to convert from GRANDCS cs to ECEF. Then
+convert from ECEF to Geodetic.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS.grandcs_to_ecef">
+<span class="sig-name descname"><span class="pre">grandcs_to_ecef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS.grandcs_to_ecef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ecef" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS.grandcs_to_geodetic">
+<span class="sig-name descname"><span class="pre">grandcs_to_geodetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS.grandcs_to_geodetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS.grandcs_to_geodetic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.geo.coordinates.GRANDCS.grandcs_to_ltp">
+<span class="sig-name descname"><span class="pre">grandcs_to_ltp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ltp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#GRANDCS.grandcs_to_ltp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.GRANDCS.grandcs_to_ltp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Reference">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">Reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#Reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.Reference" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.IntEnum" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></a></p>
+<p>Reference level for height in Geodetic coordinate system.
+Reference is also defined in topography.py for Topography use.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Reference.ELLIPSOID">
+<span class="sig-name descname"><span class="pre">ELLIPSOID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#grand.geo.coordinates.Reference.ELLIPSOID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.geo.coordinates.Reference.GEOID">
+<span class="sig-name descname"><span class="pre">GEOID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#grand.geo.coordinates.Reference.GEOID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.coordinates.geoid_undulation">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.coordinates.</span></span><span class="sig-name descname"><span class="pre">geoid_undulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/coordinates.html#geoid_undulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.coordinates.geoid_undulation" title="Link to this definition"></a></dt>
+<dd><p>Get the geoid undulation. This function calculates the height of
+the geoid w.r.t the ellipsoid at a given latitude and longitude.
+This function is also defined in topography.py for Topography use.</p>
+</dd></dl>
+
+<p id="module-grand.geo.geomagnet">Geomagnetic field wrapper for GRAND packages</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.geo.geomagnet.field">
+<span class="sig-prename descclassname"><span class="pre">grand.geo.geomagnet.</span></span><span class="sig-name descname"><span class="pre">field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.ECEF" title="grand.geo.coordinates.ECEF"><span class="pre">ECEF</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.Geodetic" title="grand.geo.coordinates.Geodetic"><span class="pre">Geodetic</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span></span><a class="reference internal" href="_modules/grand/geo/geomagnet.html#field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.geomagnet.field" title="Link to this definition"></a></dt>
+<dd><p>Get the default geo-magnetic field at the given <em>coordinates</em>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.geo.geomagnet.Geomagnet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.geo.geomagnet.</span></span><span class="sig-name descname"><span class="pre">Geomagnet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.ECEF" title="grand.geo.coordinates.ECEF"><span class="pre">ECEF</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.Geodetic" title="grand.geo.coordinates.Geodetic"><span class="pre">Geodetic</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obstime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.date" title="(in Python v3.14)"><span class="pre">date</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/geo/geomagnet.html#Geomagnet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.geo.geomagnet.Geomagnet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Proxy to a geomagnetic model. ‘IGRF13’ is used as a default model.
+Get the geo-magnetic field components [Bx, By, Bz] on any geodetic location of
+Earth at any given time. For location, either provide latitude (deg), longitude (deg), and
+height (m) or provide location in ECEF, Geodetic, or GRAND coordinate system. TypeError
+will occur if location is not provided. For obstime, provide time in isoformat
+(‘2020-01-19’) or in datetime.date(2020, 1, 19). If obstime is not provided, a
+default value (‘2020-01-01’) is used.</p>
+</dd></dl>
+
+</section>
+<section id="module-grand.sim.efield2voltage">
+<span id="simulation"></span><h2>Simulation<a class="headerlink" href="#module-grand.sim.efield2voltage" title="Link to this heading"></a></h2>
+<p>Master module for the detector unit simulation GRAND</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.get_fastest_size_fft">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.efield2voltage.</span></span><span class="sig-name descname"><span class="pre">get_fastest_size_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_samp_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#get_fastest_size_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.get_fastest_size_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sig_size</strong> – length of time traces (samples)</p></li>
+<li><p><strong>f_samp_mhz</strong> – sampling frequency in MHz. ex: 2000 MHz for dt_ns=0.5</p></li>
+<li><p><strong>padding_factor</strong> – factor to stretch length of time traces with zeros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>size_fft (int,0), array freq (float,1) in MHz for rfft()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.sim.efield2voltage.</span></span><span class="sig-name descname"><span class="pre">Efield2Voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">du_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GP300'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Class to compute voltage with GRANDROOT IO</p>
+<dl class="simple">
+<dt>Goals:</dt><dd><ul class="simple">
+<li><p>Call simulator of detector units with ROOT data</p></li>
+<li><p>Call on more than one event</p></li>
+<li><p>Call on some stations of some event (not tested, not sure it would work as is) #TODO:</p></li>
+<li><p>Different models are availiable for the response of the Detectore units using different simulations packages. The availiable option are (according the du_type parameter) du_type=’GP300’ (using hfss simulations), ‘GP300_nec’ (using nec simulations), ‘GP300_mat’ (using matlab simulations), ‘Horizon’</p></li>
+<li><p>Save output in ROOT format</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.get_event">
+<span class="sig-name descname"><span class="pre">get_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.get_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.get_event" title="Link to this definition"></a></dt>
+<dd><p>Load data of event with index event_idx or with event_number and run_number.
+Call this method everytime to load data for a new event with different event_idx, or with different event_number and run_number.
+:param: event_idx: index of event in events_list. It is a number from range(len(event_list)).
+:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.get_leff">
+<span class="sig-name descname"><span class="pre">get_leff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.get_leff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.get_leff" title="Link to this definition"></a></dt>
+<dd><p>Define for each antenna in DU du_idx an object AntennaProcessing according its position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>du_idx</strong> – index of DU</p>
+</dd>
+</dl>
+<p>:    type du_idx: int</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.get_time_samples">
+<span class="sig-name descname"><span class="pre">get_time_samples</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.get_time_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.get_time_samples" title="Link to this definition"></a></dt>
+<dd><p>Define time sample in ns for the duration of the trace
+t_samples.shape  = (nb_du, self.sig_size)
+t_start_ns.shape = (nb_du,)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.add" title="Link to this definition"></a></dt>
+<dd><p>Add addend on vout_f. Used to add noises manually.
+Make sure:</p>
+<blockquote>
+<div><p>addend is in frequency domain
+addend broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)
+addend is computed/interpolated for self.freqs_mhz</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.multiply">
+<span class="sig-name descname"><span class="pre">multiply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiplier</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.multiply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.multiply" title="Link to this definition"></a></dt>
+<dd><p>Multiply vout_f by multiplier. Used to manually provide RF chain.
+Make sure:</p>
+<blockquote>
+<div><p>multiplier is in frequency domain
+multiplier broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)
+multiplier is computed/interpolated for self.freqs_mhz</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.final_resample">
+<span class="sig-name descname"><span class="pre">final_resample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.final_resample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.final_resample" title="Link to this definition"></a></dt>
+<dd><p>after everything is done, change the sampling rate if needded and adjust to the desired target lenght:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voc_du">
+<span class="sig-name descname"><span class="pre">compute_voc_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voc_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_du" title="Link to this definition"></a></dt>
+<dd><p>Compute open circuit voltage for one DU of one event.
+This method is the base of computing voltage.
+All voltage computation is build on top of this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>du_idx</strong> – index of DU in array traces</p>
+</dd>
+</dl>
+<p>:    type du_idx: int</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voc_event">
+<span class="sig-name descname"><span class="pre">compute_voc_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voc_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voc_event" title="Link to this definition"></a></dt>
+<dd><p>Compute/simulate all DU in event either with index event_idx or with event_number and run_number.
+Computes open circuit voltage in time domain (voc) and frequency domain (voc_f)
+voc.shape = (nb_du, 3, len of time traces)
+voc_f.shape = (nb_du, 3, len of freqs_mhz)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)).</p>
+</dd>
+</dl>
+<p>:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voltage_du">
+<span class="sig-name descname"><span class="pre">compute_voltage_du</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">du_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voltage_du"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_du" title="Link to this definition"></a></dt>
+<dd><p>Compute voltage output for one DU with index du_idx.
+This method can add noises and RF chain to Voc if requested.</p>
+<dl class="simple">
+<dt>Processing order:</dt><dd><ol class="arabic simple">
+<li><p>compute Voc using antenna responses</p></li>
+<li><p>add galactic noise (if requested)</p></li>
+<li><p>RF chain effect    (if requested)</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)).</p>
+</dd>
+</dl>
+<p>:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voltage_event">
+<span class="sig-name descname"><span class="pre">compute_voltage_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voltage_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage_event" title="Link to this definition"></a></dt>
+<dd><p>Simulate all DU of an event either with index event_idx or with event_number and run_number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event_idx</strong> – index of event for which voltage is computed.</p>
+</dd>
+</dl>
+<p>This method is equivalent to the code below that takes longer.
+for du_idx in range(self.nb_du):</p>
+<blockquote>
+<div><p>self.compute_voltage_du(du_idx)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)).</p>
+</dd>
+</dl>
+<p>:    type: int
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
+:    type: int
+Note: Either event_idx, or both event_number and run_number must be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.compute_voltage">
+<span class="sig-name descname"><span class="pre">compute_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">du_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.compute_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.compute_voltage" title="Link to this definition"></a></dt>
+<dd><p>Primary method to compute voltage.
+Compute/simulate voltage for any or all DUs for any or all events in input file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Param<span class="colon">:</span></dt>
+<dd class="field-odd"><p>event_idx: index of event in events_list. It is a number from range(len(event_list)). If None, all events in an input file is used.</p>
+</dd>
+</dl>
+<p>:    type: int, list, np.ndarray
+:param du_idx: index of DU for which voltage is computed. If None, all DUs of an event is used. du_idx can be used for only one event.
+:    type: int, list, np.ndarray
+:param: event_number: event_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
+:    type: int, list, np.ndarray
+:param: run_number: run_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
+:    type: int, list, np.ndarray</p>
+<dl class="simple">
+<dt>Note: Either event_idx, or both event_number and run_number must be provided, or all three must be None.</dt><dd><p>if du_idx is provided, voltage of the given DU of the given event is computed.
+du_idx can be an integer or list/np.ndarray. du_idx can be used for only one event.
+If improper event_idx or (event_number and run_number) is used, an error is generated when self.get_event() is called.
+Selective events with either event_idx or both event_number and run_number can be given.
+If list/np.ndarray is provided, length of event_number and run_number must be equal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.efield2voltage.Efield2Voltage.save_voltage">
+<span class="sig-name descname"><span class="pre">save_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">append_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/efield2voltage.html#Efield2Voltage.save_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.efield2voltage.Efield2Voltage.save_voltage" title="Link to this definition"></a></dt>
+<dd><p>: output path/file = self.f_output. It must be defined during instantiation of this class.
+:    type file_out: str
+:param append_file: use input file to add output
+:    type append_file: bool</p>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-grand.sim.detector.process_ant">Processing effective length of antenna</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.MissingFrameError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.process_ant.</span></span><span class="sig-name descname"><span class="pre">MissingFrameError</span></span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#MissingFrameError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.MissingFrameError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a></p>
+<p>Error class</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.process_ant.</span></span><span class="sig-name descname"><span class="pre">PreComputeInterpol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx_first</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_lastp1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_itp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_inf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_sup</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#PreComputeInterpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Precompute linear interpolation of frequency of Leff</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.idx_first">
+<span class="sig-name descname"><span class="pre">idx_first</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_first" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1">
+<span class="sig-name descname"><span class="pre">idx_lastp1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_lastp1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.idx_itp">
+<span class="sig-name descname"><span class="pre">idx_itp</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.idx_itp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.c_inf">
+<span class="sig-name descname"><span class="pre">c_inf</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_inf" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.c_sup">
+<span class="sig-name descname"><span class="pre">c_sup</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.c_sup" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol">
+<span class="sig-name descname"><span class="pre">init_linear_interpol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq_in_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_out_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#PreComputeInterpol.init_linear_interpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.init_linear_interpol" title="Link to this definition"></a></dt>
+<dd><p>Precompute coefficient of linear interpolation for freq_out_mhz with reference defined at freq_in_mhz
+:param freq_in_mhz: regular array of frequency where function is defined
+:param freq_out_mhz: regular array frequency where we want interpol</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol">
+<span class="sig-name descname"><span class="pre">get_linear_interpol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#PreComputeInterpol.get_linear_interpol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.PreComputeInterpol.get_linear_interpol" title="Link to this definition"></a></dt>
+<dd><p>Return f(freq_out_mhz) by linear interpolation of f defined by
+f(freq_in_mhz) = a_val
+:param a_val: defined value of function at freq_in_mhz</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.process_ant.</span></span><span class="sig-name descname"><span class="pre">AntennaProcessing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_leff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Processing effective length of antenna</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.model_leff">
+<span class="sig-name descname"><span class="pre">model_leff</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.model_leff" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.pos">
+<span class="sig-name descname"><span class="pre">pos</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></span><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.pos" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.pre_cpt">
+<span class="sig-name descname"><span class="pre">pre_cpt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#grand.sim.detector.process_ant.PreComputeInterpol" title="grand.sim.detector.process_ant.PreComputeInterpol"><span class="pre">PreComputeInterpol</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.pre_cpt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.init_interpolation">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">init_interpolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq_sampling_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_out_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.init_interpolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.init_interpolation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz">
+<span class="sig-name descname"><span class="pre">set_out_freq_mhz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_freq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.set_out_freq_mhz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.set_out_freq_mhz" title="Link to this definition"></a></dt>
+<dd><p>!
+typically the return of scipy.fft.rfftfreq/1e6
+:param a_freq:
+:type a_freq:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.effective_length">
+<span class="sig-name descname"><span class="pre">effective_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">efield</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.basis.type_trace.ElectricField" title="grand.basis.type_trace.ElectricField"><span class="pre">ElectricField</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span></span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.effective_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.effective_length" title="Link to this definition"></a></dt>
+<dd><p>Calculation of FFT length effective of antenna for a given Xmax position.
+Linear interpolation of template of effective length in Fourier space
+by tripler (theta, phi, frequency)
+in direction of the efield source at antenna position
+:param xmax:
+:param efield:
+:param frame:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.process_ant.AntennaProcessing.compute_voltage">
+<span class="sig-name descname"><span class="pre">compute_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">efield</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.basis.type_trace.ElectricField" title="grand.basis.type_trace.ElectricField"><span class="pre">ElectricField</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#grand.basis.type_trace.Voltage" title="grand.basis.type_trace.Voltage"><span class="pre">Voltage</span></a></span></span><a class="reference internal" href="_modules/grand/sim/detector/process_ant.html#AntennaProcessing.compute_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.process_ant.AntennaProcessing.compute_voltage" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xmax</strong></p></li>
+<li><p><strong>efield</strong></p></li>
+<li><p><strong>frame</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-grand.sim.noise.galaxy">Simulation of galaxy emission in radio frequency</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.noise.galaxy.interpol_at_new_x">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.noise.galaxy.</span></span><span class="sig-name descname"><span class="pre">interpol_at_new_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/noise/galaxy.html#interpol_at_new_x"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.noise.galaxy.interpol_at_new_x" title="Link to this definition"></a></dt>
+<dd><p>Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
+and set to zero outside interval definition a_x</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> (<em>a_y</em><em> (</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>,</em>) – F(a_x) = a_y, N size of a_x</p></li>
+<li><p><strong>(</strong><strong>N</strong><strong>)</strong><strong>)</strong> – F(a_x) = a_y</p></li>
+<li><p><strong>(</strong><strong>M</strong><strong>)</strong><strong>)</strong> (<em>new_x</em><em> (</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>,</em>) – new value of x</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>F(new_x) (float, (M)): interpolation of F at new_x</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="grand.sim.noise.galaxy.galactic_noise">
+<span class="sig-prename descclassname"><span class="pre">grand.sim.noise.galaxy.</span></span><span class="sig-name descname"><span class="pre">galactic_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f_lst</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freqs_mhz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_ant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">du_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GP300'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/noise/galaxy.html#galactic_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.noise.galaxy.galactic_noise" title="Link to this definition"></a></dt>
+<dd><p>This program is used as a subroutine to complete the calculation and
+expansion of galactic noise</p>
+<dl class="simple">
+<dt>..Authors:</dt><dd><p>PengFei and Xidian group
+Modified by SN including different antenna models for leff</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f_lst</strong> – select the galactic noise LST at the LST moment</p>
+</dd>
+</dl>
+<p>:    type f_lst: float
+:param size_out: is the extended length
+:    type size_out: int
+:param freqs_mhz: array of output frequencies
+:    type freqs_mhz: float (nb freq,)
+:param nb_ant: number of antennas
+:    type nb_ant: int
+:param show_flag: print figure
+:    type show_flag: boll
+:param seed: if None, values are randomly generated as expected.</p>
+<blockquote>
+<div><p>if number, same set of randomly generated output. This is useful for testing.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>: du_type: Calculate the galactic noise for different antenna model simulations.</dt><dd><p>‘GP300’ (default) uses hfss simulations for leff
+‘GP300_nec’ uses nec simulations for leff
+‘Gp300_mat’ uses matlab simulations fro leff</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>FFT of galactic noise for all DU and components</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a>(nb du, 3, nb freq)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-grand.sim.detector.adc">Master module for the ADC in GRAND</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.sim.detector.adc.ADC">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.sim.detector.adc.</span></span><span class="sig-name descname"><span class="pre">ADC</span></span><a class="reference internal" href="_modules/grand/sim/detector/adc.html#ADC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.adc.ADC" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Class that represents the analog-to-digital converter (ADC) of GRAND.
+The ADC digitizes an analog voltage that has been processed through the entire RF chain.
+For GRAND, the ADC has:
+- a sampling rate of 500 MHz
+- 14 bits centered around 0 V &lt;-&gt; 0 ADC counts, with 13 positive and 13 negative bits
+- a saturation at an input voltage of +/- 0.9 V</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.adc.ADC.downsample">
+<span class="sig-name descname"><span class="pre">downsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voltage_trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_sampling_rate_mhz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/adc.html#ADC.downsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.adc.ADC.downsample" title="Link to this definition"></a></dt>
+<dd><p>downsamples the voltage trace to the target sampling rate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voltage_trace</strong></p></li>
+<li><p><strong>type</strong> (<em>np.ndarray</em><em>[</em><em>double</em><em>]</em>)</p></li>
+<li><p><strong>units</strong> (<em>uV</em>)</p></li>
+<li><p><strong>description</strong> (<em>Array</em><em> of </em><em>voltage traces</em><em>, </em><em>with shape</em><em> (</em><em>N_du</em><em>,</em><em>3</em><em>,</em><em>N_samples</em><em>)</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><cite>downsampled_voltage_trace</cite></p></li>
+<li><p><strong>type</strong> (<em>np.ndarray[double]</em>)</p></li>
+<li><p><strong>units</strong> (<em>uV</em>)</p></li>
+<li><p><strong>description</strong> (<em>Array of downsamplef voltage traces, with shape (N_du,3,N_samples)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.sim.detector.adc.ADC.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voltage_trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_trace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/sim/detector/adc.html#ADC.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.sim.detector.adc.ADC.process" title="Link to this definition"></a></dt>
+<dd><p>Processes an analog voltage trace to a digital ADC trace,
+with an option to add measured noise</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voltage_trace</strong></p></li>
+<li><p><strong>type</strong> (<em>np.ndarray</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>]</em>)</p></li>
+<li><p><strong>units</strong> (<em>ADC counts</em><em> (</em><em>least significant bits</em><em>)</em>)</p></li>
+<li><p><strong>description</strong> (<em>Array</em><em> of </em><em>measured noise traces</em><em>, </em><em>with shape</em><em> (</em><em>N_du</em><em>,</em><em>3</em><em>,</em><em>N_samples</em><em>)</em>)</p></li>
+<li><p><strong>(</strong><strong>optional</strong><strong>)</strong> (<em>noise_trace</em>)</p></li>
+<li><p><strong>type</strong></p></li>
+<li><p><strong>units</strong></p></li>
+<li><p><strong>description</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><cite>adc_trace</cite></p></li>
+<li><p><strong>type</strong> (<em>np.ndarray[int]</em>)</p></li>
+<li><p><strong>units</strong> (<em>ADC counts (least significant bits)</em>)</p></li>
+<li><p><strong>description</strong> (<em>Array of ADC traces with shape (N_du,3,N_samples)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-grand.basis.type_trace">
+<span id="basis"></span><h2>Basis<a class="headerlink" href="#module-grand.basis.type_trace" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.basis.type_trace.</span></span><span class="sig-name descname"><span class="pre">ElectricField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_xyz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'CartesianRepresentation'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_xyz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[CartesianRepresentation,</span> <span class="pre">None]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[LTP,</span> <span class="pre">GRANDCS,</span> <span class="pre">None]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.a_time">
+<span class="sig-name descname"><span class="pre">a_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#grand.basis.type_trace.ElectricField.a_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.e_xyz">
+<span class="sig-name descname"><span class="pre">e_xyz</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a></span><a class="headerlink" href="#grand.basis.type_trace.ElectricField.e_xyz" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.pos_xyz">
+<span class="sig-name descname"><span class="pre">pos_xyz</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.CartesianRepresentation" title="grand.geo.coordinates.CartesianRepresentation"><span class="pre">CartesianRepresentation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.basis.type_trace.ElectricField.pos_xyz" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.frame">
+<span class="sig-name descname"><span class="pre">frame</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.LTP" title="grand.geo.coordinates.LTP"><span class="pre">LTP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#grand.geo.coordinates.GRANDCS" title="grand.geo.coordinates.GRANDCS"><span class="pre">GRANDCS</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#grand.basis.type_trace.ElectricField.frame" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.get_fft">
+<span class="sig-name descname"><span class="pre">get_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size_sig_pad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField.get_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField.get_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size_sig_pad</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.get_delta_time_s">
+<span class="sig-name descname"><span class="pre">get_delta_time_s</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField.get_delta_time_s"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField.get_delta_time_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.ElectricField.get_nb_sample">
+<span class="sig-name descname"><span class="pre">get_nb_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#ElectricField.get_nb_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.ElectricField.get_nb_sample" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grand.basis.type_trace.</span></span><span class="sig-name descname"><span class="pre">Voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.t">
+<span class="sig-name descname"><span class="pre">t</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#grand.basis.type_trace.Voltage.t" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.V">
+<span class="sig-name descname"><span class="pre">V</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#grand.basis.type_trace.Voltage.V" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.get_fft">
+<span class="sig-name descname"><span class="pre">get_fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size_sig_pad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage.get_fft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage.get_fft" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size_sig_pad</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.get_delta_time_s">
+<span class="sig-name descname"><span class="pre">get_delta_time_s</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage.get_delta_time_s"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage.get_delta_time_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grand.basis.type_trace.Voltage.get_nb_sample">
+<span class="sig-name descname"><span class="pre">get_nb_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grand/basis/type_trace.html#Voltage.get_nb_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grand.basis.type_trace.Voltage.get_nb_sample" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="architecture.html" class="btn btn-neutral float-left" title="Code architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-2026, The GRAND Collaboration.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
