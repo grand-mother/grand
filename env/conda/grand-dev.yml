@@ -27,10 +27,18 @@ dependencies:
   - asdf=4.5.0
   - ipympl
   # --- build: src/build_core.py imports these; src/Makefile needs a toolchain ---
-  - cffi                   # ABSENT from reqmt_grandenv_2509.yml
-  - pycparser              # ABSENT
-  - c-compiler             # ABSENT; TURTLE and GULL are compiled from source
-  - make                   # ABSENT
+  # These are DECLARED here rather than inherited.  Verified 2026-08-30: the
+  # previous file (reqmt_grandenv_2509.yml) does resolve cffi, pycparser, gcc
+  # and c-compiler transitively -- ROOT pulls in a toolchain -- so the build
+  # works today.  It works by accident: a ROOT version that stopped pulling a
+  # compiler would break `source env/setup.sh` with nothing in any dependency
+  # list to explain why.  `make` is the one that genuinely appears nowhere,
+  # and succeeds only because most Linux hosts ship /usr/bin/make; it would
+  # fail in a minimal container.
+  - cffi
+  - pycparser
+  - c-compiler
+  - make
   # --- test and quality (was quality/requirements.txt, installed by pip) ---
   - pytest
   - pytest-cov

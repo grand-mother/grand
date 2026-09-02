@@ -26,6 +26,9 @@ Simulation
 .. automodule:: grand.sim.detector.process_ant
    :members:
 
+.. automodule:: grand.sim.detector.rf_chain
+   :members: db2reim, s2abcd, matmul, interpol_at_new_x, RFChain
+
 .. automodule:: grand.sim.noise.galaxy
    :members:
 
