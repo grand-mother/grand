@@ -140,6 +140,44 @@ on ``docs/dev/build_handbook_pdf.py``, because the pages link to the PDF with
 ``:download:`` and a missing target is itself a warning.  Both the ``docs`` job
 and the separate ``handbook`` job install a LaTeX toolchain for this.
 
+Action versions
+---------------
+
+GitHub deprecated the Node 20 runtime in September 2025, and every run was
+carrying an annotation to that effect.  ``actions/checkout`` and
+``actions/setup-python`` are pinned at ``@v7``: checkout moved to Node 24 at
+v6, and v7 adds a guard against checking out a fork's pull request under
+``pull_request_target`` or ``workflow_run``, neither of which these workflows
+use.  Both are used with almost no inputs here — checkout with none at all —
+so the majors carry no behaviour change for this repository.
+
+Three sets of actions were deliberately **not** bumped.
+
+``conda-incubator/setup-miniconda@v3`` and ``codecov/codecov-action@v4``
+    Neither was flagged by the deprecation, so both already run on a supported
+    runtime.  ``setup-miniconda`` in particular builds the environment for
+    every job, and its major versions have changed defaults before; bumping it
+    would be unrelated risk taken for no stated benefit.
+
+The GitHub Pages actions in ``pages.yml``
+    ``configure-pages``, ``upload-pages-artifact`` and ``deploy-pages`` are
+    behind, but that workflow triggers only on ``main`` and has never run.
+    Bumping them would be an untestable change.
+
+``root_version.yml``
+    Still on ``checkout@v3`` and ``setup-python@v3``, the furthest behind of
+    all — left that way for a merge reason rather than a technical one.  Two
+    branches, ``dev_io_root_testmerges`` and ``snonis_sim2root_test_merge``,
+    *add* this file relative to their merge base: it did not exist when they
+    diverged, and their copy is byte-identical to the one here.  While the
+    copies agree that merges cleanly; the moment this one is edited it becomes
+    an add/add conflict on both.  The bump waits until those branches land.
+
+    This is the general rule for CI changes on ``dev-next``: ``lint.yml``,
+    ``tests-conda.yml``, ``notebooks.yml`` and ``pages.yml`` were created here
+    and are touched by no branch, so they can be changed freely.  Anything
+    that predates the branch cannot.
+
 Running the same checks locally
 -------------------------------
 

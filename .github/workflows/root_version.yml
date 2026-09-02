@@ -1,5 +1,25 @@
 # This workflow will trigger each time a new version of grand/dataio/version is pushed
 # It will create a tag with the root format version
+# NOTE ON ACTION VERSIONS
+#
+# This file still pins actions/checkout@v3 and actions/setup-python@v3, which
+# are further behind than anything else here -- and it is left that way
+# deliberately, for a merge reason rather than a technical one.
+#
+# Two branches, dev_io_root_testmerges and snonis_sim2root_test_merge, *add*
+# this file relative to their merge base with dev-next: it did not exist when
+# they diverged, and their copy is currently byte-identical to this one.  Git
+# therefore sees an add on both sides.  While the two copies agree that is a
+# clean merge; the moment this one is edited it becomes an add/add conflict on
+# every one of those merges.
+#
+# So the bump waits until those branches have landed.  The other workflows --
+# lint, tests-conda, notebooks and pages -- were created on dev-next and are
+# touched by no branch at all, so they were bumped to checkout@v7 and
+# setup-python@v7 without that risk.
+#
+# See docs/source/ci.rst.
+
 name: Versioning test
 
 on:

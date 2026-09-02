@@ -30,7 +30,7 @@ jobs:
       run:
         shell: bash -el {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
