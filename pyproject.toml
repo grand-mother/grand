@@ -1,0 +1,110 @@
+# Packaging metadata for GRANDlib.
+#
+# Scope, deliberately narrow.  This file makes the package installable and
+# gives one place for its dependencies.  It does NOT build the C extension:
+# TURTLE and GULL are compiled by src/Makefile and src/build_core.py, driven
+# by env/setup.sh, and moving that into a build backend is a separate piece of
+# work.  Nor does it declare console entry points -- the scripts under
+# scripts/ run their argument parsing at module level rather than in a main(),
+# so they need a small refactor first.  Both are noted below.
+#
+# ROOT is not on PyPI and cannot be a dependency here.  `pip install -e .`
+# therefore assumes an environment that already has it:
+#
+#     conda env create -f env/conda/grand-dev.yml --solver=libmamba
+#     conda activate grand-dev
+#     pip install -e ".[dev]"
+#
+# See PR 154 (unified_install), which addresses the same problem; whichever
+# lands, there should be exactly one of them.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grand"
+
+# The PACKAGE version.  Not to be confused with grand/dataio/version, which
+# is 1.0.2 and versions the ROOT *data format* -- a separate thing on its own
+# release cycle, stamped into files so that a reader can tell which schema
+# wrote them.  Conflating the two would make a package release imply a format
+# change and vice versa.
+version = "0.1.0.dev0"
+
+description = "Offline data handling, simulation and analysis for the Giant Radio Array for Neutrino Detection"
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "LGPL-3.0-or-later"
+license-files = ["LICENSE", "COPYING.LESSER"]
+authors = [{ name = "The GRAND Collaboration" }]
+keywords = ["astroparticle", "ultra-high-energy", "neutrino", "cosmic ray",
+            "radio detection", "air shower"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+
+# ROOT is absent on purpose: it comes from conda, not pip.  Everything here
+# is pip-installable, so `pip install -e .` inside the conda environment is
+# additive rather than fighting it.
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "h5py>=3.8",
+    "uproot>=5.0",
+    "joblib>=1.3",
+    "asdf>=3.0",
+    "cffi",         # src/build_core.py
+    "pycparser",    # src/build_core.py
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "coverage", "pylint", "mypy", "black", "ruff"]
+docs = [
+    "sphinx", "sphinx-rtd-theme", "sphinx-copybutton", "numpydoc",
+    "myst-parser", "jupyter-sphinx", "ipykernel",
+    # jupyter-sphinx executes the docstring examples in a real kernel, so
+    # what those examples import has to be installed too.
+    "numpy", "scipy", "matplotlib",
+]
+db = ["sqlalchemy", "psycopg2-binary", "paramiko", "sshtunnel", "scp"]
+
+[project.urls]
+Homepage = "https://github.com/grand-mother/grand"
+Documentation = "https://grand-mother.github.io/grand-docs"
+Paper = "https://arxiv.org/abs/2408.10926"
+Issues = "https://github.com/grand-mother/grand/issues"
+
+# [project.scripts]
+# Not yet.  scripts/convert_efield2voltage.py and its siblings parse their
+# arguments at import time, so importing them to reach an entry point would
+# run the parser.  Wrapping each in a main() is small but is a behaviour
+# change to user-facing tools, so it belongs with the interface work rather
+# than here.
+
+[tool.setuptools.packages.find]
+# granddb and sim2root are deliberately excluded.  granddb is a separate
+# concern with its own database dependencies, and sim2root is a set of
+# converter scripts that are run, not imported.
+include = ["grand*"]
+
+[tool.setuptools.package-data]
+grand = ["dataio/version"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Pinned rather than left to the default.  Ruff's default selection widens
+# between releases, which turns a green CI red on unchanged code; this is the
+# set the package is being cleaned against.
+select = ["E4", "E7", "E9", "F"]
