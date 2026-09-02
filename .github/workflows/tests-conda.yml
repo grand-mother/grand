@@ -10,6 +10,21 @@
 # the collaboration develops against -- so what CI tests is what people run.
 name: Tests
 
+# Deliberately not named tests.yml.
+#
+# The repository's tests.yml is disabled at the repository level -- someone
+# switched it off in the UI, which is why it has no runs in its entire history.
+# That disable is attached to the file *path*, so rewriting the file inherits
+# it: a corrected tests.yml would still never run.  Enabling it is not a good
+# answer either, because master, dev and the feature branches all still carry
+# the old tests.yml pointing at docker://jcolley/grand:0.4, an image that has
+# been deleted from Docker Hub; enabling the path would start failing runs on
+# every one of them.
+#
+# A new path has never been disabled, so it is active from its first push, and
+# it only exists on the branches that carry it.  The dead tests.yml is removed
+# from the repository in the cleanup phase.
+
 on:
   push:
     branches: ['**']
