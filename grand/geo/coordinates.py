@@ -455,6 +455,22 @@ class CartesianRepresentation(Coordinates):
         Unspecified coordinates are initialized with entry 0 in 3xn ndarray.
         n: number of coordinate points. 3xn np.ndarray object will be instantiated
            which will then be replaced by input x, y, and z. 'n' has to be predefined.
+
+        Parameters
+        ----------
+        arg : Geodetic, ECEF, LTP or GRANDCS, optional
+            A position to convert into this representation.
+        x : float or ndarray, optional
+            Metres along x.
+        y : float or ndarray, optional
+            Metres along y.
+        z : float or ndarray, optional
+            Metres along z.
+
+        Returns
+        -------
+        CartesianRepresentation
+            The vector.
         """
         if isinstance(arg, SphericalRepresentation):
             x, y, z = _spherical_to_cartesian(arg.theta, arg.phi, arg.r)
@@ -510,6 +526,11 @@ class CartesianRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Metres along the frame x axis.
+
+        Returns
+        -------
+        float or ndarray
+            Metres along the frame x axis.
         """
         return self[0]
 
@@ -532,6 +553,11 @@ class CartesianRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Metres along the frame y axis.
+
+        Returns
+        -------
+        float or ndarray
+            Metres along the frame y axis.
         """
         return self[1]
 
@@ -553,6 +579,11 @@ class CartesianRepresentation(Coordinates):
         Parameters
         ----------
         v : float or ndarray
+            Metres along the frame z axis.
+
+        Returns
+        -------
+        float or ndarray
             Metres along the frame z axis.
         """
         return self[2]
@@ -633,6 +664,22 @@ class SphericalRepresentation(Coordinates):
         theta: angle from Z-axis towards XY plane. Also called zenith angle or colatitude. 0<=theta<=180 deg.
         phi  : angle from X-axis towards Y-axis in XY plane. 0<=phi<=360 deg.
         r    : magnitude of a vector or a distance to a point from the origin.
+
+        Parameters
+        ----------
+        arg : Geodetic, ECEF, LTP or GRANDCS, optional
+            A position to convert into this representation.
+        theta : float or ndarray, optional
+            Polar angle from +z, in degrees.
+        phi : float or ndarray, optional
+            Azimuth from +x, in degrees.
+        r : float or ndarray, optional
+            Radius, in metres.
+
+        Returns
+        -------
+        SphericalRepresentation
+            The vector.
         """
         if isinstance(arg, CartesianRepresentation):
             theta, phi, r = _cartesian_to_spherical(arg.x, arg.y, arg.z)
@@ -678,6 +725,11 @@ class SphericalRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Polar angle from +z, in degrees.
+
+        Returns
+        -------
+        float or ndarray
+            Polar angle from +z, in degrees.
         """
         logger.debug(f"{type(self)} {type(self[0])}")
         # TODO: self[0] and self have same type !!!!!
@@ -704,6 +756,11 @@ class SphericalRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Azimuth from +x, in degrees.
+
+        Returns
+        -------
+        float or ndarray
+            Azimuth from +x, in degrees.
         """
         # return float(self[1])
         return self[1]
@@ -726,6 +783,11 @@ class SphericalRepresentation(Coordinates):
         Parameters
         ----------
         v : float or ndarray
+            Radius, in metres.
+
+        Returns
+        -------
+        float or ndarray
             Radius, in metres.
         """
         return self[2]
@@ -793,6 +855,20 @@ class HorizontalRepresentation(Coordinates):
         azimuth  : angle from true North towards East.
         elevation: angle from horizontal plane (NE plane) towards zenith.
         norm     : distance from the origin to the point.
+
+        Parameters
+        ----------
+        azimuth : float or ndarray, optional
+            Degrees from north towards east.
+        elevation : float or ndarray, optional
+            Degrees above the horizon.
+        norm : float or ndarray, optional
+            Length, in metres.
+
+        Returns
+        -------
+        HorizontalRepresentation
+            The direction.
         """
         if isinstance(azimuth, Number):
             n = 1
@@ -828,6 +904,11 @@ class HorizontalRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Degrees from geographic north towards east.
+
+        Returns
+        -------
+        float or ndarray
+            Degrees from north towards east.
         """
         return self[0]
 
@@ -850,6 +931,11 @@ class HorizontalRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Degrees above the horizon.
+
+        Returns
+        -------
+        float or ndarray
+            Degrees above the horizon.
         """
         return self[1]
 
@@ -871,6 +957,11 @@ class HorizontalRepresentation(Coordinates):
         Parameters
         ----------
         v : float or ndarray
+            Length of the vector, in metres.
+
+        Returns
+        -------
+        float or ndarray
             Length of the vector, in metres.
         """
         return self[2]
@@ -946,7 +1037,22 @@ class GeodeticRepresentation(Coordinates):
         longitude: Union[float, int, np.ndarray] = None,
         height: Union[float, int, np.ndarray] = None,
     ):
-        """Create a new instance from latitude, longitude, and height."""
+        """Create a new instance from latitude, longitude, and height.
+
+        Parameters
+        ----------
+        latitude : float or ndarray, optional
+            Degrees north.
+        longitude : float or ndarray, optional
+            Degrees east.
+        height : float or ndarray, optional
+            Metres above the reference surface.
+
+        Returns
+        -------
+        GeodeticRepresentation
+            The position.
+        """
         if isinstance(latitude, Number):
             n = 1
         elif (
@@ -980,6 +1086,11 @@ class GeodeticRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Degrees north of the equator.
+
+        Returns
+        -------
+        float or ndarray
+            Degrees north of the equator.
         """
         return self[0]
 
@@ -1002,6 +1113,11 @@ class GeodeticRepresentation(Coordinates):
         ----------
         v : float or ndarray
             Degrees east of the prime meridian.
+
+        Returns
+        -------
+        float or ndarray
+            Degrees east of the prime meridian.
         """
         return self[1]
 
@@ -1023,6 +1139,11 @@ class GeodeticRepresentation(Coordinates):
         Parameters
         ----------
         v : float or ndarray
+            Metres above the reference surface.
+
+        Returns
+        -------
+        float or ndarray
             Metres above the reference surface.
         """
         return self[2]
@@ -1156,6 +1277,19 @@ class Geodetic(GeodeticRepresentation):
         Create a new instance from another point instance or from.
 
         latitude, longitude, height values.
+
+        Parameters
+        ----------
+        arg : Geodetic, ECEF, LTP or GRANDCS, optional
+            A position to convert into this representation.
+        latitude : float or ndarray, optional
+            Degrees north.
+        longitude : float or ndarray, optional
+            Degrees east.
+        height : float or ndarray, optional
+            Metres above the reference surface.
+        reference : str or Reference, optional
+            Surface the height is measured from.
         """
         reference = reference.upper()
         self.reference = reference
@@ -1285,6 +1419,11 @@ class Geodetic(GeodeticRepresentation):
         -------
         LTP
             The same position, in the local frame.
+
+        Parameters
+        ----------
+        ltp : LTP or GRANDCS
+            The frame to express the result in.
         """
         ecef = ECEF(self)
         pos_v = np.vstack(
@@ -1452,6 +1591,11 @@ class ECEF(CartesianRepresentation):
         -------
         Geodetic
             Latitude, longitude and height.
+
+        Parameters
+        ----------
+        reference : str or Reference, optional
+            Surface the height is measured from.
         """
         return Geodetic(self, reference=reference)
 
@@ -1478,6 +1622,11 @@ class ECEF(CartesianRepresentation):
         -------
         LTP
             The same position, in the local frame.
+
+        Parameters
+        ----------
+        ltp : LTP or GRANDCS
+            The frame to express the result in.
         """
         self = copy(self)
         pos_v = np.vstack(
@@ -1532,6 +1681,26 @@ class Horizontal(HorizontalRepresentation):
            'n' has to be predefined.
         location: origin of Horizontal coordinate system. Can be given in any known
                         coordinate system.
+
+        Parameters
+        ----------
+        arg : Geodetic, ECEF, LTP or GRANDCS, optional
+            A position to convert into this representation.
+        azimuth : float or ndarray, optional
+            Degrees from north towards east.
+        elevation : float or ndarray, optional
+            Degrees above the horizon.
+        norm : float or ndarray, optional
+            Length, in metres.
+        location : Geodetic, ECEF, LTP or GRANDCS, optional
+            Origin the direction is measured from.
+        vector : bool, optional
+            Treat the value as a direction rather than a position.
+
+        Returns
+        -------
+        Horizontal
+            The direction.
         """
         obj = LTP(location=location, orientation="ENU", magnetic=False)
         ecef_loc = obj.location  # location is already in ECEF cs.
@@ -1765,6 +1934,11 @@ class LTP(CartesianRepresentation):
         -----
         See :doc:`/coordinates` for why the same components mean different
         places under different orientations.
+
+        Returns
+        -------
+        None
+            The frame is configured in place.
         """
         if frame is not None:
             frame = copy(frame)
@@ -1910,6 +2084,11 @@ class LTP(CartesianRepresentation):
         -------
         LTP
             The vector in the other local frame.
+
+        Parameters
+        ----------
+        ltp : LTP or GRANDCS
+            The frame to express the result in.
         """
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.
         ecef = ECEF(self)
@@ -1962,6 +2141,11 @@ class LTP(CartesianRepresentation):
         -------
         Geodetic
             The vector as a geodetic position.
+
+        Parameters
+        ----------
+        reference : str or Reference, optional
+            Surface the height is measured from.
         """
         # Convert from GRANDCS to ECEF, then from ECEF to Geodetic.
         ecef = ECEF(self)
@@ -2095,6 +2279,11 @@ class GRANDCS(LTP):
         -------
         Geodetic
             The vector as a geodetic position.
+
+        Parameters
+        ----------
+        reference : str or Reference, optional
+            Surface the height is measured from.
         """
         # Convert from GRANDCSCS to ECEF, then from ECEF to Geodetic.
         return self.ltp_to_geodetic(reference=reference)
@@ -2109,6 +2298,11 @@ class GRANDCS(LTP):
         -------
         LTP
             The vector in a local frame.
+
+        Parameters
+        ----------
+        ltp : LTP or GRANDCS
+            The frame to express the result in.
         """
         # Convert from GRANDCSCS to ECEF, then from ECEF to Geodetic.
         return self.ltp_to_ltp(ltp)

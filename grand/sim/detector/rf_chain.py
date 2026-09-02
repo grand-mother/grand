@@ -71,7 +71,18 @@ Overview of calculations:
 """
 
 def read_config(xml_file):
-    """ Reads the XML configuration file and returns component settings. """
+    """ Reads the XML configuration file and returns component settings.
+
+    Parameters
+    ----------
+    xml_file : str
+        Configuration file listing the chain components.
+
+    Returns
+    -------
+    dict
+        The components and their settings.
+    """
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -104,7 +115,20 @@ axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}  # Adjust if 
 
 # Function to get filenames dynamically based on axis
 def get_axis_filename(component_name, axis):
-    """Returns the correct filename for a given component and axis."""
+    """Returns the correct filename for a given component and axis.
+
+    Parameters
+    ----------
+    component_name : str
+        Chain component.
+    axis : int
+        Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+    Returns
+    -------
+    str
+        Path to that component measurements for that arm.
+    """
 
     # Define a dictionary that maps numerical and string axes correctly
     axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}
@@ -165,7 +189,18 @@ def _set_name_data_file(self, axis):
 
 
 def read_config(xml_file):
-    """ Reads the XML configuration file and returns component settings. """
+    """ Reads the XML configuration file and returns component settings.
+
+    Parameters
+    ----------
+    xml_file : str
+        Configuration file listing the chain components.
+
+    Returns
+    -------
+    dict
+        The components and their settings.
+    """
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -208,7 +243,20 @@ axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}  # Adjust if 
 #    return None
 
 def get_axis_filename(component_name, axis):
-    """Returns the correct filename for a given component and axis."""
+    """Returns the correct filename for a given component and axis.
+
+    Parameters
+    ----------
+    component_name : str
+        Chain component.
+    axis : int
+        Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+    Returns
+    -------
+    str
+        Path to that component measurements for that arm.
+    """
     if component_name in components:
         if not components[component_name]["enabled"]:
             print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
@@ -529,6 +577,16 @@ class MatchingNetwork(GenericProcessingDU):
         ! Created Wed May 10 01:24:03 2023
         # hz S ma R 50
         ! 2 Port Network Data from SP1.SP block
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm.
+
+        Returns
+        -------
+        str
+            Path to the measurements.
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
         filename = get_axis_filename("MatchingNetwork", axis)
@@ -672,6 +730,16 @@ class gaa_frontend0db(GenericProcessingDU):
         ! Created Wed May 10 01:24:03 2023
         # hz S ma R 50
         ! 2 Port Network Data from SP1.SP block
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm.
+
+        Returns
+        -------
+        str
+            Path to the measurements.
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
         filename = get_axis_filename("AntennaLNA", axis)
@@ -1150,6 +1218,11 @@ class VGAFilter(GenericProcessingDU):
     def __init__(self, gain=0):
         """ 
         :param gain: gain setup for VGA in dB.
+
+        Parameters
+        ----------
+        gain : int, optional
+            Amplifier gain, in dB: -5, 0, 5 or 20.
         """
         super().__init__()
 
@@ -1177,6 +1250,11 @@ class VGAFilter(GenericProcessingDU):
         -------
         str
             Absolute path to this element's tabulated measurements.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm.
         """
         assert self.gain in [-5, 0, 5, 20]
         logger.info(f"vga gain: {self.gain} dB")

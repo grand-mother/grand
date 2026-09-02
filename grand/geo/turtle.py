@@ -505,6 +505,11 @@ class Stepper:
         -------
         Map or None
             The geoid map used to convert heights.
+
+        Parameters
+        ----------
+        map_ : Map
+            Geoid map to use for height conversion.
         """
         return self._geoid
 
@@ -512,6 +517,11 @@ class Stepper:
     def geoid(self, map_: Optional[Map]):
         r"""The geoid map used to convert heights, or ``None``.
 
+
+        Parameters
+        ----------
+        map_ : Map
+            Geoid map to use for height conversion.
         """
         if map_ is None:
             self._data.pop(self._geoid)

@@ -189,12 +189,24 @@ class Event:
 
     @property
     def file(self):
-        """A single file that contains all the TTrees"""
+        """A single file that contains all the TTrees
+
+        Returns
+        -------
+        str
+            Path of the file this event was read from or will be written to.
+        """
         return str(self._file)
 
     @file.setter
     def file(self, value):
-        """A single file that contains all the TTrees"""
+        """A single file that contains all the TTrees
+
+        Parameters
+        ----------
+        value : str
+            Path of the file this event is read from or written to.
+        """
 
         # If the _file is not yet TFile, make it so
         if not isinstance(value, ROOT.TFile):
@@ -212,12 +224,24 @@ class Event:
 
     @property
     def directory(self):
-        """A single file that contains all the TTrees"""
+        """A single file that contains all the TTrees
+
+        Returns
+        -------
+        str
+            Directory the event files live in.
+        """
         return self._directory
 
     @directory.setter
     def directory(self, value):
-        """A directory that contains all the files with TTrees"""
+        """A directory that contains all the files with TTrees
+
+        Parameters
+        ----------
+        value : str
+            Path of the directory the event files live in.
+        """
         # If the _file is not yet TFile, make it so
         if not isinstance(value, DataDirectory):
             self._directory = DataDirectory(value)
@@ -250,7 +274,13 @@ class Event:
 
     @property
     def origin_geoid(self):
-        """Origin of the coordinate system used for the array"""
+        """Origin of the coordinate system used for the array
+
+        Returns
+        -------
+        ndarray, shape (3,)
+            Latitude, longitude and height of the array origin.
+        """
         return self._origin_geoid
 
     @origin_geoid.setter
@@ -269,6 +299,30 @@ class Event:
         """Fill this event from trees
         :param simshower: how to treat the TShower existing in the file, as sim values or reconstructed values
         :type simshower: bool
+
+        Parameters
+        ----------
+        event_number : int, optional
+            Event number.
+        run_number : int, optional
+            Run number.
+        entry_number : int, optional
+            Entry index, instead of the pair above.
+        simshower : bool, optional
+            Read the simulator-only shower tree.
+        use_trawvoltage : bool, optional
+            Read raw voltages rather than calibrated ones.
+        trawvoltage_channels : sequence, optional
+            Channels to read.
+        init_trees : bool, optional
+            Open the trees before reading.
+        gp300_workaround : bool, optional
+            Apply the GP300 antenna-ordering workaround.
+
+        Returns
+        -------
+        bool
+            True when the event was found and populated.
         """
         # Check if any of the files exist
         if not self._file and not self.file_trun and not self.file_trunrawvoltage and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
@@ -564,7 +618,13 @@ class Event:
 
     ## Fill event's antennas
     def fill_antennas(self, gp300_workaround=True):
-        """Fill event's antennas"""
+        """Fill event's antennas
+
+        Parameters
+        ----------
+        gp300_workaround : bool, optional
+            Apply the GP300 antenna-ordering workaround.
+        """
         self.antennas = []
 
         # For GP300 for now, get the GPS coordinates for each DU and calculate the x/y/z here
@@ -1243,7 +1303,13 @@ class Event:
         self.trun.close_file()
 
     def fill_t_vector(self, resolution=1):
-        """Fills the event's time vector with resolution resolution"""
+        """Fills the event's time vector with resolution resolution
+
+        Parameters
+        ----------
+        resolution : float, optional
+            Time step of the common axis, in nanoseconds.
+        """
 
         # Get the filled traces
         filled_vals = [el for el in [self.voltages, self.efields] if el is not None][0]
@@ -1268,19 +1334,63 @@ class Event:
         self.t_vector = np.arange((et-st)/resolution+1)*resolution+st
 
     def get_voltage_at_time(self, t):
-        """Get the voltage signal value in all the DUs at the given time"""
+        """Get the voltage signal value in all the DUs at the given time
+
+        Parameters
+        ----------
+        t : float
+            Time, in nanoseconds.
+
+        Returns
+        -------
+        ndarray
+            Voltage of each unit at that time.
+        """
         return np.array([el.get_value_at_time(t) for el in self.voltages])
 
     def get_efield_at_time(self, t):
-        """Get the efield signal value in all the DUs at the given time"""
+        """Get the efield signal value in all the DUs at the given time
+
+        Parameters
+        ----------
+        t : float
+            Time, in nanoseconds.
+
+        Returns
+        -------
+        ndarray
+            Electric field of each unit at that time.
+        """
         return np.array([el.get_value_at_time(t) for el in self.efields])
 
     def get_hilbert_voltage_at_time(self, t):
-        """Get the voltage signal value in all the DUs at the given time"""
+        """Get the voltage signal value in all the DUs at the given time
+
+        Parameters
+        ----------
+        t : float
+            Time, in nanoseconds.
+
+        Returns
+        -------
+        ndarray
+            Hilbert envelope of the voltage at that time.
+        """
         return np.array([el.get_hilbert_value_at_time(t) for el in self.voltages])
 
     def get_hilbert_efield_at_time(self, t):
-        """Get the efield signal value in all the DUs at the given time"""
+        """Get the efield signal value in all the DUs at the given time
+
+        Parameters
+        ----------
+        t : float
+            Time, in nanoseconds.
+
+        Returns
+        -------
+        ndarray
+            Hilbert envelope of the field at that time.
+        """
         return np.array([el.get_hilbert_value_at_time(t) for el in self.efields])
 
 

@@ -345,6 +345,11 @@ class DetectorUnitNetwork:
             Use one colour scale for all components.
         unit : str, optional
             Unit for the colour bar.
+
+        Returns
+        -------
+        None
+            Draws the figure.
         """
 
         def subplot(plt_axis, a_values, cpnt="", scale="log"):
@@ -358,6 +363,11 @@ class DetectorUnitNetwork:
                 Per-unit quantity to colour the markers by.
             title : str
                 Panel title.
+
+            Returns
+            -------
+            matplotlib.collections.PathCollection
+                The scatter drawn, so the caller can attach a colour bar.
             """
             ax1 = plt_axis
             size_circle = 80
@@ -428,6 +438,11 @@ class DetectorUnitNetwork:
             Per-unit, per-time values.
         title : str, optional
             Plot title.
+
+        Returns
+        -------
+        None
+            Draws the figure.
         """
         # same number of sample
         assert a_time.shape[0] == a3_values.shape[2]
@@ -476,6 +491,11 @@ class DetectorUnitNetwork:
             ----------
             val : float
                 Time selected on the slider.
+
+            Returns
+            -------
+            None
+                Redraws in place; the return value is what the slider callback expects.
             """
             frame_number = int((t_slider - a_time[0]) / delta_t)
             scat.set_array(a_norm_val[:, frame_number])

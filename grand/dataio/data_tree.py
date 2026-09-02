@@ -181,6 +181,11 @@ class DataTree:
         -------
         str
             Name of the tree in the file.
+
+        Parameters
+        ----------
+        val : str
+            Name to give the tree.
         """
         return self._tree_name
 
@@ -188,6 +193,11 @@ class DataTree:
     def tree_name(self, val):
         """Set the tree name
 
+
+        Parameters
+        ----------
+        val : str
+            Name to give the tree.
         """
         # ToDo: enforce the name to start with the type!
         self._tree_name = val
