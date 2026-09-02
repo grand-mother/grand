@@ -43,7 +43,7 @@ fi
 
 cd /pbs/home/p/prod_grand/softs/grand/
 source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
-conda activate /sps/grand/software/conda/grandlib_test
+conda activate /sps/grand/software/conda/grandlib_prod_6.36
 source env/setup.sh 
 cd granddb/
 python3 /pbs/home/p/prod_grand/softs/grand/granddb/monitoring.py -t ${tag}

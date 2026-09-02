@@ -142,6 +142,7 @@ do
         outstatus=$iput_status
       fi
       # Register conversion result into the database
+      # TODO: Adapt to manage directories output
       echo "Register convertion" >> ${logfile}
       echo "Run ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile}"  |& tee -a ${logfile}
       python3 ${register_convertion} -i ${filename} -o ${filename%.*}.root -s ${conv_status} -l ${logfile} >> ${logfile} 2>&1
