@@ -151,7 +151,6 @@ convention = "numpy"
 # fully converted.
 
 "grand/__init__.py" = ["D", "E402", "F401"]
-"grand/analysis/**" = ["D"]
 "grand/aoi/__init__.py" = ["F403"]
 "grand/aoi/antenna.py" = ["D"]
 "grand/aoi/event.py" = ["D", "E701", "E711", "E721", "E722", "F402", "F841"] # (a) _aoi_levels_lwp, dev_marion

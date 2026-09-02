@@ -241,6 +241,57 @@ This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
 point with no SRTM tile also returns ``nan`` rather than raising.  Both are
 pinned in ``tests/geo/test_topography_conventions.py``.
 
+.. _issue-src-outlib-conflict:
+
+``src_outlib/`` carries an unresolved merge conflict from 2023
+---------------------------------------------------------------
+
+:Status: open, not blocking — the directory is unreachable
+:Affects: anyone who edits ``src_outlib/``, and anyone merging the four
+          branches that still touch it
+:Test: ``tests/sim2root/test_converter_defects.py``
+
+``src_outlib/ZHAireSRawToGRANDROOT.py`` contains committed conflict markers and
+has not been valid Python since the day they landed:
+
+.. code-block:: text
+
+    $ python -c "import ast; ast.parse(open('src_outlib/ZHAireSRawToGRANDROOT.py').read())"
+    SyntaxError: invalid syntax
+      <<<<<<<< HEAD:examples/dataio/ZHAireSRawToGRANDROOT.py
+
+.. code-block:: text
+
+    358967a  2023-06-30  lwpiotr  Merging master into this branch
+
+Both sides of the conflict import modules that no longer exist —
+``grand.io.root.run`` and ``grand.dataio.root_trees`` — so neither branch of it
+would run even once the markers were removed.
+
+**Why it went unnoticed.**  Nothing imports the directory from outside itself,
+it is not packaged (``pyproject.toml`` includes only ``grand*``), and the
+linter does not cover it.  There is no path by which the syntax error could
+reach anybody.
+
+**It also duplicates a live file.**
+``src_outlib/AiresInfoFunctionsGRANDROOT.py`` is a diverged copy of
+``sim2root/ZHAireSRawRoot/AiresInfoFunctionsGRANDROOT.py`` — 1814 lines against
+2095, with the sim2root copy carrying a series of ``Get*FromSry`` functions
+this one lacks.  Two versions of the same ZHAireS reader, one of them stale.
+Editing the wrong one is an easy mistake and would fail silently, since nothing
+imports this copy.
+
+**Not deleted here, deliberately.**  Four branches still touch
+``src_outlib/``.  Removing a directory that unmerged work modifies converts a
+clean merge into a delete/modify conflict on each of them, which is a poor
+trade for tidying code that cannot execute.  It belongs with the bulk cleanup
+in Phase 10, once the merge queue has drained — the same reasoning that defers
+branch deletion.
+
+**What to do in the meantime.**  Treat ``sim2root/ZHAireSRawRoot/`` as the live
+copy and ``src_outlib/`` as abandoned.  If you find yourself editing the
+latter, you are almost certainly in the wrong file.
+
 .. _issue-nutrig-field-names:
 
 Two names for the NUTRIG correlation fields

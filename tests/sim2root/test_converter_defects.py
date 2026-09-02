@@ -30,6 +30,13 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CONVERTER = ROOT / 'sim2root' / 'ZHAireSRawRoot' / 'ZHAireSRawToRawROOT.py'
 
+#: The abandoned copy of the ZHAireS tooling.  See the tests at the end of this
+#: file and ``issue-src-outlib-conflict`` in the documentation.
+OUTLIB = ROOT / 'src_outlib'
+LIVE_AIRES = ROOT / 'sim2root' / 'ZHAireSRawRoot' / 'AiresInfoFunctionsGRANDROOT.py'
+STALE_AIRES = OUTLIB / 'AiresInfoFunctionsGRANDROOT.py'
+BROKEN = OUTLIB / 'ZHAireSRawToGRANDROOT.py'
+
 #: Names called inside the longitudinal-tables block that are defined nowhere
 #: in the file.  They are leftovers from an HDF5-based predecessor.
 ORPHANS = ('SimShower', 'HDF5handle')
@@ -144,3 +151,75 @@ def test_the_converter_still_parses():
     to convert a shower.
     """
     _tree()          # raises SyntaxError if not
+
+
+# --------------------------------------------------------------------------
+# src_outlib/: abandoned, and one file has not parsed since 2023
+# --------------------------------------------------------------------------
+
+needs_outlib = pytest.mark.skipif(not OUTLIB.is_dir(),
+                                  reason='src_outlib/ is not present')
+
+
+@needs_outlib
+def test_src_outlib_still_carries_a_2023_merge_conflict():
+    r"""``ZHAireSRawToGRANDROOT.py`` contains committed conflict markers.
+
+    Landed on 2023-06-30 in "Merging master into this branch" and never
+    resolved, so the file has not been valid Python since.  Nothing imports it,
+    it is not packaged, and the linter does not cover ``src_outlib/``, so there
+    is no path by which the syntax error reaches anyone -- which is why it
+    survived.
+
+    Asserted as **present**: this records a defect that has deliberately not
+    been repaired, because four branches still touch ``src_outlib/`` and
+    deleting it would turn each of their merges into a delete/modify conflict.
+    The test is meant to fail on the day it is cleaned up, in Phase 10, which
+    is the signal to drop it and the matching entry in ``known_issues.rst``.
+    """
+    if not BROKEN.exists():
+        pytest.skip('the file has been removed, which is the intended fix')
+
+    text = BROKEN.read_text(encoding='utf-8', errors='replace')
+    markers = [line for line in text.split('\n')
+               if line.startswith('<<<<<<<') or line.startswith('>>>>>>>')]
+    assert markers, (
+        '%s no longer carries conflict markers -- delete this test and the '
+        'known-issues entry that cites it' % BROKEN.name)
+
+    with pytest.raises(SyntaxError):
+        ast.parse(text)
+
+
+@needs_outlib
+def test_the_two_aires_readers_have_diverged():
+    r"""``src_outlib`` holds a stale copy of the sim2root ZHAireS reader.
+
+    Both files are called ``AiresInfoFunctionsGRANDROOT.py``.  The sim2root one
+    is live and larger; the ``src_outlib`` one is missing a series of
+    ``Get*FromSry`` functions.  Editing the wrong one is an easy mistake and
+    fails silently, because nothing imports the stale copy.
+
+    Checks that the live copy is a superset by function name, which is the
+    property that makes "use the sim2root one" the right advice.
+    """
+    if not (STALE_AIRES.exists() and LIVE_AIRES.exists()):
+        pytest.skip('one of the two copies is gone, which is the intended fix')
+
+    def functions(path):
+        tree = ast.parse(path.read_text(encoding='utf-8', errors='replace'))
+        return {node.name for node in ast.walk(tree)
+                if isinstance(node, ast.FunctionDef)}
+
+    live, stale = functions(LIVE_AIRES), functions(STALE_AIRES)
+    only_in_stale = stale - live
+
+    assert live - stale, (
+        'the two copies now define the same functions; they may have been '
+        'reconciled, in which case this test and the known-issues entry are '
+        'stale')
+    assert not only_in_stale, (
+        'src_outlib defines functions the live sim2root copy does not: %s. '
+        'The advice to treat src_outlib as abandoned no longer holds -- it '
+        'carries something unique that needs salvaging first.'
+        % ', '.join(sorted(only_in_stale)))

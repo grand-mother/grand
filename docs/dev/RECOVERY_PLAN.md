@@ -162,6 +162,15 @@ a third abandoned trunk.
 ### Phase 10 — bulk cleanup
 - [ ] Re-run `git cherry` against the finished trunk
 - [ ] Salvage the seven branches carrying unique work
+- [ ] Delete `src_outlib/` — abandoned, unpackaged, imported by nothing, and
+      `ZHAireSRawToGRANDROOT.py` has not parsed since a conflict was committed
+      unresolved on 2023-06-30. Held to Phase 10 because four branches still
+      touch it. See `issue-src-outlib-conflict`.
+- [ ] Delete `lib/` (contains only a readme saying "directory for C library")
+      and untrack `.vscode/settings.json`
+- [ ] Reorganise the tree, if wanted, only *after* the queue drains: 14 of 36
+      branches touch `grand/`, 8 `examples/`, 8 `scripts/`, 7 `sim2root/`.
+      Before that, a rename is a manual replay of every one of them.
 - [ ] Archive-tag everything before deleting
 - [ ] Close PRs 9, 49, 52
 - [ ] Retire `master` and `dev` to their tags

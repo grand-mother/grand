@@ -120,6 +120,26 @@ Challenge datasets.  It means they have not been through the same cleanup as
 the package, so treat a change there as unguarded: nothing will tell you if you
 break it.
 
+A stale twin: ``src_outlib/``
+------------------------------
+
+``src_outlib/`` holds an abandoned copy of part of this tooling, and it is worth
+knowing about before you edit anything named ``AiresInfo*``.
+
+``src_outlib/AiresInfoFunctionsGRANDROOT.py`` is a diverged copy of the file of
+the same name under ``ZHAireSRawRoot/`` — 1814 lines against 2095, missing a
+series of ``Get*FromSry`` functions the live one has.  And
+``src_outlib/ZHAireSRawToGRANDROOT.py`` has not been valid Python since 30 June
+2023, when a merge conflict was committed unresolved and never cleaned up.
+
+**Treat ``sim2root/ZHAireSRawRoot/`` as the live copy.**  If you find yourself
+editing something under ``src_outlib/``, you are almost certainly in the wrong
+file, and nothing will tell you: the directory is not packaged, nothing imports
+it from outside itself, and the linter does not cover it.
+
+It is not deleted yet because four branches still touch it; see
+:ref:`issue-src-outlib-conflict`.
+
 If you work on it
 -----------------
 
