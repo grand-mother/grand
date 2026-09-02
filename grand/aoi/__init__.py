@@ -1,3 +1,5 @@
+"""User-facing event objects: antennas, traces, showers and event lists."""
+
 from .timetrace import *
 from .antenna import *
 from .shower import *

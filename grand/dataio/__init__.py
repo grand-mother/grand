@@ -1,3 +1,5 @@
+"""Reading and writing the GRAND ROOT data format."""
+
 from .protocol import *
 from .descriptors import *
 from .data_tree import *
