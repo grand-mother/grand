@@ -11,17 +11,14 @@ rather than staying here.
 
 .. _issue-galactic-noise-normalisation:
 
-Galactic-noise normalisation does not match the tabulated model
----------------------------------------------------------------
+Galactic-noise normalisation: which constant is right depends on one definition
+--------------------------------------------------------------------------------
 
-:Status: open, blocking
+:Status: open, blocking — but the question is now sharp
 :Affects: every simulated voltage and everything downstream — trigger
           studies, sensitivity estimates, Data Challenge outputs
 :Blocks: ``dev_snonis`` (PR 153), ``refact_galaxy`` (PR 146)
 :Test: ``tests/sim/test_galactic_noise_normalisation.py``
-
-**Symptom.**  The RMS of the simulated Galactic noise does not equal the
-value Parseval's theorem gives for the tabulated model it is built from.
 
 :func:`grand.sim.noise.galaxy.galactic_noise` constructs the spectrum as
 
@@ -38,38 +35,50 @@ branch ``dev_snonis`` changes the constant from ``size_out / 2`` to
 ``size_out / sqrt(2)``, which scales every simulated noise voltage by about
 1.41.
 
-**Measurement.**  Made on 30 August 2026 against
-``data/noise/Vocmax_30-250MHz_uVperMHz_hfss.npy`` at LST 18 h, with 600
-antennas, 221 bins of 1 MHz placed in a 2048-point transform:
+**Measurement.**  Made on 2 September 2026, comparing each ``du_type``
+against the table that ``du_type`` actually reads, at LST 18 h, with 221 bins
+of 1 MHz placed in a transform of length ``size_out``:
 
-===========================  ===================
-Normalisation                simulated / model
-===========================  ===================
-``size_out / 2`` (current)   0.33
-``size_out / sqrt(2)``       0.47
-===========================  ===================
+=================  =====================  ==============================
+``du_type``        simulated / tabulated  compare :math:`1/\sqrt2=0.7071`
+=================  =====================  ==============================
+``GP300``          0.7050                 −0.3 %
+``GP300_nec``      0.7049                 −0.3 %
+``GP300_mat``      0.7049                 −0.3 %
+=================  =====================  ==============================
 
-Neither is 1.  **The √2 change moves the result towards the model but does
-not reconcile it**, and a factor of roughly 2 remains unaccounted for.  The
-disagreement is therefore not a choice between two constants, which is how it
-has been framed.
+The ratio is :math:`1/\sqrt2` to a fraction of a percent, and it does not
+move with ``size_out`` (1024, 2048, 4096 all give the same value) or with the
+number of antennas.  The implementation produces an RMS that is exactly
+:math:`1/\sqrt2` of the tabulated value — which is the relation between the
+RMS and the peak of a sinusoid.
+
+**So the decision reduces to one definitional question**, and each answer
+picks a different constant:
+
+=========================================================  ==============================
+If ``Vocmax_30-250MHz_uVperMHz`` is a **maximum**           the current ``size_out/2`` is right
+If it is an **RMS** spectral density                        PR 153's ``size_out/sqrt(2)`` is right
+=========================================================  ==============================
+
+The filename says *max*.  Nothing else in the repository states which is
+meant, and the question belongs to the authors of the table.
+
+.. note::
+
+   **Correction to an earlier write-up.**  A measurement made on 30 August
+   2026 reported a ratio of 0.33, concluded that "neither candidate is 1",
+   and inferred an unexplained factor of roughly 2.  That comparison ran the
+   default ``GP300`` simulation against ``Vocmax_..._hfss.npy`` — a table
+   that ``GP300`` never reads.  Those two are the same antenna model at two
+   different normalisations (see below), so the missing factor was the
+   normalisation difference between the tables, not a defect in the
+   transform.  Compared like with like, there is no unexplained factor.
 
 **What is not in doubt.**  The implementation is internally consistent: the
 time series obtained from the returned spectrum carries that spectrum's
 energy, to one part in :math:`10^9`.  Whatever convention is chosen, the
 transform itself is right.
-
-**What would settle it.**  One definitional question, for the authors of the
-table:
-
-    Is ``Vocmax_30-250MHz_uVperMHz`` an **RMS** voltage spectral density, or a
-    **maximum**?
-
-The name says *max*.  If it is a peak rather than an RMS quantity, the
-reference used in the measurement above is wrong by a known factor and the
-comparison shifts accordingly — possibly onto one of the two candidates.  If
-it is an RMS, then neither candidate is correct and the chain needs a closer
-look.
 
 **A second, separate discrepancy.**  Section 8.2 of `arXiv:2408.10926
 <https://arxiv.org/abs/2408.10926>`_ states that the module randomises the
@@ -84,6 +93,65 @@ experiment whose sensitivity is set by a trigger threshold.  Until this is
 resolved, results that depend on the noise level should record which version
 of :mod:`grand.sim.noise.galaxy` produced them; ``TRun.software_version``
 exists for exactly that.
+
+.. _issue-galactic-noise-tables:
+
+The shipped Galactic-noise tables do not say what the docstring says
+--------------------------------------------------------------------
+
+:Status: open, not blocking
+:Affects: any study that selects a ``du_type``
+:Test: ``tests/sim/test_galactic_noise_normalisation.py``
+
+Three separate problems with the data files under ``data/noise/``, all found
+while settling the normalisation question above.
+
+**The NEC and MATLAB tables are the same file.**
+:func:`~grand.sim.noise.galaxy.galactic_noise` documents ``GP300_nec`` and
+``GP300_mat`` as the NEC and MATLAB variants of the antenna response.  All
+three pairs of shipped tables are byte-identical:
+
+=================================  ================================
+Table                              ``nec`` and ``mat`` SHA-256
+=================================  ================================
+``Vocmax_30-250MHz_uVperMHz``      identical
+``Pocmax_30-250_Watt_per_MHz``     identical
+``Voutmax_30-250MHz_uVperMHz``     identical
+=================================  ================================
+
+So the two options select the same numbers, and one of the files was
+presumably copied over the other.  Which one is the survivor is not
+recoverable from the repository.
+
+**The default is not the model the docstring names.**  ``du_type='GP300'``
+does not read any ``Vocmax_*.npy`` table: it recomputes the voltage from
+``PG_ALL_jifen.mat`` as :math:`V_{\rm oc}^2 = 4 P R_{\rm ant}`.  The result
+is a nearly constant 0.463 times the ``hfss`` table — the ratio is flat
+across the band to 2.4 %, which is what a normalisation difference looks
+like, whereas the ratio to the ``nec`` table varies by 11 %, which is what a
+genuinely different antenna model looks like.  ``GP300`` and ``hfss`` are
+therefore one model at two normalisations differing by a factor of about
+2.16.
+
+**The highest-level tables are unreachable.**  The three ``*_hfss.npy`` files
+ship but no ``du_type`` opens them.  A study that wanted them would have to
+load them by hand.
+
+**Consequence.**  The four nominal antenna models resolve to two distinct sets
+of numbers, differing in band-integrated level by up to a factor of 2.1:
+
+=====================  =========================  =====================
+Selector               Reads                      Band RMS at LST 18 h
+=====================  =========================  =====================
+``GP300`` (default)    ``PG_ALL_jifen.mat``       27.8, 35.6, 31.4 µV
+``GP300_nec``          ``Vocmax_..._nec.npy``     44.5, 55.6, 53.4 µV
+``GP300_mat``          the same file as ``nec``   44.5, 55.6, 53.4 µV
+*(unreachable)*        ``Vocmax_..._hfss.npy``    59.6, 75.5, 66.9 µV
+=====================  =========================  =====================
+
+A noise level quoted without its ``du_type`` is ambiguous by a factor of two.
+This is independent of the :math:`\sqrt2` question above: that one is a single
+constant applied to all models alike.
 
 .. _issue-nutrig-field-names:
 

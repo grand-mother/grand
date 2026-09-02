@@ -70,8 +70,20 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
         independent realisation on every call; a fixed value makes the
         output reproducible, which is what the tests rely on.
     du_type : {'GP300', 'GP300_nec', 'GP300_mat'}, optional
-        Which antenna-response simulation to use for the effective length:
-        HFSS by default, or the NEC or MATLAB variants.
+        Which tabulated antenna response to use.  The three options resolve
+        to only **two** distinct sets of numbers, and they differ in absolute
+        level by up to a factor of two:
+
+        - ``'GP300'`` (default) recomputes the voltage from
+          ``noise/PG_ALL_jifen.mat`` as :math:`V_{oc}^2 = 4 P R_{ant}`.  This
+          is the HFSS model, but at a normalisation about 0.46 times that of
+          the shipped ``Vocmax_..._hfss.npy`` table, which no option reads.
+        - ``'GP300_nec'`` and ``'GP300_mat'`` read
+          ``Vocmax_30-250MHz_uVperMHz_nec.npy`` and ``..._mat.npy``, which
+          are **byte-identical**, so the two options select the same data.
+
+        See :ref:`issue-galactic-noise-tables` in the documentation.  Quote
+        the ``du_type`` alongside any absolute noise level.
 
     Returns
     -------
@@ -94,6 +106,17 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300
 
     ``f_lst`` is truncated rather than interpolated, so an LST of 18.9 h is
     treated as 18 h.  The ``TODO`` in the body marks the same point.
+
+    **The absolute normalisation depends on one unresolved definition.**  The
+    returned spectrum is scaled by ``size_out / 2``.  Measured against the
+    table each ``du_type`` reads, the resulting time-domain RMS is
+    :math:`1/\sqrt2` of the tabulated value, to within 0.3 % and
+    independently of ``size_out`` and of the number of antennas.  That is the
+    RMS-to-peak relation for a sinusoid, so the current constant is correct if
+    ``Vocmax_...`` is a maximum, and PR 153's ``size_out / sqrt(2)`` is
+    correct if it is an RMS.  The filename says *max*; nothing in the
+    repository confirms it.  See
+    :ref:`issue-galactic-noise-normalisation`.
 
     Examples
     --------
