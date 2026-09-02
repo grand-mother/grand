@@ -59,6 +59,21 @@ jobs:
             data/topography
           key: grand-data-model-${{ hashFiles('data/model_version.flag') }}
 
+      # This job publishes, so it wants the *patched* Handbook PDF -- the one
+      # carrying the errata and the provenance block -- rather than the
+      # fallback copy from resources/.  That means it needs a LaTeX toolchain,
+      # unlike the documentation gate in lint.yml, which only needs the file to
+      # exist.
+      #
+      # recommended plus extra covers what the document uses: article,
+      # geometry, graphicx, amsmath, listings, longtable, enumitem, makecell,
+      # hyperref.  texlive-full is ~5 GB and would dominate the job.
+      - name: Install a LaTeX toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+
       - name: Build the C extensions and install the package
         run: |
           source env/setup.sh

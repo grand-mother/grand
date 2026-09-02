@@ -87,20 +87,17 @@ jobs:
           conda-remove-defaults: true
           auto-activate: false
 
-      # `make html` compiles the Handbook PDF first, because the documentation
-      # links to it with :download: and a missing target is a warning.  The
-      # recipe falls back to the copy in resources/ when pdflatex is absent, so
-      # this install is what makes the *patched* PDF -- with the errata and the
-      # provenance block -- the one that gets published.
+      # No LaTeX here, deliberately.  `make html` builds the Handbook PDF
+      # because the pages link to it with :download: and a missing target is a
+      # warning -- but this job only needs the file to *exist*, not to be
+      # freshly compiled, and build_handbook_pdf.py falls back to the copy in
+      # resources/ when pdflatex is absent.
       #
-      # recommended is enough for this document: article, geometry, graphicx,
-      # amsmath, listings, longtable, hyperref.  texlive-full is ~5 GB and
-      # would dominate the job.
-      - name: Install a LaTeX toolchain
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+      # Installing texlive here cost up to 13 minutes of apt on a slow mirror,
+      # against 42 seconds for the documentation build it was serving.  The
+      # Handbook PDF job above is what actually verifies the LaTeX compiles,
+      # and pages.yml installs it because the *published* site should carry the
+      # patched PDF with the errata and the provenance block.
 
       # jupyter-sphinx executes the docstring examples in a real kernel, a
       # separate process from Sphinx.  The package therefore has to be

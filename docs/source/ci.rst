@@ -135,10 +135,32 @@ out explicitly rather than tolerated silently.
 ``pages.yml`` does not check the log at all: that job publishes, and a warning
 is not a reason to leave the site stale.
 
-**The documentation build compiles the Handbook first.**  ``make html`` depends
-on ``docs/dev/build_handbook_pdf.py``, because the pages link to the PDF with
-``:download:`` and a missing target is itself a warning.  Both the ``docs`` job
-and the separate ``handbook`` job install a LaTeX toolchain for this.
+**The documentation build needs the Handbook PDF to exist, not to be
+compiled.**  ``make html`` runs ``docs/dev/build_handbook_pdf.py`` first,
+because the pages link to the PDF with ``:download:`` and a missing target is
+itself a warning.  Where ``pdflatex`` is absent that script installs the copy
+shipped in ``resources/`` instead, which satisfies the link.
+
+Only two jobs therefore carry a LaTeX toolchain, and for different reasons:
+
+===============================  =====  ===================================
+Job                              LaTeX  Why
+===============================  =====  ===================================
+``lint.yml`` / ``handbook``      yes    Its purpose is to verify the LaTeX
+                                        still compiles.
+``lint.yml`` / ``docs``          no     Needs the file to exist; the
+                                        fallback provides it.
+``pages.yml``                    yes    Publishes, so it should carry the
+                                        *patched* PDF with the errata and
+                                        the provenance block.
+===============================  =====  ===================================
+
+The ``docs`` job used to install it too, and on one run ``apt`` took **13
+minutes 19 seconds** to do so — against 42 seconds for the documentation build
+it was serving, and under a minute for the identical install in the
+``handbook`` job of the same run.  That is mirror variance rather than
+anything in the repository, but paying it in a job that does not need the
+compiler is avoidable.
 
 The data model is cached
 ------------------------
