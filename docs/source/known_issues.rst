@@ -315,3 +315,43 @@ One part of this is already improved: a bare ``raise`` with no active
 exception, which produced ``RuntimeError: No active exception to reraise`` for
 any file lacking the level marker, now raises a :class:`ValueError` naming the
 file and the convention.
+
+.. _issue-root-638-numerical-difference:
+
+ROOT 6.38 changes the result of a NumPy-only test
+---------------------------------------------------
+
+:Status: open, cause not established
+:Affects: unknown; one test is currently known to differ
+:Test: ``tests/basis/test_traces_event.py::test_remove_trace_low_signal``
+
+The first run of the new ROOT matrix found a difference that has nothing
+obviously to do with ROOT.
+
+``test_remove_trace_low_signal`` builds five traces whose three components are
+set to 1, 10, 0.5, 11 and 1, giving Euclidean norms of about 1.73, 17.3, 0.87,
+19.05 and 1.73.  With a threshold of 5, two traces should survive.  Under ROOT
+6.36.04 two do.  **Under ROOT 6.38.02, three do.**
+
+The comparison is not close to the threshold, so this is not a rounding
+difference at a boundary.  Python, NumPy and every other package are identical
+between the two legs -- 3.12.14 and 2.5.2 respectively -- and only the ROOT
+version differs.  The function itself, ``Handling3dTraces.remove_trace_low_signal``,
+is pure NumPy and never touches ROOT.
+
+**What is not yet known.**  Whether importing ROOT 6.38 changes floating-point
+behaviour process-wide (its JIT does emit CPU-feature promotions on some
+hardware), whether some shared state differs between the two runs, or whether
+the test is order-dependent in a way that only manifests on one leg.  Anything
+written here beyond the observation would be a guess.
+
+**Why it matters.**  If importing ROOT can change the result of NumPy code
+that does not use ROOT, that is a much broader problem than one test, and it
+would affect every number the pipeline produces.  If instead the test has
+hidden state, the test is wrong and should be fixed.  The two possibilities
+are very different and the first one is worth ruling out promptly.
+
+**Handling meanwhile.**  The 6.38 leg of the matrix reports but does not block:
+6.36 is the supported version and gates, while 6.38 stays visible without
+holding up work.  This is the difference the matrix was added to find, so it
+should not be silenced.

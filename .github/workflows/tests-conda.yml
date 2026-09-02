@@ -88,6 +88,14 @@ jobs:
     # A hang should fail in twenty minutes, not occupy a runner for a day as
     # the old container jobs did.
     timeout-minutes: 25
+    # The 6.38 leg reports but does not block, and that is deliberate rather
+    # than a way of ignoring it.  6.36 is what the collaboration runs and what
+    # env/conda/grand-dev.yml pins, so it gates.  6.38 is exploratory: the
+    # first run on it turned up a real difference -- see below -- and until
+    # that is understood, a newer ROOT should not be able to block work on the
+    # supported one.  Remove continue-on-error once 6.38 is green, or once it
+    # becomes the supported version.
+    continue-on-error: ${{ matrix.root != '6.36.04' }}
     strategy:
       fail-fast: false
       matrix:
