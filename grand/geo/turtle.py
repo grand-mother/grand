@@ -249,11 +249,6 @@ class Map(object):
         """
         Manage cache instance of map
 
-        :param cls:
-        :type cls:
-        :param path: path/file map
-        :type path: string
-
         Parameters
         ----------
         path : str

@@ -75,6 +75,24 @@ By convention encoded in parameter names: ``freqs_mhz``, ``f_samp_mhz``,
 The Galactic-noise tables are voltage spectral densities in µV/MHz, converted
 to a per-bin amplitude by multiplying by :math:`\sqrt{\Delta f}`.
 
+.. warning::
+
+   **The antenna model is the exception.**
+   :class:`~grand.sim.detector.antenna_model.AntennaModel` stores its frequency
+   axis in **hertz**, not megahertz:
+
+   .. code-block:: python
+
+       >>> AntennaModel().leff_sn.frequency[[0, -1]]
+       array([3.0e+07, 2.5e+08])
+
+   Everything in :mod:`grand.sim.detector.rf_chain` takes and returns MHz, so
+   code that reads a frequency from the antenna model and hands it to the RF
+   chain is wrong by a factor of :math:`10^6`.  The attribute name carries no
+   unit suffix, which is what makes this easy to miss.
+
+   Notebook 03 divides by ``1e6`` at every use for this reason.
+
 The RF chain cascades in ABCD form
 -----------------------------------
 

@@ -11,12 +11,6 @@ def interpol_at_new_x(a_x, a_y, new_x):
     Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
     and set to zero outside interval definition a_x
 
-    :param a_x (float, (N)): F(a_x) = a_y, N size of a_x
-    :param a_y (float, (N)): F(a_x) = a_y
-    :param new_x (float, (M)): new value of x
-
-    :return: F(new_x) (float, (M)): interpolation of F at new_x
-
     Parameters
     ----------
     a_x : ndarray

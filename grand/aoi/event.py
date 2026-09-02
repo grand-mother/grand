@@ -297,8 +297,6 @@ class Event:
     ## Fill this event from trees
     def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True, gp300_workaround=True):
         """Fill this event from trees
-        :param simshower: how to treat the TShower existing in the file, as sim values or reconstructed values
-        :type simshower: bool
 
         Parameters
         ----------

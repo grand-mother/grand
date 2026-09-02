@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" width="1000" height="520" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7A8994"/></marker></defs>
+<rect width="1000" height="520" fill="#FFFFFF"/>
+<text x="30" y="34" font-size="15" font-weight="600" fill="#14202A">The simulation chain</text>
+<text x="30" y="54" font-size="11" fill="#4C5C69">What GRANDlib owns is the shaded band: the instrument response, and the schema on both sides of it.</text>
+<rect x="24" y="86" width="952" height="250" rx="8" fill="#F4FAF7" stroke="#1D7A57" stroke-width="1" stroke-dasharray="6 4"/>
+<text x="38" y="106" font-size="10.5" font-weight="600" fill="#1D7A57">GRANDlib</text>
+<rect x="24" y="372" width="200" height="78" rx="5" fill="#F2F3F5" stroke="#9AA5AE" stroke-width="1.4"/>
+<text x="124" y="394" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#9AA5AE" text-anchor="middle">ZHAireS / CoREAS</text>
+<text x="124" y="412" font-size="10" fill="#4C5C69" text-anchor="middle">air shower and its</text>
+<text x="124" y="425" font-size="10" fill="#4C5C69" text-anchor="middle">radio emission</text>
+<text x="124" y="438" font-size="10" fill="#4C5C69" text-anchor="middle">not GRANDlib</text>
+<rect x="258" y="372" width="170" height="78" rx="5" fill="#F2F3F5" stroke="#9AA5AE" stroke-width="1.4"/>
+<text x="343" y="394" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#9AA5AE" text-anchor="middle">sim2root</text>
+<text x="343" y="412" font-size="10" fill="#4C5C69" text-anchor="middle">converts to the</text>
+<text x="343" y="425" font-size="10" fill="#4C5C69" text-anchor="middle">GRAND schema</text>
+<text x="343" y="438" font-size="10" fill="#4C5C69" text-anchor="middle">not linted or tested</text>
+<rect x="44" y="150" width="190" height="96" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="139" y="172" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">antenna</text>
+<text x="139" y="190" font-size="10" fill="#4C5C69" text-anchor="middle">effective length</text>
+<text x="139" y="203" font-size="10" fill="#4C5C69" text-anchor="middle">V_oc = l . E</text>
+<text x="139" y="216" font-size="10" fill="#4C5C69" text-anchor="middle">notebook 03</text>
+<rect x="276" y="150" width="190" height="96" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="371" y="172" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">RF chain</text>
+<text x="371" y="190" font-size="10" fill="#4C5C69" text-anchor="middle">6 stages, ABCD</text>
+<text x="371" y="203" font-size="10" fill="#4C5C69" text-anchor="middle">V_out / V_oc</text>
+<text x="371" y="216" font-size="10" fill="#4C5C69" text-anchor="middle">notebook 04</text>
+<rect x="508" y="150" width="190" height="96" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="603" y="172" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">Galactic noise</text>
+<text x="603" y="190" font-size="10" fill="#4C5C69" text-anchor="middle">LFMap tables</text>
+<text x="603" y="203" font-size="10" fill="#4C5C69" text-anchor="middle">added, not convolved</text>
+<text x="603" y="216" font-size="10" fill="#4C5C69" text-anchor="middle">notebook 05</text>
+<rect x="740" y="150" width="190" height="96" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="835" y="172" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">ADC</text>
+<text x="835" y="190" font-size="10" fill="#4C5C69" text-anchor="middle">14 bit, 1.8 V</text>
+<text x="835" y="203" font-size="10" fill="#4C5C69" text-anchor="middle">LSB ~ 110 uV</text>
+<text x="835" y="216" font-size="10" fill="#4C5C69" text-anchor="middle">notebook 06</text>
+<line x1="234" y1="198" x2="276" y2="198" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<line x1="466" y1="198" x2="508" y2="198" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<line x1="698" y1="198" x2="740" y2="198" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<rect x="44" y="268" width="190" height="52" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="139" y="290" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#8A6210" text-anchor="middle">TEfield</text>
+<text x="139" y="308" font-size="10" fill="#4C5C69" text-anchor="middle">traces in uV/m</text>
+<rect x="740" y="268" width="190" height="52" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="835" y="290" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#8A6210" text-anchor="middle">TVoltage / TADC</text>
+<text x="835" y="308" font-size="10" fill="#4C5C69" text-anchor="middle">traces in uV / counts</text>
+<rect x="392" y="268" width="190" height="52" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="487" y="290" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#8A6210" text-anchor="middle">TRun + TShower</text>
+<text x="487" y="308" font-size="10" fill="#4C5C69" text-anchor="middle">geometry and metadata</text>
+<line x1="139" y1="268" x2="139" y2="246" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<line x1="487" y1="268" x2="487" y2="246" stroke="#7A8994" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<line x1="835" y1="246" x2="835" y2="268" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<rect x="776" y="372" width="200" height="78" rx="5" fill="#F2F3F5" stroke="#9AA5AE" stroke-width="1.4"/>
+<text x="876" y="394" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#9AA5AE" text-anchor="middle">reconstruction</text>
+<text x="876" y="412" font-size="10" fill="#4C5C69" text-anchor="middle">direction, energy,</text>
+<text x="876" y="425" font-size="10" fill="#4C5C69" text-anchor="middle">Xmax</text>
+<text x="876" y="438" font-size="10" fill="#4C5C69" text-anchor="middle">not GRANDlib</text>
+<line x1="224" y1="411" x2="256" y2="411" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<line x1="343" y1="370" x2="343" y2="324" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<text x="353" y="350" font-size="9.5" fill="#7A8994">writes</text>
+<line x1="835" y1="324" x2="835" y2="370" stroke="#7A8994" stroke-width="1.7" marker-end="url(#a)"/>
+<text x="845" y="350" font-size="9.5" fill="#7A8994">reads</text>
+<line x1="24" y1="474" x2="976" y2="474" stroke="#D8DEE3"/>
+<text x="24" y="496" font-size="10.5" fill="#7A8994">Everything runs one detection unit at a time and one event at a time; the chain has no notion of an array trigger.</text>
+<text x="24" y="512" font-size="10.5" fill="#7A8994">Absolute noise level carries the open sqrt(2) question and depends on du_type; vga_gain is currently ignored.</text>
+</svg>

@@ -40,9 +40,6 @@ class ElectricField:
     def get_fft(self, size_sig_pad):
         """
 
-        :param size_sig_pad:
-        :type size_sig_pad:
-
         Parameters
         ----------
         size_sig_pad : int
@@ -134,8 +131,6 @@ class Voltage:
 
     def get_fft(self, size_sig_pad):
         """
-        :param size_sig_pad:
-        :type size_sig_pad:
 
         Parameters
         ----------

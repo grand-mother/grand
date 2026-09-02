@@ -148,11 +148,6 @@ def create_output_for_logger(
 ):
     """Create a logger with handler for grand
 
-    :param log_level: standard python logger level define in DICT_LOG_LEVELS
-    :param log_file: create a log file with path and name log_file
-    :param log_stdout: enable standard output
-    :param log_root: define a log_root logger str or list of str
-
     Parameters
     ----------
     log_level : str, optional
@@ -219,8 +214,6 @@ def get_logger_for_script(pfile):
 
     @note
       Must be call before create_output_for_logger()
-
-    :param pfile: path of the file, so always call with __file__ value
 
     Parameters
     ----------
@@ -343,7 +336,6 @@ def _get_string_now():
 
 def _get_logger_path(pfile):
     """
-    :param pfile: give __file__ where this is function is call
     @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
 
     Parameters
@@ -384,9 +376,6 @@ class _MyFormatter(logging.Formatter):
         @note
           This method is not used directly by the user.
 
-        :param record: internal param
-        :param datefmt: internal param
-
         Parameters
         ----------
         record : logging.LogRecord
@@ -413,8 +402,6 @@ class _MyFormatter(logging.Formatter):
 
         @note
           This method is not used directly by the user.
-
-        :param record: internal param
 
         Parameters
         ----------

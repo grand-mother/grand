@@ -475,9 +475,44 @@ from grand.sim.detector.antenna_model import AntennaModel
 model = AntennaModel()
 
 # The three arms.  "sn" and "ew" are the horizontal arms, laid out south-north
-# and east-west; "z" is the vertical one.  These keys are what the simulation
-# uses internally; the data model calls the same three channels X, Y and Z.
+# and east-west; "z" is the vertical one.
+#
+# These keys are what the simulation uses internally.  The data model calls the
+# same three channels X, Y and Z, and the mapping is
+#
+#     X = sn (south-north)      Y = ew (east-west)      Z = z (vertical)
+#
+# which is also the order efield2voltage writes them in.  Note that the GRANDlib
+# Handbook states the opposite (EW = X, SN = Y); the code is right and the
+# Handbook is wrong -- see tests/sim/test_antenna_arm_identity.py, which
+# identifies each file by correlating its pattern against the unambiguously
+# named HFSS arms.  Following the Handbook swaps two of your three channels.
 print("arms:", list(model.d_leff))'''),
+    md(r'''## 0. A naming trap, before anything else
+
+`d_leff` is keyed by the *physical* arm — `sn` south-north, `ew` east-west,
+`z` vertical. The data model calls the same three channels X, Y, Z, and the
+mapping is
+
+| channel | arm | direction |
+|---|---|---|
+| X | `sn` | south–north |
+| Y | `ew` | east–west |
+| Z | `z` | vertical |
+
+This is also the order `efield2voltage` writes them in, so `trace[:, 0]` is the
+south-north arm.
+
+The GRANDlib Handbook states the opposite — "EW or X arm, South–North denoted
+as SN or Y arm". **The Handbook is wrong here.** The HFSS files are named after
+the physical arm and carry no ambiguity, so the NEC and MATLAB files can be
+identified by correlating their patterns against them; `nec_X` correlates +0.72
+with the SN arm and −0.18 with EW. `tests/sim/test_antenna_arm_identity.py`
+does that measurement and pins the result.
+
+It matters because following the Handbook swaps two of the three channels for
+every `GP300_nec` or `GP300_mat` simulation, and a channel swap looks like a
+polarisation measurement rather than a bug.'''),
     md(r'''## 1. What is actually tabulated
 
 Each arm is a `DataTable` holding the response on a regular grid. The two

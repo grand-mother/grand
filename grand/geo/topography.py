@@ -182,9 +182,11 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
 
 def update_data(coordinates=None, clear: bool = False, radius: float = None):
     """
-    Update the cache of topography data.
-    Data are stored in https://github.com/grand-mother/store/releases.
-    Locally saved as .../grand/data/topography/*.hgt
+    Updates the cache of topography data.
+
+    Tiles are published at https://github.com/grand-mother/store/releases and
+    saved locally as ``grand/data/topography/*.hgt``, one file per one-degree
+    square.  They are not in version control.
 
     Parameters
     ----------

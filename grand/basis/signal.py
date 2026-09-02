@@ -16,22 +16,17 @@ logger = getLogger(__name__)
 
 
 def find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max):
-    """Parabolic interpolation of the maximum with 3 points
+    r"""Returns the interpolated maximum of a trace, from a parabola through 3 points.
 
+    Fits :math:`ax^2 + bx + c` through the largest sample and its two
+    neighbours, offset to :math:`(x_0, y_0)`, and returns the vertex:
 
-    trace : all values >= 0
+    .. math::
 
-    :param x_trace:
-    :param y_trace:
-    algo Mode pic, input 3 values and the middle one is max:
-        parabola : ax^2 + bx + c
-        offset of (x0, y0)
-        solve coef a, b , interpolation of the maximum is
-          x_m = x0 - b/2a
-          y_m = y0 - b^2/4a
-    :param idx_max: index of sample max, idx_max < nb_sample
-    :type idx_max: int
-    :return: x_max, y_max
+        x_m = x_0 - \frac{b}{2a}, \qquad y_m = y_0 - \frac{b^2}{4a}
+
+    The trace is assumed non-negative, and ``idx_max`` is assumed to be a
+    genuine local maximum with a sample on either side.
 
     Parameters
     ----------
@@ -101,13 +96,6 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.96):
          5.0 offset of (x, y) of first sample
          5.1 solve overdetermined linear system with a, b, c
          5.2 x_m =offset - b/2a ; v_m=offset - b^2/4a + c
-
-    :param trace:
-    :type trace:
-    :param idx_max:
-    :type idx_max:
-    :param factor_hill:
-    :type factor_hill:
 
     Parameters
     ----------
@@ -186,13 +174,6 @@ def get_filter(time, trace, fr_min, fr_max):
       At present Butterworth filter only is implemented, others: what
       is close to hardware filter?
 
-    :param time (array): [ns] time
-    :param trace (array): ElectricField (muV/m)/voltage (muV) vectors to be filtered
-    :param fr_min (float): [Hz] The minimal frequency of the bandpass filter
-    :param fr_max (float): [Hz] The maximal frequency of the bandpass filter
-
-    :return: filtered trace in time domain
-
     Parameters
     ----------
     time : ndarray
@@ -246,12 +227,6 @@ def get_peakamptime_norm_hilbert(a2_time, a3_trace):
     """
     Get peak Hilbert amplitude norm of trace (v_max) and its time t_max without interpolation
 
-    :param time (D,S): time, with D number of vector of trace, S number of sample
-    :param traces (D,3,S): trace
-
-    :return: t_max float(D,) v_max float(D,), norm_hilbert_amp float(D,S),
-            idx_max int, norm_hilbert_amp float(D,S)
-
     Parameters
     ----------
     a2_time : ndarray
@@ -277,12 +252,6 @@ def get_peakamptime_norm_hilbert(a2_time, a3_trace):
 def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     """
     #RK: This function is copied to grand/simu/master_simu.py where it is used. Remove it from here if it is not used anywhere else.
-
-    :param sig_size:
-    :param f_samp_mhz:
-    :param padding_fact:
-
-    :return: size_fft (int,0), array freq (float,1) in MHz for rfft()
 
     Parameters
     ----------
@@ -311,12 +280,6 @@ def interpol_at_new_x(a_x, a_y, new_x):
 
     Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
     and set to zero outside interval definition a_x
-
-    :param a_x (float, (N)): F(a_x) = a_y, N size of a_x
-    :param a_y (float, (N)): F(a_x) = a_y
-    :param new_x (float, (M)): new value of x
-
-    :return: F(new_x) (float, (M)): interpolation of F at new_x
 
     Parameters
     ----------

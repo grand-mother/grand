@@ -52,8 +52,6 @@ class PreComputeInterpol:
     def init_linear_interpol(self, freq_in_mhz, freq_out_mhz):
         """
         Precompute coefficient of linear interpolation for freq_out_mhz with reference defined at freq_in_mhz
-        :param freq_in_mhz: regular array of frequency where function is defined
-        :param freq_out_mhz: regular array frequency where we want interpol
 
         Parameters
         ----------
@@ -89,7 +87,6 @@ class PreComputeInterpol:
         """
         Return f(freq_out_mhz) by linear interpolation of f defined by
         f(freq_in_mhz) = a_val
-        :param a_val: defined value of function at freq_in_mhz
 
         Parameters
         ----------
@@ -149,8 +146,6 @@ class AntennaProcessing:
         """
         !
         typically the return of scipy.fft.rfftfreq/1e6
-        :param a_freq:
-        :type a_freq:
 
         Parameters
         ----------
@@ -176,9 +171,6 @@ class AntennaProcessing:
         Linear interpolation of template of effective length in Fourier space
         by tripler (theta, phi, frequency)
         in direction of the efield source at antenna position
-        :param xmax:
-        :param efield:
-        :param frame:
 
         Parameters
         ----------
@@ -323,12 +315,6 @@ class AntennaProcessing:
         frame: Union[LTP, GRANDCS, None] = None,
     ) -> Voltage:
         """
-        :param xmax:
-        :type xmax:
-        :param efield:
-        :type efield:
-        :param frame:
-        :type frame:
 
         Parameters
         ----------
@@ -341,8 +327,10 @@ class AntennaProcessing:
 
         Returns
         -------
-        Voltage
-            Open-circuit voltage at the three arms.
+        :class:`~grand.basis.type_trace.Voltage`
+            Open-circuit voltage at the three arms.  Qualified because
+            :class:`grand.aoi.timetrace.Voltage` exists too and a bare name is
+            ambiguous.
 
         Raises
         ------

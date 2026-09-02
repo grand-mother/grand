@@ -20,9 +20,6 @@ logger = getLogger(__name__)
 def closest_node(node, nodes):  # pragma: no cover
     """Simple computation of distance mouse DU
 
-    :param node:
-    :param nodes:
-
     Parameters
     ----------
     node : array_like
@@ -70,11 +67,6 @@ class DetectorUnitNetwork:
     def init_pos_id(self, du_pos, du_id=None):
         """Init object with array DU position and identifier
 
-        :param du_pos: position of DU
-        :type du_pos: float[nb_DU, 3]
-        :param du_id: identifier of DU
-        :type du_id: list or array of string
-
         Parameters
         ----------
         du_pos : ndarray, shape (n_du, 3)
@@ -95,8 +87,6 @@ class DetectorUnitNetwork:
     def keep_only_du_with_index(self, l_idx):
         """Keep DU at index defined in list <l_idx>
 
-        :param l_idx: list of index of DU
-
         Parameters
         ----------
         l_idx : sequence of int
@@ -110,9 +100,6 @@ class DetectorUnitNetwork:
     def reduce_nb_du(self, new_nb_du):
         """Feature to debug and reduce computation
 
-        :param new_nb_du: keep only new_nb_du first DU
-        :type new_nb_du: int
-
         Parameters
         ----------
         new_nb_du : int
@@ -124,9 +111,6 @@ class DetectorUnitNetwork:
 
     def get_sub_network(self, l_id):
         """Reduce networh to DU in list <l_id>
-
-        :param l_id: list of DU slected
-        :type: int[nb_DU in l_id]
 
         Parameters
         ----------
@@ -154,9 +138,6 @@ class DetectorUnitNetwork:
 
     def get_surface(self):
         """Return suface in km2
-
-        :return: [km2] surface of network envelop
-        :rtype: float
 
         Returns
         -------
@@ -204,17 +185,6 @@ class DetectorUnitNetwork:
         self, a_values, title="", traces=None, scale="log", unit=""
     ):  # pragma: no cover
         """Interactive footprint double click on DU draw trace associated and power spectrum
-
-
-        :param a_values: intensity associated to DU
-        :type a_values: float (nb DU)
-        :param title: title of figure
-        :type title: str
-        :param traces: object traces
-        :type traces: Handling3dTraces
-        :param scale: type of scale
-        :type scale: str in ["log", "lin"]
-
 
         Parameters
         ----------
@@ -328,11 +298,6 @@ class DetectorUnitNetwork:
     ):  # pragma: no cover
         """Plot footprint of time max by DU and value max by component
 
-        :param o_tr: object traces
-        :type o_tr: Handling3dTraces
-        :param title: title of plot
-        :type title: str
-
         Parameters
         ----------
         o_tr : Handling3dTraces
@@ -422,13 +387,6 @@ class DetectorUnitNetwork:
 
     def plot_footprint_time(self, a_time, a3_values, title=""):  # pragma: no cover
         """Interactive plot, footprint max value for time defined by user with slider widget
-
-        :param a_time: array of complet time of event
-        :type a_time: float[nb_sample full event]
-        :param a3_values: trace 3D
-        :type a3_values: float [nb_DU, 3]
-        :param title: title of plot
-        :type title: str
 
         Parameters
         ----------

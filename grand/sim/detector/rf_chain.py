@@ -528,8 +528,6 @@ class GenericProcessingDU:
     def _set_name_data_file(self, axis):
         """
 
-        :param axis:
-
         Parameters
         ----------
         axis : int, optional
@@ -547,9 +545,6 @@ class GenericProcessingDU:
 
     def set_out_freq_mhz(self, freqs_mhz):
         """Define frequencies
-
-        :param freqs_mhz: [MHz] given by scipy.fft.rfftfreq/1e6
-        :type freqs_mhz: float (nb_freqs)
 
         Parameters
         ----------
@@ -1054,8 +1049,6 @@ class BalunAfterLNA(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """Compute ABCD_matrix for frequency freqs_mhz
 
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -1146,8 +1139,6 @@ class Cable(GenericProcessingDU):
     def _set_name_data_file(self, axis=0):
         """
 
-        :param axis:
-
         Parameters
         ----------
         axis : int, optional
@@ -1164,8 +1155,6 @@ class Cable(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """Compute ABCD_matrix for frequency freqs_mhz
-
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -1237,7 +1226,6 @@ class VGAFilter(GenericProcessingDU):
 
     def __init__(self, gain=0):
         """ 
-        :param gain: gain setup for VGA in dB.
 
         Parameters
         ----------
@@ -1264,8 +1252,6 @@ class VGAFilter(GenericProcessingDU):
     def _set_name_data_file(self, axis=0):
         """
 
-        :param axis:
-
         Returns
         -------
         str
@@ -1285,8 +1271,6 @@ class VGAFilter(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """Compute ABCD_matrix for frequency freqs_mhz
-
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -1395,8 +1379,6 @@ class BalunBeforeADC(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
-
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -1719,8 +1701,6 @@ class Rfchain_elements(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
 
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -1816,8 +1796,6 @@ class Rfchain_elements_rad(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
-
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -1999,8 +1977,6 @@ class Zload(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """compute S-paramters and Zload for freqs_mhz
 
-        :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -2067,8 +2043,6 @@ class RFChain(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
-
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -2241,8 +2215,6 @@ class RFChainNut(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
 
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -2391,8 +2363,6 @@ class RFChain_gaa(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
 
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -2535,8 +2505,6 @@ class RFChain_Balun1(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
-
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -2693,8 +2661,6 @@ class RFChain_Match_net(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
 
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -2848,8 +2814,6 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
-
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------
@@ -3007,8 +2971,6 @@ class RFChain_VGA(GenericProcessingDU):
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
 
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
-
         Parameters
         ----------
         freqs_mhz : ndarray, shape (n_freq,)
@@ -3159,8 +3121,6 @@ class RFChain_in_Balun1(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         """Compute transfer function for frequency freqs_mhz
-
-        :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
 
         Parameters
         ----------

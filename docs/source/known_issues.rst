@@ -153,6 +153,55 @@ A noise level quoted without its ``du_type`` is ambiguous by a factor of two.
 This is independent of the :math:`\sqrt2` question above: that one is a single
 constant applied to all models alike.
 
+.. _issue-handbook-arm-naming:
+
+The Handbook has the X/Y antenna-arm mapping backwards
+--------------------------------------------------------
+
+:Status: erratum in ``resources/GRANDlib_Handbook.pdf``; the code is correct
+:Affects: anyone reading the Handbook to interpret a trace
+:Test: ``tests/sim/test_antenna_arm_identity.py``
+
+The GRANDlib Handbook, in its description of the antenna models, says the
+effective-length files hold the
+
+    "East--West arm, denoted as EW or X arm, South--North denoted as SN or Y
+    arm and Vertical denoted as Zarm"
+
+The code assigns them the other way round.
+:class:`~grand.sim.detector.antenna_model.AntennaModel` reads
+``Light_GP300Antenna_nec_Xarm_leff.npz`` into ``leff_sn`` and
+``..._nec_Yarm_leff.npz`` into ``leff_ew``.
+
+**The code is right.**  The HFSS files are named after the physical arm
+(``EWarm``, ``SNarm``) and carry no X/Y ambiguity, so the NEC and MATLAB files
+can be identified by correlating their patterns against them over 60-200 MHz:
+
+===========  =================  =================  ==============
+File         vs ``hfss_EW``     vs ``hfss_SN``     identified as
+===========  =================  =================  ==============
+``nec_X``    −0.176             **+0.722**         south-north
+``nec_Y``    **+0.651**         −0.170             east-west
+``mat_X``    −0.128             **+0.716**         south-north
+``mat_Y``    **+0.618**         −0.143             east-west
+===========  =================  =================  ==============
+
+The two reference arms correlate with each other at +0.003, so they are
+independent and the identification is not an artefact of the method.
+
+So **X is the south-north arm and Y is the east-west arm**, which is also what
+:class:`~grand.geo.coordinates.GRANDCS` implies: its ``x`` axis points north.
+
+**Why it matters.**  Following the Handbook would swap two of the three
+channels for every event simulated with ``du_type='GP300_nec'`` or
+``'GP300_mat'``.  A channel swap does not look like a bug — it looks like a
+polarisation measurement.
+
+The output channel order is fixed by :mod:`grand.sim.efield2voltage`, which
+fills ``voc[:, 0]`` from the SN arm, ``voc[:, 1]`` from EW and ``voc[:, 2]``
+from Z.  With the identification above, that is X, Y, Z in that order, which is
+how the documentation and the notebooks label them.
+
 .. _issue-geoid-longitude-convention:
 
 ``geoid_undulation`` returns NaN for a negative longitude

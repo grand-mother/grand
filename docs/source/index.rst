@@ -48,6 +48,7 @@ collaboration uses, and the coordinate systems everything is expressed in.
    :maxdepth: 1
    :caption: Project
 
+   glossary
    references
    citing
    changelog

@@ -30,9 +30,6 @@ def _get_ttree_in_file(f_root):
     """
     Return all TTree name in ROOT file
 
-    :param f_root:
-    :type f_root:
-
     Parameters
     ----------
     f_root : str
@@ -120,8 +117,6 @@ class _FileEventBase:
         """
         Load event/run with index idx in list return by get_list_of_events()
 
-        :param idx:
-
         Parameters
         ----------
         idx : int
@@ -170,8 +165,6 @@ class _FileEventBase:
     def _load_event_identifier(self, event_number, run_number):
         """
         Load traces/pos of event/run event_number/run_number
-        :param event_number:
-        :param run_number:
 
         Parameters
         ----------
@@ -298,10 +291,6 @@ class _FileEventBase:
           * zenith
           * energy_primary
 
-        :param f_name: string ROOT path/file_name
-        :param idx_evt: integer
-        :return: dictionary with some raw value of simulation parameters
-
         Returns
         -------
         dict
@@ -372,10 +361,6 @@ def get_handling3dtraces(f_name, idx_evt=0):
 
     Handling3dTraces class is the traces containers
 
-    :param f_name:  string ROOT path/file_name
-    :param idx_evt: integer
-    :return: object Handling3dTraces
-
     Parameters
     ----------
     f_name : str
@@ -401,10 +386,6 @@ def get_simu_parameters(f_name, idx_evt=0):
       * azimuth
       * zenith
       * energy_primary
-
-    :param f_name: string ROOT path/file_name
-    :param idx_evt: integer
-    :return: dictionary with some raw value of simulation parameters
 
     Parameters
     ----------
@@ -432,7 +413,6 @@ class FileEfield(_FileEventBase):
 
     def __init__(self, f_name):
         """
-        :param f_name: path to ROOT file Efield
 
         Parameters
         ----------
@@ -452,13 +432,6 @@ class FileEfield(_FileEventBase):
         Handling3dTraces
             The event's traces, wrapped in the object that provides the
             plotting and peak-finding helpers.
-
-                Examples
-                --------
-                .. jupyter-execute::
-                    :hide-code:
-
-                    print("requires a ROOT file; see the User Guide")
         """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"$\mu$V/m", "cart")
@@ -475,8 +448,6 @@ class FileVoltage(_FileEventBase):
 
     def __init__(self, f_name):
         """
-
-        :param f_name:  path to ROOT file volatge
 
         Parameters
         ----------
@@ -496,13 +467,6 @@ class FileVoltage(_FileEventBase):
         Handling3dTraces
             The event's traces, wrapped in the object that provides the
             plotting and peak-finding helpers.
-
-                Examples
-                --------
-                .. jupyter-execute::
-                    :hide-code:
-
-                    print("requires a ROOT file; see the User Guide")
         """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"$\mu$V", "dir")
@@ -519,8 +483,6 @@ class FileAdc(_FileEventBase):
 
     def __init__(self, f_name):
         """
-
-        :param f_name:  path to ROOT file volatge
 
         Parameters
         ----------
@@ -541,13 +503,6 @@ class FileAdc(_FileEventBase):
         Handling3dTraces
             The event's traces, wrapped in the object that provides the
             plotting and peak-finding helpers.
-
-                Examples
-                --------
-                .. jupyter-execute::
-                    :hide-code:
-
-                    print("requires a ROOT file; see the User Guide")
         """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"ADU", "dir")

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7A8994"/></marker></defs>
+<rect width="1000" height="560" fill="#FFFFFF"/>
+<text x="30" y="34" font-size="15" font-weight="600" fill="#14202A">The data model</text>
+<text x="30" y="54" font-size="11" fill="#4C5C69">Run-level and event-level trees are joined by different keys. A mismatch is silent, not an error.</text>
+<text x="30" y="92" font-size="10.5" font-weight="600" fill="#8A6210">RUN LEVEL — one entry per run</text>
+<rect x="30" y="104" width="210" height="74" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="135" y="125" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#8A6210" text-anchor="middle">TRun</text>
+<text x="135" y="142" font-size="9.5" fill="#4C5C69" text-anchor="middle">du_id, du_xyz, t_bin_size</text>
+<text x="135" y="154" font-size="9.5" fill="#4C5C69" text-anchor="middle">origin_geoid</text>
+<text x="135" y="167" font-size="9.5" fill="#4C5C69" text-anchor="middle">software_version</text>
+<rect x="262" y="104" width="210" height="74" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="367" y="125" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#8A6210" text-anchor="middle">TRunEfieldSim</text>
+<text x="367" y="142" font-size="9.5" fill="#4C5C69" text-anchor="middle">simulation settings</text>
+<text x="367" y="154" font-size="9.5" fill="#4C5C69" text-anchor="middle">for the run</text>
+<text x="30" y="228" font-size="10.5" font-weight="600" fill="#1D7A57">EVENT LEVEL — one entry per (run, event)</text>
+<rect x="30" y="240" width="210" height="82" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="135" y="261" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">TEfield</text>
+<text x="135" y="278" font-size="9.5" fill="#4C5C69" text-anchor="middle">trace (du, 3, n) uV/m</text>
+<text x="135" y="290" font-size="9.5" fill="#4C5C69" text-anchor="middle">du_id, du_seconds</text>
+<text x="135" y="303" font-size="9.5" fill="#4C5C69" text-anchor="middle">du_nanoseconds</text>
+<rect x="262" y="240" width="210" height="82" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="367" y="261" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">TVoltage</text>
+<text x="367" y="278" font-size="9.5" fill="#4C5C69" text-anchor="middle">trace (du, 3, n) uV</text>
+<text x="367" y="290" font-size="9.5" fill="#4C5C69" text-anchor="middle">after antenna + chain</text>
+<rect x="494" y="240" width="210" height="82" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="599" y="261" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#1D7A57" text-anchor="middle">TADC</text>
+<text x="599" y="278" font-size="9.5" fill="#4C5C69" text-anchor="middle">trace, ADC counts</text>
+<text x="599" y="290" font-size="9.5" fill="#4C5C69" text-anchor="middle">what a unit records</text>
+<rect x="726" y="240" width="210" height="82" rx="5" fill="#E2F0F0" stroke="#0E6E70" stroke-width="1.4"/>
+<text x="831" y="261" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#0E6E70" text-anchor="middle">TShower</text>
+<text x="831" y="278" font-size="9.5" fill="#4C5C69" text-anchor="middle">zenith, azimuth</text>
+<text x="831" y="290" font-size="9.5" fill="#4C5C69" text-anchor="middle">energy_primary</text>
+<text x="831" y="303" font-size="9.5" fill="#4C5C69" text-anchor="middle">xmax_pos_shc</text>
+<line x1="135" y1="178" x2="135" y2="238" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="143" y="214" font-size="9.5" fill="#8A6210">run_number</text>
+<line x1="367" y1="178" x2="367" y2="238" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="375" y="214" font-size="9.5" fill="#8A6210">run_number</text>
+<line x1="240" y1="281" x2="262" y2="281" stroke="#1D7A57" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="472" y1="281" x2="494" y2="281" stroke="#1D7A57" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="704" y1="281" x2="726" y2="281" stroke="#0E6E70" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="715" y="336" font-size="9.5" fill="#0E6E70" text-anchor="middle">(run_number, event_number)</text>
+<line x1="30" y1="368" x2="970" y2="368" stroke="#D8DEE3"/>
+<text x="30" y="392" font-size="12" font-weight="600" fill="#B4472A">Three things that are not written down anywhere else</text>
+<rect x="30" y="406" width="296" height="108" rx="5" fill="#FBEDE9" stroke="#B4472A" stroke-width="1.4"/>
+<text x="178" y="427" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#B4472A" text-anchor="middle">grouping</text>
+<text x="178" y="444" font-size="9.5" fill="#4C5C69" text-anchor="middle">DataDirectory groups by tree type</text>
+<text x="178" y="456" font-size="9.5" fill="#4C5C69" text-anchor="middle">and analysis level — not by run.</text>
+<text x="178" y="469" font-size="9.5" fill="#4C5C69" text-anchor="middle">Two runs in a directory do not</text>
+<text x="178" y="481" font-size="9.5" fill="#4C5C69" text-anchor="middle">give two handles.</text>
+<rect x="352" y="406" width="296" height="108" rx="5" fill="#FBEDE9" stroke="#B4472A" stroke-width="1.4"/>
+<text x="500" y="427" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#B4472A" text-anchor="middle">levels</text>
+<text x="500" y="444" font-size="9.5" fill="#4C5C69" text-anchor="middle">The _L0_ / _L1_ in a file name must</text>
+<text x="500" y="456" font-size="9.5" fill="#4C5C69" text-anchor="middle">match the tree’s analysis_level.</text>
+<text x="500" y="469" font-size="9.5" fill="#4C5C69" text-anchor="middle">Both levels come back; a bare</text>
+<text x="500" y="481" font-size="9.5" fill="#4C5C69" text-anchor="middle">attribute follows the highest.</text>
+<rect x="674" y="406" width="296" height="108" rx="5" fill="#FBEDE9" stroke="#B4472A" stroke-width="1.4"/>
+<text x="822" y="427" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="#B4472A" text-anchor="middle">uniqueness</text>
+<text x="822" y="444" font-size="9.5" fill="#4C5C69" text-anchor="middle">Writing a second entry with the same</text>
+<text x="822" y="456" font-size="9.5" fill="#4C5C69" text-anchor="middle">(run_number, event_number)</text>
+<text x="822" y="469" font-size="9.5" fill="#4C5C69" text-anchor="middle">raises NotUniqueEvent. Each run of a</text>
+<text x="822" y="481" font-size="9.5" fill="#4C5C69" text-anchor="middle">simulation needs its own file.</text>
+<text x="30" y="540" font-size="10.5" fill="#7A8994">Worked through in notebook 02. The fields themselves are descriptor-driven: see grand/dataio/descriptors.py.</text>
+</svg>
