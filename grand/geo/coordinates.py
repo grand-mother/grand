@@ -1083,26 +1083,36 @@ class Geodetic(GeodeticRepresentation):
 
 
 class ECEF(CartesianRepresentation):
-    """
-    Generic container for Earth-Centered Earth-Fixed (ECEF) coordinate system.
+    r"""Earth-Centred, Earth-Fixed Cartesian coordinates, in metres.
 
-    Center of Earth is the origin of this frame.
+    A right-handed frame whose origin is the centre of the Earth and which
+    rotates with it.  Every conversion between a local frame and geodetic
+    coordinates passes through ECEF; it is the common pivot, so that the
+    ellipsoid constants live in one place.
 
-    ECEF is a right-handed Cartesian coordinate system with the origin at the
-    Earth’s center. This coordinate frame is fixed with respect to the Earth
-    (i.e., rotates along with the Earth). Units are in meters. The three axis are
-    defined as follows:
-        * x :	Passes through the equator at the Prime Meridian (latitude = 0, longitude = 0).
-        * y :	Passes through the equator 90 degrees east of the Prime Meridian (latitude = 0, longitude = 90 degrees).
-        * z :	Passes through the North Pole (latitude = 90 degrees, longitude = any value).
+    The axes are:
 
-    :Note:
-        Reason to have __new__ and __init__ is to store obstime as instance attribute.
-        obstime will be saved as class attribute if only __new__ is used. This means
-        if obstime is modified for one case anywhere during calculation, obstime for
-        all cases will be modified.
+    - :math:`x`, through the equator at the prime meridian
+      (latitude 0, longitude 0);
+    - :math:`y`, through the equator 90 degrees east
+      (latitude 0, longitude 90);
+    - :math:`z`, through the north pole (latitude 90).
 
-    :Todo: find an elegant way to do this.
+    Examples
+    --------
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import Geodetic, ECEF
+
+        site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+        print(np.round(np.asarray(ECEF(site)).ravel(), 1))
+
+    See Also
+    --------
+    Geodetic : latitude, longitude and height.
+    LTP : a local tangent plane.
+    GRANDCS : the array frame.
     """
 
     def __new__(

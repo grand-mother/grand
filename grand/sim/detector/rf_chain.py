@@ -228,19 +228,23 @@ def interp(x,y,z):
     return np.interp(x,y,z)
 
 def interpol_at_new_x(a_x, a_y, new_x):
-    """
-    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
-    and set to zero outside interval definition a_x
+    r"""Returns `a_y` interpolated onto `new_x`, zero outside the input range.
 
-    :param a_x (float, (N)): F(a_x) = a_y, N size of a_x
-    :param a_y (float, (N)): F(a_x) = a_y
-    :param new_x (float, (M)): new value of x
+    Parameters
+    ----------
+    a_x : ndarray, shape (n,)
+        Sample positions, in increasing order.
+    a_y : ndarray, shape (n,)
+        Values at `a_x`.
+    new_x : ndarray, shape (m,)
+        Positions to interpolate onto.
 
-    :return: F(new_x) (float, (M)): interpolation of F at new_x
-    # RK: scipy interpolate gave 0 values for S21 due to fill_values=(0,0)
-    #.    which resulted in 'nan' values in A-parameters. Also final transfer
-    #     function (TF) outside of the range of 10-300 MHz was weird. TF for Z-port produces a sharp peak around 10 MHz.
-    #     So np.interp is used instead.
+    Returns
+    -------
+    ndarray, shape (m,)
+        Interpolated values.  Cubic within the range of `a_x`, and **zero**
+        outside it rather than extrapolated -- the S-parameter tables are
+        measured over 30-250 MHz and have no meaning beyond it.
     """
     assert a_x.shape[0] > 0
     #func_interpol = interpolate.interp1d(
@@ -371,11 +375,31 @@ def s2abcd(s11, s21, s12, s22):
         ])
 
 def matmul(A, B):
-    """
-    This function deals with 2x2 matrix multiplication.
-    Input matrix shape in our case is (2,2,nports,nb_freqs)
-    AxB = [[A11*B11 + A12*B21, A11*B12 + A12*B22],
-           [A21*B11 + A22*B21, A21*B12 + A22*B22]]
+    r"""Returns the product of two stacked 2x2 matrices.
+
+    Multiplies elementwise over the trailing axes, which is what cascades
+    two stages of the RF chain: an ABCD matrix per port and per frequency.
+
+    Parameters
+    ----------
+    A, B : ndarray, shape (2, 2, n_ports, n_freqs)
+        The matrices to multiply.
+
+    Returns
+    -------
+    ndarray, shape (2, 2, n_ports, n_freqs)
+        The product, computed as
+
+        .. math::
+
+           AB = \begin{bmatrix}
+                A_{11}B_{11} + A_{12}B_{21} & A_{11}B_{12} + A_{12}B_{22} \\
+                A_{21}B_{11} + A_{22}B_{21} & A_{21}B_{12} + A_{22}B_{22}
+                \end{bmatrix}
+
+    See Also
+    --------
+    s2abcd : produces the matrices this cascades.
     """
     assert A.shape[0]==2
     assert A.shape[1]==2

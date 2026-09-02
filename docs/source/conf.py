@@ -73,7 +73,15 @@ bibtex_default_style = 'plain'
 
 # CHANGELOG.md is included by changelog.rst; without this, myst also picks it
 # up as a page in its own right and warns that it is not in any toctree.
-suppress_warnings = ['myst.xref_missing']
+suppress_warnings = [
+    'myst.xref_missing',
+    # DANTON (Niess:2018opy) is an arXiv-only note with no journal reference.
+    # sphinxcontrib-bibtex warns about the absent field; the field is absent
+    # because the work was never published, not because the entry is
+    # incomplete.  Warnings are errors in the CI docs build, so this cannot
+    # be left to stand.
+    'bibtex.missing_field',
+]
 
 intersphinx_timeout = 10
 intersphinx_mapping = {

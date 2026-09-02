@@ -1,0 +1,133 @@
+Continuous integration
+======================
+
+.. contents::
+   :local:
+
+What continuous integration is
+------------------------------
+
+Continuous integration is a set of checks that GitHub runs automatically on
+the collaboration's own machines every time code changes, so that a problem is
+found by a machine within minutes rather than by a person weeks later.
+
+Nothing about it is specific to GRANDlib.  The checks are the same ones anyone
+can run locally — the test suite, the linter, a documentation build — and the
+point is only that they are run *every time*, on a clean machine, by something
+that does not forget.  A clean machine matters: it is what catches the case
+where the code works because of something installed on one person's laptop.
+
+When it runs
+------------
+
+===========================  ==============================================
+Event                        What happens
+===========================  ==============================================
+Push to any branch           The suite, the linter and a docs build
+Opening or updating a PR     The same, including pull requests from forks
+Merge to ``main``            The above, plus the documentation is deployed
+Change to the data-format
+version file                 The format version is tagged
+===========================  ==============================================
+
+Pull requests from forks matter here.  The workflows this replaces triggered
+on ``push`` only, so an outside contributor's pull request received **no
+checks at all** — three of the currently open pull requests come from forks
+and have never been tested by anything.
+
+Results appear as a check on the commit and on the pull request.  A failing
+check is a request to look, not a verdict: the log says which step failed and
+the command it ran, and every one of those commands can be run locally.
+
+The workflows
+-------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 34 42
+
+   * - Workflow
+     - Trigger
+     - What it does
+   * - ``tests.yml``
+     - push, pull request
+     - Runs the suite on two ROOT versions
+   * - ``lint.yml``
+     - push, pull request
+     - Runs ruff, and builds the docs with warnings as errors
+   * - ``pages.yml``
+     - push to ``main``
+     - Deploys the documentation to GitHub Pages
+   * - ``root_version.yml``
+     - change to ``grand/dataio/version``
+     - Tags the ROOT data-format version
+
+There is no container.  The environment is built from
+``env/conda/grand-dev.yml`` with ``conda-incubator/setup-miniconda``, which is
+the same file the collaboration installs locally, so what CI tests is what
+people run.
+
+Why there is no container
+-------------------------
+
+The repository used to run its tests inside two images, and both are why CI
+stopped working:
+
+* ``jcolley/grand:0.4``, used by the old ``tests.yml``, was **deleted from
+  Docker Hub**.  The workflow had also been disabled by hand, which is why it
+  has no runs at all in its history.
+* ``jcolley/grandlib_ci:0.1``, used by ``tests_with_docker.yml``, still
+  exists but was last pushed in **January 2022**.  It is too old for the
+  runner to operate in — GitHub injects its own Node.js to execute
+  JavaScript actions, and that needs a newer glibc.  Every job hung in
+  container setup and was killed by the 24-hour limit with no step ever
+  recorded.
+
+Both images lived on one person's personal Docker Hub account.  The full
+diagnosis is in ``docs/dev/FINDINGS_CI.md``.
+
+Design decisions worth knowing
+------------------------------
+
+**The path filter lives inside the workflow, not on the trigger.**  A
+workflow-level ``paths:`` does not skip the job — it stops the workflow from
+existing, so no check is reported on the commit at all.  That is invisible
+until the check becomes *required*, at which point a pull request touching
+only ``docs/`` waits forever on something that will never report: pending,
+not failing, with nothing saying why.  The ``changes`` job reports on every
+commit and skips only the expensive steps.
+
+**The gate fails safe in both directions.**  Anything ``changes`` cannot work
+out — a new branch, a force push, an unfetched base — reports ``code=true``
+and everything runs.  The jobs downstream test ``!= 'false'`` rather than
+``== 'true'``, so a crash in the gate still runs the suite.  The failure mode
+must be "did too much", never "silently did nothing".
+
+**Jobs carry a timeout.**  ``timeout-minutes`` means a hang fails in
+twenty-five minutes instead of occupying a runner for a day, which is what
+the old container jobs did.
+
+**Two ROOT versions.**  6.36 is what the environment pins; 6.38 is the release
+whose stricter ``None`` comparison produced the warnings that a whole stack of
+branches exists to fix.  Testing both is what stops that recurring unseen.
+
+**Documentation is built with** ``-W --keep-going`` **in** ``lint.yml``.
+Warnings become errors, which is what keeps the documentation from drifting
+from the code the way ``docs/package/grand.rst`` did — describing modules that
+had been renamed years earlier.  ``pages.yml`` deliberately builds *without*
+``-W``: that job publishes, and a warning is not a reason to leave the site
+stale.
+
+Running the same checks locally
+-------------------------------
+
+.. code-block:: bash
+
+    conda env create -f env/conda/grand-dev.yml --solver=libmamba
+    conda activate grand-dev
+    source env/setup.sh
+    pip install -e .
+
+    pytest tests/ -q                       # the suite
+    ruff check grand/ tests/ quality/      # lint and the docstring ratchet
+    cd docs && make html SPHINXOPTS="-W"   # the documentation gate

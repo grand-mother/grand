@@ -156,16 +156,32 @@ class Efield2Voltage:
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
-        """
-        Load data of event with index event_idx or with event_number and run_number. 
-        Call this method everytime to load data for a new event with different event_idx, or with different event_number and run_number.
-        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).
-        :    type: int
-        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int
-        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int  
-        Note: Either event_idx, or both event_number and run_number must be provided.      
+        r"""Loads the data of one event, selected by index or by number.
+
+        Call this for every new event: it replaces the traces, positions and
+        shower parameters the other methods work from.
+
+        Parameters
+        ----------
+        event_idx : int, optional
+            Index of the event in ``events_list``, from
+            ``range(len(event_list))``.
+        event_number : int, optional
+            Event number.  Must be given together with `run_number`; the pair
+            is unique.
+        run_number : int, optional
+            Run number.  Must be given together with `event_number`.
+
+        Raises
+        ------
+        Exception
+            If neither `event_idx` nor the ``(event_number, run_number)``
+            pair identifies an event in the input.
+
+        Notes
+        -----
+        Either `event_idx`, or both `event_number` and `run_number`, must be
+        given.
         """
         self.event_idx = event_idx  # index of events. 0 is for the 1st event and so on. Just a placeholder if event_number and run_number are provided.
         if (event_number is not None) and (run_number is not None):
@@ -289,11 +305,21 @@ class Efield2Voltage:
             self.rf_chaingaa.compute_for_freqs(self.freqs_mhz)
 
     def get_leff(self, du_idx):
-        """
-        Define for each antenna in DU du_idx an object AntennaProcessing according its position
+        r"""Builds the antenna response for one detection unit.
 
-        :param du_idx: index of DU
-        :    type du_idx: int
+        The effective length depends on the direction of the incoming signal
+        in the antenna frame, so it is constructed per unit from that unit's
+        position and the shower direction.
+
+        Parameters
+        ----------
+        du_idx : int
+            Index of the detection unit in the event arrays.
+
+        Returns
+        -------
+        AntennaProcessing
+            The response object for that unit's three arms.
         """
         if self.du_pos[du_idx, 0]>22000000:
             raise ValueError("du_pos_x is too large for computing!")
@@ -345,23 +371,35 @@ class Efield2Voltage:
         return t_samples
 
     def add(self, addend):
-        """
-        Add addend on vout_f. Used to add noises manually.
-        Make sure:
-            addend is in frequency domain
-            addend broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)
-            addend is computed/interpolated for self.freqs_mhz
+        r"""Adds `addend` to the output voltage spectrum, in place.
+
+        Provided so that a caller can inject their own noise instead of, or
+        in addition to, the built-in Galactic model.
+
+        Parameters
+        ----------
+        addend : ndarray
+            A frequency-domain quantity that broadcasts against ``vout_f``,
+            whose shape is ``(n_du, 3, n_freqs)``.  It must already be
+            evaluated on ``self.freqs_mhz``: nothing here interpolates it,
+            and a mismatched axis will broadcast silently into the wrong
+            frequencies.
         """
         assert self.vout_f.shape==addend.shape
         self.vout_f += addend
 
     def multiply(self, multiplier):
-        """
-        Multiply vout_f by multiplier. Used to manually provide RF chain.
-        Make sure:
-            multiplier is in frequency domain
-            multiplier broadcasts with self.vout_f. self.vout_f.shape = (nb_du, 3, nb_freq_mhz)
-            multiplier is computed/interpolated for self.freqs_mhz
+        r"""Multiplies the output voltage spectrum by `multiplier`, in place.
+
+        Provided so that a caller can apply their own transfer function
+        instead of the built-in RF chain.
+
+        Parameters
+        ----------
+        multiplier : ndarray
+            A frequency-domain quantity that broadcasts against ``vout_f``,
+            whose shape is ``(n_du, 3, n_freqs)``, already evaluated on
+            ``self.freqs_mhz``.
         """
         assert self.vout_f.shape[-1]==multiplier.shape[-1]
         self.vout_f *= multiplier
@@ -398,12 +436,20 @@ class Efield2Voltage:
 
     # compute open circuit voltage in one antenna of one event.
     def compute_voc_du(self, du_idx):
-        """Compute open circuit voltage for one DU of one event. 
-        This method is the base of computing voltage.
-        All voltage computation is build on top of this method.
+        r"""Computes the open-circuit voltage for one detection unit.
 
-        :param du_idx: index of DU in array traces
-        :    type du_idx: int
+        This is the base of every voltage computation: the others call it,
+        directly or through :meth:`compute_voc_event`.
+
+        Parameters
+        ----------
+        du_idx : int
+            Index of the detection unit in the trace arrays.
+
+        Notes
+        -----
+        Stores the result on the instance rather than returning it: ``voc``
+        in the time domain and ``voc_f`` in the frequency domain.
         """
         logger.debug(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
         assert isinstance(du_idx, int)
@@ -456,19 +502,32 @@ class Efield2Voltage:
         self.vout_f[du_idx, 2] = self.ant_leff_z.voc_f
 
     def compute_voc_event(self, event_idx=None, event_number=None, run_number=None):
-        """
-        Compute/simulate all DU in event either with index event_idx or with event_number and run_number.
-        Computes open circuit voltage in time domain (voc) and frequency domain (voc_f)
-        voc.shape = (nb_du, 3, len of time traces)
-        voc_f.shape = (nb_du, 3, len of freqs_mhz)
+        r"""Computes the open-circuit voltage for every unit in one event.
 
-        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).
-        :    type: int
-        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int
-        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int  
-        Note: Either event_idx, or both event_number and run_number must be provided.      
+        Fills ``voc`` with shape ``(n_du, 3, n_samples)`` and ``voc_f`` with
+        shape ``(n_du, 3, n_freqs)``.
+
+        Parameters
+        ----------
+        event_idx : int, optional
+            Index of the event in ``events_list``, from
+            ``range(len(event_list))``.
+        event_number : int, optional
+            Event number.  Must be given together with `run_number`; the pair
+            is unique.
+        run_number : int, optional
+            Run number.  Must be given together with `event_number`.
+
+        Raises
+        ------
+        Exception
+            If neither `event_idx` nor the ``(event_number, run_number)``
+            pair identifies an event in the input.
+
+        Notes
+        -----
+        Either `event_idx`, or both `event_number` and `run_number`, must be
+        given.
         """
         # update event. Provide either integer event_idx, or event_number and run_number.
         self.get_event(event_idx, event_number, run_number)
@@ -477,21 +536,22 @@ class Efield2Voltage:
 
     # compute voltage in one antenna of one event.
     def compute_voltage_du(self, du_idx):
-        """Compute voltage output for one DU with index du_idx.
-        This method can add noises and RF chain to Voc if requested.
+        r"""Computes the output voltage for one detection unit.
 
-        Processing order:
-          1. compute Voc using antenna responses
-          2. add galactic noise (if requested)
-          3. RF chain effect    (if requested)
+        Applies, in order:
 
-        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).
-        :    type: int
-        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int
-        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int  
-        Note: Either event_idx, or both event_number and run_number must be provided.      
+        1. the open-circuit voltage from the antenna response,
+        2. Galactic noise, if ``params["add_noise"]``,
+        3. the RF chain, if ``params["add_rf_chain"]``.
+
+        Parameters
+        ----------
+        du_idx : int
+            Index of the detection unit in the trace arrays.
+
+        Notes
+        -----
+        Which stages run is taken from ``self.params``, not from arguments.
         """
         assert isinstance(du_idx, int)
         self.compute_voc_du(du_idx)
@@ -534,21 +594,32 @@ class Efield2Voltage:
 
     # compute voltage in all antennas of one event.
     def compute_voltage_event(self, event_idx=None, event_number=None, run_number=None):
-        """
-        Simulate all DU of an event either with index event_idx or with event_number and run_number.
+        r"""Computes the output voltage for every unit in one event.
 
-        :param event_idx: index of event for which voltage is computed.
-        This method is equivalent to the code below that takes longer.
-        for du_idx in range(self.nb_du):
-            self.compute_voltage_du(du_idx)
+        Equivalent to calling :meth:`compute_voltage_du` for each unit in
+        turn, but vectorised over units and therefore much faster.
 
-        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)).
-        :    type: int
-        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int
-        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.
-        :    type: int  
-        Note: Either event_idx, or both event_number and run_number must be provided.      
+        Parameters
+        ----------
+        event_idx : int, optional
+            Index of the event in ``events_list``, from
+            ``range(len(event_list))``.
+        event_number : int, optional
+            Event number.  Must be given together with `run_number`; the pair
+            is unique.
+        run_number : int, optional
+            Run number.  Must be given together with `event_number`.
+
+        Raises
+        ------
+        Exception
+            If neither `event_idx` nor the ``(event_number, run_number)``
+            pair identifies an event in the input.
+
+        Notes
+        -----
+        Either `event_idx`, or both `event_number` and `run_number`, must be
+        given.
         """
         # Provide either integer event_idx, or both event_number and run_number.
         self.compute_voc_event(event_idx, event_number, run_number)
@@ -597,24 +668,33 @@ class Efield2Voltage:
         run_number=None, 
         append_file=True
         ):
-        """Primary method to compute voltage.  
-        Compute/simulate voltage for any or all DUs for any or all events in input file.
+        r"""Computes voltages for any or all events, and saves them.
 
-        :param: event_idx: index of event in events_list. It is a number from range(len(event_list)). If None, all events in an input file is used.
-        :    type: int, list, np.ndarray
-        :param du_idx: index of DU for which voltage is computed. If None, all DUs of an event is used. du_idx can be used for only one event.
-        :    type: int, list, np.ndarray
-        :param: event_number: event_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
-        :    type: int, list, np.ndarray
-        :param: run_number: run_number of an event. Combination of event_number and run_number must be unique.  If None, all events in an input file is used.
-        :    type: int, list, np.ndarray  
+        The primary entry point.  With no arguments it processes every event
+        in the input file.
 
-        Note: Either event_idx, or both event_number and run_number must be provided, or all three must be None.      
-              if du_idx is provided, voltage of the given DU of the given event is computed. 
-              du_idx can be an integer or list/np.ndarray. du_idx can be used for only one event.
-              If improper event_idx or (event_number and run_number) is used, an error is generated when self.get_event() is called.
-              Selective events with either event_idx or both event_number and run_number can be given.
-              If list/np.ndarray is provided, length of event_number and run_number must be equal.    
+        Parameters
+        ----------
+        event_idx : int, list or ndarray, optional
+            Index or indices of events to process.  ``None`` processes all.
+        du_idx : int, list or ndarray, optional
+            Detection units to process.  ``None`` processes all of them.
+            May be used for a single event only.
+        event_number : int, list or ndarray, optional
+            Event number or numbers, given with `run_number`.
+        run_number : int, list or ndarray, optional
+            Run number or numbers, given with `event_number`.
+        append_file : bool, optional
+            Append to the output file rather than replacing it.
+
+        Notes
+        -----
+        Give either `event_idx`, or both `event_number` and `run_number`, or
+        none of the three.  When lists are given, `event_number` and
+        `run_number` must be the same length.
+
+        The result is written to ``self.f_output`` as a side effect; the
+        method returns nothing.
         """
         # compute voltage for all DUs of given event/s.
         if du_idx is None:
@@ -677,11 +757,17 @@ class Efield2Voltage:
             raise Exception(message)
 
     def save_voltage(self, append_file=True):
-        """
-        : output path/file = self.f_output. It must be defined during instantiation of this class.
-        :    type file_out: str
-        :param append_file: use input file to add output
-        :    type append_file: bool
+        r"""Writes the computed voltages to the output file.
+
+        Parameters
+        ----------
+        append_file : bool, optional
+            Append to an existing file instead of replacing it.
+
+        Notes
+        -----
+        The destination is ``self.f_output``, fixed when the object was
+        constructed.
         """
         # delete file can take time => start with this action
         # File name for DataDirecory

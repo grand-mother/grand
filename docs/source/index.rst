@@ -25,14 +25,28 @@ collaboration uses, and the coordinate systems everything is expressed in.
    quickstart
    coordinates
    datamodel
-   known_issues
+   simulation
 
 .. toctree::
    :maxdepth: 2
    :caption: Reference
 
    architecture
+   implementation
    api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   ci
+   testing
+   known_issues
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
    references
    citing
    changelog
