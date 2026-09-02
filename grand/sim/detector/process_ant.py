@@ -166,8 +166,12 @@ class AntennaProcessing:
         self.theta_efield, self.phi_efield = theta_efield, phi_efield
         #theta_efield, phi_efield=theta_efield+self.direction_smearing[0], phi_efield+self.direction_smearing[1]
         logger.debug(f"type theta_efield: {type(theta_efield)} {theta_efield}")
+        # np.ravel(...)[0] rather than float(...): under NumPy 2 a size-1
+        # array no longer converts implicitly to a scalar, and this is a
+        # debug line -- it must not be able to abort the computation.
         logger.debug(
-            f"Source direction (degree): azimuth={float(phi_efield):.1f}, zenith={float(theta_efield):.1f}"
+            "Source direction (degree): azimuth=%.1f, zenith=%.1f",
+            np.ravel(phi_efield)[0], np.ravel(theta_efield)[0]
         )
         # logger.debug(f"{theta_efield.r}")
         # Interpolate using a tri-linear interpolation in (f, phi, theta)

@@ -69,13 +69,42 @@ class DataDirectory:
         """Go through the list of files in the directory and open all of them"""
         file_handle_list = []
 
-        # Function returning the tree type and analysis level from the filename. That's how we want to group files.
         def split_filenames(x):
+            r"""Returns the grouping key for a file: its tree type and level.
+
+            GRAND filenames encode the tree type and the analysis level in
+            underscore-separated fields, in one of two layouts:
+            ``<type>_<date>_<level>_<serial>`` with four fields, or the longer
+            ``<type>_<date>_<time>_<run>_<level>_...`` form.
+
+            Parameters
+            ----------
+            x : str or Path
+                Path to a file.
+
+            Returns
+            -------
+            tuple of str
+                ``(tree type, analysis level)``, used only to group files that
+                belong together.
+
+            Notes
+            -----
+            A name matching neither layout is grouped under its first field
+            with an empty level, rather than raising.  It used to index the
+            fields unconditionally, so a single file whose name did not follow
+            the convention -- which nothing enforces -- aborted the scan of the
+            whole directory with ``IndexError: list index out of range`` and no
+            indication of which file was at fault.
+            """
             el = Path(x).name.split("_")
-            if len(el)==4:
+            if len(el) == 4:
                 return el[0], el[2]
-            else:
+            if len(el) > 4:
                 return el[0], el[4]
+            logger.debug("filename %s does not follow the GRAND convention; "
+                         "grouping it on its own", x)
+            return el[0], ""
 
         # for filename in self.file_list:
         from itertools import groupby

@@ -376,11 +376,11 @@ class Handling3dTraces:
             logger.debug(f"{idx} {self.idx2idt[idx]} {idx_max[idx]}")
             if interpol == "parab":
                 t_max[idx], v_max[idx] = gds.find_max_with_parabola_interp_3pt(
-                    self.t_samples[idx], tr_norm[idx], int(idx_max[idx])
+                    self.t_samples[idx], tr_norm[idx], int(np.ravel(idx_max[idx])[0])
                 )
             else:
                 t_max[idx], v_max[idx] = gds.find_max_with_parabola_interp(
-                    self.t_samples[idx], tr_norm[idx], int(idx_max[idx])
+                    self.t_samples[idx], tr_norm[idx], int(np.ravel(idx_max[idx])[0])
                 )
             logger.debug(f"{t_max[idx]} ; {v_max[idx]}")
         self.t_max = t_max
