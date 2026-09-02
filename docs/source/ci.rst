@@ -140,6 +140,47 @@ on ``docs/dev/build_handbook_pdf.py``, because the pages link to the PDF with
 ``:download:`` and a missing target is itself a warning.  Both the ``docs`` job
 and the separate ``handbook`` job install a LaTeX toolchain for this.
 
+The data model is cached
+------------------------
+
+Every job needs the detector, noise and topography data — about 1 GB, fetched
+by ``env/setup.sh`` from ``forge.in2p3.fr``.  That host has no mirror, and the
+transfer is not reliable at that size.  On one push two jobs failed on it and a
+third passed:
+
+.. code-block:: text
+
+    ROOT 6.36.04   HTTP Error: 502 - Bad Gateway
+    Documentation  retrieval incomplete: got only 358625964 out of 976538181 bytes
+    Notebooks      (passed)
+
+Three jobs, one commit, three different outcomes — which is what an unreliable
+transfer looks like, not an outage.  Re-running the same commit unchanged
+turned it green.
+
+Two fixes, at different levels.
+
+**The workflows cache it.**  ``actions/cache`` keyed on
+``hashFiles('data/model_version.flag')``, which is the file that records the
+model version and changes exactly when the model does.  A restored cache makes
+``env/setup.sh`` a no-op, because the download script compares that version
+against the copy inside ``data/detector/`` and exits early when they match.
+
+Deliberately **no** ``restore-keys``.  A near-miss would restore a *different*
+model version, and silently running against the wrong data is worse than
+downloading.
+
+**The download script retries.**  ``data/download_data_grand.py`` now attempts
+the fetch up to four times with exponential backoff, and checks the received
+size against the reported ``Content-Length`` — ``urlretrieve`` does not raise
+on a truncated transfer, it returns a short file, which surfaces later as a
+confusing tar error rather than as the network failure it was.
+
+It also **downloads before deleting**.  The order used to be reversed: the
+three directories were removed first, so a failed download left the
+installation with no data at all rather than with the previous version.  That
+is what turned a transient failure into a broken environment.
+
 Action versions
 ---------------
 

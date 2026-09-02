@@ -1,6 +1,22 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+r"""Downloads the GRAND detector data model, if it is not already current.
+
+Compares the version in ``data/model_version.flag`` against the copy recorded
+inside ``data/detector/`` and fetches the archive only when they differ.  Run
+by ``env/setup.sh``; safe to run again at any time.
+
+The archive is about 976 MB and is served from a single host,
+``forge.in2p3.fr``, with no mirror, so transient failures are routine.  The
+download is retried with exponential backoff, checked against the reported
+content length -- a truncated transfer otherwise surfaces later as a confusing
+tar error -- and staged to a temporary file so that a failure leaves the
+existing installation intact.
+"""
+
 import tarfile
 import os
+import time
 import sys
 import shutil
 import os.path as osp
@@ -51,31 +67,89 @@ if detector_version == repo_version:
     print("Skip download: data model is up to date.")
     sys.exit(0)
 
-# Remove old data
+# Download the new data model *before* removing the old one.
+#
+# The order used to be the other way round, and it made a transient network
+# failure destructive: the detector, noise and topography directories were
+# deleted first, so a download that then failed left the installation with no
+# data at all rather than with the previous version.  That is what turns a
+# forge.in2p3.fr hiccup into a broken environment.
+#
+# The archive is about 976 MB and comes from a single host with no mirror, so
+# partial and refused transfers are both routine.  Hence the retries, and the
+# size check: urlretrieve does not raise on a truncated download, it just
+# returns a short file, which then fails later as a confusing tar error.
+
+RETRIES = 4
+BACKOFF_SECONDS = 5
+
+
+def _download_once(url, destination):
+    """Fetches `url` to `destination`, verifying the transfer is complete.
+
+    Parameters
+    ----------
+    url : str
+        What to fetch.
+    destination : str
+        Where to write it.
+
+    Raises
+    ------
+    URLError
+        If the server reports a length and fewer bytes arrived.  Raised as a
+        network error because that is what it is, and so the caller's retry
+        logic treats it like any other.
+    """
+    path, headers = request.urlretrieve(url, destination)
+    expected = headers.get("Content-Length")
+    if expected is not None:
+        expected = int(expected)
+        actual = osp.getsize(path)
+        if actual != expected:
+            os.remove(path)
+            raise URLError(
+                f"retrieval incomplete: got only {actual} out of {expected} bytes"
+            )
+
+
+print("==============================")
+print(f"Downloading new data model ({repo_version}), please wait...")
+
+tmp_file = tar_file + ".part"
+for attempt in range(1, RETRIES + 1):
+    try:
+        _download_once(LINK_MODEL, tmp_file)
+        print("Successfully downloaded.")
+        break
+    except (HTTPError, URLError) as e:
+        reason = (f"HTTP Error: {e.code} - {e.reason}"
+                  if isinstance(e, HTTPError) else f"Network Error: {e.reason}")
+        print(f"Download attempt {attempt} of {RETRIES} failed: {reason}")
+        if osp.exists(tmp_file):
+            os.remove(tmp_file)
+        if attempt == RETRIES:
+            print(f"Download failed: {LINK_MODEL}")
+            print("The data model is served from a single host without a "
+                  "mirror; if it is unreachable, try again later.")
+            sys.exit(1)
+        delay = BACKOFF_SECONDS * 2 ** (attempt - 1)
+        print(f"Retrying in {delay} s...")
+        time.sleep(delay)
+    except Exception as e:
+        if osp.exists(tmp_file):
+            os.remove(tmp_file)
+        print(f"Unexpected error during download: {e}")
+        sys.exit(1)
+
+# Only now is it safe to discard what is already installed.
 print("==============================")
 print("Updating data model. Removing old directories...")
 for dir_name in ["detector", "noise", "topography"]:
     dir_path = grand_add_path_data(dir_name)
     if osp.exists(dir_path):
         shutil.rmtree(dir_path)
-
-# Download new data
-print("==============================")
-print(f"Downloading new data model ({repo_version}), please wait...")
-try:
-    request.urlretrieve(LINK_MODEL, tar_file)
-    print("Successfully downloaded.")
-except HTTPError as e:
-    print(f"Download failed: {LINK_MODEL}")
-    print(f"HTTP Error: {e.code} - {e.reason}")
-    sys.exit(1)
-except URLError as e:
-    print(f"Download failed: {LINK_MODEL}")
-    print(f"Network Error: {e.reason}")
-    sys.exit(1)
-except Exception as e:
-    print(f"Unexpected error during download: {e}")
-    sys.exit(1)
+os.replace(tmp_file, tar_file)
 
 # Extract new data
 print("==============================")

@@ -40,6 +40,25 @@ jobs:
           conda-remove-defaults: true
           auto-activate: false
 
+      # The data model is ~1 GB fetched from forge.in2p3.fr, a single host with
+      # no mirror.  Two jobs on one push failed on it -- one 502, one truncated
+      # at 358 of 976 MB -- while a third passed, which is what an unreliable
+      # transfer looks like rather than an outage.  Caching removes the fetch
+      # from almost every run, and env/setup.sh becomes a no-op when the
+      # restored version matches.
+      #
+      # No restore-keys: a near-miss would restore a *different* model version,
+      # which is worse than downloading. The key is the version flag itself,
+      # which changes exactly when the model does.
+      - name: Cache the data model
+        uses: actions/cache@v6
+        with:
+          path: |
+            data/detector
+            data/noise
+            data/topography
+          key: grand-data-model-${{ hashFiles('data/model_version.flag') }}
+
       - name: Build the C extensions and install the package
         run: |
           source env/setup.sh
