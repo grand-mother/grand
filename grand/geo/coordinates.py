@@ -417,6 +417,16 @@ class Coordinates(np.ndarray):
         Create 3xn ndarray coordinates instance with n random entries for all 3D coordinate system.
 
         n: number of coordinate points.
+
+        Parameters
+        ----------
+        n : int, optional
+            Number of points to allocate room for.
+
+        Returns
+        -------
+        Coordinates
+            An empty coordinate array.
         """
         if isinstance(n, int):
             return super().__new__(cls, (3, n), dtype="f8")
@@ -483,38 +493,79 @@ class CartesianRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        str
+            A short description of shape and range, for interactive use.
         """
         ret = f"CartesianRepresentation: shape {self.shape}, min:{np.min(self)} max:{np.max(self)}"
         return ret
 
     @property
     def x(self):
-        r"""Cartesian :math:`x` component, in metres."""
+        r"""Cartesian :math:`x` component, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres along the frame x axis.
+        """
         return self[0]
 
     @x.setter
     def x(self, v):
-        r"""Sets the :math:`x` component."""
+        r"""Sets the :math:`x` component.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres along the frame x axis.
+        """
         self[0] = v
 
     @property
     def y(self):
-        r"""Cartesian :math:`y` component, in metres."""
+        r"""Cartesian :math:`y` component, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres along the frame y axis.
+        """
         return self[1]
 
     @y.setter
     def y(self, v):
-        r"""Sets the :math:`y` component."""
+        r"""Sets the :math:`y` component.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres along the frame y axis.
+        """
         self[1] = v
 
     @property
     def z(self):
-        r"""Cartesian :math:`z` component, in metres."""
+        r"""Cartesian :math:`z` component, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres along the frame z axis.
+        """
         return self[2]
 
     @z.setter
     def z(self, v):
-        r"""Sets the :math:`z` component."""
+        r"""Sets the :math:`z` component.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres along the frame z axis.
+        """
         self[2] = v
 
     def cartesian_to_spherical(self):
@@ -522,6 +573,11 @@ class CartesianRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        SphericalRepresentation
+            Polar angle, azimuth and radius.
         """
         theta, phi, r = _cartesian_to_spherical(self[0], self[1], self[2])
         return SphericalRepresentation(theta=theta, phi=phi, r=r)
@@ -531,6 +587,11 @@ class CartesianRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        HorizontalRepresentation
+            Azimuth, elevation and norm.
         """
         azi, ele, norm = _cartesian_to_horizontal(self[0], self[1], self[2])
         return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
@@ -540,6 +601,11 @@ class CartesianRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        ndarray
+            Euclidean length of each vector, in metres.
         """
         return np.linalg.norm(self)
 
@@ -606,7 +672,13 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def theta(self):
-        r"""Polar angle from the :math:`+z` axis, in degrees."""
+        r"""Polar angle from the :math:`+z` axis, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Polar angle from +z, in degrees.
+        """
         logger.debug(f"{type(self)} {type(self[0])}")
         # TODO: self[0] and self have same type !!!!!
         # use float(self[0]) instead self[0] ?
@@ -615,28 +687,58 @@ class SphericalRepresentation(Coordinates):
 
     @theta.setter
     def theta(self, v):
-        r"""Sets the polar angle, in degrees."""
+        r"""Sets the polar angle, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Polar angle from +z, in degrees.
+        """
         self[0] = v
 
     @property
     def phi(self):
-        r"""Azimuth from the :math:`+x` axis, in degrees."""
+        r"""Azimuth from the :math:`+x` axis, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Azimuth from +x, in degrees.
+        """
         # return float(self[1])
         return self[1]
 
     @phi.setter
     def phi(self, v):
-        r"""Sets the azimuth, in degrees."""
+        r"""Sets the azimuth, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Azimuth from +x, in degrees.
+        """
         self[1] = v
 
     @property
     def r(self):
-        r"""Radius, in metres."""
+        r"""Radius, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Radius, in metres.
+        """
         return self[2]
 
     @r.setter
     def r(self, v):
-        r"""Sets the radius, in metres."""
+        r"""Sets the radius, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Radius, in metres.
+        """
         self[2] = v
 
     def spherical_to_cartesian(self):
@@ -644,6 +746,11 @@ class SphericalRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        CartesianRepresentation
+            Components x, y and z.
         """
         x, y, z = _spherical_to_cartesian(self[0], self[1], self[2])
         return CartesianRepresentation(x=x, y=y, z=z)
@@ -653,6 +760,11 @@ class SphericalRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        HorizontalRepresentation
+            Azimuth, elevation and norm.
         """
         azi, ele, norm = _spherical_to_horizontal(self[0], self[1], self[2])
         return HorizontalRepresentation(azimuth=azi, elevation=ele, norm=norm)
@@ -710,32 +822,68 @@ class HorizontalRepresentation(Coordinates):
 
     @property
     def azimuth(self):
-        r"""Azimuth from geographic north towards east, in degrees."""
+        r"""Azimuth from geographic north towards east, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees from geographic north towards east.
+        """
         return self[0]
 
     @azimuth.setter
     def azimuth(self, v):
-        r"""Sets the azimuth, in degrees."""
+        r"""Sets the azimuth, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees from geographic north towards east.
+        """
         self[0] = v
 
     @property
     def elevation(self):
-        r"""Elevation above the horizon, in degrees."""
+        r"""Elevation above the horizon, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees above the horizon.
+        """
         return self[1]
 
     @elevation.setter
     def elevation(self, v):
-        r"""Sets the elevation, in degrees."""
+        r"""Sets the elevation, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees above the horizon.
+        """
         self[1] = v
 
     @property
     def norm(self):
-        r"""Length of the vector, in metres."""
+        r"""Length of the vector, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Length of the vector, in metres.
+        """
         return self[2]
 
     @norm.setter
     def norm(self, v):
-        r"""Sets the length, in metres."""
+        r"""Sets the length, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Length of the vector, in metres.
+        """
         self[2] = v
 
     def horizontal_to_cartesian(self):
@@ -743,6 +891,11 @@ class HorizontalRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        CartesianRepresentation
+            Components x, y and z.
         """
         x, y, z = _horizontal_to_cartesian(self[0], self[1], self[2])
         return CartesianRepresentation(x=x, y=y, z=z)
@@ -752,6 +905,11 @@ class HorizontalRepresentation(Coordinates):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        SphericalRepresentation
+            Polar angle, azimuth and radius.
         """
         th, phi, r = _horizontal_to_spherical(self[0], self[1], self[2])
         return SphericalRepresentation(theta=th, phi=phi, r=r)
@@ -816,32 +974,68 @@ class GeodeticRepresentation(Coordinates):
 
     @property
     def latitude(self):
-        r"""Geodetic latitude, in degrees."""
+        r"""Geodetic latitude, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees north of the equator.
+        """
         return self[0]
 
     @latitude.setter
     def latitude(self, v):
-        r"""Sets the latitude, in degrees."""
+        r"""Sets the latitude, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees north of the equator.
+        """
         self[0] = v
 
     @property
     def longitude(self):
-        r"""Geodetic longitude, in degrees."""
+        r"""Geodetic longitude, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees east of the prime meridian.
+        """
         return self[1]
 
     @longitude.setter
     def longitude(self, v):
-        r"""Sets the longitude, in degrees."""
+        r"""Sets the longitude, in degrees.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Degrees east of the prime meridian.
+        """
         self[1] = v
 
     @property
     def height(self):
-        r"""Height above the reference surface, in metres."""
+        r"""Height above the reference surface, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres above the reference surface.
+        """
         return self[2]
 
     @height.setter
     def height(self, v):
-        r"""Sets the height, in metres."""
+        r"""Sets the height, in metres.
+
+        Parameters
+        ----------
+        v : float or ndarray
+            Metres above the reference surface.
+        """
         self[2] = v
 
 
@@ -1047,6 +1241,11 @@ class Geodetic(GeodeticRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        HorizontalRepresentation
+            Azimuth, elevation and norm.
         """
         pass
 
@@ -1055,6 +1254,11 @@ class Geodetic(GeodeticRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        ECEF
+            The same position, Earth-centred.
         """
         return ECEF(self)
 
@@ -1063,6 +1267,11 @@ class Geodetic(GeodeticRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        GRANDCS
+            The same position, in the array frame.
         """
         return GRANDCS(self)
 
@@ -1071,6 +1280,11 @@ class Geodetic(GeodeticRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        LTP
+            The same position, in the local frame.
         """
         ecef = ECEF(self)
         pos_v = np.vstack(
@@ -1233,6 +1447,11 @@ class ECEF(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        Geodetic
+            Latitude, longitude and height.
         """
         return Geodetic(self, reference=reference)
 
@@ -1241,6 +1460,11 @@ class ECEF(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        GRANDCS
+            The same position, in the array frame.
         """
         return GRANDCS(self)
 
@@ -1249,6 +1473,11 @@ class ECEF(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        LTP
+            The same position, in the local frame.
         """
         self = copy(self)
         pos_v = np.vstack(
@@ -1370,6 +1599,11 @@ class Horizontal(HorizontalRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        ECEF
+            The same direction, Earth-centred.
         """
         rel = np.deg2rad(self.elevation)
         raz = np.deg2rad(self.azimuth)
@@ -1398,6 +1632,11 @@ class Horizontal(HorizontalRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        Geodetic
+            The same direction, as a geodetic position.
         """
         ecef = self.horizontal_to_ecef()
         return Geodetic(ecef)
@@ -1407,6 +1646,11 @@ class Horizontal(HorizontalRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        GRANDCS
+            The same direction, in the array frame.
         """
         ecef = self.horizontal_to_ecef()
         return GRANDCS(ecef)
@@ -1661,6 +1905,11 @@ class LTP(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        LTP
+            The vector in the other local frame.
         """
         # convert self to ECEF frame. Then convert ecef to new ltp's frame.
         ecef = ECEF(self)
@@ -1677,6 +1926,11 @@ class LTP(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        GRANDCS
+            The vector in the array frame.
         """
         # just instantiating a GRANDCS CS to get it's basis and location. x, y, z values does not matter.
         self = copy(self)
@@ -1688,6 +1942,11 @@ class LTP(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        ECEF
+            The vector, Earth-centred.
         """
         # Basis forms a rotational matrix. Transpose is the inverse of rotational matrix (real).
         # Use inverse (transpose) of rotational matrix to convert from GRANDCS to ECEF.
@@ -1698,6 +1957,11 @@ class LTP(CartesianRepresentation):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        Geodetic
+            The vector as a geodetic position.
         """
         # Convert from GRANDCS to ECEF, then from ECEF to Geodetic.
         ecef = ECEF(self)
@@ -1811,6 +2075,11 @@ class GRANDCS(LTP):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        ECEF
+            The vector, Earth-centred.
         """
         # Basis forms a rotational matrix. Transpose is the inverse of rotational matrix (real).
         # Use inverse (transpose) of rotational matrix to convert from GRANDCSCS to ECEF.
@@ -1821,6 +2090,11 @@ class GRANDCS(LTP):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        Geodetic
+            The vector as a geodetic position.
         """
         # Convert from GRANDCSCS to ECEF, then from ECEF to Geodetic.
         return self.ltp_to_geodetic(reference=reference)
@@ -1830,6 +2104,11 @@ class GRANDCS(LTP):
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Returns
+        -------
+        LTP
+            The vector in a local frame.
         """
         # Convert from GRANDCSCS to ECEF, then from ECEF to Geodetic.
         return self.ltp_to_ltp(ltp)

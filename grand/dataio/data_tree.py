@@ -113,12 +113,24 @@ class DataTree:
 
     @property
     def tree(self):
-        """The ROOT TTree in which the variables' values are stored"""
+        """The ROOT TTree in which the variables' values are stored
+
+        Returns
+        -------
+        ROOT.TTree
+            The underlying ROOT tree.
+        """
         return self._tree
 
     @property
     def type(self):
-        """The type of the tree"""
+        """The type of the tree
+
+        Returns
+        -------
+        str
+            The tree type, as stored in its metadata.
+        """
         return self._type
 
     @type.setter
@@ -130,6 +142,11 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        str
+            The tree type, as stored in its metadata.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("type")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("type", val))
@@ -141,7 +158,13 @@ class DataTree:
 
     @property
     def file(self):
-        """The ROOT TFile in which the tree is stored"""
+        """The ROOT TFile in which the tree is stored
+
+        Returns
+        -------
+        ROOT.TFile
+            The file this tree lives in.
+        """
         return self._file
 
     @file.setter
@@ -152,17 +175,34 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        ROOT.TFile
+            The file this tree lives in.
         """
         self._set_file(val)
 
     @property
     def tree_name(self):
-        """The name of the TTree"""
+        """The name of the TTree
+
+        Returns
+        -------
+        str
+            Name of the tree in the file.
+        """
         return self._tree_name
 
     @tree_name.setter
     def tree_name(self, val):
-        """Set the tree name"""
+        """Set the tree name
+
+        Returns
+        -------
+        str
+            Name of the tree in the file.
+        """
         # ToDo: enforce the name to start with the type!
         self._tree_name = val
         self._tree.SetName(val)
@@ -170,12 +210,24 @@ class DataTree:
 
     @property
     def file_name(self):
-        """The file in which the TTree is stored"""
+        """The file in which the TTree is stored
+
+        Returns
+        -------
+        str
+            Path of the file this tree lives in.
+        """
         return self._file_name
 
     @property
     def comment(self):
-        """Comment - if needed, added by user"""
+        """Comment - if needed, added by user
+
+        Returns
+        -------
+        str
+            Free-text comment stored with the tree.
+        """
         return self._comment
 
     @comment.setter
@@ -187,6 +239,11 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        str
+            Free-text comment stored with the tree.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("comment")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("comment", val))
@@ -205,6 +262,11 @@ class DataTree:
                 -------
                 datetime
                     Creation time, as recorded in the file.
+
+        Parameters
+        ----------
+        val : datetime or int
+            Creation time to record.
         """
         return self._creation_datetime
 
@@ -217,6 +279,11 @@ class DataTree:
                 -------
                 datetime
                     Creation time, as recorded in the file.
+
+        Parameters
+        ----------
+        val : datetime or int
+            Creation time to record.
         """
         if type(val) == datetime.datetime:
             val = int(val.timestamp())
@@ -237,7 +304,13 @@ class DataTree:
 
     @property
     def modification_history(self):
-        """Modification_history - if needed, added by user"""
+        """Modification_history - if needed, added by user
+
+        Returns
+        -------
+        str
+            Record of the modifications made to this tree.
+        """
         return self._modification_history
 
     @modification_history.setter
@@ -249,6 +322,11 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        str
+            Record of the modifications made to this tree.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_history")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_history", val))
@@ -261,7 +339,13 @@ class DataTree:
 
     @property
     def source_datetime(self):
-        """Unix creation datetime of the source tree; 0 s means no source"""
+        """Unix creation datetime of the source tree; 0 s means no source
+
+        Returns
+        -------
+        datetime
+            Timestamp of the data this tree derives from.
+        """
         # Convert from ROOT's TDatime into Python's datetime object
         # return datetime.datetime.fromtimestamp(self._tree.GetUserInfo().At(3).GetVal())
         return self._source_datetime
@@ -275,6 +359,11 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        datetime
+            Timestamp of the data this tree derives from.
         """
         self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
 
@@ -299,7 +388,13 @@ class DataTree:
 
     @property
     def modification_software(self):
-        """The tool used to generate this tree's values from another tree"""
+        """The tool used to generate this tree's values from another tree
+
+        Returns
+        -------
+        str
+            Name of the software that last modified the tree.
+        """
         return self._modification_software
 
     @modification_software.setter
@@ -311,6 +406,11 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        str
+            Name of the software that last modified the tree.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_software")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
@@ -322,7 +422,13 @@ class DataTree:
 
     @property
     def modification_software_version(self):
-        """The tool used to generate this tree's values from another tree"""
+        """The tool used to generate this tree's values from another tree
+
+        Returns
+        -------
+        str
+            Version of that software.
+        """
         return self._modification_software_version
 
     @modification_software_version.setter
@@ -334,6 +440,11 @@ class DataTree:
                 ----------
                 val : object
                     The new value.
+
+        Returns
+        -------
+        str
+            Version of that software.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_software_version")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
@@ -345,7 +456,13 @@ class DataTree:
 
     @property
     def analysis_level(self):
-        """The analysis level of this tree"""
+        """The analysis level of this tree
+
+        Returns
+        -------
+        int
+            How far through the processing chain this data has been taken.
+        """
         return self._analysis_level
 
     @analysis_level.setter
@@ -359,6 +476,11 @@ class DataTree:
                     How far through the processing chain this data has been taken.
                     It is part of how files are grouped and named, so changing it
                     changes which files are read together.
+
+        Returns
+        -------
+        int
+            How far through the processing chain this data has been taken.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("analysis_level")):
             self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
@@ -370,7 +492,13 @@ class DataTree:
 
     @classmethod
     def get_default_tree_name(cls):
-        """Gets the default name of the tree of the class"""
+        """Gets the default name of the tree of the class
+
+        Returns
+        -------
+        str
+            The conventional name for this tree class, such as ``"trun"``.
+        """
         return cls._tree_name
 
     def __post_init__(self):
@@ -416,7 +544,13 @@ class DataTree:
 
     ## Set the tree's file
     def _set_file(self, f):
-        """Set the tree's file"""
+        """Set the tree's file
+
+        Parameters
+        ----------
+        f : ROOT.TFile or str
+            File to attach the tree to.
+        """
         # If the ROOT TFile is given, just use it
         if isinstance(f, ROOT.TFile):
             self._file = f
@@ -457,7 +591,13 @@ class DataTree:
 
     ## Init/readout the tree from a file
     def _set_tree(self, t):
-        """Init/readout the tree from a file"""
+        """Init/readout the tree from a file
+
+        Parameters
+        ----------
+        t : ROOT.TTree or str
+            Tree to wrap, or its name.
+        """
         # If the ROOT TTree is given, just use it
         if isinstance(t, ROOT.TTree) or isinstance(t, ROOT.TChain):
             self._tree = t
@@ -491,7 +631,13 @@ class DataTree:
 
     ## Create the tree
     def _create_tree(self, tree_name=""):
-        """Create the tree"""
+        """Create the tree
+
+        Parameters
+        ----------
+        tree_name : str, optional
+            Name for the new tree; the class default if omitted.
+        """
         if tree_name != "":
             self._tree_name = tree_name
         self._tree = ROOT.TTree(self._tree_name, self._tree_name)
@@ -503,7 +649,17 @@ class DataTree:
         pass
 
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
-        """Write the tree to the file"""
+        """Write the tree to the file
+
+        Parameters
+        ----------
+        close_file : bool, optional
+            Close the file after writing.
+        overwrite : bool, optional
+            Replace an existing tree of the same name.
+        force_close_file : bool, optional
+            Close the file even if other trees reference it.
+        """
         # Add the tree friends to this tree
         self.add_proper_friends()
 
@@ -570,13 +726,45 @@ class DataTree:
         self._tree.Scan(*args)
 
     def get_entry(self, ev_no):
-        """Read into memory the ev_no entry of the tree"""
+        """Read into memory the ev_no entry of the tree
+
+        Parameters
+        ----------
+        ev_no : int
+            Entry index to load.
+
+        Returns
+        -------
+        int
+            Bytes read; zero when the entry does not exist.
+        """
         res = self._tree.GetEntry(ev_no)
         self.assign_branches()
         return res
 
     def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0, delete_temp_histogram=True):
-        """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX()."""
+        """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX().
+
+        Parameters
+        ----------
+        varexp : str
+            Expression to plot, in ROOT syntax.
+        selection : str, optional
+            Cut applied before plotting.
+        option : str, optional
+            ROOT draw option.
+        nentries : int, optional
+            Maximum entries to use.
+        firstentry : int, optional
+            First entry to use.
+        delete_temp_histogram : bool, optional
+            Remove the temporary histogram ROOT creates.
+
+        Returns
+        -------
+        int
+            Number of entries drawn.
+        """
 
         count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
 
@@ -588,32 +776,74 @@ class DataTree:
         return count
 
     def get_v1(self):
-        '''Get first vector of results from draw()'''
+        '''Get first vector of results from draw()
+
+        Returns
+        -------
+        ndarray
+            First variable of the last :meth:`draw`.
+        '''
         return self._tree.GetV1()
 
     def get_v2(self):
-        '''Get second vector of results from draw()'''
+        '''Get second vector of results from draw()
+
+        Returns
+        -------
+        ndarray
+            Second variable of the last :meth:`draw`.
+        '''
         return self._tree.GetV2()
 
     def get_v3(self):
-        '''Get third vector of results from draw()'''
+        '''Get third vector of results from draw()
+
+        Returns
+        -------
+        ndarray
+            Third variable of the last :meth:`draw`.
+        '''
         return self._tree.GetV3()
 
     def get_v4(self):
-        '''Get fourth vector of results from draw()'''
+        '''Get fourth vector of results from draw()
+
+        Returns
+        -------
+        ndarray
+            Fourth variable of the last :meth:`draw`.
+        '''
         return self._tree.GetV4()
 
     ## All three methods below return the number of entries
     def get_entries(self):
-        """Return the number of events in the tree"""
+        """Return the number of events in the tree
+
+        Returns
+        -------
+        int
+            Number of entries in the tree.
+        """
         return self._tree.GetEntries()
 
     def get_number_of_entries(self):
-        """Return the number of events in the tree"""
+        """Return the number of events in the tree
+
+        Returns
+        -------
+        int
+            Number of entries in the tree.
+        """
         return self.get_entries()
 
     def get_number_of_events(self):
-        """Return the number of events in the tree"""
+        """Return the number of events in the tree
+
+        Returns
+        -------
+        int
+            Number of distinct events, which differs from the entry count when a tree holds several entries per event.
+        """
         return self.get_number_of_entries()
 
     def add_friend(self, value, filename=""):
@@ -626,26 +856,55 @@ class DataTree:
                     The tree to attach, or its name.
                 filename : str, optional
                     File holding it, when it is not in this one.
+
+        Returns
+        -------
+        ROOT.TTree
+            The friend that was attached.
         """
         return 0
         """Add a friend to the tree"""
         self._tree.AddFriend(value, filename)
 
     def remove_friend(self, value):
-        """Remove a friend from the tree"""
+        """Remove a friend from the tree
+
+        Parameters
+        ----------
+        value : DataTree or str
+            Friend to detach.
+        """
         self._tree.RemoveFriend(value)
 
     def set_tree_index(self, value):
-        """Set the tree index (necessary for working with friends)"""
+        """Set the tree index (necessary for working with friends)
+
+        Parameters
+        ----------
+        value : str
+            Index expression, typically run and event number.
+        """
         self._tree.SetTreeIndex(value)
 
     def get_current_file(self):
-        """Get's the current TFile the TTree is in"""
+        """Get's the current TFile the TTree is in
+
+        Returns
+        -------
+        ROOT.TFile
+            The file currently being read, which differs from :attr:`file` when the tree is a chain spanning several.
+        """
         return self._tree.GetCurrentFile()
 
     ## Create branches of the TTree based on the class fields
     def create_branches(self, set_if_exists=True):
-        """Create branches of the TTree based on the class fields"""
+        """Create branches of the TTree based on the class fields
+
+        Parameters
+        ----------
+        set_if_exists : bool, optional
+            Attach to existing branches rather than failing.
+        """
         # Reset all branch addresses just in case
         self._tree.ResetBranchAddresses()
 
@@ -667,7 +926,17 @@ class DataTree:
 
     ## Create a specific branch of a TTree computing its type from the corresponding class field
     def create_branch_from_field(self, value, set_branches=False, value_name=""):
-        """Create a specific branch of a TTree computing its type from the corresponding class field"""
+        """Create a specific branch of a TTree computing its type from the corresponding class field
+
+        Parameters
+        ----------
+        value : object
+            Dataclass field to create a branch for.
+        set_branches : bool, optional
+            Bind the branch immediately.
+        value_name : str, optional
+            Branch name; the field name by default.
+        """
         # Handle numpy arrays
         # for key in dir(value):
         #     print(getattr(value, key))
@@ -815,7 +1084,20 @@ class DataTree:
 
     ## Get entry with indices
     def get_entry_with_index(self, run_no=0, evt_no=0):
-        """Get the event with run_no and evt_no"""
+        """Get the event with run_no and evt_no
+
+        Parameters
+        ----------
+        run_no : int
+            Run number.
+        evt_no : int
+            Event number.
+
+        Returns
+        -------
+        int
+            Bytes read; zero when the pair matches no entry.
+        """
         res = self._tree.GetEntryWithIndex(run_no, evt_no)
         if res == 0 or res == -1:
             logger.error(
@@ -828,7 +1110,13 @@ class DataTree:
 
     ## Print out the tree scheme
     def print(self):
-        """Print out the tree scheme"""
+        """Print out the tree scheme
+
+        Returns
+        -------
+        None
+            Prints a summary to standard output.
+        """
         return self._tree.Print()
 
     ## Print the meta information
@@ -845,7 +1133,18 @@ class DataTree:
 
     @staticmethod
     def get_metadata_as_dict(tree):
-        """Get the meta information as a dictionary"""
+        """Get the meta information as a dictionary
+
+        Parameters
+        ----------
+        tree : DataTree, optional
+            Tree to read; this one by default.
+
+        Returns
+        -------
+        dict
+            The metadata fields and their values.
+        """
 
         metadata = {}
 
@@ -868,7 +1167,13 @@ class DataTree:
     ## Copy contents of another dataclass instance of the same type to this instance
     def copy_contents(self, source):
         """Copy contents of another dataclass instance of similar type to this instance
-        The source has to have some field the same as this tree. For example EventEfieldTree and EventVoltageTree"""
+        The source has to have some field the same as this tree. For example EventEfieldTree and EventVoltageTree
+
+        Parameters
+        ----------
+        source : DataTree
+            Tree to copy entries from.
+        """
         # ToDo: Shallow copy with assigning branches would be probably faster, but it would be... shallow ;)
         for k in source.__dict__.keys():
             # Skip the nonbranch fields and fields not belonging to this tree type
@@ -880,7 +1185,13 @@ class DataTree:
                 logger.warning(f"The type of {k} in {source.tree_name} and {self._tree_name} differs. Not copying.")
 
     def get_tree_size(self):
-        """Get the tree size in memory and on disk, similar to what comes from the Print()"""
+        """Get the tree size in memory and on disk, similar to what comes from the Print()
+
+        Returns
+        -------
+        int
+            Size of the tree on disk, in bytes.
+        """
         mem_size = self._tree.GetDirectory().GetKey(self._tree_name).GetKeylen()
         mem_size += self._tree.GetTotBytes()
         b = ROOT.TBufferFile(ROOT.TBuffer.kWrite, 10000)

@@ -49,13 +49,39 @@ class LibraryError(RuntimeError):
 
 
 def _regularize(a):
-    """Regularize an array (or float) input"""
+    """Regularize an array (or float) input
+
+    Parameters
+    ----------
+    a : array_like
+        Value to convert.
+
+    Returns
+    -------
+    ndarray
+        Contiguous ``float64`` array the C bindings accept.
+    """
     a = numpy.asanyarray(a)
     return numpy.require(a, float, ["CONTIGUOUS", "ALIGNED"])
 
 
 def ecef_from_geodetic(latitude, longitude, altitude):
-    """Convert geodetic coordinates to ECEF ones"""
+    """Convert geodetic coordinates to ECEF ones
+
+    Parameters
+    ----------
+    latitude : float or ndarray
+        Degrees north.
+    longitude : float or ndarray
+        Degrees east.
+    altitude : float or ndarray
+        Metres above the ellipsoid.
+
+    Returns
+    -------
+    ndarray
+        ECEF position, in metres.
+    """
 
     latitude, longitude, altitude = map(_regularize, (latitude, longitude, altitude))
     if latitude.size != longitude.size:
@@ -79,7 +105,24 @@ def ecef_from_geodetic(latitude, longitude, altitude):
 
 
 def ecef_from_horizontal(latitude, longitude, azimuth, elevation):
-    """Convert horizontal coordinates to an ECEF direction"""
+    """Convert horizontal coordinates to an ECEF direction
+
+    Parameters
+    ----------
+    latitude : float or ndarray
+        Degrees north.
+    longitude : float or ndarray
+        Degrees east.
+    azimuth : float or ndarray
+        Degrees from north towards east.
+    elevation : float or ndarray
+        Degrees above the horizon.
+
+    Returns
+    -------
+    ndarray
+        Unit direction in ECEF.
+    """
 
     latitude, longitude, azimuth, elevation = map(
         _regularize, (latitude, longitude, azimuth, elevation)
@@ -108,7 +151,18 @@ def ecef_from_horizontal(latitude, longitude, azimuth, elevation):
 
 
 def ecef_to_geodetic(ecef):
-    """Convert ECEF coordinates to geodetic ones"""
+    """Convert ECEF coordinates to geodetic ones
+
+    Parameters
+    ----------
+    ecef : array_like
+        ECEF position, in metres.
+
+    Returns
+    -------
+    tuple
+        Latitude and longitude in degrees, altitude in metres.
+    """
 
     ecef = _regularize(ecef)
     if (ecef.size < 3) or ((ecef.size % 3) != 0):
@@ -137,7 +191,22 @@ def ecef_to_geodetic(ecef):
 
 
 def ecef_to_horizontal(latitude, longitude, direction):
-    """Convert an ECEF direction to horizontal coordinates"""
+    """Convert an ECEF direction to horizontal coordinates
+
+    Parameters
+    ----------
+    latitude : float
+        Degrees north of the observer.
+    longitude : float
+        Degrees east of the observer.
+    direction : array_like
+        Direction in ECEF.
+
+    Returns
+    -------
+    tuple
+        Azimuth and elevation, in degrees.
+    """
 
     latitude, longitude, direction = map(_regularize, (latitude, longitude, direction))
     if latitude.size != longitude.size:
@@ -184,6 +253,16 @@ class Map(object):
         :type cls:
         :param path: path/file map
         :type path: string
+
+        Parameters
+        ----------
+        path : str
+            File holding the elevation map.
+
+        Returns
+        -------
+        Map
+            The opened map.
         """
 
         if path in Map.cache.keys():
@@ -231,7 +310,20 @@ class Map(object):
             lib.turtle_map_destroy(self._map)
 
     def elevation(self, x, y):
-        """Get the elevation at the given map coordinates"""
+        """Get the elevation at the given map coordinates
+
+        Parameters
+        ----------
+        x : float or ndarray
+            Longitude, in degrees.
+        y : float or ndarray
+            Latitude, in degrees.
+
+        Returns
+        -------
+        float or ndarray
+            Elevation, in metres.
+        """
 
         x, y = map(_regularize, (x, y))
         if x.size != y.size:
@@ -254,7 +346,13 @@ class Map(object):
 
     @property
     def path(self):
-        """The path where the data tiles are located"""
+        """The path where the data tiles are located
+
+        Returns
+        -------
+        str
+            Path of the file this map was read from.
+        """
         return self._path
 
 
@@ -297,7 +395,20 @@ class Stack:
         self._stack = None
 
     def elevation(self, latitude, longitude):
-        """Get the elevation at the given geodetic coordinates"""
+        """Get the elevation at the given geodetic coordinates
+
+        Parameters
+        ----------
+        latitude : float or ndarray
+            Degrees north.
+        longitude : float or ndarray
+            Degrees east.
+
+        Returns
+        -------
+        float or ndarray
+            Elevation, in metres.
+        """
 
         latitude, longitude = map(_regularize, (latitude, longitude))
         if latitude.size != longitude.size:
@@ -317,12 +428,24 @@ class Stack:
 
     @property
     def path(self):
-        """The path where the data tiles are located"""
+        """The path where the data tiles are located
+
+        Returns
+        -------
+        str
+            Directory holding the elevation tiles.
+        """
         return self._path
 
     @property
     def stack_size(self):
-        """The maximum number of data tiles kept in memory"""
+        """The maximum number of data tiles kept in memory
+
+        Returns
+        -------
+        int
+            Number of tiles held in memory.
+        """
         return self._stack_size
 
 
@@ -374,12 +497,22 @@ class Stepper:
     @property
     def geoid(self):
         r"""The geoid map used to convert heights, or ``None``.
+
+        Returns
+        -------
+        Map or None
+            The geoid map used to convert heights.
         """
         return self._geoid
 
     @geoid.setter
     def geoid(self, map_: Optional[Map]):
         r"""The geoid map used to convert heights, or ``None``.
+
+        Returns
+        -------
+        Map or None
+            The geoid map used to convert heights.
         """
         if map_ is None:
             self._data.pop(self._geoid)

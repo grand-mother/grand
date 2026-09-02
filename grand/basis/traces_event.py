@@ -23,6 +23,20 @@ def get_psd(trace, f_samp_mhz, nperseg=0):
     :param trace: floatX(nb_sample,)
     :param f_samp_mhz: frequency sampling
     :param nperseg: number of sample by periodogram
+
+    Parameters
+    ----------
+    trace : ndarray
+        Time trace to transform.
+    f_samp_mhz : float
+        Sampling frequency, in MHz.
+    nperseg : int, optional
+        Segment length for the periodogram.
+
+    Returns
+    -------
+    tuple of ndarray
+        Frequency axis in MHz, and power spectral density.
     """
     if nperseg == 0:
         nperseg = trace.shape[0] // 2
@@ -121,6 +135,17 @@ class Handling3dTraces:
         :type t_start_ns: int (nb_du,)
         :param f_samp_mhz: frequency sampling in MHz
         :type f_samp_mhz: float or array
+
+        Parameters
+        ----------
+        traces : ndarray, shape (n_du, 3, n_samples)
+            The traces.
+        du_id : sequence, optional
+            Identifier of each unit.
+        t_start_ns : ndarray, optional
+            Start time of each trace, in nanoseconds.
+        f_samp_mhz : float or ndarray, optional
+            Sampling frequency, in MHz.
         """
         assert isinstance(self.traces, np.ndarray)
         assert traces.ndim == 3
@@ -147,6 +172,11 @@ class Handling3dTraces:
 
         :param du_pos: position of DU in cartesian coordinate
         :type du_pos: float(nb_du,3)
+
+        Parameters
+        ----------
+        du_pos : ndarray, shape (n_du, 3)
+            Position of each unit, in the array frame.
         """
         self.network = DetectorUnitNetwork()
         self.network.init_pos_id(du_pos, self.idx2idt)
@@ -160,6 +190,15 @@ class Handling3dTraces:
         :type axis_name: string
         :param type_tr: define type of traces
         :type type_tr: string
+
+        Parameters
+        ----------
+        str_unit : str, optional
+            Unit of the trace values, for axis labels.
+        axis_name : str, optional
+            Naming of the three components.
+        type_tr : str, optional
+            Kind of trace, used in plot titles.
         """
         assert isinstance(str_unit, str)
         assert isinstance(axis_name, str)
@@ -172,6 +211,11 @@ class Handling3dTraces:
         """
 
         :param size: size of periodogram
+
+        Parameters
+        ----------
+        size : int
+            Segment length used when computing spectra.
         """
         assert size > 0
         self.nperseg = size
@@ -183,6 +227,15 @@ class Handling3dTraces:
         band filter with butterfly window
 
         :return: filtered trace in time domain
+
+        Parameters
+        ----------
+        fr_min : float
+            Lower edge, in MHz.
+        fr_max : float
+            Upper edge, in MHz.
+        causal : bool, optional
+            Apply a causal filter rather than a zero-phase one.
         """
         low = fr_min * 1e6
         high = fr_max * 1e6
@@ -217,6 +270,11 @@ class Handling3dTraces:
 
         :param l_idt: list of identifier of trace
         :type l_idt: list int or string
+
+        Parameters
+        ----------
+        l_idt : sequence
+            Identifiers of the units to keep.
         """
         l_idx = [self.idt2idx[idt] for idt in l_idt]
         self.keep_only_trace_with_index(l_idx)
@@ -226,6 +284,11 @@ class Handling3dTraces:
 
         :param l_idx:list of index of trace
         :type l_idt: list int
+
+        Parameters
+        ----------
+        l_idx : sequence of int
+            Indices of the traces to keep.
         """
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
@@ -250,6 +313,11 @@ class Handling3dTraces:
 
         :param new_nb_du: keep only new_nb_du first DU
         :type new_nb_du: int
+
+        Parameters
+        ----------
+        new_nb_du : int
+            Number of traces to keep, taken from the start.
         """
         assert new_nb_du > 0
         assert new_nb_du <= self.get_nb_trace()
@@ -265,6 +333,11 @@ class Handling3dTraces:
 
         :param fact: the downsampling factor
         :type fact: int
+
+        Parameters
+        ----------
+        fact : int
+            Decimation factor.
         """
         # self.traces = self.traces[:, :, ::fact]
         self.traces = ssig.decimate(self.traces, fact)
@@ -278,6 +351,18 @@ class Handling3dTraces:
 
         :param threshold: value > 0
         :type threshold: number
+
+        Parameters
+        ----------
+        threshold : float
+            Minimum amplitude to keep.
+        norm_traces : ndarray, optional
+            Precomputed norms, to avoid recomputing them.
+
+        Returns
+        -------
+        ndarray
+            Indices of the traces that were kept.
         """
         if norm_traces is None:
             norm_traces = self.get_max_norm()
@@ -302,6 +387,18 @@ class Handling3dTraces:
         :param new_traces: if array must be have the same shape
         :type new_traces: array/None/0
         :return: Handling3dTraces instance
+
+        Parameters
+        ----------
+        new_traces : ndarray, optional
+            Traces for the copy; the existing ones by default.
+        deepcopy : bool, optional
+            Copy the arrays rather than referencing them.
+
+        Returns
+        -------
+        Handling3dTraces
+            The copy.
         """
         if deepcopy:
             my_copy = copy.deepcopy(self)
@@ -321,6 +418,11 @@ class Handling3dTraces:
         """Return sampling rate in ns
 
         :return: float(nb_3dtrace,)
+
+        Returns
+        -------
+        ndarray
+            Sampling interval of each trace, in nanoseconds.
         """
         ret = 1e3 / self.f_samp_mhz
         return ret
@@ -330,6 +432,11 @@ class Handling3dTraces:
 
         :return:  array max of abs value
         :rtype: float (nb_du,)
+
+        Returns
+        -------
+        ndarray
+            Largest absolute value of each trace.
         """
         return np.max(np.abs(self.traces), axis=(1, 2))
 
@@ -338,6 +445,11 @@ class Handling3dTraces:
 
         :return: array norm of traces
         :rtype: float (nb_du,)
+
+        Returns
+        -------
+        ndarray
+            Largest three-component norm of each trace.
         """
         # norm on 3D composant => axis=1
         # max on all norm => axis=1
@@ -348,6 +460,11 @@ class Handling3dTraces:
 
         :return:  norm of traces for each time sample
         :rtype: float (nb_du, nb sample)
+
+        Returns
+        -------
+        ndarray, shape (n_du, n_samples)
+            Three-component norm at every sample.
         """
         return np.linalg.norm(self.traces, axis=1)
 
@@ -360,6 +477,18 @@ class Handling3dTraces:
         :type interpol: string
         :return: time of max and max
         :rtype: float(nb_du,) , float(nb_du,)
+
+        Parameters
+        ----------
+        hilbert : bool, optional
+            Use the Hilbert envelope rather than the raw trace.
+        interpol : str, optional
+            Interpolation around the peak: ``"parab"`` for a three-point parabola, or ``"auto"``.
+
+        Returns
+        -------
+        tuple of ndarray
+            Time of maximum in nanoseconds, and the value there.
         """
         if hilbert:
             tmax, vmax, idx_max, tr_norm = gds.get_peakamptime_norm_hilbert(
@@ -399,6 +528,11 @@ class Handling3dTraces:
 
         :return: first and last time start
         :rtype: float, float
+
+        Returns
+        -------
+        tuple of float
+            Earliest and latest trace start time, in nanoseconds.
         """
         return self.t_start_ns.min(), self.t_start_ns.max()
 
@@ -406,6 +540,11 @@ class Handling3dTraces:
         """Return the number of 3d traces
         :return: number of DU
         :rtype: int
+
+        Returns
+        -------
+        int
+            Number of traces held.
         """
         return len(self.idx2idt)
 
@@ -414,6 +553,11 @@ class Handling3dTraces:
 
         :return: number of sample in trace
         :rtype: int
+
+        Returns
+        -------
+        int
+            Number of samples per trace.
         """
         return self.traces.shape[2]
 
@@ -425,6 +569,11 @@ class Handling3dTraces:
            * max value has different estimator.
 
         :return: snr float(nb_trace,), noise(nb_trace,)
+
+        Returns
+        -------
+        tuple of ndarray
+            Signal-to-noise ratio and noise level of each trace.
         """
         size_noise = np.min([100, int(self.get_size_trace() / 20)])
         noise = np.max(np.std(self.traces[:, :, -size_noise:], axis=-1), axis=-1)
@@ -439,6 +588,11 @@ class Handling3dTraces:
 
         :return: common time, extended traces
         :rtype: float (nb extended sample), float (nb_du, 3, nb extended sample)
+
+        Returns
+        -------
+        tuple of ndarray
+            Traces padded onto a common time axis, and that axis.
         """
         size_tr = int(self.get_size_trace())
         t_min, t_max = self.get_min_max_t_start()
@@ -462,6 +616,13 @@ class Handling3dTraces:
         :type idx: int
         :param to_draw: select components to draw
         :type to_draw: enum str ["0", "1", "2"] not exclusive
+
+        Parameters
+        ----------
+        idx : int
+            Index of the trace to plot.
+        to_draw : str, optional
+            Which components to draw.
         """
         self._define_t_samples()
         plt.figure()
@@ -506,6 +667,13 @@ class Handling3dTraces:
         :type idx: int
         :param to_draw: select components to draw
         :type to_draw: enum str ["0", "1", "2"] not exclusive
+
+        Parameters
+        ----------
+        du_id : int
+            Identifier of the unit to plot.
+        to_draw : str, optional
+            Which components to draw.
         """
         self.plot_trace_idx(self.idt2idx[du_id], to_draw)
 
@@ -516,6 +684,13 @@ class Handling3dTraces:
         :type idx: int
         :param to_draw: select components to draw
         :type to_draw: enum str ["0", "1", "2"] not exclusive
+
+        Parameters
+        ----------
+        idx : int
+            Index of the trace.
+        to_draw : str, optional
+            Which components to draw.
         """
         self._define_t_samples()
         plt.figure()
@@ -542,6 +717,13 @@ class Handling3dTraces:
         :type idx2idt: int
         :param to_draw: select components to draw
         :type to_draw: enum str ["0", "1", "2"] not exclusive
+
+        Parameters
+        ----------
+        du_id : int
+            Identifier of the unit.
+        to_draw : str, optional
+            Which components to draw.
         """
         self.plot_psd_trace_idx(self.idt2idx[du_id], to_draw)
 

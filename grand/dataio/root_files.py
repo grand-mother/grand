@@ -32,6 +32,16 @@ def _get_ttree_in_file(f_root):
 
     :param f_root:
     :type f_root:
+
+    Parameters
+    ----------
+    f_root : str
+        Path to a ROOT file.
+
+    Returns
+    -------
+    list of str
+        Names of the trees it contains.
     """
     tfile = ROOT.TFile.Open(f_root)
     l_ttree = tfile.GetListOfKeys()
@@ -64,6 +74,13 @@ class _FileEventBase:
     def __init__(self, tt_event, f_name):
         """
         Constructor
+
+        Parameters
+        ----------
+        tt_event : DataTree
+            Tree class to read.
+        f_name : str
+            File to open.
         """
         self.run_number: Optional[None, int] = None
         self.event_number: Optional[None, int] = None
@@ -97,6 +114,11 @@ class _FileEventBase:
         Load event/run with index idx in list return by get_list_of_events()
 
         :param idx:
+
+        Parameters
+        ----------
+        idx : int
+            Index of the event to load.
         """
         if self.idx_event == idx:
             return
@@ -108,6 +130,11 @@ class _FileEventBase:
     def load_next_event(self):
         """
         Load next event, return False at the end of list else True
+
+        Returns
+        -------
+        bool
+            True while events remain; False at the end of the file.
         """
         idx = self.idx_event + 1
         if idx >= self.get_nb_events():
@@ -138,6 +165,13 @@ class _FileEventBase:
         Load traces/pos of event/run event_number/run_number
         :param event_number:
         :param run_number:
+
+        Parameters
+        ----------
+        event_number : int
+            Event number.
+        run_number : int
+            Run number.
         """
         self.event_number = event_number
         self.run_number = run_number
@@ -156,30 +190,55 @@ class _FileEventBase:
     def get_du_count(self):
         """
         Return number of du in event
+
+        Returns
+        -------
+        int
+            Number of detection units in the current event.
         """
         return self.tt_event.du_count
 
     def get_nb_events(self):
         """
         Return number of event in file
+
+        Returns
+        -------
+        int
+            Number of events in the file.
         """
         return len(self.l_events)
 
     def get_size_trace(self):
         """
         Return number of sample in trace
+
+        Returns
+        -------
+        int
+            Number of samples per trace.
         """
         return self.traces.shape[2]
 
     def get_sampling_freq_mhz(self):
         """
         Return sampling frequency in MHz
+
+        Returns
+        -------
+        float
+            Sampling frequency, in MHz.
         """
         return 1e3 / self.t_bin_size
 
     def get_du_nanosec_ordered(self):
         """
         return nanosecond between 0s to 2s max
+
+        Returns
+        -------
+        ndarray
+            Trigger times of the units, in nanoseconds, in unit order.
         """
         du_s = self.tt_event.du_seconds.asnumpy().astype(np.float64)
         min_sec = du_s.min()
@@ -189,6 +248,11 @@ class _FileEventBase:
     def get_obj_handling3dtraces(self):
         """
         Return a traces container IO independent Handling3dTraces
+
+        Returns
+        -------
+        Handling3dTraces
+            The traces of the current event.
         """
         s_file = os.path.basename(self.f_name)
         o_tevent = Handling3dTraces(
@@ -230,6 +294,11 @@ class _FileEventBase:
         :param f_name: string ROOT path/file_name
         :param idx_evt: integer
         :return: dictionary with some raw value of simulation parameters
+
+        Returns
+        -------
+        dict
+            The simulation parameters stored with the event.
         """
         d_simu = {}
         # raw parameters
@@ -263,6 +332,16 @@ def get_file_event(f_name):
     """Event factory
 
     Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event
+
+    Parameters
+    ----------
+    f_name : str
+        File to open.
+
+    Returns
+    -------
+    _FileEventBase
+        A reader of the appropriate kind for the trees the file holds.
     """
     if not os.path.exists(f_name):
         logger.error(f"File {f_name} doesn't exist.")
@@ -289,6 +368,18 @@ def get_handling3dtraces(f_name, idx_evt=0):
     :param f_name:  string ROOT path/file_name
     :param idx_evt: integer
     :return: object Handling3dTraces
+
+    Parameters
+    ----------
+    f_name : str
+        File to open.
+    idx_evt : int, optional
+        Event index.
+
+    Returns
+    -------
+    Handling3dTraces
+        The traces of the current event.
     """
     event_files = get_file_event(f_name)
     event_files.load_event_idx(idx_evt)
@@ -307,6 +398,18 @@ def get_simu_parameters(f_name, idx_evt=0):
     :param f_name: string ROOT path/file_name
     :param idx_evt: integer
     :return: dictionary with some raw value of simulation parameters
+
+    Parameters
+    ----------
+    f_name : str
+        File to open.
+    idx_evt : int, optional
+        Event index.
+
+    Returns
+    -------
+    dict
+        Simulation parameters of that event.
     """
     event_files = get_file_event(f_name)
     event_files.load_event_idx(idx_evt)
@@ -323,6 +426,11 @@ class FileEfield(_FileEventBase):
     def __init__(self, f_name):
         """
         :param f_name: path to ROOT file Efield
+
+        Parameters
+        ----------
+        f_name : str
+            File holding electric-field traces.
         """
         event = groot.TEfield(f_name)
         super().__init__(event, f_name)
@@ -362,6 +470,11 @@ class FileVoltage(_FileEventBase):
         """
 
         :param f_name:  path to ROOT file volatge
+
+        Parameters
+        ----------
+        f_name : str
+            File holding voltage traces.
         """
         event = groot.TVoltage(f_name)
         super().__init__(event, f_name)
@@ -401,6 +514,11 @@ class FileAdc(_FileEventBase):
         """
 
         :param f_name:  path to ROOT file volatge
+
+        Parameters
+        ----------
+        f_name : str
+            File holding ADC traces.
         """
         event = groot.TADC(f_name)
         super().__init__(event, f_name)

@@ -461,6 +461,16 @@ class GenericProcessingDU:
         """
 
         :param axis:
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+        Returns
+        -------
+        str
+            Absolute path to the measurements for that arm.
         """
         # fix a file version for processing by heritage
         pass
@@ -472,6 +482,11 @@ class GenericProcessingDU:
 
         :param freqs_mhz: [MHz] given by scipy.fft.rfftfreq/1e6
         :type freqs_mhz: float (nb_freqs)
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Frequency axis the stage's response is wanted on, in MHz.
         """
         assert isinstance(freqs_mhz, np.ndarray)
         self.freqs_mhz = freqs_mhz
@@ -534,6 +549,17 @@ class MatchingNetwork(GenericProcessingDU):
         -----
         Results are stored on the instance rather than returned; the chain reads
         them when it cascades the stages.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
@@ -664,6 +690,17 @@ class gaa_frontend0db(GenericProcessingDU):
         -----
         Results are stored on the instance rather than returned; the chain reads
         them when it cascades the stages.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
@@ -781,6 +818,16 @@ class LowNoiseAmplifier(GenericProcessingDU):
         S2P File: Measurements: S11, S21, S12, S22:
         Thursday, April 27, 2023
         Hz  S  dB  R 50.000
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+        Returns
+        -------
+        str
+            Absolute path to the measurements for that arm.
         """
         axis_dict = {0:"X", 1:"Y", 2:"Z"}
         filename = get_axis_filename("LNA", axis)
@@ -791,6 +838,17 @@ class LowNoiseAmplifier(GenericProcessingDU):
         """
         compute s-parameters of LNA
 
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
@@ -885,6 +943,16 @@ class BalunAfterLNA(GenericProcessingDU):
         hz S ma R 50
         2 Port Network Data from SP1.SP block
         freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22         
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+        Returns
+        -------
+        str
+            Absolute path to the measurements for that arm.
         """
         #filename = os.path.join("detector", "RFchain_v1", "balun_after_LNA.s2p")
         #filename = os.path.join("detector", "RFchain_v1", "balun46in.s2p")
@@ -896,6 +964,17 @@ class BalunAfterLNA(GenericProcessingDU):
         """Compute ABCD_matrix for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -976,6 +1055,16 @@ class Cable(GenericProcessingDU):
         """
 
         :param axis:
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+        Returns
+        -------
+        str
+            Absolute path to the measurements for that arm.
         """
         filename = components["CableConnector"]["s2p_file"] if components["CableConnector"]["enabled"] else None
 
@@ -985,6 +1074,17 @@ class Cable(GenericProcessingDU):
         """Compute ABCD_matrix for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1068,6 +1168,11 @@ class VGAFilter(GenericProcessingDU):
         """
 
         :param axis:
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         assert self.gain in [-5, 0, 5, 20]
         logger.info(f"vga gain: {self.gain} dB")
@@ -1080,6 +1185,17 @@ class VGAFilter(GenericProcessingDU):
         """Compute ABCD_matrix for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1165,6 +1281,11 @@ class BalunBeforeADC(GenericProcessingDU):
         hz S ma R 50
         2 Port Network Data from SP1.SP block
         freq  magS11  angS11  magS21  angS21  magS12  angS12  magS22  angS22  
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         filename = components["BalunBeforeAD"]["s2p_file"] if components["BalunBeforeAD"]["enabled"] else None
 
@@ -1174,6 +1295,17 @@ class BalunBeforeADC(GenericProcessingDU):
         """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1247,6 +1379,11 @@ class Rfchain_elements_db(GenericProcessingDU):
 
     def _set_name_data_file(self):
         r"""Returns the path of the data file holding this stage's measurements.
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
@@ -1264,6 +1401,17 @@ class Rfchain_elements_db(GenericProcessingDU):
         -----
         Results are stored on the instance rather than returned; the chain reads
         them when it cascades the stages.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1342,6 +1490,11 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
 
     def _set_name_data_file(self):
         r"""Returns the path of the data file holding this stage's measurements.
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
@@ -1359,6 +1512,17 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         -----
         Results are stored on the instance rather than returned; the chain reads
         them when it cascades the stages.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1438,6 +1602,11 @@ class Rfchain_elements(GenericProcessingDU):
 
     def _set_name_data_file(self):
         r"""Returns the path of the data file holding this stage's measurements.
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
@@ -1446,6 +1615,17 @@ class Rfchain_elements(GenericProcessingDU):
         """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1519,6 +1699,11 @@ class Rfchain_elements_rad(GenericProcessingDU):
 
     def _set_name_data_file(self):
         r"""Returns the path of the data file holding this stage's measurements.
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
@@ -1527,6 +1712,17 @@ class Rfchain_elements_rad(GenericProcessingDU):
         """compute s-parameters and ABCD matrix of Balun before AD chip for freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1597,6 +1793,11 @@ class Zload_arb(GenericProcessingDU):
     def _set_name_data_file(self):
         #filename = os.path.join("detector", "RFchain_v1", "zload_balun_200ohm.s1p")
         r"""Returns the path of the data file holding this stage's measurements.
+
+        Returns
+        -------
+        str
+            Absolute path to this element's tabulated measurements.
         """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
@@ -1615,6 +1816,17 @@ class Zload_arb(GenericProcessingDU):
         -----
         Results are stored on the instance rather than returned; the chain reads
         them when it cascades the stages.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1661,6 +1873,16 @@ class Zload(GenericProcessingDU):
         S1P File: Measurements: S22:
         Thursday, April 20, 2023
         Hz  S  RI  R 50
+
+        Parameters
+        ----------
+        axis : int, optional
+            Antenna arm: 0 for X, 1 for Y, 2 for Z.
+
+        Returns
+        -------
+        str
+            Absolute path to the measurements for that arm.
         """
         #filename = os.path.join("detector", "RFchain_v1", "zload_balun_200ohm.s1p")
         filename = components["S_balun_AD"]["s1p_file"] if components["S_balun_AD"]["enabled"] else None
@@ -1671,6 +1893,17 @@ class Zload(GenericProcessingDU):
         """compute S-paramters and Zload for freqs_mhz
 
         :param freqs_mhz (float, (N)): [MHz] given by scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
@@ -1729,6 +1962,17 @@ class RFChain(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -1791,6 +2035,16 @@ class RFChain(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1814,6 +2068,12 @@ class RFChain(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -1857,6 +2117,17 @@ class RFChainNut(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -1917,6 +2188,16 @@ class RFChainNut(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -1941,6 +2222,12 @@ class RFChainNut(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -1980,6 +2267,17 @@ class RFChain_gaa(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.gaa.compute_for_freqs(freqs_mhz)
@@ -2023,6 +2321,16 @@ class RFChain_gaa(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2051,6 +2359,12 @@ class RFChain_gaa(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -2098,6 +2412,17 @@ class RFChain_Balun1(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -2157,6 +2482,16 @@ class RFChain_Balun1(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2181,6 +2516,12 @@ class RFChain_Balun1(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -2228,6 +2569,17 @@ class RFChain_Match_net(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -2287,6 +2639,16 @@ class RFChain_Match_net(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2311,6 +2673,12 @@ class RFChain_Match_net(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -2357,6 +2725,17 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -2418,6 +2797,16 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2442,6 +2831,12 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -2488,6 +2883,17 @@ class RFChain_VGA(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -2545,6 +2951,16 @@ class RFChain_VGA(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2569,6 +2985,12 @@ class RFChain_VGA(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 
@@ -2614,6 +3036,17 @@ class RFChain_in_Balun1(GenericProcessingDU):
         """Compute transfer function for frequency freqs_mhz
 
         :param freqs_mhz (float, (N)): return of scipy.fft.rfftfreq/1e6
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.
+
+        Returns
+        -------
+        None
+            Results are stored on the instance; the chain reads them when it
+            cascades the stages.
         """
         self.set_out_freq_mhz(freqs_mhz)
         self.matcnet.compute_for_freqs(freqs_mhz)
@@ -2673,6 +3106,16 @@ class RFChain_in_Balun1(GenericProcessingDU):
         Output: Voltage after RF chain in frequency domain.
         Make sure to run self.compute_for_freqs() before calling this method.
         RK Note: name 'vout_f' is a placeholder. Change it with something better. 
+
+        Parameters
+        ----------
+        voc_f : ndarray, shape (n_du, 3, n_freq)
+            Open-circuit voltage spectrum at the antenna feed point.
+
+        Returns
+        -------
+        ndarray, shape (n_du, 3, n_freq)
+            Voltage spectrum at the ADC input, after the chain.
         """
         assert voc_f.shape==self.Z_in.shape  # shape = (nports, nfreqs)
 
@@ -2699,6 +3142,12 @@ class RFChain_in_Balun1(GenericProcessingDU):
         """Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            The complex transfer function per antenna arm,
+            :math:`V_{\rm out}/V_{\rm oc}`.
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 

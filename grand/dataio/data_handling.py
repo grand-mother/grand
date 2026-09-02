@@ -21,6 +21,17 @@ class DataDirectory:
         @param dir_name: the name of the directory to be scanned
         @param recursive: if to scan the directory recursively
         @param analysis_level: which analysis level files to read. -1 means max
+
+        Parameters
+        ----------
+        dir_name : str
+            Directory to index.
+        recursive : bool, optional
+            Descend into subdirectories.
+        analysis_level : int, optional
+            Keep only files at this level; the highest available by default.
+        sim2root_structure : bool, optional
+            Read the layout the sim2root converters write.
         """
 
         self.analysis_level = analysis_level
@@ -54,7 +65,23 @@ class DataDirectory:
         #     logger.warning("Sorry, non exp or sim2root directories are not supported yet")
 
     def __getattr__(self, name):
-        """For non-existing tree files or tree parameters, return None instead of rising an exception"""
+        """For non-existing tree files or tree parameters, return None instead of rising an exception
+
+        Parameters
+        ----------
+        name : str
+            Attribute requested, typically a tree name.
+
+        Returns
+        -------
+        object
+            The tree or file list of that name.
+
+        Raises
+        ------
+        AttributeError
+            If no such tree was found in the directory.
+        """
         trees_to_check = ["trun", "trunvoltage", "trunrawvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
         if any(s in name for s in trees_to_check):
             return None
@@ -62,11 +89,28 @@ class DataDirectory:
             raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
 
     def get_list_of_files(self, recursive: bool = False):
-        """Gets list of files in the directory"""
+        """Gets list of files in the directory
+
+        Parameters
+        ----------
+        recursive : bool, optional
+            Descend into subdirectories.
+
+        Returns
+        -------
+        list of str
+            Paths of the ROOT files found.
+        """
         return sorted(glob.glob(os.path.join(self.dir_name, "*.root"), recursive=recursive))
 
     def get_list_of_files_handles(self):
-        """Go through the list of files in the directory and open all of them"""
+        """Go through the list of files in the directory and open all of them
+
+        Returns
+        -------
+        list of DataFile
+            One handle per group of files that belong together.
+        """
         file_handle_list = []
 
         def split_filenames(x):
@@ -192,7 +236,13 @@ class DataDirectory:
                     setattr(self, f"{flistname[1:-1]}", getattr(f, f"{flistname[1:-1]}"))
 
     def print(self, verbose=True):
-        """Prints all the information about all the data"""
+        """Prints all the information about all the data
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            Include per-tree detail.
+        """
         print("This DataDirectory instance has:")
         print(f"  {len(self.file_attrs):<3} file/tree attributes")
         print(f"  {len(self.file_list):<3} files")
@@ -219,7 +269,13 @@ class DataDirectory:
             f.close()
 
     def get_max_list_of_events(self):
-        """Gets the max list of event,run from all the trees"""
+        """Gets the max list of event,run from all the trees
+
+        Returns
+        -------
+        list
+            The events of the file holding the most of them.
+        """
 
         trees_to_check = ["tadc", "trawvoltage", "tvoltage", "tefield", "tshower", "tshowersim"]
         # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
@@ -233,7 +289,13 @@ class DataFile:
     """Class holding the information about GRAND TTrees in the specified file"""
 
     def __init__(self, filename):
-        """filename can be either a string or a ROOT.TFile"""
+        """filename can be either a string or a ROOT.TFile
+
+        Parameters
+        ----------
+        filename : str or list of str
+            File to open, or files that belong together.
+        """
 
         # Need to init here, so that different instances do not share the same data
         ## Holds all the trees in the file, by tree name
@@ -385,11 +447,27 @@ class DataFile:
             self.list_of_trees.append(self.dict_of_trees[max_anal_tree_name])
 
     def __enter__(self):
-        """ enter() for DataFile as context manager"""
+        """ enter() for DataFile as context manager
+
+        Returns
+        -------
+        DataFile
+            This object, for use as a context manager.
+        """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """On exiting DataFile as context manager call close function"""
+        """On exiting DataFile as context manager call close function
+
+        Parameters
+        ----------
+        exc_type : type
+            Exception type, if one was raised.
+        exc_val : BaseException
+            The exception.
+        exc_tb : traceback
+            Its traceback.
+        """
         self.close()
 
     def print(self):
@@ -419,7 +497,18 @@ class DataFile:
                     print(f"  {key2:<20}: {self.tree_types[key][key1][key2]}")
 
     def get_tree_info(self, tree):
-        """Gets the information about the tree"""
+        """Gets the information about the tree
+
+        Parameters
+        ----------
+        tree : DataTree or str
+            Tree to describe.
+
+        Returns
+        -------
+        dict
+            Its metadata, entry count and trace lengths.
+        """
 
         # If tree is a string, turn it into a TTree
         if type(tree) == str:
@@ -441,7 +530,18 @@ class DataFile:
         return tree_info
 
     def _get_traces_lengths(self, tree):
-        """Adds traces info to event trees"""
+        """Adds traces info to event trees
+
+        Parameters
+        ----------
+        tree : DataTree
+            Tree to inspect.
+
+        Returns
+        -------
+        list of int
+            Trace length per unit, or an empty list when the tree holds none.
+        """
         # If tree is not of Event class (contains traces), do nothing
         if not issubclass(tree.__class__, MotherEventTree) or "sim" in tree.tree_name or "zhaires" in tree.tree_name:
             return None
@@ -458,18 +558,46 @@ class DataFile:
                 return traces_lengths[0][0]
 
     def _get_list_of_all_used_dus(self, tree):
-        """Get list of all data units used in the tree"""
+        """Get list of all data units used in the tree
+
+        Parameters
+        ----------
+        tree : DataTree
+            Tree to inspect.
+
+        Returns
+        -------
+        list of int
+            Identifiers of every detection unit appearing in it.
+        """
         if issubclass(tree.__class__, MotherEventTree):
             return tree.get_list_of_all_used_dus()
         else:
             return None
 
     def print_tree_info(self, tree):
-        """Prints the information about the tree"""
+        """Prints the information about the tree
+
+        Parameters
+        ----------
+        tree : DataTree or str, optional
+            Tree to describe; all of them by default.
+        """
         pass
 
     def _guess_tree_type(self, tree):
-        """Guesses the tree type from its name. Needed for old trees with missing metadata"""
+        """Guesses the tree type from its name. Needed for old trees with missing metadata
+
+        Parameters
+        ----------
+        tree : ROOT.TTree
+            Tree to classify.
+
+        Returns
+        -------
+        type
+            The DataTree subclass that matches its branches.
+        """
         name = tree.GetName()
 
         # Sim trees
@@ -519,7 +647,13 @@ class DataFile:
         self.f.Close()
 
     def get_max_list_of_events(self):
-        """Gets the max list of event,run from all the trees"""
+        """Gets the max list of event,run from all the trees
+
+        Returns
+        -------
+        list
+            The events of the tree holding the most of them.
+        """
 
         trees_to_check = ["tadc", "trawvoltage", "tvoltage", "tefield", "tshower", "tshowersim"]
         # Assuming, that the lowest level tadc has the max number, and going up if it doesn't exist
