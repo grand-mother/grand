@@ -57,12 +57,17 @@ jobs:
       # The .rst pages under docs/source/handbook/ are generated from the same
       # source and committed.  If the zip changes and nobody re-runs the
       # generator, the site and the PDF disagree; this catches that.
+      #
+      # It compares the recorded SHA-256 of the source archive, not the
+      # converted text.  Re-running pandoc and diffing looked like the obvious
+      # check and does not work: pandoc's output differs between versions in
+      # whitespace and in whether it emits ":width:" on an image, so on a
+      # runner whose pandoc differs from the one that generated the committed
+      # pages -- Ubuntu's against the one used locally -- every line of every
+      # page differs and the job fails with a false report of staleness.
+      # It did exactly that on the first run.
       - name: Check the generated pages are current
-        run: |
-          sudo apt-get install -y --no-install-recommends pandoc
-          python docs/dev/build_handbook.py
-          git diff --exit-code -- docs/source/handbook \
-            || { echo "docs/source/handbook is stale; run docs/dev/build_handbook.py"; exit 1; }
+        run: python docs/dev/build_handbook.py --check
 
   docs:
     name: Documentation

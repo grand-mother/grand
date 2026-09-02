@@ -132,6 +132,67 @@ def errata_table():
     return '\n'.join(lines)
 
 
+STAMP = 'source.txt'
+
+
+def source_stamp():
+    r"""Returns a line identifying the source these pages were generated from.
+
+    Contains the SHA-256 of ``resources/GRANDlib_Handbook.zip`` and the pandoc
+    version that converted it.
+
+    Returns
+    -------
+    str
+        One line, ``<sha256>  pandoc <version>``.
+    """
+    import hashlib
+
+    digest = hashlib.sha256(ZIP.read_bytes()).hexdigest()
+    try:
+        version = subprocess.run(['pandoc', '--version'], capture_output=True,
+                                 text=True).stdout.split('\n')[0].strip()
+    except (OSError, subprocess.SubprocessError):
+        version = 'pandoc unavailable'
+    return '%s  %s' % (digest, version)
+
+
+def check_current():
+    r"""Returns 0 if the committed pages were generated from the current zip.
+
+    Compares the recorded SHA-256 of the source archive, **not** the converted
+    text.  Comparing the text does not work: pandoc's output differs between
+    versions in whitespace and in whether it emits ``:width:`` on an image, so
+    a byte comparison fails on any runner whose pandoc differs from the one
+    that last generated the pages -- which is a false alarm about the pandoc
+    version, not a report that the pages are stale.
+
+    What actually matters is whether the *source* changed without the pages
+    being rebuilt, and the hash answers exactly that.
+
+    Returns
+    -------
+    int
+        0 if current, 1 otherwise.
+    """
+    marker = OUT / STAMP
+    if not marker.exists():
+        print('  %s is missing; run docs/dev/build_handbook.py' % marker)
+        return 1
+    recorded = marker.read_text().strip().split('  ')[0]
+    import hashlib
+
+    current = hashlib.sha256(ZIP.read_bytes()).hexdigest()
+    if recorded != current:
+        print('  the Handbook source has changed since the pages were '
+              'generated:\n    recorded %s\n    current  %s\n'
+              '  run docs/dev/build_handbook.py' % (recorded[:16], current[:16]))
+        return 1
+    print('  handbook pages were generated from the current source (%s)'
+          % current[:16])
+    return 0
+
+
 def convert():
     r"""Returns the Handbook as reStructuredText, and extracts its figures.
 
@@ -360,8 +421,13 @@ def main():
               '',
               errata_table()]
     (OUT / 'index.rst').write_text('\n'.join(index) + '\n')
+    (OUT / STAMP).write_text(source_stamp() + '\n')
     print('  wrote %s' % OUT)
 
 
 if __name__ == '__main__':
+    import sys
+
+    if '--check' in sys.argv:
+        raise SystemExit(check_current())
     main()
