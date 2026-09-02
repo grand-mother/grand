@@ -46,6 +46,16 @@ KNOWN_FAILURES = {
         'downloaded; fails when GRAND_DATA_PATH differs from the default.',
 
     # --- missing fixture -------------------------------------------------
+    'test_root_trees.py::RootTreesTest::test_datatree':
+        'Asserts that data/test_efield.root exists. It is not in version '
+        'control -- data/.gitignore excludes everything -- and is not fetched '
+        'by env/setup.sh, so it is absent on any clean checkout and in CI. '
+        'It passes on a developer machine only when a stale copy happens to '
+        'be present, which is worse than failing. It therefore xpasses '
+        'locally and xfails in CI; strict=False means both are green, and '
+        'the xpass is the reminder that the fixture is still not in the '
+        'repository. Same root cause as the end-to-end fixture below.',
+
     'test_efield2voltage.py::Efield2VoltageTest::test_Efield2Voltage':
         'data/test_efield.root is not in version control -- data/.gitignore '
         'excludes everything -- and is not fetched by env/setup.sh, so the '
