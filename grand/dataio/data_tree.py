@@ -95,6 +95,15 @@ class DataTree:
     # def __setattr__(self, key, value):
     def mod_setattr(self, key, value):
         # Create a list of attributes and properties for the class if it doesn't exist
+        r"""Sets an attribute, recording the change in the modification history.
+
+                Parameters
+                ----------
+                key : str
+                    Attribute name.
+                value : object
+                    New value.
+        """
         if not hasattr(self, "_attributes_and_properties"):
             super().__setattr__("_attributes_and_properties", set([el1 for el in type(self).__mro__[:-1] for el1 in list(el.__dict__.keys()) + list(el.__annotations__.keys())]))
         # If the attribute not in the list of class's attributes and properties, don't add it
@@ -115,6 +124,13 @@ class DataTree:
     @type.setter
     def type(self, val: str) -> None:
         # The meta field does not exist, add it
+        r"""Sets the tree type.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         if not (el:=self._tree.GetUserInfo().FindObject("type")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("type", val))
         # The meta field exists, change the value
@@ -130,6 +146,13 @@ class DataTree:
 
     @file.setter
     def file(self, val: ROOT.TFile) -> None:
+        r"""Sets the file this tree belongs to.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         self._set_file(val)
 
     @property
@@ -158,6 +181,13 @@ class DataTree:
     @comment.setter
     def comment(self, val: str) -> None:
         # The meta field does not exist, add it
+        r"""Sets the free-text comment stored with the tree.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         if not (el:=self._tree.GetUserInfo().FindObject("comment")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("comment", val))
         # The meta field exists, change the value
@@ -169,11 +199,25 @@ class DataTree:
 
     @property
     def creation_datetime(self):
+        r"""Returns the time the tree was created.
+
+                Returns
+                -------
+                datetime
+                    Creation time, as recorded in the file.
+        """
         return self._creation_datetime
 
     @creation_datetime.setter
     def creation_datetime(self, val: datetime.datetime) -> None:
         # If datetime was given, convert it to int
+        r"""Returns the time the tree was created.
+
+                Returns
+                -------
+                datetime
+                    Creation time, as recorded in the file.
+        """
         if type(val) == datetime.datetime:
             val = int(val.timestamp())
             val_dt = val
@@ -199,6 +243,13 @@ class DataTree:
     @modification_history.setter
     def modification_history(self, val: str) -> None:
         # The meta field does not exist, add it
+        r"""Sets the record of modifications.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_history")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_history", val))
         # The meta field exists, change the value
@@ -218,6 +269,13 @@ class DataTree:
     @source_datetime.setter
     def source_datetime(self, val: datetime.datetime) -> None:
         # Remove the existing datetime
+        r"""Sets the timestamp of the data this tree derives from.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
 
         # If datetime was given
@@ -247,6 +305,13 @@ class DataTree:
     @modification_software.setter
     def modification_software(self, val: str) -> None:
         # The meta field does not exist, add it
+        r"""Sets the name of the software that last modified the tree.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_software")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
         # The meta field exists, change the value
@@ -263,6 +328,13 @@ class DataTree:
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
         # The meta field does not exist, add it
+        r"""Sets the version of the software that last modified the tree.
+
+                Parameters
+                ----------
+                val : object
+                    The new value.
+        """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_software_version")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
         # The meta field exists, change the value
@@ -279,6 +351,15 @@ class DataTree:
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
         # The meta field does not exist, add it
+        r"""Sets the analysis level.
+
+                Parameters
+                ----------
+                val : int
+                    How far through the processing chain this data has been taken.
+                    It is part of how files are grouped and named, so changing it
+                    changes which files are read together.
+        """
         if not (el:=self._tree.GetUserInfo().FindObject("analysis_level")):
             self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
         # The meta field exists, change the value
@@ -293,6 +374,8 @@ class DataTree:
         return cls._tree_name
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         self._type = type(self).__name__
 
         # Append the instance to the list of generated trees - needed later for adding friends
@@ -535,6 +618,15 @@ class DataTree:
 
     def add_friend(self, value, filename=""):
         # ToDo: Due to a bug discovered during DC1, disable adding of the friends for now
+        r"""Attaches another tree as a ROOT friend, so its branches are readable here.
+
+                Parameters
+                ----------
+                value : DataTree or str
+                    The tree to attach, or its name.
+                filename : str, optional
+                    File holding it, when it is not in this one.
+        """
         return 0
         """Add a friend to the tree"""
         self._tree.AddFriend(value, filename)

@@ -65,6 +65,11 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
 """
 @dataclass
 class ShowerEvent:
+    r"""The parameters of one air shower.
+
+        Direction, energy, core position, depth of maximum and primary type,
+        together with the frame they are expressed in.
+    """
     energy: Optional[float] = None
     zenith: Optional[float] = None
     azimuth: Optional[float] = None
@@ -79,6 +84,18 @@ class ShowerEvent:
     # Since ROOT is the only format in which GRAND data will be stored in, 
     # so the code to deal with other formats are deleted.
     def load_root(self, d_shower):
+        r"""Returns a shower built from a ROOT shower tree.
+
+                Parameters
+                ----------
+                d_shower : TShower or TShowerSim
+                    The tree to read.
+
+                Returns
+                -------
+                ShowerEvent
+                    The shower it describes.
+        """
         self.energy = d_shower.energy_primary
         self.zenith = d_shower.zenith
         self.azimuth = d_shower.azimuth

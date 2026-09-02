@@ -116,6 +116,20 @@ class _FileEventBase:
         return self.load_event_idx(idx)
 
     def load_nb_event_run(self, event_number, run_number):
+        r"""Loads the event identified by number and run.
+
+                Parameters
+                ----------
+                event_number : int
+                    Event number.
+                run_number : int
+                    Run number.  The pair is unique.
+
+                Returns
+                -------
+                bool
+                    True when the event was found.
+        """
         self.idx_event = self.l_events.index((event_number, run_number))
         self._load_event_identifier(event_number, run_number)
 
@@ -316,6 +330,21 @@ class FileEfield(_FileEventBase):
         self.load_event_idx(0)
 
     def get_obj_handling3dtraces(self):
+        r"""Returns the traces as a :class:`~grand.basis.traces_event.Handling3dTraces`.
+
+                Returns
+                -------
+                Handling3dTraces
+                    The event's traces, wrapped in the object that provides the
+                    plotting and peak-finding helpers.
+
+                Examples
+                --------
+                .. jupyter-execute::
+                    :hide-code:
+
+                    print("requires a ROOT file; see the User Guide")
+        """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"$\mu$V/m", "cart")
         o_tevent.type_trace = "Efield"
@@ -340,6 +369,21 @@ class FileVoltage(_FileEventBase):
         self.load_event_idx(0)
 
     def get_obj_handling3dtraces(self):
+        r"""Returns the traces as a :class:`~grand.basis.traces_event.Handling3dTraces`.
+
+                Returns
+                -------
+                Handling3dTraces
+                    The event's traces, wrapped in the object that provides the
+                    plotting and peak-finding helpers.
+
+                Examples
+                --------
+                .. jupyter-execute::
+                    :hide-code:
+
+                    print("requires a ROOT file; see the User Guide")
+        """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"$\mu$V", "dir")
         o_tevent.type_trace = "Voltage"
@@ -365,6 +409,21 @@ class FileAdc(_FileEventBase):
         self.load_event_idx(0)
 
     def get_obj_handling3dtraces(self):
+        r"""Returns the traces as a :class:`~grand.basis.traces_event.Handling3dTraces`.
+
+                Returns
+                -------
+                Handling3dTraces
+                    The event's traces, wrapped in the object that provides the
+                    plotting and peak-finding helpers.
+
+                Examples
+                --------
+                .. jupyter-execute::
+                    :hide-code:
+
+                    print("requires a ROOT file; see the User Guide")
+        """
         o_tevent = super().get_obj_handling3dtraces()
         o_tevent.set_unit_axis(r"ADU", "dir")
         o_tevent.type_trace = "volt ADC"

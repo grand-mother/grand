@@ -29,6 +29,23 @@ _default_obstime: Final[datetime.date] = datetime.date(2020, 1, 1)
 
 
 def __getattr__(name):
+    r"""Returns a module-level attribute, building the default model on first use.
+
+        Parameters
+        ----------
+        name : str
+            Attribute requested.
+
+        Returns
+        -------
+        object
+            The attribute.
+
+        Raises
+        ------
+        AttributeError
+            If the module has no such attribute.
+    """
     if name == "model":
         return _default_model
     elif name == "obstime":
@@ -70,6 +87,20 @@ class Geomagnet:
     ) -> None:
 
         # print('location:', location, type(location))
+        r"""Creates a geomagnetic field model at a place and time.
+
+                Parameters
+                ----------
+                model : str, optional
+                    Field model to use; the IGRF release by default.
+                latitude, longitude, height : float, optional
+                    Location at which to evaluate the field.
+                location : Geodetic, ECEF, LTP or GRANDCS, optional
+                    Location, given as a coordinate object instead.
+                obstime : str or datetime, optional
+                    Date of observation.  The field changes measurably from year to
+                    year, so this is not decorative.
+        """
         if model is None:
             model = _default_model
 

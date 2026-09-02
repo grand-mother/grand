@@ -222,6 +222,8 @@ class Map(object):
         Map.cache[path] = self
 
     def __del__(self):
+        r"""Releases the underlying TURTLE map.
+        """
         if self in Map.cache:
             logger.debug(f"Map : remove {self._path} from the cache")
             del Map.cache[self._path]
@@ -288,6 +290,8 @@ class Stack:
         self._stack_size = stack_size
 
     def __del__(self):
+        r"""Releases the underlying TURTLE stack.
+        """
         logger.debug("destroy  in Stack class")
         lib.turtle_stack_destroy(self._stack)
         self._stack = None
@@ -338,11 +342,22 @@ class Stepper:
         self._data = set([])
 
     def __del__(self):
+        r"""Releases the underlying TURTLE stepper.
+        """
         logger.debug("destroy  in Stepper class")
         lib.turtle_stepper_destroy(self._stepper)
         self._stepper = None
 
     def add(self, data: Union[Map, Stack, None] = None, offset: float = 0):
+        r"""Adds an elevation source to the stepper.
+
+                Parameters
+                ----------
+                data : Map or Stack
+                    The elevation data to consult.
+                offset : float, optional
+                    Constant offset applied to its elevations, in metres.
+        """
         if data is not None:
             if isinstance(data, Map):
                 if data._map is None:
@@ -358,10 +373,14 @@ class Stepper:
 
     @property
     def geoid(self):
+        r"""The geoid map used to convert heights, or ``None``.
+        """
         return self._geoid
 
     @geoid.setter
     def geoid(self, map_: Optional[Map]):
+        r"""The geoid map used to convert heights, or ``None``.
+        """
         if map_ is None:
             self._data.pop(self._geoid)
             self._geoid = None

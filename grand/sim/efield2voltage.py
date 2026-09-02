@@ -111,6 +111,35 @@ class Efield2Voltage:
     def __init__(self, d_input, f_output=None, output_directory=None, seed=None, padding_factor=1.0, du_type='GP300'):
 
         # If directory given, use DataDirectory
+        r"""Opens the input and prepares the antenna and RF-chain models.
+
+                Parameters
+                ----------
+                d_input : str
+                    Input ROOT file, or a directory of them.
+                f_output : str, optional
+                    Output file.  Derived from the input name when omitted.
+                output_directory : str, optional
+                    Directory to write into.
+                seed : int, optional
+                    Seed for the noise generator.  ``None`` gives an independent
+                    realisation each run; a fixed value makes it reproducible.
+                padding_factor : float, optional
+                    Zero-padding applied before the transform, which improves the
+                    frequency resolution.
+                du_type : str, optional
+                    Which antenna model to use.
+
+                Raises
+                ------
+                IOError
+                    If `d_input` is neither a file nor a directory.
+
+                Notes
+                -----
+                Construction reads the input file, so this object cannot be built
+                without one.
+        """
         if os.path.isdir(d_input):
             self.d_input = groot.DataDirectory(d_input)
             self.f_input = None

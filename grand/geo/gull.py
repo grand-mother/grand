@@ -85,6 +85,8 @@ class Snapshot:
         self._altitude = tuple(map(float, (altitude_min[0], altitude_max[0])))
 
     def __del__(self):
+        r"""Releases the underlying GULL snapshot.
+        """
         logger.debug("__del__ Snapshot ")
         try:
             if self._snapshot is None:
@@ -100,6 +102,18 @@ class Snapshot:
         """Get the magnetic field at a given Earth location"""
 
         def regularize(a):
+            r"""Returns `a` as a contiguous array of the type the GULL bindings expect.
+
+            Parameters
+            ----------
+            a : array_like
+                Value to convert.
+
+            Returns
+            -------
+            ndarray
+                Contiguous ``float64`` array.
+            """
             a = numpy.asanyarray(a)
             return numpy.require(a, float, ["CONTIGUOUS", "ALIGNED"])
 

@@ -180,6 +180,8 @@ class Event:
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         if self._file:
             self.fill_event_from_trees()
             self.fill_t_vector()
@@ -252,6 +254,13 @@ class Event:
 
     @origin_geoid.setter
     def origin_geoid(self, v):
+        r"""Sets the geodetic origin the event's local coordinates refer to.
+
+                Parameters
+                ----------
+                v : array_like
+                    Latitude, longitude and height of the array origin.
+        """
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
@@ -475,6 +484,18 @@ class Event:
 
     ## Fill part of the event from the Run tree
     def fill_event_from_runtree(self, run_entry_number=None):
+        r"""Populates the run-level fields from the run tree.
+
+                Parameters
+                ----------
+                run_entry_number : int, optional
+                    Entry to read.
+
+                Returns
+                -------
+                bool
+                    True when the entry was found.
+        """
         ret = 1
 
         # For star shape, the run entry number should be the same as event entry number
@@ -512,6 +533,18 @@ class Event:
     ## Fill part of the event from the Run tree
     def fill_event_from_runrawvoltagetree(self, run_entry_number=None):
         # For star shape, the run entry number should be the same as event entry number
+        r"""Populates the run-level voltage fields from the raw-voltage run tree.
+
+                Parameters
+                ----------
+                run_entry_number : int, optional
+                    Entry to read.
+
+                Returns
+                -------
+                bool
+                    True when the entry was found.
+        """
         if self.is_starshape and run_entry_number is None and self.run_number is None:
             run_entry_number = self._entry_number
 
@@ -629,6 +662,20 @@ class Event:
 
     ## Fill part of the event from the Voltage tree
     def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
+        r"""Populates the voltage traces from the voltage tree.
+
+                Parameters
+                ----------
+                use_trawvoltage : bool, optional
+                    Read ``TRawVoltage`` rather than ``TVoltage``.
+                trawvoltage_channels : sequence, optional
+                    Which channels to read; all of them by default.
+
+                Returns
+                -------
+                bool
+                    True when traces were found.
+        """
         ret = 1
         if self._entry_number is not None:
             ret = self.tvoltage.get_entry(self._entry_number)
@@ -698,6 +745,13 @@ class Event:
 
     ## Fill part of the event from the Efield tree
     def fill_event_from_efield_tree(self):
+        r"""Populates this event from the electric-field tree.
+
+                Returns
+                -------
+                bool
+                    True when the tree held data for this event.
+        """
         ret = 1
         if self._entry_number is not None:
             ret = self.tefield.get_entry(self._entry_number)
@@ -731,6 +785,19 @@ class Event:
 
     ## Fill part of the event from the Shower tree
     def fill_event_from_shower_tree(self, simshower=False):
+        r"""Populates the shower parameters from the shower tree.
+
+                Parameters
+                ----------
+                simshower : bool, optional
+                    Read ``TShowerSim``, the simulator-only tree, rather than
+                    ``TShower``.
+
+                Returns
+                -------
+                bool
+                    True when the shower was found.
+        """
         ret = 1
         # The shower contains simulated parameters
         if simshower:
@@ -771,6 +838,8 @@ class Event:
     ## Print all the class values
     def print(self):
         # Assign the TTree branches to the class fields
+        r"""Prints a summary of the event, for interactive use.
+        """
         for field in fields(self):
             # Skip the list fields
             if any(x in field.name for x in {"antennas", "voltages", "efields", "shower", "trun", "tvoltage", "tefield", "tshower"}): continue
@@ -810,6 +879,20 @@ class Event:
 
         # *** Writing to the current files (no output directory provided or same as current) ***
 
+        r"""Writes the whole event out, one file per tree kind.
+
+                Parameters
+                ----------
+                common_filename : str, optional
+                    Single destination for every tree.  When given, the per-tree
+                    names below are ignored.
+                shower_filename, efields_filename, voltages_filename, run_filename : str, optional
+                    Individual destinations for each tree.
+                overwrite : bool, optional
+                    Replace existing files rather than appending.
+                out_dir : str, optional
+                    Directory to write into.
+        """
         if out_dir is None or (isinstance(out_dir, str) and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory.dir_name==out_dir.dir_name):
             # Give common_filename to all the filenames if not specified
             if common_filename:
@@ -887,24 +970,63 @@ class Event:
 
     ## Write the run to a file
     def write_run(self, filename, overwrite=False):
+        r"""Writes the run tree to a ROOT file.
+
+                Parameters
+                ----------
+                filename : str, optional
+                    Destination.  Defaults to the name the event was read from.
+                overwrite : bool, optional
+                    Replace an existing file rather than appending to it.
+        """
         self.fill_run_tree(filename=filename)
         if self.auto_file_close:
             self.trun.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the voltages to a file
     def write_voltages(self, filename, overwrite=False):
+        r"""Writes the voltage traces to a ROOT file.
+
+                Parameters
+                ----------
+                filename : str, optional
+                    Destination.  Defaults to the name the event was read from.
+                overwrite : bool, optional
+                    Replace an existing file rather than appending to it.
+        """
         self.fill_voltage_tree(filename=filename)
         if self.auto_file_close:
             self.tvoltage.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the efields to a file
     def write_efields(self, filename, overwrite=False):
+        r"""Writes the electric-field traces to a ROOT file.
+
+                Parameters
+                ----------
+                filename : str, optional
+                    Destination.  Defaults to the name the event was read from.
+                overwrite : bool, optional
+                    Replace an existing file rather than appending to it.
+        """
         self.fill_efield_tree(filename=filename)
         if self.auto_file_close:
             self.tefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
 
     ## Write the shower to a file
     def write_shower(self, filename, overwrite=False, tree_name="tshower"):
+        r"""Writes the shower parameters to a ROOT file.
+
+                Parameters
+                ----------
+                filename : str, optional
+                    Destination.
+                overwrite : bool, optional
+                    Replace an existing file.
+                tree_name : str, optional
+                    Name of the tree to write, which selects ``TShower`` or
+                    ``TShowerSim``.
+        """
         self.fill_shower_tree(filename=filename, tree_name=tree_name)
         if self.auto_file_close:
             self.tshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
@@ -913,6 +1035,15 @@ class Event:
     ## Fill the run tree from this Event
     def fill_run_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
+        r"""Fills the run tree from this event's contents, ready to be written.
+
+                Parameters
+                ----------
+                overwrite : bool, optional
+                    Replace existing entries rather than appending.
+                filename : str, optional
+                    File the tree belongs to.
+        """
         if self.trun is not None and not overwrite:
             raise TreeExists("The trun TTree already exists!")
 
@@ -949,6 +1080,15 @@ class Event:
     ## Fill the voltage tree from this Event
     def fill_voltage_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
+        r"""Fills the voltage tree from this event's contents, ready to be written.
+
+                Parameters
+                ----------
+                overwrite : bool, optional
+                    Replace existing entries rather than appending.
+                filename : str, optional
+                    File the tree belongs to.
+        """
         if self.tvoltage is not None and not overwrite:
             raise TreeExists("The tvoltage TTree already exists!")
 
@@ -997,6 +1137,15 @@ class Event:
     ## Fill the efield tree from this Event
     def fill_efield_tree(self, overwrite=False, filename=None):
         # Fill only if the tree not initialised yet
+        r"""Fills the electric-field tree from this event's contents, ready to be written.
+
+                Parameters
+                ----------
+                overwrite : bool, optional
+                    Replace existing entries rather than appending.
+                filename : str, optional
+                    File the tree belongs to.
+        """
         if self.tefield is not None and not overwrite:
             raise TreeExists("The tefield TTree already exists!")
 
@@ -1037,6 +1186,17 @@ class Event:
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
         # Fill only if the tree not initialised yet
+        r"""Fills the shower tree from this event's contents.
+
+                Parameters
+                ----------
+                overwrite : bool, optional
+                    Replace existing entries.
+                filename : str, optional
+                    File the tree belongs to.
+                tree_name : str, optional
+                    Which shower tree to fill.
+        """
         if self.tshower is not None and not overwrite:
             raise TreeExists("The tshower TTree already exists!")
 
@@ -1126,6 +1286,22 @@ class Event:
 def create_file_tree(target_dir, tree_name, source_tree):
 
     # Check if the time string was already generated
+    r"""Returns a tree of `tree_name` in `target_dir`, copying `source_tree` if given.
+
+        Parameters
+        ----------
+        target_dir : str
+            Directory the file lives in.
+        tree_name : str
+            Name of the tree to create.
+        source_tree : DataTree, optional
+            Tree whose structure and metadata to copy.
+
+        Returns
+        -------
+        DataTree
+            The new tree.
+    """
     if not hasattr(target_dir, "cur_time_string"):
         # Generate the time string and store it
         from datetime import datetime

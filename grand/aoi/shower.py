@@ -40,6 +40,13 @@ class Shower:
 
     @Xmaxpos.setter
     def Xmaxpos(self, v):
+        r"""Sets the position of shower maximum.
+
+                Parameters
+                ----------
+                v : array_like
+                    Position of Xmax, in the frame the event uses.
+        """
         self._Xmaxpos = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     @property
@@ -49,6 +56,13 @@ class Shower:
 
     @origin_geoid.setter
     def origin_geoid(self, v):
+        r"""Sets the geodetic origin of the local frame.
+
+                Parameters
+                ----------
+                v : array_like
+                    Latitude, longitude and height.
+        """
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     @property
@@ -58,4 +72,11 @@ class Shower:
 
     @core_ground_pos.setter
     def core_ground_pos(self, v):
+        r"""Sets the shower core position at ground.
+
+                Parameters
+                ----------
+                v : array_like
+                    Core position, in the array frame.
+        """
         self._core_ground_pos = CartesianRepresentation(x=v[0], y=v[1], z=v[2])

@@ -40,6 +40,13 @@ class DetectorUnitNetwork:
     """
 
     def __init__(self, name="NotDefined"):
+        r"""Creates an empty detector-unit network.
+
+                Parameters
+                ----------
+                name : str, optional
+                    Label used in plot titles.
+        """
         self.name = name
         nb_du = 0
         self.du_pos = np.zeros((nb_du, 3))
@@ -163,6 +170,13 @@ class DetectorUnitNetwork:
         cur_idx_plot = -1
 
         def on_move(event):
+            r"""Redraws the annotation as the pointer moves over the layout.
+
+            Parameters
+            ----------
+            event : matplotlib.backend_bases.MouseEvent
+                The motion event.
+            """
             nonlocal cur_idx_plot
             if event.inaxes:
                 idx = closest_node(np.array([event.xdata, event.ydata]), self.du_pos[:, :2])
@@ -176,6 +190,13 @@ class DetectorUnitNetwork:
                     plt.draw()
 
         def on_click(event):
+            r"""Reports the detection unit nearest the click.
+
+            Parameters
+            ----------
+            event : matplotlib.backend_bases.MouseEvent
+                The click event.
+            """
             if event.button is MouseButton.LEFT and event.dblclick:
                 # logger.info(f"on_click {event.xdata}, {event.ydata}")
                 if traces:
@@ -251,6 +272,17 @@ class DetectorUnitNetwork:
         """
 
         def subplot(plt_axis, a_values, cpnt="", scale="log"):
+            r"""Draws one panel of the layout figure.
+
+            Parameters
+            ----------
+            ax : matplotlib.axes.Axes
+                Axes to draw into.
+            values : ndarray
+                Per-unit quantity to colour the markers by.
+            title : str
+                Panel title.
+            """
             ax1 = plt_axis
             size_circle = 80
 
@@ -353,6 +385,13 @@ class DetectorUnitNetwork:
 
         # The function to be called anytime a slider's value changes
         def update_time(t_slider):
+            r"""Redraws the figure for a new time, driven by the slider.
+
+            Parameters
+            ----------
+            val : float
+                Time selected on the slider.
+            """
             frame_number = int((t_slider - a_time[0]) / delta_t)
             scat.set_array(a_norm_val[:, frame_number])
             return scat

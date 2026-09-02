@@ -17,6 +17,8 @@ class MotherEventTree(DataTree):
     event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":

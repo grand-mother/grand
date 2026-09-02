@@ -185,6 +185,8 @@ class TRun(MotherRunTree):
     """Time bin size in ns (for hardware, computed as 1/adc_sampling_frequency)"""
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":
@@ -254,6 +256,8 @@ class TRunVoltage(MotherRunTree):
     """Channel z trigger settings - described in Channel trigger parameters in the manual. ToDo: Decode?"""
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":
@@ -334,6 +338,8 @@ class TRunRawVoltage(MotherRunTree):
     """ADC to voltage conversion factor"""
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":
@@ -375,6 +381,8 @@ class TRunEfieldSim(MotherRunTree):
     """Simulator version string"""
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":
@@ -432,6 +440,8 @@ class TRunShowerSim(MotherRunTree):
     """Simulator version string"""
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":
@@ -462,6 +472,8 @@ class TRunNoise(MotherRunTree):
     """Noise std dev for each arm of each antenna"""
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         super().__post_init__()
 
         if self._tree.GetName() == "":

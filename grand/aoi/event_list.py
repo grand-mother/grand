@@ -18,6 +18,17 @@ class EventList:
 
     def __init__(self, inp_name, start_event = None, start_entry = None, **kwargs):
 
+        r"""Opens a file or directory and prepares to iterate its events.
+
+                Parameters
+                ----------
+                inp_name : str
+                    File or directory to read.
+                start_event : int, optional
+                    Event number to begin at.
+                start_entry : int, optional
+                    Entry index to begin at, used instead of `start_event`.
+        """
         self.event_list = None
 
         # If TFile was given
@@ -136,6 +147,13 @@ class EventList:
 
     ## Return the iterable over self
     def __iter__(self):
+        r"""Yields each event in turn.
+
+                Yields
+                ------
+                Event
+                    The next event, fully populated.
+        """
         for event_num, run_num in self.event_list:
             yield self.get_event(event_number=event_num, run_number=run_num)
 

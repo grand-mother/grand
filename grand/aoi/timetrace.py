@@ -88,6 +88,13 @@ class Timetrace3D:
 
     @trace.setter
     def trace(self, v):
+        r"""Sets the three-component trace.
+
+                Parameters
+                ----------
+                v : array_like
+                    Samples, shape ``(3, n_samples)``.
+        """
         self._trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     @property
@@ -104,6 +111,13 @@ class Timetrace3D:
 
     @hilbert_trace.setter
     def hilbert_trace(self, v):
+        r"""Sets the Hilbert envelope of the trace.
+
+                Parameters
+                ----------
+                v : array_like
+                    Envelope, shape ``(3, n_samples)``.
+        """
         self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
 @dataclass
@@ -128,5 +142,7 @@ class Efield(Timetrace3D):
 
 ## Exception risen if the TTree already exists
 class TreeExists(Exception):
+    r"""Raised when writing to a tree that is already present in the file.
+    """
     pass
 

@@ -20,6 +20,8 @@ logger = getLogger(__name__)
 
 @dataclass
 class DataTable:
+    r"""The tabulated antenna response, on a grid of frequency, azimuth and zenith.
+    """
     frequency: Union[Number, np.ndarray]
     theta: Union[Number, np.ndarray]
     phi: Union[Number, np.ndarray]
@@ -38,6 +40,18 @@ class DataTable:
 def tabulated_antenna_model(filename):
     # RK: TODO: update this function after antenna model is finalized. Remove tag.
     #     1. GP300 model (~1GB/arm) 2. LP float32 model (~520MB/arm) 3. JM Light GP300 model (~120MB/arm)
+    r"""Returns the antenna response read from a tabulated file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the tabulated response.
+
+        Returns
+        -------
+        DataTable
+            The response, on its native grid.
+    """
     split_file = os.path.splitext(filename)
     if split_file[-1]==".npy": # for Horizon Antenna
         f, R, X, theta, phi, lefft, leffp, phaset, phasep = np.load(filename, mmap_mode="r")
@@ -105,8 +119,21 @@ def tabulated_antenna_model(filename):
             raise Exception(f"Provide a proper antenna model. Current input file is {filename}")
 
 class AntennaModel:
+    r"""The effective length of a GRAND antenna, for the three arms.
+
+        Loads the tabulated response and provides it on whatever frequency and
+        direction grid the caller needs.
+    """
     def __init__(self, du_type="GP300"):
 
+        r"""Loads the antenna response for one detection-unit type.
+
+                Parameters
+                ----------
+                du_type : str, optional
+                    Which tabulated response to load: ``'GP300'`` for the HFSS
+                    simulation, or the NEC or MATLAB variants.
+        """
         if du_type=="GP300":
             logger.info("Loading GP300 antenna model produced by HFSS simulation package")
             
@@ -149,5 +176,7 @@ class AntennaModel:
         self.d_leff = {"sn": self.leff_sn, "ew": self.leff_ew, "z": self.leff_z}
 
     def plot_effective_length(self):
+        r"""Plots the effective length against frequency, for inspection.
+        """
         pass
 

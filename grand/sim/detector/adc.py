@@ -17,6 +17,11 @@ class ADC:
     '''
 
     def __init__(self):
+        r"""Creates the ADC model.
+
+                Sets the bit depth, sampling rate and saturation level of the chip
+                used by a GRAND detection unit.
+        """
         self.sampling_rate = 500  # [MHz]
         self.max_bit_value = 8192 # 14 bit ADC;  2 x 2^13 bits for negative and positive ADC values
         self.max_voltage   = 9e5  # [µV]; saturation voltage of ADC (absolute value)

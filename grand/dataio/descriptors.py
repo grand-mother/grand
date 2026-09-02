@@ -56,9 +56,18 @@ class StdVectorList(MutableSequence):
         self.ndim = vec_type.count("vector") + 1
 
     def __len__(self):
+        r"""Returns the number of elements in the vector.
+        """
         return self._vector.size()
 
     def __delitem__(self, index):
+        r"""Removes the element at `index`.
+
+                Parameters
+                ----------
+                index : int
+                    Position to remove.
+        """
         self._vector.erase(index)
 
     def insert(self, index, value):
@@ -66,10 +75,31 @@ class StdVectorList(MutableSequence):
         self._vector.insert(index, value)
 
     def __setitem__(self, index, value):
+        r"""Replaces the element at `index`.
+
+                Parameters
+                ----------
+                index : int
+                    Position to write.
+                value : object
+                    New value, converted to the vector's C++ element type.
+        """
         self._vector[index] = value
 
     def __getitem__(self, index):
         # If this is a vector of vectors, convert a subvector to list for the return
+        r"""Returns the element at `index`.
+
+                Parameters
+                ----------
+                index : int or slice
+                    Position or range to read.
+
+                Returns
+                -------
+                object
+                    The element, converted back to a Python value.
+        """
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[index])):
                 try:
@@ -93,6 +123,18 @@ class StdVectorList(MutableSequence):
 
     def __eq__(self, other):
         # Make comparisons to lists with same contents true
+        r"""Returns whether `other` holds the same elements.
+
+                Parameters
+                ----------
+                other : StdVectorList or sequence
+                    Value to compare against.
+
+                Returns
+                -------
+                bool
+                    True when the contents match element by element.
+        """
         if self.ndim == 1:
             return list(self._vector) == other
         elif self.ndim == 2:
@@ -117,6 +159,8 @@ class StdVectorList(MutableSequence):
         self._vector.clear()
 
     def __repr__(self):
+        r"""Returns the vector's contents as a printable string.
+        """
         if len(self._vector) > 0:
             if "std.vector" in str(type(self._vector[0])):
                 return str([list(el) for el in self._vector])
@@ -126,6 +170,18 @@ class StdVectorList(MutableSequence):
     # The standard way of adding stuff to a ROOT.vector is +=. However, for ndim>2 it wants only list, so let's always give it a list
     def __iadd__(self, value):
         # To avoid memory leak when getting a numpy array
+        r"""Appends `value` to the vector, in place.
+
+                Parameters
+                ----------
+                value : sequence
+                    Elements to append.
+
+                Returns
+                -------
+                StdVectorList
+                    This object, extended.
+        """
         if isinstance(value, np.ndarray):
             fill_stdvectorlist_with_array(self, value)
             return self
@@ -284,21 +340,75 @@ class StdVectorList(MutableSequence):
 class StdVectorListDesc:
     """A descriptor for StdVectorList - makes use of it possible in dataclasses without setting property and setter"""
     def __init__(self, vec_type, sec_vec_type=None):
+        r"""Declares a branch holding a ``std::vector``.
+
+                Parameters
+                ----------
+                vec_type : str
+                    C++ element type, for example ``"float"`` or
+                    ``"vector<unsigned char>"``.
+                sec_vec_type : str, optional
+                    Element type of the inner vector, for nested vectors.
+        """
         self.factory = lambda: StdVectorList(vec_type, sec_vec_type=sec_vec_type)
 
     def __set_name__(self, type, name):
+        r"""Records the attribute name this descriptor was assigned to.
+
+                Called by Python when the owning class is created.
+
+                Parameters
+                ----------
+                type : type
+                    The owning class.
+                name : str
+                    The attribute name.
+        """
         self.name = name
         self.attrname = f"_{name}"
 
     def create_default(self, obj):
+        r"""Creates the backing std::vector on `obj`, holding the declared default.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance to install it on.
+        """
         setattr(obj, self.attrname, self.factory())
 
     def __get__(self, obj, obj_type):
+        r"""Returns the value held for `obj`.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance, or ``None`` when accessed on the class.
+                obj_type : type, optional
+                    The owning class.
+
+                Returns
+                -------
+                object
+                    The stored value, or the descriptor itself for class access.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return getattr(obj, self.attrname)
 
     def __set__(self, obj, value):
+        r"""Installs the vector value on `obj`, converting it for the tree branch.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance the field belongs to.
+                value : object
+                    The value to store.  When a dataclass field takes its default,
+                    the descriptor object itself arrives here; the default has
+                    already been installed by :meth:`create_default`, so there is
+                    nothing to assign.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         # This is needed for default init as a field of an upper class
@@ -330,21 +440,72 @@ class StdVectorListDesc:
 class TTreeScalarDesc:
     """A descriptor for scalars assigned to TTrees as numpy arrays of size 1 - makes use of it possible in dataclasses without setting property and setter"""
     def __init__(self, dtype):
+        r"""Declares a branch holding a single number.
+
+                Parameters
+                ----------
+                dtype : type or str
+                    NumPy dtype of the scalar, for example ``np.uint32``.
+        """
         self.factory = lambda: np.zeros(1, dtype)
 
     def __set_name__(self, type, name):
+        r"""Records the attribute name this descriptor was assigned to.
+
+                Called by Python when the owning class is created.
+
+                Parameters
+                ----------
+                type : type
+                    The owning class.
+                name : str
+                    The attribute name.
+        """
         self.name = name
         self.attrname = f"_{name}"
 
     def create_default(self, obj):
+        r"""Creates the backing one-element array on `obj`, holding the declared default.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance to install it on.
+        """
         setattr(obj, self.attrname, self.factory())
 
     def __get__(self, obj, obj_type):
+        r"""Returns the value held for `obj`.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance, or ``None`` when accessed on the class.
+                obj_type : type, optional
+                    The owning class.
+
+                Returns
+                -------
+                object
+                    The stored value, or the descriptor itself for class access.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return getattr(obj, self.attrname)[0]
 
     def __set__(self, obj, value):
+        r"""Installs the scalar value on `obj`, converting it for the tree branch.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance the field belongs to.
+                value : object
+                    The value to store.  When a dataclass field takes its default,
+                    the descriptor object itself arrives here; the default has
+                    already been installed by :meth:`create_default`, so there is
+                    nothing to assign.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         # This is needed for default init as a field of an upper class
@@ -369,22 +530,75 @@ class TTreeScalarDesc:
 class TTreeArrayDesc:
     """A descriptor for numpy arrays stored in TTrees. Ensures the type and converts to array (in case of for eg. list). Makes use of it possible in dataclasses without setting property and setter"""
     def __init__(self, shape, dtype):
+        r"""Declares a branch holding a fixed-shape array.
+
+                Parameters
+                ----------
+                shape : tuple of int
+                    Shape of the array.
+                dtype : type or str
+                    NumPy dtype of its elements.
+        """
         self.factory = lambda: np.zeros(shape, dtype)
         self.dtype = dtype
 
     def __set_name__(self, type, name):
+        r"""Records the attribute name this descriptor was assigned to.
+
+                Called by Python when the owning class is created.
+
+                Parameters
+                ----------
+                type : type
+                    The owning class.
+                name : str
+                    The attribute name.
+        """
         self.name = name
         self.attrname = f"_{name}"
 
     def create_default(self, obj):
+        r"""Creates the backing array on `obj`, holding the declared default.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance to install it on.
+        """
         setattr(obj, self.attrname, self.factory())
 
     def __get__(self, obj, obj_type):
+        r"""Returns the value held for `obj`.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance, or ``None`` when accessed on the class.
+                obj_type : type, optional
+                    The owning class.
+
+                Returns
+                -------
+                object
+                    The stored value, or the descriptor itself for class access.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return getattr(obj, self.attrname)
 
     def __set__(self, obj, value):
+        r"""Installs the array value on `obj`, converting it for the tree branch.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance the field belongs to.
+                value : object
+                    The value to store.  When a dataclass field takes its default,
+                    the descriptor object itself arrives here; the default has
+                    already been installed by :meth:`create_default`, so there is
+                    nothing to assign.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         # This is needed for default init as a field of an upper class
@@ -399,12 +613,23 @@ class StdString:
     """A python string interface to ROOT's std::string"""
 
     def __init__(self, value):
+        r"""Wraps a Python string as a ``std::string`` for a branch.
+
+                Parameters
+                ----------
+                value : str
+                    The string to hold.
+        """
         self.string = ROOT.string(value)
 
     def __len__(self):
+        r"""Returns the length of the string.
+        """
         return len(str(self.string))
 
     def __repr__(self):
+        r"""Returns the string's contents.
+        """
         return str(self.string)
 
 
@@ -412,22 +637,73 @@ class StdStringDesc:
     """A descriptor for strings assigned to TTrees as python strings - makes use of it possible in dataclasses without setting property and setter"""
 
     def __init__(self, value=""):
+        r"""Declares a branch holding a ``std::string``.
+
+                Parameters
+                ----------
+                value : str, optional
+                    Default contents.
+        """
         self.factory = lambda: ROOT.string(value)
 
     def __set_name__(self, type, name):
+        r"""Records the attribute name this descriptor was assigned to.
+
+                Called by Python when the owning class is created.
+
+                Parameters
+                ----------
+                type : type
+                    The owning class.
+                name : str
+                    The attribute name.
+        """
         self.name = name
         self.attrname = f"_{name}"
 
     def create_default(self, obj):
+        r"""Creates the backing std::string on `obj`, holding the declared default.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance to install it on.
+        """
         setattr(obj, self.attrname, self.factory())
 
     def __get__(self, obj, obj_type):
+        r"""Returns the value held for `obj`.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance, or ``None`` when accessed on the class.
+                obj_type : type, optional
+                    The owning class.
+
+                Returns
+                -------
+                object
+                    The stored value, or the descriptor itself for class access.
+        """
         if not hasattr(obj, self.attrname):
             self.create_default(obj)
         return str(getattr(obj, self.attrname))
 
     def __set__(self, obj, value):
         # Not a string was given
+        r"""Installs the string value on `obj`, converting it for the tree branch.
+
+                Parameters
+                ----------
+                obj : object
+                    The tree instance the field belongs to.
+                value : object
+                    The value to store.  When a dataclass field takes its default,
+                    the descriptor object itself arrives here; the default has
+                    already been installed by :meth:`create_default`, so there is
+                    nothing to assign.
+        """
         if not (isinstance(value, str) or isinstance(value, ROOT.std.string) or isinstance(value, StdStringDesc)):
             raise ValueError(
                 f"Incorrect type for site {type(value)}. Either a string or a ROOT.std.string is required."
@@ -446,10 +722,37 @@ from collections.abc import Iterable
 
 def chars_to_uint8_array(nested_chars):
     # 1) Remember the original shape
+    r"""Returns nested character vectors as an array of unsigned bytes.
+
+        ROOT returns ``vector<vector<char>>`` branches as nested character
+        sequences; this flattens them into the numeric array callers expect.
+
+        Parameters
+        ----------
+        nested_chars : sequence of sequence
+            The nested character data read from a branch.
+
+        Returns
+        -------
+        ndarray
+            The same data as ``uint8``.
+    """
     shape = np.shape(nested_chars)
 
     # 2) Flatten arbitrarily-nested lists of single‐char strings
     def _flatten(xs):
+        r"""Yields the scalar elements of an arbitrarily nested sequence.
+
+        Parameters
+        ----------
+        seq : sequence
+            Possibly nested data.
+
+        Yields
+        ------
+        object
+            Each leaf element, in order.
+        """
         for x in xs:
             if (isinstance(x, Iterable) or "std.vector" in str(type(x))) and not isinstance(x, (str, bytes)):
                 yield from _flatten(x)
@@ -500,6 +803,15 @@ def split_2d_arrays_to_rows(data):
 
 # Fills the StdVectorList's vector with numpy array using C++ functions to avoid a memory leak
 def fill_stdvectorlist_with_array(target, value):
+    r"""Fills `target` from `value`, converting as the element type requires.
+
+        Parameters
+        ----------
+        target : StdVectorList
+            Vector to fill.  Its existing contents are replaced.
+        value : array_like
+            Data to write.
+    """
     if isinstance(value, np.ndarray):
         # Do not set empty values
         if value.size == 0: return

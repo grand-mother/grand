@@ -100,6 +100,8 @@ class AntennaProcessing:
 
     def __post_init__(self):
         #assert isinstance(self.model_leff, TabulatedAntennaModel)
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         self.size_fft = 0
         self.freqs_out_hz = 0
         self.theta_efield, self.phi_efield = 0,0
@@ -108,6 +110,18 @@ class AntennaProcessing:
 
     @classmethod
     def init_interpolation(cls, freq_sampling_mhz, freq_out_mhz):
+        r"""Precomputes the interpolation from the tabulated grid onto an output axis.
+
+                Doing this once and reusing it is what keeps the per-unit voltage
+                computation cheap.
+
+                Parameters
+                ----------
+                freq_sampling_mhz : ndarray
+                    Frequency axis the response is tabulated on, in MHz.
+                freq_out_mhz : ndarray
+                    Frequency axis wanted, in MHz.
+        """
         pre = PreComputeInterpol()
         pre.init_linear_interpol(freq_sampling_mhz, freq_out_mhz)
         cls.pre_cpt = pre

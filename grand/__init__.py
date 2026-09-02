@@ -31,6 +31,18 @@ GRAND_DATA_PATH = osp.join(grand_get_path_root_pkg(), "data")
 
 
 def grand_add_path_data(s_file):
+    r"""Returns the absolute path of a file in the package's data directory.
+
+        Parameters
+        ----------
+        s_file : str
+            Path relative to ``data/``.
+
+        Returns
+        -------
+        str
+            Absolute path.
+    """
     return os.path.join(GRAND_DATA_PATH, s_file)
 
 

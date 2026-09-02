@@ -39,6 +39,18 @@ import grand.sim.detector.rf_chain as grfc
 from grand import grand_add_path_data
 
 def compute_rfchain_and_latitude(site):
+    r"""Returns the RF chain and site latitude for a named site.
+
+        Parameters
+        ----------
+        site : str
+            Site name, such as ``'GP300'`` or ``'GP13'``.
+
+        Returns
+        -------
+        tuple
+            The chain object and the latitude in degrees.
+    """
     if site == "gp13":
         rfchain = grfc.RFChain(vga_gain=20)
         latitude = (90 - 40.98) * np.pi / 180
@@ -50,6 +62,18 @@ def compute_rfchain_and_latitude(site):
     return rfchain, latitude
 
 def compute_antenna_paths(du_type):
+    r"""Returns the paths of the tabulated antenna response for a unit type.
+
+        Parameters
+        ----------
+        du_type : str
+            Detection-unit type.
+
+        Returns
+        -------
+        list of str
+            One path per antenna arm.
+    """
     if du_type == "GP300":
         path_antX = grand_add_path_data("detector/Light_GP300Antenna_SNarm_leff.npz")
         path_antY = grand_add_path_data("detector/Light_GP300Antenna_EWarm_leff.npz")
@@ -67,6 +91,19 @@ def compute_antenna_paths(du_type):
     return path_antX, path_antY, path_antZ
 
 def main(site, du_type, run_mode, lst):
+    r"""Computes and plots the Galactic noise for a site.
+
+        Parameters
+        ----------
+        site : str
+            Site name.
+        du_type : str
+            Detection-unit type.
+        run_mode : str
+            What to produce: the spectrum, the induced voltage, or both.
+        lst : float
+            Local sidereal time, in hours.
+    """
     freq_MHz = np.arange(30, 251, 1)
     
     # Initialize RFChain and latitude based on site

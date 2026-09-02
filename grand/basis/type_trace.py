@@ -19,12 +19,20 @@ logger = getLogger(__name__)
 
 @dataclass
 class ElectricField:
+    r"""A three-component electric field trace, with its time axis and frame.
+
+        Holds the samples for one detection unit: three components against a
+        shared time axis, together with the coordinate frame they are expressed
+        in.
+    """
     a_time: np.ndarray
     e_xyz: CartesianRepresentation  # RK
     pos_xyz: Union[CartesianRepresentation, None] = None
     frame: Union[LTP, GRANDCS, None] = None
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         self.fft_e_3d = np.zeros((3, 0))
         assert self.a_time.shape[0] == self.e_xyz.shape[1]
 
@@ -41,9 +49,24 @@ class ElectricField:
             return self.fft_e_3d
 
     def get_delta_time_s(self):
+        r"""Returns the sampling interval, in seconds.
+
+                Returns
+                -------
+                float
+                    Time between consecutive samples.  Note the unit: the traces
+                    themselves are conventionally described in nanoseconds.
+        """
         return self.a_time[1] - self.a_time[0]
 
     def get_nb_sample(self):
+        r"""Returns the number of samples in the trace.
+
+                Returns
+                -------
+                int
+                    Length of the time axis.
+        """
         return self.e_xyz.shape[1]
 
     """
@@ -83,10 +106,18 @@ class ElectricField:
 
 @dataclass
 class Voltage:
+    r"""A three-component voltage trace, with its time axis and frame.
+
+        Holds the samples for one detection unit: three components against a
+        shared time axis, together with the coordinate frame they are expressed
+        in.
+    """
     t: np.ndarray  # [s]
     V: np.ndarray  # [?]
 
     def __post_init__(self):
+        r"""Completes initialisation after the dataclass fields are set.
+        """
         self.v_fft = None
 
     def get_fft(self, size_sig_pad):
@@ -101,9 +132,24 @@ class Voltage:
             return self.v_fft
 
     def get_delta_time_s(self):
+        r"""Returns the sampling interval, in seconds.
+
+                Returns
+                -------
+                float
+                    Time between consecutive samples.  Note the unit: the traces
+                    themselves are conventionally described in nanoseconds.
+        """
         return self.t[1] - self.t[0]
 
     def get_nb_sample(self):
+        r"""Returns the number of samples in the trace.
+
+                Returns
+                -------
+                int
+                    Length of the time axis.
+        """
         return self.V.shape[-1]
 
     """

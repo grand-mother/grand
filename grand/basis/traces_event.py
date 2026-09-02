@@ -64,6 +64,13 @@ class Handling3dTraces:
     """
 
     def __init__(self, name="NotDefined"):
+        r"""Creates an empty container for a set of three-component traces.
+
+                Parameters
+                ----------
+                name : str, optional
+                    Label used in plot titles.
+        """
         logger.info(f"Create Handling3dTraces with name {name}")
         self.name = name
         self.info_shower = ""
@@ -551,6 +558,13 @@ class Handling3dTraces:
         plt.ylabel("Index DU")
 
         def on_click(event):
+            r"""Opens the trace of the detection unit nearest the click.
+
+            Parameters
+            ----------
+            event : matplotlib.backend_bases.MouseEvent
+                The click event.
+            """
             if event.button is MouseButton.LEFT and event.dblclick:
                 idx = int(event.ydata + 0.5)
                 self.plot_trace_idx(idx)

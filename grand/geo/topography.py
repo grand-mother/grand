@@ -88,6 +88,13 @@ def elevation(coordinates, reference: Optional[str] = _default_reference):
 
 
 def _get_geoid():
+    r"""Returns the geoid map, loading it on first use.
+
+        Returns
+        -------
+        turtle.Map
+            The EGM96 undulation map shipped in ``data/``.
+    """
     global _geoid
 
     if _geoid is None:
@@ -234,6 +241,13 @@ class Topography:
 
     def __init__(self, path: Union[Path, str] = DATADIR) -> None:
         # self._stack = _Stack(str(path))
+        r"""Opens a topography dataset.
+
+                Parameters
+                ----------
+                path : str
+                    Directory holding the elevation tiles.
+        """
         self._stack = _Stack(path)
         self._stepper: Optional[_Stepper] = None
 
@@ -266,6 +280,18 @@ class Topography:
 
     @staticmethod
     def _as_double_ptr(a):
+        r"""Returns `a` as a C pointer to double, for the TURTLE bindings.
+
+                Parameters
+                ----------
+                a : ndarray
+                    Array to pass through; converted to ``float64`` if needed.
+
+                Returns
+                -------
+                cffi pointer
+                    Pointer to the array's data.
+        """
         a = np.require(a, float, ["CONTIGUOUS", "ALIGNED"])
         return ffi.cast("double *", a.ctypes.data)
 

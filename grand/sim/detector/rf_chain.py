@@ -142,6 +142,18 @@ def get_axis_filename(component_name, axis):
 
 # Function to safely set the filename for MatchingNetwork
 def _set_name_data_file(self, axis):
+    r"""Returns the path of the data file for one antenna arm.
+
+        Parameters
+        ----------
+        axis : int
+            Arm index: 0 for X, 1 for Y, 2 for Z.
+
+        Returns
+        -------
+        str
+            Path to the tabulated measurements for that arm.
+    """
     filename = get_axis_filename("MatchingNetwork", axis)
 
     #print(f"DEBUG: Final MatchingNetwork filename for {axis}: {filename}")
@@ -225,6 +237,25 @@ def get_axis_filename(component_name, axis):
     return Nonec
 
 def interp(x,y,z):
+    r"""Returns `z` interpolated onto `x` from samples at `y`.
+
+        A thin wrapper over :func:`numpy.interp`, kept so that the interpolation
+        used across this module can be changed in one place.
+
+        Parameters
+        ----------
+        x : ndarray
+            Positions to interpolate onto.
+        y : ndarray
+            Sample positions.
+        z : ndarray
+            Sample values.
+
+        Returns
+        -------
+        ndarray
+            Interpolated values, of the shape of `x`.
+    """
     return np.interp(x,y,z)
 
 def interpol_at_new_x(a_x, a_y, new_x):
@@ -417,6 +448,10 @@ class GenericProcessingDU:
     """
 
     def __init__(self):
+        r"""Initialises the empty arrays every chain stage shares.
+
+                Subclasses fill them in :meth:`compute_for_freqs`.
+        """
         """ """
         self.freqs_mhz = np.zeros(0)
         self.nb_freqs = 0
@@ -446,6 +481,8 @@ class GenericProcessingDU:
 class MatchingNetwork(GenericProcessingDU):
     
 
+    r"""The impedance matching network between antenna and LNA.
+    """
     def __init__(self):
         """
 
@@ -484,6 +521,20 @@ class MatchingNetwork(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         
+        r"""Computes this stage's response on the given frequency axis.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.  The tabulated S-parameters are
+            interpolated onto it, and are zero outside the 30-250 MHz band they
+            were measured over.
+
+        Notes
+        -----
+        Results are stored on the instance rather than returned; the chain reads
+        them when it cascades the stages.
+        """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
         assert self.nb_freqs > 0
@@ -560,6 +611,8 @@ class MatchingNetwork(GenericProcessingDU):
 class gaa_frontend0db(GenericProcessingDU):
     
 
+    r"""The GAA front end at 0 dB gain.
+    """
     def __init__(self):
         """
 
@@ -598,6 +651,20 @@ class gaa_frontend0db(GenericProcessingDU):
 
     def compute_for_freqs(self, freqs_mhz):
         
+        r"""Computes this stage's response on the given frequency axis.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.  The tabulated S-parameters are
+            interpolated onto it, and are zero outside the 30-250 MHz band they
+            were measured over.
+
+        Notes
+        -----
+        Results are stored on the instance rather than returned; the chain reads
+        them when it cascades the stages.
+        """
         logger.debug(f"{self.sparams[0].shape}")
         self.set_out_freq_mhz(freqs_mhz)
         assert self.nb_freqs > 0
@@ -797,6 +864,8 @@ class BalunAfterLNA(GenericProcessingDU):
     """
 
     def __init__(self):
+        r"""Initialises the balun that follows the low-noise amplifier.
+        """
         """ """
         super().__init__()
         #self.data_cable = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
@@ -884,6 +953,8 @@ class Cable(GenericProcessingDU):
     """
 
     def __init__(self):
+        r"""Initialises the cable and its connector.
+        """
         """ """
         super().__init__()
         #self.data_cable = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
@@ -1153,7 +1224,16 @@ class BalunBeforeADC(GenericProcessingDU):
 #################################################################################################
         
 class Rfchain_elements_db(GenericProcessingDU):
+    r"""A chain element whose response is tabulated in decibels.
+    """
     def __init__(self, filename="test2.s2p"):
+        r"""Loads this stage's tabulated data and prepares its S-parameters.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the measured data file for this element.
+        """
         super().__init__()
         self.filename = filename
 
@@ -1166,9 +1246,25 @@ class Rfchain_elements_db(GenericProcessingDU):
         self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
 
     def _set_name_data_file(self):
+        r"""Returns the path of the data file holding this stage's measurements.
+        """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
     def compute_for_freqs(self, freqs_mhz):
+        r"""Computes this stage's response on the given frequency axis.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.  The tabulated S-parameters are
+            interpolated onto it, and are zero outside the 30-250 MHz band they
+            were measured over.
+
+        Notes
+        -----
+        Results are stored on the instance rather than returned; the chain reads
+        them when it cascades the stages.
+        """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
         assert self.nb_freqs > 0
@@ -1223,7 +1319,16 @@ class Rfchain_elements_db(GenericProcessingDU):
 ########################################################################################
 
 class Rfchain_elements_db_rad(GenericProcessingDU):
+    r"""A chain element tabulated in decibels, with phase in radians.
+    """
     def __init__(self, filename="test2.s2p"):
+        r"""Loads this stage's tabulated data and prepares its S-parameters.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the measured data file for this element.
+        """
         super().__init__()
         self.filename = filename
 
@@ -1236,9 +1341,25 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
         self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
 
     def _set_name_data_file(self):
+        r"""Returns the path of the data file holding this stage's measurements.
+        """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
     def compute_for_freqs(self, freqs_mhz):
+        r"""Computes this stage's response on the given frequency axis.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.  The tabulated S-parameters are
+            interpolated onto it, and are zero outside the 30-250 MHz band they
+            were measured over.
+
+        Notes
+        -----
+        Results are stored on the instance rather than returned; the chain reads
+        them when it cascades the stages.
+        """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
         assert self.nb_freqs > 0
@@ -1293,7 +1414,16 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
 ###################################################################################### 
 
 class Rfchain_elements(GenericProcessingDU):
+    r"""A chain element whose response is tabulated in linear units.
+    """
     def __init__(self, filename="test.s2p"):
+        r"""Loads this stage's tabulated data and prepares its S-parameters.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the measured data file for this element.
+        """
         super().__init__()
         self.filename = filename
         
@@ -1307,6 +1437,8 @@ class Rfchain_elements(GenericProcessingDU):
         self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
 
     def _set_name_data_file(self):
+        r"""Returns the path of the data file holding this stage's measurements.
+        """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
 
@@ -1363,7 +1495,16 @@ class Rfchain_elements(GenericProcessingDU):
 
 ##############################################################################################
 class Rfchain_elements_rad(GenericProcessingDU):
+    r"""A chain element tabulated linearly, with phase in radians.
+    """
     def __init__(self, filename="test.s2p"):
+        r"""Loads this stage's tabulated data and prepares its S-parameters.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the measured data file for this element.
+        """
         super().__init__()
         self.filename = filename
         
@@ -1377,6 +1518,8 @@ class Rfchain_elements_rad(GenericProcessingDU):
         self.ABCD_matrix = np.zeros((2, 2, 3, self.nb_freqs), dtype=np.complex64)
 
     def _set_name_data_file(self):
+        r"""Returns the path of the data file holding this stage's measurements.
+        """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
 
@@ -1434,7 +1577,16 @@ class Rfchain_elements_rad(GenericProcessingDU):
 ###########################################################################################
 
 class Zload_arb(GenericProcessingDU):
+    r"""An arbitrary load impedance read from a measurement file.
+    """
     def __init__(self, filename="S_balun_AD.s1p"):
+        r"""Loads this stage's tabulated data and prepares its S-parameters.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the measured data file for this element.
+        """
         super().__init__()
         self.filename = filename
         self.sparams = np.loadtxt(self._set_name_data_file(), comments=['#', '!'])
@@ -1444,10 +1596,26 @@ class Zload_arb(GenericProcessingDU):
 
     def _set_name_data_file(self):
         #filename = os.path.join("detector", "RFchain_v1", "zload_balun_200ohm.s1p")
+        r"""Returns the path of the data file holding this stage's measurements.
+        """
         filename = os.path.join("detector", "RFchain_v2", self.filename)
         return grand_add_path_data(filename)
 
     def compute_for_freqs(self, freqs_mhz):
+        r"""Computes this stage's response on the given frequency axis.
+
+        Parameters
+        ----------
+        freqs_mhz : ndarray, shape (n_freq,)
+            Output frequency axis, in MHz.  The tabulated S-parameters are
+            interpolated onto it, and are zero outside the 30-250 MHz band they
+            were measured over.
+
+        Notes
+        -----
+        Results are stored on the instance rather than returned; the chain reads
+        them when it cascades the stages.
+        """
         self.set_out_freq_mhz(freqs_mhz)
         freqs_in = self.freqs_in
         assert self.nb_freqs > 0
@@ -1529,6 +1697,19 @@ class RFChain(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the full RF chain: matching network, LNA, baluns, cable, VGA and filter.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
@@ -1644,6 +1825,19 @@ class RFChainNut(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the RF chain of the Nut variant of the detection unit.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
@@ -1759,6 +1953,19 @@ class RFChain_gaa(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=0):
+        r"""Assembles the RF chain of the GAA variant of the detection unit.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.gaa = gaa_frontend0db()
         self.zload = Zload()
@@ -1857,6 +2064,21 @@ class RFChain_Balun1(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the chain truncated after the first balun.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Useful for isolating one stage's contribution.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
@@ -1972,6 +2194,21 @@ class RFChain_Match_net(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the chain truncated after the matching network.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Useful for isolating one stage's contribution.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
@@ -2086,6 +2323,21 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the chain truncated after the cable and connectors.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Useful for isolating one stage's contribution.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
@@ -2202,6 +2454,21 @@ class RFChain_VGA(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the chain truncated after the variable-gain amplifier.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Useful for isolating one stage's contribution.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()
@@ -2313,6 +2580,21 @@ class RFChain_in_Balun1(GenericProcessingDU):
     """
 
     def __init__(self, vga_gain=20):
+        r"""Assembles the chain up to the input of the first balun.
+
+        Parameters
+        ----------
+        vga_gain : int, optional
+            Gain of the variable-gain amplifier, in dB.  S-parameters are shipped
+            for 20 (the GRANDProto300 default), 5, 0 and -5.
+
+        Useful for isolating one stage's contribution.
+
+        Notes
+        -----
+        Construction only gathers the stages; :meth:`compute_for_freqs` evaluates
+        them, and :meth:`get_tf` returns the resulting transfer function.
+        """
         super().__init__()
         self.matcnet = MatchingNetwork()
         self.lna = LowNoiseAmplifier()

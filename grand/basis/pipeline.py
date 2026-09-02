@@ -32,10 +32,25 @@ pipeline.Add("writer", f_output="out.root")
 @dataclass
 class Pipeline:
 
+    r"""A sketch of a processing pipeline; not finished.
+
+        The intent is that stages are added by name and events pushed through
+        them.  It is incomplete and has drifted from :mod:`grand.dataio`; see
+        the module docstring.
+    """
     trees_dict = {}
     command_dict = {}
 
     def Add(self, name, **kwargs):
+        r"""Adds a named stage to the pipeline.
+
+                Parameters
+                ----------
+                name : str
+                    Stage name, such as ``"reader"`` or ``"efield2voltage"``.
+                **kwargs
+                    Stage-specific options.
+        """
         name = name.lower()
         if name=='reader':
             logger.info("Reading input files")
