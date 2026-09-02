@@ -38,7 +38,7 @@ Measured in the built environment on 2026-08-30:
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
 | Documentation | 7 pages build, examples execute against real GRANDlib |
-| Tag | `v0.1.0-dev.5` |
+| Tag | `v0.1.0-dev.10` |
 
 ## Phases
 
@@ -55,7 +55,7 @@ a third abandoned trunk.
 
 ### Phase 0 — integration branch
 - [x] Cut `dev-next` from `dev@1ca1847d`
-- [ ] Push `dev-next` to origin *(deliberately held: publishing announces the plan)*
+- [x] Push `dev-next` to origin
 - [ ] Announce the freeze date for `dev`
 - [ ] Tag `master` as `archive/master-2025-03`
 
@@ -72,7 +72,8 @@ a third abandoned trunk.
 - [x] Add `pull_request` to the triggers — fork PRs have had no CI at all
 - [x] Move the `paths:` filter off the triggers into the workflow
 - [x] Add the ROOT 6.36 / 6.38 matrix
-- [ ] Turn on branch protection for `dev-next`
+- [x] CI runs and is green on GitHub (`Code Quality`, `Tests`)
+- [ ] Turn on branch protection for `dev-next` — wait until the checks have been green for a few pushes
 
 ### Phase 3 — tests before features
 - [x] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
