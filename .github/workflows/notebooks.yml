@@ -1,0 +1,54 @@
+# Executes the tutorial notebooks.
+#
+# Its own workflow rather than a job in lint.yml, because it costs minutes
+# where the linter costs seconds, and because it is not a gate: a notebook that
+# stops running is worth knowing about but should not block a code change.
+#
+# Weekly rather than per-push for the same reason -- the notebooks change
+# rarely and executing them is slow.
+name: Notebooks
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'          # Mondays, 05:00 UTC
+  workflow_dispatch:
+  push:
+    paths:
+      - 'notebooks/**'
+      - '.github/workflows/notebooks.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: env/conda/grand-dev.yml
+          activate-environment: grand-dev
+          channels: conda-forge
+          conda-remove-defaults: true
+          auto-activate-base: false
+
+      - name: Build the C extensions and install the package
+        run: |
+          source env/setup.sh
+          pip install -e . --no-deps --no-build-isolation
+
+      - name: Execute every notebook
+        run: |
+          source env/setup.sh
+          for nb in notebooks/*.ipynb; do
+            echo "::group::$nb"
+            python -m jupyter execute "$nb" --output=/tmp/out.ipynb
+            echo "::endgroup::"
+          done

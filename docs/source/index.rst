@@ -26,6 +26,7 @@ collaboration uses, and the coordinate systems everything is expressed in.
    coordinates
    datamodel
    simulation
+   notebooks
 
 .. toctree::
    :maxdepth: 2

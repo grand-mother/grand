@@ -355,3 +355,50 @@ are very different and the first one is worth ruling out promptly.
 6.36 is the supported version and gates, while 6.38 stays visible without
 holding up work.  This is the difference the matrix was added to find, so it
 should not be silenced.
+
+.. _issue-geomagnetic-model-expired:
+
+The geomagnetic model expired on 1 January 2025
+-------------------------------------------------
+
+:Status: open
+:Affects: any use of the geomagnetic field, or of a magnetic-north frame, at
+          a present-day date
+:Test: ``tests/geo/test_geomagnet_validity.py``
+
+``data/geomagnet/IGRF13.COF`` is the thirteenth generation of the
+International Geomagnetic Reference Field, which is defined from 1900 to
+**2025**.  GULL rejects any date at or beyond the end of that range:
+
+.. code-block:: text
+
+    2020-01-01: OK
+    2024-06-01: OK
+    2025-01-01: LibraryError: missing data in file .../IGRF13.COF
+    2026-01-01: LibraryError: missing data in file .../IGRF13.COF
+
+So a magnetic-north frame, or a field evaluation, at any date since the start
+of 2025 fails outright.
+
+**Why nobody noticed.**  The default observation time throughout
+:mod:`grand.geo.coordinates` is the literal string ``"2020-01-01"``:
+
+.. code-block:: python
+
+    obstime: Union[str, datetime] = "2020-01-01",  # calculate declination of what date?
+
+That default sits comfortably inside the valid range, so everything works
+until someone passes a real date -- at which point it stops working, more than
+a year after the model lapsed.  The trailing comment in the source suggests
+the choice of epoch was never settled.
+
+**Why it matters.**  The geomagnetic field is one of the three physics inputs
+the library owns, and it drives the radio emission.  A simulation of data
+taken in 2025 or 2026 cannot currently evaluate the field at the time the data
+were taken; it can only use a stale epoch, silently, via the default.
+
+**The fix.**  IGRF-14 was released at the end of 2024 and covers 2025 to 2030.
+Shipping it, and reconsidering whether a hard-coded default epoch is wanted at
+all, would resolve both halves of this. A default that is a fixed date in the
+past is the kind of thing that works for years and then quietly stops being
+right.
