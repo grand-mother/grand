@@ -3,29 +3,35 @@
 <text x="90" y="34" font-size="15" font-weight="600" fill="#14202A">dev-next recovery</text>
 <rect x="90" y="46" width="9" height="9" rx="2" fill="#E1F1EA" stroke="#1D7A57"/>
 <text x="104" y="54.5" font-size="10" fill="#4C5C69">done</text>
-<rect x="138" y="46" width="9" height="9" rx="2" fill="#F6EDDA" stroke="#8A6210"/>
-<text x="152" y="54.5" font-size="10" fill="#4C5C69">blocked</text>
-<rect x="203" y="46" width="9" height="9" rx="2" fill="#EDF1F3" stroke="#BCC7CE"/>
-<text x="217" y="54.5" font-size="10" fill="#4C5C69">not started</text>
+<rect x="138" y="46" width="9" height="9" rx="2" fill="#E2F0F0" stroke="#0E6E70"/>
+<text x="152" y="54.5" font-size="10" fill="#4C5C69">in progress</text>
+<rect x="226" y="46" width="9" height="9" rx="2" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="240" y="54.5" font-size="10" fill="#4C5C69">blocked</text>
+<rect x="291" y="46" width="9" height="9" rx="2" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="305" y="54.5" font-size="10" fill="#4C5C69">not started</text>
 <text x="90" y="92" font-size="10.5" font-weight="600" fill="#0E6E70" letter-spacing="0.08em">INFRASTRUCTURE</text>
-<rect x="90.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="135.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ conda env</text>
-<rect x="190.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="235.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ setup.sh</text>
-<rect x="290.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="335.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ pyproject</text>
-<rect x="390.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="435.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ Sphinx tree</text>
-<rect x="490.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="535.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ schema test</text>
-<rect x="590.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="635.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ noise test</text>
-<rect x="690.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="735.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ CI restore</text>
-<rect x="790.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="835.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ green suite</text>
-<rect x="890.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1.2"/>
-<text x="935.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#7A8994" text-anchor="middle">○ interface</text>
+<rect x="90.0" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="125.9" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ conda e…</text>
+<rect x="171.8" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="207.7" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ setup.sh</text>
+<rect x="253.6" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="289.5" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ pyproje…</text>
+<rect x="335.5" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="371.4" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ Sphinx …</text>
+<rect x="417.3" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="453.2" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ schema …</text>
+<rect x="499.1" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="535.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ noise t…</text>
+<rect x="580.9" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="616.8" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ CI rest…</text>
+<rect x="662.7" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="698.6" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ green s…</text>
+<rect x="744.5" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="780.5" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ docstri…</text>
+<rect x="826.4" y="104.0" width="71.8" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="862.3" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ coverag…</text>
+<rect x="908.2" y="104.0" width="71.8" height="30.0" rx="4" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1.2"/>
+<text x="944.1" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#7A8994" text-anchor="middle">○ interfa…</text>
 <text x="90" y="176" font-size="10.5" font-weight="600" fill="#0E6E70" letter-spacing="0.08em">MERGE QUEUE</text>
 <rect x="90.0" y="190.0" width="204.0" height="40.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
 <text x="192.0" y="207.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#1D7A57" text-anchor="middle">dev_fix_root_warnings_lwp</text>
@@ -96,8 +102,8 @@
 <text x="537.5" y="498" font-size="9" fill="#7A8994" text-anchor="middle">5 decide</text>
 <rect x="580.9" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
 <text x="619.3" y="498" font-size="9" fill="#7A8994" text-anchor="middle">6 interface</text>
-<rect x="662.7" y="482" width="76.8" height="24" rx="3" fill="#F6EDDA" stroke="#8A6210"/>
-<text x="701.1" y="498" font-size="9" fill="#8A6210" text-anchor="middle">7 docs</text>
+<rect x="662.7" y="482" width="76.8" height="24" rx="3" fill="#E2F0F0" stroke="#0E6E70"/>
+<text x="701.1" y="498" font-size="9" fill="#0E6E70" text-anchor="middle">7 docs</text>
 <rect x="744.5" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
 <text x="783.0" y="498" font-size="9" fill="#7A8994" text-anchor="middle">8 govern</text>
 <rect x="826.4" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>

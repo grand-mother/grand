@@ -36,13 +36,15 @@ WORK = [
     ('noise test',     'done'),
     ('CI restore',     'done'),
     ('green suite',    'done'),
+    ('docstrings',     'done'),
+    ('coverage 68%',   'done'),
     ('interface',      'todo'),
 ]
 
-FILL = {'done': '#E1F1EA', 'blocked': '#F6EDDA', 'todo': '#EDF1F3'}
-EDGE = {'done': '#1D7A57', 'blocked': '#8A6210', 'todo': '#BCC7CE'}
-TEXT = {'done': '#1D7A57', 'blocked': '#8A6210', 'todo': '#7A8994'}
-MARK = {'done': '✓', 'blocked': '✗', 'todo': '○'}
+FILL = {'done': '#E1F1EA', 'doing': '#E2F0F0', 'blocked': '#F6EDDA', 'todo': '#EDF1F3'}
+EDGE = {'done': '#1D7A57', 'doing': '#0E6E70', 'blocked': '#8A6210', 'todo': '#BCC7CE'}
+TEXT = {'done': '#1D7A57', 'doing': '#0E6E70', 'blocked': '#8A6210', 'todo': '#7A8994'}
+MARK = {'done': '✓', 'doing': '◐', 'blocked': '✗', 'todo': '○'}
 
 W, H = 1080, 620
 SPINE_Y = 392
@@ -101,8 +103,8 @@ def main():
     s.append('<text x="%d" y="34" font-size="15" font-weight="600" '
              'fill="#14202A">dev-next recovery</text>' % X0)
     lx = X0
-    for state, label in [('done', 'done'), ('blocked', 'blocked'),
-                         ('todo', 'not started')]:
+    for state, label in [('done', 'done'), ('doing', 'in progress'),
+                         ('blocked', 'blocked'), ('todo', 'not started')]:
         s.append('<rect x="%d" y="46" width="9" height="9" rx="2" fill="%s" '
                  'stroke="%s"/>' % (lx, FILL[state], EDGE[state]))
         s.append('<text x="%d" y="54.5" font-size="10" fill="#4C5C69">%s</text>'
@@ -182,7 +184,7 @@ def main():
              'fill="#0E6E70" letter-spacing="0.08em">PHASES</text>' % X0)
     phases = [('0 branch', 'done'), ('1 env', 'done'), ('2 CI', 'done'),
               ('3 tests', 'done'), ('4 merge', 'blocked'),
-              ('5 decide', 'todo'), ('6 interface', 'todo'), ('7 docs', 'blocked'),
+              ('5 decide', 'todo'), ('6 interface', 'todo'), ('7 docs', 'doing'),
               ('8 govern', 'todo'), ('9 promote', 'todo'), ('10 cleanup', 'todo')]
     pw = (X1 - X0) / len(phases)
     for i, (label, state) in enumerate(phases):
