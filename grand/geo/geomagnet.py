@@ -68,6 +68,22 @@ def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresen
     -------
     CartesianRepresentation
         The geomagnetic field vector, in the frame of `coordinates`.
+
+    Examples
+    --------
+    The field drives the radio emission, so its direction at the site enters
+    every simulated shower.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import Geodetic
+        from grand.geo.geomagnet import field
+
+        site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+        b = np.asarray(field(site)).ravel()
+        print("B at Dunhuang (T):", np.round(b, 7))
+        print("magnitude: %.1f microtesla" % (np.linalg.norm(b) * 1e6))
     """
     # global _default_magnet
     # if _default_magnet is None:

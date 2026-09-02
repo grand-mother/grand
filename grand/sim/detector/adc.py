@@ -168,6 +168,29 @@ class ADC:
             Voltage trace to digitise.
         noise_trace : ndarray, optional
             Noise to add before digitising.
+
+        Examples
+        --------
+        A signal below one count does not come out small, it comes out **absent**.
+        A simulation whose voltages land under the step yields an all-zero trace,
+        which reads as a quiet event rather than a scaling error.
+
+        .. jupyter-execute::
+
+            import numpy as np
+            from grand.sim.detector.adc import ADC
+
+            adc = ADC()
+            lsb = adc.max_voltage / adc.max_bit_value
+            print("one count is %.1f uV" % lsb)
+
+            t = np.arange(512) * 0.5
+            pulse = np.exp(-((t - 100.0) ** 2) / (2 * 5.0 ** 2))
+
+            for amplitude in (lsb / 10, lsb * 100):
+                trace = np.stack([np.stack([pulse * amplitude] * 3)])
+                print("%9.1f uV -> %4d counts"
+                      % (amplitude, int(np.abs(np.asarray(adc.process(trace))).max())))
         '''
 
         assert isinstance(voltage_trace,np.ndarray)       

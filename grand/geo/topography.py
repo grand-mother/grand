@@ -149,6 +149,17 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     -------
     float or ndarray
         Height of the geoid above the ellipsoid, in metres.
+
+    Examples
+    --------
+    Negative here: at Dunhuang the geoid lies below the ellipsoid, so a point
+    1200 m above the ellipsoid is about 1207.8 m above sea level.
+
+    .. jupyter-execute::
+
+        from grand.geo.topography import geoid_undulation
+
+        print("%.2f m" % geoid_undulation(latitude=40.98, longitude=93.95))
     """
     geoid = _get_geoid()
 

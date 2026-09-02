@@ -479,6 +479,26 @@ def matmul(A, B):
     See Also
     --------
     s2abcd : produces the matrices this cascades.
+
+    Examples
+    --------
+    Cascading a stage with the identity leaves it unchanged, which is the
+    property that makes the ABCD representation worth converting to.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.sim.detector.rf_chain import matmul
+
+        n = 4
+        identity = np.zeros((2, 2, n), dtype=complex)
+        identity[0, 0] = identity[1, 1] = 1.0
+
+        rng = np.random.default_rng(0)
+        stage = rng.normal(size=(2, 2, n)) + 1j * rng.normal(size=(2, 2, n))
+
+        print("cascading with the identity is a no-op:",
+              np.allclose(matmul(stage, identity), stage))
     """
     assert A.shape[0]==2
     assert A.shape[1]==2
@@ -2161,6 +2181,24 @@ class RFChain(GenericProcessingDU):
         ndarray, shape (3, n_freq)
             The complex transfer function per antenna arm,
             :math:`V_{\rm out}/V_{\rm oc}`.
+
+        Examples
+        --------
+        The chain is a net amplifier across the band at 20 dB; Fig. 8 of
+        `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_ shows this curve.
+
+        .. jupyter-execute::
+
+            import numpy as np
+            from grand.sim.detector.rf_chain import RFChain
+
+            freqs = np.arange(30.0, 251.0)
+            chain = RFChain(vga_gain=20)
+            chain.compute_for_freqs(freqs)
+
+            gain = np.abs(chain.get_tf())
+            print("peak |V_out/V_oc| per arm:", np.round(gain.max(axis=1), 1))
+            print("at 100 MHz              :", np.round(gain[:, 70], 1))
         """
         self._total_tf = self.vout_f(np.ones((3, self.nb_freqs)))
 

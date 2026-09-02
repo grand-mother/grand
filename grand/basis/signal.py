@@ -46,6 +46,25 @@ def find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max):
     -------
     tuple of float
         Position and value of the interpolated maximum, from a parabola through three points.
+
+    Examples
+    --------
+    A peak between two samples is recovered more precisely than the sample grid
+    allows.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.basis.signal import find_max_with_parabola_interp_3pt
+
+        t = np.arange(512) * 0.5
+        true_peak = 100.25                              # deliberately between samples
+        y = np.exp(-((t - true_peak) ** 2) / (2 * 6.0 ** 2))
+
+        idx = int(np.argmax(y))
+        t_interp, v = find_max_with_parabola_interp_3pt(t, y, idx)
+        print("nearest sample : %.4f ns" % t[idx])
+        print("interpolated   : %.4f ns" % t_interp)
     """
     if (idx_max >= len(x_trace) - 1) or idx_max == 0:
         return x_trace[idx_max], y_trace[idx_max]
@@ -191,6 +210,26 @@ def get_filter(time, trace, fr_min, fr_max):
     -------
     ndarray
         The band-passed trace.
+
+    Examples
+    --------
+    The band edges are in **hertz**.  Passing megahertz does not raise; it
+    silently returns an empty trace, which is the failure most easily mistaken
+    for a quiet event.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.basis.signal import get_filter
+
+        t = np.arange(1024) * 0.5                       # ns
+        tone = np.sin(2 * np.pi * 100.0 * t * 1e-3)     # a 100 MHz tone
+
+        kept = get_filter(t, tone, 50e6, 200e6)         # edges in Hz
+        print("in band, kept: %.3f" % np.std(kept))
+
+        # The same numbers read as MHz pass nothing at all -- no error, just zeros.
+        print("edges given in MHz: %.3f" % np.std(get_filter(t, tone, 50.0, 200.0)))
     """
     tstep = (time[1] - time[0]) * 1e-09  # s
     rate = 1 / tstep
@@ -292,6 +331,22 @@ def interpol_at_new_x(a_x, a_y, new_x):
     -------
     ndarray
         Interpolated values, zero outside the range of `a_x`.
+
+    Examples
+    --------
+    Values outside the measured range come back as zero rather than
+    extrapolated: the tabulated antenna and RF-chain data have no meaning
+    beyond 30-250 MHz.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.basis.signal import interpol_at_new_x
+
+        a_x = np.linspace(30.0, 250.0, 100)             # the measured band, in MHz
+        a_y = np.ones_like(a_x)
+
+        print(interpol_at_new_x(a_x, a_y, np.array([10.0, 140.0, 400.0])))
     """
     assert a_x.shape[0] > 0
     func_interpol = interpolate.interp1d(

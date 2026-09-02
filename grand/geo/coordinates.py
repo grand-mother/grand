@@ -127,6 +127,19 @@ class Reference(enum.IntEnum):
     -----
     The same enumeration is defined in :mod:`grand.geo.topography`.  It is
     repeated here because importing it would make the two modules circular.
+
+    Examples
+    --------
+    A height of 1200 m means two different places depending on which surface it
+    is measured from.
+
+    .. jupyter-execute::
+
+        from grand.geo.coordinates import Reference, geoid_undulation
+
+        print(list(Reference))
+        print("geoid - ellipsoid at Dunhuang: %.2f m"
+              % geoid_undulation(latitude=40.98, longitude=93.95))
     """
 
     ELLIPSOID = enum.auto()
@@ -1194,6 +1207,20 @@ class Geodetic(GeodeticRepresentation):
             To save reference as instance attribute instead of class attribute,
             __init__ is necessary. Same approach is used in LTP.
             Todo: There might be an elegant way to do this.
+
+    Examples
+    --------
+    Conversion to any local frame passes through :class:`ECEF`, and the round
+    trip is exact.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import Geodetic, ECEF
+
+        site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+        print("ECEF (m):", np.round(np.asarray(ECEF(site)).ravel(), 1))
+        print("round trip:", np.round(np.asarray(Geodetic(ECEF(site))).ravel(), 6))
     """
 
     def __new__(
@@ -2174,6 +2201,25 @@ class GRANDCS(LTP):
 
     Use inverse (transpose) of rotational matrix to convert from GRANDCS cs to ECEF. Then
     convert from ECEF to Geodetic.
+
+    Examples
+    --------
+    GRANDCS :math:`x` runs **north**, while an ENU :math:`x` runs **east**, so
+    the same three numbers name different places.  Neither call raises.
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand import Geodetic, GRANDCS, LTP, ECEF
+
+        site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+
+        a = ECEF(GRANDCS(x=1000.0, y=0.0, z=0.0, location=site))
+        b = ECEF(LTP(x=1000.0, y=0.0, z=0.0, location=site,
+                     orientation="ENU", magnetic=False))
+
+        print("%.1f m apart" % np.linalg.norm(np.asarray(a).ravel()
+                                              - np.asarray(b).ravel()))
     """
 
     def __init__(
