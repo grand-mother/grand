@@ -219,11 +219,34 @@ Three sets of actions were deliberately **not** bumped.
     ``.condarc`` key it writes is chosen by the conda version rather than by
     which input name the workflow used.
 
-``codecov/codecov-action@v4``
-    Left behind deliberately.  It runs in one step of one job, uploads
-    coverage, and its majors have changed the tokenless-upload behaviour
-    before; there is nothing to gain by moving it in the same change as the
-    runtime fix.
+``codecov/codecov-action`` is at ``@v7``
+    Bumped last, once everything else was clean, so that if the upload
+    misbehaved it would be the only change in flight.  v5 was the risky major —
+    it moved to the Codecov CLI wrapper and renamed ``file`` to ``files`` — but
+    this workflow already passed ``files``, so nothing here was affected.  v6
+    brought Node 24 and v7 changes nothing functional.
+
+.. warning::
+
+   **Coverage is not actually reaching Codecov, and has not been.**  The upload
+   step fails on every run:
+
+   .. code-block:: text
+
+       Upload queued for processing failed:
+       {"message":"Token required because branch is protected"}
+
+   The repository has no ``CODECOV_TOKEN`` secret — only ``PERSONAL_TOKEN`` and
+   ``PYPI_TOKEN`` — and Codecov refuses a tokenless upload on a protected
+   branch.  The failure is invisible because ``fail_ci_if_error: false``, which
+   is the right setting: a coverage service being unreachable is not a reason
+   to fail a test run.
+
+   **The fix needs repository admin**: add ``CODECOV_TOKEN`` to the repository
+   secrets.  The workflow already passes it, so nothing here changes when it
+   appears.  Until then, coverage is available locally with
+   ``pytest tests/ -q --cov=grand --cov-report=term``, and the badge in the
+   README will not reflect reality.
 
 The GitHub Pages actions in ``pages.yml``
     ``configure-pages``, ``upload-pages-artifact`` and ``deploy-pages`` are

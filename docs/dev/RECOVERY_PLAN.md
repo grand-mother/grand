@@ -166,6 +166,19 @@ a third abandoned trunk.
 - [ ] Close PRs 9, 49, 52
 - [ ] Retire `master` and `dev` to their tags
 
+## Needs repository admin
+
+Neither can be done from a branch; both are one-time settings.
+
+**`CODECOV_TOKEN` is missing.** The coverage upload has never worked — Codecov
+answers `Token required because branch is protected`, and the repository has
+only `PERSONAL_TOKEN` and `PYPI_TOKEN`. The step is non-fatal so it fails
+invisibly, and the README's codecov badge does not reflect reality. Adding the
+secret is the whole fix; the workflow already passes it.
+
+**24 Dependabot alerts on the default branch** — 1 critical, 15 high, 7
+moderate, 1 low — reported on every push. Not looked at yet.
+
 ## Blocked on a decision
 
 **NUTRIG field names.** `dev_nutrig_fields` adds `nutrig_rhox`/`nutrig_rhoy` to

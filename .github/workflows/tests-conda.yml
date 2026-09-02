@@ -161,9 +161,30 @@ jobs:
           source env/setup.sh
           pytest tests/ -q --cov=grand --cov-report=xml --cov-report=term
 
+      # NOTE: this upload currently fails, and does so silently.  Codecov
+      # answers
+      #
+      #   Upload queued for processing failed:
+      #   {"message":"Token required because branch is protected"}
+      #
+      # because the repository has no CODECOV_TOKEN secret -- only
+      # PERSONAL_TOKEN and PYPI_TOKEN exist.  Tokenless upload is refused on a
+      # protected branch, so coverage has never reached Codecov from here.
+      #
+      # The step is kept, and kept non-fatal.  Adding the secret is the whole
+      # fix and needs repository admin; the moment it exists this starts
+      # working with no change here.  Until then a coverage service being
+      # unreachable is not a reason to fail a test run, which is what
+      # fail_ci_if_error: false says.
+      #
+      # `python quality/docstring_coverage.py` and `pytest --cov` report
+      # coverage locally in the meantime; see docs/source/testing.rst.
       - name: Upload coverage
         if: matrix.root == '6.36.04'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: coverage.xml
           fail_ci_if_error: false
+          # Empty when the secret is absent, which is the current state; the
+          # action then attempts a tokenless upload.
+          token: ${{ secrets.CODECOV_TOKEN }}
