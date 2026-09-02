@@ -319,8 +319,17 @@ def main():
              '',
              'The GRANDlib Handbook, converted from the LaTeX source in',
              '``resources/GRANDlib_Handbook.zip`` and included here so that it is',
-             'searchable alongside the rest of the documentation.  The PDF is in',
-             '``resources/GRANDlib_Handbook.pdf``.',
+             'searchable alongside the rest of the documentation.',
+             '',
+             '.. admonition:: Download the PDF',
+             '   :class: tip',
+             '',
+             '   :download:`GRANDlib Handbook (PDF, 78 pages)',
+             '   <../_static/GRANDlib_Handbook.pdf>` -- compiled from the same',
+             '   source by ``docs/dev/build_handbook_pdf.py``, with the errata',
+             '   below reproduced after its table of contents and a build',
+             '   provenance block on the title page naming the commit it came',
+             '   from.',
              '',
              '.. note::',
              '',
@@ -331,20 +340,25 @@ def main():
              '   :doc:`../installation` first; come here for the material nothing else',
              '   covers, chiefly ``sim2root``, ``granddb`` and the example scripts.',
              '',
-             'Errata',
-             '------',
-             '',
-             'Every entry below was checked against the package rather than assumed.',
-             '',
-             errata_table(),
-             '',
-             'Contents',
-             '--------',
-             '',
+             # The toctree goes *before* the Errata heading, not after it.
+             # reStructuredText has no way to close a section, so anything
+             # following "Errata" belongs to it -- putting the toctree there
+             # nests every handbook page one level under Errata in the sidebar.
+             # Placed here, the pages are its siblings, which is what the
+             # navigation should show.  No "Contents" heading either: it would
+             # add a level that carries no content of its own.
              '.. toctree::',
              '   :maxdepth: 2',
              '']
     index += ['   %s' % name for name, _ in names]
+    index += ['',
+              'Errata',
+              '------',
+              '',
+              'Every entry below was checked against the package rather than '
+              'assumed.',
+              '',
+              errata_table()]
     (OUT / 'index.rst').write_text('\n'.join(index) + '\n')
     print('  wrote %s' % OUT)
 

@@ -410,9 +410,31 @@ component configuration:
     #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
     filename = components["Filter"]["s2p_file"] if components["Filter"]["enabled"] else None
 
-The per-gain files are present: ``filter+vga0db+filter.s2p``,
-``filter+vga5db+filter.s2p`` and ``filter+vga20db+filter.s2p`` all ship in
-``data/detector/RFchain_v2/``.
+``components["Filter"]["s2p_file"]`` resolves to
+``detector/RFchain_v2/feb+amfitler+biast.s2p``.  That is worth stating plainly:
+the stage is not loading the *wrong* VGA table, it is **not loading a VGA table
+at all** — that file is a front-end board with an AM filter and a bias tee, a
+different component.  The three per-gain files ship in
+``data/detector/RFchain_v2/`` and are never opened:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - File
+     - Read by anything?
+   * - ``filter+vga0db+filter.s2p``
+     - no
+   * - ``filter+vga5db+filter.s2p``
+     - no
+   * - ``filter+vga20db+filter.s2p``
+     - no
+
+Note also the mismatch between the assertion and the data: four values are
+accepted, ``[-5, 0, 5, 20]``, and only three files exist.  There is no
+``filter+vga-5db+filter.s2p``.  Uncommenting the line above would therefore fix
+three of the four accepted settings and turn the fourth into a missing-file
+error, so the assertion needs narrowing at the same time.
 
 **Why it matters.**  Section 8.3 of `arXiv:2408.10926
 <https://arxiv.org/abs/2408.10926>`_ states that the total transfer function

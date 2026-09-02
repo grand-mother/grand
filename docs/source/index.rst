@@ -26,6 +26,9 @@ collaboration uses, and the coordinate systems everything is expressed in.
    coordinates
    datamodel
    simulation
+   data_files
+   sim2root
+   troubleshooting
    notebooks
 
 .. toctree::
@@ -40,6 +43,8 @@ collaboration uses, and the coordinate systems everything is expressed in.
    :maxdepth: 2
    :caption: Development
 
+   contributing
+   roadmap
    ci
    testing
    known_issues
@@ -49,6 +54,14 @@ collaboration uses, and the coordinate systems everything is expressed in.
    :caption: Handbook
 
    handbook/index
+
+.. tip::
+
+   The GRANDlib Handbook is included in full under
+   :doc:`Handbook <handbook/index>`, and is also available as a
+   :download:`PDF (78 pages) <_static/GRANDlib_Handbook.pdf>`.  Both are built
+   from the same LaTeX source and carry the same errata; the PDF's title page
+   records the commit it was compiled from.
 
 .. toctree::
    :maxdepth: 1

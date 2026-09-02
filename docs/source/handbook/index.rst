@@ -5,8 +5,17 @@ GRANDlib Handbook
 
 The GRANDlib Handbook, converted from the LaTeX source in
 ``resources/GRANDlib_Handbook.zip`` and included here so that it is
-searchable alongside the rest of the documentation.  The PDF is in
-``resources/GRANDlib_Handbook.pdf``.
+searchable alongside the rest of the documentation.
+
+.. admonition:: Download the PDF
+   :class: tip
+
+   :download:`GRANDlib Handbook (PDF, 78 pages)
+   <../_static/GRANDlib_Handbook.pdf>` -- compiled from the same
+   source by ``docs/dev/build_handbook_pdf.py``, with the errata
+   below reproduced after its table of contents and a build
+   provenance block on the title page naming the commit it came
+   from.
 
 .. note::
 
@@ -16,6 +25,15 @@ searchable alongside the rest of the documentation.  The PDF is in
    the code the code is right.  Read :doc:`../quickstart` and
    :doc:`../installation` first; come here for the material nothing else
    covers, chiefly ``sim2root``, ``granddb`` and the example scripts.
+
+.. toctree::
+   :maxdepth: 2
+
+   introduction
+   installation
+   directory_structure
+   grandlib_classes
+   root_files
 
 Errata
 ------
@@ -46,15 +64,3 @@ Every entry below was checked against the package rather than assumed.
      - Describes ``grand/recon/`` as "Reconstruction Algorithms" and ``grand.aoi`` as providing "filtering and reconstruction".
      - ``grand.recon`` is a placeholder: two classes with a constructor and no other method. No reconstruction is implemented in GRANDlib.
      - :doc:`../api`
-
-Contents
---------
-
-.. toctree::
-   :maxdepth: 2
-
-   introduction
-   installation
-   directory_structure
-   grandlib_classes
-   root_files

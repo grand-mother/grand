@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 620" width="940" height="620" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7A8994"/></marker>
+<marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B4472A"/></marker>
+</defs>
+<rect width="940" height="620" fill="#FFFFFF"/>
+<text x="28.0" y="34.0" font-size="15" fill="#14202A" text-anchor="start" font-weight="600">Subpackage dependencies</text>
+<text x="28.0" y="54.0" font-size="11" fill="#4C5C69" text-anchor="start" font-weight="400">Measured from the import statements. An arrow means "imports from"; the number is how many statements.</text>
+<line x1="260.0" y1="338.0" x2="390.0" y2="338.0" stroke="#B4472A" stroke-width="2.0" marker-end="url(#c)"/>
+<text x="325.0" y="333.0" font-size="9.5" fill="#B4472A" text-anchor="middle" font-weight="600">1</text>
+<line x1="441.5" y1="300.0" x2="358.5" y2="206.0" stroke="#B4472A" stroke-width="2.0" marker-end="url(#c)"/>
+<text x="400.0" y="248.0" font-size="9.5" fill="#B4472A" text-anchor="middle" font-weight="600">1</text>
+<line x1="291.5" y1="206.0" x2="208.5" y2="300.0" stroke="#B4472A" stroke-width="2.0" marker-end="url(#c)"/>
+<text x="250.0" y="248.0" font-size="9.5" fill="#B4472A" text-anchor="middle" font-weight="600">1</text>
+<line x1="640.0" y1="194.3" x2="260.0" y2="311.7" stroke="#7A8994" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="450.0" y="248.0" font-size="9.5" fill="#7A8994" text-anchor="middle" font-weight="600">3</text>
+<line x1="640.0" y1="168.0" x2="410.0" y2="168.0" stroke="#7A8994" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="525.0" y="163.0" font-size="9.5" fill="#7A8994" text-anchor="middle" font-weight="600">2</text>
+<line x1="669.1" y1="206.0" x2="530.9" y2="300.0" stroke="#7A8994" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="600.0" y="248.0" font-size="9.5" fill="#7A8994" text-anchor="middle" font-weight="600">1</text>
+<line x1="640.0" y1="338.0" x2="560.0" y2="338.0" stroke="#7A8994" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="600.0" y="333.0" font-size="9.5" fill="#7A8994" text-anchor="middle" font-weight="600">3</text>
+<line x1="640.0" y1="338.0" x2="260.0" y2="338.0" stroke="#7A8994" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="450.0" y="333.0" font-size="9.5" fill="#7A8994" text-anchor="middle" font-weight="600">1</text>
+<line x1="410.0" y1="168.0" x2="640.0" y2="168.0" stroke="#7A8994" stroke-width="1.4" marker-end="url(#a)" stroke-dasharray="5 4"/>
+<text x="525.0" y="163.0" font-size="9.5" fill="#7A8994" text-anchor="middle" font-weight="600">1</text>
+<rect x="90" y="300" width="170" height="76" rx="5" fill="#E2F0F0" stroke="#0E6E70" stroke-width="1.4"/>
+<text x="175.0" y="324.0" font-size="12.5" fill="#0E6E70" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">grand.geo</text>
+<text x="175.0" y="342.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">coordinates, topography,</text>
+<text x="175.0" y="355.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">geomagnet — frames and Earth</text>
+<rect x="390" y="300" width="170" height="76" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="475.0" y="324.0" font-size="12.5" fill="#8A6210" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">grand.dataio</text>
+<text x="475.0" y="342.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">the ROOT schema:</text>
+<text x="475.0" y="355.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">TRun, TEfield, TVoltage</text>
+<rect x="240" y="130" width="170" height="76" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="325.0" y="154.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">grand.basis</text>
+<text x="325.0" y="172.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">traces, signals,</text>
+<text x="325.0" y="185.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">DU networks</text>
+<rect x="640" y="130" width="170" height="76" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="725.0" y="154.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">grand.sim</text>
+<text x="725.0" y="172.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">antenna, RF chain,</text>
+<text x="725.0" y="185.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">noise, ADC</text>
+<rect x="640" y="300" width="170" height="76" rx="5" fill="#EFE9F5" stroke="#6B4E9B" stroke-width="1.4"/>
+<text x="725.0" y="324.0" font-size="12.5" fill="#6B4E9B" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">grand.aoi</text>
+<text x="725.0" y="342.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">events and antennas</text>
+<text x="725.0" y="355.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">as objects</text>
+<rect x="90" y="420" width="170" height="76" rx="5" fill="#F2F3F5" stroke="#9AA5AE" stroke-width="1.4"/>
+<text x="175.0" y="444.0" font-size="12.5" fill="#9AA5AE" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">grand.recon</text>
+<text x="175.0" y="462.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">placeholder:</text>
+<text x="175.0" y="475.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">no algorithm</text>
+<line x1="28" y1="530" x2="912" y2="530" stroke="#D8DEE3"/>
+<line x1="28" y1="552" x2="60" y2="552" stroke="#B4472A" stroke-width="2" marker-end="url(#c)"/>
+<text x="70.0" y="556.0" font-size="10.5" fill="#B4472A" text-anchor="start" font-weight="600">part of a cycle:</text>
+<text x="168.0" y="556.0" font-size="10.5" fill="#14202A" text-anchor="start" font-weight="400">geo → dataio → basis → geo, all at module level. Nothing breaks today, but import order decides whether it stays that way.</text>
+<line x1="28" y1="576" x2="60" y2="576" stroke="#7A8994" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="70.0" y="580.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="600">deferred:</text>
+<text x="132.0" y="580.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="400">basis/pipeline.py imports grand.sim inside a function, which is what keeps that second cycle from existing at import time.</text>
+<text x="28.0" y="604.0" font-size="10" fill="#7A8994" text-anchor="start" font-weight="400">grand.recon has no incoming or outgoing edges: nothing imports it and it imports nothing.</text>
+</svg>

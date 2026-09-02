@@ -116,11 +116,27 @@ modelled.
 The RF chain
 ------------
 
-A cascade of two-port networks: low-noise amplifier, balun, cable and
-connector, variable-gain amplifier with filter, a second balun, and the ADC
-input.  Each is characterised by measured scattering parameters, converted to
-the transmission (ABCD) representation so that the cascade is a matrix
-product.
+A cascade of two-port networks: matching network, low-noise amplifier, balun,
+cable and connector, variable-gain amplifier with filter, a second balun, and
+the ADC input.  Each is characterised by measured scattering parameters,
+converted to the transmission (ABCD) representation so that the cascade is a
+matrix product.
+
+.. image:: _static/rfchain.svg
+   :target: _static/rfchain.svg
+   :alt: the six RF-chain stages between Z_ant and Z_load, the measured file
+         each reads, the order of the matrix product, and the stage whose
+         gain setting selects nothing
+   :width: 100%
+
+*Click the figure to open it full size.*
+
+Two things in that figure are worth stating in words.  The numbered circles are
+the order of the **matrix product**, which is not the signal-flow order the
+boxes are drawn in: the first factor is the class named ``BalunAfterLNA``,
+applied before the LNA.  And the ``vgaf`` stage loads
+``feb+amfitler+biast.s2p``, which is not a variable-gain amplifier — see
+:ref:`issue-vga-gain-ignored` and :doc:`data_files`.
 
 .. jupyter-execute::
 

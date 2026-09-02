@@ -1,0 +1,36 @@
+/* The logo is re-inked for the dark sidebar by docs/dev/make_logo_variants.py,
+   so it needs no panel behind it -- only a width, since the theme would
+   otherwise show it at full resolution. */
+/* The selector matches the theme's own exactly. A shorter one loses: the theme
+   uses `.wy-side-nav-search > a img.logo`, specificity (0,2,2), against which
+   `.wy-side-nav-search img.logo` at (0,2,1) is silently ignored. Matching it
+   ties, and this sheet is loaded second. */
+.wy-side-nav-search > a img.logo,
+.wy-side-nav-search .wy-dropdown > a img.logo {
+    max-width: 200px;
+    padding: 6px 0 2px;
+}
+
+/* With logo_only the theme drops its version block, and the logo carries the
+   wordmark but not the version.  _static/version.css restores it, generated at
+   build time from the package version so it cannot drift. */
+.wy-side-nav-search::after {
+    display: block;
+    color: rgba(255, 255, 255, .85);
+    font-size: 90%;
+    margin: -4px 0 10px;
+}
+
+/* Diagrams are embedded at :width: 100% and linked to themselves so they can be
+   opened full size.  A faint border separates a white-background SVG from the
+   page, and the pointer says the figure is clickable. */
+.rst-content a > img[src$=".svg"] {
+    border: 1px solid #e1e4e5;
+    border-radius: 4px;
+    cursor: zoom-in;
+}
+
+/* Wide tables should scroll inside themselves rather than pushing the page. */
+.rst-content .wy-table-responsive {
+    overflow-x: auto;
+}

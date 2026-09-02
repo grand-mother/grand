@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1130 560" width="1130" height="560" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7A8994"/></marker></defs>
+<rect width="1130" height="560" fill="#FFFFFF"/>
+<text x="28.0" y="34.0" font-size="15" fill="#14202A" text-anchor="start" font-weight="600">The RF chain</text>
+<text x="28.0" y="54.0" font-size="11" fill="#4C5C69" text-anchor="start" font-weight="400">Six two-port stages between the antenna terminals and the ADC, terminated in Z_ant at the input and Z_load at the output.</text>
+<rect x="6" y="124" width="70" height="60" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="36.0" y="152.0" font-size="11" fill="#8A6210" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">Z_ant</text>
+<text x="36.0" y="168.0" font-size="9" fill="#4C5C69" text-anchor="middle" font-weight="400">antenna</text>
+<rect x="98" y="108" width="140" height="92" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="168.0" y="129.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">matcnet</text>
+<text x="168.0" y="145.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">MatchingNetwork</text>
+<text x="168.0" y="164.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">MatchingNetworkX</text>
+<text x="168.0" y="175.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">.s2p</text>
+<circle cx="222" cy="188" r="9" fill="#1D7A57"/>
+<text x="222.0" y="191.5" font-size="9.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">2</text>
+<rect x="250" y="108" width="140" height="92" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="320.0" y="129.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">lna</text>
+<text x="320.0" y="145.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">LowNoiseAmplifier</text>
+<text x="320.0" y="164.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">LNA-X</text>
+<text x="320.0" y="175.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">.s2p</text>
+<circle cx="374" cy="188" r="9" fill="#1D7A57"/>
+<text x="374.0" y="191.5" font-size="9.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">3</text>
+<line x1="238" y1="154" x2="248" y2="154" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="402" y="108" width="140" height="92" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="472.0" y="129.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">balun1</text>
+<text x="472.0" y="145.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">BalunAfterLNA</text>
+<text x="472.0" y="164.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">balun_in_nut</text>
+<text x="472.0" y="175.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">.s2p</text>
+<circle cx="526" cy="188" r="9" fill="#1D7A57"/>
+<text x="526.0" y="191.5" font-size="9.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">1</text>
+<line x1="390" y1="154" x2="400" y2="154" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="554" y="108" width="140" height="92" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="624.0" y="129.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">cable</text>
+<text x="624.0" y="145.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">Cable</text>
+<text x="624.0" y="164.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">cable+Connector</text>
+<text x="624.0" y="175.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">.s2p</text>
+<circle cx="678" cy="188" r="9" fill="#1D7A57"/>
+<text x="678.0" y="191.5" font-size="9.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">4</text>
+<line x1="542" y1="154" x2="552" y2="154" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="706" y="108" width="140" height="92" rx="5" fill="#FBEDE9" stroke="#B4472A" stroke-width="1.4"/>
+<text x="776.0" y="129.0" font-size="12.5" fill="#B4472A" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">vgaf</text>
+<text x="776.0" y="145.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">VGAFilter</text>
+<text x="776.0" y="164.0" font-size="8" fill="#B4472A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">feb+amfitler+biast</text>
+<text x="776.0" y="175.0" font-size="8" fill="#B4472A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">.s2p</text>
+<circle cx="830" cy="188" r="9" fill="#B4472A"/>
+<text x="830.0" y="191.5" font-size="9.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">5</text>
+<line x1="694" y1="154" x2="704" y2="154" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="858" y="108" width="140" height="92" rx="5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="928.0" y="129.0" font-size="12.5" fill="#1D7A57" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">balun2</text>
+<text x="928.0" y="145.0" font-size="8.5" fill="#4C5C69" text-anchor="middle" font-weight="400">BalunBeforeADC</text>
+<text x="928.0" y="164.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">balun_before_ad</text>
+<text x="928.0" y="175.0" font-size="8" fill="#14202A" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono, monospace">.s2p</text>
+<circle cx="982" cy="188" r="9" fill="#1D7A57"/>
+<text x="982.0" y="191.5" font-size="9.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">6</text>
+<line x1="846" y1="154" x2="856" y2="154" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="998" y1="154" x2="1020" y2="154" stroke="#7A8994" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="1024" y="124" width="60" height="60" rx="5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="1054.0" y="152.0" font-size="11" fill="#8A6210" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono, monospace">Z_load</text>
+<text x="1054.0" y="168.0" font-size="9" fill="#4C5C69" text-anchor="middle" font-weight="400">ADC</text>
+<text x="98.0" y="226.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="400">Numbered circles give the order of the matrix product, which is not the signal-flow order drawn above:</text>
+<text x="98.0" y="244.0" font-size="11.5" fill="#14202A" text-anchor="start" font-weight="600" font-family="IBM Plex Mono, monospace">balun1 . matcnet . lna . cable . vgaf . balun2</text>
+<text x="98.0" y="262.0" font-size="10" fill="#7A8994" text-anchor="start" font-weight="400">The first factor is the class named BalunAfterLNA, applied before the LNA. Either the name or the order is misleading.</text>
+<line x1="28" y1="330" x2="1102" y2="330" stroke="#D8DEE3"/>
+<text x="28.0" y="356.0" font-size="12.5" fill="#14202A" text-anchor="start" font-weight="600">Why ABCD and not S</text>
+<text x="28.0" y="378.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="400">S-parameters are what a network analyser measures, but they do not cascade by multiplication. Each stage is converted</text>
+<text x="28.0" y="394.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="400">with s2abcd() and the ABCD matrices are multiplied by matmul(). Z_ant enters at the input and Z_load at the output, which is why</text>
+<text x="28.0" y="410.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="400">a stage’s isolated |S21| does not add up to the total.</text>
+<text x="28.0" y="436.0" font-size="12" fill="#14202A" text-anchor="start" font-weight="600" font-family="IBM Plex Mono, monospace">H(nu) = V_out / V_oc</text>
+<text x="190.0" y="436.0" font-size="10.5" fill="#4C5C69" text-anchor="start" font-weight="400">- one complex number per frequency and arm; peak |H| is about 95 on the horizontal arms, 39 dB.</text>
+<rect x="28" y="460" width="1074" height="76" rx="5" fill="#FBEDE9" stroke="#B4472A" stroke-width="1.4"/>
+<text x="44.0" y="482.0" font-size="11.5" fill="#B4472A" text-anchor="start" font-weight="600">vgaf does not read a VGA file</text>
+<text x="44.0" y="501.0" font-size="10" fill="#14202A" text-anchor="start" font-weight="400">feb+amfitler+biast.s2p is a front-end board with an AM filter and a bias tee. The three per-gain tables (filter+vga0db, vga5db, vga20db)</text>
+<text x="44.0" y="517.0" font-size="10" fill="#14202A" text-anchor="start" font-weight="400">ship in data/detector/RFchain_v2/ and are opened by nothing, so vga_gain selects nothing. See the known issues page.</text>
+</svg>

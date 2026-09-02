@@ -29,6 +29,41 @@ jobs:
       - name: Ruff
         run: ruff check grand/ tests/ quality/ notebooks/ docs/dev/
 
+  handbook:
+    name: Handbook PDF
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install a LaTeX toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+
+      # --check compiles and reports without installing the result.  Its own
+      # job so that a LaTeX error is reported as a LaTeX error, rather than
+      # surfacing as an unexplained documentation failure.  The Handbook is
+      # somebody else's document and this is the only thing that would notice
+      # if a new revision of it stopped compiling.
+      - name: Compile the Handbook
+        run: python docs/dev/build_handbook_pdf.py --check
+
+      # The .rst pages under docs/source/handbook/ are generated from the same
+      # source and committed.  If the zip changes and nobody re-runs the
+      # generator, the site and the PDF disagree; this catches that.
+      - name: Check the generated pages are current
+        run: |
+          sudo apt-get install -y --no-install-recommends pandoc
+          python docs/dev/build_handbook.py
+          git diff --exit-code -- docs/source/handbook \
+            || { echo "docs/source/handbook is stale; run docs/dev/build_handbook.py"; exit 1; }
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest
@@ -46,6 +81,21 @@ jobs:
           channels: conda-forge
           conda-remove-defaults: true
           auto-activate-base: false
+
+      # `make html` compiles the Handbook PDF first, because the documentation
+      # links to it with :download: and a missing target is a warning.  The
+      # recipe falls back to the copy in resources/ when pdflatex is absent, so
+      # this install is what makes the *patched* PDF -- with the errata and the
+      # provenance block -- the one that gets published.
+      #
+      # recommended is enough for this document: article, geometry, graphicx,
+      # amsmath, listings, longtable, hyperref.  texlive-full is ~5 GB and
+      # would dominate the job.
+      - name: Install a LaTeX toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
 
       # jupyter-sphinx executes the docstring examples in a real kernel, a
       # separate process from Sphinx.  The package therefore has to be
