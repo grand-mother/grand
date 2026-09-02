@@ -849,7 +849,6 @@ class Event:
             # Go through all the run trees
             # ToDo: Add trunrawvoltage
             for source_tree in self._trees:
-                if source_tree == self.tshower: continue
                 # print("source_tree:", source_tree, self._trees)
                 # Skip non-existing trees
                 if not source_tree: continue
@@ -859,7 +858,6 @@ class Event:
                 if not getattr(target_dir, source_tree_name):
                     # Create the tree and its file
                     create_file_tree(target_dir, source_tree_name, source_tree)
-                    self.files_creation_time = target_dir.cur_time_string
 
                 # Get the target tree from the target directory
                 target_tree = getattr(target_dir, source_tree_name)
@@ -886,14 +884,6 @@ class Event:
                 print("Writing", target_tree.tree_name)
                 # target_tree._tree.GetCurrentFile().Write("", ROOT.TObject.kWriteDelete)
                 target_tree.write(force_close_file=True)
-
-            # Write the shower if it is created (externally)
-            if self.shower:
-                print("Writing shower")
-                file_name = f"shower_{self.files_creation_time}_0-0_L1_0000.root"
-                self.fill_shower_tree(filename=file_name, tree_name="tshower")
-                self.write_shower(target_dir.dir_name + "/" + file_name)
-                self.tshower.stop_using()
 
     ## Write the run to a file
     def write_run(self, filename, overwrite=False):
@@ -1047,8 +1037,8 @@ class Event:
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
         # Fill only if the tree not initialised yet
-        # if self.tshower is not None and not overwrite:
-        #     raise TreeExists("The tshower TTree already exists!")
+        if self.tshower is not None and not overwrite:
+            raise TreeExists("The tshower TTree already exists!")
 
         # Look for the TShower with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
@@ -1076,9 +1066,6 @@ class Event:
         self.tshower.zenith = self.shower.zenith
         ## Poistion of the core on the ground in the site's reference frame
         self.tshower.shower_core_pos = self.shower.core_ground_pos[:,0]
-
-        ## The analysis level is usually 1
-        self.tshower.analysis_level = 1
 
         self.tshower.fill()
 
