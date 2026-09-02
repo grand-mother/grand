@@ -89,6 +89,13 @@ The WGS-84 constants
    overhaul exists to remove.  Once it does, these become calls into the
    library and this page becomes its executable specification.
 
+.. note::
+
+   A worked notebook is planned for this page — the frames and conversions
+   end to end, with a detector layout drawn in ``GRANDCS`` and again in
+   geodetic coordinates, a shower axis in both, and a terrain profile along
+   it. Tracked in ``docs/dev/RECOVERY_PLAN.md``.
+
 Reference
 ---------
 

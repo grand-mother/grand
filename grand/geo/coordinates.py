@@ -69,6 +69,27 @@ __all__ = (
 
 
 def copy(obj, deep=False, attributes=[]):
+    r"""Returns a copy of `obj`, with its instance attributes copied too.
+
+    ``numpy.ndarray`` subclasses do not carry their instance dictionary
+    through :func:`copy.copy`, so the frame attributes a coordinate object
+    holds -- its origin, its basis, its reference level -- would be lost.
+    This copies the array and then the attributes.
+
+    Parameters
+    ----------
+    obj : object
+        The object to copy, typically a :class:`Coordinates` subclass.
+    deep : bool, optional
+        Copy recursively with :func:`copy.deepcopy` instead of shallowly.
+    attributes : list, optional
+        Unused; retained because callers pass it.
+
+    Returns
+    -------
+    object
+        A copy of `obj`, of the same type.
+    """
     if deep:
         new = _copy.deepcopy(obj)
         for var in vars(obj):
@@ -84,8 +105,20 @@ def copy(obj, deep=False, attributes=[]):
 # Using Reference and geoid_undulation from topography.py gives circular import error.
 # So simple Reference and geoid_undulation functions are defined here for coordinates purpose only.
 class Reference(enum.IntEnum):
-    """Reference level for height in Geodetic coordinate system.
-    Reference is also defined in topography.py for Topography use.
+    r"""Reference surface for a height in the geodetic system.
+
+    A geodetic height is meaningless without saying what it is measured
+    from.  ``ELLIPSOID`` measures from the WGS-84 ellipsoid, the smooth
+    mathematical figure; ``GEOID`` measures from mean sea level, which
+    departs from the ellipsoid by up to about 100 m.  Confusing the two is
+    a common source of vertical errors at the array.
+
+    .. versionadded:: 0.1.0
+
+    Notes
+    -----
+    The same enumeration is defined in :mod:`grand.geo.topography`.  It is
+    repeated here because importing it would make the two modules circular.
     """
 
     ELLIPSOID = enum.auto()
@@ -93,9 +126,39 @@ class Reference(enum.IntEnum):
 
 
 def geoid_undulation(latitude=None, longitude=None):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
-    This function is also defined in topography.py for Topography use.
+    r"""Returns the height of the geoid above the ellipsoid, in metres.
+
+    The geoid undulation is what converts between the two references of
+    :class:`Reference`: a height above mean sea level plus the undulation
+    at that location is the height above the ellipsoid.  Values are read
+    from the EGM96 model shipped in ``data/egm96.png``.
+
+    Parameters
+    ----------
+    latitude : float or ndarray
+        Geodetic latitude, in degrees.
+    longitude : float or ndarray
+        Geodetic longitude, in degrees.
+
+    Returns
+    -------
+    float or ndarray
+        Undulation in metres, positive where the geoid lies above the
+        ellipsoid.
+
+    Examples
+    --------
+    .. jupyter-execute::
+
+        from grand.geo.coordinates import geoid_undulation
+
+        # The GRANDProto300 site at Dunhuang.
+        print("%.2f m" % geoid_undulation(latitude=40.98, longitude=93.95))
+
+    Notes
+    -----
+    Also defined in :mod:`grand.geo.topography`; repeated here to avoid a
+    circular import.
     """
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
@@ -111,7 +174,37 @@ def _cartesian_to_spherical(
     y: Union[float, int, np.ndarray],
     z: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
-    """Transform Cartesian coordinates to spherical"""
+    r"""Returns the spherical coordinates of a Cartesian vector.
+
+    Parameters
+    ----------
+    x, y, z : float or ndarray
+        Cartesian components, in the same length unit.
+
+    Returns
+    -------
+    theta : float or ndarray
+        Polar angle from the :math:`+z` axis, in **degrees**, in
+        :math:`[0, 180]`.
+    phi : float or ndarray
+        Azimuth from the :math:`+x` axis towards :math:`+y`, in
+        **degrees**, in :math:`(-180, 180]`.
+    r : float or ndarray
+        Radius, in the unit of the inputs.
+
+    Examples
+    --------
+    .. jupyter-execute::
+
+        from grand.geo.coordinates import _cartesian_to_spherical
+
+        print(_cartesian_to_spherical(0.0, 0.0, 1.0))   # straight up
+        print(_cartesian_to_spherical(1.0, 0.0, 0.0))   # on the +x axis
+
+    Notes
+    -----
+    Angles are in degrees, not radians, throughout this module.
+    """
     rho2 = x ** 2 + y ** 2
     rho = np.sqrt(rho2)
     theta = np.rad2deg(np.arctan2(rho, z))
@@ -129,7 +222,32 @@ def _cartesian_to_horizontal(
     y: Union[float, int, np.ndarray],
     z: Union[float, int, np.ndarray],
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
-    """Transform Cartesian coordinates to horizontal"""
+    r"""Returns the horizontal coordinates of a Cartesian vector.
+
+    Parameters
+    ----------
+    x, y, z : float or ndarray
+        Cartesian components in an **ENU** basis -- :math:`x` east,
+        :math:`y` north, :math:`z` up -- sharing the horizontal frame's
+        origin.
+
+    Returns
+    -------
+    azimuth : float or ndarray
+        Degrees, measured from geographic north towards east.
+    elevation : float or ndarray
+        Degrees above the horizon.
+    norm : float or ndarray
+        Length of the vector.
+
+    Notes
+    -----
+    The horizontal frame has an axis fixed to geographic north, so unlike
+    the Cartesian and spherical representations it is not a pure change of
+    variables: the ENU basis and a shared origin are assumed.  Passing
+    components expressed in some other Cartesian basis silently gives the
+    wrong azimuth.
+    """
     theta, phi, r = _cartesian_to_spherical(x, y, z)
     return _spherical_to_horizontal(theta, phi, r)
 
@@ -139,7 +257,37 @@ def _spherical_to_cartesian(
     phi: Union[float, int, np.ndarray],
     r: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
-    """Transform spherical coordinates to Cartesian"""
+    r"""Returns the Cartesian components of a spherical vector.
+
+    Parameters
+    ----------
+    theta : float or ndarray
+        Polar angle from :math:`+z`, in **degrees**.
+    phi : float or ndarray
+        Azimuth from :math:`+x`, in **degrees**.
+    r : float or ndarray
+        Radius.
+
+    Returns
+    -------
+    x, y, z : float or ndarray
+        Cartesian components, in the unit of `r`.
+
+    Examples
+    --------
+    Round-tripping recovers the input, which is the property every test of
+    this pair relies on:
+
+    .. jupyter-execute::
+
+        import numpy as np
+        from grand.geo.coordinates import (_cartesian_to_spherical,
+                                           _spherical_to_cartesian)
+
+        v = (3.0, -4.0, 12.0)
+        back = _spherical_to_cartesian(*_cartesian_to_spherical(*v))
+        print(np.round(back, 12))
+    """
     cos_theta = np.cos(np.deg2rad(theta))
     sin_theta = np.sin(np.deg2rad(theta))
 
@@ -155,7 +303,37 @@ def _spherical_to_horizontal(
     phi: Union[float, int, np.ndarray],
     r: Union[float, int, np.ndarray],
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
-    """Transform spherical coordinates to horizontal"""
+    r"""Returns the horizontal coordinates of a spherical vector.
+
+    Parameters
+    ----------
+    theta : float or ndarray
+        Polar angle from :math:`+z`, in **degrees**.
+    phi : float or ndarray
+        Azimuth from :math:`+x`, in **degrees**.
+    r : float or ndarray
+        Radius.
+
+    Returns
+    -------
+    azimuth : float or ndarray
+        :math:`90 - \phi`, in degrees: measured from north towards east
+        rather than from :math:`+x` towards :math:`+y`.
+    elevation : float or ndarray
+        :math:`90 - \theta`, in degrees: measured up from the horizon
+        rather than down from the zenith.
+    norm : float or ndarray
+        Unchanged radius.
+
+    Examples
+    --------
+    .. jupyter-execute::
+
+        from grand.geo.coordinates import _spherical_to_horizontal
+
+        # Straight up: zero polar angle becomes 90 degrees of elevation.
+        print(_spherical_to_horizontal(0.0, 0.0, 1.0))
+    """
     # return 0.5 * np.pi - phi, 0.5 * np.pi - theta, r
     return 90.0 - phi, 90.0 - theta, r
 
@@ -168,7 +346,22 @@ def _horizontal_to_cartesian(
     elevation: Union[float, int, np.ndarray],
     norm: Union[float, int, np.ndarray],
 ) -> Union[Tuple[float, ...], Tuple[np.ndarray, ...]]:
-    """Transform horizontal coordinates to Cartesian"""
+    r"""Returns the Cartesian components of a horizontal vector.
+
+    Parameters
+    ----------
+    azimuth : float or ndarray
+        Degrees from geographic north towards east.
+    elevation : float or ndarray
+        Degrees above the horizon.
+    norm : float or ndarray
+        Length of the vector.
+
+    Returns
+    -------
+    x, y, z : float or ndarray
+        Components in an ENU basis, in the unit of `norm`.
+    """
     theta, phi, r = _horizontal_to_spherical(azimuth, elevation, norm)
     return _spherical_to_cartesian(theta, phi, r)
 
@@ -178,7 +371,26 @@ def _horizontal_to_spherical(
     elevation: Union[float, int, np.ndarray],
     norm: Union[float, int, np.ndarray],
 ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
-    """Transform horizontal coordinates to spherical"""
+    r"""Returns the spherical coordinates of a horizontal vector.
+
+    Parameters
+    ----------
+    azimuth : float or ndarray
+        Degrees from geographic north towards east.
+    elevation : float or ndarray
+        Degrees above the horizon.
+    norm : float or ndarray
+        Length of the vector.
+
+    Returns
+    -------
+    theta : float or ndarray
+        :math:`90 - \mathrm{elevation}`, in degrees.
+    phi : float or ndarray
+        :math:`90 - \mathrm{azimuth}`, in degrees.
+    r : float or ndarray
+        Unchanged length.
+    """
     # return 0.5 * np.pi - elevation, 0.5 * np.pi - azimuth, norm
     return 90.0 - elevation, 90.0 - azimuth, norm
 
@@ -263,26 +475,32 @@ class CartesianRepresentation(Coordinates):
 
     @property
     def x(self):
+        r"""Cartesian :math:`x` component, in metres."""
         return self[0]
 
     @x.setter
     def x(self, v):
+        r"""Sets the :math:`x` component."""
         self[0] = v
 
     @property
     def y(self):
+        r"""Cartesian :math:`y` component, in metres."""
         return self[1]
 
     @y.setter
     def y(self, v):
+        r"""Sets the :math:`y` component."""
         self[1] = v
 
     @property
     def z(self):
+        r"""Cartesian :math:`z` component, in metres."""
         return self[2]
 
     @z.setter
     def z(self, v):
+        r"""Sets the :math:`z` component."""
         self[2] = v
 
     def cartesian_to_spherical(self):
@@ -360,6 +578,7 @@ class SphericalRepresentation(Coordinates):
 
     @property
     def theta(self):
+        r"""Polar angle from the :math:`+z` axis, in degrees."""
         logger.debug(f"{type(self)} {type(self[0])}")
         # TODO: self[0] and self have same type !!!!!
         # use float(self[0]) instead self[0] ?
@@ -368,23 +587,28 @@ class SphericalRepresentation(Coordinates):
 
     @theta.setter
     def theta(self, v):
+        r"""Sets the polar angle, in degrees."""
         self[0] = v
 
     @property
     def phi(self):
+        r"""Azimuth from the :math:`+x` axis, in degrees."""
         # return float(self[1])
         return self[1]
 
     @phi.setter
     def phi(self, v):
+        r"""Sets the azimuth, in degrees."""
         self[1] = v
 
     @property
     def r(self):
+        r"""Radius, in metres."""
         return self[2]
 
     @r.setter
     def r(self, v):
+        r"""Sets the radius, in metres."""
         self[2] = v
 
     def spherical_to_cartesian(self):
@@ -449,26 +673,32 @@ class HorizontalRepresentation(Coordinates):
 
     @property
     def azimuth(self):
+        r"""Azimuth from geographic north towards east, in degrees."""
         return self[0]
 
     @azimuth.setter
     def azimuth(self, v):
+        r"""Sets the azimuth, in degrees."""
         self[0] = v
 
     @property
     def elevation(self):
+        r"""Elevation above the horizon, in degrees."""
         return self[1]
 
     @elevation.setter
     def elevation(self, v):
+        r"""Sets the elevation, in degrees."""
         self[1] = v
 
     @property
     def norm(self):
+        r"""Length of the vector, in metres."""
         return self[2]
 
     @norm.setter
     def norm(self, v):
+        r"""Sets the length, in metres."""
         self[2] = v
 
     def horizontal_to_cartesian(self):
@@ -540,26 +770,32 @@ class GeodeticRepresentation(Coordinates):
 
     @property
     def latitude(self):
+        r"""Geodetic latitude, in degrees."""
         return self[0]
 
     @latitude.setter
     def latitude(self, v):
+        r"""Sets the latitude, in degrees."""
         self[0] = v
 
     @property
     def longitude(self):
+        r"""Geodetic longitude, in degrees."""
         return self[1]
 
     @longitude.setter
     def longitude(self, v):
+        r"""Sets the longitude, in degrees."""
         self[1] = v
 
     @property
     def height(self):
+        r"""Height above the reference surface, in metres."""
         return self[2]
 
     @height.setter
     def height(self, v):
+        r"""Sets the height, in metres."""
         self[2] = v
 
 

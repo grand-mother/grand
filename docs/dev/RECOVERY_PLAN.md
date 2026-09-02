@@ -115,6 +115,10 @@ a third abandoned trunk.
 - [ ] Apply the standard to the remaining functions
 - [ ] Ruff `D`-rule ratchet
 - [ ] Delete `docs/apidoc-only/`, retire Doxygen
+- [ ] Notebook: coordinate systems, showing the frames and conversions end to end
+      (`notebooks/02_coordinates.ipynb`) — the long form of `coordinates.rst`,
+      with figures: a DU layout in GRANDCS, the same in geodetic, a shower
+      axis in both, and a terrain profile along it
 - [ ] Publish to GitHub Pages from CI
 
 ### Phase 8 — governance and weight
