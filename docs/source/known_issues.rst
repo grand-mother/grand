@@ -494,6 +494,36 @@ exception, which produced ``RuntimeError: No active exception to reraise`` for
 any file lacking the level marker, now raises a :class:`ValueError` naming the
 file and the convention.
 
+**The mechanism, measured.**  ``DataDirectory`` groups files by **filename
+prefix**, not by the trees a file contains: ``ftshowers`` collects files whose
+name begins with ``shower_``.  So a single file holding ``TRun``, ``TEfield``
+and ``TShower`` is only ever seen as an efield file, and
+:class:`~grand.dataio.root_files.FileEfield` then fails on it with
+
+.. code-block:: text
+
+    AttributeError: 'NoneType' object has no attribute 'file_name'
+
+Three conditions must hold together for a file to be readable:
+
+1. the run, efield and shower trees are in **separate files**, named
+   ``run_*``, ``efield_*`` and ``shower_*``;
+2. each name carries its analysis level as ``_L0_`` or ``_L1_``;
+3. the ``analysis_level`` stored *in each tree* matches the name.
+
+None of that is stated anywhere in the code.  It is now pinned by
+``tests/dataio/test_root_files_reader.py``, which builds a conforming fixture
+and also asserts that the single-file layout fails — so that the day the reader
+looks inside the file it was handed, the test says so.
+
+**Two smaller defects found while writing those tests.**
+``get_du_count()`` returns 0 on a file whose ``TRun`` was written with
+``du_id`` set, while the traces carry the right number of units; a caller
+sizing an array from it gets nothing.  Recorded as an expected failure.  And
+``get_du_nanosec_ordered()`` returns a ``(times, origin)`` tuple, not the
+``ndarray`` its docstring claimed — ``np.asarray`` on the result raises.  The
+docstring is corrected.
+
 .. _issue-root-638-numerical-difference:
 
 ROOT 6.38 changes the result of a NumPy-only test

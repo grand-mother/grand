@@ -232,13 +232,27 @@ class _FileEventBase:
         return 1e3 / self.t_bin_size
 
     def get_du_nanosec_ordered(self):
-        """
-        return nanosecond between 0s to 2s max
+        r"""Returns the trigger times of the units, in nanoseconds from a common origin.
+
+        The second counts are reduced to their minimum across the units, and
+        the difference folded into the nanosecond part, so the values are
+        comparable within an event without losing sub-nanosecond resolution to
+        floating-point range.
 
         Returns
         -------
-        ndarray
-            Trigger times of the units, in nanoseconds, in unit order.
+        du_ns : ndarray, shape (n_du,)
+            Trigger time of each unit, in nanoseconds relative to `min_sec`,
+            in unit order.  Despite the name, the values are **not sorted**.
+        min_sec : float
+            The second count the nanoseconds are measured from.
+
+        Notes
+        -----
+        .. versionchanged:: 0.1.0
+           The docstring previously said this returns a single ``ndarray``.  It
+           returns a two-element tuple and always has; ``np.asarray`` on the
+           result raises rather than giving the times.
         """
         du_s = self.tt_event.du_seconds.asnumpy().astype(np.float64)
         min_sec = du_s.min()
