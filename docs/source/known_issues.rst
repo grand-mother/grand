@@ -113,6 +113,66 @@ the NUTRIG analysis code that reads them.
 ``tests/dataio/test_schema_snapshot.py`` fails if both spellings ever appear
 together, so the collision cannot be merged past silently.
 
+.. _issue-numpy2-descriptors:
+
+Tree classes cannot be constructed under NumPy 2
+--------------------------------------------------
+
+:Status: open, cause identified, candidate fix measured
+:Affects: the whole data layer — ``TRun()`` raises
+:Test: visible in ``tests/dataio/`` (about 150 tests)
+
+**Symptom.**  Constructing any run or event tree fails::
+
+    >>> from grand.dataio.run_trees import TRun
+    >>> TRun()
+    ValueError: setting an array element with a sequence.
+
+**Cause.**  In :mod:`grand.dataio.descriptors`, ``TTreeScalarDesc.__set__``
+receives the descriptor object itself as ``value`` when a dataclass field
+takes its default.  The guard for that case reassigns the instance array to
+itself:
+
+.. code-block:: python
+
+    if isinstance(value, TTreeScalarDesc):
+        value = getattr(obj, self.attrname)   # same array as `inst` below
+    inst = getattr(obj, self.attrname)
+
+    inst[0] = value                           # inst[0] = inst
+
+``arr[0] = np.array([x])`` was tolerated by NumPy 1 and is rejected by NumPy 2:
+
+.. code-block:: text
+
+    numpy 2.5.2: arr[0] = array([x])  ->  ValueError
+
+This is why it appears now.  Nothing in the code changed; the environment
+moved.  The CI container that last ran successfully dates from January 2022
+and carried NumPy 1.
+
+**Candidate fix.**  The instance array is already populated by
+``create_default(obj)`` on the preceding line, so the assignment is a no-op in
+intent and can simply be skipped:
+
+.. code-block:: python
+
+    if isinstance(value, TTreeScalarDesc):
+        return          # default already installed by create_default()
+
+**Measured effect** on the full suite, 30 August 2026:
+
+=====================  ==========  ==========
+Suite                  failed      passed
+=====================  ==========  ==========
+before                 124         215
+with the fix           **16**      **323**
+=====================  ==========  ==========
+
+Not applied.  The change is one line in the core data layer, and it should be
+reviewed by whoever owns :mod:`grand.dataio` before it lands.
+
+
 .. _issue-import-requires-root:
 
 The package cannot be imported without ROOT
