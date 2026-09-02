@@ -25,6 +25,7 @@ collaboration uses, and the coordinate systems everything is expressed in.
    quickstart
    coordinates
    datamodel
+   known_issues
 
 .. toctree::
    :maxdepth: 2
