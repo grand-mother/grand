@@ -1,5 +1,18 @@
-python_docs_theme
-sphinx
-sphinx-automodapi
-sphinx-pyreverse
-sphinx-rtd-theme
+# Documentation dependencies.
+#
+# The environment file is the single list; this points at it so the two cannot
+# drift.  Run from the repository root, since `-e .` resolves relative to the
+# working directory and not to this file:
+#
+#     conda env create -f env/conda/grand-dev.yml --solver=libmamba
+#     conda activate grand-dev
+#     pip install -e ".[docs]"
+#     cd docs && make html
+#
+# The install is *editable*, and that matters beyond convenience:
+# jupyter-sphinx executes the `.. jupyter-execute::` blocks in the narrative
+# pages and in the docstrings in a real kernel, which is a separate process.
+# The sys.path handling in docs/source/conf.py applies to Sphinx itself and
+# never reaches that kernel, so the package has to be importable properly
+# rather than merely findable from the source tree.
+-e .[docs]
