@@ -33,7 +33,7 @@ name = "grand"
 version = "0.1.0.dev0"
 
 description = "Offline data handling, simulation and analysis for the Giant Radio Array for Neutrino Detection"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.10"
 license = "LGPL-3.0-or-later"
 license-files = ["LICENSE", "COPYING.LESSER"]
@@ -67,7 +67,7 @@ dependencies = [
 dev = ["pytest", "pytest-cov", "coverage", "pylint", "mypy", "black", "ruff"]
 docs = [
     "sphinx", "sphinx-rtd-theme", "sphinx-copybutton", "numpydoc",
-    "myst-parser", "jupyter-sphinx", "ipykernel",
+    "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel",
     # jupyter-sphinx executes the docstring examples in a real kernel, so
     # what those examples import has to be installed too.
     "numpy", "scipy", "matplotlib",

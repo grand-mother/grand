@@ -61,9 +61,19 @@ extensions = [
     'sphinx.ext.viewcode',      # links API entries to highlighted source
     'sphinx.ext.intersphinx',   # cross-links to the Python and NumPy docs
     'sphinx_copybutton',        # copy-to-clipboard on code blocks
-    'myst_parser',              # lets .rst include Markdown
+    'myst_parser',              # lets changelog.rst include CHANGELOG.md
     'jupyter_sphinx',           # runs the .. jupyter-execute:: blocks
+    'sphinxcontrib.bibtex',     # the References page, from refs.bib
 ]
+
+# One bibliography file, whose entries come from INSPIRE so that keys and
+# metadata match what the literature uses.
+bibtex_bibfiles = ['refs.bib']
+bibtex_default_style = 'plain'
+
+# CHANGELOG.md is included by changelog.rst; without this, myst also picks it
+# up as a page in its own right and warns that it is not in any toctree.
+suppress_warnings = ['myst.xref_missing']
 
 intersphinx_timeout = 10
 intersphinx_mapping = {

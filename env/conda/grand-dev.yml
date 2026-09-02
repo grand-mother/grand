@@ -54,6 +54,7 @@ dependencies:
   - numpydoc
   - myst-parser
   - jupyter-sphinx
+  - sphinxcontrib-bibtex   # the References page
   - ipykernel
   # --- needed by work now in flight ---
   - lmfit                  # docker list only, never in conda

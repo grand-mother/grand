@@ -33,6 +33,9 @@ collaboration uses, and the coordinate systems everything is expressed in.
 
    architecture
    api
+   references
+   citing
+   changelog
 
 Citing
 ------

@@ -13,6 +13,7 @@ emission is driven by the local geomagnetic field.  Reconciling those is what
 user error in the library.
 
 .. image:: _static/frames.svg
+   :target: _static/frames.svg
    :alt: The coordinate frames and the conversions between them
    :align: center
 
