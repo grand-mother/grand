@@ -155,11 +155,13 @@ a third abandoned trunk.
       CPU-feature diagnostic there on some processors. Under `-W` that fails
       the build for a hardware reason nobody can act on. The job greps the
       log instead, filtering that one line; every other warning still fails.
-- [ ] Publish to GitHub Pages from CI — `pages.yml` is written and has never
-      run: Pages is not enabled on the repository, *and* the trigger names
-      `main` while the default branch is `master`, so GitHub does not offer
-      `workflow_dispatch` either. Both routes — the collaboration repository,
-      and a personal fork as a stopgap — are written up in `ci.rst`.
+- [x] Publish to GitHub Pages from CI — **live at
+      https://mbustama.github.io/grand/**, built by `pages.yml` from `dev-next`.
+      Published from a personal fork, because the collaboration repository has
+      Pages switched off *and* a default branch GitHub will not dispatch from.
+      Both routes, and the two non-obvious failure modes met on the way, are in
+      `ci.rst`. Still open on the proper repository — see *Needs repository
+      admin* — and the fork comes down the day that is switched on.
 
 ### Phase 8 — governance and weight
 - [x] Bump the deprecated GitHub Action versions (checkout, setup-python,
@@ -219,6 +221,13 @@ answers `Token required because branch is protected`, and the repository has
 only `PERSONAL_TOKEN` and `PYPI_TOKEN`. The step is non-fatal so it fails
 invisibly, and the README's codecov badge does not reflect reality. Adding the
 secret is the whole fix; the workflow already passes it.
+
+**GitHub Pages is switched off.** The manual currently publishes from a
+personal fork at https://mbustama.github.io/grand/ — complete and current, but
+a preview of a branch rather than the collaboration's own page. Turning Pages
+on (*Settings → Pages → Source: GitHub Actions*) makes `pages.yml` publish from
+this repository instead; until Phase 9 makes `dev-next` the default branch, add
+it to the workflow's `branches` list as well.
 
 **24 Dependabot alerts on the default branch** — 1 critical, 15 high, 7
 moderate, 1 low — reported on every push. Not looked at yet.

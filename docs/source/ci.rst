@@ -446,21 +446,48 @@ matches and the manual republishes on every push, at
 the workflow's ``branches`` list.
 
 **From a personal fork, in the meantime.**  A fork is a repository you are
-admin of, which removes both blockers without anyone's permission:
+admin of, which removes both blockers without anyone's permission.  This is
+what currently publishes https://mbustama.github.io/grand/:
 
 .. code-block:: bash
 
-    gh repo fork grand-mother/grand --clone=false --remote-name fork
-    git push fork dev-next
+    gh repo fork grand-mother/grand --clone=false
     gh repo edit <you>/grand --default-branch dev-next
     gh api -X POST repos/<you>/grand/pages -f build_type=workflow
     gh workflow run pages.yml --repo <you>/grand --ref dev-next
 
 Setting the fork's default branch to ``dev-next`` is what makes the last line
-work: it puts ``pages.yml`` where GitHub looks for dispatchable workflows.  The
-result is a complete, current manual at ``https://<you>.github.io/grand/``,
-which is enough to circulate a link — but say plainly that it is a preview of a
-branch, not a second home for the project.
+work: it puts ``pages.yml`` where GitHub looks for dispatchable workflows.
+
+Two things are worth knowing before repeating this, because neither is
+obvious and both cost a wasted run:
+
+*A fresh fork has no registered workflows.*  GitHub indexes a fork's workflow
+files on its first ``push`` event, not when the fork is created — so
+``workflow run`` answers ``404: workflow pages.yml not found on the default
+branch`` even though the file is plainly there.  Any push to the fork fixes it.
+
+*The deployment is restricted to the default branch.*  Enabling Pages creates a
+``github-pages`` environment whose branch policy allows ``dev-next`` alone, so
+a run started on any other branch fails before its first step, with no log to
+read.  Dispatch on ``dev-next``.
+
+To republish after pushing new commits:
+
+.. code-block:: bash
+
+    gh workflow run pages.yml --repo <you>/grand --ref dev-next
+
+To take it down again — the first keeps the repository, the second needs the
+``delete_repo`` scope or the web UI:
+
+.. code-block:: bash
+
+    gh api -X DELETE repos/<you>/grand/pages
+    gh repo delete <you>/grand
+
+Say plainly, wherever the link is circulated, that it is a preview of a branch
+and not a second home for the project.
 
 Neither route changes a line of the documentation.  The manual that publishes
 is the one ``cd docs && make html`` builds locally.
