@@ -33,12 +33,12 @@ Measured in the built environment on 2026-08-30:
 
 | | |
 |---|---|
-| Merge queue | 5 of 9 merged |
-| Test suite | 124 failed, 215 passed, 14 skipped — the rise is `dev_aoi_unittest` exposing a NumPy 2 bug, not a regression |
+| Merge queue | 5 of 9 merged; 4 blocked on decisions |
+| Test suite | **343 passed, 8 xfailed, 0 failed**; coverage 64% |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
 | Documentation | 7 pages build, examples execute against real GRANDlib |
-| Tag | `v0.1.0-dev.1` |
+| Tag | `v0.1.0-dev.5` |
 
 ## Phases
 
@@ -68,10 +68,10 @@ a third abandoned trunk.
 
 ### Phase 2 — restore CI
 - [x] Read the logs of a cancelled run and confirm the cause — see `FINDINGS_CI.md`
-- [ ] Move the container into the repo, publish to GHCR under `grand-mother`
-- [ ] Add `pull_request` to the triggers — fork PRs have had no CI at all
-- [ ] Move the `paths:` filter off the triggers into the workflow
-- [ ] Add the ROOT 6.36 / 6.38 matrix
+- [x] ~~Move the container into the repo~~ — no container at all; `setup-miniconda` against `grand-dev.yml`
+- [x] Add `pull_request` to the triggers — fork PRs have had no CI at all
+- [x] Move the `paths:` filter off the triggers into the workflow
+- [x] Add the ROOT 6.36 / 6.38 matrix
 - [ ] Turn on branch protection for `dev-next`
 
 ### Phase 3 — tests before features

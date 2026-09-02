@@ -34,7 +34,8 @@ WORK = [
     ('Sphinx tree',    'done'),
     ('schema test',    'done'),
     ('noise test',     'done'),
-    ('CI restore',     'todo'),
+    ('CI restore',     'done'),
+    ('green suite',    'done'),
     ('interface',      'todo'),
 ]
 
@@ -179,8 +180,8 @@ def main():
     # --- phase strip (below) ---------------------------------------------
     s.append('<text x="%d" y="470" font-size="10.5" font-weight="600" '
              'fill="#0E6E70" letter-spacing="0.08em">PHASES</text>' % X0)
-    phases = [('0 branch', 'done'), ('1 env', 'done'), ('2 CI', 'todo'),
-              ('3 tests', 'blocked'), ('4 merge', 'blocked'),
+    phases = [('0 branch', 'done'), ('1 env', 'done'), ('2 CI', 'done'),
+              ('3 tests', 'done'), ('4 merge', 'blocked'),
               ('5 decide', 'todo'), ('6 interface', 'todo'), ('7 docs', 'blocked'),
               ('8 govern', 'todo'), ('9 promote', 'todo'), ('10 cleanup', 'todo')]
     pw = (X1 - X0) / len(phases)
