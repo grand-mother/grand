@@ -216,12 +216,18 @@ disagree:
     than one red cross on a long script.  ``dataio`` gets its own stage because
     that is where the ROOT-version branch lives, and the conda matrix never
     exercises it: both legs are ROOT >= 6.36 and take the other path.
-``build-images``
+``build-images`` — **opt-in**, off unless ``build_images`` is set
     Runs ``build_base.sh`` and ``build_dev.sh`` from ``env/docker_amd64/``.
     Those scripts assemble their requirements files by copying them out of the
     repository before building, so they have to be run rather than the
     Dockerfiles built directly.  This job is what would have caught the copy
     that pointed at ``docs/apidoc-only/`` after that directory was deleted.
+
+    It is off by default because it answers a different question from "does the
+    published image work", and is the slower and more fragile half: ``pip``
+    resolving 53 unpinned packages against Python 3.8 has a great deal of room
+    to backtrack.  The push trigger carries no inputs, so a branch-triggered
+    run skips it and costs one job per ref rather than three.
 
 **Why in CI and not on a laptop.**  The image is about 3 GB uncompressed and
 the data model another 2 GB at peak.  More to the point, running the container
