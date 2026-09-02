@@ -181,9 +181,11 @@ def get_filter(time, trace, fr_min, fr_max):
     trace : ndarray
         Trace to filter.
     fr_min : float
-        Lower band edge, in MHz.
+        Lower band edge, in **Hz**.  Note the unit: most frequency arguments
+        in this package are in MHz, and this one is not -- passing 50 rather
+        than 50e6 silently returns an all-zero trace.
     fr_max : float
-        Upper band edge, in MHz.
+        Upper band edge, in **Hz**.
 
     Returns
     -------
