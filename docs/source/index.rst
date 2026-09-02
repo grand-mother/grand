@@ -45,6 +45,12 @@ collaboration uses, and the coordinate systems everything is expressed in.
    known_issues
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Handbook
+
+   handbook/index
+
+.. toctree::
    :maxdepth: 1
    :caption: Project
 
