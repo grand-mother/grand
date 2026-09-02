@@ -1,7 +1,4 @@
-"""
-Classes to handle external Air shower simulators: ZHAires and Coreas
-"""
-
+"""Air-shower containers and particle codes."""
 #from .coreas import CoreasShower
 #from grand.sim.shower.gen_shower import ShowerEvent
 #from .zhaires import ZhairesShower

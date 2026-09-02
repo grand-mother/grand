@@ -107,4 +107,63 @@ target-version = "py310"
 # Pinned rather than left to the default.  Ruff's default selection widens
 # between releases, which turns a green CI red on unchanged code; this is the
 # set the package is being cleaned against.
-select = ["E4", "E7", "E9", "F"]
+#
+# "D" is pydocstyle.  Every function in the package is to carry a numpydoc
+# docstring -- description, Parameters, Returns, versionadded/versionchanged
+# where they apply, and a worked example.  Doing that to 554 functions in one
+# pass would stall everything else, so it is a ratchet instead: the
+# per-file-ignores list below names the modules not yet converted, and entries
+# are deleted as modules are finished.  The list may shrink and must never
+# grow.  `python quality/docstring_coverage.py` reports where it stands.
+select = ["E4", "E7", "E9", "F", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+# Not yet converted.  Delete a line when its module is done; never add one.
+#
+# Grouped by why they are waiting:
+#   (a) files the pending merge-queue branches edit -- converting them now
+#       manufactures conflicts;
+#   (b) the simulation layer, whose signatures Phase 6 rewrites, so
+#       Parameters sections written now would be thrown away.
+"grand/aoi/event.py"                    = ["D"]   # (a) _aoi_levels_lwp, dev_marion
+"grand/aoi/event_list.py"               = ["D"]   # (a)
+"grand/aoi/shower.py"                   = ["D"]   # (a)
+"grand/basis/signal.py"                 = ["D"]   # (a) refact_galaxy
+"grand/dataio/data_handling.py"         = ["D"]   # (a)
+"grand/dataio/descriptors.py"           = ["D"]   # (a)
+"grand/dataio/event_trees.py"           = ["D"]   # (a)
+"grand/dataio/run_trees.py"             = ["D"]   # (a) dev_marion
+"grand/sim/efield2voltage.py"           = ["D"]   # (b)
+"grand/sim/noise/galaxy.py"             = ["D"]   # (b)
+"grand/sim/detector/rf_chain.py"        = ["D"]   # (b)
+"grand/sim/detector/process_ant.py"     = ["D"]   # (b)
+"grand/sim/detector/adc.py"             = ["D"]   # (b)
+"grand/sim/detector/antenna_model.py"   = ["D"]   # (b)
+# Safe to convert now; listed so the build stays green until each is done.
+"grand/geo/coordinates.py"              = ["D"]
+"grand/dataio/data_tree.py"             = ["D"]
+"grand/basis/traces_event.py"           = ["D"]
+"grand/dataio/root_files.py"            = ["D"]
+"grand/geo/turtle.py"                   = ["D"]
+"grand/basis/du_network.py"             = ["D"]
+"grand/geo/topography.py"               = ["D"]
+"grand/manage_log.py"                   = ["D"]
+"grand/geo/gull.py"                     = ["D"]
+"grand/basis/type_trace.py"             = ["D"]
+"grand/aoi/timetrace.py"                = ["D"]
+"grand/aoi/antenna.py"                  = ["D"]
+"grand/geo/geomagnet.py"                = ["D"]
+"grand/sim/shower/gen_shower.py"        = ["D"]
+"grand/sim/shower/pdg.py"               = ["D"]
+"grand/sim/noise/Compute_Plot_Galactic_Noise.py" = ["D"]
+"grand/recon/elec_field.py"             = ["D"]
+"grand/recon/params_shower.py"          = ["D"]
+"grand/basis/pipeline.py"               = ["D"]
+"grand/dataio/protocol.py"              = ["D"]
+"grand/__init__.py"                     = ["D"]
+"tests/**"                              = ["D"]
+"grand/analysis/**"                     = ["D"]
+"grand/geo/coordinates_test.ipynb"      = ["D"]     # a notebook, not a module

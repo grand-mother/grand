@@ -1,7 +1,4 @@
-"""
-Earth-related classes: positioning, topography, geodesy, magnetism
-"""
-
+"""Terrestrial coordinate systems, topography and the geomagnetic field."""
 from typing_extensions import Final
 
 import os

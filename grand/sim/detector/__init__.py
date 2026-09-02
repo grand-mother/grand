@@ -1,3 +1,1 @@
-"""
-Modeling classes to simulate detector unit : response antenna and electronic chain
-"""
+"""Detector-unit response: antenna effective length, RF chain and ADC."""
