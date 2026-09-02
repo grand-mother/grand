@@ -90,7 +90,12 @@ a third abandoned trunk.
       one-character strings (values intact) — now in the known issues.
       Also generated the missing `schema_snapshot.json`, without which the
       schema-snapshot test had been skipping since it was written.
-- [ ] Backward-compatibility ROOT fixture
+- [x] Backward-compatibility ROOT fixture — `tests/dataio/test_backward_compatibility.py`,
+      against the 2024 fixtures already in the repo (April, CoREAS; October,
+      ZHAireS). They still read, values and trace shapes included, and the 24
+      fields `TADC` has gained since read back empty rather than raising.
+      Compatibility rests on branch names: `event_version` exists in the files
+      and no code in `grand/` reads it, which is pinned too.
 - [x] Upgrade `test_rf_chain.py` to passivity, reciprocity, cascade identity —
       in `tests/sim/test_rf_chain_physics.py`. The tests discriminate: passive
       stages must satisfy |S11|²+|S21|² ≤ 1 and S12 = S21, and the two
@@ -106,6 +111,12 @@ a third abandoned trunk.
 - [ ] `dev_fix_root_warnings_aoi_levels_lwp` — blocked behind it
 - [ ] `dev_snonis` — conflict on `galaxy.py`, plus the physics decision
 - [ ] `dev_database` — conflict on `granddb/datamanager.py`
+- [ ] After the `sim2root/` branches land: fix the CoREAS site table
+      (`issue-coreas-site-table`). Unknown sites raise `ValueError` on an
+      empty unpacking — Xiaodushan among them — and the table's centimetre
+      altitudes are one line away from reaching the output. Both are pinned
+      by tests meanwhile; neither is touched here, because
+      `dev_io_root_testmerges` is in flight over that directory.
 
 ### Phase 5 — the three decisions
 - [ ] Galactic noise: fix or rewrite

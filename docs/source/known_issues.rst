@@ -983,3 +983,83 @@ compatibility question in a different place.
 behaviour, so it is documented rather than surprising, and the test fails if
 a future ROOT version changes it. That failure is the moment to decide, since
 at that point the compatibility break has happened anyway.
+
+.. _issue-coreas-site-table:
+
+The CoREAS site table knows two sites, and stores their altitudes in centimetres
+---------------------------------------------------------------------------------
+
+:Status: open — one live defect, one dormant landmine, both in five lines
+:Affects: converting any CoREAS simulation of a site other than Dunhuang or
+          Lenghu; and, if one line moves, every CoREAS conversion
+:Test: ``tests/sim2root/test_converter_defects.py``
+:Blocked by: ``dev_io_root_testmerges``, which is in flight over ``sim2root/``
+
+``read_lat_long_alt`` in ``sim2root/CoREASRawRoot/CorsikaInfoFuncs.py`` maps a
+site name to its coordinates:
+
+.. code-block:: python
+
+    def read_lat_long_alt(site):
+        if site == "Dunhuang":
+            latitude, longitude, altitude = [40.142132, 94.661880, 114200] # alt in cm
+        elif site == "Lenghu":
+            latitude, longitude, altitude = [38.7348, 93.3306, 280000] # alt in cm
+        else:
+            latitude, longitude, altitude = []
+        return latitude, longitude, altitude
+
+**The live defect: every other site raises.** The ``else`` branch unpacks an
+empty list, so an unrecognised site does not fall back, warn or return
+``None``:
+
+.. code-block:: text
+
+    Dunhuang     -> (40.142132, 94.66188, 114200)
+    Lenghu       -> (38.7348, 93.3306, 280000)
+    Xiaodushan   -> ValueError: not enough values to unpack (expected 3, got 0)
+
+Xiaodushan is the case that matters. It is a real GRAND site, the ZHAireS
+fixtures in this repository are simulations of it, and a CoREAS simulation of
+the same site cannot be converted. The error names neither the site nor the
+table, so the report will be about an unpacking error deep in a conversion
+run.
+
+**The dormant landmine: the altitudes are in centimetres.** Dunhuang is at
+1142 m and the table says 114200; Lenghu is at 2800 m and the table says
+280000. The comments say so, and the unit matches CORSIKA's own — but the
+value is handed to ``RawShower.site_alt``, whose other producer, the ZHAireS
+reader, writes metres. Nothing in the schema records which.
+
+It is currently harmless because ``CoreasToRawROOT.py`` throws the value away
+three lines after reading it:
+
+.. code-block:: python
+
+    latitude, longitude, altitude = read_lat_long_alt(site)
+
+    # set altitude to simulations obslevel
+    altitude = CorePosition[2]          # metres: the reas file is /100 on read
+
+That override arrived in ``0694fa9`` (2024-11-04, "save obs level as site
+altitude"). Before it, the centimetre value reached the output — which is
+still visible in the fixtures, and is asserted in
+``tests/dataio/test_backward_compatibility.py``:
+
+===============================================  ==============  =============
+Fixture                                          Committed       Origin altitude
+===============================================  ==============  =============
+``sim_Dunhuang_..._CoREAS-NJ_0000``              2024-04-04      ``114200``
+``sim_Xiaodushan_..._ZHAireS_0000``              2024-10-03      ``1264``
+===============================================  ==============  =============
+
+Delete or reorder that one line and every CoREAS conversion is wrong by a
+factor of 100 in the array origin, silently, because nothing downstream checks
+whether an altitude is plausible.
+
+**Why it is not fixed here.** ``dev_io_root_testmerges`` is in flight over
+``sim2root/``. The fix is small — raise something that names the site, and
+either convert in the table or record the unit — but it belongs after that
+branch lands, for the same reason as the other ``sim2root`` entries in this
+page. Five tests pin both halves in the meantime, including one that fails if
+the override line moves away from the read.
