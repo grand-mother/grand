@@ -1,0 +1,24 @@
+# Review ownership.
+#
+# GitHub reads this from the repository root, .github/ or docs/.  A pattern
+# further down wins, so the specific entries below override the catch-all.
+#
+# Left deliberately sparse: an owner who does not review is worse than no
+# owner, because it silently blocks. Fill in the areas that have a real
+# maintainer and leave the rest to the default.
+
+# Default: anything not claimed below.
+*                               @grand-mother/maintainers
+
+# The ROOT schema is a data contract shared across the collaboration, and a
+# field name that lands is expensive to change.  See the NUTRIG naming entry
+# in docs/source/known_issues.rst for what happens without a single owner.
+/grand/dataio/                  @grand-mother/maintainers
+
+# The converters from ZHAireS and CoREAS, maintained by their authors.
+/sim2root/                      @grand-mother/maintainers
+
+# Quality machinery: the lint ratchet, the pre-merge check, CI.
+/quality/                       @grand-mother/maintainers
+/.github/workflows/             @grand-mother/maintainers
+/pyproject.toml                 @grand-mother/maintainers

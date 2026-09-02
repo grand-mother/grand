@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+title: GRANDlib
+message: >-
+  If you use this software, please cite both the software itself and the
+  paper describing it.
+type: software
+authors:
+  - name: The GRAND Collaboration
+    website: 'http://grand.cnrs.fr'
+repository-code: 'https://github.com/grand-mother/grand'
+url: 'https://grand-mother.github.io/grand-docs/'
+abstract: >-
+  Offline data handling, simulation and analysis for the Giant Radio Array for
+  Neutrino Detection. GRANDlib applies the instrument response of a GRAND
+  detection unit to an electric field produced by an external air-shower
+  simulation -- the antenna effective length, the radio-frequency chain, the
+  Galactic background and the digitiser -- and defines the data format and the
+  coordinate systems the collaboration uses.
+keywords:
+  - astroparticle physics
+  - ultra-high-energy neutrinos
+  - ultra-high-energy cosmic rays
+  - radio detection
+  - extensive air showers
+license: LGPL-3.0
+preferred-citation:
+  type: article
+  title: >-
+    GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino
+    Detection (GRAND)
+  authors:
+    - family-names: Alves Batista
+      given-names: Rafael
+    - name: The GRAND Collaboration
+  year: 2024
+  identifiers:
+    - type: other
+      value: 'arXiv:2408.10926'
+      description: arXiv preprint
+  url: 'https://arxiv.org/abs/2408.10926'

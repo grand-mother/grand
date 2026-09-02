@@ -126,14 +126,28 @@ a third abandoned trunk.
 - [x] Diagrams: frames, pipeline, data model, antenna arms, RF chain, module
       dependencies
 - [x] The GRANDlib Handbook included as its own section, with errata
-- [ ] Make `-W` the gate now that the build is clean
+- [x] ~~Make `-W` the gate~~ — **won't do.** `jupyter-sphinx` reports
+      anything a cell writes to stderr as a warning, and ROOT's JIT writes a
+      CPU-feature diagnostic there on some processors. Under `-W` that fails
+      the build for a hardware reason nobody can act on. The job greps the
+      log instead, filtering that one line; every other warning still fails.
 - [ ] Publish to GitHub Pages from CI
 
 ### Phase 8 — governance and weight
-- [ ] CONTRIBUTING.md, CODEOWNERS, templates, CITATION.cff
-- [ ] pre-commit with black, ruff, nbstripout
+- [x] CONTRIBUTING.md, CODEOWNERS, issue/PR templates, CITATION.cff
+- [x] pre-commit: ruff, whitespace/YAML/TOML checks, a large-file guard, and
+      a notebooks-match-the-generator hook. **No formatter**: reformatting the
+      package wholesale would rewrite files across every open branch and turn
+      the merge queue into conflicts. **No nbstripout**: the stored outputs are
+      what a reader sees on GitHub, so stripping them is the opposite of what
+      is wanted here.
 - [ ] Move large ROOT fixtures to a fetched bundle
-- [ ] Delete `createAIP.jar` and the stray `GP300` file
+- [ ] Delete the stray `GP300` file (383 B ROOT file at the repo root)
+- [ ] ~~Delete `createAIP.jar`~~ — **it is in use**: `scripts/archiving/
+      archive_grandraw.bash` invokes it. 36 MB, and it can only go when the
+      archiving workflow is retired or the jar is fetched instead.
+- [ ] The real weight is elsewhere: ~142 MB of ROOT fixtures tracked under
+      `sim2root/Common/sim_*/`, the largest a single 86 MB voltage file
 
 ### Phase 9 — promote to `main`
 - [ ] Confirm exit criteria

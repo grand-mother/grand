@@ -27,6 +27,11 @@ Options
     Write the notebooks without running them.  Useful while drafting; never
     what you want before committing, since the stored outputs are what a reader
     sees on GitHub.
+``--check``
+    Report whether the notebooks on disk match this file and carry outputs,
+    writing nothing.  This is the one to use in a hook or in CI -- note that
+    ``--no-execute`` is *not* a check, because it rewrites every notebook
+    without its outputs.
 
 Notes
 -----
@@ -1713,6 +1718,43 @@ are available through this module but are the caller's responsibility.'''),
     ])
 
 
+def check():
+    r"""Reports whether the notebooks on disk match this file, writing nothing.
+
+    ``--no-execute`` is not a check: it rewrites every notebook *without*
+    outputs, which is exactly what must not happen to a committed notebook,
+    since the stored outputs are what a reader sees on GitHub.  This compares
+    instead.
+
+    Returns
+    -------
+    int
+        0 if every notebook matches and carries outputs, 1 otherwise.
+    """
+    stale, bare = [], []
+    for name, nb in books.items():
+        path = HERE / name
+        if not sources_match(path, nb):
+            stale.append(name)
+            continue
+        on_disk = nbf.read(path, as_version=4)
+        if not any(cell.get('outputs') for cell in on_disk.cells
+                   if cell.cell_type == 'code'):
+            bare.append(name)
+
+    if stale:
+        print('  these no longer match the generator: %s' % ', '.join(stale))
+        print('  run: python notebooks/make_notebooks.py')
+    if bare:
+        print('  these carry no stored outputs and would render blank on '
+              'GitHub: %s' % ', '.join(bare))
+    if not stale and not bare:
+        print('  all %d notebooks match the generator and carry outputs'
+              % len(books))
+        return 0
+    return 1
+
+
 def build(execute=True, only=None):
     r"""Writes every notebook, executes it, and checks the directory is coherent.
 
@@ -1802,6 +1844,8 @@ if __name__ == '__main__':
     import sys
 
     argv = sys.argv[1:]
+    if '--check' in argv:
+        raise SystemExit(check())
     chosen = None
     if '--only' in argv:
         chosen = [f.strip() for f in argv[argv.index('--only') + 1].split(',')

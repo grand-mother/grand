@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Known issues
+    url: https://grand-mother.github.io/grand-docs/known_issues.html
+    about: >-
+      Open problems that are already recorded, with what was measured and what
+      would settle each one. Worth checking first.
+  - name: Troubleshooting
+    url: https://grand-mother.github.io/grand-docs/troubleshooting.html
+    about: >-
+      Silent NaNs, exceptions, and messages that look like errors but are not.

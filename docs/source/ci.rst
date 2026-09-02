@@ -111,12 +111,34 @@ the old container jobs did.
 whose stricter ``None`` comparison produced the warnings that a whole stack of
 branches exists to fix.  Testing both is what stops that recurring unseen.
 
-**Documentation is built with** ``-W --keep-going`` **in** ``lint.yml``.
-Warnings become errors, which is what keeps the documentation from drifting
-from the code the way ``docs/package/grand.rst`` did — describing modules that
-had been renamed years earlier.  ``pages.yml`` deliberately builds *without*
-``-W``: that job publishes, and a warning is not a reason to leave the site
-stale.
+**Any documentation warning fails** ``lint.yml``, which is what keeps the
+documentation from drifting from the code the way ``docs/package/grand.rst``
+did — describing modules that had been renamed years earlier.
+
+It is not done with ``-W``, and the reason is specific.  ``jupyter-sphinx``
+treats *anything* an executed cell writes to stderr as a warning, and ROOT's
+cling JIT writes a CPU-feature diagnostic there on some processors:
+
+.. code-block:: text
+
+    warning: invalid feature combination: +avx10.1-256;
+             will be promoted to avx10.1-512
+
+That depends on the runner's hardware, not on the documentation, and it appears
+on GitHub's runners while not appearing on a typical developer machine.  Under
+``-W`` it would fail the build for a reason nobody can act on.  So the job
+builds with ``--keep-going`` and greps the log afterwards, filtering that one
+diagnostic and its ``jupyter-sphinx`` wrapper; every other warning still fails
+it.  The effect is the same gate, with one hardware-dependent exception carved
+out explicitly rather than tolerated silently.
+
+``pages.yml`` does not check the log at all: that job publishes, and a warning
+is not a reason to leave the site stale.
+
+**The documentation build compiles the Handbook first.**  ``make html`` depends
+on ``docs/dev/build_handbook_pdf.py``, because the pages link to the PDF with
+``:download:`` and a missing target is itself a warning.  Both the ``docs`` job
+and the separate ``handbook`` job install a LaTeX toolchain for this.
 
 Running the same checks locally
 -------------------------------
@@ -129,5 +151,11 @@ Running the same checks locally
     pip install -e .
 
     pytest tests/ -q                       # the suite
-    ruff check grand/ tests/ quality/      # lint and the docstring ratchet
-    cd docs && make html SPHINXOPTS="-W"   # the documentation gate
+    ruff check grand/ tests/ quality/ notebooks/ docs/dev/   # lint + the ratchet
+    cd docs && make html                   # the documentation, warning-free
+    python notebooks/make_notebooks.py     # rebuild and execute the notebooks
+
+The documentation build should print no ``WARNING`` or ``ERROR`` lines apart
+from the ROOT CPU-feature diagnostic described above.  Do not add ``-W``: on a
+machine where ROOT emits that diagnostic it fails the build for a reason
+unrelated to the documentation.

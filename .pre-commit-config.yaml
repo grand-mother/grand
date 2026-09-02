@@ -1,0 +1,65 @@
+# Fast, local checks that run before a commit lands.
+#
+#   pip install pre-commit && pre-commit install
+#   pre-commit run --all-files      # to check the whole tree once
+#
+# Scope matches the CI lint job exactly: grand/, tests/, quality/, notebooks/
+# and docs/dev/.  sim2root/, granddb/, examples/ and src_outlib/ are excluded
+# for the same reason CI excludes them -- they carry roughly 1600 findings that
+# predate any of this, and sweeping them in would make every commit fail on
+# code the author did not touch.  See docs/source/sim2root.rst.
+#
+# Deliberately no formatter.  Reformatting the package wholesale would rewrite
+# files across every open branch and turn the merge queue into conflicts; the
+# lint ratchet in pyproject.toml is the mechanism for cleaning up instead.
+
+exclude: |
+  (?x)^(
+      sim2root/|
+      granddb/|
+      examples/|
+      src_outlib/|
+      wheel/|
+      docs/source/handbook/|
+      notebooks/.*\.ipynb$
+  )
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        # The repository already carries ~142 MB of ROOT fixtures under
+        # sim2root/ and a 36 MB jar.  This stops it growing further by
+        # accident; anything genuinely large belongs in a fetched bundle.
+        args: ['--maxkb=2048']
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.5
+    hooks:
+      - id: ruff
+        # No --fix: the ratchet in pyproject.toml records findings that are
+        # meant to be resolved deliberately, not silently rewritten.
+        args: ['--no-fix']
+
+  - repo: local
+    hooks:
+      # The notebooks are generated.  A hand-edited .ipynb is lost on the next
+      # rebuild, so catching it here saves the work rather than the diff.
+      #
+      # --check, not --no-execute.  The latter is not a check: it *rewrites*
+      # every notebook without its outputs, and the stored outputs are what a
+      # reader sees on GitHub.  --check compares and writes nothing.
+      - id: notebooks-are-generated
+        name: notebooks match make_notebooks.py
+        entry: python notebooks/make_notebooks.py --check
+        language: system
+        pass_filenames: false
+        files: ^notebooks/
