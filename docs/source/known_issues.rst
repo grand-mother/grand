@@ -435,7 +435,7 @@ against both branches.  Measured 2 September 2026:
 =============  ==========================================================
 Branch         Full suite inside the 2023 image
 =============  ==========================================================
-``dev-next``   **1 failed, 458 passed**, 13 skipped, 9 xfailed, 2 xpassed
+``dev-next``   **459 passed**, 13 skipped, 9 xfailed, 2 xpassed
 ``dev``        11 failed, 12 passed
 =============  ==========================================================
 
@@ -460,7 +460,7 @@ thresholds.  CI covers only the innermost.  The middle band, 6.30.04 up to
 ``dev-next`` is also markedly *better* under Docker than ``dev``, which fails
 eleven tests to its one.  The drift is real but it has not broken the library.
 
-**The single failure is arguably the test's fault.**
+**The single failure was the test's fault, and it is fixed.**
 ``tests/basis/test_signal.py::test_get_peakamptime_norm_hilbert`` checks where
 a Hilbert envelope peaks, with two adjacent assertions:
 
@@ -469,11 +469,19 @@ a Hilbert envelope peaks, with two adjacent assertions:
     assert np.isclose(t_max[1], true_t_max, atol=delta_t)   # one sample of slack
     assert idx_max[1] == int(true_t_max / 1000)             # exact
 
-``delta_t`` is one sample.  The first passes; the second fails by exactly one,
-``array([512]) == 511``.  The test allows a sample of tolerance in the time and
-none in the index for the same quantity, and older NumPy and SciPy land on the
-other side of the boundary.  Nothing in the library is wrong here; the second
-assertion is stricter than the first for no stated reason.
+``delta_t`` is one sample.  The first passed; the second failed by exactly one,
+``array([512]) == 511``.
+
+The cause is arithmetic rather than NumPy.  The trace is built on
+``linspace(-20, 20, 1024)``, whose midpoint falls on a half-sample: the peak
+sits at index **511.5**, exactly between two samples, so which one ``argmax``
+returns is decided by floating-point noise and implementations legitimately
+differ.  ``int(511.5)`` truncates to 511 — picking one of two equally correct
+answers for no reason.
+
+The assertion now brackets the true position, ``floor <= idx <= ceil``, which
+accepts 511 and 512 and still rejects 510 and 513.  With that, ``dev-next``
+passes its whole suite inside the 2023 image.
 
 **What this does to the recommendation.**  Reviving Docker is a smaller job
 than it looked.  The images are stale rather than incompatible, so the work is
@@ -569,7 +577,7 @@ Tree classes cannot be constructed under NumPy 2
 
 :Status: **fixed** 2026-08-30 — kept here until it appears in a release changelog
 :Affects: the whole data layer — ``TRun()`` raises
-:Test: visible in ``tests/dataio/`` (about 150 tests)
+:Test: visible in ``tests/dataio/`` (271 tests)
 
 **Symptom.**  Constructing any run or event tree fails::
 
@@ -778,11 +786,18 @@ name, and that the directory also hold matching run and shower trees grouped
 under the naming scheme :meth:`DataDirectory.get_list_of_files_handles`
 expects.  None of that is documented, validated or stated in an error message.
 
-**Consequences.**  The module sits at 21% test coverage, not because it is
-unimportant but because a valid input is difficult to construct: the existing
-tests skip when a fixture that is not in version control is absent.  A user
-who renames a file, or writes one from the tree classes directly, gets an
-``AttributeError`` naming an attribute they have never heard of.
+**Consequences.**  A user who renames a file, or writes one from the tree
+classes directly, gets an ``AttributeError`` naming an attribute they have
+never heard of.
+
+The module was at 21 % test coverage when this was written, not because it is
+unimportant but because a valid input was difficult to construct.  It is now at
+75 %: ``tests/dataio/test_root_files_reader.py`` builds a conforming
+three-file set in a fixture, and documents the convention above by
+constructing it.  The coupling itself is unchanged — the tests encode the
+requirement rather than removing it, and one of them asserts that the
+single-file layout still fails, so that the day the reader looks inside the
+file it was handed, the suite says so.
 
 **What it needs.**  The reader should take the trees it needs, or accept them
 explicitly, rather than rediscovering them from a directory listing.  That is

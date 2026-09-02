@@ -17,8 +17,8 @@ Current state, on the ``dev-next`` branch:
 
 .. code-block:: text
 
-    343 passed, 14 skipped, 8 xfailed
-    coverage: 64%
+    459 passed, 13 skipped, 10 xfailed, 1 xpassed
+    coverage: 71%
 
 Layout
 ------
