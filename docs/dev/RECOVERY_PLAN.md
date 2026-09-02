@@ -33,8 +33,8 @@ Measured in the built environment on 2026-08-30:
 
 | | |
 |---|---|
-| Merge queue | 4 of 8 merged |
-| Test suite | 27 failed, 64 passed, 1 skipped |
+| Merge queue | 5 of 9 merged |
+| Test suite | 124 failed, 215 passed, 14 skipped — the rise is `dev_aoi_unittest` exposing a NumPy 2 bug, not a regression |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
 | Documentation | 7 pages build, examples execute against real GRANDlib |
@@ -67,7 +67,7 @@ a third abandoned trunk.
 - [ ] Verify the four-command install on a *clean* machine
 
 ### Phase 2 — restore CI
-- [ ] Read the logs of a cancelled run and confirm the cause
+- [x] Read the logs of a cancelled run and confirm the cause — see `FINDINGS_CI.md`
 - [ ] Move the container into the repo, publish to GHCR under `grand-mother`
 - [ ] Add `pull_request` to the triggers — fork PRs have had no CI at all
 - [ ] Move the `paths:` filter off the triggers into the workflow
@@ -75,7 +75,7 @@ a third abandoned trunk.
 - [ ] Turn on branch protection for `dev-next`
 
 ### Phase 3 — tests before features
-- [ ] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
+- [x] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
 - [ ] End-to-end numerical regression against Fig. 6 of the paper
 - [x] Parseval invariant for galactic noise — `tests/sim/test_galactic_noise_normalisation.py`
 - [x] Tree schema snapshot — `tests/dataio/test_schema_snapshot.py`
