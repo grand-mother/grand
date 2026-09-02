@@ -29,12 +29,17 @@ FROM rootproject/root:6.36.00-ubuntu25.04
 # TURTLE and GULL are C libraries compiled by src/Makefile through
 # env/setup.sh, so the toolchain has to be present even though nothing here is
 # a C project.  git is needed because install_ext_lib.bash clones them.
+# python3-pip because the rootproject/root image does not ship it: the build
+# failed with "/usr/bin/python3: No module named pip" without it.  ROOT is
+# built against the system interpreter in these images, so that is the one to
+# install into rather than a separate virtualenv.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         build-essential \
         make \
         git \
         ca-certificates \
+        python3-pip \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/grandlib
