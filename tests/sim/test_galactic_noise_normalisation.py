@@ -279,22 +279,48 @@ def test_gp300_is_the_hfss_model_at_a_different_normalisation():
 
 
 def test_hfss_tables_are_not_reachable_through_du_type():
-    r"""Records that the ``hfss`` tables ship but no ``du_type`` reads them.
+    r"""Records that the ``hfss`` tables ship but no ``du_type`` opens them.
 
     ``galactic_noise`` accepts ``GP300``, ``GP300_nec`` and ``GP300_mat``.  The
     first recomputes the voltage from the MATLAB power file; the other two read
     the ``nec`` and ``mat`` tables.  The three ``*_hfss.npy`` files are never
-    opened.  They are the highest-level tables shipped, so a study that wanted
-    them would have to load them by hand.
-    """
-    import inspect
+    opened, even though they are the highest-level tables shipped, so a study
+    that wanted them would have to load them by hand.
 
+    Checked by recording every path the function actually opens, rather than by
+    grepping the source: the docstring names the hfss tables in order to warn
+    about exactly this, so a text search finds them and proves nothing.
+    """
     from grand.sim.noise import galaxy
 
-    source = inspect.getsource(galaxy.galactic_noise)
-    assert "hfss" not in source, (
-        'galactic_noise now mentions the hfss tables; this test is stale'
-    )
+    opened = []
+
+    # Bind the originals before patching.  `galaxy.np` is the numpy module
+    # itself, so a recorder that called `np.load` would call its own
+    # replacement and recurse.
+    real_load, real_h5 = galaxy.np.load, galaxy.h5py.File
+
+    def record_load(path, *args, **kwargs):
+        opened.append(str(path))
+        return real_load(path, *args, **kwargs)
+
+    def record_h5(path, *args, **kwargs):
+        opened.append(str(path))
+        return real_h5(path, *args, **kwargs)
+
+    galaxy.np.load, galaxy.h5py.File = record_load, record_h5
+    try:
+        for du_type in ("GP300", "GP300_nec", "GP300_mat"):
+            galactic_noise(float(LST_HOUR), 256, FREQS_MHZ, nb_ant=1, seed=0,
+                           du_type=du_type)
+    finally:
+        galaxy.np.load, galaxy.h5py.File = real_load, real_h5
+
+    assert opened, 'no data file was opened; the recording hook did not work'
+    hfss = [path for path in opened if "hfss" in path]
+    assert not hfss, (
+        'a du_type now reads an hfss table (%s); this test and the caveat in '
+        'the galactic_noise docstring are stale' % ', '.join(hfss))
 
 
 if __name__ == '__main__':

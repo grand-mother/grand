@@ -153,6 +153,45 @@ A noise level quoted without its ``du_type`` is ambiguous by a factor of two.
 This is independent of the :math:`\sqrt2` question above: that one is a single
 constant applied to all models alike.
 
+.. _issue-geoid-longitude-convention:
+
+``geoid_undulation`` returns NaN for a negative longitude
+----------------------------------------------------------
+
+:Status: open, not blocking
+:Affects: any site west of Greenwich
+:Test: ``tests/geo/test_topography_conventions.py``
+
+The EGM96 undulation map shipped as ``data/egm96.png`` is indexed over
+longitude 0-360 degrees.  :func:`grand.geo.topography.geoid_undulation` has two
+calling conventions, and only one of them normalises:
+
+.. code-block:: python
+
+    >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
+    nan
+    >>> topography.geoid_undulation(latitude=-35.20, longitude=290.68)
+    -44.371455192615110
+    >>> topography.geoid_undulation(
+    ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
+    -44.371455192615110
+
+Nothing raises.  The ``nan`` propagates into whatever geometry follows, and
+through ``elevation(..., reference='sea')``, which subtracts the undulation.
+
+**Workaround.**  Pass a :class:`~grand.geo.coordinates.Geodetic` rather than
+the ``latitude=``/``longitude=`` keywords.  That path normalises and is what
+the documentation and notebook 07 use throughout.
+
+**Fix.**  Wrap the longitude into :math:`[0, 360)` in the keyword branch.  It
+is one line; it has not been made here only because changing a function's
+domain silently is worse than documenting it, and no user of the keyword form
+in the western hemisphere has been identified.
+
+This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
+point with no SRTM tile also returns ``nan`` rather than raising.  Both are
+pinned in ``tests/geo/test_topography_conventions.py``.
+
 .. _issue-nutrig-field-names:
 
 Two names for the NUTRIG correlation fields

@@ -236,7 +236,13 @@ def test_remove_trace_low_signal():
     tr3d.remove_trace_low_signal(5, norm)
     assert tr3d.get_nb_trace() == 2
     tr3d = ori_tr3d.copy()
-    noise = np.random.normal(0, 1, tr3d.traces.size).reshape(tr3d.traces.shape)
+    # Seeded, and through a local generator so this does not disturb the global
+    # random state that other tests may rely on.  Unseeded, this was flaky: the
+    # three traces below the threshold sit at 1.0 and 0.5 against a cut of 5,
+    # and with 20 samples x 3 components of unit noise per unit, one of them
+    # occasionally crossed.  It failed roughly once in six full runs.
+    rng = np.random.default_rng(0)
+    noise = rng.normal(0, 1, tr3d.traces.size).reshape(tr3d.traces.shape)
     tr3d.traces += noise
     # print( tr3d.traces)
     tm, norm = tr3d.get_tmax_vmax(False, "no")

@@ -65,7 +65,11 @@ def test_find_max_with_parabola_interp_3pt():
     n_sig = 29
     v_x = np.linspace(0, 3, n_sig)
     epsilon = 0.001
-    v_y = parabole(v_x) + np.random.normal(0, epsilon, n_sig)
+    # Seeded through a local generator: the tolerance below is 10 epsilon, so
+    # this was never likely to fail, but a test that can fail one run in a
+    # thousand is a test that fails in CI eventually.
+    rng = np.random.default_rng(0)
+    v_y = parabole(v_x) + rng.normal(0, epsilon, n_sig)
     idx = np.argmax(v_y)
     #print(idx, v_y[idx])
     x_max, y_max = find_max_with_parabola_interp_3pt(v_x, v_y, idx)
