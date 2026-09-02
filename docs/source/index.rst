@@ -22,6 +22,7 @@ collaboration uses, and the coordinate systems everything is expressed in.
    :caption: User guide
 
    installation
+   docker
    quickstart
    coordinates
    datamodel

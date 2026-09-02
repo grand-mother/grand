@@ -243,44 +243,56 @@ pinned in ``tests/geo/test_topography_conventions.py``.
 
 .. _issue-setup-sh-swallows-errors:
 
-``env/setup.sh`` reports success when the C extension fails to build
----------------------------------------------------------------------
+Fixed: ``env/setup.sh`` used to report success when the build failed
+----------------------------------------------------------------------
 
-:Status: open, not blocking on a working environment
-:Affects: any environment where the build fails — a new container, a machine
-          missing a build dependency
-:Found: building the proposed Docker image, September 2026
+:Status: **fixed**, September 2026
+:Found: building the proposed Docker image
 
-``env/setup.sh`` compiles TURTLE and GULL through ``src/Makefile`` and
-``src/build_core.py``.  When that compilation fails, the script prints the
-traceback and **exits zero anyway**:
+``env/setup.sh`` compiles TURTLE and GULL through ``src/Makefile``.  When that
+failed it printed the traceback and **exited zero anyway**, because the script
+ended on a ``cd`` and nothing checked a status:
 
 .. code-block:: text
 
     PYTHON   _core.abi3.so
-    Traceback (most recent call last):
-      File ".../cffi/_shimmed_dist_utils.py", line 12, in <module>
-        import setuptools
     ModuleNotFoundError: No module named 'setuptools'
 
     $ echo $?
     0
 
-Neither ``env/setup.sh`` nor ``src/install_ext_lib.bash`` sets ``set -e`` or
-checks a status, so the failure is reported to the screen and nowhere else.
+The failure therefore surfaced later and somewhere unrelated — a CI stage named
+"run env/setup.sh" passed, and the next one failed with ``No module named
+'grand._core'``, which reads as a broken package rather than a missing build
+dependency two steps earlier.
 
-The consequence is that the failure surfaces later and somewhere unrelated.  In
-the case that found it, a CI stage named "run env/setup.sh" passed, and the
-next stage failed with ``ModuleNotFoundError: No module named 'grand._core'``
-— which reads as a broken package rather than a missing build dependency two
-steps earlier.
+**The fix**, in three places, and the shape of it matters:
 
-**Fix.**  ``set -e`` in ``env/setup.sh``, or an explicit status check after the
-extension build.  Not done here: the script is sourced rather than executed, so
-``set -e`` would leak into the caller's interactive shell and abort it on any
-subsequent failing command — the fix needs a subshell or an explicit check, and
-that is a change to the entry point every developer uses, which deserves its
-own review rather than riding along with a Docker investigation.
+``src/install_ext_lib.bash``
+    ``set -e``.  Correct here because the script is *executed*: aborting ends
+    the script and nothing else.  Previously a failed ``make`` was followed by
+    ``cp`` regardless, and the script's status became the ``cp``'s.
+``env/_setup_lib.sh``
+    Captures the build's status and returns it, rather than ending on ``cd``.
+``env/setup.sh``
+    Checks each step, prints which ones failed, and returns non-zero.  It does
+    **not** use ``set -e``: the script is sourced, so that would leak into the
+    caller's interactive shell and abort it on the next failing command —
+    closing a terminal because a ``grep`` found nothing.
+
+Verified both directions: a normal run returns 0, and a deliberately broken
+build returns 2 with
+
+.. code-block:: text
+
+    env/setup.sh FAILED. These steps did not succeed:
+      - compiling TURTLE and GULL (src/install_ext_lib.bash) (exit 2)
+
+A second bug was fixed alongside it.  ``_setup_lib.sh`` tested
+``if [ ! -z $CONDA_PREFIX ]`` — unquoted, so with no conda active the test
+became ``[ ! -z ]``, which asks whether the literal string ``-z`` is non-empty.
+It is, so the branch ran anyway and appended a bare ``:include`` and ``:lib`` to
+the compiler search paths.  Now ``[ -n "$CONDA_PREFIX" ]``.
 
 .. _issue-docker-unmaintained:
 
@@ -314,10 +326,8 @@ environment has drifted three years from the one everybody else uses.
 
 *ROOT is ten minor versions behind.*  The images and
 ``env/docker_*/base.dockerfile`` pin ROOT 6.26.02, against 6.36.04 in the conda
-environment and a CI matrix of 6.36 and 6.38.  This repository already records
-a case where :ref:`ROOT 6.38 changes a numerical result
-<issue-root-638-numerical-difference>`; someone three releases further back is
-not running the same software as anybody else, and nothing would tell them.
+environment and a CI matrix of 6.36 and 6.38.  Someone three releases further back is not running the same software as
+anybody else, and nothing would tell them.
 
 *The base image is out of support.*  ``rootproject/root:6.26.02-ubuntu20.04``
 — Ubuntu 20.04 left standard support in April 2025.  The tag does still exist
@@ -430,9 +440,22 @@ Branch         Full suite inside the 2023 image
 =============  ==========================================================
 
 So **the code does work under Docker**, on ROOT 6.26, Python 3.8 and NumPy
-1.23 — and it exercises ``high_root_version = False``, the branch the conda
+1.23 — and it exercises ``high_root_version = False``, a branch the conda
 matrix never reaches, since both of its legs are ROOT >= 6.36.  That path is
 not merely present, it is functional, which nothing had established before.
+
+There are in fact **two** thresholds in ``grand/dataio/descriptors.py`` and so
+three paths, which is worth stating because "the old ROOT path" is not one
+thing:
+
+.. code-block:: python
+
+    high_root_version   = ROOT.gROOT.GetVersionInt() >= 63600   # 6.36.00
+    higher_root_version = ROOT.gROOT.GetVersionInt() >= 63004   # 6.30.04
+
+The 2023 image is at 6.26.02, so it takes the outermost branch — below *both*
+thresholds.  CI covers only the innermost.  The middle band, 6.30.04 up to
+6.36, is covered by nothing at all.
 
 ``dev-next`` is also markedly *better* under Docker than ``dev``, which fails
 eleven tests to its one.  The drift is real but it has not broken the library.
@@ -642,13 +665,20 @@ This is also why the test asserts so little.  Its only check after
 ``compute_voltage()`` is that an output file exists -- which is all you can
 assert when there is no reliable input to compare against.
 
-**What it needs.** Either a small ROOT file committed as a fixture, or one
-built in a pytest fixture from the tree classes themselves.  The second is
-better: it costs nothing in repository size, it cannot drift from the schema,
-and it makes the fixture's contents visible in the test rather than opaque.
-Once it exists, the end-to-end regression described in the recovery plan --
-peak voltage, trace RMS, band-integrated power against stored references --
-becomes possible.
+**Partly resolved.**  ``tests/sim/test_pipeline_end_to_end.py`` now builds its
+input in a pytest fixture from the tree classes themselves, which costs nothing
+in repository size, cannot drift from the schema, and puts the fixture's
+contents in front of the reader.  Six tests exercise the whole chain on it.
+
+What remains is the *numerical* regression described in the recovery plan --
+peak voltage, trace RMS and band-integrated power against stored references.
+That needs agreed reference values, which in turn needs the Galactic-noise
+normalisation settled, so it is blocked on
+:ref:`issue-galactic-noise-normalisation` rather than on the fixture.
+
+``tests/sim/test_efield2voltage.py`` still reads the absent
+``data/test_efield.root`` and is still marked xfail; it should be retired in
+favour of the built fixture.
 
 .. _issue-vga-gain-ignored:
 
@@ -796,43 +826,54 @@ docstring is corrected.
 
 .. _issue-root-638-numerical-difference:
 
-ROOT 6.38 changes the result of a NumPy-only test
----------------------------------------------------
+Withdrawn: ROOT 6.38 does not change the result of a NumPy-only test
+----------------------------------------------------------------------
 
-:Status: open, cause not established
-:Affects: unknown; one test is currently known to differ
+:Status: **withdrawn.** The observation was real; the explanation was wrong.
 :Test: ``tests/basis/test_traces_event.py::test_remove_trace_low_signal``
 
-The first run of the new ROOT matrix found a difference that has nothing
-obviously to do with ROOT.
+This entry used to report that ``test_remove_trace_low_signal`` kept two traces
+under ROOT 6.36.04 and three under 6.38.02, and reasoned that since the
+function is pure NumPy and never touches ROOT, importing ROOT might be changing
+floating-point behaviour process-wide — "a much broader problem than one test".
 
-``test_remove_trace_low_signal`` builds five traces whose three components are
-set to 1, 10, 0.5, 11 and 1, giving Euclidean norms of about 1.73, 17.3, 0.87,
-19.05 and 1.73.  With a threshold of 5, two traces should survive.  Under ROOT
-6.36.04 two do.  **Under ROOT 6.38.02, three do.**
+**It is not.  The test was flaky.**
 
-The comparison is not close to the threshold, so this is not a rounding
-difference at a boundary.  Python, NumPy and every other package are identical
-between the two legs -- 3.12.14 and 2.5.2 respectively -- and only the ROOT
-version differs.  The function itself, ``Handling3dTraces.remove_trace_low_signal``,
-is pure NumPy and never touches ROOT.
+It added *unseeded* unit-variance noise to traces of amplitude 1, 10, 0.5, 11
+and 1 and then counted how many exceeded a threshold of 5.  The three quiet
+traces sit far enough below the threshold to survive most draws and not all of
+them.  Measured over 400 draws with ROOT imported and never called:
 
-**What is not yet known.**  Whether importing ROOT 6.38 changes floating-point
-behaviour process-wide (its JIT does emit CPU-feature promotions on some
-hardware), whether some shared state differs between the two runs, or whether
-the test is order-dependent in a way that only manifests on one leg.  Anything
-written here beyond the observation would be a guess.
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
 
-**Why it matters.**  If importing ROOT can change the result of NumPy code
-that does not use ROOT, that is a much broader problem than one test, and it
-would affect every number the pipeline produces.  If instead the test has
-hidden state, the test is wrong and should be fixed.  The two possibilities
-are very different and the first one is worth ruling out promptly.
+   * - Surviving traces
+     - Frequency
+   * - 2 (the expected count)
+     - 93.5 %
+   * - 3
+     - 6.2 %
+   * - 4
+     - 0.2 %
 
-**Handling meanwhile.**  The 6.38 leg of the matrix reports but does not block:
-6.36 is the supported version and gates, while 6.38 stays visible without
-holding up work.  This is the difference the matrix was added to find, so it
-should not be silenced.
+So "three survived on one leg" is what this test did roughly one run in
+fifteen, on any ROOT version.  The two CI legs simply drew different noise.
+Nothing about ROOT is required to explain it, and no evidence for a ROOT effect
+survives.
+
+The test is now seeded through a local generator and the flakiness is gone; it
+had been failing about one full suite run in six before that.
+
+**What was actually wrong** was the test, and it is fixed.  What was wrong with
+this entry was reaching for a dramatic explanation of a difference between two
+runs without first asking whether the measurement was repeatable.  A
+single-sample difference between two runs is not evidence of anything until the
+runs are shown to be deterministic.
+
+If someone does observe a genuine ROOT-version-dependent numerical difference,
+it needs a deterministic reproducer — the same seeded input giving different
+output on two ROOT versions — before it is written down as one.
 
 .. _issue-geomagnetic-model-expired:
 

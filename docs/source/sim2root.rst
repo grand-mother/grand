@@ -99,7 +99,7 @@ Said plainly, because the alternative is finding out by accident.
 ``sim2root/``, and neither does the test suite: there are no tests for any of
 the files above.
 
-**Ruff reports about 900 findings there**, against zero in the gated scope.
+**Ruff reports 839 findings there**, against zero in the gated scope.
 The largest groups are ``F405`` (371, names possibly undefined from star
 imports), ``D103`` (108, missing docstrings) and ``F821`` (99, undefined
 names).

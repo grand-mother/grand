@@ -21,7 +21,7 @@ fresh checkout has 12 tracked files and no models:
 ==================================  ========================================
 Tracked                             What it is
 ==================================  ========================================
-``download_*.py`` (5 scripts)       Fetch the models; see below
+``download_*.py`` (4 scripts)       Fetch the models; see below
 ``egm96.png``                       EGM96 geoid undulation map, ~2 MB.  Read
                                     by :func:`~grand.geo.topography.geoid_undulation`.
                                     A PNG used as a raster data file, not a

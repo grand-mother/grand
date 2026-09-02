@@ -238,12 +238,28 @@ without its `du_type` is ambiguous by a factor of two.
 
 ## Open scope question: is Docker supported?
 
-**Answered in part, 2026-09-02.** The Docker workflow was run: the code *does*
-work in the 2023 image — ROOT 6.26, Python 3.8, NumPy 1.23 — with `dev-next`
-at 1 failure of 459, and that one failure is a test asserting an exact sample
-index where the assertion beside it allows a sample of tolerance. `dev` fails
-eleven. So the images are stale, not incompatible, and reviving them is
-repin + rebuild + publish rather than fixing the library.
+**Technically answered, 2026-09-02.** Both halves now pass:
+
+| Image | Environment | Full suite |
+|---|---|---|
+| `grandlib/dev:1.2` (2023) | ROOT 6.26, Py 3.8, NumPy 1.23 | **459 passed** on `dev-next` |
+| built from this repo | ROOT 6.36, Py 3.13, NumPy 2.2 | **459 passed** |
+
+So the images are stale, not incompatible. What remains is a *decision*, not
+engineering:
+
+- **Supported** → publish the image `env/docker/grandlib.dockerfile` builds,
+  and keep the CI job that builds it. Roughly a day, mostly registry
+  paperwork.
+- **Not supported** → say so on the installation page and retire
+  `env/docker_*` in Phase 10.
+
+Two loose ends either way: arm64 is untested (x86_64 runners; needs
+`ubuntu-24.04-arm` or QEMU), and a **2025** image exists that nothing can pull
+— the Handbook distributes `grand_docker_handson_2025.tar.gz` via Google Drive.
+If that one works, publishing it is smaller than anything above.
+
+See `docs/source/docker.rst`.
 
 The Dockerfiles and the published images are three years stale — newest image
 2023-01-14, pinning ROOT 6.26.02 against 6.36/6.38 everywhere else — and
@@ -262,6 +278,31 @@ This is a decision for the collaboration, not a patch:
 Documented meanwhile in `issue-docker-unmaintained`, with an erratum in the
 Handbook and a note on the installation page. Merge exposure is low either way:
 `env/docker_arm64` is touched by no branch, `env/docker_amd64` by two.
+
+## Corrections to earlier findings in this plan
+
+Everything in this document was re-verified on 2026-09-02. Four claims that had
+been recorded as defects were not defects, and are listed here rather than
+quietly edited out, because the pattern in them is worth more than any of them
+individually.
+
+| Claimed | Actually |
+|---|---|
+| Galactic-noise normalisation is off by an unexplained factor of ~2 (ratio 0.33) | Ratio is **1/√2** exactly. The 0.33 came from comparing `GP300` against a table it never reads. |
+| ROOT 6.38 changes the result of a NumPy-only test | **No.** The test had unseeded noise and gave the "anomalous" answer 6.5 % of the time on any ROOT. |
+| The Docker route cannot work | **It works.** 459 tests pass in the 2023 image. |
+| `vga_gain` loads the 20 dB table regardless | It loads `feb+amfitler+biast.s2p`, which is not a VGA table at all. |
+
+The pattern: each was a *real observation* wrapped in a *guessed cause*, and in
+each case the guess was more dramatic than the truth. The observation that two
+CI legs disagreed was real; "ROOT changes NumPy's floating point" was invented
+to explain it. The observation that `du_type` levels differ by 2× was real; "the
+transform is wrong" was invented to explain it.
+
+The discipline that would have caught all four: **before attributing a
+difference to a cause, check that the measurement repeats.** Three of the four
+collapse immediately under that test, and the fourth (`vga_gain`) needed only
+reading one more line of the function.
 
 ## Branches carrying unique work
 

@@ -160,9 +160,12 @@ Environment and build
 
     conda env create -f env/conda/grand-dev.yml --solver=libmamba
 
-**A result changed after a ROOT upgrade.**  ROOT 6.38 changes a result that is
-computed in NumPy only, which should not depend on ROOT at all.  Unresolved;
-see :ref:`issue-root-638-numerical-difference`.
+**A result changed after a ROOT upgrade.**  Check first that the computation is
+deterministic.  A difference between two runs on different ROOT versions was
+once recorded here as a ROOT effect and turned out to be an unseeded random
+draw in the test itself — see :ref:`issue-root-638-numerical-difference`, which
+is retained as a worked example of the mistake.  Seed everything, reproduce the
+difference twice, and only then look at ROOT.
 
 **A test fails only in a full run, never alone.**  Look for unseeded
 randomness.  One such test existed in this repository and failed about one run

@@ -1379,10 +1379,14 @@ The last stage turns microvolts into ADC counts.'''),
 adc = ADC()
 print("ADC:", [a for a in dir(adc) if not a.startswith('_')])
 
-# 1.8 V full scale across a 14-bit converter, expressed in microvolts so it can
-# be compared with the traces above directly.
-lsb_uv = 1.8e6 / 2 ** 14
+# Read the constants from the class rather than restating them.  An earlier
+# draft of this notebook hard-coded "1.8e6 / 2**14", which gives the right
+# number for the wrong reason: the ADC is +/-0.9 V over +/-8192 counts, and
+# 1.8/2**14 happens to equal 0.9/2**13.  Reading them means the notebook cannot
+# quietly disagree with the code.
+lsb_uv = adc.max_voltage / adc.max_bit_value
 print()
+print("full scale         +/-%.2f V over +/-%d counts" % (adc.max_voltage / 1e6, adc.max_bit_value))
 print("quantisation step   %.1f uV" % lsb_uv)
 print("noise RMS, X arm    %.1f uV  ->  %.1f counts"
       % (np.std(noise[0, 0]), np.std(noise[0, 0]) / lsb_uv))
