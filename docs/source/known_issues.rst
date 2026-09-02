@@ -368,16 +368,53 @@ notes, so that path has a user, and containers are the right answer for
 reproducibility if anyone maintains them.  Merge exposure is low either way:
 ``env/docker_arm64`` is touched by no branch and ``env/docker_amd64`` by two.
 
-**How to find out.**  ``.github/workflows/docker.yml`` runs the question:
-trigger it from the Actions tab and it pulls the published image, checks out
-``dev-next`` and ``dev`` inside it, and runs ``env/setup.sh``, ``import
-grand``, the ``dataio`` suite and the full suite as separate stages.  It is
-manual and is not a gate — it is expected to be able to fail.  Running it
-against both branches separates "Docker is stale" from "``dev-next`` broke
-Docker".
+**It has now been run, and the answer is better than expected.**
+``.github/workflows/docker.yml`` pulled ``grandlib/dev:1.2`` and ran
+``env/setup.sh``, ``import grand``, the ``dataio`` suite and the full suite
+against both branches.  Measured 2 September 2026:
 
-Nobody has run it yet, so the question in the title of this entry is still
-open.
+.. code-block:: text
+
+    grand    /work/grand/__init__.py
+    ROOT     6.26/02 (int 62602)
+    numpy    1.23.5
+    python   3.8.10
+    high_root_version = False
+
+=============  ==========================================================
+Branch         Full suite inside the 2023 image
+=============  ==========================================================
+``dev-next``   **1 failed, 458 passed**, 13 skipped, 9 xfailed, 2 xpassed
+``dev``        11 failed, 12 passed
+=============  ==========================================================
+
+So **the code does work under Docker**, on ROOT 6.26, Python 3.8 and NumPy
+1.23 — and it exercises ``high_root_version = False``, the branch the conda
+matrix never reaches, since both of its legs are ROOT >= 6.36.  That path is
+not merely present, it is functional, which nothing had established before.
+
+``dev-next`` is also markedly *better* under Docker than ``dev``, which fails
+eleven tests to its one.  The drift is real but it has not broken the library.
+
+**The single failure is arguably the test's fault.**
+``tests/basis/test_signal.py::test_get_peakamptime_norm_hilbert`` checks where
+a Hilbert envelope peaks, with two adjacent assertions:
+
+.. code-block:: python
+
+    assert np.isclose(t_max[1], true_t_max, atol=delta_t)   # one sample of slack
+    assert idx_max[1] == int(true_t_max / 1000)             # exact
+
+``delta_t`` is one sample.  The first passes; the second fails by exactly one,
+``array([512]) == 511``.  The test allows a sample of tolerance in the time and
+none in the index for the same quantity, and older NumPy and SciPy land on the
+other side of the boundary.  Nothing in the library is wrong here; the second
+assertion is stricter than the first for no stated reason.
+
+**What this does to the recommendation.**  Reviving Docker is a smaller job
+than it looked.  The images are stale rather than incompatible, so the work is
+to repin the base, pin the requirements from the conda environment, rebuild and
+publish — not to fix the library for old ROOT, which already works.
 
 **In the meantime**, the supported route is the conda environment; see
 :doc:`installation`.

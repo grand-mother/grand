@@ -238,6 +238,13 @@ without its `du_type` is ambiguous by a factor of two.
 
 ## Open scope question: is Docker supported?
 
+**Answered in part, 2026-09-02.** The Docker workflow was run: the code *does*
+work in the 2023 image — ROOT 6.26, Python 3.8, NumPy 1.23 — with `dev-next`
+at 1 failure of 459, and that one failure is a test asserting an exact sample
+index where the assertion beside it allows a sample of tolerance. `dev` fails
+eleven. So the images are stale, not incompatible, and reviving them is
+repin + rebuild + publish rather than fixing the library.
+
 The Dockerfiles and the published images are three years stale — newest image
 2023-01-14, pinning ROOT 6.26.02 against 6.36/6.38 everywhere else — and
 nothing builds them. The Handbook still presents Docker as the first
