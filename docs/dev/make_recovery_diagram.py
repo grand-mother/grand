@@ -90,6 +90,7 @@ def box(x, y, w, h, state, lines, small=False):
 
 
 def main():
+    r"""Writes the diagram to ``docs/source/_static/recovery.svg``."""
     s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
          'width="100%%" font-family="IBM Plex Sans, sans-serif">' % (W, H)]
     # An explicit light surface.  The labels are dark by design, and the SVG

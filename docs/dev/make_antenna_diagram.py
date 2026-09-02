@@ -26,10 +26,12 @@ WARN_FILL, WARN_EDGE = '#FBEDE9', '#B4472A'
 
 
 def esc(text):
+    r"""Returns `text` with the XML metacharacters escaped."""
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
 def line(x1, y1, x2, y2, colour, width=1.8, dashed=False, head=True):
+    r"""Returns one straight line, optionally dashed and arrow-headed."""
     d = ' stroke-dasharray="5 4"' if dashed else ''
     m = ' marker-end="url(#%s)"' % ('h' + colour.lstrip('#')) if head else ''
     return ('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
@@ -37,6 +39,7 @@ def line(x1, y1, x2, y2, colour, width=1.8, dashed=False, head=True):
 
 
 def label(x, y, text, colour, size=10.5, anchor='start', weight='400', mono=False):
+    r"""Returns one text label."""
     font = ' font-family="IBM Plex Mono, monospace"' if mono else ''
     return ('<text x="%.1f" y="%.1f" font-size="%s" fill="%s" '
             'text-anchor="%s" font-weight="%s"%s>%s</text>'
@@ -44,6 +47,7 @@ def label(x, y, text, colour, size=10.5, anchor='start', weight='400', mono=Fals
 
 
 def main():
+    r"""Writes the diagram to ``docs/source/_static/antenna_arms.svg``."""
     s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
          'width="%d" height="%d" font-family="Inter, Helvetica, Arial, '
          'sans-serif">' % (W, H, W, H)]

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""Draws the coordinate-frame relationships for the documentation.
 
-    python docs/dev/make_frames_diagram.py   ->  docs/source/_static/frames.svg
+python docs/dev/make_frames_diagram.py   ->  docs/source/_static/frames.svg
 """
 
 import os
@@ -15,6 +15,7 @@ EDGE = {'geo': '#0E6E70', 'ecef': '#8A6210', 'local': '#1D7A57'}
 
 
 def box(x, y, w, h, kind, title, lines):
+    r"""Returns one labelled box with a title and body lines."""
     out = ['<rect x="%d" y="%d" width="%d" height="%d" rx="5" fill="%s" '
            'stroke="%s" stroke-width="1.4"/>' % (x, y, w, h, BOX[kind], EDGE[kind])]
     out.append('<text x="%d" y="%d" font-family="IBM Plex Mono, monospace" '
@@ -28,6 +29,7 @@ def box(x, y, w, h, kind, title, lines):
 
 
 def arrow(x1, y1, x2, y2, label, dashed=False, above=True):
+    r"""Returns a double-headed arrow with a label."""
     d = ' stroke-dasharray="4 3"' if dashed else ''
     mid = ((x1 + x2) / 2, (y1 + y2) / 2)
     return ('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" '
@@ -39,6 +41,7 @@ def arrow(x1, y1, x2, y2, label, dashed=False, above=True):
 
 
 def main():
+    r"""Writes the diagram to ``docs/source/_static/frames.svg``."""
     s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
          'width="100%%" font-family="IBM Plex Sans, sans-serif">' % (W, H),
          '<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" '

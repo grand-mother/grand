@@ -27,7 +27,7 @@ jobs:
       # per-file-ignores list of modules not yet converted to numpydoc.  That
       # list may shrink and must never grow, which is what this enforces.
       - name: Ruff
-        run: ruff check grand/ tests/ quality/
+        run: ruff check grand/ tests/ quality/ notebooks/ docs/dev/
 
   docs:
     name: Documentation

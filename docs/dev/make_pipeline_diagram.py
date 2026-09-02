@@ -22,6 +22,7 @@ BAND = '#F4FAF7'
 
 
 def esc(text):
+    r"""Returns `text` with the XML metacharacters escaped."""
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
@@ -41,6 +42,7 @@ def box(x, y, w, h, fill, edge, title, lines, mono=True):
 
 
 def arrow(x1, y1, x2, y2, label='', dashed=False):
+    r"""Returns an arrow, optionally labelled and dashed."""
     d = ' stroke-dasharray="5 4"' if dashed else ''
     parts = ['<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" '
              'stroke-width="1.7"%s marker-end="url(#a)"/>'
@@ -53,6 +55,7 @@ def arrow(x1, y1, x2, y2, label='', dashed=False):
 
 
 def main():
+    r"""Writes the diagram to ``docs/source/_static/pipeline.svg``."""
     s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
          'width="%d" height="%d" font-family="Inter, Helvetica, Arial, '
          'sans-serif">' % (W, H, W, H)]

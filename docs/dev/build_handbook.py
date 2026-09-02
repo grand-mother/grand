@@ -25,7 +25,6 @@ handbook pages are committed, so a checkout without pandoc still builds the
 documentation.
 """
 
-import os
 import pathlib
 import re
 import shutil
@@ -285,10 +284,12 @@ def redistribute_substitutions(sections):
 
 
 def slug(title):
+    r"""Returns a file-name slug for a section title."""
     return re.sub(r'[^a-z0-9]+', '_', title.lower()).strip('_')
 
 
 def main():
+    r"""Converts the Handbook and writes the Sphinx pages."""
     OUT.mkdir(parents=True, exist_ok=True)
     for stale in OUT.glob('*.rst'):
         stale.unlink()

@@ -22,10 +22,12 @@ WARN_FILL, WARN_EDGE = '#FBEDE9', '#B4472A'
 
 
 def esc(text):
+    r"""Returns `text` with the XML metacharacters escaped."""
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
 def box(x, y, w, h, fill, edge, title, lines):
+    r"""Returns one labelled box with a title and body lines."""
     out = ['<rect x="%d" y="%d" width="%d" height="%d" rx="5" fill="%s" '
            'stroke="%s" stroke-width="1.4"/>' % (x, y, w, h, fill, edge)]
     out.append('<text x="%d" y="%d" font-family="IBM Plex Mono, monospace" '
@@ -40,6 +42,7 @@ def box(x, y, w, h, fill, edge, title, lines):
 
 
 def arrow(x1, y1, x2, y2, label='', colour=None, dashed=False, dy=-7):
+    r"""Returns an arrow, optionally labelled and dashed."""
     colour = colour or FAINT
     d = ' stroke-dasharray="5 4"' if dashed else ''
     parts = ['<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" '
@@ -53,6 +56,7 @@ def arrow(x1, y1, x2, y2, label='', colour=None, dashed=False, dy=-7):
 
 
 def main():
+    r"""Writes the diagram to ``docs/source/_static/datamodel.svg``."""
     s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
          'width="%d" height="%d" font-family="Inter, Helvetica, Arial, '
          'sans-serif">' % (W, H, W, H)]
