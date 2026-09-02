@@ -223,3 +223,49 @@ and it makes the fixture's contents visible in the test rather than opaque.
 Once it exists, the end-to-end regression described in the recovery plan --
 peak voltage, trace RMS, band-integrated power against stored references --
 becomes possible.
+
+.. _issue-vga-gain-ignored:
+
+The VGA gain setting has no effect
+-----------------------------------
+
+:Status: open
+:Affects: any study that varies the amplifier gain
+:Test: ``tests/sim/test_rf_chain_physics.py::test_gain_setting_changes_the_transfer_function``
+
+``RFChain(vga_gain=...)`` accepts 20, 5, 0 or -5 dB, stores the value, asserts
+it is one of those four, and logs it — and then loads the same S-parameter
+file whatever it was.  The transfer function is identical for every setting:
+
+.. code-block:: text
+
+    vga_gain= 0   max|TF| = 94.7612
+    vga_gain= 5   max|TF| = 94.7612
+    vga_gain=20   max|TF| = 94.7612
+
+**Cause.**  In ``VGAFilter._set_name_data_file`` the line that used the gain
+is commented out, and the replacement reads a single fixed path from a
+component configuration:
+
+.. code-block:: python
+
+    assert self.gain in [-5, 0, 5, 20]
+    logger.info(f"vga gain: {self.gain} dB")
+    #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
+    filename = components["Filter"]["s2p_file"] if components["Filter"]["enabled"] else None
+
+The per-gain files are present: ``filter+vga0db+filter.s2p``,
+``filter+vga5db+filter.s2p`` and ``filter+vga20db+filter.s2p`` all ship in
+``data/detector/RFchain_v2/``.
+
+**Why it matters.**  Section 8.3 of `arXiv:2408.10926
+<https://arxiv.org/abs/2408.10926>`_ states that the total transfer function
+changes with the choice of VGA gain, and one of the library's stated purposes
+is assessing the effect of changes to the detector design.  A comparison
+across gain settings currently returns the same answer three times, with no
+error and no warning.
+
+**Not fixed here.**  Restoring the commented line would bypass the component
+configuration that replaced it, which appears to be deliberate and part of
+other work.  Whoever introduced that configuration should decide how the gain
+selects a file within it.
