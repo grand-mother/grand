@@ -77,7 +77,7 @@ a third abandoned trunk.
 ### Phase 3 — tests before features
 - [ ] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
 - [ ] End-to-end numerical regression against Fig. 6 of the paper
-- [ ] Parseval invariant for galactic noise
+- [x] Parseval invariant for galactic noise — `tests/sim/test_galactic_noise_normalisation.py`
 - [x] Tree schema snapshot — `tests/dataio/test_schema_snapshot.py`
 - [ ] Tree schema round-trip
 - [ ] Backward-compatibility ROOT fixture
@@ -149,6 +149,14 @@ settled, `_aoi_levels_lwp` is blocked behind it.
 Both cannot land. Section 8.2 of the paper describes phase-only randomisation
 while the code also randomises the modulus, so the published description does
 not match either implementation exactly.
+
+Measured 2026-08-30 (`tests/sim/test_galactic_noise_normalisation.py`): against
+the tabulated model at LST 18 h the simulated RMS is **0.33** of the Parseval
+value with the current `size_out/2`, and would be **0.47** with
+`size_out/sqrt(2)`. Neither is 1, so the √2 change is not by itself sufficient
+and a factor of roughly 2 is unexplained. **The question that settles it:** is
+`Vocmax_..._uVperMHz` an RMS voltage spectral density or a maximum? That is for
+the table's authors (PengFei / Xidian, or Stavros).
 
 ## Branches carrying unique work
 
