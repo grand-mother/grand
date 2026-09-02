@@ -167,7 +167,16 @@ Three sets of actions were deliberately **not** bumped.
     ``environment-file``, ``activate-environment``, ``channels``,
     ``conda-remove-defaults`` — is unchanged, and v4 replaces ``conda config``
     subprocesses with direct ``.condarc`` writes, which is where these jobs
-    spend their time.
+    spend their time.  Conda setup measurably sped up: the ROOT 6.36 leg went
+    from 3 m 21 s to 2 m 51 s across the bump.
+
+    The one input that did change is ``auto-activate-base``, now
+    ``auto-activate``.  It was renamed in a **separate commit** from the
+    version bump, so that if either broke the environment it would be obvious
+    which.  The rename is a no-op: ``src/input.ts`` in the action resolves both
+    names to a single option, preferring the old one when it is set, and the
+    ``.condarc`` key it writes is chosen by the conda version rather than by
+    which input name the workflow used.
 
 ``codecov/codecov-action@v4``
     Left behind deliberately.  It runs in one step of one job, uploads

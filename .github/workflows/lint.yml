@@ -85,7 +85,7 @@ jobs:
           activate-environment: grand-dev
           channels: conda-forge
           conda-remove-defaults: true
-          auto-activate-base: false
+          auto-activate: false
 
       # `make html` compiles the Handbook PDF first, because the documentation
       # links to it with :download: and a missing target is a warning.  The

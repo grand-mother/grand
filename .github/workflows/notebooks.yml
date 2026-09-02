@@ -37,7 +37,7 @@ jobs:
           activate-environment: grand-dev
           channels: conda-forge
           conda-remove-defaults: true
-          auto-activate-base: false
+          auto-activate: false
 
       - name: Build the C extensions and install the package
         run: |
