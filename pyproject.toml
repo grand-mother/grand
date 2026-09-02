@@ -117,6 +117,15 @@ target-version = "py310"
 # grow.  `python quality/docstring_coverage.py` reports where it stands.
 select = ["E4", "E7", "E9", "F", "D"]
 
+ignore = [
+    # pydocstyle wants imperative mood ("Return the ..."); this project uses
+    # third person ("Returns the ..."), matching the docstrings in the
+    # sibling NuOscProbExact and Magnus codebases and reading better beside
+    # the numpydoc Returns section.  The rule contradicts the house style, so
+    # it is off rather than suppressed file by file.
+    "D401",
+]
+
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
@@ -143,7 +152,7 @@ convention = "numpy"
 "grand/sim/detector/adc.py"             = ["D"]   # (b)
 "grand/sim/detector/antenna_model.py"   = ["D"]   # (b)
 # Safe to convert now; listed so the build stays green until each is done.
-"grand/geo/coordinates.py"              = ["D"]
+# grand/geo/coordinates.py -- DONE, removed from the ratchet 2026-08-30
 "grand/dataio/data_tree.py"             = ["D"]
 "grand/basis/traces_event.py"           = ["D"]
 "grand/dataio/root_files.py"            = ["D"]

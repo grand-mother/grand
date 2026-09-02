@@ -1,5 +1,13 @@
-"""
+"""Terrestrial coordinate systems and the conversions between them.
+
+The frames are :class:`Geodetic`, :class:`ECEF`, :class:`LTP` and
+:class:`GRANDCS`; every conversion between a local frame and geodetic passes
+through ECEF.  See :doc:`/coordinates` for the conventions, including the two
+that most often catch people out: every angle is in degrees, and GRANDCS
+:math:`x` runs north where an ENU :math:`x` runs east.
+
 units: 
+
  *	energy: GeV
  * time  : nanosecond
  *	length: m
@@ -10,7 +18,7 @@ units:
  *	grammage: g/cm2
  *	Density: g/cm3 
  *	frequency: Hz
- *	resistance: Ohm
+ *	resistance: Ohm.
 """
 
 from __future__ import annotations
@@ -398,7 +406,8 @@ def _horizontal_to_spherical(
 # -----------Base Representation------------
 class Coordinates(np.ndarray):
     """
-    Generic container for a coordinates object
+    Generic container for a coordinates object.
+
     This object created is a standard np.ndarray of size (3, n)
     where 3 is for 3D coordinates and n is the number of entries.
     """
@@ -406,6 +415,7 @@ class Coordinates(np.ndarray):
     def __new__(cls, n: Optional[int] = None):
         """
         Create 3xn ndarray coordinates instance with n random entries for all 3D coordinate system.
+
         n: number of coordinate points.
         """
         if isinstance(n, int):
@@ -420,9 +430,7 @@ class Coordinates(np.ndarray):
 
 # --------------Representation---------------
 class CartesianRepresentation(Coordinates):
-    """
-    Generic container for cartesian coordinates
-    """
+    """Generic container for cartesian coordinates."""
 
     def __new__(
         cls,
@@ -432,7 +440,8 @@ class CartesianRepresentation(Coordinates):
         z: Union[float, np.ndarray] = None,
     ):
         """
-        Create a Cartesian coordinates instance
+        Create a Cartesian coordinates instance.
+
         Unspecified coordinates are initialized with entry 0 in 3xn ndarray.
         n: number of coordinate points. 3xn np.ndarray object will be instantiated
            which will then be replaced by input x, y, and z. 'n' has to be predefined.
@@ -536,9 +545,7 @@ class CartesianRepresentation(Coordinates):
 
 
 class SphericalRepresentation(Coordinates):
-    """
-    Generic container for spherical coordinates
-    """
+    """Generic container for spherical coordinates."""
 
     def __new__(
         cls,
@@ -549,6 +556,7 @@ class SphericalRepresentation(Coordinates):
     ):
         """
         Create a spherical coordinates instance.
+
         Object with (3,n) ndarray is created which will later be filled with input
         theta, phi, and r, where n is equal to len(theta). If predefined object
         (like CartesianCoordinates,..) is given as an argument, it will be
@@ -651,9 +659,7 @@ class SphericalRepresentation(Coordinates):
 
 
 class HorizontalRepresentation(Coordinates):
-    """
-    Generic container for horizontal coordinates.
-    """
+    """Generic container for horizontal coordinates."""
 
     def __new__(
         cls,
@@ -663,6 +669,7 @@ class HorizontalRepresentation(Coordinates):
     ):
         """
         Create a horizontal coordinates instance.
+
         Object with (3,n) ndarray is created which will later be filled with input
         azimuth, elevation, and norm, where n is equal to len(azimuth). If predefined
         object (like CartesianCoordinates,..) is given as an argument, it will be
@@ -752,7 +759,8 @@ class HorizontalRepresentation(Coordinates):
 
 class GeodeticRepresentation(Coordinates):
     """
-    Generic container for Geodetic coordinate system. Center of this frame
+    Generic container for Geodetic coordinate system. Center of this frame.
+
     is the center of Earth. Geodetic representation w.r.t. the WGS84 ellipsoid.
 
     Latitude:	Angle north and south of the equator. +ve in the northern hemisphere,
@@ -780,9 +788,7 @@ class GeodeticRepresentation(Coordinates):
         longitude: Union[float, int, np.ndarray] = None,
         height: Union[float, int, np.ndarray] = None,
     ):
-        """
-        Create a new instance from latitude, longitude, and height.
-        """
+        """Create a new instance from latitude, longitude, and height."""
         if isinstance(latitude, Number):
             n = 1
         elif (
@@ -842,7 +848,8 @@ class GeodeticRepresentation(Coordinates):
 # ------------------Frame---------------------
 class Geodetic(GeodeticRepresentation):
     """
-    Generic container for Geodetic coordinate system. Center of this frame
+    Generic container for Geodetic coordinate system. Center of this frame.
+
     is the center of Earth.
 
     Latitude:	Angle north and south of the equator. +ve in the northern hemisphere,
@@ -883,7 +890,40 @@ class Geodetic(GeodeticRepresentation):
         *args,
         **kwargs,
     ):
+        r"""Returns a geodetic position, from components or another frame.
 
+        Called either with `latitude`, `longitude` and `height`, or with a
+        single positional `arg` holding a position in another frame, which is
+        then converted.
+
+        Parameters
+        ----------
+        arg : ECEF, LTP, GRANDCS or Geodetic, optional
+            A position to convert.  Conversion passes through
+            :class:`ECEF`.
+        latitude : float or ndarray, optional
+            Degrees north of the equator, in :math:`[-90, 90]`.
+        longitude : float or ndarray, optional
+            Degrees east of the prime meridian.
+        height : float or ndarray, optional
+            Metres above the reference surface -- see :class:`Reference`, and
+            note that a height is meaningless without knowing which surface.
+
+        Returns
+        -------
+        Geodetic
+            The position.
+
+        Examples
+        --------
+        .. jupyter-execute::
+
+            import numpy as np
+            from grand import Geodetic, ECEF
+
+            site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+            print(np.round(np.asarray(Geodetic(ECEF(site))).ravel(), 6))
+        """
         if isinstance(latitude, (float, np.ndarray)):
             return super().__new__(cls, latitude=latitude, longitude=longitude, height=height)
         elif not isinstance(arg, type(None)):
@@ -919,8 +959,9 @@ class Geodetic(GeodeticRepresentation):
         reference: Any = "GEOID",
     ):  # options: 'GEOID', 'ELLIPSOID'
         """
-        Create a new instance from another point instance or from
-        latitude, longitude, height values
+        Create a new instance from another point instance or from.
+
+        latitude, longitude, height values.
         """
         reference = reference.upper()
         self.reference = reference
@@ -1044,6 +1085,7 @@ class Geodetic(GeodeticRepresentation):
 class ECEF(CartesianRepresentation):
     """
     Generic container for Earth-Centered Earth-Fixed (ECEF) coordinate system.
+
     Center of Earth is the origin of this frame.
 
     ECEF is a right-handed Cartesian coordinate system with the origin at the
@@ -1072,7 +1114,21 @@ class ECEF(CartesianRepresentation):
         *args,
         **kwargs,
     ):
+        r"""Returns an Earth-centred, Earth-fixed vector.
 
+        Parameters
+        ----------
+        arg : Geodetic, LTP, GRANDCS or ECEF, optional
+            A position to convert.  ECEF is the pivot every other frame
+            converts through.
+        x, y, z : float or ndarray, optional
+            Components in metres from the geocentre.
+
+        Returns
+        -------
+        ECEF
+            The vector.
+        """
         if isinstance(x, (Number, np.ndarray)):
             return super().__new__(cls, x=x, y=y, z=z)
         elif not isinstance(arg, type(None)):
@@ -1102,7 +1158,19 @@ class ECEF(CartesianRepresentation):
         z: Union[float, int, np.ndarray] = None,
         obstime: Union[str, datetime] = "2020-01-01",
     ):
+        r"""Initialises the frame and records the observation time.
 
+        Parameters
+        ----------
+        arg : Geodetic, LTP, GRANDCS or ECEF, optional
+            A position to convert.
+        x, y, z : float or ndarray, optional
+            Components in metres.
+        obstime : str or datetime, optional
+            Date the coordinates refer to.  It matters because the
+            geomagnetic field, and any magnetic-north orientation derived
+            from it, changes with time.
+        """
         self.obstime = obstime
 
         if not isinstance(arg, type(None)):
@@ -1192,8 +1260,8 @@ grandcs_origin = Geodetic(
 
 # RK: Merged into Horizontal. Delete this class.
 class HorizontalVector(HorizontalRepresentation):
-    """
-    This class has been merged into Horizontal class
+    """Deprecated alias, merged into :class:`Horizontal`.
+
     by adding 'vector' attribute to reduce code duplication.
     """
 
@@ -1219,7 +1287,8 @@ class Horizontal(HorizontalRepresentation):
         vector: bool = False,
     ):
         """
-        n: number of coordinate points. 3xn np.ndarray object will be instantiated
+        n: number of coordinate points. 3xn np.ndarray object will be instantiated.
+
            which will then be replaced by input azimuth, elevation, and norm.
            'n' has to be predefined.
         location: origin of Horizontal coordinate system. Can be given in any known
@@ -1336,6 +1405,7 @@ class Horizontal(HorizontalRepresentation):
 class LTP(CartesianRepresentation):
     """
     Calculates basis and orgin at a given latitude and longitude.
+
     Basis and origin is calculated in ECEF frame.
     'location' and 'orientation' are required.
     """
@@ -1349,7 +1419,27 @@ class LTP(CartesianRepresentation):
         *args,
         **kwargs,
     ):
+        r"""Returns a local-tangent-plane vector, from components or another frame.
 
+        Parameters
+        ----------
+        arg : ECEF, LTP, GRANDCS or Geodetic, optional
+            A position to convert into this frame.
+        x, y, z : float or ndarray, optional
+            Components in metres, along the axes named by the frame's
+            ``orientation``.
+
+        Returns
+        -------
+        LTP
+            The vector.
+
+        Notes
+        -----
+        The axes depend on ``orientation``, so the same three numbers mean
+        different places in different frames: ``'ENU'`` puts :math:`x` east,
+        while :class:`GRANDCS` puts it north.  See :doc:`/coordinates`.
+        """
         if isinstance(x, (Number, np.ndarray)):
             return super().__new__(cls, x=x, y=y, z=z)
         elif not isinstance(arg, type(None)):
@@ -1395,6 +1485,33 @@ class LTP(CartesianRepresentation):
     ):
         # Make sure the location is in the correct format. i.e ECEF, Geodetic, GeodeticRepresentation,
         # or GRANDCS cs. OR latitude=deg, longitude=deg, height=meter.
+        r"""Initialises the local frame: its origin, axes and epoch.
+
+        Parameters
+        ----------
+        arg : Geodetic, ECEF, LTP or GRANDCS, optional
+            A position to convert into this frame.
+        x, y, z : float or ndarray, optional
+            Components in metres along the frame's own axes.
+        location : Geodetic, ECEF, LTP or GRANDCS, optional
+            Origin of the frame.  A local frame without an origin cannot be
+            converted to any other.
+        orientation : str, optional
+            Three characters, one per axis, from ``E``/``W``, ``N``/``S`` and
+            ``U``/``D``.  ``'ENU'`` is east-north-up.
+        magnetic : bool, optional
+            Measure the horizontal axes from magnetic north rather than
+            geographic north.  The declination is a few degrees at Dunhuang,
+            which is hundreds of metres across a 10 km array, so this is a
+            choice to make deliberately.
+        obstime : str or datetime, optional
+            Date used to evaluate the declination when `magnetic` is true.
+
+        Notes
+        -----
+        See :doc:`/coordinates` for why the same components mean different
+        places under different orientations.
+        """
         if frame is not None:
             frame = copy(frame)
             geodetic_loc = (
@@ -1405,7 +1522,7 @@ class LTP(CartesianRepresentation):
             declination = frame.declination
             magmodel = frame.magmodel
             obstime = frame.obstime
-        elif latitude != None and longitude != None and height != None:
+        elif latitude is not None and longitude is not None and height is not None:
             geodetic_loc = Geodetic(
                 latitude=latitude,
                 longitude=longitude,
@@ -1447,6 +1564,27 @@ class LTP(CartesianRepresentation):
         magnetic = magnetic if declination is None else True
 
         def vector(name):
+            r"""Returns the ECEF direction of one named local axis.
+
+            Parameters
+            ----------
+            name : str
+                One axis of an orientation string: ``E``, ``W``, ``N``,
+                ``S``, ``U`` or ``D``.  Only the first character is read,
+                and case is ignored.
+
+            Returns
+            -------
+            ndarray
+                Unit vector in ECEF, shape ``(3,)``.
+
+            Notes
+            -----
+            Horizontal axes are offset by ``azimuth0``, which is the
+            magnetic declination when the frame was asked for magnetic
+            north and zero otherwise.  This is where a ``magnetic=True``
+            frame stops agreeing with a geographic one.
+            """
             tag = name[0].upper()
             if tag == "E":
                 return turtle.ecef_from_horizontal(latitude, longitude, 90 + azimuth0, 0)
@@ -1558,7 +1696,8 @@ class LTP(CartesianRepresentation):
 
 class GRANDCS(LTP):
     """
-    Class for the GRANDCS coordinate system (cs). This class instantiate coordinates
+    Class for the GRANDCS coordinate system (cs). This class instantiate coordinates.
+
     in GRANDCS's coordinate frame. Input can be either x, y, z coordinates value
     in GRANDCS's cs or coordinates in ECEF or Geodetic system.
 
@@ -1594,6 +1733,37 @@ class GRANDCS(LTP):
     ):
 
         # Added for tests.
+        r"""Initialises the GRAND array frame at a given origin.
+
+        An :class:`LTP` with GRAND's conventions applied: the axes are
+        north-west-up, so **x runs north**, not east.
+
+        Parameters
+        ----------
+        arg : Geodetic, ECEF, LTP or GRANDCS, optional
+            A position to convert into the array frame.
+        x, y, z : float or ndarray, optional
+            Components in metres: x north, y west, z up.
+        latitude, longitude, height : float or ndarray, optional
+            Origin of the frame, if not given through `location`.
+        location : Geodetic, ECEF, LTP or GRANDCS, optional
+            Origin of the frame.
+        obstime : str or datetime, optional
+            Date the coordinates refer to.
+
+        Examples
+        --------
+        .. jupyter-execute::
+
+            import numpy as np
+            from grand import Geodetic, GRANDCS
+
+            site = Geodetic(latitude=40.98, longitude=93.95, height=1200.0)
+            north = GRANDCS(x=1000.0, y=0.0, z=0.0, location=site)
+            print(np.round(np.asarray(Geodetic(north)).ravel(), 6))
+
+        The latitude rises, confirming that x runs north.
+        """
         if arg is not None:
             if isinstance(arg, (ECEF, Horizontal, Geodetic, LTP, GRANDCS)):
                 pass

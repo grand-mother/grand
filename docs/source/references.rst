@@ -2,52 +2,19 @@ References
 ==========
 
 Works cited across this documentation.  Entries are taken from `INSPIRE-HEP
-<https://inspirehep.net>`_, so the keys match the ones the literature uses
-and can be pasted straight into a paper.
+<https://inspirehep.net>`_, so the keys match the ones the literature uses and
+can be pasted straight into a paper.
 
-GRAND
------
+GRANDlib itself performs comparatively little physics: air showers and their
+radio emission come from ZHAireS :cite:`Alvarez-Muniz:2010hbb` or CoREAS
+:cite:`Huege:2013vt`, tau propagation from DANTON :cite:`Niess:2018opy`, and
+terrain from TURTLE :cite:`Niess:2019hdn`.  The pipeline itself is described
+in :cite:`GRAND:2024atu`, the experiment in :cite:`GRAND:2018iaj`, and offline
+signal identification for GRANDProto300 in :cite:`Mitra:2023pha`.  Related
+frameworks in the same field are NuRadioMC :cite:`Glaser:2019cws` and the
+Pierre Auger Observatory's Offline :cite:`Argiro:2007qg`.
 
-:cite:`GRAND:2024atu`
-   The GRANDlib paper.  Appendix A is the source for :doc:`coordinates`,
-   Appendix B for :doc:`datamodel`.
-
-:cite:`GRAND:2018iaj`
-   The science case and detector design.
-
-:cite:`Mitra:2023pha`
-   Offline signal identification with GRANDProto300.
-
-External simulation packages
------------------------------
-
-GRANDlib performs comparatively little physics itself; showers, radio
-emission and particle propagation come from these.
-
-:cite:`Alvarez-Muniz:2010hbb`
-   ZHAireS: coherent Cherenkov radio pulses from hadronic showers.
-
-:cite:`Huege:2013vt`
-   CoREAS: radio emission from air showers.
-
-:cite:`Niess:2018opy`
-   DANTON: :math:`\tau` from :math:`\nu_\tau` interacting with the Earth.
-
-:cite:`Niess:2019hdn`
-   TURTLE: stepping through a topography.  Used by :mod:`grand.geo.topography`.
-
-Related frameworks
-------------------
-
-:cite:`Glaser:2019cws`
-   NuRadioMC, the established framework for radio neutrino detection.
-
-:cite:`Argiro:2007qg`
-   The Pierre Auger Observatory Offline framework, whose experience GRANDlib
-   draws on.
-
-Bibliography
-------------
+See :doc:`citing` for how to cite GRANDlib.
 
 .. bibliography::
    :all:
