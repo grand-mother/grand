@@ -27,17 +27,18 @@ QUEUE = [
 ]
 
 # (label, state) for the infrastructure track
+# Nine, not eleven: at this width a tenth box truncates its own label, and
+# a diagram that abbreviates "conda env" to "conda e..." is worse than one
+# that says less.  Check `fit` against the box width before adding to this.
 WORK = [
     ('conda env',      'done'),
     ('setup.sh',       'done'),
     ('pyproject',      'done'),
-    ('Sphinx tree',    'done'),
+    ('Sphinx docs',    'done'),
     ('schema test',    'done'),
-    ('noise test',     'done'),
-    ('CI restore',     'done'),
-    ('green suite',    'done'),
-    ('docstrings',     'done'),
-    ('coverage 68%',   'done'),
+    ('CI green',       'done'),
+    ('518 tests',      'done'),
+    ('cov 71%',        'done'),
     ('interface',      'todo'),
 ]
 
@@ -185,7 +186,7 @@ def main():
              'fill="#0E6E70" letter-spacing="0.08em">PHASES</text>' % X0)
     phases = [('0 branch', 'done'), ('1 env', 'done'), ('2 CI', 'done'),
               ('3 tests', 'done'), ('4 merge', 'blocked'),
-              ('5 decide', 'todo'), ('6 interface', 'todo'), ('7 docs', 'doing'),
+              ('5 decide', 'blocked'), ('6 interface', 'todo'), ('7 docs', 'doing'),
               ('8 govern', 'todo'), ('9 promote', 'todo'), ('10 cleanup', 'todo')]
     pw = (X1 - X0) / len(phases)
     for i, (label, state) in enumerate(phases):
@@ -201,7 +202,8 @@ def main():
              'fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>'
              % X0)
     notes = ['NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr',
-             'Galactic noise: dev_snonis √2 fix, or the refact_galaxy rewrite — needs the collaboration']
+             'Galactic noise: is the tabulated Vocmax an RMS or a maximum? — needs the antenna table authors',
+             'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration']
     for i, note in enumerate(notes):
         s.append('<text x="%d" y="%d" font-size="10.5" fill="#4C5C69">• %s</text>'
                  % (X0, 558 + i * 17, esc(note)))
