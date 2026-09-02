@@ -103,6 +103,12 @@ testpaths = ["tests"]
 line-length = 100
 target-version = "py310"
 
+# Notebooks are excluded.  They are a different kind of artefact: exploratory,
+# often deliberately repetitive, and their "unused variable" findings are
+# usually a cell being read interactively rather than dead code.  Their
+# *outputs* are what needs managing, which nbstripout does in pre-commit.
+extend-exclude = ["*.ipynb"]
+
 [tool.ruff.lint]
 # Pinned rather than left to the default.  Ruff's default selection widens
 # between releases, which turns a green CI red on unchanged code; this is the
