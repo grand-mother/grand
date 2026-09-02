@@ -229,6 +229,26 @@ and `_mat` tables are byte-identical, the default `GP300` reads neither, and
 the `_hfss` tables are unreachable from any `du_type`. A noise level quoted
 without its `du_type` is ambiguous by a factor of two.
 
+## Open scope question: is Docker supported?
+
+The Dockerfiles and the published images are three years stale — newest image
+2023-01-14, pinning ROOT 6.26.02 against 6.36/6.38 everywhere else — and
+nothing builds them. The Handbook still presents Docker as the first
+installation route.
+
+This is a decision for the collaboration, not a patch:
+
+- **Supported** → repin the base to `rootproject/root:6.36.00-ubuntu25.04`, pin
+  the requirements from the conda environment, rebuild and publish, and add a
+  CI job that builds the image. Without that last part it drifts again; the
+  drift happened precisely because nothing checked.
+- **Not supported** → say so on the installation page and retire
+  `env/docker_*` in Phase 10.
+
+Documented meanwhile in `issue-docker-unmaintained`, with an erratum in the
+Handbook and a note on the installation page. Merge exposure is low either way:
+`env/docker_arm64` is touched by no branch, `env/docker_amd64` by two.
+
 ## Branches carrying unique work
 
 Verified with `git cherry`, so distance behind `dev` is not the criterion.

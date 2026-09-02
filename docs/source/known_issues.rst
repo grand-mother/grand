@@ -241,6 +241,92 @@ This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
 point with no SRTM tile also returns ``nan`` rather than raising.  Both are
 pinned in ``tests/geo/test_topography_conventions.py``.
 
+.. _issue-docker-unmaintained:
+
+The Docker installation route is unmaintained
+----------------------------------------------
+
+:Status: open — needs a decision, not a patch
+:Affects: anyone following the Handbook's installation chapter
+:Verified: from the files, the build scripts and Docker Hub.  **Not** by
+           building an image: no container runtime was available.
+
+The Handbook presents Docker as the first installation route and names
+published images.  Those images exist and still pull — and they are the newest
+there are:
+
+===============  ========  ==============  ==============
+Tag              Size      Last updated    Architecture
+===============  ========  ==============  ==============
+``1.2``          944 MB    2023-01-14      amd64
+``2.0``          812 MB    2022-11-18      arm64
+``1.1``          944 MB    2022-05-13      amd64
+``1.0``          940 MB    2022-05-12      amd64
+===============  ========  ==============  ==============
+
+Nothing about the route is *broken* in the sense of refusing to run.  The
+Handbook's steps end at ``source env/setup.sh``, which sets ``PYTHONPATH`` and
+never invokes pip, so the ``requires-python = ">=3.10"`` in ``pyproject.toml``
+is not reached — and the package uses no syntax or standard-library module
+newer than 3.8, so the code itself would import.  What is wrong is that the
+environment has drifted three years from the one everybody else uses.
+
+*ROOT is ten minor versions behind.*  The images and
+``env/docker_*/base.dockerfile`` pin ROOT 6.26.02, against 6.36.04 in the conda
+environment and a CI matrix of 6.36 and 6.38.  This repository already records
+a case where :ref:`ROOT 6.38 changes a numerical result
+<issue-root-638-numerical-difference>`; someone three releases further back is
+not running the same software as anybody else, and nothing would tell them.
+
+*The base image is out of support.*  ``rootproject/root:6.26.02-ubuntu20.04``
+— Ubuntu 20.04 left standard support in April 2025.  The tag does still exist
+upstream, so a build would still start.
+
+*The requirements are unpinned.*  ``env/docker_*/requirements.txt`` lists 53
+packages with no version constraint at all, so a rebuild resolves to whatever
+pip offers that day.  That is the opposite of what a container is for, and it
+is how this set drifted from the conda environment — it was the only one
+carrying ``numba`` and ``lmfit`` until those were folded in.
+
+**Why it drifted.**  Nothing builds these images.  There is no CI job for them,
+and no file outside ``env/docker_amd64/`` and ``env/docker_arm64/`` references
+either directory.  The last commits touching them are 2023-09-13 and
+2023-02-13.
+
+.. note::
+
+   **A regression introduced on this branch, and fixed.**  ``build_dev.sh``
+   assembles its two requirements files by copying them out of the repository
+   before building.  One of its sources was
+   ``docs/apidoc-only/doxygen-rtd/requirements.txt``, which this branch deleted
+   when the Sphinx tree was rebuilt — so ``build_dev.sh`` would have failed at
+   the ``cp`` on ``dev-next`` while working on the 34 other branches that still
+   have that file.  Both architectures now copy ``docs/requirements.txt``
+   instead.
+
+   The wider point stands: nothing would have caught this.  A build script with
+   no CI behind it is a script that is already broken and has not been told.
+
+**What this needs is a decision, not a patch.**  Is Docker a supported
+installation route?
+
+*If yes*, the work is: repin the base to
+``rootproject/root:6.36.00-ubuntu25.04`` to match the conda environment, pin
+the requirements from that environment rather than listing names, rebuild and
+publish the images, and — the part that prevents a repeat — add a CI job that
+builds them.
+
+*If no*, say so on the installation page and retire ``env/docker_*`` with the
+bulk cleanup in Phase 10.
+
+Deleting it is not proposed here.  ``tian-conda-arm`` carries ARM install
+notes, so that path has a user, and containers are the right answer for
+reproducibility if anyone maintains them.  Merge exposure is low either way:
+``env/docker_arm64`` is touched by no branch and ``env/docker_amd64`` by two.
+
+**In the meantime**, the supported route is the conda environment; see
+:doc:`installation`.
+
 .. _issue-src-outlib-conflict:
 
 ``src_outlib/`` carries an unresolved merge conflict from 2023

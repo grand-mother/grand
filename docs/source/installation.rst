@@ -88,6 +88,24 @@ The Snakemake reprocessing pipeline is likewise not in the core environment —
 ``conda-forge`` has no ``snakemake-minimal`` build for every platform, and
 only the pipeline needs it.  Install it alongside if you run that workflow.
 
+Docker
+------
+
+There are Dockerfiles under ``env/docker_amd64/`` and ``env/docker_arm64/``,
+and published images on Docker Hub, and the Handbook presents them as the
+first installation route.  **They are unmaintained.**
+
+The newest published image dates from January 2023 and pins ROOT 6.26.02,
+against 6.36.04 here and a CI matrix of 6.36 and 6.38.  Nothing builds the
+images and no CI covers them, which is why they drifted.  The route still
+*runs* — the setup script never invokes pip, and the package uses no syntax
+newer than Python 3.8 — but it puts you three years away from the environment
+everybody else is using, silently.
+
+Use the conda environment above.  Whether Docker becomes a supported route
+again is an open question rather than a defect to patch; see
+:ref:`issue-docker-unmaintained`.
+
 Not yet available
 -----------------
 

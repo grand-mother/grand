@@ -59,6 +59,15 @@ ERRATA = [
      'Lists ``grand.io`` for file I/O and ``grand.topography`` for terrain.',
      'Neither exists. They are ``grand.dataio`` and ``grand.geo.topography``.',
      ':doc:`../api`'),
+    ('Docker install',
+     'Presents Docker as the first installation route, naming the published '
+     'images grandlib/dev:1.x and 2.0.',
+     'Unmaintained. Those images are the newest published — 1.2 dates from '
+     '2023-01-14 — and pin ROOT 6.26.02 against 6.36 in the conda environment '
+     'and 6.36/6.38 in CI, on an Ubuntu 20.04 base out of support since April '
+     '2025. Nothing builds them and no CI covers them. The supported route is '
+     'the conda environment.',
+     ':ref:`issue-docker-unmaintained`'),
     ('Reconstruction',
      'Describes ``grand/recon/`` as "Reconstruction Algorithms" and '
      '``grand.aoi`` as providing "filtering and reconstruction".',
