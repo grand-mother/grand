@@ -105,8 +105,15 @@ class _FileEventBase:
             self.tt_shower = data_dir.tshower
             self.tt_run = data_dir.trun
         else:
-            logger.exception("I don't know which version of trun/tshower is associated to event.")
-            raise
+            # A bare `raise` used to stand here, with no exception active, so
+            # a file whose name lacks the level marker failed with
+            # "RuntimeError: No active exception to reraise" -- which names
+            # neither the file nor the convention it broke.
+            raise ValueError(
+                "cannot tell which run and shower trees belong to %r: a GRAND "
+                "filename carries its analysis level as '_L0_' or '_L1_', and "
+                "this one has neither" % f_name
+            )
         logger.info(f"file trun: {self.tt_run.file_name}\nfile tshower: {self.tt_shower.file_name}")
 
     def load_event_idx(self, idx):

@@ -269,3 +269,49 @@ error and no warning.
 configuration that replaced it, which appears to be deliberate and part of
 other work.  Whoever introduced that configuration should decide how the gain
 selects a file within it.
+
+.. _issue-reader-directory-coupling:
+
+The file readers depend on an undocumented naming convention
+-------------------------------------------------------------
+
+:Status: open
+:Affects: :mod:`grand.dataio.root_files`, and anything that opens a file
+          through it
+:Test: ``tests/dataio/test_root_files_reading.py``
+
+``_FileEventBase.__init__`` does not read the file it is given in isolation.
+It constructs a :class:`~grand.dataio.data_handling.DataDirectory` for the
+*containing directory*, then looks up the run and shower trees by attribute
+names chosen from a substring of the filename:
+
+.. code-block:: python
+
+    if f_name.find("_L0_") > 0:
+        self.tt_shower = data_dir.tshower_l0
+        self.tt_run = data_dir.trun_l0
+    elif f_name.find("_L1_") > 0:
+        self.tt_shower = data_dir.tshower
+        self.tt_run = data_dir.trun
+
+So opening one voltage file requires that its name carry ``_L0_`` or ``_L1_``,
+that the analysis level recorded *inside* its trees agree with the one in the
+name, and that the directory also hold matching run and shower trees grouped
+under the naming scheme :meth:`DataDirectory.get_list_of_files_handles`
+expects.  None of that is documented, validated or stated in an error message.
+
+**Consequences.**  The module sits at 21% test coverage, not because it is
+unimportant but because a valid input is difficult to construct: the existing
+tests skip when a fixture that is not in version control is absent.  A user
+who renames a file, or writes one from the tree classes directly, gets an
+``AttributeError`` naming an attribute they have never heard of.
+
+**What it needs.**  The reader should take the trees it needs, or accept them
+explicitly, rather than rediscovering them from a directory listing.  That is
+the sort of change Phase 6 of the recovery plan exists to make; until then the
+convention should at least be written down and checked with a clear error.
+
+One part of this is already improved: a bare ``raise`` with no active
+exception, which produced ``RuntimeError: No active exception to reraise`` for
+any file lacking the level marker, now raises a :class:`ValueError` naming the
+file and the convention.
