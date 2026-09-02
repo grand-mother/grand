@@ -181,7 +181,9 @@ class AntennaProcessing:
         # theta_efield between index it0 and it1 in theta antenna response representation
         rt1 = (theta_efield - self.model_leff.theta[0]) / dtheta
         # prevent > 360 deg or >180 deg ?
-        it0 = int(np.floor(rt1) % self.model_leff.theta.size)
+        # np.ravel(...)[0]: rt1 may be a size-1 array, which NumPy 2 will
+        # not convert to a scalar implicitly.
+        it0 = int(np.ravel(np.floor(rt1) % self.model_leff.theta.size)[0])
         it1 = it0 + 1
         if it1 == self.model_leff.theta.size:  # Prevent overflow
             it1, rt1 = it0, 0
@@ -191,7 +193,7 @@ class AntennaProcessing:
         # phi_efield between index ip0 and ip1 in phi antenna response representation
         dphi = self.model_leff.phi[1] - self.model_leff.phi[0]  # deg
         rp1 = (phi_efield - self.model_leff.phi[0]) / dphi
-        ip0 = int(np.floor(rp1) % self.model_leff.phi.size)
+        ip0 = int(np.ravel(np.floor(rp1) % self.model_leff.phi.size)[0])
         ip1 = ip0 + 1
         if ip1 == self.model_leff.phi.size:  # Results are periodic along phi
             ip1 = 0
@@ -279,10 +281,18 @@ class AntennaProcessing:
         """
         # frame is shower frame. self.frame is antenna frame.
         logger.debug(f"pos {self.pos}")
-        if (not np.all(np.isfinite(self.pos))) or (not np.all(np.isfinite(frame))): # which one
-            print("pos",self.pos)
-            print("frame",frame)
+        # `frame is None` has to be tested first.  np.isfinite(None) raises
+        # TypeError, so the guard meant to *detect* a missing frame used to
+        # crash on one -- a caller who omitted the frame got an obscure
+        # "ufunc 'isfinite' not supported for the input types" instead of the
+        # MissingFrameError this is here to raise.
+        if self.pos is None or frame is None:
             raise MissingFrameError("missing antenna or shower frame")
+        if not np.all(np.isfinite(self.pos)) or not np.all(np.isfinite(frame)):
+            raise MissingFrameError(
+                "antenna position or shower frame is not finite: "
+                "pos=%r, frame=%r" % (self.pos, frame)
+            )
 
         # Compute the voltage. input fft_leff and field are in shower frame.
         leff_f = self.effective_length(xmax, efield, frame)
