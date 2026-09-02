@@ -118,7 +118,7 @@ together, so the collision cannot be merged past silently.
 Tree classes cannot be constructed under NumPy 2
 --------------------------------------------------
 
-:Status: open, cause identified, candidate fix measured
+:Status: **fixed** 2026-08-30 — kept here until it appears in a release changelog
 :Affects: the whole data layer — ``TRun()`` raises
 :Test: visible in ``tests/dataio/`` (about 150 tests)
 
@@ -151,9 +151,9 @@ This is why it appears now.  Nothing in the code changed; the environment
 moved.  The CI container that last ran successfully dates from January 2022
 and carried NumPy 1.
 
-**Candidate fix.**  The instance array is already populated by
-``create_default(obj)`` on the preceding line, so the assignment is a no-op in
-intent and can simply be skipped:
+**Fix.**  The instance array is already populated by ``create_default(obj)``
+on the preceding line, so the assignment is a no-op in intent and is now
+skipped:
 
 .. code-block:: python
 
@@ -165,12 +165,15 @@ intent and can simply be skipped:
 =====================  ==========  ==========
 Suite                  failed      passed
 =====================  ==========  ==========
-before                 124         215
-with the fix           **16**      **323**
+before                 123         216
+after                  **15**      **324**
 =====================  ==========  ==========
 
-Not applied.  The change is one line in the core data layer, and it should be
-reviewed by whoever owns :mod:`grand.dataio` before it lands.
+Guarded by ``tests/dataio/test_descriptor_defaults.py``, which constructs
+every run and event tree with no arguments and checks that the default
+survives as a scalar.  That the default is still correct after skipping the
+assignment is the part worth testing: it confirms ``create_default`` was
+always doing the work.
 
 
 .. _issue-import-requires-root:

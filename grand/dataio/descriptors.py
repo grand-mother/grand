@@ -349,7 +349,18 @@ class TTreeScalarDesc:
             self.create_default(obj)
         # This is needed for default init as a field of an upper class
         if isinstance(value, TTreeScalarDesc):
-            value = getattr(obj, self.attrname)
+            # A dataclass field taking its default: the descriptor object
+            # itself arrives as `value`.  `create_default(obj)` above has
+            # already installed the default in the instance array, so there
+            # is nothing to assign and the array is returned untouched.
+            #
+            # This used to read `value = getattr(obj, self.attrname)`,
+            # binding `value` to the same array as `inst`, so the line below
+            # became `inst[0] = inst`.  NumPy 1 tolerated assigning a
+            # one-element array into a scalar slot; NumPy 2 raises
+            # "setting an array element with a sequence", which made every
+            # tree class impossible to construct.
+            return
         inst = getattr(obj, self.attrname)
 
         inst[0] = value
