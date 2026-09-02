@@ -254,7 +254,7 @@ class MotherEventTree(DataTree):
         """Gets the traces lengths for each event"""
 
         # If there are no traces in the tree, return None
-        if self._tree.GetListOfLeaves().FindObject("trace_x") == None and self._tree.GetListOfLeaves().FindObject("trace_0") == None:
+        if not self._tree.GetListOfLeaves().FindObject("trace_x") and not self._tree.GetListOfLeaves().FindObject("trace_0"):
             return None
 
         traces_lengths = []
@@ -279,7 +279,7 @@ class MotherEventTree(DataTree):
         """Gets the list of all detector units used for each event"""
 
         # If there are no detector unit ids in the tree, return None
-        if self._tree.GetListOfLeaves().FindObject("du_id") == None:
+        if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
 
         # Try to store the currently read entry

@@ -115,7 +115,7 @@ class DataTree:
     @type.setter
     def type(self, val: str) -> None:
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("type")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("type")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("type", val))
         # The meta field exists, change the value
         else:
@@ -158,7 +158,7 @@ class DataTree:
     @comment.setter
     def comment(self, val: str) -> None:
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("comment")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("comment")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("comment", val))
         # The meta field exists, change the value
         else:
@@ -183,7 +183,7 @@ class DataTree:
             raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
 
         # The meta field does not exist, add it
-        if (el := self._tree.GetUserInfo().FindObject("creation_datetime")) == None:
+        if not (el := self._tree.GetUserInfo().FindObject("creation_datetime")):
             self._tree.GetUserInfo().Add(ROOT.TParameter(int)("creation_datetime", val))
         # The meta field exists, change the value
         else:
@@ -199,7 +199,7 @@ class DataTree:
     @modification_history.setter
     def modification_history(self, val: str) -> None:
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_history")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("modification_history")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_history", val))
         # The meta field exists, change the value
         else:
@@ -231,7 +231,7 @@ class DataTree:
             raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
 
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("source_datetime")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("source_datetime")):
             self._tree.GetUserInfo().Add(ROOT.TParameter(int)("source_datetime", val))
         # The meta field exists, change the value
         else:
@@ -247,7 +247,7 @@ class DataTree:
     @modification_software.setter
     def modification_software(self, val: str) -> None:
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_software")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("modification_software")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
         # The meta field exists, change the value
         else:
@@ -263,7 +263,7 @@ class DataTree:
     @modification_software_version.setter
     def modification_software_version(self, val: str) -> None:
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("modification_software_version")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("modification_software_version")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
         # The meta field exists, change the value
         else:
@@ -279,7 +279,7 @@ class DataTree:
     @analysis_level.setter
     def analysis_level(self, val: int) -> None:
         # The meta field does not exist, add it
-        if (el:=self._tree.GetUserInfo().FindObject("analysis_level")) == None:
+        if not (el:=self._tree.GetUserInfo().FindObject("analysis_level")):
             self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
         # The meta field exists, change the value
         else:
@@ -387,7 +387,7 @@ class DataTree:
             if self._file is not None:
                 self._tree = self._file.Get(self._tree_name)
                 # There was no such tree in the file, so create one
-                if self._tree == None:
+                if not self._tree:
                     logger.warning(
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
@@ -631,7 +631,7 @@ class DataTree:
             # For two-type vectors, check if a switch to the second vector type is needed
             if getattr(self, value_name).sec_vec_type is not None:
                 # If the second vector type is the type of the branch, switch to the second vector type
-                if self._tree.GetLeaf(branch_name) != None:
+                if self._tree.GetLeaf(branch_name):
                     if getattr(self, value_name).sec_vec_type in self._tree.GetLeaf(branch_name).GetTypeName():
                         getattr(self, value_name).switch_to_sec_vec_type()
             # Create the branch
