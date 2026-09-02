@@ -8,7 +8,6 @@ import unittest
 from tests import TestCase
 
 import numpy
-import datetime
 from grand import (
     ECEF,
     LTP,
@@ -17,18 +16,14 @@ from grand import (
     CartesianRepresentation,
     SphericalRepresentation,
     HorizontalRepresentation,
-    HorizontalVector,
     Horizontal,
-    Reference,
     Coordinates,
-    Rotation,
     GRANDCS,
 )
 import copy as _copy
 
 
 def copy(obj, deep=False):
-    import inspect
 
     if deep:
         new = _copy.deepcopy(obj)

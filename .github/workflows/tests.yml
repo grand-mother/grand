@@ -1,154 +1,127 @@
+# The test suite.
+#
+# No container.  The two images this repository used to run in are the reason
+# CI stopped working: jcolley/grand:0.4 was deleted from Docker Hub, and
+# jcolley/grandlib_ci:0.1 dates from January 2022 and is too old for the
+# runner to operate in, so every job hung in container setup and was killed by
+# the 24-hour limit with no step ever recorded.  See docs/dev/FINDINGS_CI.md.
+#
+# The environment is built here from env/conda/grand-dev.yml -- the same file
+# the collaboration develops against -- so what CI tests is what people run.
 name: Tests
+
 on:
   push:
-    paths-ignore:
-    - docs/requirements.txt
-    - examples/**
-    - .github/workflows/appimage.yml
+    branches: ['**']
+  pull_request:
+
+# Supersede a running job when a branch is pushed again, but never on the
+# trunk, where every commit's result is worth keeping.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  Linux:
+  # What a trigger-level `paths:` filter used to do, in a form that still
+  # reports.  A workflow-level filter does not skip the job, it stops the
+  # workflow from existing: no run, and so no check on the commit at all.
+  # That is invisible until this becomes a required check, at which point a
+  # pull request touching only docs/ waits forever on something that will
+  # never report.  Filtering here reports every context on every commit and
+  # skips only the expensive steps.
+  #
+  # Fails safe in both directions: anything it cannot work out reports
+  # code=true, and the guards below test `!= 'false'`, so a crash here still
+  # runs everything.  The failure mode must be "did too much", never
+  # "silently did nothing".
+  changes:
+    name: Detect what changed
     runs-on: ubuntu-latest
-    container:
-      image: docker://jcolley/grand:0.4 
-      
-    steps:    
-    - uses: actions/checkout@v2
-    - name: Initialise the environment      
-      run: |
-        echo $USR
-        echo $PWD
-        echo $SHELL
-        ls -la
-        source env/setup.sh
-        python -m pip install -r quality/requirements.txt
-        quality/ci/coverage_if_necessary.bash
-      shell: bash
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        run: |
+          base=''
+          if [ "${{ github.event_name }}" = 'pull_request' ]; then
+            base='${{ github.event.pull_request.base.sha }}'
+          elif [ "${{ github.event.before }}" != '0000000000000000000000000000000000000000' ]; then
+            base='${{ github.event.before }}'
+          fi
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo 'no usable base; running everything'
+            echo 'code=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$base" '${{ github.sha }}')
+          echo "$changed"
+          if printf '%s\n' "$changed" | grep -qvE '^(docs/|README|CHANGELOG)'; then
+            echo 'code=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'documentation only; skipping the suite'
+            echo 'code=false' >> "$GITHUB_OUTPUT"
+          fi
 
-    - name: Check SonarQube update
-      env:
-        USER_GIT: ${{github.actor}}
-        SONAR_L: ${{secrets.SONAR_TOKEN}}
-      run: |
-        pwd
-        ls -la
-        . env/test.sh $PWD
-        quality/ci/manage_sonar_update.py "$SONAR_L"
-        . quality/ci/apply_sonar_update.bash
+  pytest:
+    name: ROOT ${{ matrix.root }}
+    needs: changes
+    if: needs.changes.outputs.code != 'false'
+    runs-on: ubuntu-latest
+    # A hang should fail in twenty minutes, not occupy a runner for a day as
+    # the old container jobs did.
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # 6.36 is what env/conda/grand-dev.yml pins and what the
+        # collaboration runs.  6.38 is the version whose stricter None
+        # comparison produced the warnings the dev_fix_root_warnings branches
+        # address; testing it here is what stops that recurring unseen.
+        root: ['6.36.04', '6.38.02']
+    defaults:
+      run:
+        shell: bash -el {0}          # -l so conda activation persists
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Dynamics analysis and coverage
-      run: |
-        . env/setup.sh        
-        quality/ci/coverage_if_necessary.bash
-        check_score_coverage.py
-        
-    - name: Static analysis with pylint
-      run: |
-        . env/setup.sh                
-        grand_quality_analysis.bash
-        
-    - name: Static type check
-      run: |
-        . env/setup.sh
-        grand_quality_type.bash 
+      - name: Provision the environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: env/conda/grand-dev.yml
+          activate-environment: grand-dev
+          channels: conda-forge
+          conda-remove-defaults: true
+          auto-activate-base: false
 
-#     - name: Check documentation examples
-#       run: |
-#         . env/setup_AppImage.sh
-#         python -m tests --doc
+      - name: Pin the ROOT version for this leg
+        if: matrix.root != '6.36.04'
+        run: conda install -y -q root=${{ matrix.root }}
 
+      - name: Report what is actually installed
+        run: |
+          python -c "import sys; print('python', sys.version)"
+          python -c "import ROOT; print('ROOT', ROOT.gROOT.GetVersion())"
+          python -c "import numpy; print('numpy', numpy.__version__)"
 
-#     - name: Upload the coverage
-#       if: github.ref == 'refs/heads/master'
-#       uses: codecov/codecov-action@v1
+      - name: Build the C extensions and fetch the data model
+        # Compiles TURTLE and GULL and downloads topography, geomagnetic and
+        # antenna data.  Everything after this needs it.
+        run: source env/setup.sh
 
-#     - name: Build wheels
-#       if: github.ref == 'refs/heads/master'
-#       run: |
-#         ./wheel/build-linux-wheel.sh cp38-cp38 x86_64
-#         ./wheel/build-linux-wheel.sh cp38-cp38 i686
-#         rm -rf dist
-#         mkdir dist
-#         mv wheel/*.whl dist
+      - name: Install the package
+        run: pip install -e . --no-deps --no-build-isolation
 
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.8'
+      - name: Run the suite
+        run: |
+          source env/setup.sh
+          pytest tests/ -q --cov=grand --cov-report=xml --cov-report=term
 
-#     - name: Test wheel
-#       run: |
-#         mv grand .grand
-#         pip3 install dist/grand-*_x86_64.whl
-#         python3 -m tests --unit
-#         mv .grand grand
-
-#     - name: Upload to PyPI
-#       if: github.ref == 'refs/heads/master'
-#       uses: pypa/gh-action-pypi-publish@master
-#       with:
-#         password: ${{ secrets.PYPI_TOKEN }}
-
-#   OSX:
-#     runs-on: macOS-latest
-#     env:
-#       PYTHONPATH: ${{ github.workspace }}/lib/python
-#     steps:
-#     - uses: actions/checkout@v2
-#     - uses: actions/setup-python@v1
-#       with:
-#         python-version: '3.8'
-# 
-#     - name: Install
-#       run: |
-#         pip3 install -U pip
-#         pip3 install -U -r requirements.txt
-#         make install PYTHON=$(which python3)
-# 
-#     - name: Check documentation examples
-#       run: python3 -m tests --doc
-# 
-#     - name: Run unit tests
-#       run: python3 -m tests --unit
-
-#   Documentation:
-#     runs-on: ubuntu-latest
-#     needs: Linux
-#     if: github.ref == 'refs/heads/master'
-#     steps:
-#       - uses: actions/checkout@v2
-#       - uses: actions/checkout@v2
-#         with:
-#           repository: grand-mother/grand-docs
-#           path: docs/build/html
-#           persist-credentials: false
-#           fetch-depth: 0
-# 
-#       - name: Build
-#         run: |
-#           . env/setup.sh
-# 
-#           cd docs/build/html
-#           git config user.email "action@github.com"
-#           git config user.name "GitHub Action"
-# 
-#           cd ../..
-#           make html
-# 
-#           if [[ ! -f "build/html/.nojekyll" ]]; then
-#             touch "build/html/.nojekyll"
-#           fi
-# 
-#           cd build/html
-#           if [[ ! -z "$(git status --porcelain)" ]]; then
-#             git add "."
-#             git commit -a --amend --message "Update the docs"
-#           fi
-#           cd ../../..
-# 
-#       - name: Push
-#         uses: ad-m/github-push-action@master
-#         with:
-#           directory: docs/build/html
-#           repository: grand-mother/grand-docs
-#           github_token: ${{ secrets.PERSONAL_TOKEN }}
-#           force: true
+      - name: Upload coverage
+        if: matrix.root == '6.36.04'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false

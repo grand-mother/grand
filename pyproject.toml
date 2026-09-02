@@ -130,49 +130,75 @@ ignore = [
 convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
-# Not yet converted.  Delete a line when its module is done; never add one.
+# Two ratchets in one table.
 #
-# Grouped by why they are waiting:
-#   (a) files the pending merge-queue branches edit -- converting them now
-#       manufactures conflicts;
-#   (b) the simulation layer, whose signatures Phase 6 rewrites, so
-#       Parameters sections written now would be thrown away.
-"grand/aoi/event.py"                    = ["D"]   # (a) _aoi_levels_lwp, dev_marion
-"grand/aoi/event_list.py"               = ["D"]   # (a)
-"grand/aoi/shower.py"                   = ["D"]   # (a)
-"grand/basis/signal.py"                 = ["D"]   # (a) refact_galaxy
-"grand/dataio/data_handling.py"         = ["D"]   # (a)
-"grand/dataio/descriptors.py"           = ["D"]   # (a)
-"grand/dataio/event_trees.py"           = ["D"]   # (a)
-"grand/dataio/run_trees.py"             = ["D"]   # (a) dev_marion
-"grand/sim/efield2voltage.py"           = ["D"]   # (b)
-"grand/sim/noise/galaxy.py"             = ["D"]   # (b)
-"grand/sim/detector/rf_chain.py"        = ["D"]   # (b)
-"grand/sim/detector/process_ant.py"     = ["D"]   # (b)
-"grand/sim/detector/adc.py"             = ["D"]   # (b)
-"grand/sim/detector/antenna_model.py"   = ["D"]   # (b)
-# Safe to convert now; listed so the build stays green until each is done.
-# grand/geo/coordinates.py -- DONE, removed from the ratchet 2026-08-30
-"grand/dataio/data_tree.py"             = ["D"]
-"grand/basis/traces_event.py"           = ["D"]
-"grand/dataio/root_files.py"            = ["D"]
-"grand/geo/turtle.py"                   = ["D"]
-"grand/basis/du_network.py"             = ["D"]
-"grand/geo/topography.py"               = ["D"]
-"grand/manage_log.py"                   = ["D"]
-"grand/geo/gull.py"                     = ["D"]
-"grand/basis/type_trace.py"             = ["D"]
-"grand/aoi/timetrace.py"                = ["D"]
-"grand/aoi/antenna.py"                  = ["D"]
-"grand/geo/geomagnet.py"                = ["D"]
-"grand/sim/shower/gen_shower.py"        = ["D"]
-"grand/sim/shower/pdg.py"               = ["D"]
-"grand/sim/noise/Compute_Plot_Galactic_Noise.py" = ["D"]
-"grand/recon/elec_field.py"             = ["D"]
-"grand/recon/params_shower.py"          = ["D"]
-"grand/basis/pipeline.py"               = ["D"]
-"grand/dataio/protocol.py"              = ["D"]
-"grand/__init__.py"                     = ["D"]
-"tests/**"                              = ["D"]
-"grand/analysis/**"                     = ["D"]
-"grand/geo/coordinates_test.ipynb"      = ["D"]     # a notebook, not a module
+# "D" marks a module whose docstrings are not yet numpydoc.  Everything else
+# is pre-existing lint debt: 336 findings in code that had never been checked,
+# because CI has not run in years.  67 were fixed automatically; the rest are
+# recorded here so the lint job starts green and can be made a required check.
+#
+# Both lists may shrink and must never grow.  A module converted to numpydoc
+# loses its "D"; a file cleaned of a rule loses that rule.  New entries are not
+# added -- new code is written clean.
+#
+# grand/geo/coordinates.py came off the D list on 2026-08-30, the first module
+# fully converted.
+
+"grand/__init__.py" = ["D", "E402", "F401"]
+"grand/analysis/**" = ["D"]
+"grand/aoi/__init__.py" = ["F403"]
+"grand/aoi/antenna.py" = ["D"]
+"grand/aoi/event.py" = ["D", "E701", "E711", "E721", "E722", "F402", "F841"] # (a) _aoi_levels_lwp, dev_marion
+"grand/aoi/event_list.py" = ["D", "F841"]      # (a)
+"grand/aoi/shower.py" = ["D"]                  # (a)
+"grand/aoi/timetrace.py" = ["D", "F403", "F405"]
+"grand/basis/du_network.py" = ["D"]
+"grand/basis/pipeline.py" = ["D"]
+"grand/basis/signal.py" = ["D"]                # (a) refact_galaxy
+"grand/basis/traces_event.py" = ["D"]
+"grand/basis/type_trace.py" = ["D"]
+"grand/dataio/__init__.py" = ["F403"]
+"grand/dataio/data_handling.py" = ["D", "E721", "E722", "E741", "F841"] # (a)
+"grand/dataio/data_tree.py" = ["D", "E701", "E712", "E721", "E722", "F402", "F841"]
+"grand/dataio/descriptors.py" = ["D", "E402", "E701", "E722"] # (a)
+"grand/dataio/event_trees.py" = ["D", "E722"]  # (a)
+"grand/dataio/protocol.py" = ["D"]
+"grand/dataio/root_files.py" = ["D"]
+"grand/dataio/run_trees.py" = ["D"]            # (a) dev_marion
+"grand/geo/__init__.py" = ["F401"]
+"grand/geo/coordinates.py" = ["E722"]
+"grand/geo/coordinates_test.ipynb" = ["D"]     # a notebook, not a module
+"grand/geo/geomagnet.py" = ["D"]
+"grand/geo/gull.py" = ["D", "F841"]
+"grand/geo/topography.py" = ["D", "F811"]
+"grand/geo/turtle.py" = ["D", "E731"]
+"grand/manage_log.py" = ["D"]
+"grand/recon/elec_field.py" = ["D"]
+"grand/recon/params_shower.py" = ["D"]
+"grand/sim/detector/adc.py" = ["D"]            # (b)
+"grand/sim/detector/antenna_model.py" = ["D"]  # (b)
+"grand/sim/detector/process_ant.py" = ["D"]    # (b)
+"grand/sim/detector/rf_chain.py" = ["D", "F811", "F821", "F841"] # (b)
+"grand/sim/efield2voltage.py" = ["D"]          # (b)
+"grand/sim/noise/Compute_Plot_Galactic_Noise.py" = ["D", "E741", "F841"]
+"grand/sim/noise/galaxy.py" = ["D"]            # (b)
+"grand/sim/shower/gen_shower.py" = ["D"]
+"grand/sim/shower/pdg.py" = ["D"]
+"quality/check_score_coverage.py" = ["D400"]
+"quality/ci/manage_sonar_update.py" = ["D103", "D400"]
+"quality/docstring_coverage.py" = ["D103"]
+"quality/premerge_check.py" = ["D103"]
+"tests/**" = ["D"]
+"tests/basis/test_pipeline.py" = ["E722"]
+"tests/basis/test_signal.py" = ["F403", "F405"]
+"tests/basis/test_traces_event.py" = ["F403", "F405"]
+"tests/dataio/test_data_tree.py" = ["E712", "F841"]
+"tests/dataio/test_descriptors.py" = ["F841"]
+"tests/dataio/test_root_trees.py" = ["F841"]
+"tests/dataio/test_run_trees.py" = ["E712"]
+"tests/geo/test_coordinates.py" = ["F841"]
+"tests/geo/test_gull.py" = ["F841"]
+"tests/geo/test_turtle.py" = ["F841"]
+"tests/recon/test_elec_field.py" = ["F841"]
+"tests/recon/test_params_shower.py" = ["F841"]
+"tests/sim/test_antenna.py" = ["F841"]

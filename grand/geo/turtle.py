@@ -4,9 +4,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, Optional, Union
+from typing import Optional, Union
 from logging import getLogger
-import os.path as osp
 import numpy
 
 from .._core import ffi, lib

@@ -12,7 +12,6 @@ Tests the core descriptor classes used throughout the dataio package:
 
 import pytest
 import numpy as np
-from unittest.mock import Mock, patch
 
 from grand.dataio.descriptors import (
     StdVectorList,
@@ -25,7 +24,6 @@ from grand.dataio.descriptors import (
     chars_to_uint8_array,
     convert_deepest_lists_to_arrays,
     split_2d_arrays_to_rows,
-    fill_stdvectorlist_with_array,
     cpp_to_numpy_typecodes,
     cpp_to_array_typecodes,
     numpy_to_array_typecodes,

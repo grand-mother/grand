@@ -2,7 +2,6 @@
 Unit tests for the grand.libs.gull module
 """
 
-import os
 import unittest
 
 from grand.geo import gull

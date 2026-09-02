@@ -6,7 +6,6 @@ import unittest
 from tests import TestCase
 from pathlib import Path
 import os
-from grand.dataio.protocol import InvalidBLOB, get
 from grand.basis.pipeline import Pipeline
 from grand import grand_get_path_root_pkg
 

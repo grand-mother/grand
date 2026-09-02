@@ -8,8 +8,6 @@ Tests all event-level tree classes:
 """
 
 import pytest
-import numpy as np
-from pathlib import Path
 
 from grand.dataio.event_trees import (
     MotherEventTree,

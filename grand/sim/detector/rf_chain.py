@@ -2,9 +2,7 @@
 import os
 import xml.etree.ElementTree as ET
 import os.path
-import scipy.fft as sf
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 
 from grand import grand_add_path_data
@@ -244,7 +242,6 @@ def interpol_at_new_x(a_x, a_y, new_x):
     #     function (TF) outside of the range of 10-300 MHz was weird. TF for Z-port produces a sharp peak around 10 MHz.
     #     So np.interp is used instead.
     """
-    from scipy import interpolate
     assert a_x.shape[0] > 0
     #func_interpol = interpolate.interp1d(
     #    a_x, a_y, "cubic", bounds_error=False, fill_value=(1.0, 1.0)

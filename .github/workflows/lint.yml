@@ -1,0 +1,65 @@
+# Code quality: linting, the docstring ratchet, and a strict documentation
+# build.  Kept apart from tests.yml because it costs a couple of minutes
+# where the suite costs twenty, so it can be read and retried on its own.
+name: Code Quality
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  ruff:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff
+      # The D rules are the docstring ratchet: pyproject.toml carries a
+      # per-file-ignores list of modules not yet converted to numpydoc.  That
+      # list may shrink and must never grow, which is what this enforces.
+      - name: Ruff
+        run: ruff check grand/ tests/ quality/
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: env/conda/grand-dev.yml
+          activate-environment: grand-dev
+          channels: conda-forge
+          conda-remove-defaults: true
+          auto-activate-base: false
+
+      # jupyter-sphinx executes the docstring examples in a real kernel, a
+      # separate process from Sphinx.  The package therefore has to be
+      # importable properly, not merely findable on sys.path.
+      - name: Build the C extensions and install the package
+        run: |
+          source env/setup.sh
+          pip install -e . --no-deps --no-build-isolation
+
+      # -W turns Sphinx warnings into errors.  This is the gate: it is what
+      # stops the documentation drifting from the code the way
+      # docs/package/grand.rst did, describing modules that had been renamed
+      # years earlier.  --keep-going reports every problem in one run.
+      - name: Build the documentation, strictly
+        run: |
+          source env/setup.sh
+          cd docs && make html SPHINXOPTS="-W --keep-going"

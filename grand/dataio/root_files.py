@@ -111,7 +111,7 @@ class _FileEventBase:
         """
         idx = self.idx_event + 1
         if idx >= self.get_nb_events():
-            logger.warning(f"No more event")
+            logger.warning("No more event")
             return False
         return self.load_event_idx(idx)
 

@@ -202,7 +202,7 @@ class DetectorUnitNetwork:
             norm_user = colors.Normalize(vmin=vmin, vmax=vmax)
             my_cmaps = "Blues"
         else:
-            logger.error(f'scale must be in ["log","lin"]')
+            logger.error('scale must be in ["log","lin"]')
         scm = ax1.scatter(
             self.du_pos[:, 0],
             self.du_pos[:, 1],
@@ -228,7 +228,7 @@ class DetectorUnitNetwork:
             xlabel += f"\n{traces.info_shower}"
             xlabel += f"\n{traces.name}"
         plt.xlabel(xlabel)
-        plt.ylabel(rf"West [m]  (azimuth=+90°) =>")
+        plt.ylabel(r"West [m]  (azimuth=+90°) =>")
         ax1.grid()
         anch_du = AnchoredText("DU id", prop=dict(size=10), frameon=False, loc="upper left")
         anch_val = AnchoredText("Value", prop=dict(size=10), frameon=False, loc="upper right")
@@ -264,7 +264,7 @@ class DetectorUnitNetwork:
                 elif scale == "lin":
                     norm_user = colors.Normalize(vmin=vmin, vmax=vmax)
                 else:
-                    logger.error(f'scale must be in ["log","lin"]')
+                    logger.error('scale must be in ["log","lin"]')
             else:
                 norm_user = scale
                 my_cmaps = "Reds"

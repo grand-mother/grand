@@ -4,7 +4,6 @@ Master module for the ADC in GRAND
 import numpy as np
 import logging
 import scipy.fft as sf
-import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 class ADC:

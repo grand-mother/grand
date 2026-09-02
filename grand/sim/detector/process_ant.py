@@ -71,7 +71,7 @@ class PreComputeInterpol:
         self.c_sup = (freq_in_band - freq_in_mhz[self.idx_itp]) / d_freq_in
         if self.idx_itp[-1]+1 == freq_in_mhz.shape[0]:
             # https://github.com/grand-mother/collaboration-issues/issues/30
-            logger.info(f" ** Specfic processing when f_in = k * f_out else IndexError **")
+            logger.info(" ** Specfic processing when f_in = k * f_out else IndexError **")
             self.idx_itp[-1] -= 1
             # in this case last c_sup must be zero
             # check it !

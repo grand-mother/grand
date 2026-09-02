@@ -548,7 +548,7 @@ class Event:
             # If this is the first time we calculate antennas positions
             if not self._all_antennas:
                 print("GP300 workaround: calculating all antennas positions")
-                from grand import ECEF, Geodetic, GRANDCS
+                from grand import Geodetic, GRANDCS
 
                 # Get the coordinates for all DUs from all events
                 count = cur_tree.draw("du_id:gps_lat:gps_long:gps_alt", "", "goff")

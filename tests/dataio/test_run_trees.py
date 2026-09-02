@@ -8,8 +8,6 @@ Tests all run-level tree classes:
 """
 
 import pytest
-import numpy as np
-from pathlib import Path
 
 from grand.dataio.run_trees import (
     MotherRunTree,

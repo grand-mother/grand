@@ -7,7 +7,6 @@ Tests high-level file and directory management classes:
 """
 
 import pytest
-from pathlib import Path
 
 from grand.dataio.data_handling import DataDirectory, DataFile
 from grand.dataio import TRun, TADC

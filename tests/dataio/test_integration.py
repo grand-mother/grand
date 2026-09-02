@@ -6,11 +6,9 @@ These tests verify that all components work together correctly.
 """
 
 import pytest
-import numpy as np
-from pathlib import Path
 
-from grand.dataio import TRun, TADC, TVoltage, TEfield, TShower
-from grand.dataio import DataDirectory, DataFile
+from grand.dataio import TRun, TADC, TVoltage
+from grand.dataio import DataDirectory
 
 
 # ============================================================================

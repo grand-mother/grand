@@ -168,7 +168,7 @@ class StdVectorList(MutableSequence):
 
                             # self._vector.assign(np.ascontiguousarray(value).astype(cpp_to_numpy_typecodes[self.basic_vec_type]))
                         return self
-                    except Exception as e:
+                    except Exception:
                         # Basically only for ROOT <6.36 for 3D lists that can't be converted to arrays (traces of non-homogenous lenght)
                         if self.ndim == 1: value = array.array(cpp_to_array_typecodes[self.basic_vec_type], value)
                         if self.ndim == 2: value = [array.array(cpp_to_array_typecodes[self.basic_vec_type], el) for el in value]

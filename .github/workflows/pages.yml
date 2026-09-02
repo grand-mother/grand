@@ -1,0 +1,58 @@
+# Deploys the documentation to GitHub Pages.
+#
+# Deliberately without -W, unlike the docs job in lint.yml.  That job is the
+# gate and should fail on a warning; this one exists to publish, and a
+# warning is not a reason to leave the site stale.
+name: Documentation Deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: env/conda/grand-dev.yml
+          activate-environment: grand-dev
+          channels: conda-forge
+          conda-remove-defaults: true
+          auto-activate-base: false
+
+      - name: Build the C extensions and install the package
+        run: |
+          source env/setup.sh
+          pip install -e . --no-deps --no-build-isolation
+
+      - name: Build the documentation
+        run: |
+          source env/setup.sh
+          cd docs && make html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/build/html
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,7 +1,6 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
 import glob
 import os
-import sys
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
@@ -159,7 +158,7 @@ class DataDirectory:
 
     def print(self, verbose=True):
         """Prints all the information about all the data"""
-        print(f"This DataDirectory instance has:")
+        print("This DataDirectory instance has:")
         print(f"  {len(self.file_attrs):<3} file/tree attributes")
         print(f"  {len(self.file_list):<3} files")
         print(f"  {len(self.file_handle_list):<3} file chains")

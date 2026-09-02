@@ -7,8 +7,6 @@ This is the foundational class for all GRAND ROOT tree operations.
 
 import pytest
 import datetime
-import numpy as np
-from pathlib import Path
 
 from grand.dataio.data_tree import DataTree, grand_tree_list
 

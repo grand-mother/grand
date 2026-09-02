@@ -1,15 +1,13 @@
 """
 Unit tests for the grand.geo.topography module
 """
-import os
 import unittest
 from pathlib import Path
 import numpy
 from tests import TestCase
 
 import grand.dataio.protocol as store
-import grand.geo as tools
-from grand import topography, Topography, geoid_undulation  # , Reference
+from grand import topography, Topography  # , Reference
 from grand import grand_get_path_root_pkg
 from grand import ECEF, Geodetic, LTP, GRANDCS
 

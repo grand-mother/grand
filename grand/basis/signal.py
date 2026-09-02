@@ -111,7 +111,7 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.96):
     logger.debug(f"{x_trace[b_idx]}\t{x_trace[e_idx]}")
     if (e_idx - b_idx) <= 2:
         return find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max)
-    logger.debug(f"Parabola interp: mode hill")
+    logger.debug("Parabola interp: mode hill")
     # mode hill
     y_hill = y_trace[b_idx : e_idx + 1] - y_trace[b_idx]
     x_hill = x_trace[b_idx : e_idx + 1] - x_trace[b_idx]

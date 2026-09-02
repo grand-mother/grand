@@ -32,7 +32,6 @@ Exit status is 1 if anything was flagged, so it can gate a merge.
 """
 
 import argparse
-import collections
 import re
 import subprocess
 import sys

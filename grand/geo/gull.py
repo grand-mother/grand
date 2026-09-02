@@ -85,7 +85,7 @@ class Snapshot:
         self._altitude = tuple(map(float, (altitude_min[0], altitude_max[0])))
 
     def __del__(self):
-        logger.debug(f"__del__ Snapshot ")
+        logger.debug("__del__ Snapshot ")
         try:
             if self._snapshot is None:
                 return

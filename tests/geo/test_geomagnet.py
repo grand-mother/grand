@@ -12,7 +12,6 @@ import datetime
 
 import grand.geo as tools
 from grand.geo.coordinates import (
-    GeodeticRepresentation,
     LTP,
     Geodetic,
     CartesianRepresentation,

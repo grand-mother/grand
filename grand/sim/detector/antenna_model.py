@@ -10,8 +10,8 @@ from logging import getLogger
 
 from grand import grand_add_path_data
 
-from dataclasses import dataclass, fields
-from typing import Union, Any
+from dataclasses import dataclass
+from typing import Union
 from numbers import Number
 import numpy as np
 import os
@@ -108,7 +108,7 @@ class AntennaModel:
     def __init__(self, du_type="GP300"):
 
         if du_type=="GP300":
-            logger.info(f"Loading GP300 antenna model produced by HFSS simulation package")
+            logger.info("Loading GP300 antenna model produced by HFSS simulation package")
             
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_EWarm_leff.npz")
             self.leff_ew = tabulated_antenna_model(path_ant)
@@ -118,7 +118,7 @@ class AntennaModel:
             self.leff_z = tabulated_antenna_model(path_ant)
             
         elif du_type=="GP300_nec":
-            logger.info(f"Loading GP300 antenna model produced by NEC simulation package")
+            logger.info("Loading GP300 antenna model produced by NEC simulation package")
             
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_nec_Yarm_leff.npz")
             self.leff_ew = tabulated_antenna_model(path_ant)
@@ -128,7 +128,7 @@ class AntennaModel:
             self.leff_z = tabulated_antenna_model(path_ant)
             
         elif du_type=="GP300_mat":
-            logger.info(f"Loading GP300 antenna model produced by matlab antenna package")
+            logger.info("Loading GP300 antenna model produced by matlab antenna package")
             
             path_ant = grand_add_path_data("detector/Light_GP300Antenna_mat_Yarm_leff.npz")
             self.leff_ew = tabulated_antenna_model(path_ant)
@@ -138,7 +138,7 @@ class AntennaModel:
             self.leff_z = tabulated_antenna_model(path_ant)
             
         elif du_type=='Horizon':
-            logger.info(f"Loading Horizon antenna model")
+            logger.info("Loading Horizon antenna model")
             path_ant = grand_add_path_data("detector/HorizonAntenna_EWarm_leff_loaded.npy")
             self.leff_ew = tabulated_antenna_model(path_ant)
             path_ant = grand_add_path_data("detector/HorizonAntenna_SNarm_leff_loaded.npy")
