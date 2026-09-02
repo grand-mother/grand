@@ -14,6 +14,40 @@
 # overwrite the host's, breaking the conda environment in a way that would take
 # a while to diagnose.  Here the whole machine is thrown away afterwards.
 #
+# What the repository's own history says, which is worth knowing before reading
+# a failure here as "Docker is broken":
+#
+#   * The previous workflow, tests_with_docker.yml, has not *executed* since at
+#     least 2025-08-07.  All 41 runs in that window ended `cancelled` after
+#     24h0m2s with "The job has exceeded the maximum execution time while
+#     awaiting a runner".  It pinned `runs-on: ubuntu-20.04`, a runner image
+#     GitHub has since retired, so the job queued forever for a label that no
+#     longer exists.  It never failed; it stopped being scheduled.  So there is
+#     no evidence that Docker broke for any reason to do with Docker -- only
+#     that nothing has checked in over a year.
+#
+#   * 34 of the 36 branches still carry that file, so each push to them still
+#     burns a 24-hour queue slot and shows a red cross.  Retiring it repo-wide
+#     belongs with the Phase 10 cleanup.
+#
+#   * Four images exist, and they are not interchangeable:
+#       grandlib/dev:1.2          2023-01-14, Docker Hub, what the Handbook
+#                                 tells users to pull
+#       grandlib/dev:2.0          2022-11-18, arm64
+#       jcolley/grandlib_ci:0.1   2022-01-31, what the old CI used
+#       grand_docker_handson_2025 2025, distributed as a tarball on Google
+#                                 Drive rather than a registry, so CI cannot
+#                                 pull it -- but it is the newest that exists
+#                                 and suggests a working 2025 image is out
+#                                 there
+#
+# This uses `docker run` with a bind mount rather than the `container:` key the
+# old workflow used, deliberately.  With `container:` the checkout action runs
+# *inside* the image, which makes the job's success depend on that image
+# carrying a runtime GitHub's actions can use; with `docker run` the checkout
+# happens on the runner and the container only ever runs bash, so a failure is
+# unambiguously about the container and not about the plumbing around it.
+#
 # Two independent questions, one job each:
 #
 #   published-image  does the image users are told to pull work with the code?
@@ -49,7 +83,9 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: 'Published image to test'
+        description: >-
+          Published image to test.  grandlib/dev:1.2 is what the Handbook tells
+          users to pull; jcolley/grandlib_ci:0.1 is what the old CI used.
         required: true
         default: 'grandlib/dev:1.2'
       refs:

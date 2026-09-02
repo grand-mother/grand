@@ -177,6 +177,9 @@ a third abandoned trunk.
       Before that, a rename is a manual replay of every one of them.
 - [ ] Archive-tag everything before deleting
 - [ ] Close PRs 9, 49, 52
+- [ ] Delete `tests_with_docker.yml` from the 34 branches that still carry it.
+      It pins the retired `ubuntu-20.04` runner, so every push to those
+      branches queues 24 h and is cancelled — 41 such runs since 2025-08-07.
 - [ ] Retire `master` and `dev` to their tags
 
 ## Needs repository admin

@@ -288,10 +288,54 @@ pip offers that day.  That is the opposite of what a container is for, and it
 is how this set drifted from the conda environment — it was the only one
 carrying ``numba`` and ``lmfit`` until those were folded in.
 
-**Why it drifted.**  Nothing builds these images.  There is no CI job for them,
-and no file outside ``env/docker_amd64/`` and ``env/docker_arm64/`` references
-either directory.  The last commits touching them are 2023-09-13 and
-2023-02-13.
+**Why it drifted, from the repository's own run history.**  There *was* a CI
+job — ``tests_with_docker.yml`` — and it has not executed since at least
+2025-08-07.  All 41 runs in that window ended ``cancelled`` after ``24h0m2s``:
+
+.. code-block:: text
+
+    The job has exceeded the maximum execution time while awaiting a runner
+
+It pinned ``runs-on: ubuntu-20.04``, a runner image GitHub has since retired,
+so the job queued forever for a label that no longer exists.  **It never
+failed; it stopped being scheduled.**  That is the whole explanation, and it
+matters for how a failure in the new workflow should be read: there is no
+evidence Docker broke for any reason to do with Docker, only that nothing has
+checked in over a year.
+
+Two consequences.  34 of the 36 branches still carry that file, so every push
+to them still burns a 24-hour queue slot and shows a red cross — retiring it
+repo-wide belongs with the Phase 10 cleanup.  And the last commits touching
+``env/docker_amd64/`` and ``env/docker_arm64/`` are 2023-09-13 and 2023-02-13,
+with no file outside those directories referencing either.
+
+**Four images exist, and they are not interchangeable.**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 14 56
+
+   * - Image
+     - Date
+     - What it is
+   * - ``grandlib/dev:1.2``
+     - 2023-01-14
+     - what the Handbook tells users to pull
+   * - ``grandlib/dev:2.0``
+     - 2022-11-18
+     - the arm64 build
+   * - ``jcolley/grandlib_ci:0.1``
+     - 2022-01-31
+     - what the old CI used
+   * - ``grand_docker_handson_2025``
+     - 2025
+     - newest that exists, but distributed as a tarball on Google Drive rather
+       than a registry, so CI cannot pull it
+
+That last one is the interesting one: the Handbook's hands-on chapter
+distributes a **2025** image, two years newer than anything on Docker Hub.  If
+a working modern image already exists, publishing it to a registry would be a
+far smaller job than rebuilding the Dockerfiles.
 
 .. note::
 
