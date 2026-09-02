@@ -33,9 +33,9 @@ WORK = [
     ('pyproject',      'done'),
     ('Sphinx tree',    'done'),
     ('schema test',    'done'),
+    ('noise test',     'done'),
     ('CI restore',     'todo'),
     ('interface',      'todo'),
-    ('docstrings',     'todo'),
 ]
 
 FILL = {'done': '#E1F1EA', 'blocked': '#F6EDDA', 'todo': '#EDF1F3'}
