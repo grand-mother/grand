@@ -134,6 +134,10 @@ a third abandoned trunk.
 - [ ] Publish to GitHub Pages from CI
 
 ### Phase 8 — governance and weight
+- [x] Bump the deprecated GitHub Action versions (checkout, setup-python,
+      setup-miniconda). `root_version.yml` is deliberately left behind: two
+      branches add it from a base where it did not exist, so editing it turns
+      every such merge into an add/add conflict. Bump it after they land.
 - [x] CONTRIBUTING.md, CODEOWNERS, issue/PR templates, CITATION.cff
 - [x] pre-commit: ruff, whitespace/YAML/TOML checks, a large-file guard, and
       a notebooks-match-the-generator hook. **No formatter**: reformatting the

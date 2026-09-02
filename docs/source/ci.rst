@@ -153,11 +153,27 @@ so the majors carry no behaviour change for this repository.
 
 Three sets of actions were deliberately **not** bumped.
 
-``conda-incubator/setup-miniconda@v3`` and ``codecov/codecov-action@v4``
-    Neither was flagged by the deprecation, so both already run on a supported
-    runtime.  ``setup-miniconda`` in particular builds the environment for
-    every job, and its major versions have changed defaults before; bumping it
-    would be unrelated risk taken for no stated benefit.
+``conda-incubator/setup-miniconda`` is at ``@v4``
+    It was bumped a commit later than the others, and the reason is worth
+    recording because the first attempt got it wrong.  It was initially left at
+    v3 on the grounds that the deprecation had not flagged it — which was
+    false.  The annotations list only the actions used by the jobs that
+    actually ran, and the push in question had not triggered the notebook or
+    conda jobs, so ``setup-miniconda`` never appeared in them.  It was on Node
+    20 the whole time.
+
+    The bump itself is small: v4.0.0's only breaking changes are the Node 24
+    runtime and an internal ESM build.  Every input used here —
+    ``environment-file``, ``activate-environment``, ``channels``,
+    ``conda-remove-defaults`` — is unchanged, and v4 replaces ``conda config``
+    subprocesses with direct ``.condarc`` writes, which is where these jobs
+    spend their time.
+
+``codecov/codecov-action@v4``
+    Left behind deliberately.  It runs in one step of one job, uploads
+    coverage, and its majors have changed the tokenless-upload behaviour
+    before; there is nothing to gain by moving it in the same change as the
+    runtime fix.
 
 The GitHub Pages actions in ``pages.yml``
     ``configure-pages``, ``upload-pages-artifact`` and ``deploy-pages`` are
