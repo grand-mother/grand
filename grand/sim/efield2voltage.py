@@ -181,7 +181,24 @@ class Efield2Voltage:
         self.rf_chainnut = RFChainNut()                      # loads RF chain for GP13 in the nut (output of LNA)
         self.rf_chaingaa = RFChain_gaa()                     # loads RF chain for G@Auger
         self.ant_model = AntennaModel(du_type)              # loads antenna models. time consuming. du_type='GP300' (default using hfss simulations), 'GP300_nec', 'GP300_mat', 'Horizon'
-        self.params = {"add_noise": True, "lst": 18.0, "add_rf_chain":True, "add_rf_chain_nut":False, "add_rf_chain_gaa":False}
+        # Every key the class reads must be present here.  Four of them --
+        # resample_to_mhz, extend_to_us, calibration_smearing_sigma and
+        # add_jitter_ns -- used to be set only by
+        # scripts/convert_efield2voltage.py, so the command line worked while
+        # the documented Python usage raised KeyError on the first call to
+        # compute_voltage().  The defaults are the argparse defaults of that
+        # script: zero, meaning the step is off.
+        self.params = {
+            "add_noise": True,
+            "lst": 18.0,
+            "add_rf_chain": True,
+            "add_rf_chain_nut": False,
+            "add_rf_chain_gaa": False,
+            "resample_to_mhz": 0,            # 0: keep the input sampling rate
+            "extend_to_us": 0,               # 0: keep the input trace length
+            "calibration_smearing_sigma": 0, # 0: no calibration smearing
+            "add_jitter_ns": 0,              # 0: no trigger-time jitter
+        }
         self.previous_run = -1                              # Not to load run info everytime event info is loaded.
 
     def get_event(self, event_idx=None, event_number=None, run_number=None):
