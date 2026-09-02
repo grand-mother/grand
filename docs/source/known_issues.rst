@@ -936,3 +936,50 @@ Shipping it, and reconsidering whether a hard-coded default epoch is wanted at
 all, would resolve both halves of this. A default that is a fixed date in the
 past is the kind of thing that works for years and then quietly stops being
 right.
+
+.. _issue-unsigned-char-fields:
+
+Fourteen fields change Python type when a file is read back
+-------------------------------------------------------------
+
+:Status: open, low severity — a trap rather than a defect
+:Affects: any code that does arithmetic on an ``unsigned char`` field of
+          :class:`~grand.dataio.event_trees.TADC` or
+          :class:`~grand.dataio.run_trees.TRunRawVoltage`
+:Test: ``tests/dataio/test_tree_roundtrip.py``
+
+Fourteen fields in the data model are declared ``unsigned char``, and PyROOT
+presents ``std::vector<unsigned char>`` as characters rather than as numbers.
+The same field therefore has one Python type before a write and another after
+a read:
+
+.. code-block:: python
+
+    tadc.test_pulse_rate_divider = [3, 5]
+    ...                                        # fill, write, reopen, get_entry
+    tadc.test_pulse_rate_divider               # ['\x03', '\x05'] -- strings
+
+``sum()`` over that field works on the writing side and raises ``TypeError``
+on the reading side. The affected fields are ``adc_input_channels_ch``,
+``test_pulse_rate_divider``, ``selector_readout_ch``, ``offset_correction_ch``,
+``qmax_ch``, ``qmin_ch``, ``notch_filters_no_ch``, ``gps_receiver_mode``,
+``gps_disciplining_mode``, ``gps_self_survey`` and ``gps_gnss_decoding`` on
+``TADC``, and three of the same names on ``TRunRawVoltage``.
+
+**No data is lost.** ``ord()`` recovers the number exactly, and the
+round-trip test asserts that it does. Nothing inside the package currently
+reads these fields numerically, so the problem is latent rather than live —
+it is waiting for the first piece of analysis code to treat a mode flag as a
+number.
+
+**Why it is not simply fixed.** The declared C++ type is part of the on-disk
+format. Changing ``unsigned char`` to ``unsigned short`` would widen eleven
+branches of ``TADC`` and make new files unreadable by older code, for a
+cosmetic gain. The alternative — decoding in the descriptor's ``__get__`` —
+is contained but changes what every existing reader sees, which is the same
+compatibility question in a different place.
+
+**What is done instead.** ``tests/dataio/test_tree_roundtrip.py`` pins the
+behaviour, so it is documented rather than surprising, and the test fails if
+a future ROOT version changes it. That failure is the moment to decide, since
+at that point the compatibility break has happened anyway.
