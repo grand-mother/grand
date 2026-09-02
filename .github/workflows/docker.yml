@@ -25,6 +25,27 @@
 name: Docker
 
 on:
+  # Two triggers, and the second exists because the first does not work yet.
+  #
+  # GitHub only offers workflow_dispatch for a workflow file that exists on the
+  # *default* branch.  This repository's default is master, 1163 commits behind
+  # dev, so anything added here is untriggerable from the Actions tab until
+  # Phase 9 promotes dev-next:
+  #
+  #     HTTP 404: workflow docker.yml not found on the default branch
+  #
+  # The push trigger is the way round it.  Pushing this branch's content to a
+  # branch named ci/docker-test runs the job against it, from anywhere:
+  #
+  #     git push origin dev-next:ci/docker-test --force
+  #
+  # A dedicated branch name rather than a paths filter on this file, so that
+  # editing the workflow does not run it and running it does not require
+  # editing it.
+  push:
+    branches:
+      - 'ci/docker-test**'
+
   workflow_dispatch:
     inputs:
       image:
@@ -63,7 +84,9 @@ jobs:
           print('refs=' + json.dumps(refs))
           PY
         env:
-          REFS: ${{ inputs.refs }}
+          # inputs is empty on the push trigger, so fall back to the pair that
+          # makes the result interpretable: dev-next against dev.
+          REFS: ${{ inputs.refs || 'dev-next,dev' }}
 
   # -------------------------------------------------------- published image
   published-image:
@@ -75,6 +98,9 @@ jobs:
       fail-fast: false        # test every ref even when one fails
       matrix:
         ref: ${{ fromJSON(needs.plan.outputs.refs) }}
+    env:
+      # inputs is empty on the push trigger; 1.2 is the newest published image.
+      IMAGE: ${{ inputs.image || 'grandlib/dev:1.2' }}
     steps:
       - name: Free some disk
         # The image is ~3 GB and the data model ~2 GB at peak.  A runner starts
@@ -92,15 +118,15 @@ jobs:
 
       - name: Pull the image and report what is in it
         run: |
-          docker pull "${{ inputs.image }}"
+          docker pull "$IMAGE"
           {
-            echo "### ${{ matrix.ref }} in \`${{ inputs.image }}\`"
+            echo "### ${{ matrix.ref }} in \`$IMAGE\`"
             echo
             echo '| | |'
             echo '|---|---|'
-            echo "| image size on disk | $(docker image inspect '${{ inputs.image }}' --format '{{.Size}}' | awk '{printf "%.1f GB", $1/1e9}') |"
-            echo "| python | $(docker run --rm '${{ inputs.image }}' python3 --version 2>&1 | tr -d '\n') |"
-            echo "| ROOT | $(docker run --rm '${{ inputs.image }}' bash -lc 'root-config --version' 2>&1 | tr -d '\n') |"
+            echo "| image size on disk | $(docker image inspect "$IMAGE" --format '{{.Size}}' | awk '{printf "%.1f GB", $1/1e9}') |"
+            echo "| python | $(docker run --rm "$IMAGE" python3 --version 2>&1 | tr -d '\n') |"
+            echo "| ROOT | $(docker run --rm "$IMAGE" bash -lc 'root-config --version' 2>&1 | tr -d '\n') |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # Each step re-sources env/setup.sh, because a container does not survive
@@ -109,7 +135,7 @@ jobs:
       # rather than one opaque red cross on a single long script.
       - name: 'Stage 1: env/setup.sh (compiles TURTLE and GULL, fetches ~1 GB)'
         run: |
-          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
             bash -lc 'source env/setup.sh'
 
       # Written to a file rather than passed inline: quoting Python inside
@@ -136,7 +162,7 @@ jobs:
               print('NOTE: this is the ROOT < 6.36 code path, which the conda CI')
               print('matrix never exercises -- both of its legs are >= 6.36.')
           PY
-          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
             bash -lc 'source env/setup.sh >/dev/null 2>&1 && python3 _probe.py'
 
       # dataio is where the ROOT-version branch lives, so it is the part most
@@ -145,12 +171,12 @@ jobs:
       # branch.
       - name: 'Stage 3: the dataio suite'
         run: |
-          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
             bash -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/dataio -q'
 
       - name: 'Stage 4: the whole suite'
         run: |
-          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
             bash -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/ -q'
 
       - name: Record the outcome

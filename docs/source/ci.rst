@@ -170,7 +170,33 @@ does the installation route the Handbook recommends still work?  It is
 **manual only** (``workflow_dispatch``) and is a diagnostic rather than a gate
 — it is expected to be able to fail, which is the point of running it.
 
-Trigger it from the Actions tab.  Two inputs, both with defaults:
+.. warning::
+
+   **It cannot be triggered from the Actions tab yet, and neither can any other
+   manual workflow added on this branch.**  GitHub only offers
+   ``workflow_dispatch`` for a workflow file that exists on the *default*
+   branch, and this repository's default is ``master`` — 1163 commits behind.
+   Dispatching it returns
+
+   .. code-block:: text
+
+       HTTP 404: workflow docker.yml not found on the default branch
+
+   The workflow therefore also triggers on a push to a branch named
+   ``ci/docker-test``, which works from anywhere:
+
+   .. code-block:: bash
+
+       git push origin dev-next:ci/docker-test --force
+
+   A dedicated branch name rather than a paths filter on the workflow file, so
+   that editing it does not run it and running it does not require editing it.
+   Phase 9 promotes ``dev-next`` to the default and the dispatch trigger starts
+   working then; the push trigger can stay as the branch-local way in.
+
+Trigger it from the Actions tab, once that is possible.  Two inputs, both with
+defaults — on the push trigger there are no inputs, so the defaults
+``grandlib/dev:1.2`` and ``dev-next,dev`` apply:
 
 ``image``
     The published image to test, ``grandlib/dev:1.2`` by default — the newest

@@ -155,6 +155,10 @@ a third abandoned trunk.
 
 ### Phase 9 — promote to `main`
 - [ ] Confirm exit criteria
+- [ ] Note: promoting also unblocks `workflow_dispatch`. GitHub only offers it
+      for workflows present on the *default* branch, so every manual workflow
+      added on `dev-next` — `docker.yml` today — is untriggerable from the
+      Actions tab until this lands.
 - [ ] Archive the 2023 `main`, free the name
 - [ ] Rename `dev-next`, set default, move protection
 - [ ] Announce with the install commands
