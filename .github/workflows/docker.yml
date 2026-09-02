@@ -1,0 +1,196 @@
+# Does the Docker installation route still work?
+#
+# Manual only.  This is a diagnostic, not a gate: the Handbook presents Docker
+# as the first installation route while the published images date from January
+# 2023 and pin ROOT 6.26.02 against 6.36/6.38 everywhere else, and nobody knows
+# whether the combination still runs.  See issue-docker-unmaintained in the
+# documentation.
+#
+# It runs here rather than on a developer machine for a practical reason: the
+# image is ~3 GB uncompressed and the data model another ~2 GB at peak, and a
+# runner has that to spare where a laptop at 97 % does not.  It is also safer.
+# Running the container against a working checkout would recompile TURTLE and
+# GULL into it -- built against ROOT 6.26 and Ubuntu 20.04's glibc -- and
+# overwrite the host's, breaking the conda environment in a way that would take
+# a while to diagnose.  Here the whole machine is thrown away afterwards.
+#
+# Two independent questions, one job each:
+#
+#   published-image  does the image users are told to pull work with the code?
+#   build-images     do the Dockerfiles in this repository still build?
+#
+# They can differ.  The published images cannot be rebuilt from the current
+# Dockerfiles anyway -- the base pins a ROOT release from 2022 -- so a failure
+# in one says nothing about the other.
+name: Docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Published image to test'
+        required: true
+        default: 'grandlib/dev:1.2'
+      refs:
+        description: >-
+          Branches to test inside it, comma-separated.  Testing dev-next and
+          dev together is what separates "Docker is stale" from "dev-next broke
+          Docker".
+        required: true
+        default: 'dev-next,dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ------------------------------------------------------------------ matrix
+  # The refs input is a string; this turns it into a JSON array the matrix can
+  # consume, so the caller can test one branch or several without editing the
+  # workflow.
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    outputs:
+      refs: ${{ steps.split.outputs.refs }}
+    steps:
+      - id: split
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          raw = os.environ['REFS']
+          refs = [r.strip() for r in raw.split(',') if r.strip()]
+          print('refs=' + json.dumps(refs))
+          PY
+        env:
+          REFS: ${{ inputs.refs }}
+
+  # -------------------------------------------------------- published image
+  published-image:
+    name: Published image / ${{ matrix.ref }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false        # test every ref even when one fails
+      matrix:
+        ref: ${{ fromJSON(needs.plan.outputs.refs) }}
+    steps:
+      - name: Free some disk
+        # The image is ~3 GB and the data model ~2 GB at peak.  A runner starts
+        # with about 14 GB free, which is enough, but not with room to spare.
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+          df -h / | tail -1
+
+      - name: Check out the branch under test
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.ref }}
+          path: checkout
+
+      - name: Pull the image and report what is in it
+        run: |
+          docker pull "${{ inputs.image }}"
+          {
+            echo "### ${{ matrix.ref }} in \`${{ inputs.image }}\`"
+            echo
+            echo '| | |'
+            echo '|---|---|'
+            echo "| image size on disk | $(docker image inspect '${{ inputs.image }}' --format '{{.Size}}' | awk '{printf "%.1f GB", $1/1e9}') |"
+            echo "| python | $(docker run --rm '${{ inputs.image }}' python3 --version 2>&1 | tr -d '\n') |"
+            echo "| ROOT | $(docker run --rm '${{ inputs.image }}' bash -lc 'root-config --version' 2>&1 | tr -d '\n') |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Each step re-sources env/setup.sh, because a container does not survive
+      # between steps but its effects on the mounted checkout do.  Splitting it
+      # this way is deliberate: it makes GitHub show *which* stage failed,
+      # rather than one opaque red cross on a single long script.
+      - name: 'Stage 1: env/setup.sh (compiles TURTLE and GULL, fetches ~1 GB)'
+        run: |
+          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+            bash -lc 'source env/setup.sh'
+
+      # Written to a file rather than passed inline: quoting Python inside
+      # bash -lc inside YAML is three levels of escaping and gets misread by
+      # everyone who edits it afterwards.
+      - name: 'Stage 2: import grand'
+        run: |
+          cat > checkout/_probe.py <<'PY'
+          import sys
+
+          import numpy
+          import ROOT
+
+          import grand
+          import grand.dataio.descriptors as descriptors
+
+          print('grand   ', grand.__file__)
+          print('ROOT    ', ROOT.gROOT.GetVersion(), '(int %d)' % ROOT.gROOT.GetVersionInt())
+          print('numpy   ', numpy.__version__)
+          print('python  ', sys.version.split()[0])
+          print('high_root_version =', descriptors.high_root_version)
+          if not descriptors.high_root_version:
+              print()
+              print('NOTE: this is the ROOT < 6.36 code path, which the conda CI')
+              print('matrix never exercises -- both of its legs are >= 6.36.')
+          PY
+          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+            bash -lc 'source env/setup.sh >/dev/null 2>&1 && python3 _probe.py'
+
+      # dataio is where the ROOT-version branch lives, so it is the part most
+      # likely to behave differently on 6.26 -- and the part CI never covers,
+      # since both legs of the conda matrix are >= 6.36 and take the other
+      # branch.
+      - name: 'Stage 3: the dataio suite'
+        run: |
+          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+            bash -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/dataio -q'
+
+      - name: 'Stage 4: the whole suite'
+        run: |
+          docker run --rm -v "$PWD/checkout:/work" -w /work "${{ inputs.image }}" \
+            bash -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/ -q'
+
+      - name: Record the outcome
+        if: always()
+        run: |
+          echo "| result | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------- build the images
+  build-images:
+    name: Build the Dockerfiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Free some disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+          df -h / | tail -1
+
+      - uses: actions/checkout@v7
+
+      # The build scripts assemble their requirements files by copying them out
+      # of the repository first, so they must be run from their own directory
+      # rather than the Dockerfiles being built directly.  One of those copies
+      # pointed at docs/apidoc-only/, deleted when the Sphinx tree was rebuilt;
+      # this job is what would have caught that.
+      - name: base
+        working-directory: env/docker_amd64
+        run: bash build_base.sh
+
+      - name: dev
+        working-directory: env/docker_amd64
+        run: bash build_dev.sh
+
+      - name: Report the images
+        if: always()
+        run: |
+          {
+            echo '### Images built from env/docker_amd64'
+            echo
+            echo '```'
+            docker images --format '{{.Repository}}:{{.Tag}}\t{{.Size}}' | head -10
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

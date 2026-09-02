@@ -324,6 +324,17 @@ notes, so that path has a user, and containers are the right answer for
 reproducibility if anyone maintains them.  Merge exposure is low either way:
 ``env/docker_arm64`` is touched by no branch and ``env/docker_amd64`` by two.
 
+**How to find out.**  ``.github/workflows/docker.yml`` runs the question:
+trigger it from the Actions tab and it pulls the published image, checks out
+``dev-next`` and ``dev`` inside it, and runs ``env/setup.sh``, ``import
+grand``, the ``dataio`` suite and the full suite as separate stages.  It is
+manual and is not a gate — it is expected to be able to fail.  Running it
+against both branches separates "Docker is stale" from "``dev-next`` broke
+Docker".
+
+Nobody has run it yet, so the question in the title of this entry is still
+open.
+
 **In the meantime**, the supported route is the conda environment; see
 :doc:`installation`.
 

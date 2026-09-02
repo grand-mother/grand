@@ -162,6 +162,48 @@ it was serving, and under a minute for the identical install in the
 anything in the repository, but paying it in a job that does not need the
 compiler is avoidable.
 
+Testing the Docker route
+------------------------
+
+``docker.yml`` answers the question :ref:`issue-docker-unmaintained` poses:
+does the installation route the Handbook recommends still work?  It is
+**manual only** (``workflow_dispatch``) and is a diagnostic rather than a gate
+— it is expected to be able to fail, which is the point of running it.
+
+Trigger it from the Actions tab.  Two inputs, both with defaults:
+
+``image``
+    The published image to test, ``grandlib/dev:1.2`` by default — the newest
+    that exists, from January 2023.
+``refs``
+    Which branches to check out inside it, ``dev-next,dev`` by default.
+    Testing both is what separates "Docker is stale" from "``dev-next`` broke
+    Docker", a distinction worth having before anyone spends time on a fix.
+
+Two independent jobs, because they answer different questions and can
+disagree:
+
+``published-image``
+    Pulls the image, checks a branch out inside it, and runs four stages —
+    ``env/setup.sh``, ``import grand``, the ``dataio`` suite, then everything.
+    Split into separate steps so that GitHub shows *which* stage failed rather
+    than one red cross on a long script.  ``dataio`` gets its own stage because
+    that is where the ROOT-version branch lives, and the conda matrix never
+    exercises it: both legs are ROOT >= 6.36 and take the other path.
+``build-images``
+    Runs ``build_base.sh`` and ``build_dev.sh`` from ``env/docker_amd64/``.
+    Those scripts assemble their requirements files by copying them out of the
+    repository before building, so they have to be run rather than the
+    Dockerfiles built directly.  This job is what would have caught the copy
+    that pointed at ``docs/apidoc-only/`` after that directory was deleted.
+
+**Why in CI and not on a laptop.**  The image is about 3 GB uncompressed and
+the data model another 2 GB at peak.  More to the point, running the container
+against a working checkout would recompile TURTLE and GULL into it — built
+against ROOT 6.26 and Ubuntu 20.04's glibc — and overwrite the host copies,
+breaking the conda environment in a way that would take a while to trace.  On
+a runner the whole machine is discarded afterwards.
+
 The data model is cached
 ------------------------
 
