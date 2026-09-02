@@ -241,6 +241,47 @@ This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
 point with no SRTM tile also returns ``nan`` rather than raising.  Both are
 pinned in ``tests/geo/test_topography_conventions.py``.
 
+.. _issue-setup-sh-swallows-errors:
+
+``env/setup.sh`` reports success when the C extension fails to build
+---------------------------------------------------------------------
+
+:Status: open, not blocking on a working environment
+:Affects: any environment where the build fails — a new container, a machine
+          missing a build dependency
+:Found: building the proposed Docker image, September 2026
+
+``env/setup.sh`` compiles TURTLE and GULL through ``src/Makefile`` and
+``src/build_core.py``.  When that compilation fails, the script prints the
+traceback and **exits zero anyway**:
+
+.. code-block:: text
+
+    PYTHON   _core.abi3.so
+    Traceback (most recent call last):
+      File ".../cffi/_shimmed_dist_utils.py", line 12, in <module>
+        import setuptools
+    ModuleNotFoundError: No module named 'setuptools'
+
+    $ echo $?
+    0
+
+Neither ``env/setup.sh`` nor ``src/install_ext_lib.bash`` sets ``set -e`` or
+checks a status, so the failure is reported to the screen and nowhere else.
+
+The consequence is that the failure surfaces later and somewhere unrelated.  In
+the case that found it, a CI stage named "run env/setup.sh" passed, and the
+next stage failed with ``ModuleNotFoundError: No module named 'grand._core'``
+— which reads as a broken package rather than a missing build dependency two
+steps earlier.
+
+**Fix.**  ``set -e`` in ``env/setup.sh``, or an explicit status check after the
+extension build.  Not done here: the script is sourced rather than executed, so
+``set -e`` would leak into the caller's interactive shell and abort it on any
+subsequent failing command — the fix needs a subshell or an explicit check, and
+that is a change to the entry point every developer uses, which deserves its
+own review rather than riding along with a Docker investigation.
+
 .. _issue-docker-unmaintained:
 
 The Docker installation route is unmaintained

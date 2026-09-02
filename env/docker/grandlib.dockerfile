@@ -33,6 +33,13 @@ FROM rootproject/root:6.36.00-ubuntu25.04
 # failed with "/usr/bin/python3: No module named pip" without it.  ROOT is
 # built against the system interpreter in these images, so that is the one to
 # install into rather than a separate virtualenv.
+#
+# python3-setuptools because cffi needs it to compile the _core extension --
+# Python 3.13 removed distutils, and cffi's shim falls back to setuptools:
+#
+#     File ".../cffi/_shimmed_dist_utils.py", line 12, in <module>
+#         import setuptools
+#     ModuleNotFoundError: No module named 'setuptools'
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         build-essential \
@@ -40,6 +47,7 @@ RUN apt-get update \
         git \
         ca-certificates \
         python3-pip \
+        python3-setuptools \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/grandlib
@@ -63,7 +71,13 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages ".[dev]"
 # "import grand"` works in a bare `docker run` with no sourcing.  A bind mount
 # over /opt/grandlib shadows the installed copy, which is what you want when
 # developing against the container.
+#
+# PYTHONPATH *appends* to what the base image sets.  Replacing it outright --
+# `ENV PYTHONPATH=/opt/grandlib` -- drops the base's `/opt/root/lib` and makes
+# ROOT itself unimportable, which is what the first build of this image did:
+#
+#     ModuleNotFoundError: No module named 'ROOT'
 ENV GRAND_ROOT=/opt/grandlib
-ENV PYTHONPATH=/opt/grandlib
+ENV PYTHONPATH=/opt/grandlib:${PYTHONPATH}
 
 CMD ["/bin/bash"]
