@@ -24,16 +24,16 @@ Composition
 
 Measured on the ``dev`` branch, by lines of Python:
 
-====================================  =======  ======
-Subpackage                            Lines    Share
-====================================  =======  ======
+======================================  =====  =====
+Subpackage                              Lines  Share
+======================================  =====  =====
 ``grand.sim`` — instrument response     4510   31.9%
 ``grand.dataio`` — data model           3696   26.1%
 ``grand.geo`` — geometry and geodesy    2375   16.8%
 ``grand.aoi`` — user-facing API         1602   11.3%
 ``grand.basis`` — traces and array viz  1512   10.7%
-``grand.recon`` — reconstruction          28    0.2%
-====================================  =======  ======
+``grand.recon`` — reconstruction        28     0.2%
+======================================  =====  =====
 
 The last row is the thing to notice.  The pipeline runs forward only:
 shower to field to voltage to ADC.  Reconstruction — recovering direction,
