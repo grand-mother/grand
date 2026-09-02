@@ -104,4 +104,14 @@ Known gaps
 
 The end-to-end test cannot run at all on a fresh checkout, because its input
 file is not in version control and is not downloaded by ``env/setup.sh``.
-See :ref:`issue-missing-endtoend-fixture`.
+See :ref:`issue-missing-endtoend-fixture`.  A replacement that builds its own
+input, ``tests/sim/test_pipeline_end_to_end.py``, covers the same ground and
+does run.
+
+**The suite cannot be run twice at once.**  Several tests write to fixed paths
+under ``data/`` -- ``test_voltage.root``, ``test_voltage1.root`` -- rather than
+to a temporary directory, so two concurrent runs, or ``pytest -n auto``,
+occasionally fail on a file another process is writing.  It shows up as a
+single failure that disappears on a rerun, which is the most misleading shape
+a test failure can take.  New tests should use pytest's ``tmp_path``, as
+``test_pipeline_end_to_end.py`` does.
