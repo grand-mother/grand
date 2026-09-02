@@ -420,3 +420,47 @@ The documentation build should print no ``WARNING`` or ``ERROR`` lines apart
 from the ROOT CPU-feature diagnostic described above.  Do not add ``-W``: on a
 machine where ROOT emits that diagnostic it fails the build for a reason
 unrelated to the documentation.
+
+Publishing the documentation
+-----------------------------
+
+``pages.yml`` builds this manual and deploys it to GitHub Pages.  It has never
+run, for two independent reasons, and both have to be dealt with:
+
+1. **Pages is not enabled** on ``grand-mother/grand``.  The API returns 404 for
+   the Pages endpoint, so ``deploy-pages`` has nothing to deploy to.
+2. **The trigger names a branch GitHub cannot see.**  The workflow fires on
+   ``push`` to ``main`` and on ``workflow_dispatch``, but the repository's
+   default branch is ``master``, and GitHub only offers ``workflow_dispatch``
+   for workflows that exist on the default branch.  ``pages.yml`` lives on
+   ``dev-next`` alone, so nothing can start it.
+
+There are two ways to publish, and they are not alternatives so much as a
+stopgap and a destination.
+
+**From the collaboration repository.**  Someone with admin on
+``grand-mother/grand`` sets *Settings → Pages → Source* to **GitHub Actions**.
+Once ``dev-next`` becomes the default branch in Phase 9 the existing trigger
+matches and the manual republishes on every push, at
+``https://grand-mother.github.io/grand/``.  Before then, add ``dev-next`` to
+the workflow's ``branches`` list.
+
+**From a personal fork, in the meantime.**  A fork is a repository you are
+admin of, which removes both blockers without anyone's permission:
+
+.. code-block:: bash
+
+    gh repo fork grand-mother/grand --clone=false --remote-name fork
+    git push fork dev-next
+    gh repo edit <you>/grand --default-branch dev-next
+    gh api -X POST repos/<you>/grand/pages -f build_type=workflow
+    gh workflow run pages.yml --repo <you>/grand --ref dev-next
+
+Setting the fork's default branch to ``dev-next`` is what makes the last line
+work: it puts ``pages.yml`` where GitHub looks for dispatchable workflows.  The
+result is a complete, current manual at ``https://<you>.github.io/grand/``,
+which is enough to circulate a link — but say plainly that it is a preview of a
+branch, not a second home for the project.
+
+Neither route changes a line of the documentation.  The manual that publishes
+is the one ``cd docs && make html`` builds locally.

@@ -155,7 +155,11 @@ a third abandoned trunk.
       CPU-feature diagnostic there on some processors. Under `-W` that fails
       the build for a hardware reason nobody can act on. The job greps the
       log instead, filtering that one line; every other warning still fails.
-- [ ] Publish to GitHub Pages from CI
+- [ ] Publish to GitHub Pages from CI — `pages.yml` is written and has never
+      run: Pages is not enabled on the repository, *and* the trigger names
+      `main` while the default branch is `master`, so GitHub does not offer
+      `workflow_dispatch` either. Both routes — the collaboration repository,
+      and a personal fork as a stopgap — are written up in `ci.rst`.
 
 ### Phase 8 — governance and weight
 - [x] Bump the deprecated GitHub Action versions (checkout, setup-python,
