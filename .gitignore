@@ -71,3 +71,6 @@ docs/apidoc-only/sphinx/source/grand.*
 sim2root/CoREASRawRoot/__pycache__/CorsikaInfoFuncs.cpython-310.pyc
 *.pyc
 /.env
+
+# Sphinx build output
+docs/build/
