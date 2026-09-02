@@ -160,6 +160,16 @@ jobs:
           ref: ${{ matrix.ref }}
           path: checkout
 
+      # Every docker run here passes --entrypoint explicitly.  grandlib/dev
+      # sets Entrypoint ["/bin/bash"], so the usual `docker run IMAGE bash -lc
+      # '...'` becomes `/bin/bash bash -lc '...'` -- bash handed bash as a
+      # script -- and fails with
+      #
+      #     /usr/bin/bash: /usr/bin/bash: cannot execute binary file
+      #
+      # exit 126.  Overriding the entrypoint makes this work whatever the image
+      # declares, which matters because the other candidate images were built
+      # separately and need not agree.
       - name: Pull the image and report what is in it
         run: |
           docker pull "$IMAGE"
@@ -169,8 +179,8 @@ jobs:
             echo '| | |'
             echo '|---|---|'
             echo "| image size on disk | $(docker image inspect "$IMAGE" --format '{{.Size}}' | awk '{printf "%.1f GB", $1/1e9}') |"
-            echo "| python | $(docker run --rm "$IMAGE" python3 --version 2>&1 | tr -d '\n') |"
-            echo "| ROOT | $(docker run --rm "$IMAGE" bash -lc 'root-config --version' 2>&1 | tr -d '\n') |"
+            echo "| python | $(docker run --rm --entrypoint python3 "$IMAGE" --version 2>&1 | tr -d '\n') |"
+            echo "| ROOT | $(docker run --rm --entrypoint /bin/bash "$IMAGE" -lc 'root-config --version' 2>&1 | tr -d '\n') |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # Each step re-sources env/setup.sh, because a container does not survive
@@ -185,8 +195,8 @@ jobs:
         # problem, not the container.
         timeout-minutes: 25
         run: |
-          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
-            bash -lc 'source env/setup.sh'
+          docker run --rm -v "$PWD/checkout:/work" -w /work \
+            --entrypoint /bin/bash "$IMAGE" -lc 'source env/setup.sh'
 
       # Written to a file rather than passed inline: quoting Python inside
       # bash -lc inside YAML is three levels of escaping and gets misread by
@@ -212,8 +222,8 @@ jobs:
               print('NOTE: this is the ROOT < 6.36 code path, which the conda CI')
               print('matrix never exercises -- both of its legs are >= 6.36.')
           PY
-          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
-            bash -lc 'source env/setup.sh >/dev/null 2>&1 && python3 _probe.py'
+          docker run --rm -v "$PWD/checkout:/work" -w /work \
+            --entrypoint /bin/bash "$IMAGE" -lc 'source env/setup.sh >/dev/null 2>&1 && python3 _probe.py'
 
       # dataio is where the ROOT-version branch lives, so it is the part most
       # likely to behave differently on 6.26 -- and the part CI never covers,
@@ -221,13 +231,13 @@ jobs:
       # branch.
       - name: 'Stage 3: the dataio suite'
         run: |
-          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
-            bash -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/dataio -q'
+          docker run --rm -v "$PWD/checkout:/work" -w /work \
+            --entrypoint /bin/bash "$IMAGE" -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/dataio -q'
 
       - name: 'Stage 4: the whole suite'
         run: |
-          docker run --rm -v "$PWD/checkout:/work" -w /work "$IMAGE" \
-            bash -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/ -q'
+          docker run --rm -v "$PWD/checkout:/work" -w /work \
+            --entrypoint /bin/bash "$IMAGE" -lc 'source env/setup.sh >/dev/null && python3 -m pytest tests/ -q'
 
       - name: Record the outcome
         if: always()

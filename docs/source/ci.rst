@@ -229,6 +229,30 @@ disagree:
     to backtrack.  The push trigger carries no inputs, so a branch-triggered
     run skips it and costs one job per ref rather than three.
 
+.. note::
+
+   Every ``docker run`` in that workflow passes ``--entrypoint`` explicitly.
+   ``grandlib/dev`` declares ``Entrypoint: ["/bin/bash"]``, so the ordinary
+   form ``docker run IMAGE bash -lc '...'`` becomes ``/bin/bash bash -lc
+   '...'`` — bash handed bash as a script — and dies with
+
+   .. code-block:: text
+
+       /usr/bin/bash: /usr/bin/bash: cannot execute binary file
+
+   and exit 126.  That is what the first run of this workflow did, in all four
+   stages and in the two probes that report the image's Python and ROOT
+   versions.  Overriding the entrypoint works whatever an image declares, which
+   matters because the four candidate images were built separately and need not
+   agree.
+
+   Pushing to ``ci/docker-test`` also used to trigger ``Code Quality`` and
+   ``Tests``, which had ``branches: ['**']`` — running the whole of CI a second
+   time on a commit that had already passed it.  Both now carry a negative
+   pattern, ``['**', '!ci/**']``.  It has to be a negative pattern inside
+   ``branches`` rather than a separate ``branches-ignore``: GitHub rejects a
+   workflow that uses both filters for the same event.
+
 **Why in CI and not on a laptop.**  The image is about 3 GB uncompressed and
 the data model another 2 GB at peak.  More to the point, running the container
 against a working checkout would recompile TURTLE and GULL into it — built

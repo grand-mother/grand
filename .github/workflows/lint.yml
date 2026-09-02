@@ -5,7 +5,17 @@ name: Code Quality
 
 on:
   push:
-    branches: ['**']
+    # A negative pattern inside `branches`, not a separate `branches-ignore`:
+    # GitHub rejects a workflow that uses both filters for the same event.
+    #
+    # ci/** are throwaway trigger branches -- pushing dev-next's content to
+    # ci/docker-test is how the Docker workflow is started, since
+    # workflow_dispatch needs the file on the default branch.  Running the whole
+    # of CI again on a commit that has already passed it wastes about ten
+    # minutes of runner time per trigger.
+    branches:
+      - '**'
+      - '!ci/**'
   pull_request:
 
 concurrency:
