@@ -244,6 +244,69 @@ jobs:
         run: |
           echo "| result | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
 
+  # ------------------------------------------------------ the proposed image
+  # Builds env/docker/grandlib.dockerfile -- ROOT 6.36 matching the conda
+  # environment, dependencies taken from pyproject.toml rather than a second
+  # list -- and runs the suite inside it.  This is the "if Docker is supported"
+  # option made concrete enough to judge.
+  #
+  # It builds and tests.  It does not publish: pushing an image to a registry
+  # is a decision about what the collaboration distributes, not something a CI
+  # job should start doing on its own.  Adding a push is a login step and a
+  # docker push once that decision is made.
+  build-modern:
+    name: Proposed image (ROOT 6.36)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Report free disk
+        run: df -h / | tail -1
+
+      - uses: actions/checkout@v7
+
+      - name: Build
+        timeout-minutes: 40
+        run: |
+          docker build -f env/docker/grandlib.dockerfile -t grandlib:dev .
+
+      - name: What is in it
+        run: |
+          {
+            echo '### Proposed image'
+            echo
+            echo '| | |'
+            echo '|---|---|'
+            echo "| size | $(docker image inspect grandlib:dev --format '{{.Size}}' | awk '{printf "%.1f GB", $1/1e9}') |"
+            echo "| python | $(docker run --rm --entrypoint python3 grandlib:dev --version 2>&1 | tr -d '\n') |"
+            echo "| ROOT | $(docker run --rm --entrypoint /bin/bash grandlib:dev -lc 'root-config --version' 2>&1 | tr -d '\n') |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Same staging as the published-image job, and for the same reason: the
+      # first stage to fail is the informative one.
+      - name: 'Stage 1: env/setup.sh'
+        timeout-minutes: 25
+        run: |
+          docker run --rm -v "$PWD:/opt/grandlib" -w /opt/grandlib \
+            --entrypoint /bin/bash grandlib:dev -lc 'source env/setup.sh'
+
+      - name: 'Stage 2: import grand'
+        run: |
+          docker run --rm -v "$PWD:/opt/grandlib" -w /opt/grandlib \
+            --entrypoint /bin/bash grandlib:dev -lc \
+            'source env/setup.sh >/dev/null 2>&1 && python3 -c "
+          import ROOT, numpy, sys, grand
+          import grand.dataio.descriptors as d
+          print(\"ROOT\", ROOT.gROOT.GetVersion(), \"numpy\", numpy.__version__,
+                \"python\", sys.version.split()[0])
+          print(\"high_root_version =\", d.high_root_version)
+          "'
+
+      - name: 'Stage 3: the whole suite'
+        run: |
+          docker run --rm -v "$PWD:/opt/grandlib" -w /opt/grandlib \
+            --entrypoint /bin/bash grandlib:dev -lc \
+            'source env/setup.sh >/dev/null && python3 -m pytest tests/ -q'
+
   # ---------------------------------------------------------- build the images
   build-images:
     name: Build the Dockerfiles

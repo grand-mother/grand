@@ -39,7 +39,21 @@ def test_get_peakamptime_norm_hilbert():
     assert np.allclose(tr3d.traces[1, :, idx_max[1]], np.zeros(3), atol=0.1)
     # but hilbert is max
     assert np.isclose(t_max[1], true_t_max, atol=delta_t)
-    assert idx_max[1] == int(true_t_max / 1000)
+    # The peak sits at sample 511.5 -- exactly between two samples, because
+    # linspace(-20, 20, 1024) puts its midpoint on a half-sample.  Which
+    # neighbour argmax returns is therefore decided by floating-point noise in
+    # the Hilbert transform, and implementations disagree: 511 with the NumPy
+    # in the conda environment, 512 with the 1.23 in the Docker image.
+    #
+    # This used to assert `idx_max[1] == int(true_t_max / 1000)`, where int()
+    # truncates 511.5 to 511 -- picking one of two equally correct answers for
+    # no reason, and making the test fail on any stack that rounds the other
+    # way.  Assert the bracket instead, which is what the line above already
+    # does for the same quantity with its one-sample tolerance.
+    exact_idx = true_t_max / delta_t
+    assert np.floor(exact_idx) <= idx_max[1] <= np.ceil(exact_idx), (
+        'the Hilbert peak landed at sample %s, outside the pair bracketing the '
+        'true maximum at %.1f' % (idx_max[1], exact_idx))
     true_max = np.sqrt(1 + 2 * 2 + 3 * 3)
     assert np.isclose(v_max[1], true_max, rtol=1e-3)
     assert t_max.shape == (2,) == v_max.shape
