@@ -11,4 +11,9 @@ class EstimateEfield(object):
     def __init__(self, params):
         """
         Constructor
+
+        Parameters
+        ----------
+        params : dict
+            Reconstruction parameters.
         """

@@ -144,15 +144,15 @@ def get_axis_filename(component_name, axis):
 def _set_name_data_file(self, axis):
     r"""Returns the path of the data file for one antenna arm.
 
-        Parameters
-        ----------
-        axis : int
-            Arm index: 0 for X, 1 for Y, 2 for Z.
+    Parameters
+    ----------
+    axis : int
+    Arm index: 0 for X, 1 for Y, 2 for Z.
 
-        Returns
-        -------
-        str
-            Path to the tabulated measurements for that arm.
+    Returns
+    -------
+    str
+        Path to the tabulated measurements for that arm.
     """
     filename = get_axis_filename("MatchingNetwork", axis)
 
@@ -242,19 +242,19 @@ def interp(x,y,z):
         A thin wrapper over :func:`numpy.interp`, kept so that the interpolation
         used across this module can be changed in one place.
 
-        Parameters
-        ----------
-        x : ndarray
-            Positions to interpolate onto.
-        y : ndarray
-            Sample positions.
-        z : ndarray
-            Sample values.
+    Parameters
+    ----------
+    x : ndarray
+        Positions to interpolate onto.
+    y : ndarray
+    Sample positions.
+    z : ndarray
+    Sample values.
 
-        Returns
-        -------
-        ndarray
-            Interpolated values, of the shape of `x`.
+    Returns
+    -------
+    ndarray
+    Interpolated values, of the shape of `x`.
     """
     return np.interp(x,y,z)
 
@@ -450,7 +450,7 @@ class GenericProcessingDU:
     def __init__(self):
         r"""Initialises the empty arrays every chain stage shares.
 
-                Subclasses fill them in :meth:`compute_for_freqs`.
+        Subclasses fill them in :meth:`compute_for_freqs`.
         """
         """ """
         self.freqs_mhz = np.zeros(0)
@@ -497,6 +497,7 @@ class MatchingNetwork(GenericProcessingDU):
     
 
     r"""The impedance matching network between antenna and LNA.
+
     """
     def __init__(self):
         """
@@ -638,6 +639,7 @@ class gaa_frontend0db(GenericProcessingDU):
     
 
     r"""The GAA front end at 0 dB gain.
+
     """
     def __init__(self):
         """
@@ -923,6 +925,7 @@ class BalunAfterLNA(GenericProcessingDU):
 
     def __init__(self):
         r"""Initialises the balun that follows the low-noise amplifier.
+
         """
         """ """
         super().__init__()
@@ -1033,6 +1036,7 @@ class Cable(GenericProcessingDU):
 
     def __init__(self):
         r"""Initialises the cable and its connector.
+
         """
         """ """
         super().__init__()
@@ -1251,12 +1255,12 @@ class VGAFilter(GenericProcessingDU):
 
 class BalunBeforeADC(GenericProcessingDU):
     """Class goals:
-      * Pass signal through Balun before Analog to Digitial Converter (ADC) for each antenna
-      * Balun is used in x, y, and z ports
-      * Same data is used for all three ports
-      * read data files only once
-      * pre_compute interpolation
-      * this Balun is referred to as Balun1 Balun2
+    * Pass signal through Balun before Analog to Digitial Converter (ADC) for each antenna
+    * Balun is used in x, y, and z ports
+    * Same data is used for all three ports
+    * read data files only once
+    * pre_compute interpolation
+    * this Balun is referred to as Balun1 Balun2
     """
 
     def __init__(self):
@@ -1357,6 +1361,7 @@ class BalunBeforeADC(GenericProcessingDU):
         
 class Rfchain_elements_db(GenericProcessingDU):
     r"""A chain element whose response is tabulated in decibels.
+
     """
     def __init__(self, filename="test2.s2p"):
         r"""Loads this stage's tabulated data and prepares its S-parameters.
@@ -1468,6 +1473,7 @@ class Rfchain_elements_db(GenericProcessingDU):
 
 class Rfchain_elements_db_rad(GenericProcessingDU):
     r"""A chain element tabulated in decibels, with phase in radians.
+
     """
     def __init__(self, filename="test2.s2p"):
         r"""Loads this stage's tabulated data and prepares its S-parameters.
@@ -1579,6 +1585,7 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
 
 class Rfchain_elements(GenericProcessingDU):
     r"""A chain element whose response is tabulated in linear units.
+
     """
     def __init__(self, filename="test.s2p"):
         r"""Loads this stage's tabulated data and prepares its S-parameters.
@@ -1676,6 +1683,7 @@ class Rfchain_elements(GenericProcessingDU):
 ##############################################################################################
 class Rfchain_elements_rad(GenericProcessingDU):
     r"""A chain element tabulated linearly, with phase in radians.
+
     """
     def __init__(self, filename="test.s2p"):
         r"""Loads this stage's tabulated data and prepares its S-parameters.
@@ -1774,6 +1782,7 @@ class Rfchain_elements_rad(GenericProcessingDU):
 
 class Zload_arb(GenericProcessingDU):
     r"""An arbitrary load impedance read from a measurement file.
+
     """
     def __init__(self, filename="S_balun_AD.s1p"):
         r"""Loads this stage's tabulated data and prepares its S-parameters.
@@ -1849,7 +1858,7 @@ class Zload_arb(GenericProcessingDU):
 
 class Zload(GenericProcessingDU):
     """Class goals:
-      * computes input impedance of load due to balun + 200ohm ADC.
+    * computes input impedance of load due to balun + 200ohm ADC.
     """
 
     def __init__(self):
@@ -2065,7 +2074,7 @@ class RFChain(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -2219,7 +2228,7 @@ class RFChainNut(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -2356,7 +2365,7 @@ class RFChain_gaa(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -2513,7 +2522,7 @@ class RFChain_Balun1(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -2670,7 +2679,7 @@ class RFChain_Match_net(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -2828,7 +2837,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -2982,7 +2991,7 @@ class RFChain_VGA(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 
@@ -3139,7 +3148,7 @@ class RFChain_in_Balun1(GenericProcessingDU):
         return self.V_out_RFchain
 
     def get_tf(self):
-        """Return transfer function for all elements in RF chain
+        r"""Return transfer function for all elements in RF chain
         total transfer function is the output voltage for input Voc of 1. It says by what factor the Voc will be multiplied by the RF chain.
         @return total TF (complex, (3,N)):
 

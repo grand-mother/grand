@@ -67,8 +67,8 @@ class FieldsCollection(OrderedDict, MutableMapping[int, CollectionEntry]):
 class ShowerEvent:
     r"""The parameters of one air shower.
 
-        Direction, energy, core position, depth of maximum and primary type,
-        together with the frame they are expressed in.
+    Direction, energy, core position, depth of maximum and primary type,
+    together with the frame they are expressed in.
     """
     energy: Optional[float] = None
     zenith: Optional[float] = None
@@ -86,15 +86,15 @@ class ShowerEvent:
     def load_root(self, d_shower):
         r"""Returns a shower built from a ROOT shower tree.
 
-                Parameters
-                ----------
-                d_shower : TShower or TShowerSim
-                    The tree to read.
+        Parameters
+        ----------
+        d_shower : TShower or TShowerSim
+            The tree to read.
 
-                Returns
-                -------
-                ShowerEvent
-                    The shower it describes.
+        Returns
+        -------
+        ShowerEvent
+            The shower it describes.
         """
         self.energy = d_shower.energy_primary
         self.zenith = d_shower.zenith

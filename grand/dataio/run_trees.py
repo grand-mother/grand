@@ -48,14 +48,31 @@ class MotherRunTree(DataTree):
 
     ## Gets list of runs in the tree together
     def get_list_of_runs(self):
-        """Gets list of runs in the tree together"""
+        """Gets list of runs in the tree together
+
+        Returns
+        -------
+        list of int
+            Every run number in the tree.
+        """
         count = self.draw("run_number", "", "goff")
         runs = self.get_v1()
         return [int(runs[i]) for i in range(count)]
 
     # Readout the TTree entry corresponding to the run
     def get_run(self, run_no):
-        """Readout the TTree entry corresponding to the run"""
+        """Readout the TTree entry corresponding to the run
+
+        Parameters
+        ----------
+        run_no : int
+            Run number.
+
+        Returns
+        -------
+        int
+            Bytes read; zero when the run is absent.
+        """
         # Make sure we have an int
         run_no = int(run_no)
         # Try to get the run from the tree
@@ -71,7 +88,18 @@ class MotherRunTree(DataTree):
 
     ## Check if the TTree has an entry with the given run number
     def has_run(self, run_no):
-        """Check if the TTree has an entry with the given run number"""
+        """Check if the TTree has an entry with the given run number
+
+        Parameters
+        ----------
+        run_no : int
+            Run number.
+
+        Returns
+        -------
+        bool
+            True when the tree holds that run.
+        """
         # Make sure we have an int
         run_no = int(run_no)
         # Try to get the run from the tree
@@ -83,7 +111,13 @@ class MotherRunTree(DataTree):
             return True
 
     def build_index(self, run_id):
-        """Build the tree index (necessary for working with friends)"""
+        """Build the tree index (necessary for working with friends)
+
+        Parameters
+        ----------
+        run_id : str, optional
+            Branch holding the run number.
+        """
         self._tree.BuildIndex(run_id)
 
     ## Fills the entry list from the tree
@@ -96,7 +130,13 @@ class MotherRunTree(DataTree):
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
-        """Check if specified run_number/event_number already exist in the tree"""
+        """Check if specified run_number/event_number already exist in the tree
+
+        Returns
+        -------
+        bool
+            True when no run number appears twice.
+        """
         # If the entry list does not exist, the event is unique
         if self._entry_list and self.run_number in self._entry_list:
             return False
@@ -186,6 +226,7 @@ class TRun(MotherRunTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 
@@ -257,6 +298,7 @@ class TRunVoltage(MotherRunTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 
@@ -339,6 +381,7 @@ class TRunRawVoltage(MotherRunTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 
@@ -382,6 +425,7 @@ class TRunEfieldSim(MotherRunTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 
@@ -441,6 +485,7 @@ class TRunShowerSim(MotherRunTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 
@@ -473,6 +518,7 @@ class TRunNoise(MotherRunTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 

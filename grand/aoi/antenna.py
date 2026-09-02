@@ -39,48 +39,66 @@ class Antenna:
 
     @property
     def position(self):
-        """Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)"""
+        """Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
+
+        Returns
+        -------
+        ndarray, shape (3,)
+            Position in the array frame, in metres.
+        """
         return self._position
 
     @position.setter
     def position(self, v):
         r"""Sets the antenna position.
 
-                Parameters
-                ----------
-                v : array_like
-                    Position in the array frame, in metres.
+        Parameters
+        ----------
+        v : array_like
+            Position in the array frame, in metres.
         """
         self._position = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     @property
     def tilt(self):
-        """Antenna tilt"""
+        """Antenna tilt
+
+        Returns
+        -------
+        ndarray
+            Tilt angles, in degrees.
+        """
         return self._tilt
 
     @tilt.setter
     def tilt(self, v):
         r"""Sets the antenna tilt.
 
-                Parameters
-                ----------
-                v : array_like
-                    Tilt angles, in degrees.
+        Parameters
+        ----------
+        v : array_like
+            Tilt angles, in degrees.
         """
         self._tilt = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     @property
     def acceleration(self):
-        """Antenna acceleration - this comes from hardware."""
+        """Antenna acceleration - this comes from hardware.
+
+        Returns
+        -------
+        ndarray
+            Measured acceleration components.
+        """
         return self._acceleration
 
     @acceleration.setter
     def acceleration(self, v):
         r"""Sets the measured acceleration.
 
-                Parameters
-                ----------
-                v : array_like
-                    Acceleration components, used to infer the tilt.
+        Parameters
+        ----------
+        v : array_like
+            Acceleration components, used to infer the tilt.
         """
         self._acceleration = CartesianRepresentation(x=v[0], y=v[1], z=v[2])

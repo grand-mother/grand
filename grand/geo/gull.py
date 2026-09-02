@@ -86,6 +86,7 @@ class Snapshot:
 
     def __del__(self):
         r"""Releases the underlying GULL snapshot.
+
         """
         logger.debug("__del__ Snapshot ")
         try:
@@ -99,7 +100,22 @@ class Snapshot:
         self._snapshot = None
 
     def __call__(self, latitude, longitude, altitude=None):
-        """Get the magnetic field at a given Earth location"""
+        """Get the magnetic field at a given Earth location
+
+        Parameters
+        ----------
+        latitude : float or ndarray
+            Degrees north.
+        longitude : float or ndarray
+            Degrees east.
+        altitude : float or ndarray, optional
+            Metres above the ellipsoid.
+
+        Returns
+        -------
+        ndarray
+            Field components, in tesla.
+        """
 
         def regularize(a):
             r"""Returns `a` as a contiguous array of the type the GULL bindings expect.
@@ -149,12 +165,24 @@ class Snapshot:
 
     @property
     def altitude(self):
-        """The altitude range of the snapshot"""
+        """The altitude range of the snapshot
+
+        Returns
+        -------
+        tuple of float
+            Altitude range the snapshot is valid over, in metres.
+        """
         return self._altitude
 
     @property
     def date(self):
-        """The date of the snapshot"""
+        """The date of the snapshot
+
+        Returns
+        -------
+        datetime.date
+            Date the field model was evaluated for.
+        """
         return self._date
 
     #@property
@@ -164,5 +192,11 @@ class Snapshot:
 
     @property
     def order(self):
-        """The approximation order of the model"""
+        """The approximation order of the model
+
+        Returns
+        -------
+        int
+            Maximum spherical-harmonic order of the model.
+        """
         return self._order

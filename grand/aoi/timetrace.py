@@ -59,12 +59,29 @@ class Timetrace3D:
     ## ToDo: add additional quantities from the trees?
 
     def calculate_t_vector(self, time_offset):
-        """Calculation of the time vector - should be called manually when all the necessary parameters of the Timetrace3D are set"""
+        """Calculation of the time vector - should be called manually when all the necessary parameters of the Timetrace3D are set
+
+        Parameters
+        ----------
+        time_offset : float, optional
+            Offset added to the time axis, in nanoseconds.
+        """
         # ToDo: t0 is at the moment the trigger time, not the start time...
         self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
 
     def get_value_at_time(self, time_offset):
-        """Get the signal value at a certain time. Returns 0, if nothing measured at this time"""
+        """Get the signal value at a certain time. Returns 0, if nothing measured at this time
+
+        Parameters
+        ----------
+        t : float
+            Time, in nanoseconds.
+
+        Returns
+        -------
+        ndarray, shape (3,)
+            The three components at that time, interpolated.
+        """
         # If a signal was measured for the requested time value, return it
         if np.any(self.t_vector == time_offset):
             return self.trace[:,np.where(self.t_vector == time_offset)[0][0]]
@@ -73,7 +90,18 @@ class Timetrace3D:
             return np.zeros(3, np.float32)
 
     def get_hilbert_value_at_time(self, time_offset):
-        """Get the signal Hilbert envelope's value at a certain time. Returns 0, if nothing measured at this time"""
+        """Get the signal Hilbert envelope's value at a certain time. Returns 0, if nothing measured at this time
+
+        Parameters
+        ----------
+        t : float
+            Time, in nanoseconds.
+
+        Returns
+        -------
+        ndarray, shape (3,)
+            The three components at that time, interpolated.
+        """
         # If a signal was measured for the requested time value, return it
         if np.any(self.t_vector == time_offset):
             return self.hilbert_trace[:,np.where(self.t_vector == time_offset)[0][0]]
@@ -83,23 +111,35 @@ class Timetrace3D:
 
     @property
     def trace(self):
-        """Trace 3D vector (x,y,z)"""
+        """Trace 3D vector (x,y,z)
+
+        Returns
+        -------
+        ndarray, shape (3, n_samples)
+            The three-component trace.
+        """
         return self._trace
 
     @trace.setter
     def trace(self, v):
         r"""Sets the three-component trace.
 
-                Parameters
-                ----------
-                v : array_like
-                    Samples, shape ``(3, n_samples)``.
+        Parameters
+        ----------
+        v : array_like
+            Samples, shape ``(3, n_samples)``.
         """
         self._trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     @property
     def hilbert_trace(self):
-        """Hilbert envelope 3D vector (x,y,z) - not defined in the hardware"""
+        """Hilbert envelope 3D vector (x,y,z) - not defined in the hardware
+
+        Returns
+        -------
+        ndarray, shape (3, n_samples)
+            Its Hilbert envelope.
+        """
         # Calculate the hilbert envelope if not yet calculated
         if len(self._hilbert_trace[0]) == 0:
             hx = np.abs(hilbert(self.trace.x))
@@ -113,10 +153,10 @@ class Timetrace3D:
     def hilbert_trace(self, v):
         r"""Sets the Hilbert envelope of the trace.
 
-                Parameters
-                ----------
-                v : array_like
-                    Envelope, shape ``(3, n_samples)``.
+        Parameters
+        ----------
+        v : array_like
+            Envelope, shape ``(3, n_samples)``.
         """
         self._hilbert_trace = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
@@ -143,6 +183,7 @@ class Efield(Timetrace3D):
 ## Exception risen if the TTree already exists
 class TreeExists(Exception):
     r"""Raised when writing to a tree that is already present in the file.
+
     """
     pass
 

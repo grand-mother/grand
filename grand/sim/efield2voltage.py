@@ -113,22 +113,22 @@ class Efield2Voltage:
         # If directory given, use DataDirectory
         r"""Opens the input and prepares the antenna and RF-chain models.
 
-                Parameters
-                ----------
-                d_input : str
-                    Input ROOT file, or a directory of them.
-                f_output : str, optional
-                    Output file.  Derived from the input name when omitted.
-                output_directory : str, optional
-                    Directory to write into.
-                seed : int, optional
-                    Seed for the noise generator.  ``None`` gives an independent
-                    realisation each run; a fixed value makes it reproducible.
-                padding_factor : float, optional
-                    Zero-padding applied before the transform, which improves the
-                    frequency resolution.
-                du_type : str, optional
-                    Which antenna model to use.
+        Parameters
+        ----------
+        d_input : str
+            Input ROOT file, or a directory of them.
+        f_output : str, optional
+            Output file.  Derived from the input name when omitted.
+        output_directory : str, optional
+            Directory to write into.
+        seed : int, optional
+            Seed for the noise generator.  ``None`` gives an independent
+            realisation each run; a fixed value makes it reproducible.
+        padding_factor : float, optional
+            Zero-padding applied before the transform, which improves the
+            frequency resolution.
+        du_type : str, optional
+            Which antenna model to use.
 
                 Raises
                 ------
@@ -406,6 +406,11 @@ class Efield2Voltage:
         Define time sample in ns for the duration of the trace
         t_samples.shape  = (nb_du, self.sig_size)
         t_start_ns.shape = (nb_du,)
+
+        Returns
+        -------
+        ndarray, shape (n_du, n_samples)
+            Time axis of each unit, in nanoseconds.
         """
         t_start_ns = np.asarray(self.events.du_nanoseconds)[...,np.newaxis]   # shape = (nb_du, 1)
         t_samples = (

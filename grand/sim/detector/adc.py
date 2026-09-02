@@ -19,8 +19,8 @@ class ADC:
     def __init__(self):
         r"""Creates the ADC model.
 
-                Sets the bit depth, sampling rate and saturation level of the chip
-                used by a GRAND detection unit.
+        Sets the bit depth, sampling rate and saturation level of the chip
+        used by a GRAND detection unit.
         """
         self.sampling_rate = 500  # [MHz]
         self.max_bit_value = 8192 # 14 bit ADC;  2 x 2^13 bits for negative and positive ADC values
@@ -31,20 +31,27 @@ class ADC:
                   voltage_trace,input_sampling_rate_mhz):
         '''
         downsamples the voltage trace to the target sampling rate
-        
+
         Arguments
         ---------
         `voltage_trace`
         type        : np.ndarray[double]
         units       : uV 
         description : Array of voltage traces, with shape (N_du,3,N_samples)
-                                    
+
         Returns
         -------
         `downsampled_voltage_trace`
         type        : np.ndarray[double]
         units       : uV
         description : Array of downsamplef voltage traces, with shape (N_du,3,N_samples)
+
+        Parameters
+        ----------
+        voltage_trace : ndarray
+            Trace to resample.
+        input_sampling_rate_mhz : float
+            Its current sampling rate, in MHz.
         '''
         if self.sampling_rate != input_sampling_rate_mhz : 
           #compute the fft
@@ -69,20 +76,25 @@ class ADC:
         Performs the digitization of voltage traces at the ADC input:
         - converts voltage to ADC counts
         - quantizes the values
-        
+
         Arguments
         ---------
         `voltage_trace`
         type        : np.ndarray[float]
         units       : µV
         description : Array of voltage traces at the ADC level, with shape (N_du,3,N_samples)
-                                    
+
         Returns
         -------
         `adc_trace`
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
         description : The digitized array of ADC traces, with shape (N_du,3,N_samples)
+
+        Parameters
+        ----------
+        voltage_trace : ndarray
+            Voltage trace, in microvolts.
         '''
         
         # Convert voltage to ADC
@@ -97,20 +109,25 @@ class ADC:
                   adc_trace):
         '''
         Simulates the saturation of the ADC
-        
+
         Arguments
         ---------
         `adc_trace`
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
         description : Array of ADC traces, with shape (N_du,3,N_samples)
-                                    
+
         Returns
         -------
         `saturated_adc_trace`
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
         description : Array of saturated ADC traces, with shape (N_du,3,N_samples)
+
+        Parameters
+        ----------
+        adc_trace : ndarray
+            Digitised trace, in counts.
         '''
         
         saturated_adc_trace = np.where(np.abs(adc_trace)<self.max_bit_value,
@@ -125,7 +142,7 @@ class ADC:
         '''
         Processes an analog voltage trace to a digital ADC trace,
         with an option to add measured noise
-        
+
         Arguments
         ---------
         `voltage_trace`
@@ -137,13 +154,20 @@ class ADC:
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
         description : Array of measured noise traces, with shape (N_du,3,N_samples)
-        
+
         Returns
         -------
         `adc_trace`
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
         description : Array of ADC traces with shape (N_du,3,N_samples)
+
+        Parameters
+        ----------
+        voltage_trace : ndarray
+            Voltage trace to digitise.
+        noise_trace : ndarray, optional
+            Noise to add before digitising.
         '''
 
         assert isinstance(voltage_trace,np.ndarray)       

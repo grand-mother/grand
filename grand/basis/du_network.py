@@ -22,6 +22,18 @@ def closest_node(node, nodes):  # pragma: no cover
 
     :param node:
     :param nodes:
+
+    Parameters
+    ----------
+    node : array_like
+        Reference position.
+    nodes : ndarray
+        Positions to search.
+
+    Returns
+    -------
+    int
+        Index of the nearest of `nodes`.
     """
     nodes = np.asarray(nodes)
     dist_2 = np.sum((nodes - node) ** 2, axis=1)
@@ -42,10 +54,10 @@ class DetectorUnitNetwork:
     def __init__(self, name="NotDefined"):
         r"""Creates an empty detector-unit network.
 
-                Parameters
-                ----------
-                name : str, optional
-                    Label used in plot titles.
+        Parameters
+        ----------
+        name : str, optional
+            Label used in plot titles.
         """
         self.name = name
         nb_du = 0
@@ -62,6 +74,13 @@ class DetectorUnitNetwork:
         :type du_pos: float[nb_DU, 3]
         :param du_id: identifier of DU
         :type du_id: list or array of string
+
+        Parameters
+        ----------
+        du_pos : ndarray, shape (n_du, 3)
+            Position of each unit, in metres.
+        du_id : sequence, optional
+            Identifier of each unit.
         """
         if du_id is None:
             du_id = list(range(du_pos.shape[0]))
@@ -77,6 +96,11 @@ class DetectorUnitNetwork:
         """Keep DU at index defined in list <l_idx>
 
         :param l_idx: list of index of DU
+
+        Parameters
+        ----------
+        l_idx : sequence of int
+            Indices to keep.
         """
         du_id = [self.idx2idt[idx] for idx in l_idx]
         self.idx2idt = du_id
@@ -88,6 +112,11 @@ class DetectorUnitNetwork:
 
         :param new_nb_du: keep only new_nb_du first DU
         :type new_nb_du: int
+
+        Parameters
+        ----------
+        new_nb_du : int
+            Number of units to keep, taken from the start.
         """
         self.idx2idt = self.idx2idt[:new_nb_du]
         self.du_pos = self.du_pos[:new_nb_du, :]
@@ -98,13 +127,29 @@ class DetectorUnitNetwork:
 
         :param l_id: list of DU slected
         :type: int[nb_DU in l_id]
+
+        Parameters
+        ----------
+        l_id : sequence
+            Identifiers to keep.
+
+        Returns
+        -------
+        DetectorUnitNetwork
+            A network holding only those units.
         """
         sub_net = DetectorUnitNetwork("sub-network of " + self.name)
         sub_net.init_pos_id(self.du_pos[l_id], self.idx2idt[l_id])
         return sub_net
 
     def get_nb_du(self):
-        """Return the number of DU"""
+        """Return the number of DU
+
+        Returns
+        -------
+        int
+            Number of detection units.
+        """
         return len(self.idx2idt)
 
     def get_surface(self):
@@ -112,6 +157,11 @@ class DetectorUnitNetwork:
 
         :return: [km2] surface of network envelop
         :rtype: float
+
+        Returns
+        -------
+        float
+            Area covered by the array, in square kilometres.
         """
         if self.area_km2 >= 0:
             return self.area_km2
@@ -165,6 +215,19 @@ class DetectorUnitNetwork:
         :param scale: type of scale
         :type scale: str in ["log", "lin"]
 
+
+        Parameters
+        ----------
+        a_values : ndarray
+            Per-unit value to colour by.
+        title : str, optional
+            Plot title.
+        traces : Handling3dTraces, optional
+            Traces to show when a unit is clicked.
+        scale : str, optional
+            ``"log"`` or ``"lin"``.
+        unit : str, optional
+            Unit of `a_values`, for the colour bar.
         """
         size_circle = 200
         cur_idx_plot = -1
@@ -269,6 +332,19 @@ class DetectorUnitNetwork:
         :type o_tr: Handling3dTraces
         :param title: title of plot
         :type title: str
+
+        Parameters
+        ----------
+        o_tr : Handling3dTraces
+            Traces to animate.
+        v_plot : str, optional
+            Quantity to plot.
+        title : str, optional
+            Plot title.
+        same_scale : bool, optional
+            Use one colour scale for all components.
+        unit : str, optional
+            Unit for the colour bar.
         """
 
         def subplot(plt_axis, a_values, cpnt="", scale="log"):
@@ -343,6 +419,15 @@ class DetectorUnitNetwork:
         :type a3_values: float [nb_DU, 3]
         :param title: title of plot
         :type title: str
+
+        Parameters
+        ----------
+        a_time : ndarray
+            Time axis, in nanoseconds.
+        a3_values : ndarray
+            Per-unit, per-time values.
+        title : str, optional
+            Plot title.
         """
         # same number of sample
         assert a_time.shape[0] == a3_values.shape[2]

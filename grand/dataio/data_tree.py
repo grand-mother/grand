@@ -97,12 +97,12 @@ class DataTree:
         # Create a list of attributes and properties for the class if it doesn't exist
         r"""Sets an attribute, recording the change in the modification history.
 
-                Parameters
-                ----------
-                key : str
-                    Attribute name.
-                value : object
-                    New value.
+        Parameters
+        ----------
+        key : str
+            Attribute name.
+        value : object
+            New value.
         """
         if not hasattr(self, "_attributes_and_properties"):
             super().__setattr__("_attributes_and_properties", set([el1 for el in type(self).__mro__[:-1] for el1 in list(el.__dict__.keys()) + list(el.__annotations__.keys())]))
@@ -138,15 +138,10 @@ class DataTree:
         # The meta field does not exist, add it
         r"""Sets the tree type.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        str
-            The tree type, as stored in its metadata.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("type")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("type", val))
@@ -171,15 +166,10 @@ class DataTree:
     def file(self, val: ROOT.TFile) -> None:
         r"""Sets the file this tree belongs to.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        ROOT.TFile
-            The file this tree lives in.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         self._set_file(val)
 
@@ -198,10 +188,6 @@ class DataTree:
     def tree_name(self, val):
         """Set the tree name
 
-        Returns
-        -------
-        str
-            Name of the tree in the file.
         """
         # ToDo: enforce the name to start with the type!
         self._tree_name = val
@@ -235,15 +221,10 @@ class DataTree:
         # The meta field does not exist, add it
         r"""Sets the free-text comment stored with the tree.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        str
-            Free-text comment stored with the tree.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("comment")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("comment", val))
@@ -258,10 +239,10 @@ class DataTree:
     def creation_datetime(self):
         r"""Returns the time the tree was created.
 
-                Returns
-                -------
-                datetime
-                    Creation time, as recorded in the file.
+        Returns
+        -------
+        datetime
+            Creation time, as recorded in the file.
 
         Parameters
         ----------
@@ -274,11 +255,6 @@ class DataTree:
     def creation_datetime(self, val: datetime.datetime) -> None:
         # If datetime was given, convert it to int
         r"""Returns the time the tree was created.
-
-                Returns
-                -------
-                datetime
-                    Creation time, as recorded in the file.
 
         Parameters
         ----------
@@ -318,15 +294,10 @@ class DataTree:
         # The meta field does not exist, add it
         r"""Sets the record of modifications.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        str
-            Record of the modifications made to this tree.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_history")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_history", val))
@@ -355,15 +326,10 @@ class DataTree:
         # Remove the existing datetime
         r"""Sets the timestamp of the data this tree derives from.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        datetime
-            Timestamp of the data this tree derives from.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         self._tree.GetUserInfo().Remove(self._tree.GetUserInfo().FindObject("source_datetime"))
 
@@ -402,15 +368,10 @@ class DataTree:
         # The meta field does not exist, add it
         r"""Sets the name of the software that last modified the tree.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        str
-            Name of the software that last modified the tree.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_software")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software", val))
@@ -436,15 +397,10 @@ class DataTree:
         # The meta field does not exist, add it
         r"""Sets the version of the software that last modified the tree.
 
-                Parameters
-                ----------
-                val : object
-                    The new value.
-
-        Returns
-        -------
-        str
-            Version of that software.
+        Parameters
+        ----------
+        val : object
+            The new value.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("modification_software_version")):
             self._tree.GetUserInfo().Add(ROOT.TNamed("modification_software_version", val))
@@ -470,17 +426,12 @@ class DataTree:
         # The meta field does not exist, add it
         r"""Sets the analysis level.
 
-                Parameters
-                ----------
-                val : int
-                    How far through the processing chain this data has been taken.
-                    It is part of how files are grouped and named, so changing it
-                    changes which files are read together.
-
-        Returns
-        -------
-        int
+        Parameters
+        ----------
+        val : int
             How far through the processing chain this data has been taken.
+            It is part of how files are grouped and named, so changing it
+            changes which files are read together.
         """
         if not (el:=self._tree.GetUserInfo().FindObject("analysis_level")):
             self._tree.GetUserInfo().Add(ROOT.TParameter(int)("analysis_level", val))
@@ -503,6 +454,7 @@ class DataTree:
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         self._type = type(self).__name__
 
@@ -850,12 +802,12 @@ class DataTree:
         # ToDo: Due to a bug discovered during DC1, disable adding of the friends for now
         r"""Attaches another tree as a ROOT friend, so its branches are readable here.
 
-                Parameters
-                ----------
-                value : DataTree or str
-                    The tree to attach, or its name.
-                filename : str, optional
-                    File holding it, when it is not in this one.
+        Parameters
+        ----------
+        value : DataTree or str
+            The tree to attach, or its name.
+        filename : str, optional
+            File holding it, when it is not in this one.
 
         Returns
         -------

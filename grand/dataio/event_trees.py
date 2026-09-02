@@ -18,6 +18,7 @@ class MotherEventTree(DataTree):
 
     def __post_init__(self):
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         super().__post_init__()
 
@@ -62,7 +63,13 @@ class MotherEventTree(DataTree):
         self._entry_list.append((self.run_number, self.event_number))
 
     def add_proper_friends(self):
-        """Add proper friends to this tree"""
+        """Add proper friends to this tree
+
+        Returns
+        -------
+        None
+            Attaches the run and simulation trees this one needs.
+        """
         # Create the indices
         self.build_index("run_number", "event_number")
         # For now, do not add friends
@@ -183,7 +190,13 @@ class MotherEventTree(DataTree):
 
     ## Gets list of events in the tree together with runs
     def get_list_of_events(self):
-        """Gets list of events in the tree together with runs"""
+        """Gets list of events in the tree together with runs
+
+        Returns
+        -------
+        list of tuple
+            Every ``(event number, run number)`` in the tree.
+        """
         count = self._tree.Draw("event_number:run_number", "", "goff")
         # Remove the Draw() generated histogram from current file to prevent saving
         if tmph := ROOT.gDirectory.Get("htemp"):
@@ -194,7 +207,20 @@ class MotherEventTree(DataTree):
 
     ## Readout the TTree entry corresponding to the event and run
     def get_event(self, ev_no, run_no=0):
-        """Readout the TTree entry corresponding to the event and run"""
+        """Readout the TTree entry corresponding to the event and run
+
+        Parameters
+        ----------
+        ev_no : int
+            Event number.
+        run_no : int, optional
+            Run number; the pair is unique.
+
+        Returns
+        -------
+        int
+            Bytes read; zero when the event is absent.
+        """
         # Try to get the requested entry
         # res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
         # The above should work, but there is a bug in ROOT
@@ -212,7 +238,20 @@ class MotherEventTree(DataTree):
 
     ## Check if the TTree has an entry with the given event and run number
     def has_event(self, ev_no, run_no=0):
-        """Check if the TTree has an entry with the given event and run number"""
+        """Check if the TTree has an entry with the given event and run number
+
+        Parameters
+        ----------
+        ev_no : int
+            Event number.
+        run_no : int, optional
+            Run number; the pair is unique.
+
+        Returns
+        -------
+        bool
+            True when the tree holds that event.
+        """
         # Try to get the requested entry
         res = self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no))
         # If no such entry, return
@@ -223,12 +262,26 @@ class MotherEventTree(DataTree):
 
     ## Builds index based on run_id and evt_id for the TTree
     def build_index(self, run_id, evt_id):
-        """Builds index based on run_id and evt_id for the TTree"""
+        """Builds index based on run_id and evt_id for the TTree
+
+        Parameters
+        ----------
+        run_id : str, optional
+            Branch holding the run number.
+        evt_id : str, optional
+            Branch holding the event number.
+        """
         self._tree.BuildIndex(run_id, evt_id)
 
     ## Fills the entry list from the tree
     def fill_entry_list(self, tree=None):
-        """Fills the entry list from the tree"""
+        """Fills the entry list from the tree
+
+        Parameters
+        ----------
+        tree : ROOT.TTree, optional
+            Tree to index; this one by default.
+        """
         if tree is None:
             tree = self._tree
         # Fill the entry list if there are some entries in the tree
@@ -242,7 +295,13 @@ class MotherEventTree(DataTree):
 
     ## Check if specified run_number/event_number already exist in the tree
     def is_unique_event(self):
-        """Check if specified run_number/event_number already exist in the tree"""
+        """Check if specified run_number/event_number already exist in the tree
+
+        Returns
+        -------
+        bool
+            True when no ``(event, run)`` pair appears twice.
+        """
         # If there is no entry list, create it
         if not self._entry_list:
             self.fill_entry_list()
@@ -253,7 +312,13 @@ class MotherEventTree(DataTree):
         return True
 
     def get_traces_lengths(self):
-        """Gets the traces lengths for each event"""
+        """Gets the traces lengths for each event
+
+        Returns
+        -------
+        list of int
+            Trace length per detection unit.
+        """
 
         # If there are no traces in the tree, return None
         if not self._tree.GetListOfLeaves().FindObject("trace_x") and not self._tree.GetListOfLeaves().FindObject("trace_0"):
@@ -278,7 +343,13 @@ class MotherEventTree(DataTree):
         return traces_lengths
 
     def get_list_of_dus(self):
-        """Gets the list of all detector units used for each event"""
+        """Gets the list of all detector units used for each event
+
+        Returns
+        -------
+        list of int
+            Detection units in the current event.
+        """
 
         # If there are no detector unit ids in the tree, return None
         if not self._tree.GetListOfLeaves().FindObject("du_id"):
@@ -305,7 +376,13 @@ class MotherEventTree(DataTree):
         return detector_units
 
     def get_list_of_all_used_dus(self):
-        """Compiles the list of all detector units used in the events of the tree"""
+        """Compiles the list of all detector units used in the events of the tree
+
+        Returns
+        -------
+        list of int
+            Every detection unit appearing anywhere in the tree.
+        """
         dus = self.get_list_of_dus()
         if dus is not None:
             return np.unique(np.array(dus).flatten()).tolist()
@@ -313,7 +390,18 @@ class MotherEventTree(DataTree):
             return None
 
     def get_dus_indices_in_run(self, trun):
-        """Gets an array of the indices of DUs of the current event in the TRun tree"""
+        """Gets an array of the indices of DUs of the current event in the TRun tree
+
+        Parameters
+        ----------
+        trun : TRun
+            The run tree to look the units up in.
+
+        Returns
+        -------
+        ndarray
+            Index of each unit of this event within the run unit list.
+        """
 
         return np.nonzero(np.isin(np.asarray(trun.du_id), np.asarray(self.du_id)))[0]
 

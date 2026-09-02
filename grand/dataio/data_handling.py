@@ -161,6 +161,7 @@ class DataDirectory:
     # Init the instance with sim2root structure files
     def init_structure(self):
         r"""Detects the directory layout and indexes the files it holds.
+
         """
         self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
@@ -187,6 +188,7 @@ class DataDirectory:
     # Init the instance with sim2root structure files
     def init_sim2root_structure(self):
         r"""Indexes a directory written by the sim2root converters.
+
         """
         self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
@@ -213,6 +215,7 @@ class DataDirectory:
     # ToDo: It should be the same as sim2root, but at the moment sim2root has different naming convention
     def init_exp_structure(self):
         r"""Indexes a directory of experimental data.
+
         """
         self.file_attrs = []
         # Loop through groups of files with tree types expected in the directory
@@ -637,6 +640,7 @@ class DataFile:
         # Add the tree to a dict for this tree class
         # Select the highest analysis level trees for each class and store these trees as main attributes
         r"""Opens every tree in the file and exposes each as an attribute.
+
         """
         pass
 

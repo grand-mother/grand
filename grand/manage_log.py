@@ -152,6 +152,17 @@ def create_output_for_logger(
     :param log_file: create a log file with path and name log_file
     :param log_stdout: enable standard output
     :param log_root: define a log_root logger str or list of str
+
+    Parameters
+    ----------
+    log_level : str, optional
+        Threshold: ``"debug"``, ``"info"``, ``"warning"``, ``"error"`` or ``"critical"``.
+    log_file : str, optional
+        File to write to; none by default.
+    log_stdout : bool, optional
+        Also write to standard output.
+    log_root : str, optional
+        Logger name to configure.
     """
     if isinstance(log_root, str):
         l_log_root = [log_root]
@@ -188,7 +199,13 @@ def create_output_for_logger(
 
 
 def close_output_for_logger(log_root=NAME_ROOT_LIB):
-    """close handler for test"""
+    """close handler for test
+
+    Parameters
+    ----------
+    log_root : str, optional
+        Logger whose handlers to close.
+    """
     my_logger = logging.getLogger(log_root)
     handlers = my_logger.handlers[:]
     for handler in handlers:
@@ -204,6 +221,16 @@ def get_logger_for_script(pfile):
       Must be call before create_output_for_logger()
 
     :param pfile: path of the file, so always call with __file__ value
+
+    Parameters
+    ----------
+    pfile : str
+        Path of the calling script, used to name the logger.
+
+    Returns
+    -------
+    logging.Logger
+        A logger named after that script.
     """
     global SCRIPT_ROOT_LOGGER  # pylint: disable=global-statement
     str_logger = _get_logger_path(pfile)
@@ -216,6 +243,11 @@ def get_logger_for_script(pfile):
 def string_begin_script():
     """
     Return string start message with date, time
+
+    Returns
+    -------
+    str
+        A banner marking the start of a script run.
     """
     global START_BEGIN  # pylint: disable=global-statement
     START_BEGIN = datetime.now()
@@ -226,6 +258,11 @@ def string_begin_script():
 def string_end_script():
     """
     Return string end message with date, time and duration
+
+    Returns
+    -------
+    str
+        A banner marking the end, with the elapsed time.
     """
     ret = f"\n\n===========> End at {_get_string_now()} <===========\n"
     ret += f"Duration (h:m:s): {datetime.now()-START_BEGIN}"
@@ -235,6 +272,11 @@ def string_end_script():
 def chrono_start():
     """
     Start chonometer
+
+    Returns
+    -------
+    float
+        The start time, to pass to :func:`chrono_string_duration`.
     """
     global START_CHRONO  # pylint: disable=global-statement
     START_CHRONO = datetime.now()
@@ -244,6 +286,11 @@ def chrono_start():
 def chrono_string_duration():
     """
     Return string with duration between call chrono_start()
+
+    Returns
+    -------
+    str
+        Elapsed time since :func:`chrono_start`, formatted.
     """
     return f"-----> Chrono duration (h:m:s): {datetime.now()-START_CHRONO}"
 
@@ -254,7 +301,23 @@ def chrono_string_duration():
 
 
 def _check_logger_level(str_level):
-    """Check the validity of the logger level specified"""
+    """Check the validity of the logger level specified
+
+    Parameters
+    ----------
+    str_level : str
+        Level name to validate.
+
+    Returns
+    -------
+    int
+        The matching :mod:`logging` level.
+
+    Raises
+    ------
+    Exception
+        If the name is not a known level.
+    """
     try:
         return DICT_LOG_LEVELS[str_level]
     except KeyError:
@@ -269,6 +332,11 @@ def _check_logger_level(str_level):
 def _get_string_now():
     """
     Returns string with current date, time
+
+    Returns
+    -------
+    str
+        The current time, formatted for a log line.
     """
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -277,6 +345,16 @@ def _get_logger_path(pfile):
     """
     :param pfile: give __file__ where this is function is call
     @return: NAME_PKG_GIT.xx.yy.zz of module that call this function
+
+    Parameters
+    ----------
+    pfile : str
+        Path of a script.
+
+    Returns
+    -------
+    str
+        Logger name derived from it.
     """
     l_sep = osp.sep
     r_str = l_sep + NAME_PKG_GIT + l_sep
@@ -308,6 +386,18 @@ class _MyFormatter(logging.Formatter):
 
         :param record: internal param
         :param datefmt: internal param
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            Record being formatted.
+        datefmt : str, optional
+            Time format.
+
+        Returns
+        -------
+        str
+            The formatted timestamp.
         """
         my_convert = self.converter(record.created)
         if datefmt:
@@ -318,13 +408,23 @@ class _MyFormatter(logging.Formatter):
         return str_date
 
     def format(self, record):
-        """
+        r"""
         Override format function to manage multiline with \n
 
         @note
           This method is not used directly by the user.
 
         :param record: internal param
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            Record to format.
+
+        Returns
+        -------
+        str
+            The formatted line.
         """
         msg = logging.Formatter.format(self, record)
 

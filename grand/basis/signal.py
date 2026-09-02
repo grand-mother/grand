@@ -32,6 +32,20 @@ def find_max_with_parabola_interp_3pt(x_trace, y_trace, idx_max):
     :param idx_max: index of sample max, idx_max < nb_sample
     :type idx_max: int
     :return: x_max, y_max
+
+    Parameters
+    ----------
+    x_trace : ndarray
+        Sample positions.
+    y_trace : ndarray
+        Sample values.
+    idx_max : int
+        Index of the largest sample.
+
+    Returns
+    -------
+    tuple of float
+        Position and value of the interpolated maximum, from a parabola through three points.
     """
     if (idx_max >= len(x_trace) - 1) or idx_max == 0:
         return x_trace[idx_max], y_trace[idx_max]
@@ -75,6 +89,22 @@ def find_max_with_parabola_interp(x_trace, y_trace, idx_max, factor_hill=0.96):
     :type idx_max:
     :param factor_hill:
     :type factor_hill:
+
+    Parameters
+    ----------
+    x_trace : ndarray
+        Sample positions.
+    y_trace : ndarray
+        Sample values.
+    idx_max : int
+        Index of the largest sample.
+    factor_hill : float, optional
+        Fraction of the peak defining how much of the hill to fit.
+
+    Returns
+    -------
+    tuple of float
+        Position and value of the interpolated maximum.
     """
     # y threshold mean around max (so 3 points) * factor_hill
     y_lim = (y_trace[idx_max - 1 : idx_max + 2].sum() / 3) * factor_hill
@@ -143,6 +173,22 @@ def get_filter(time, trace, fr_min, fr_max):
     :param fr_max (float): [Hz] The maximal frequency of the bandpass filter
 
     :return: filtered trace in time domain
+
+    Parameters
+    ----------
+    time : ndarray
+        Time axis, in nanoseconds.
+    trace : ndarray
+        Trace to filter.
+    fr_min : float
+        Lower band edge, in MHz.
+    fr_max : float
+        Upper band edge, in MHz.
+
+    Returns
+    -------
+    ndarray
+        The band-passed trace.
     """
     tstep = (time[1] - time[0]) * 1e-09  # s
     rate = 1 / tstep
@@ -164,6 +210,18 @@ def get_peakamptime_norm_hilbert(a2_time, a3_trace):
 
     :return: t_max float(D,) v_max float(D,), norm_hilbert_amp float(D,S),
             idx_max int, norm_hilbert_amp float(D,S)
+
+    Parameters
+    ----------
+    a2_time : ndarray
+        Time axis per trace.
+    a3_trace : ndarray, shape (n_du, 3, n_samples)
+        Traces.
+
+    Returns
+    -------
+    tuple of ndarray
+        Peak time, peak amplitude, the norm, and its Hilbert envelope.
     """
     hilbert_amp = np.abs(hilbert(a3_trace, axis=-1))
     norm_hilbert_amp = np.linalg.norm(hilbert_amp, axis=1)
@@ -184,6 +242,20 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     :param padding_fact:
 
     :return: size_fft (int,0), array freq (float,1) in MHz for rfft()
+
+    Parameters
+    ----------
+    sig_size : int
+        Length of the trace, in samples.
+    f_samp_mhz : float or ndarray
+        Sampling frequency, in MHz.
+    padding_fact : float, optional
+        Zero-padding factor; at least 1.
+
+    Returns
+    -------
+    tuple
+        Transform length, and the frequency axis in MHz.
     """
     assert padding_fact >= 1
     dt_s = 1e-6 / f_samp_mhz
@@ -204,6 +276,20 @@ def interpol_at_new_x(a_x, a_y, new_x):
     :param new_x (float, (M)): new value of x
 
     :return: F(new_x) (float, (M)): interpolation of F at new_x
+
+    Parameters
+    ----------
+    a_x : ndarray
+        Sample positions.
+    a_y : ndarray
+        Sample values.
+    new_x : ndarray
+        Positions to interpolate onto.
+
+    Returns
+    -------
+    ndarray
+        Interpolated values, zero outside the range of `a_x`.
     """
     assert a_x.shape[0] > 0
     func_interpol = interpolate.interp1d(

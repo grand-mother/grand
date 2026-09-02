@@ -21,6 +21,7 @@ logger = getLogger(__name__)
 @dataclass
 class DataTable:
     r"""The tabulated antenna response, on a grid of frequency, azimuth and zenith.
+
     """
     frequency: Union[Number, np.ndarray]
     theta: Union[Number, np.ndarray]
@@ -42,15 +43,15 @@ def tabulated_antenna_model(filename):
     #     1. GP300 model (~1GB/arm) 2. LP float32 model (~520MB/arm) 3. JM Light GP300 model (~120MB/arm)
     r"""Returns the antenna response read from a tabulated file.
 
-        Parameters
-        ----------
-        filename : str
-            Path to the tabulated response.
+    Parameters
+    ----------
+    filename : str
+        Path to the tabulated response.
 
-        Returns
-        -------
-        DataTable
-            The response, on its native grid.
+    Returns
+    -------
+    DataTable
+        The response, on its native grid.
     """
     split_file = os.path.splitext(filename)
     if split_file[-1]==".npy": # for Horizon Antenna
@@ -121,18 +122,18 @@ def tabulated_antenna_model(filename):
 class AntennaModel:
     r"""The effective length of a GRAND antenna, for the three arms.
 
-        Loads the tabulated response and provides it on whatever frequency and
-        direction grid the caller needs.
+    Loads the tabulated response and provides it on whatever frequency and
+    direction grid the caller needs.
     """
     def __init__(self, du_type="GP300"):
 
         r"""Loads the antenna response for one detection-unit type.
 
-                Parameters
-                ----------
-                du_type : str, optional
-                    Which tabulated response to load: ``'GP300'`` for the HFSS
-                    simulation, or the NEC or MATLAB variants.
+        Parameters
+        ----------
+        du_type : str, optional
+            Which tabulated response to load: ``'GP300'`` for the HFSS
+            simulation, or the NEC or MATLAB variants.
         """
         if du_type=="GP300":
             logger.info("Loading GP300 antenna model produced by HFSS simulation package")
@@ -177,6 +178,7 @@ class AntennaModel:
 
     def plot_effective_length(self):
         r"""Plots the effective length against frequency, for inspection.
+
         """
         pass
 

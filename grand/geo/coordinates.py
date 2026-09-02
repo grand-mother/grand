@@ -921,14 +921,14 @@ class GeodeticRepresentation(Coordinates):
 
     is the center of Earth. Geodetic representation w.r.t. the WGS84 ellipsoid.
 
-    Latitude:	Angle north and south of the equator. +ve in the northern hemisphere,
+    Latitude:    Angle north and south of the equator. +ve in the northern hemisphere,
                             -ve in the southern hemisphere. Range: -90 deg (South Pole)
                             to +90 deg (North Pole). In equator, latitude = 0.
-    Longitude:	Angle east and west of the Prime Meridian. The Prime Meridian
+    Longitude:    Angle east and west of the Prime Meridian. The Prime Meridian
                             is a north-south line that passes through Greenwich, UK.
                             +ve to the east of the Prime Meridian, -ve to the west.
                             Range: -180 deg to +180 deg.
-    Height:	Also called altitude or elevation, this represents the height above
+    Height:    Also called altitude or elevation, this represents the height above
                     the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
                     mathematical surface defined by a semi-major axis and a semi-minor axis.
                     The most common values for these two parameters are defined by
@@ -1046,16 +1046,16 @@ class Geodetic(GeodeticRepresentation):
 
     is the center of Earth.
 
-    Latitude:	Angle north and south of the equator. +ve in the northern hemisphere,
+    Latitude:    Angle north and south of the equator. +ve in the northern hemisphere,
                             -ve in the southern hemisphere. Range: -90 deg (South Pole)
                             to +90 deg (North Pole). In equator, latitude = 0.
-    Longitude:	Angle east and west of the Prime Meridian. The Prime Meridian
+    Longitude:    Angle east and west of the Prime Meridian. The Prime Meridian
                             is a north-south line that passes through Greenwich, UK.
                             +ve to the east of the Prime Meridian, -ve to the west.
                             Range: 0 deg to 360 deg positive or negative. 
                             Note that coordinate transformation is possible for +ve 0 to 360 deg.
                             So negative values are changed to positive by adding 360.
-    Height:	Also called altitude or elevation, this represents the height above
+    Height:    Also called altitude or elevation, this represents the height above
                     the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
                     mathematical surface defined by a semi-major axis and a semi-minor axis.
                     The most common values for these two parameters are defined by

@@ -80,10 +80,10 @@ class Handling3dTraces:
     def __init__(self, name="NotDefined"):
         r"""Creates an empty container for a set of three-component traces.
 
-                Parameters
-                ----------
-                name : str, optional
-                    Label used in plot titles.
+        Parameters
+        ----------
+        name : str, optional
+            Label used in plot titles.
         """
         logger.info(f"Create Handling3dTraces with name {name}")
         self.name = name

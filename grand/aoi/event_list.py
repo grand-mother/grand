@@ -20,14 +20,14 @@ class EventList:
 
         r"""Opens a file or directory and prepares to iterate its events.
 
-                Parameters
-                ----------
-                inp_name : str
-                    File or directory to read.
-                start_event : int, optional
-                    Event number to begin at.
-                start_entry : int, optional
-                    Entry index to begin at, used instead of `start_event`.
+        Parameters
+        ----------
+        inp_name : str
+            File or directory to read.
+        start_event : int, optional
+            Event number to begin at.
+        start_entry : int, optional
+            Entry index to begin at, used instead of `start_event`.
         """
         self.event_list = None
 
@@ -71,7 +71,24 @@ class EventList:
             self.init_trees = False
 
     def get_event(self, event_number=None, run_number=None, entry_number=None, fill_event=True, **kwargs):
-        """Get specified event from the event list"""
+        """Get specified event from the event list
+
+        Parameters
+        ----------
+        event_number : int, optional
+            Event number.
+        run_number : int, optional
+            Run number.
+        entry_number : int, optional
+            Entry index, instead of the pair above.
+        fill_event : bool, optional
+            Populate the event from every tree, rather than only locating it.
+
+        Returns
+        -------
+        Event
+            The event, or ``None`` when it was not found.
+        """
 
         # Don't allow specifying entry and event/run at the same time, because... what to chose?
         if entry_number is not None and (run_number is not None or event_number is not None):
@@ -119,7 +136,13 @@ class EventList:
         return e
 
     def get_number_of_events(self):
-        """Get the number of events in the list"""
+        """Get the number of events in the list
+
+        Returns
+        -------
+        int
+            Number of events available.
+        """
 
         # ToDo: at the moment assumes the same number of events in all the trees
         # Read directory if given
@@ -149,10 +172,10 @@ class EventList:
     def __iter__(self):
         r"""Yields each event in turn.
 
-                Yields
-                ------
-                Event
-                    The next event, fully populated.
+        Yields
+        ------
+        Event
+            The next event, fully populated.
         """
         for event_num, run_num in self.event_list:
             yield self.get_event(event_number=event_num, run_number=run_num)

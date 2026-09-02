@@ -10,6 +10,11 @@ def grand_get_path_root_pkg():
     """get the root path of grand git package, ex: /home/user/grand
 
     @return (string) : root path of grand git package
+
+    Returns
+    -------
+    str
+        Root directory of the git checkout.
     """
     root = os.getenv("GRAND_ROOT")
     if not root:
@@ -23,6 +28,11 @@ def grand_get_path_grandlib():
     """get root path of grand source, ex: /home/user/grand/grand
 
     @return (string) : root path of grand source
+
+    Returns
+    -------
+    str
+        Directory holding the ``grand`` package.
     """
     return osp.join(grand_get_path_root_pkg(), "grand")
 
@@ -33,15 +43,15 @@ GRAND_DATA_PATH = osp.join(grand_get_path_root_pkg(), "data")
 def grand_add_path_data(s_file):
     r"""Returns the absolute path of a file in the package's data directory.
 
-        Parameters
-        ----------
-        s_file : str
-            Path relative to ``data/``.
+    Parameters
+    ----------
+    s_file : str
+        Path relative to ``data/``.
 
-        Returns
-        -------
-        str
-            Absolute path.
+    Returns
+    -------
+    str
+    Absolute path.
     """
     return os.path.join(GRAND_DATA_PATH, s_file)
 

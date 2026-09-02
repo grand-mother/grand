@@ -16,6 +16,20 @@ def interpol_at_new_x(a_x, a_y, new_x):
     :param new_x (float, (M)): new value of x
 
     :return: F(new_x) (float, (M)): interpolation of F at new_x
+
+    Parameters
+    ----------
+    a_x : ndarray
+        Sample positions.
+    a_y : ndarray
+        Sample values.
+    new_x : ndarray
+        Positions to interpolate onto.
+
+    Returns
+    -------
+    ndarray
+        Cubic interpolation, zero outside the range of `a_x`.
     """
     from scipy import interpolate
     assert a_x.shape[0] > 0

@@ -41,15 +41,15 @@ from grand import grand_add_path_data
 def compute_rfchain_and_latitude(site):
     r"""Returns the RF chain and site latitude for a named site.
 
-        Parameters
-        ----------
-        site : str
-            Site name, such as ``'GP300'`` or ``'GP13'``.
+    Parameters
+    ----------
+    site : str
+    Site name, such as ``'GP300'`` or ``'GP13'``.
 
-        Returns
-        -------
-        tuple
-            The chain object and the latitude in degrees.
+    Returns
+    -------
+    tuple
+        The chain object and the latitude in degrees.
     """
     if site == "gp13":
         rfchain = grfc.RFChain(vga_gain=20)
@@ -64,15 +64,15 @@ def compute_rfchain_and_latitude(site):
 def compute_antenna_paths(du_type):
     r"""Returns the paths of the tabulated antenna response for a unit type.
 
-        Parameters
-        ----------
-        du_type : str
-            Detection-unit type.
+    Parameters
+    ----------
+    du_type : str
+    Detection-unit type.
 
-        Returns
-        -------
-        list of str
-            One path per antenna arm.
+    Returns
+    -------
+    list of str
+        One path per antenna arm.
     """
     if du_type == "GP300":
         path_antX = grand_add_path_data("detector/Light_GP300Antenna_SNarm_leff.npz")
@@ -93,16 +93,16 @@ def compute_antenna_paths(du_type):
 def main(site, du_type, run_mode, lst):
     r"""Computes and plots the Galactic noise for a site.
 
-        Parameters
-        ----------
-        site : str
-            Site name.
-        du_type : str
-            Detection-unit type.
-        run_mode : str
-            What to produce: the spectrum, the induced voltage, or both.
-        lst : float
-            Local sidereal time, in hours.
+    Parameters
+    ----------
+    site : str
+    Site name.
+    du_type : str
+    Detection-unit type.
+    run_mode : str
+    What to produce: the spectrum, the induced voltage, or both.
+    lst : float
+    Local sidereal time, in hours.
     """
     freq_MHz = np.arange(30, 251, 1)
     
@@ -406,7 +406,7 @@ def main(site, du_type, run_mode, lst):
         plt.plot(freqs, avBnu, '-*', color='b')
         plt.grid(ls='--', alpha=0.3)
         plt.xlabel('Frequency [MHz]', fontsize=16)
-        plt.ylabel('<B$_{v}$>$_{4\\pi}$ [W$\cdot$m$^{-2}$$\cdot$sr$^{-1}$$\cdot$Hz$^{-1}$]', fontsize=16)
+        plt.ylabel(r'<B$_{v}$>$_{4\\pi}$ [W$\cdot$m$^{-2}$$\cdot$sr$^{-1}$$\cdot$Hz$^{-1}$]', fontsize=16)
         plt.xticks(fontsize=12)
         plt.yticks(fontsize=12)
         plt.savefig(f"galactic_bnu_{site}_{du_type}.png")
@@ -417,7 +417,7 @@ def main(site, du_type, run_mode, lst):
         plt.plot(freqs, avErms2, '-*', color='b')
         plt.grid(ls='--', alpha=0.3)
         plt.xlabel('Frequency [MHz]', fontsize=16)
-        plt.ylabel('<|E|$^{2}$$_{rms}$>$_{4\\pi}$ [V$^{2}$/m$^{2}$$\cdot$Hz$^{-1}$]', fontsize=16)
+        plt.ylabel(r'<|E|$^{2}$$_{rms}$>$_{4\\pi}$ [V$^{2}$/m$^{2}$$\cdot$Hz$^{-1}$]', fontsize=16)
         plt.xticks(fontsize=12)
         plt.yticks(fontsize=12)
         plt.savefig(f"galactic_avErms2_{site}_{du_type}.png")

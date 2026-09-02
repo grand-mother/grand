@@ -31,15 +31,15 @@ _default_obstime: Final[datetime.date] = datetime.date(2020, 1, 1)
 def __getattr__(name):
     r"""Returns a module-level attribute, building the default model on first use.
 
-        Parameters
-        ----------
-        name : str
-            Attribute requested.
+    Parameters
+    ----------
+    name : str
+    Attribute requested.
 
-        Returns
-        -------
-        object
-            The attribute.
+    Returns
+    -------
+    object
+        The attribute.
 
         Raises
         ------
@@ -57,7 +57,18 @@ def __getattr__(name):
 
 # This function is no longer necessary. Might show up in other part of the grandlib.
 def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresentation:
-    """Get the default geo-magnetic field at the given *coordinates*."""
+    """Get the default geo-magnetic field at the given *coordinates*.
+
+    Parameters
+    ----------
+    coordinates : Geodetic, ECEF, LTP or GRANDCS
+        Where to evaluate the field.
+
+    Returns
+    -------
+    CartesianRepresentation
+        The geomagnetic field vector, in the frame of `coordinates`.
+    """
     # global _default_magnet
     # if _default_magnet is None:
     #    #_default_magnet = Geomagnet()
@@ -89,17 +100,17 @@ class Geomagnet:
         # print('location:', location, type(location))
         r"""Creates a geomagnetic field model at a place and time.
 
-                Parameters
-                ----------
-                model : str, optional
-                    Field model to use; the IGRF release by default.
-                latitude, longitude, height : float, optional
-                    Location at which to evaluate the field.
-                location : Geodetic, ECEF, LTP or GRANDCS, optional
-                    Location, given as a coordinate object instead.
-                obstime : str or datetime, optional
-                    Date of observation.  The field changes measurably from year to
-                    year, so this is not decorative.
+        Parameters
+        ----------
+        model : str, optional
+            Field model to use; the IGRF release by default.
+        latitude, longitude, height : float, optional
+            Location at which to evaluate the field.
+        location : Geodetic, ECEF, LTP or GRANDCS, optional
+            Location, given as a coordinate object instead.
+        obstime : str or datetime, optional
+            Date of observation.  The field changes measurably from year to
+            year, so this is not decorative.
         """
         if model is None:
             model = _default_model

@@ -68,7 +68,22 @@ def distance(
     direction: CartesianRepresentation,
     maximum_distance: float = None,
 ):
-    """Get the signed intersection distance with the topography."""
+    """Get the signed intersection distance with the topography.
+
+    Parameters
+    ----------
+    position : Geodetic, ECEF, LTP or GRANDCS
+        Starting point.
+    direction : array_like
+        Direction to travel in.
+    maximum_distance : float, optional
+        Give up beyond this distance, in metres.
+
+    Returns
+    -------
+    float or ndarray
+        Distance to the ground, in metres, or NaN if it was not reached.
+    """
     global _default_topography
 
     if _default_topography is None:
@@ -78,7 +93,20 @@ def distance(
 
 
 def elevation(coordinates, reference: Optional[str] = _default_reference):
-    """Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid."""
+    """Get the topography elevation, w.r.t. sea level or w.r.t. the ellipsoid.
+
+    Parameters
+    ----------
+    coordinates : Geodetic, ECEF, LTP or GRANDCS
+        Position or positions to evaluate at.
+    reference : str or Reference, optional
+        Surface the height is measured from: the ellipsoid or the geoid.
+
+    Returns
+    -------
+    float or ndarray
+        Ground elevation, in metres.
+    """
     global _default_topography
 
     if _default_topography is None:
@@ -90,10 +118,10 @@ def elevation(coordinates, reference: Optional[str] = _default_reference):
 def _get_geoid():
     r"""Returns the geoid map, loading it on first use.
 
-        Returns
-        -------
-        turtle.Map
-            The EGM96 undulation map shipped in ``data/``.
+    Returns
+    -------
+    turtle.Map
+        The EGM96 undulation map shipped in ``data/``.
     """
     global _geoid
 
@@ -107,6 +135,20 @@ def _get_geoid():
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     """Get the geoid undulation. This function calculates the height of
     the geoid w.r.t the ellipsoid at a given latitude and longitude.
+
+    Parameters
+    ----------
+    coordinates : Geodetic, ECEF, LTP or GRANDCS
+        Position or positions to evaluate at.
+    latitude : float or ndarray, optional
+        Degrees north, instead of `coordinates`.
+    longitude : float or ndarray, optional
+        Degrees east, instead of `coordinates`.
+
+    Returns
+    -------
+    float or ndarray
+        Height of the geoid above the ellipsoid, in metres.
     """
     geoid = _get_geoid()
 
@@ -132,6 +174,15 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     Update the cache of topography data.
     Data are stored in https://github.com/grand-mother/store/releases.
     Locally saved as .../grand/data/topography/*.hgt
+
+    Parameters
+    ----------
+    coordinates : Geodetic, ECEF, LTP or GRANDCS
+        Position or positions to evaluate at.
+    clear : bool, optional
+        Remove the cached tiles first.
+    radius : float, optional
+        Fetch tiles within this radius, in metres.
     """
     if clear:
         for p in DATADIR.glob("**/*.*"):
@@ -222,17 +273,35 @@ def update_data(coordinates=None, clear: bool = False, radius: float = None):
     _default_topography = None
 
 def cachedir() -> Path:
-    """Get the location of the topography data cache."""
+    """Get the location of the topography data cache.
+
+    Returns
+    -------
+    Path
+        Directory the downloaded elevation tiles are cached in.
+    """
     return DATADIR
 
 
 def datadir() -> Path:
-    """Get the location of the topography data cache."""
+    """Get the location of the topography data cache.
+
+    Returns
+    -------
+    Path
+        Directory holding the topography data.
+    """
     return DATADIR
 
 
 def model() -> str:
-    """Get the default model for topographic data."""
+    """Get the default model for topographic data.
+
+    Returns
+    -------
+    str
+        Name of the elevation model in use, such as SRTM.
+    """
     return _DEFAULT_MODEL
 
 
@@ -243,10 +312,10 @@ class Topography:
         # self._stack = _Stack(str(path))
         r"""Opens a topography dataset.
 
-                Parameters
-                ----------
-                path : str
-                    Directory holding the elevation tiles.
+        Parameters
+        ----------
+        path : str
+            Directory holding the elevation tiles.
         """
         self._stack = _Stack(path)
         self._stepper: Optional[_Stepper] = None
@@ -259,6 +328,18 @@ class Topography:
         """Get the topography elevation, w.r.t. sea level, w.r.t the
         ellipsoid or in local coordinates. The default reference is
         w.r.t sea level (GEOID).
+
+        Parameters
+        ----------
+        coordinates : Geodetic, ECEF, LTP or GRANDCS
+            Position or positions to evaluate at.
+        reference : str or Reference, optional
+            Surface the height is measured from: the ellipsoid or the geoid.
+
+        Returns
+        -------
+        float or ndarray
+            Ground elevation, in metres.
         """
         if isinstance(reference, str):
             reference = reference.upper()
@@ -282,21 +363,32 @@ class Topography:
     def _as_double_ptr(a):
         r"""Returns `a` as a C pointer to double, for the TURTLE bindings.
 
-                Parameters
-                ----------
-                a : ndarray
-                    Array to pass through; converted to ``float64`` if needed.
+        Parameters
+        ----------
+        a : ndarray
+            Array to pass through; converted to ``float64`` if needed.
 
-                Returns
-                -------
-                cffi pointer
-                    Pointer to the array's data.
+        Returns
+        -------
+        cffi pointer
+            Pointer to the array's data.
         """
         a = np.require(a, float, ["CONTIGUOUS", "ALIGNED"])
         return ffi.cast("double *", a.ctypes.data)
 
     def _local_elevation(self, coordinates):
-        """Get the topography elevation in local coordinates, i.e. along the (Oz) axis."""
+        """Get the topography elevation in local coordinates, i.e. along the (Oz) axis.
+
+        Parameters
+        ----------
+        coordinates : Geodetic, ECEF, LTP or GRANDCS
+            Position or positions to evaluate at.
+
+        Returns
+        -------
+        ndarray
+            Elevation from the local tiles, in metres.
+        """
         # Compute the x and y coordinate in local frame.
         x = coordinates.x
         y = coordinates.y
@@ -330,6 +422,18 @@ class Topography:
     def _global_elevation(self, coordinates, reference: str):
         """Get the topography elevation w.r.t. sea level or w.r.t. the
         ellipsoid.
+
+        Parameters
+        ----------
+        coordinates : Geodetic, ECEF, LTP or GRANDCS
+            Position or positions to evaluate at.
+        reference : str or Reference, optional
+            Surface the height is measured from: the ellipsoid or the geoid.
+
+        Returns
+        -------
+        ndarray
+            Elevation from the global model, in metres.
         """
 
         # Compute the geodetic coordinates
@@ -366,7 +470,22 @@ class Topography:
         direction: CartesianRepresentation,
         maximum_distance: float = None,
     ):
-        """Get the signed intersection distance with the topography."""
+        """Get the signed intersection distance with the topography.
+
+        Parameters
+        ----------
+        position : Geodetic, ECEF, LTP or GRANDCS
+            Starting point.
+        direction : array_like
+            Direction to travel in.
+        maximum_distance : float, optional
+            Give up beyond this distance, in metres.
+
+        Returns
+        -------
+        float or ndarray
+            Distance to the ground, in metres.
+        """
         if self._stepper is None:
             stepper = _Stepper()
             stepper.add(self._stack)

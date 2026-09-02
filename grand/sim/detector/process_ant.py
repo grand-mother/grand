@@ -54,6 +54,13 @@ class PreComputeInterpol:
         Precompute coefficient of linear interpolation for freq_out_mhz with reference defined at freq_in_mhz
         :param freq_in_mhz: regular array of frequency where function is defined
         :param freq_out_mhz: regular array frequency where we want interpol
+
+        Parameters
+        ----------
+        freq_in_mhz : ndarray
+            Frequency axis the response is tabulated on, in MHz.
+        freq_out_mhz : ndarray
+            Frequency axis wanted, in MHz.
         """
         d_freq_out = freq_out_mhz[1]
         # index of freq in first in band, + 1 to have first in band
@@ -83,6 +90,16 @@ class PreComputeInterpol:
         Return f(freq_out_mhz) by linear interpolation of f defined by
         f(freq_in_mhz) = a_val
         :param a_val: defined value of function at freq_in_mhz
+
+        Parameters
+        ----------
+        a_val : ndarray
+            Values on the tabulated axis.
+
+        Returns
+        -------
+        ndarray
+            The same values on the output axis.
         """
         a_itp = self.c_inf * a_val[self.idx_itp] + self.c_sup * a_val[self.idx_itp + 1]
         return a_itp
@@ -101,6 +118,7 @@ class AntennaProcessing:
     def __post_init__(self):
         #assert isinstance(self.model_leff, TabulatedAntennaModel)
         r"""Completes initialisation after the dataclass fields are set.
+
         """
         self.size_fft = 0
         self.freqs_out_hz = 0
@@ -115,12 +133,12 @@ class AntennaProcessing:
                 Doing this once and reusing it is what keeps the per-unit voltage
                 computation cheap.
 
-                Parameters
-                ----------
-                freq_sampling_mhz : ndarray
-                    Frequency axis the response is tabulated on, in MHz.
-                freq_out_mhz : ndarray
-                    Frequency axis wanted, in MHz.
+        Parameters
+        ----------
+        freq_sampling_mhz : ndarray
+            Frequency axis the response is tabulated on, in MHz.
+        freq_out_mhz : ndarray
+            Frequency axis wanted, in MHz.
         """
         pre = PreComputeInterpol()
         pre.init_linear_interpol(freq_sampling_mhz, freq_out_mhz)
@@ -133,6 +151,11 @@ class AntennaProcessing:
         typically the return of scipy.fft.rfftfreq/1e6
         :param a_freq:
         :type a_freq:
+
+        Parameters
+        ----------
+        a_freq : ndarray
+            Output frequency axis, in MHz.
         """
         assert isinstance(a_freq, np.ndarray)
         assert a_freq[0] == 0
@@ -156,6 +179,20 @@ class AntennaProcessing:
         :param xmax:
         :param efield:
         :param frame:
+
+        Parameters
+        ----------
+        xmax : Coordinates
+            Position of shower maximum.
+        efield : ElectricField
+            The incoming field.
+        frame : LTP or GRANDCS
+            Frame the field is expressed in.
+
+        Returns
+        -------
+        ndarray, shape (3, n_freq)
+            Effective length per antenna arm, in the frequency domain.
         """
         # 'frame' is shower frame. 'self.frame' is antenna frame.
         if isinstance(xmax, LTP):
@@ -292,6 +329,25 @@ class AntennaProcessing:
         :type efield:
         :param frame:
         :type frame:
+
+        Parameters
+        ----------
+        xmax : Coordinates
+            Position of shower maximum.
+        efield : ElectricField
+            The incoming field.
+        frame : LTP or GRANDCS, optional
+            Frame the field is expressed in.
+
+        Returns
+        -------
+        Voltage
+            Open-circuit voltage at the three arms.
+
+        Raises
+        ------
+        MissingFrameError
+            If the antenna position or the shower frame is absent or not finite.
         """
         # frame is shower frame. self.frame is antenna frame.
         logger.debug(f"pos {self.pos}")

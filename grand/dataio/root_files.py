@@ -145,17 +145,17 @@ class _FileEventBase:
     def load_nb_event_run(self, event_number, run_number):
         r"""Loads the event identified by number and run.
 
-                Parameters
-                ----------
-                event_number : int
-                    Event number.
-                run_number : int
-                    Run number.  The pair is unique.
+        Parameters
+        ----------
+        event_number : int
+            Event number.
+        run_number : int
+            Run number.  The pair is unique.
 
-                Returns
-                -------
-                bool
-                    True when the event was found.
+        Returns
+        -------
+        bool
+            True when the event was found.
         """
         self.idx_event = self.l_events.index((event_number, run_number))
         self._load_event_identifier(event_number, run_number)
@@ -440,11 +440,11 @@ class FileEfield(_FileEventBase):
     def get_obj_handling3dtraces(self):
         r"""Returns the traces as a :class:`~grand.basis.traces_event.Handling3dTraces`.
 
-                Returns
-                -------
-                Handling3dTraces
-                    The event's traces, wrapped in the object that provides the
-                    plotting and peak-finding helpers.
+        Returns
+        -------
+        Handling3dTraces
+            The event's traces, wrapped in the object that provides the
+            plotting and peak-finding helpers.
 
                 Examples
                 --------
@@ -484,11 +484,11 @@ class FileVoltage(_FileEventBase):
     def get_obj_handling3dtraces(self):
         r"""Returns the traces as a :class:`~grand.basis.traces_event.Handling3dTraces`.
 
-                Returns
-                -------
-                Handling3dTraces
-                    The event's traces, wrapped in the object that provides the
-                    plotting and peak-finding helpers.
+        Returns
+        -------
+        Handling3dTraces
+            The event's traces, wrapped in the object that provides the
+            plotting and peak-finding helpers.
 
                 Examples
                 --------
@@ -529,11 +529,11 @@ class FileAdc(_FileEventBase):
     def get_obj_handling3dtraces(self):
         r"""Returns the traces as a :class:`~grand.basis.traces_event.Handling3dTraces`.
 
-                Returns
-                -------
-                Handling3dTraces
-                    The event's traces, wrapped in the object that provides the
-                    plotting and peak-finding helpers.
+        Returns
+        -------
+        Handling3dTraces
+            The event's traces, wrapped in the object that provides the
+            plotting and peak-finding helpers.
 
                 Examples
                 --------

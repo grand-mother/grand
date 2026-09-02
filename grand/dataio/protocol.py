@@ -26,7 +26,20 @@ class InvalidBLOB(IOError):
 
 
 def get(name: str, tag: str = "101") -> bytes:
-    """Get a BLOB from the store."""
+    """Get a BLOB from the store.
+
+    Parameters
+    ----------
+    name : str
+        File to fetch.
+    tag : str, optional
+        Release tag to fetch it from.
+
+    Returns
+    -------
+    bytes
+        The downloaded contents.
+    """
     base = "https://github.com/grand-mother/store/releases/download"
     url = f"{base}/{tag}/{name}.gz"
     try:
