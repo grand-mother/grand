@@ -66,6 +66,65 @@ def classify(a):
     return rust, dark, white
 
 
+def band_mask(rust, dark, white):
+    r"""Returns a mask of the rust band, its outline and its interior.
+
+    The band is a trapezoid whose sides slope outwards, drawn with a black
+    outline along its top and bottom edges.  Three things have to be inside
+    this mask and nothing else:
+
+    - the rust fill itself;
+    - the black outline above and below it, which must become **rust** rather
+      than white -- inverted to white it reads as a bright stripe spilling out
+      of the band, above and below;
+    - the white "lib" lettering, which must stay white.
+
+    Getting the extent wrong is what produced the earlier artefacts.  Taking
+    the band as a full-width strip of rows keeps the white *outside* the
+    trapezoid's sloping sides, which appears as wedges in the bottom corners.
+
+    Parameters
+    ----------
+    rust, dark, white : ndarray of bool
+        The masks from :func:`classify`.
+
+    Returns
+    -------
+    ndarray of bool
+        True inside the band, following its slope row by row.
+    """
+    h, w = rust.shape
+    rows = np.where(rust.mean(axis=1) > 0.25)[0]
+    if not rows.size:
+        return np.zeros((h, w), dtype=bool)
+
+    top, bottom = int(rows.min()), int(rows.max())
+
+    # Extend over the outline.  Walk outwards while the row is not yet mostly
+    # ground.
+    #
+    # The test is on ground rather than on line work, and that matters: the row
+    # where the outline meets the white above it is almost entirely
+    # *antialiased*, counting as neither dark nor white -- 342 of 425 pixels on
+    # this artwork.  A "mostly dark" test stops one row short there and leaves
+    # a white hairline along the top of the band.
+    def is_ground(y):
+        return white[y].sum() > 0.5 * w
+
+    while top - 1 >= 0 and not is_ground(top - 1):
+        top -= 1
+    while bottom + 1 < h and not is_ground(bottom + 1):
+        bottom += 1
+
+    mask = np.zeros((h, w), dtype=bool)
+    ink = rust | dark
+    for y in range(top, bottom + 1):
+        xs = np.where(ink[y])[0]
+        if xs.size:
+            mask[y, xs.min():xs.max() + 1] = True
+    return mask
+
+
 def recolour(src):
     r"""Returns `src` re-inked for a dark background, as RGBA.
 
@@ -78,45 +137,44 @@ def recolour(src):
     -------
     PIL.Image.Image
         RGBA, with the ground transparent, the line work white and the rust
-        band lifted.
+        band solid.
     """
     a = np.asarray(src).astype(int)
     rust, dark, white = classify(a)
     h, w, _ = a.shape
 
-    # The rust band is the contiguous run of rows that are substantially rust;
-    # white inside it is the "lib" lettering and must stay white.
-    rows = rust.mean(axis=1)
-    band_rows = np.where(rows > 0.25)[0]
-    in_band = np.zeros((h, w), dtype=bool)
-    if band_rows.size:
-        in_band[band_rows.min():band_rows.max() + 1] = True
+    band = band_mask(rust, dark, white)
+    lifted = np.array([196, 88, 58], dtype=np.uint8)
 
     out = np.zeros((h, w, 4), dtype=np.uint8)
 
-    # Rust, lifted towards the orange end so it reads against dark grey.
-    lifted = np.array([196, 88, 58], dtype=np.uint8)
-    out[rust] = np.concatenate([lifted, [255]])
+    # Outside the band: line work becomes white, ground disappears.
+    out[dark & ~band] = (255, 255, 255, 255)
 
-    # Black line work and "GRAND" become white.
-    out[dark] = (255, 255, 255, 255)
+    # Inside the band: the fill and its outline are both rust, so the band is a
+    # single solid shape with no bright edge; the lettering stays white.
+    out[(rust | dark) & band] = np.concatenate([lifted, [255]])
+    out[white & band] = (255, 255, 255, 255)
+    out[rust & ~band] = np.concatenate([lifted, [255]])      # the rays
 
-    # White ground disappears, except the lettering inside the band.
-    lib = white & in_band
-    out[lib] = (255, 255, 255, 255)
-    ground = white & ~in_band
-    out[ground] = (0, 0, 0, 0)
+    # Ground is transparent everywhere, inside the band's rows included -- that
+    # is what keeps the corners outside the trapezoid clear.
+    out[white & ~band] = (0, 0, 0, 0)
 
     # Antialiased edges: carry their darkness as opacity so the line work keeps
-    # its smooth edge instead of turning into a staircase.
+    # a smooth edge instead of turning into a staircase.  Inside the band they
+    # are edges of the lettering against rust, so they blend to rust instead.
     other = ~(rust | dark | white)
     if other.any():
-        lum = a.mean(axis=2)[other]
+        lum = a.mean(axis=2)
         alpha = np.clip((235.0 - lum) / 120.0, 0.0, 1.0) * 255
-        out[other] = np.stack([np.full(alpha.shape, 255),
-                               np.full(alpha.shape, 255),
-                               np.full(alpha.shape, 255),
-                               alpha], axis=-1).astype(np.uint8)
+        edge_out = other & ~band
+        out[edge_out] = np.stack([np.full(alpha[edge_out].shape, 255),
+                                  np.full(alpha[edge_out].shape, 255),
+                                  np.full(alpha[edge_out].shape, 255),
+                                  alpha[edge_out]], axis=-1).astype(np.uint8)
+        edge_in = other & band
+        out[edge_in] = np.concatenate([lifted, [255]])
 
     return Image.fromarray(out, 'RGBA')
 
