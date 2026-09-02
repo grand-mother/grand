@@ -159,3 +159,138 @@ def test_z_arm_differs_from_the_horizontal_arms(chain):
     """
     tf = np.abs(chain.get_tf())
     assert not np.allclose(tf[2], tf[0]), 'the Z arm matches the X arm exactly'
+
+
+# --------------------------------------------------------------------------
+# Passivity and reciprocity
+#
+# The tests above check the algebra of the cascade.  These check that the
+# measured data going into it describes physically possible components, which
+# is a different question and the one that catches a corrupted file, a swapped
+# column or a magnitude read in the wrong units.
+#
+# Two properties, and the point of both is that they *discriminate*: they must
+# hold for the passive stages and must fail for the amplifiers.  A test that
+# passed for everything would be measuring nothing.
+# --------------------------------------------------------------------------
+
+#: Stages with no power source.  A passive two-port cannot emit more power than
+#: it receives, and is reciprocal up to measurement error.
+PASSIVE = ('matcnet', 'balun1', 'cable', 'balun2')
+
+#: Stages that amplify.  `vgaf` is in this list because of what it actually
+#: loads -- feb+amfitler+biast.s2p, a front-end board -- and not because a
+#: filter should have gain; see the vga_gain entry in the known issues.
+ACTIVE = ('lna', 'vgaf')
+
+#: Reciprocity tolerance for measured data.  The measured stages sit at
+#: 1.2e-3 to 1.1e-2; the matching network is simulated and is exact.  The
+#: amplifiers are three orders of magnitude above this.
+RECIPROCITY_TOL = 5e-2
+
+
+def _sparams(chain, name):
+    r"""Returns ``(s11, s12, s21)`` for one stage as complex arrays.
+
+    Parameters
+    ----------
+    chain : RFChain
+        A chain on which ``compute_for_freqs`` has been called.
+    name : str
+        Attribute name of the stage.
+
+    Returns
+    -------
+    tuple of ndarray
+        Each of shape ``(3, n_freq)``.
+    """
+    stage = getattr(chain, name)
+    return (np.asarray(stage.s11), np.asarray(stage.s12), np.asarray(stage.s21))
+
+
+@pytest.mark.parametrize('name', PASSIVE)
+def test_passive_stages_do_not_create_power(chain, name):
+    r"""A passive two-port cannot emit more power than it receives.
+
+    For a lossless-or-lossy passive network driven at port 1,
+    :math:`|S_{11}|^2 + |S_{21}|^2 \le 1`: what is not reflected or transmitted
+    was dissipated.  Exceeding one means the component is generating power,
+    which for a balun or a length of coaxial cable would mean the data is wrong
+    -- most plausibly a magnitude read in the wrong units, since these files
+    come in two different Touchstone formats.
+    """
+    s11, _, s21 = _sparams(chain, name)
+    delivered = np.abs(s11) ** 2 + np.abs(s21) ** 2
+    assert delivered.max() <= 1.0 + 1e-6, (
+        '%s emits more power than it receives: max |S11|^2 + |S21|^2 = %.4f'
+        % (name, delivered.max()))
+
+
+@pytest.mark.parametrize('name', ACTIVE)
+def test_active_stages_do_create_power(chain, name):
+    r"""The amplifiers must fail the passivity test, or it is measuring nothing.
+
+    The guard against a passivity check that would pass on any input at all --
+    for instance if every magnitude were being read as a small number.
+    """
+    s11, _, s21 = _sparams(chain, name)
+    delivered = np.abs(s11) ** 2 + np.abs(s21) ** 2
+    assert delivered.max() > 1.0, (
+        '%s does not amplify: max |S11|^2 + |S21|^2 = %.4f. Either the stage '
+        'is loading the wrong file or a dB magnitude is being read as linear.'
+        % (name, delivered.max()))
+
+
+@pytest.mark.parametrize('name', PASSIVE)
+def test_passive_stages_are_reciprocal(chain, name):
+    r"""A passive network transmits equally in both directions: :math:`S_{12} = S_{21}`.
+
+    True of any network built from reciprocal materials, which is everything in
+    this chain except the amplifiers.  It is a genuine check on the data rather
+    than on the loader: ``s12`` is read from its own columns of the Touchstone
+    file, not copied from ``s21``, so agreement is a property of the
+    measurement.
+
+    The matching network is exact -- it is simulated rather than measured --
+    while the measured stages agree to about 1 %.
+    """
+    _, s12, s21 = _sparams(chain, name)
+    difference = np.abs(s12 - s21).max()
+    assert difference < RECIPROCITY_TOL, (
+        '%s is not reciprocal: max |S12 - S21| = %.3e, above the %.0e expected '
+        'of measurement error' % (name, difference, RECIPROCITY_TOL))
+
+
+@pytest.mark.parametrize('name', ACTIVE)
+def test_active_stages_are_not_reciprocal(chain, name):
+    r"""An amplifier passes signal one way, so :math:`S_{12} \ne S_{21}`.
+
+    The counterpart to the test above: without this, a bug that set ``s12 =
+    s21`` for every stage would leave the reciprocity test passing everywhere
+    and looking like a strong result.
+    """
+    _, s12, s21 = _sparams(chain, name)
+    difference = np.abs(s12 - s21).max()
+    assert difference > RECIPROCITY_TOL, (
+        '%s looks reciprocal (max |S12 - S21| = %.3e); an amplifier should not '
+        'be, so s12 may be a copy of s21' % (name, difference))
+
+
+def test_the_cascade_is_lossier_than_its_amplifiers_alone(chain):
+    r"""End-to-end gain is below the product of the two amplifier gains.
+
+    A weak statement deliberately: it does not pin a number that a
+    re-measurement of any component would change, but it does catch a cascade
+    that has silently dropped its passive stages -- which would leave the
+    matched, lossy parts out and inflate the transfer function.
+    """
+    gain = np.abs(chain.get_tf()).max()
+    amplifier_product = 1.0
+    for name in ACTIVE:
+        _, _, s21 = _sparams(chain, name)
+        amplifier_product *= np.abs(s21).max()
+
+    assert gain < amplifier_product, (
+        'the whole chain (%.1f) is not lossier than its amplifiers alone '
+        '(%.1f); the passive stages may not be in the cascade'
+        % (gain, amplifier_product))

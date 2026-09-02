@@ -655,6 +655,24 @@ class MatchingNetwork(GenericProcessingDU):
         # Fill S-parameters from files obtained by measuring S-parameters using virtual network analyzer.
         for axis in range(3):
             freqs_in = self.sparams[axis][:, 0] / 1e6 # note: freqs_in for x and y ports is the same, but for z port is different.
+            # This class does NOT call db2reim, and that is deliberate.
+            # Touchstone files declare their magnitude format on the `#` line,
+            # and the ones read here disagree:
+            #
+            #     MatchingNetwork*.s2p       # hz S ma R 50    <- linear
+            #     LNA-*.s2p, cable+*.s2p,    # Hz S dB R 50    <- decibels
+            #     feb+amfitler+biast.s2p
+            #
+            # The matching-network files are in `ma` (magnitude/angle), so the
+            # magnitude column is already linear and multiplying by cos/sin of
+            # the angle is the whole conversion.  Running db2reim on it -- the
+            # commented-out line below -- would treat a linear magnitude as
+            # decibels and is why it is commented out.
+            #
+            # LowNoiseAmplifier, Cable and VGAFilter read `dB` files and do call
+            # db2reim.  Both are correct for their own input; the asymmetry
+            # looks like a bug and is not.  The variable names do not help: they
+            # are called dbs11 and so on here even though the values are linear.
             # ----- S11
             dbs11 = self.sparams[axis][:, 1]
             phs11 = np.deg2rad(self.sparams[axis][:, 2])

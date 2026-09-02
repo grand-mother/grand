@@ -84,7 +84,11 @@ a third abandoned trunk.
 - [x] Tree schema snapshot — `tests/dataio/test_schema_snapshot.py`
 - [ ] Tree schema round-trip
 - [ ] Backward-compatibility ROOT fixture
-- [ ] Upgrade `test_rf_chain.py` to passivity, reciprocity, cascade identity
+- [x] Upgrade `test_rf_chain.py` to passivity, reciprocity, cascade identity —
+      in `tests/sim/test_rf_chain_physics.py`. The tests discriminate: passive
+      stages must satisfy |S11|²+|S21|² ≤ 1 and S12 = S21, and the two
+      amplifiers must violate both, so a check that passed on any input would
+      be caught.
 
 ### Phase 4 — merge the queue
 - [x] `dev_fix_root_warnings_lwp` — ROOT 6.38 warnings
@@ -148,7 +152,7 @@ a third abandoned trunk.
       what a reader sees on GitHub, so stripping them is the opposite of what
       is wanted here.
 - [ ] Move large ROOT fixtures to a fetched bundle
-- [ ] Delete the stray `GP300` file (383 B ROOT file at the repo root)
+- [x] Delete the stray `GP300` file — done in 3a2ec1a
 - [ ] ~~Delete `createAIP.jar`~~ — **it is in use**: `scripts/archiving/
       archive_grandraw.bash` invokes it. 36 MB, and it can only go when the
       archiving workflow is retired or the jar is fetched instead.
@@ -286,7 +290,9 @@ Handbook and a note on the installation page. Merge exposure is low either way:
 Everything in this document was re-verified on 2026-09-02. Four claims that had
 been recorded as defects were not defects, and are listed here rather than
 quietly edited out, because the pattern in them is worth more than any of them
-individually.
+individually. A fifth is listed below them: it was caught before it was ever
+written down, and is kept because it is the same mistake stopping one step
+earlier.
 
 | Claimed | Actually |
 |---|---|
@@ -294,6 +300,7 @@ individually.
 | ROOT 6.38 changes the result of a NumPy-only test | **No.** The test had unseeded noise and gave the "anomalous" answer 6.5 % of the time on any ROOT. |
 | The Docker route cannot work | **It works.** 459 tests pass in the 2023 image. |
 | `vga_gain` loads the 20 dB table regardless | It loads `feb+amfitler+biast.s2p`, which is not a VGA table at all. |
+| *(not filed)* `MatchingNetwork` treats dB magnitudes as linear | **Correct as written.** Its files declare `# hz S ma R 50`; the dB-declaring files are the ones whose classes do call `db2reim`. A comment now says so at the line. |
 
 The pattern: each was a *real observation* wrapped in a *guessed cause*, and in
 each case the guess was more dramatic than the truth. The observation that two
@@ -305,6 +312,12 @@ The discipline that would have caught all four: **before attributing a
 difference to a cause, check that the measurement repeats.** Three of the four
 collapse immediately under that test, and the fourth (`vga_gain`) needed only
 reading one more line of the function.
+
+The fifth is the same shape and shows what the discipline costs when it works:
+an asymmetry between sibling classes is a real observation, and "one of them
+forgot the unit conversion" is the dramatic explanation. Reading the four file
+headers took a minute and produced the undramatic one. Asymmetric code that is
+correct is worth a comment, because the next reader will make the same guess.
 
 ## Branches carrying unique work
 
