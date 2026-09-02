@@ -328,8 +328,22 @@ Three sets of actions were deliberately **not** bumped.
     ``environment-file``, ``activate-environment``, ``channels``,
     ``conda-remove-defaults`` — is unchanged, and v4 replaces ``conda config``
     subprocesses with direct ``.condarc`` writes, which is where these jobs
-    spend their time.  Conda setup measurably sped up: the ROOT 6.36 leg went
-    from 3 m 21 s to 2 m 51 s across the bump.
+    spend their time.
+
+    .. note::
+
+       An earlier version of this page claimed the bump "measurably sped up"
+       conda setup, citing the ROOT 6.36 leg going from 3 m 21 s to 2 m 51 s
+       across it.  **Withdrawn.**  Measured over eight runs of unchanged code,
+       that job takes anywhere from 102 s to 202 s.  A 30-second difference
+       between two runs is well inside that spread and is evidence of nothing.
+
+       The rule this repository has learned twice now: a difference between two
+       runs is not a measurement.  Either it repeats, or it comes with a
+       mechanism — a step that no longer runs, a download that no longer
+       happens — or it is noise.  The timings quoted elsewhere on this page are
+       step durations read from a job's own breakdown, which is why they can
+       carry an argument where this one could not.
 
     The one input that did change is ``auto-activate-base``, now
     ``auto-activate``.  It was renamed in a **separate commit** from the

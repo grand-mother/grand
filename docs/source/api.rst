@@ -6,7 +6,7 @@ Generated from the docstrings.
 Every one of the 554 functions and methods in the package carries a
 description.  64 % also carry a ``Parameters`` section and 58 % a ``Returns``
 section; the remainder are functions that take no arguments or return nothing,
-where numpydoc asks for neither.  21 carry a worked example, concentrated on
+where numpydoc asks for neither.  18 carry a worked example, concentrated on
 the entry points where an example earns its keep.
 
 Run ``python quality/docstring_coverage.py`` to reproduce those figures.
@@ -14,7 +14,9 @@ Run ``python quality/docstring_coverage.py`` to reproduce those figures.
 .. note::
 
    The modules below are grouped by what they are for, not by their import
-   path.  ``grand.geo.gull`` and ``grand.geo.turtle`` are the ``cffi`` bindings
+   path.  All of the package's modules are here except
+   ``grand/sim/noise/Compute_Plot_Galactic_Noise.py``, which is a script rather
+   than a module -- it plots on import -- and would execute during the build.  ``grand.geo.gull`` and ``grand.geo.turtle`` are the ``cffi`` bindings
    to the compiled libraries and are documented here for completeness; most
    users reach them through :mod:`grand.geo.geomagnet` and
    :mod:`grand.geo.topography` instead.
