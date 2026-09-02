@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 620" width="100%" font-family="IBM Plex Sans, sans-serif">
+<rect width="1080" height="620" rx="6" fill="#FBFCFC" stroke="#D8DEE3"/>
+<text x="90" y="34" font-size="15" font-weight="600" fill="#14202A">dev-next recovery</text>
+<rect x="90" y="46" width="9" height="9" rx="2" fill="#E1F1EA" stroke="#1D7A57"/>
+<text x="104" y="54.5" font-size="10" fill="#4C5C69">done</text>
+<rect x="138" y="46" width="9" height="9" rx="2" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="152" y="54.5" font-size="10" fill="#4C5C69">blocked</text>
+<rect x="203" y="46" width="9" height="9" rx="2" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="217" y="54.5" font-size="10" fill="#4C5C69">not started</text>
+<text x="90" y="92" font-size="10.5" font-weight="600" fill="#0E6E70" letter-spacing="0.08em">INFRASTRUCTURE</text>
+<rect x="90.0" y="104.0" width="102.5" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="141.2" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ conda env</text>
+<rect x="202.5" y="104.0" width="102.5" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="253.8" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ setup.sh</text>
+<rect x="315.0" y="104.0" width="102.5" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="366.2" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ pyproject</text>
+<rect x="427.5" y="104.0" width="102.5" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="478.8" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ Sphinx tree</text>
+<rect x="540.0" y="104.0" width="102.5" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="591.2" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ schema test</text>
+<rect x="652.5" y="104.0" width="102.5" height="30.0" rx="4" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1.2"/>
+<text x="703.8" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#7A8994" text-anchor="middle">○ CI restore</text>
+<rect x="765.0" y="104.0" width="102.5" height="30.0" rx="4" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1.2"/>
+<text x="816.2" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#7A8994" text-anchor="middle">○ interface</text>
+<rect x="877.5" y="104.0" width="102.5" height="30.0" rx="4" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1.2"/>
+<text x="928.8" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#7A8994" text-anchor="middle">○ docstrings</text>
+<text x="90" y="176" font-size="10.5" font-weight="600" fill="#0E6E70" letter-spacing="0.08em">MERGE QUEUE</text>
+<rect x="90.0" y="190.0" width="204.0" height="40.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="192.0" y="207.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#1D7A57" text-anchor="middle">dev_fix_root_warnings_lwp</text>
+<text x="192.0" y="220.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">ROOT 6.38 warnings</text>
+<rect x="322.0" y="190.0" width="204.0" height="40.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="424.0" y="207.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#1D7A57" text-anchor="middle">dev_nutrig_fields</text>
+<text x="424.0" y="220.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">NUTRIG fields in TADC</text>
+<rect x="554.0" y="190.0" width="204.0" height="40.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="656.0" y="207.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#1D7A57" text-anchor="middle">dev_reprocessing</text>
+<text x="656.0" y="220.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">Snakemake pipeline</text>
+<rect x="786.0" y="190.0" width="204.0" height="40.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
+<text x="888.0" y="207.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#1D7A57" text-anchor="middle">dev_Event_write</text>
+<text x="888.0" y="220.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">tshower writing</text>
+<rect x="90.0" y="268.0" width="204.0" height="40.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.2"/>
+<text x="192.0" y="285.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#8A6210" text-anchor="middle">..._lwp_new_fields</text>
+<text x="192.0" y="298.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">name clash: NUTRIG</text>
+<rect x="322.0" y="268.0" width="204.0" height="40.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.2"/>
+<text x="424.0" y="285.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#8A6210" text-anchor="middle">..._aoi_levels_lwp</text>
+<text x="424.0" y="298.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">levels, +40% speed</text>
+<rect x="554.0" y="268.0" width="204.0" height="40.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.2"/>
+<text x="656.0" y="285.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#8A6210" text-anchor="middle">dev_snonis</text>
+<text x="656.0" y="298.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">noise √2 fix</text>
+<rect x="786.0" y="268.0" width="204.0" height="40.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.2"/>
+<text x="888.0" y="285.5" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#8A6210" text-anchor="middle">dev_database</text>
+<text x="888.0" y="298.5" font-family="IBM Plex Mono, monospace" font-size="9.7" font-weight="400" fill="#4C5C69" text-anchor="middle">datamanager conflict</text>
+<path d="M 192.0 230.0 L 192.0 346.0 L 146.2 346.0 L 146.2 385.0" stroke="#1D7A57" stroke-width="1.3" fill="none"/>
+<circle cx="146.2" cy="392" r="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="146.2" y="394" font-size="8" font-weight="700" fill="#1D7A57" text-anchor="middle">✓</text>
+<path d="M 424.0 230.0 L 424.0 346.0 L 258.8 346.0 L 258.8 385.0" stroke="#1D7A57" stroke-width="1.3" fill="none"/>
+<circle cx="258.8" cy="392" r="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="258.8" y="394" font-size="8" font-weight="700" fill="#1D7A57" text-anchor="middle">✓</text>
+<path d="M 656.0 230.0 L 656.0 346.0 L 371.2 346.0 L 371.2 385.0" stroke="#1D7A57" stroke-width="1.3" fill="none"/>
+<circle cx="371.2" cy="392" r="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="371.2" y="394" font-size="8" font-weight="700" fill="#1D7A57" text-anchor="middle">✓</text>
+<path d="M 888.0 230.0 L 888.0 346.0 L 483.8 346.0 L 483.8 385.0" stroke="#1D7A57" stroke-width="1.3" fill="none"/>
+<circle cx="483.8" cy="392" r="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.4"/>
+<text x="483.8" y="394" font-size="8" font-weight="700" fill="#1D7A57" text-anchor="middle">✓</text>
+<path d="M 192.0 308.0 L 192.0 362.0 L 596.2 362.0 L 596.2 385.0" stroke="#8A6210" stroke-width="1.3" fill="none" stroke-dasharray="3 3" opacity="0.8"/>
+<circle cx="596.2" cy="392" r="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="596.2" y="394" font-size="8" font-weight="700" fill="#8A6210" text-anchor="middle">✗</text>
+<path d="M 424.0 308.0 L 424.0 362.0 L 708.8 362.0 L 708.8 385.0" stroke="#8A6210" stroke-width="1.3" fill="none" stroke-dasharray="3 3" opacity="0.8"/>
+<circle cx="708.8" cy="392" r="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="708.8" y="394" font-size="8" font-weight="700" fill="#8A6210" text-anchor="middle">✗</text>
+<path d="M 656.0 308.0 L 656.0 362.0 L 821.2 362.0 L 821.2 385.0" stroke="#8A6210" stroke-width="1.3" fill="none" stroke-dasharray="3 3" opacity="0.8"/>
+<circle cx="821.2" cy="392" r="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="821.2" y="394" font-size="8" font-weight="700" fill="#8A6210" text-anchor="middle">✗</text>
+<path d="M 888.0 308.0 L 888.0 362.0 L 933.8 362.0 L 933.8 385.0" stroke="#8A6210" stroke-width="1.3" fill="none" stroke-dasharray="3 3" opacity="0.8"/>
+<circle cx="933.8" cy="392" r="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.4"/>
+<text x="933.8" y="394" font-size="8" font-weight="700" fill="#8A6210" text-anchor="middle">✗</text>
+<line x1="50" y1="392" x2="540.0" y2="392" stroke="#1D7A57" stroke-width="3"/>
+<line x1="540.0" y1="392" x2="1020" y2="392" stroke="#BCC7CE" stroke-width="3" stroke-dasharray="5 4"/>
+<circle cx="50" cy="392" r="6" fill="#0E6E70"/>
+<text x="50" y="414" font-size="9.5" font-family="IBM Plex Mono, monospace" fill="#4C5C69" text-anchor="middle">dev@1ca1847</text>
+<path d="M 1030 392 l -10 -5.5 l 0 11 z" fill="#7A8994"/>
+<text x="998" y="378" font-size="11" font-weight="600" fill="#4C5C69" text-anchor="middle">main</text>
+<text x="90" y="470" font-size="10.5" font-weight="600" fill="#0E6E70" letter-spacing="0.08em">PHASES</text>
+<rect x="90.0" y="482" width="76.8" height="24" rx="3" fill="#E1F1EA" stroke="#1D7A57"/>
+<text x="128.4" y="498" font-size="9" fill="#1D7A57" text-anchor="middle">0 branch</text>
+<rect x="171.8" y="482" width="76.8" height="24" rx="3" fill="#E1F1EA" stroke="#1D7A57"/>
+<text x="210.2" y="498" font-size="9" fill="#1D7A57" text-anchor="middle">1 env</text>
+<rect x="253.6" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="292.0" y="498" font-size="9" fill="#7A8994" text-anchor="middle">2 CI</text>
+<rect x="335.5" y="482" width="76.8" height="24" rx="3" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="373.9" y="498" font-size="9" fill="#8A6210" text-anchor="middle">3 tests</text>
+<rect x="417.3" y="482" width="76.8" height="24" rx="3" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="455.7" y="498" font-size="9" fill="#8A6210" text-anchor="middle">4 merge</text>
+<rect x="499.1" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="537.5" y="498" font-size="9" fill="#7A8994" text-anchor="middle">5 decide</text>
+<rect x="580.9" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="619.3" y="498" font-size="9" fill="#7A8994" text-anchor="middle">6 interface</text>
+<rect x="662.7" y="482" width="76.8" height="24" rx="3" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="701.1" y="498" font-size="9" fill="#8A6210" text-anchor="middle">7 docs</text>
+<rect x="744.5" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="783.0" y="498" font-size="9" fill="#7A8994" text-anchor="middle">8 govern</text>
+<rect x="826.4" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="864.8" y="498" font-size="9" fill="#7A8994" text-anchor="middle">9 promote</text>
+<rect x="908.2" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
+<text x="946.6" y="498" font-size="9" fill="#7A8994" text-anchor="middle">10 cleanup</text>
+<text x="90" y="538" font-size="10.5" font-weight="600" fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>
+<text x="90" y="558" font-size="10.5" fill="#4C5C69">• NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr</text>
+<text x="90" y="575" font-size="10.5" fill="#4C5C69">• Galactic noise: dev_snonis √2 fix, or the refact_galaxy rewrite — needs the collaboration</text>
+</svg>
