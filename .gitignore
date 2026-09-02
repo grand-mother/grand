@@ -53,11 +53,10 @@ quality/html_*
 .settings
 
 # doc generation
-docs/apidoc-only/doxygen-rtd/build
-docs/apidoc-only/doxygen-rtd/html
-docs/apidoc-only/doxygen-rtd/xml
-docs/apidoc-only/sphinx/build
-docs/apidoc-only/sphinx/source/grand.*
+# docs/apidoc-only/ was the old Doxygen tree; it was deleted when the Sphinx
+# tree was rebuilt, so its five ignore patterns went with it.  `make html`
+# writes to docs/build/, ignored below.
+docs/_build/
 
 /examples/io/stored_data.root
 
