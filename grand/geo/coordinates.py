@@ -1839,8 +1839,9 @@ class GRANDCS(LTP):
 class Rotation(_Rotation):
     r"""A rotation between coordinate frames.
 
-        Extends :class:`scipy.spatial.transform.Rotation` so that a rotation can
-        be applied to the frame objects in this module and carry their metadata
-        through.
+    Extends :class:`scipy.spatial.transform.Rotation` so that a rotation can
+    be applied to the frame objects in this module and carry their metadata
+    through.
     """
+
     pass
