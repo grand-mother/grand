@@ -193,3 +193,33 @@ document it — the Sphinx configuration carries a typed mock for this reason.
 
 Deferring the version check to first use, and breaking the geometry-to-dataio
 dependency, are part of the interface work.
+
+.. _issue-missing-endtoend-fixture:
+
+The end-to-end test has no input
+---------------------------------
+
+:Status: open
+:Affects: the only test that exercises the whole pipeline
+:Test: ``tests/sim/test_efield2voltage.py``
+
+``tests/sim/test_efield2voltage.py`` reads ``data/test_efield.root``.  That
+file is not in version control: ``data/.gitignore`` excludes everything except
+the readme, the download scripts and itself.  Nor is it produced by
+``env/setup.sh``, which fetches the topography, geomagnetic and antenna data
+but no test input.
+
+So the test cannot pass on a fresh checkout or in CI.  The copy that happens to
+exist in this working tree is 615 bytes and contains no trees at all.
+
+This is also why the test asserts so little.  Its only check after
+``compute_voltage()`` is that an output file exists -- which is all you can
+assert when there is no reliable input to compare against.
+
+**What it needs.** Either a small ROOT file committed as a fixture, or one
+built in a pytest fixture from the tree classes themselves.  The second is
+better: it costs nothing in repository size, it cannot drift from the schema,
+and it makes the fixture's contents visible in the test rather than opaque.
+Once it exists, the end-to-end regression described in the recovery plan --
+peak voltage, trace RMS, band-integrated power against stored references --
+becomes possible.
