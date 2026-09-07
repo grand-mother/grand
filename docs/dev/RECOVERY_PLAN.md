@@ -29,18 +29,22 @@ trivial — if `dev-next` goes wrong, unfreeze `dev` and carry on.
 
 ## Status
 
-Measured in the built environment on 2026-09-02:
+Measured in the built environment on 2026-09-07:
 
 | | |
 |---|---|
-| Merge queue | 5 of 9 merged; 4 blocked on decisions |
-| Test suite | **411 passed, 13 skipped, 9 xfailed, 0 failed** |
+| Merge queue | 6 of 9 merged; 2 blocked on the NUTRIG name, 1 in doubt |
+| Test suite | **532 passed, 12 skipped, 10 xfailed, 1 xpassed, 0 failed** |
+| Coverage | 71 % over `grand/` |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
 | Lint | clean over `grand/ tests/ quality/ notebooks/ docs/dev/` |
-| Documentation | 23 authored pages + API over 33 of 34 modules + the Handbook; **zero warnings** |
+| Documentation | 23 authored pages + API over 33 of 34 modules + the Handbook; **zero warnings**; **published at https://grand-mother.github.io/grand/** |
+| Known issues | 17, of which 2 resolved on 2026-09-07 |
 | Notebooks | 7, generated and executed by `notebooks/make_notebooks.py` |
-| Tag | `v0.1.0-dev.15` |
+| CI | `Code Quality`, `Tests` and `Documentation Deployment` green on `dev-next` |
+| Branch protection | `dev-next`: force-push and deletion blocked, enforced on admins |
+| Tag | `v0.1.0-dev.27` |
 
 ## Phases
 
@@ -75,7 +79,12 @@ a third abandoned trunk.
 - [x] Move the `paths:` filter off the triggers into the workflow
 - [x] Add the ROOT 6.36 / 6.38 matrix
 - [x] CI runs and is green on GitHub (`Code Quality`, `Tests`)
-- [ ] Turn on branch protection for `dev-next` — wait until the checks have been green for a few pushes
+- [x] Turn on branch protection for `dev-next` — **done 2026-09-07**, narrowly:
+      force-push and deletion blocked, enforced on admins so the guard binds on
+      the one person who could trip it. No required checks and no required
+      reviews, because there is no second maintainer to approve and a required
+      check that a path filter skips would produce an unmergeable PR. Widen it
+      the first time someone else merges here, not on a date.
 
 ### Phase 3 — tests before features
 - [x] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
@@ -109,12 +118,17 @@ a third abandoned trunk.
 - [x] `dev_Event_write` — tshower writing
 - [ ] `dev_fix_root_warnings_lwp_new_fields` — **blocked, see below**
 - [ ] `dev_fix_root_warnings_aoi_levels_lwp` — blocked behind it
-- [x] `dev_snonis` — **merged 2026-09-07** on `merge/dev_snonis`. The physics
+- [x] `dev_snonis` — **merged into `dev-next` 2026-09-07**. The physics
       decision was answered by its author: the tabulated quantity is an RMS by
       construction, so `size_out/sqrt(2)` is right. Both conflicts resolved
       deliberately — `.gitignore` ours, `galaxy.py` their code in our docstring
       style. See `issue-galactic-noise-normalisation`.
-- [ ] `dev_database` — conflict on `granddb/datamanager.py`
+- [ ] `dev_database` — **the stated reason does not hold.** `git cherry` reports
+      0 commits it carries that `dev-next` lacks, and `git merge-tree
+      --write-tree` reports no conflict. Its tip is `dc565b3`, June 2025. Either
+      its work arrived by another route and this entry is stale, or the conflict
+      is about something other than unmerged commits. Needs its author before it
+      is either merged or struck.
 - [ ] After the `sim2root/` branches land: fix the CoREAS site table
       (`issue-coreas-site-table`). Unknown sites raise `ValueError` on an
       empty unpacking — Xiaodushan among them — and the table's centimetre
@@ -234,12 +248,13 @@ only `PERSONAL_TOKEN` and `PYPI_TOKEN`. The step is non-fatal so it fails
 invisibly, and the README's codecov badge does not reflect reality. Adding the
 secret is the whole fix; the workflow already passes it.
 
-**GitHub Pages is switched off.** The manual currently publishes from a
-personal fork at https://mbustama.github.io/grand/ — complete and current, but
-a preview of a branch rather than the collaboration's own page. Turning Pages
-on (*Settings → Pages → Source: GitHub Actions*) makes `pages.yml` publish from
-this repository instead; until Phase 9 makes `dev-next` the default branch, add
-it to the workflow's `branches` list as well.
+**~~GitHub Pages is switched off.~~ Done 2026-09-07.** The manual publishes
+from this repository at https://grand-mother.github.io/grand/, built by
+`pages.yml` on every push to `dev-next`. Three things had to change: Pages
+enabled with GitHub Actions as the source, `dev-next` added to the
+`github-pages` environment's deployment branch policy, and `dev-next` added to
+the workflow's trigger alongside `main`. The personal fork that served as a
+stopgap can come down.
 
 **24 Dependabot alerts on the default branch** — 1 critical, 15 high, 7
 moderate, 1 low — reported on every push. Not looked at yet.
