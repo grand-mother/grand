@@ -5,6 +5,8 @@ import os
 import os.path
 from logging import getLogger
 import time
+import importlib.metadata
+
 import numpy as np
 import scipy.fft as sf
 from pathlib import Path
@@ -94,6 +96,25 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     freqs_mhz = sf.rfftfreq(fast_size, dt_s[0]) * 1e-6
     #print(f"padding_factor {padding_factor} sig_size {sig_size} ({padding_factor * sig_size +0.5}) fast size {fast_size} freqs_mhz size {len(freqs_mhz)}")
     return fast_size, freqs_mhz
+
+
+def _grandlib_version():
+    r"""Returns the installed GRANDlib version, or ``"unknown"``.
+
+    Read from the package metadata rather than a hard-coded constant, so it
+    cannot drift from what was actually installed.  Returns ``"unknown"``
+    rather than raising if the package is not installed -- running from a
+    source tree without ``pip install`` is a legitimate way to work, and it
+    should not stop a simulation.
+
+    Returns
+    -------
+    str
+    """
+    try:
+        return importlib.metadata.version("grand")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
 
 
 class Efield2Voltage:
@@ -848,6 +869,12 @@ class Efield2Voltage:
         # Fill voltage object. d_root = events
         self.tt_volt.du_count     = self.nb_du
         logger.debug(f"We will save voltage for {self.tt_volt.du_count} DUs.")
+
+        # Stamp the producing version. The simulated voltage depends on the
+        # code as much as on the input -- the galactic-noise normalisation
+        # moved by sqrt(2) on 2026-09-07 -- and without this there is nothing
+        # in a file to say which side of such a change it came from.
+        self.tt_volt.grandlib_version = _grandlib_version()
 
         self.tt_volt.run_number   = self.events.run_number
         self.tt_volt.event_number = self.events.event_number

@@ -873,6 +873,24 @@ class TVoltage(MotherEventTree):
     time_max: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """(Computed) peak time"""
 
+    ## Version of GRANDlib that produced this file
+    grandlib_version: StdStringDesc = field(default=StdStringDesc())
+    """Version of GRANDlib that produced this file.
+
+    Written by :class:`~grand.sim.efield2voltage.Efield2Voltage`.  It exists
+    because the simulated voltage depends on the code as much as on the input:
+    the galactic-noise normalisation changed by a factor of :math:`\sqrt2` on
+    2026-09-07, and before this field there was nothing in a file to say which
+    side of that change it came from.
+
+    Empty on files written before this field existed, which is itself the
+    answer: no stamp means it predates 2026-09-07.
+
+    This is only worth reading if the version is bumped when behaviour changes.
+    It sat at ``0.1.0.dev0`` across twenty-seven milestone tags, which would
+    have made the stamp useless; see the note in ``pyproject.toml``.
+    """
+
 
 @dataclass
 ## The class for storing Efield traces and associated values for each event

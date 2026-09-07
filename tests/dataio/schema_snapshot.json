@@ -313,6 +313,7 @@
     "du_seconds": "<class 'grand.dataio.descriptors.StdVectorListDesc'>",
     "event_number": "<class 'grand.dataio.descriptors.TTreeScalarDesc'>",
     "first_du": "<class 'grand.dataio.descriptors.TTreeScalarDesc'>",
+    "grandlib_version": "<class 'grand.dataio.descriptors.StdStringDesc'>",
     "is_tchain": "<class 'bool'>",
     "p2p": "<class 'grand.dataio.descriptors.StdVectorListDesc'>",
     "run_number": "<class 'grand.dataio.descriptors.TTreeScalarDesc'>",

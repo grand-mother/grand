@@ -30,7 +30,17 @@ name = "grand"
 # release cycle, stamped into files so that a reader can tell which schema
 # wrote them.  Conflating the two would make a package release imply a format
 # change and vice versa.
-version = "0.1.0.dev0"
+# Bump this whenever released behaviour changes, not only on releases.
+#
+# TVoltage.grandlib_version records this string in every simulated voltage
+# file, so a reader can tell which code produced it. That is worth nothing if
+# the string never moves -- and it did not: it sat at 0.1.0.dev0 across the
+# first twenty-seven milestone tags, spanning a change that made every
+# simulated voltage sqrt(2) larger.
+#
+# dev1 marks that change: the galactic-noise normalisation fix of 2026-09-07.
+# A file stamped dev0, or carrying no stamp at all, predates it.
+version = "0.1.0.dev1"
 
 description = "Offline data handling, simulation and analysis for the Giant Radio Array for Neutrino Detection"
 readme = "README.md"

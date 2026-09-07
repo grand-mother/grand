@@ -183,3 +183,24 @@ def test_output_file_is_readable(efield_file, tmp_path):
     trace = np.asarray(voltage.trace)
     assert trace.shape[0] == N_DU, 'wrong number of units in the output'
     assert np.isfinite(trace).all(), 'output file holds non-finite values'
+
+
+def test_the_written_file_records_which_code_wrote_it():
+    r"""Every voltage file Efield2Voltage writes carries the GRANDlib version.
+
+    The stamp exists because the simulated voltage depends on the code as
+    much as on the input: the galactic-noise normalisation moved by
+    :math:`\sqrt2` on 2026-09-07, and files from either side were previously
+    indistinguishable.
+
+    It is only worth anything if the version moves when behaviour does, which
+    is why ``pyproject.toml`` carries that instruction next to the number.
+    This test checks the mechanism; it cannot check the discipline.
+    """
+    from grand.sim.efield2voltage import _grandlib_version
+
+    stamp = _grandlib_version()
+    assert stamp and stamp != 'unknown', (
+        'the version is unreadable, so files would be stamped %r' % stamp)
+    assert stamp[0].isdigit(), (
+        'the stamp %r does not look like a version' % stamp)

@@ -247,3 +247,26 @@ def test_compatibility_comes_from_branch_names_and_not_from_a_version():
 
     assert np.asarray(adc.trace_ch[0][0]).size == 2048, (
         'and the data is readable without any version having been consulted')
+
+
+def test_the_version_stamp_is_absent_from_old_files(tmp_path):
+    r"""A file written before the stamp existed reads back empty, not wrong.
+
+    ``TVoltage.grandlib_version`` was added on 2026-09-07 so that a simulated
+    voltage file says which code produced it -- the galactic-noise
+    normalisation had just changed by :math:`\sqrt2`, and nothing in a file
+    distinguished the two.
+
+    Old files cannot carry it, and that is the point: an empty stamp *is* the
+    information, because it can only mean the file predates the field, and
+    therefore predates the change.  This asserts the empty case explicitly, so
+    that nobody later "fixes" it by defaulting the field to the current
+    version and destroys the only signal old files have.
+    """
+    old = _open(groot.TADC, DUNHUANG / 'adc_4100-4100_L1_0000.root')
+    assert old.run_number == 1, 'sanity: the 2024 fixture still reads'
+
+    fresh = groot.TVoltage(_file_name=str(tmp_path / 'v.root'))
+    assert str(fresh.grandlib_version) == '', (
+        'a newly constructed TVoltage already claims a version; the default '
+        'must stay empty so that an unstamped file stays distinguishable')

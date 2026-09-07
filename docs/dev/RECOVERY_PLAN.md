@@ -57,8 +57,11 @@ a third abandoned trunk.
 - [ ] Draft and send the freeze announcement for `dev`
 - [ ] Decide the reprocessing policy for the √2 noise change — **now live.**
       The fix is merged, so every simulated voltage produced from 2026-09-07
-      is √2 higher than everything before it. Nothing in the data model
-      distinguishes the two, which is the part that needs a decision.
+      is √2 higher than everything before it. New files now say which code
+      wrote them (`TVoltage.grandlib_version`, and the version bumped to
+      `0.1.0.dev1` to mark the change), so the question is narrowed to the
+      files already on disk: they carry no stamp, and an absent stamp is the
+      only thing distinguishing them.
 - [ ] Write the rollback sentence somewhere visible
 - [ ] Fix a first version number and target date
 
