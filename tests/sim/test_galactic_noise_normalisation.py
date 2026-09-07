@@ -233,20 +233,32 @@ def test_level_matches_the_tables_and_the_stated_relation(du_type):
 
     per 1 MHz table bin, summed in quadrature over the band -- which is the
     time-domain variance, because a conjugate pair under a backward-normalised
-    ``irfft`` contributes exactly :math:`\sigma_k^2`.  Converting volts to
-    microvolts is the last step.
+    ``irfft`` contributes exactly :math:`\sigma_k^2`.
 
-    Agreement is to about 0.4 %, not exactly one: the code interpolates the
-    table onto the requested frequency grid and selects the nearest of 72 LST
-    bins, while the prediction reads the native grid and bin directly.  The
-    tolerance is set to accommodate that and nothing larger -- a factor of
-    :math:`\sqrt2`, a factor of two, or a missing bin-width would all fail by
-    orders of magnitude more.
+    **Why the agreement is not exact.**  That expression is the *expectation
+    value*.  What the code returns is one realisation of it: the amplitudes
+    are drawn from :math:`\mathcal{N}(0, \sigma_k^2)`, so a sample RMS over a
+    finite number of antennas scatters about the prediction.  Everything else
+    in the chain is exact -- with the draw replaced by its own scale the two
+    agree to 1e-15, the interpolation onto this grid is the identity to
+    4e-16, LST 18 h lands on bin 54 exactly, and the bin-width factor is 1.
+
+    The tolerance is therefore derived rather than chosen.  For amplitudes
+    drawn independently per bin, the relative spread of the sample RMS is
+
+    .. math::  \frac{1}{\sqrt{2\,n_{\rm ant}\,N_{\rm eff}}},
+               \qquad N_{\rm eff} = \frac{(\sum_k \sigma_k^2)^2}{\sum_k \sigma_k^4}
+
+    with :math:`N_{\rm eff}` between 87 and 172 of the 221 bins here -- the
+    spectrum is steep, so the low-frequency bins dominate and the Z arm has
+    the fewest effective bins.  That predicts 0.22-0.31 % at 600 antennas,
+    against 0.20-0.25 % measured over 40 seeds.  Four sigma is the bar below,
+    and it scales correctly if `N_ANTENNAS` changes.
 
     What this does **not** establish is that the :math:`P_L` tables are
-    themselves right.  That depends on the sky model and antenna response used
-    to produce them, which are not in this repository.  It establishes that
-    the code turns those tables into voltages the way it says it does.
+    themselves right.  That depends on the sky model and antenna response
+    used to produce them, which are not in this repository.  It establishes
+    that the code turns those tables into voltages the way it says it does.
     """
     zant = np.loadtxt(grand_add_path_data(Z_ANT_FILE), delimiter=',',
                       skiprows=1)
@@ -255,16 +267,22 @@ def test_level_matches_the_tables_and_the_stated_relation(du_type):
     table = np.load(grand_add_path_data(
         'noise/galactic_PL_per_Hz_gp13_%s.npy'
         % ('GP300' if du_type == 'GP300' else du_type)))
-    variance_v2 = (4.0 * table[:, LST_BIN, :] * BIN_WIDTH_HZ * rant).sum(axis=0)
-    predicted_uv = np.sqrt(variance_v2) * 1e6
+    variance = 4.0 * table[:, LST_BIN, :] * BIN_WIDTH_HZ * rant   # per bin, V^2
+    predicted_uv = np.sqrt(variance.sum(axis=0)) * 1e6
+
+    # The spread the finite draw is expected to produce, from the same sigmas.
+    n_eff = variance.sum(axis=0) ** 2 / (variance ** 2).sum(axis=0)
+    tolerance = 4.0 * np.sqrt(1.0 / (2.0 * N_ANTENNAS * n_eff))
 
     _, _, traces = _traces(du_type)
     measured = traces.std(axis=(0, 2))
+    deviation = np.abs(measured / predicted_uv - 1.0)
 
-    assert np.allclose(measured, predicted_uv, rtol=0.01), (
-        '%s: simulated %s uV against %s predicted from the tables; ratio %s'
+    assert (deviation < tolerance).all(), (
+        '%s: simulated %s uV against %s predicted; deviation %s exceeds the '
+        '4-sigma sampling spread %s'
         % (du_type, np.round(measured, 2), np.round(predicted_uv, 2),
-           np.round(measured / predicted_uv, 4)))
+           np.round(deviation, 5), np.round(tolerance, 5)))
 
 
 @pytest.mark.parametrize('du_type', MODELS)
