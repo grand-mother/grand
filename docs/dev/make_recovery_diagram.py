@@ -22,8 +22,8 @@ QUEUE = [
     ('dev_Event_write',                'tshower writing',         'done'),
     ('..._lwp_new_fields',             'name clash: NUTRIG',      'blocked'),
     ('..._aoi_levels_lwp',             'levels, +40% speed',      'blocked'),
-    ('dev_snonis',                     'noise √2 fix',            'blocked'),
-    ('dev_database',                   'datamanager conflict',    'blocked'),
+    ('dev_snonis',                     'noise √2 fix',            'done'),
+    ('dev_database',                   'nothing unmerged?',       'todo'),
 ]
 
 # (label, state) for the infrastructure track
@@ -37,7 +37,7 @@ WORK = [
     ('Sphinx docs',    'done'),
     ('schema test',    'done'),
     ('CI green',       'done'),
-    ('518 tests',      'done'),
+    ('532 tests',      'done'),
     ('cov 71%',        'done'),
     ('interface',      'todo'),
 ]
@@ -51,7 +51,11 @@ W, H = 1080, 620
 SPINE_Y = 392
 X0, X1 = 90, 990
 BOX_W, BOX_H = 204, 40
-COLS = 4
+# Columns follow the data: the queue is drawn as two rows, merged above the
+# spine and blocked below, and the wider of the two sets the grid. Hardcoding
+# it at 4 clipped the fifth box off the canvas the day a fifth branch merged.
+COLS = max(sum(1 for q in QUEUE if q[2] == 'done'),
+           sum(1 for q in QUEUE if q[2] != 'done'))
 COL_GAP = (X1 - X0 - BOX_W) / (COLS - 1)
 
 # Approximate advance width of IBM Plex Mono, as a fraction of font size.
@@ -204,9 +208,9 @@ def main():
              'fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>'
              % X0)
     notes = ['NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr',
-             'Galactic noise: is the tabulated Vocmax an RMS or a maximum? — needs the antenna table authors',
              'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration',
-             'Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration']
+             'Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration',
+             'Reprocessing: the noise fix raises every simulated voltage by √2 — needs the collaboration']
     for i, note in enumerate(notes):
         s.append('<text x="%d" y="%d" font-size="10.5" fill="#4C5C69">• %s</text>'
                  % (X0, 549 + i * 17, esc(note)))
