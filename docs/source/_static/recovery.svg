@@ -106,8 +106,9 @@
 <text x="864.8" y="498" font-size="9" fill="#7A8994" text-anchor="middle">9 promote</text>
 <rect x="908.2" y="482" width="76.8" height="24" rx="3" fill="#EDF1F3" stroke="#BCC7CE"/>
 <text x="946.6" y="498" font-size="9" fill="#7A8994" text-anchor="middle">10 cleanup</text>
-<text x="90" y="538" font-size="10.5" font-weight="600" fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>
-<text x="90" y="558" font-size="10.5" fill="#4C5C69">• NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr</text>
-<text x="90" y="575" font-size="10.5" fill="#4C5C69">• Galactic noise: is the tabulated Vocmax an RMS or a maximum? — needs the antenna table authors</text>
-<text x="90" y="592" font-size="10.5" fill="#4C5C69">• Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration</text>
+<text x="90" y="530" font-size="10.5" font-weight="600" fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>
+<text x="90" y="549" font-size="10.5" fill="#4C5C69">• NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr</text>
+<text x="90" y="566" font-size="10.5" fill="#4C5C69">• Galactic noise: is the tabulated Vocmax an RMS or a maximum? — needs the antenna table authors</text>
+<text x="90" y="583" font-size="10.5" fill="#4C5C69">• Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration</text>
+<text x="90" y="600" font-size="10.5" fill="#4C5C69">• Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration</text>
 </svg>

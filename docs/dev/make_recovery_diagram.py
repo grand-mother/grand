@@ -197,16 +197,19 @@ def main():
                  'text-anchor="middle">%s</text>'
                  % (x + (pw - 5) / 2, TEXT[state], esc(label)))
 
-    # --- the two decisions blocking the queue -----------------------------
-    s.append('<text x="%d" y="538" font-size="10.5" font-weight="600" '
+    # --- the decisions blocking the queue ---------------------------------
+    # The header sits at 530 rather than 538 so that a fourth line still
+    # clears the bottom edge at H=620.  Check that before adding a fifth.
+    s.append('<text x="%d" y="530" font-size="10.5" font-weight="600" '
              'fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>'
              % X0)
     notes = ['NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr',
              'Galactic noise: is the tabulated Vocmax an RMS or a maximum? — needs the antenna table authors',
-             'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration']
+             'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration',
+             'Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration']
     for i, note in enumerate(notes):
         s.append('<text x="%d" y="%d" font-size="10.5" fill="#4C5C69">• %s</text>'
-                 % (X0, 558 + i * 17, esc(note)))
+                 % (X0, 549 + i * 17, esc(note)))
 
     s.append('</svg>')
     out = os.path.join(os.path.dirname(os.path.dirname(
