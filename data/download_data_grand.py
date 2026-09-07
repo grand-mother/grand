@@ -19,6 +19,7 @@ import os
 import time
 import sys
 import shutil
+import subprocess
 import os.path as osp
 from urllib import request
 from urllib.error import URLError, HTTPError
@@ -142,9 +143,58 @@ for attempt in range(1, RETRIES + 1):
         print(f"Unexpected error during download: {e}")
         sys.exit(1)
 
+def _tracked_files(dir_name):
+    """Returns the version-controlled files under one data directory.
+
+    Parameters
+    ----------
+    dir_name : str
+        Directory below ``data/``, for example ``"noise"``.
+
+    Returns
+    -------
+    list of str
+        Paths relative to the repository root. Empty if git is unavailable or
+        this is not a checkout, which is the right answer for a tarball
+        install: there is nothing version-controlled to protect.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "--", "data/%s" % dir_name],
+            cwd=osp.dirname(osp.dirname(osp.abspath(__file__))),
+            capture_output=True, text=True, timeout=30, check=True)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return [line for line in out.stdout.splitlines() if line.strip()]
+
+
 # Only now is it safe to discard what is already installed.
+#
+# These directories are owned by the archive, but not exclusively: some files
+# under them are committed to the repository instead -- the galactic-noise
+# P_L tables are, deliberately, because they version with the code that reads
+# them. A plain rmtree deletes those too, and they do not come back, because
+# the archive has never heard of them. That is not hypothetical: it broke the
+# documentation build the day the tables landed, and it would break any fresh
+# clone whose data-model version happened to differ.
+#
+# So the tracked files are set aside and restored afterwards. A file present
+# in both loses to the archive, which keeps the archive authoritative for
+# anything it actually ships.
 print("==============================")
 print("Updating data model. Removing old directories...")
+
+preserved = {}
+for dir_name in ["detector", "noise", "topography"]:
+    for rel in _tracked_files(dir_name):
+        path = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), rel)
+        if osp.exists(path):
+            with open(path, "rb") as handle:
+                preserved[rel] = handle.read()
+if preserved:
+    print("Preserving %d version-controlled file(s) the archive does not ship."
+          % len(preserved))
+
 for dir_name in ["detector", "noise", "topography"]:
     dir_path = grand_add_path_data(dir_name)
     if osp.exists(dir_path):
@@ -162,6 +212,15 @@ except Exception as e:
     print(f"Extract failed: {tar_file}")
     print(f"Error: {e}")
     sys.exit(1)
+
+# Put back anything version-controlled that the archive did not ship.
+for rel, blob in preserved.items():
+    path = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), rel)
+    if osp.exists(path):
+        continue                      # the archive shipped it; it wins
+    os.makedirs(osp.dirname(path), exist_ok=True)
+    with open(path, "wb") as handle:
+        handle.write(blob)
 
 # Write new version to detector flag file
 with open(DETECTOR_FLAG_FILE, 'w') as f:
