@@ -875,7 +875,7 @@ class TVoltage(MotherEventTree):
 
     ## Version of GRANDlib that produced this file
     grandlib_version: StdStringDesc = field(default=StdStringDesc())
-    """Version of GRANDlib that produced this file.
+    r"""Version of GRANDlib that produced this file.
 
     Written by :class:`~grand.sim.efield2voltage.Efield2Voltage`.  It exists
     because the simulated voltage depends on the code as much as on the input:
