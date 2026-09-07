@@ -55,7 +55,10 @@ a third abandoned trunk.
 ### Before you start
 - [x] Name an owner per phase — Mauricio Bustamante, all phases
 - [ ] Draft and send the freeze announcement for `dev`
-- [ ] Decide the reprocessing policy for the √2 noise change
+- [ ] Decide the reprocessing policy for the √2 noise change — **now live.**
+      The fix is merged, so every simulated voltage produced from 2026-09-07
+      is √2 higher than everything before it. Nothing in the data model
+      distinguishes the two, which is the part that needs a decision.
 - [ ] Write the rollback sentence somewhere visible
 - [ ] Fix a first version number and target date
 
@@ -266,6 +269,10 @@ moderate, 1 low — reported on every push. Not looked at yet.
 for the same quantity. Same author, same type, same meaning. Field names enter
 the ROOT schema and the data contract, so this needs lwpiotr. Until it is
 settled, `_aoi_levels_lwp` is blocked behind it.
+
+*(The galactic-noise entry that stood here is gone: answered, merged, and its
+provenance recorded in `data_files.rst` on 2026-09-07. What remains of it is
+the reprocessing question, listed under* Before you start.*)*
 
 **Docker: publish an image, or say we do not.** The engineering is finished —
 `env/docker/grandlib.dockerfile` builds an image on ROOT 6.36 matching the

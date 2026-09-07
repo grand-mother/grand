@@ -202,6 +202,49 @@ Galactic noise
    and ``Pocmax_`` tables below are still shipped and still describe files
    simulated before that date, but no code path opens them.
 
+The Galactic-noise tables in use
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``noise/galactic_PL_per_Hz_gp13_GP300.npy`` and its ``_nec`` and ``_mat``
+counterparts.  Each is shape ``(221, 72, 3)`` — 30-250 MHz in 1 MHz steps,
+72 local-sidereal-time bins at 20-minute spacing, and the three antenna
+ports — holding **available power spectral density**, in W/Hz.
+
+**How they were produced** (Stavros Nonis, September 2026).
+``grand/sim/noise/Compute_Plot_Galactic_Noise.py`` integrates the LFMap
+Galactic sky temperature over direction against the antenna effective-length
+response, as :math:`|h_\theta|^2 + |h_\phi|^2`, giving
+:math:`V_{\rm oc,RMS}^2/\mathrm{Hz}`, then converts to available power:
+
+.. math::  P_L = \frac{V_{\rm oc,RMS}^2}{4\,\mathrm{Re}(Z_{\rm ant})}
+
+with :math:`Z_{\rm ant}` from ``detector/RFchain_v2/Z_ant_3.2m.csv``.  The
+LFMap inputs, ``noise/LFmap/LFmapshort<frequency>.npy``, are fetched by
+``data/download_LFmap_grand.py``.
+
+The three models differ only in which effective-length files they read:
+
+=============  ===================================================
+``du_type``    Effective length
+=============  ===================================================
+``GP300``      ``Light_GP300Antenna_{SNarm,EWarm,Zarm}_leff.npz``
+``GP300_nec``  ``Light_GP300Antenna_nec_{X,Y,Z}arm_leff.npz``
+``GP300_mat``  ``Light_GP300Antenna_mat_{X,Y,Z}arm_leff.npz``
+=============  ===================================================
+
+The ``_nec`` and ``_mat`` tables were generated during the September 2026
+validation.  The ``GP300`` table was regenerated at the same time and came
+out bit-for-bit identical to the copy already committed.
+
+Note that :func:`~grand.sim.noise.galaxy.galactic_noise` inverts the last
+step — :math:`V_{\rm oc,RMS}^2 = 4 P_L \mathrm{Re}(Z_{\rm ant})` — and
+``tests/sim/test_galactic_noise_normalisation.py`` rebuilds the expected
+level from the same relation, independently of the module.  So the
+round trip from sky temperature to simulated voltage is closed at both ends.
+
+Superseded Galactic-noise tables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **The tables.**  ``Vocmax_30-250MHz_uVperMHz_{hfss,nec,mat}.npy``, with
 matching ``Pocmax_...`` (power) and ``Voutmax_...`` (after the chain) sets.
 Each is shape ``(221, 24, 3)`` — frequency, LST hour, arm — and

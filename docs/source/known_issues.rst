@@ -46,8 +46,16 @@ be byte-identical files, the default ``GP300`` recomputed its own from a
 MATLAB file through ``h5py``, and the ``hfss`` tables were reachable from no
 ``du_type``.
 
-**What is still not verified here.** The absolute scale rests on how the
-:math:`P_L` tables were generated, which is not in this repository. The FFT
+**How the tables were made** — recorded 2026-09-07, so it is no longer
+outside the repository. ``Compute_Plot_Galactic_Noise.py`` integrates the
+LFMap sky temperature against the antenna effective length and converts to
+available power by :math:`P_L = V_{\rm oc,RMS}^2 / [4\,\mathrm{Re}(Z_{\rm ant})]`.
+The full chain, including which effective-length file each model reads, is in
+:doc:`data_files`. The simulation inverts exactly that relation, and the test
+rebuilds it independently, so the round trip is closed at both ends.
+
+**What is still not verified here.** Nothing in this repository re-derives the
+LFMap sky model itself. The FFT
 normalisation, LST selection, RMS level for all three models and the
 integration through ``Efield2Voltage`` including the RF chain were validated
 by their author. The test file asserts what this repository can check —
