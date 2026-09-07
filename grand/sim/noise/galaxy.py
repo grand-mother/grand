@@ -1,15 +1,15 @@
 """
-Simulation of galaxy emission in radio frequency
+Simulation of Galactic radio noise.
 """
 
-import h5py
 import numpy as np
+
 from grand import grand_add_path_data
+
 
 def interpol_at_new_x(a_x, a_y, new_x):
     """
-    Interpolation of discreet function F defined by set of point F(a_x)=a_y for new_x value
-    and set to zero outside interval definition a_x
+    Interpolate a discrete function and return zero outside its definition range.
 
     Parameters
     ----------
@@ -26,250 +26,205 @@ def interpol_at_new_x(a_x, a_y, new_x):
         Cubic interpolation, zero outside the range of `a_x`.
     """
     from scipy import interpolate
+
     assert a_x.shape[0] > 0
     func_interpol = interpolate.interp1d(
-        a_x, a_y, "cubic", bounds_error=False, fill_value=(0.0, 0.0)
+        a_x,
+        a_y,
+        kind="cubic",
+        bounds_error=False,
+        fill_value=(0.0, 0.0),
     )
     return func_interpol(new_x)
 
-def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type='GP300'):
-    r"""Returns the Fourier-domain voltage induced in each antenna arm by Galactic noise.
 
-    The Galactic radio background is computed from LFMap sky brightness
-    temperatures, folded through the response of a GRAND HorizonAntenna and
-    tabulated over frequency (30-250 MHz) and local sidereal time (0-24 h).
-    This routine reads that table and returns one realisation of the induced
-    voltage spectrum for each antenna and each of the three arms.
+def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300"):
+    """
+    Generate Galactic-noise voltage spectra for detector units.
 
-    Spatial coherence between neighbouring detection units is **not**
-    modelled — it is expected to be small given the sparsity of the array —
-    so each unit receives an independent realisation of the sky-averaged
-    noise.
+    The precomputed Galactic-noise tables contain available-power spectral
+    density ``P_L`` in W/Hz for 30--250 MHz, 72 local-sidereal-time bins
+    (20-minute spacing), and the three antenna ports X, Y, Z. The requested
+    LST is mapped to the nearest available 20-minute bin.
+
+    For each port, the open-circuit RMS voltage in a 1 MHz native table bin is
+    reconstructed from
+
+    ``V_oc,RMS**2 = 4 * P_L * Re(Z_ant)``.
+
+    The RMS voltage is then scaled to the requested uniform FFT-bin width,
+    interpolated onto ``freqs_mhz``, and converted to complex rFFT
+    coefficients using the normalization appropriate for SciPy/NumPy's
+    backward-normalized ``irfft``.
+
+    .. Authors:
+       PengFei and Xidian group
+       Modified by SN to support different antenna effective-length models.
 
     Parameters
     ----------
     f_lst : float
-        Local sidereal time, in hours.  Truncated to an integer index into
-        the tabulated LST axis; see the note below.
+        Local sidereal time in hours. Must satisfy ``0 <= f_lst < 24``.
     size_out : int
-        Length of the padded time trace the spectrum will be transformed
-        back into.  It enters the normalisation of the returned amplitude.
-    freqs_mhz : ndarray, shape (n_freq,)
-        Output frequency axis, in MHz.  The tabulated model is interpolated
-        onto it.
+        Length of the corresponding time-domain inverse FFT.
+    freqs_mhz : ndarray, shape (nb_freq,)
+        Uniformly spaced output-frequency grid, in MHz.
     nb_ant : int
-        Number of detection units to generate realisations for.
+        Number of detector units for which independent noise is generated.
     seed : int or None, optional
-        Seed for the random generator.  ``None`` (the default) gives an
-        independent realisation on every call; a fixed value makes the
-        output reproducible, which is what the tests rely on.
-    du_type : {'GP300', 'GP300_nec', 'GP300_mat'}, optional
-        Which tabulated antenna response to use.  The three options resolve
-        to only **two** distinct sets of numbers, and they differ in absolute
-        level by up to a factor of two:
-
-        - ``'GP300'`` (default) recomputes the voltage from
-          ``noise/PG_ALL_jifen.mat`` as :math:`V_{oc}^2 = 4 P R_{ant}`.  This
-          is the HFSS model, but at a normalisation about 0.46 times that of
-          the shipped ``Vocmax_..._hfss.npy`` table, which no option reads.
-        - ``'GP300_nec'`` and ``'GP300_mat'`` read
-          ``Vocmax_30-250MHz_uVperMHz_nec.npy`` and ``..._mat.npy``, which
-          are **byte-identical**, so the two options select the same data.
-
-        See :ref:`issue-galactic-noise-tables` in the documentation.  Quote
-        the ``du_type`` alongside any absolute noise level.
+        Random-number-generator seed. If None, a non-reproducible realization
+        is generated; an integer seed gives reproducible output.
+    du_type : str, optional
+        Antenna model used for the Galactic-noise table: ``"GP300"`` (HFSS),
+        ``"GP300_nec"`` (NEC), or ``"GP300_mat"`` (MATLAB).
 
     Returns
     -------
-    ndarray, shape (nb_ant, 3, n_freq)
-        Complex voltage spectrum per antenna and arm, ordered X, Y, Z.
+    ndarray, complex, shape (nb_ant, 3, nb_freq)
+        Complex rFFT coefficients of the Galactic noise, for all detector
+        units and antenna arms, in microvolts.
 
-    Notes
-    -----
-    **The implementation and the published description differ.**  Section
-    8.2 of `arXiv:2408.10926 <https://arxiv.org/abs/2408.10926>`_ states
-    that the module "mimics the variability of the Galactic noise by
-    multiplying, for each DU, the sky-averaged value of the noise by a
-    different random value of its *phase* for each antenna arm and at each
-    frequency" — that is, a fixed modulus with a randomised phase.  The code
-    below also randomises the modulus, drawing it from a normal distribution
-    scaled by the tabulated amplitude and taking the absolute value.  The
-    two agree in mean power and differ in their fluctuations.  Which is
-    intended has not been settled; it is tracked as part of the
-    galactic-noise decision in the repository overhaul.
-
-    ``f_lst`` is truncated rather than interpolated, so an LST of 18.9 h is
-    treated as 18 h.  The ``TODO`` in the body marks the same point.
-
-    **The absolute normalisation depends on one unresolved definition.**  The
-    returned spectrum is scaled by ``size_out / 2``.  Measured against the
-    table each ``du_type`` reads, the resulting time-domain RMS is
-    :math:`1/\sqrt2` of the tabulated value, to within 0.3 % and
-    independently of ``size_out`` and of the number of antennas.  That is the
-    RMS-to-peak relation for a sinusoid, so the current constant is correct if
-    ``Vocmax_...`` is a maximum, and PR 153's ``size_out / sqrt(2)`` is
-    correct if it is an RMS.  The filename says *max*; nothing in the
-    repository confirms it.  See
-    :ref:`issue-galactic-noise-normalisation`.
-
-    Examples
-    --------
-    .. jupyter-execute::
-
-        import numpy as np
-        from grand.sim.noise.galaxy import galactic_noise
-
-        freqs = np.linspace(30.0, 250.0, 221)
-        v = galactic_noise(18.0, 1024, freqs, nb_ant=4, seed=0)
-
-        print("shape (n_ant, 3 arms, n_freq):", v.shape)
-        print("median |V| per arm (uV/MHz):",
-              np.round(np.median(np.abs(v), axis=(0, 2)), 3))
-
-    The Z arm is the one with vertical orientation and sees less of the sky
-    than the horizontal X and Y arms; Fig. 7 of the paper shows the
-    resulting difference across LST.
-
-    ..Authors:
-      PengFei and Xidian group.
-      Modified by SN to support several antenna models for the effective length.
+    Raises
+    ------
+    ValueError
+        If `f_lst` is not finite or lies outside ``[0, 24)``, if `du_type` is
+        not one of the three tabulated models, or if `freqs_mhz` is not
+        uniformly spaced and increasing.
     """
-    # TODO: why lst is an integer ?
-    lst = int(f_lst)
-    
-    if du_type == 'GP300':
-        lst = int(f_lst)
-        gala_file = grand_add_path_data("noise/PG_ALL_jifen.mat")
-        Zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
-        gala_show = h5py.File(gala_file, "r")
-        gala_power = np.array(gala_show["PG_ALL_jifen"])
-        gala_power = np.transpose(gala_power, (2, 0, 1)) #Watt/Hz
-        Poc2X = 1e6*gala_power[:,:,0] #W
-        Poc2Y = 1e6*gala_power[:,:,1] #W
-        Poc2Z = 1e6*gala_power[:,:,2] #W
-    
-        zant = np.loadtxt(Zant_file, delimiter=",", skiprows=1)  # Skip header row if it exists
-        # Extract real and imaginary parts and construct complex numbers
-        zant_complex = np.column_stack([
+    # The Galactic-noise tables sample LST every 20 minutes (72 bins/24 h).
+    # Select the nearest available bin. Integer-hour values map exactly, e.g.
+    # f_lst=18.0 -> bin 54 -> LST 18:00.
+    f_lst = float(f_lst)
+    if not np.isfinite(f_lst):
+        raise ValueError("f_lst must be finite.")
+    if not 0.0 <= f_lst < 24.0:
+        raise ValueError("f_lst must satisfy 0 <= f_lst < 24 hours.")
+    lst_bin = int(np.floor(3.0 * f_lst + 0.5)) % 72
+
+    # Available-power spectral-density tables, P_L [W/Hz].
+    # Shape: (221 frequencies, 72 LST bins, 3 ports).
+    gala_files = {
+        "GP300": "noise/galactic_PL_per_Hz_gp13_GP300.npy",
+        "GP300_nec": "noise/galactic_PL_per_Hz_gp13_GP300_nec.npy",
+        "GP300_mat": "noise/galactic_PL_per_Hz_gp13_GP300_mat.npy",
+    }
+
+    if du_type not in gala_files:
+        raise ValueError(
+            f"Unsupported du_type '{du_type}'. "
+            f"Expected one of {tuple(gala_files)}."
+        )
+
+    gala_file = grand_add_path_data(gala_files[du_type])
+    zant_file = grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv")
+
+    gala_power = np.load(gala_file)
+    if gala_power.shape != (221, 72, 3):
+        raise ValueError(
+            f"Unexpected Galactic-noise table shape {gala_power.shape} "
+            f"for du_type='{du_type}'; expected (221, 72, 3)."
+        )
+    if not np.all(np.isfinite(gala_power)) or np.any(gala_power < 0.0):
+        raise ValueError(
+            f"Invalid Galactic-noise power values for du_type='{du_type}'."
+        )
+
+    # Select P_L at the requested LST: W/Hz, shape (221, 3).
+    poc_per_hz = gala_power[:, lst_bin, :]
+
+    # Convert W/Hz to available power in the native 1 MHz table bins.
+    poc_1mhz = 1e6 * poc_per_hz
+
+    # Use the same antenna-resistance table used to construct the P_L tables.
+    zant = np.loadtxt(zant_file, delimiter=",", skiprows=1)
+    zant_complex = np.column_stack(
+        [
             zant[:, 1] + 1j * zant[:, 2],  # Z(1,1)
             zant[:, 3] + 1j * zant[:, 4],  # Z(2,2)
-            zant[:, 5] + 1j * zant[:, 6]   # Z(3,3)
-        ])
-        R = np.real(zant_complex)
-        R_reshaped = R.T
-        RantX = R_reshaped[0, :]
-        RantY = R_reshaped[1, :]
-        RantZ = R_reshaped[2, :]
-        Voc2X = 4*Poc2X*RantX[:, np.newaxis]
-        Voc2Y = 4*Poc2Y*RantY[:, np.newaxis]
-        Voc2Z = 4*Poc2Z*RantZ[:, np.newaxis]
-        VocX = 1e6*np.sqrt(Voc2X) # in uV
-        VocY = 1e6*np.sqrt(Voc2Y) # in uV
-        VocZ = 1e6*np.sqrt(Voc2Z) # in uV
-        gala_voltage = np.stack((VocX, VocY, VocZ), axis=1)
-        #gala_psd_dbm = np.transpose(gala_show["psd_narrow_huatu"])
-        #gala_power_dbm = np.transpose(
-        #    gala_show["p_narrow_huatu"]
-        #)  # SL, dbm per MHz, P=mean(V*V)/imp with imp=100 ohms
-        #gala_voltage = np.transpose(
-        #    gala_show["v_amplitude"]
-        #)  # SL, microV per MHz, seems to be Vmax=sqrt(2*mean(V*V)), not std(V)=sqrt(mean(V*V))
-        ## gala_power_mag = np.transpose(gala_show["p_narrow"])
-        gala_freq1 = np.arange(30.,251.)
-        gala_freq = gala_freq1.reshape(221, 1)
+            zant[:, 5] + 1j * zant[:, 6],  # Z(3,3)
+        ]
+    )
+    rant = np.real(zant_complex)
 
-        """f_start = 30
-        f_end = 250
-        # TODO: 221 is the number of frequency ? why ? and comment to explain
-        nb_freq = 221
-        v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
-        galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
-        galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
-        galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
-        v_amplitude_infile = gala_voltage[:, :, lst - 1]
-    
-    elif du_type == 'GP300_nec':
-        gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_nec.npy")
-        gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_nec.npy")
-        gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_nec.npy")
-        gala_voltage = np.load(gala_file)
-        gala_voltage = np.transpose(gala_voltage, (0, 2, 1)) #micro Volts per MHz (max)
-        gala_power_watt = np.load(gala_file1) 
-        gala_power_watt = np.transpose(gala_power_watt, (0, 2, 1)) #watt per MHz
-        gala_power_dbm = np.load(gala_file2)
-        gala_power_dbm = np.transpose(gala_power_dbm, (0, 2, 1)) # dBm per MHz
-        gala_freq1 = np.arange(30.,251.)
-        gala_freq = gala_freq1.reshape(221, 1)
-        """f_start = 30
-        f_end = 250
-        # TODO: 221 is the number of frequency ? why ? and comment to explain
-        nb_freq = 221
-        v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
-        galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
-        galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
-        galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
-        v_amplitude_infile = gala_voltage[:, :, lst - 1]
-        
-    elif du_type == 'GP300_mat':
-        gala_file = grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_mat.npy")
-        gala_file1 = grand_add_path_data("noise/Pocmax_30-250_Watt_per_MHz_mat.npy")
-        gala_file2 = grand_add_path_data("noise/Pocmax_30-250_dBm_per_MHz_mat.npy")
-        gala_voltage = np.load(gala_file)
-        gala_voltage = np.transpose(gala_voltage, (0, 2, 1)) #micro Volts per MHz (max)
-        gala_power_watt = np.load(gala_file1) 
-        gala_power_watt = np.transpose(gala_power_watt, (0, 2, 1)) #watt per MHz
-        gala_power_dbm = np.load(gala_file2)
-        gala_power_dbm = np.transpose(gala_power_dbm, (0, 2, 1)) # dBm per MHz
-        gala_freq1 = np.arange(30.,251.)
-        gala_freq = gala_freq1.reshape(221, 1)
-        """f_start = 30
-        f_end = 250
-        # TODO: 221 is the number of frequency ? why ? and comment to explain
-        nb_freq = 221
-        v_complex_double = np.zeros((nb_ant, size_out, 3), dtype=complex)
-        galactic_v_time = np.zeros((nb_ant, size_out, 3), dtype=float)
-        galactic_v_m_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)
-        galactic_v_p_single = np.zeros((nb_ant, int(size_out / 2) + 1, 3), dtype=float)"""
-        v_amplitude_infile = gala_voltage[:, :, lst - 1]
+    if rant.shape != (221, 3):
+        raise ValueError(
+            f"Unexpected antenna-resistance shape {rant.shape}; "
+            "expected (221, 3)."
+        )
+    if not np.all(np.isfinite(rant)) or np.any(rant <= 0.0):
+        raise ValueError("Antenna resistance must be finite and positive.")
 
-    # SL
-    nb_freq = len(freqs_mhz)
-    freq_res = freqs_mhz[1] - freqs_mhz[0]
-    v_amplitude_infile = v_amplitude_infile * np.sqrt(freq_res)
-    v_amplitude = np.zeros((nb_freq, 3))
-    v_amplitude[:, 0] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 0], freqs_mhz)
-    v_amplitude[:, 1] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 1], freqs_mhz)
-    v_amplitude[:, 2] = interpol_at_new_x(gala_freq[:, 0], v_amplitude_infile[:, 2], freqs_mhz)
+    # Available power and open-circuit RMS voltage are related by
+    # P_L = V_oc,RMS^2 / (4 R_ant).
+    voc2_1mhz = 4.0 * poc_1mhz * rant
+    voc_rms_1mhz_uv = 1e6 * np.sqrt(voc2_1mhz)
 
-    '''
-    a_nor = np.zeros((nb_ant, nb_freq, 3), dtype=float)
-    phase = np.zeros((nb_ant, nb_freq, 3), dtype=float)
-    v_complex = np.zeros((nb_ant, 3, nb_freq), dtype=complex)
-    for l_ant in range(nb_ant):
-        for l_fq in range(nb_freq):
-            for l_axis in range(3):
-                # Generates a normal distribution with 0 as the mean and
-                # v_amplitude[l_fq, l_axis] as the standard deviation
-                a_nor[l_ant, l_fq, l_axis] = np.random.normal(
-                    loc=0, scale=v_amplitude[l_fq, l_axis]
-                )
-                # phase of random Gauss noise
-                phase[l_ant, l_fq, l_axis] = 2 * np.pi * np.random.random_sample()
-                # SL *size_out is because default scipy fft is normalised backward, *1/2 is because mean(cos(x)*cos(x)))
-                v_complex[l_ant, l_axis, l_fq] = abs(a_nor[l_ant, l_fq, l_axis] * size_out / 2)
-                v_complex[l_ant, l_axis, l_fq] *= np.exp(1j * phase[l_ant, l_fq, l_axis])
-    '''
+    gala_freq_mhz = np.arange(30.0, 251.0)
 
-    # RK: above loop is replaced by lines below. Also np.random.default_rng(seed) is used instead of np.random.seed().
-    #     if seed is a fixed number, same set of randomly generated number is produced. This is useful for testing.
+    # Validate the requested FFT-frequency grid. The per-bin RMS voltage scales
+    # as sqrt(bandwidth), so a uniform bin width is required here.
+    freqs_mhz = np.asarray(freqs_mhz, dtype=float)
+    if freqs_mhz.ndim != 1 or freqs_mhz.size < 2:
+        raise ValueError(
+            "freqs_mhz must be a one-dimensional array with at least two bins."
+        )
+    if not np.all(np.isfinite(freqs_mhz)):
+        raise ValueError("freqs_mhz must contain only finite values.")
+
+    df_mhz = np.diff(freqs_mhz)
+    if np.any(df_mhz <= 0.0):
+        raise ValueError("freqs_mhz must be strictly increasing.")
+    if not np.allclose(df_mhz, df_mhz[0], rtol=1e-10, atol=1e-12):
+        raise ValueError(
+            "galactic_noise currently requires a uniformly spaced frequency grid."
+        )
+
+    nb_freq = freqs_mhz.size
+    freq_res_mhz = df_mhz[0]
+
+    # Scale the 1 MHz RMS voltage to the requested FFT-bin bandwidth and
+    # interpolate each antenna port onto the requested frequency grid.
+    voc_rms_bin_uv = voc_rms_1mhz_uv * np.sqrt(freq_res_mhz)
+    v_amplitude = np.empty((nb_freq, 3), dtype=float)
+    for port in range(3):
+        v_amplitude[:, port] = interpol_at_new_x(
+            gala_freq_mhz,
+            voc_rms_bin_uv[:, port],
+            freqs_mhz,
+        )
+
+    if not np.all(np.isfinite(v_amplitude)):
+        raise ValueError("Interpolated Galactic-noise RMS amplitudes are not finite.")
+    if np.any(v_amplitude < 0.0):
+        raise ValueError("Interpolated Galactic-noise RMS amplitudes must be non-negative.")
+
+    # Arrange as (port, frequency), then draw one Gaussian RMS amplitude and
+    # one independent random phase for each DU, port, and frequency bin.
     v_amplitude = v_amplitude.T
-    rng   = np.random.default_rng(seed)     
-    amp   = rng.normal(loc=0, scale=v_amplitude[np.newaxis,...], size=(nb_ant, 3, nb_freq))
-    phase = 2 * np.pi * rng.random(size=(nb_ant, 3, nb_freq))
-    v_complex = np.abs(amp * size_out / 2) * np.exp(1j * phase)
+    rng = np.random.default_rng(seed)
+    amp = rng.normal(
+        loc=0.0,
+        scale=v_amplitude[np.newaxis, ...],
+        size=(nb_ant, 3, nb_freq),
+    )
+    phase = 2.0 * np.pi * rng.random(size=(nb_ant, 3, nb_freq))
+
+    # Interior positive-frequency rFFT bins. For a backward-normalized irFFT,
+    # a conjugate pair contributes RMS sqrt(2)*|X_k|/N in the time domain.
+    # Therefore a requested per-bin RMS sigma requires |X_k| = N*sigma/sqrt(2).
+    v_complex = (
+        np.abs(amp * size_out / np.sqrt(2.0))
+        * np.exp(1j * phase)
+    )
+
+    # On a complete rFFT grid (the Efield2Voltage production use case), DC and
+    # Nyquist are self-conjugate real coefficients and do not have a conjugate
+    # partner. Their coefficient normalization is therefore N*sigma. Galactic
+    # noise is zero at DC for the present 30--250 MHz tables, but handle it
+    # generically. For odd N there is no Nyquist bin.
+    if nb_freq == size_out // 2 + 1:
+        v_complex[:, :, 0] = amp[:, :, 0] * size_out
+        if size_out % 2 == 0:
+            v_complex[:, :, -1] = amp[:, :, -1] * size_out
 
     return v_complex
-
-
-
-

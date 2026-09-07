@@ -1,78 +1,79 @@
 # -*- coding: utf-8 -*-
-r"""Checks the normalisation of the simulated Galactic noise.
+r"""Galactic-noise normalisation: properties that hold, and levels that are pinned.
 
-There is a live disagreement about one constant.  ``grand/sim/noise/galaxy.py``
-builds the spectrum as ``|amp| * size_out / 2``; the branch ``dev_snonis``
-(PR 153) changes that to ``size_out / sqrt(2)``, which scales every simulated
-noise voltage by about 1.41 and therefore moves every trigger threshold and
-sensitivity estimate downstream of it.  Nothing in the suite could tell the two
-apart, so this file measures rather than argues.
+**History, because this file used to say the opposite.**  Until 2026-09-07 the
+normalisation was an open question.  ``galaxy.py`` scaled the spectrum by
+``size_out / 2``; PR 153 proposed ``size_out / sqrt(2)``; and which was right
+turned on whether the tabulated ``Vocmax_...`` quantity was an RMS or a
+maximum.  Measured against the table each ``du_type`` actually read, the
+simulated RMS came out at :math:`1/\sqrt2` of the tabulated value, which is
+what one expects if the table is an RMS and the code is treating it as a
+maximum -- but the filename said *max*, and nothing in the repository could
+settle it.
 
-What the measurement says
--------------------------
+Stavros Nonis settled it, and this file records the resolution rather than the
+question.  The Galactic-noise calculation starts from the available power
+spectral density :math:`P_L`, from which the open-circuit voltage is
+reconstructed as
 
-For **every** ``du_type``, and independently of ``size_out`` and of the number
-of antennas, the simulated time-domain RMS comes out at
+.. math::  V_{\rm oc,RMS}^2 = 4 P_L \,\mathrm{Re}(Z_{\rm ant})
 
-.. math::  \frac{V_{\rm rms}^{\rm sim}}{V^{\rm table}} = 0.705 \pm 0.3\%
-           \qquad \left(1/\sqrt{2} = 0.7071\right)
+so the quantity used as the Gaussian standard deviation **is** an RMS by
+construction, and ``size_out / sqrt(2)`` is correct.  ``dev_snonis`` @
+``0205c15`` applies that, and supplies matching :math:`P_L` tables for all
+three antenna models.
 
-That is not a loose agreement: it is :math:`1/\sqrt2` to a fraction of a
-percent, and it does not drift with any parameter.  The implementation is
-therefore producing an RMS that is exactly :math:`1/\sqrt2` of the tabulated
-value, which is precisely the relation between the RMS and the peak of a
-sinusoid.
+**What this file does and does not claim.**  The absolute scale rests on how
+those :math:`P_L` tables were generated, which is not in this repository; the
+FFT normalisation, LST selection, RMS level and the integration through
+``Efield2Voltage`` were validated by their author.  Nothing here re-derives
+that.  What is asserted below is of two kinds: *properties* that must hold
+whatever the tables contain, and *pinned levels* that turn a silent change in
+those tables into a failing test.
 
-So the decision reduces to one definitional question, and each answer picks a
-different constant:
-
-=========================================  ==========================
-if ``Vocmax_..._uVperMHz`` is a **maximum**  the current ``size_out/2`` is right
-if it is an **RMS**                          PR 153's ``size_out/sqrt(2)`` is right
-=========================================  ==========================
-
-The filename says *max*.  Nothing else in the repository states which is
-meant, so the test below records the ratio and asserts only the parts that no
-convention can change.
-
-.. versionchanged:: 0.1.0
-   An earlier version of this file compared the default ``GP300`` simulation
-   against ``Vocmax_30-250MHz_uVperMHz_hfss.npy`` and reported a ratio of 0.33
-   with an unexplained factor of roughly 2.  Those are different
-   normalisations of the same model (see
-   :func:`test_gp300_is_the_hfss_model_at_a_different_normalisation`), so the
-   comparison was not like for like.  Compared against the table it actually
-   uses, the ratio is :math:`1/\sqrt2`.
+Three defects this file used to record are now fixed and their tests are gone:
+the ``nec`` and ``mat`` tables were byte-identical, the default ``GP300``
+recomputed its own from a MATLAB file via ``h5py``, and the ``hfss`` tables
+were reachable from no ``du_type`` at all.  Each model now reads one distinct
+table of its own.
 """
-
-import hashlib
 
 import numpy as np
 import pytest
 
-from grand import grand_add_path_data
 from grand.sim.noise.galaxy import galactic_noise
 
-LST_HOUR = 18
-N_SAMPLES = 2048          # with 1 MHz bins, 30-250 MHz lands on bins 30..250
-N_ANTENNAS = 600          # enough for the sample RMS to settle to ~1%
+#: Sidereal hour to sample.  Integer hours land exactly on a table bin.
+LST_HOUR = 18.0
+
+#: With 1 MHz bins, 30-250 MHz lands on bins 30..250 of the one-sided spectrum.
+N_SAMPLES = 2048
+
+#: Enough antennas for the sample RMS to settle to well under a percent.
+N_ANTENNAS = 600
+
 FREQS_MHZ = np.arange(30.0, 251.0)
 
-#: The table each ``du_type`` actually reads.  ``GP300`` reads none of them:
-#: it recomputes the voltage from ``PG_ALL_jifen.mat``.
-TABLE_OF = {
-    "GP300_nec": "noise/Vocmax_30-250MHz_uVperMHz_nec.npy",
-    "GP300_mat": "noise/Vocmax_30-250MHz_uVperMHz_mat.npy",
+MODELS = ("GP300", "GP300_nec", "GP300_mat")
+
+#: Time-domain RMS per arm, in microvolts, at `LST_HOUR` with seed 1.
+#: Measured on dev_snonis @ 0205c15.  These are pinned, not derived: they exist
+#: so that a change in the tables or in the transform shows up here rather than
+#: silently in someone's noise floor a year from now.
+PINNED_RMS_UV = {
+    "GP300":     (29.8452, 37.8260, 35.1107),
+    "GP300_nec": (31.4952, 39.3583, 37.8664),
+    "GP300_mat": (32.4994, 40.3907, 37.3170),
 }
 
 
 def _traces(du_type="GP300", seed=1, size_out=N_SAMPLES, nb_ant=N_ANTENNAS):
-    r"""Returns the spectrum, its zero-padded form and the time series.
+    r"""Returns the band spectrum, the padded spectrum and the time series.
 
     Parameters
     ----------
     du_type : str, optional
-        Which antenna model to pass to :func:`galactic_noise`.
+        Antenna model passed to :func:`galactic_noise`.
     seed, size_out, nb_ant : optional
         Passed straight through.
 
@@ -82,250 +83,181 @@ def _traces(du_type="GP300", seed=1, size_out=N_SAMPLES, nb_ant=N_ANTENNAS):
         What :func:`galactic_noise` returns.
     full : ndarray, shape (nb_ant, 3, size_out // 2 + 1)
         The same, embedded in a complete one-sided spectrum, which is what
-        the caller in :mod:`grand.sim.efield2voltage` effectively does.
+        :mod:`grand.sim.efield2voltage` effectively does.
     traces : ndarray, shape (nb_ant, 3, size_out)
         The corresponding time series.
     """
-    band = galactic_noise(float(LST_HOUR), size_out, FREQS_MHZ,
+    band = galactic_noise(LST_HOUR, size_out, FREQS_MHZ,
                           nb_ant=nb_ant, seed=seed, du_type=du_type)
     full = np.zeros((nb_ant, 3, size_out // 2 + 1), dtype=complex)
     full[:, :, 30:251] = band
     return band, full, np.fft.irfft(full, n=size_out, axis=-1)
 
 
-def _gp300_internal_table():
-    r"""Returns the voltage table the ``GP300`` branch builds, in microvolts.
-
-    Reproduces the arithmetic of :func:`galactic_noise` for that branch:
-    :math:`V_{\rm oc}^2 = 4 P R_{\rm ant}`, with the power read from
-    ``PG_ALL_jifen.mat`` and the resistance from the 3.2 m antenna impedance.
-
-    Returns
-    -------
-    ndarray, shape (221, 3, 24)
-        Indexed by frequency, arm and LST hour.
-    """
-    import h5py
-
-    with h5py.File(grand_add_path_data("noise/PG_ALL_jifen.mat"), "r") as f:
-        power = np.transpose(np.array(f["PG_ALL_jifen"]), (2, 0, 1))
-    zant = np.loadtxt(grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv"),
-                      delimiter=",", skiprows=1)
-    r_ant = np.column_stack([zant[:, 1], zant[:, 3], zant[:, 5]]).T
-    return np.stack([1e6 * np.sqrt(4.0 * (1e6 * power[:, :, i]) * r_ant[i][:, None])
-                     for i in range(3)], axis=1)
-
-
-def _band_rms(table):
-    r"""Returns the per-arm RMS implied by a table slice, in microvolts.
-
-    Parameters
-    ----------
-    table : ndarray, shape (221, 3)
-        Voltage spectral density at one LST, per frequency and arm.
-
-    Returns
-    -------
-    ndarray, shape (3,)
-        Quadrature sum over the band, one value per arm.
-    """
-    return np.sqrt(np.sum(table ** 2, axis=0))
-
-
-def _reference(du_type):
-    r"""Returns the band RMS of the table that ``du_type`` reads."""
-    if du_type == "GP300":
-        table = _gp300_internal_table()
-    else:
-        table = np.transpose(np.load(grand_add_path_data(TABLE_OF[du_type])),
-                             (0, 2, 1))
-    return _band_rms(table[:, :, LST_HOUR - 1])
-
-
 # --------------------------------------------------------------------------
-# invariants: true under either convention
+# Properties: true whatever the tables contain.
 # --------------------------------------------------------------------------
 
 def test_parseval_internal_consistency():
-    r"""The time series carries the energy of the spectrum it came from.
+    r"""Spectral power and time-domain power agree, as Parseval requires.
 
-    True for any normalisation convention, so this holds equally before and
-    after the ``dev_snonis`` change and will hold for a rewrite such as
-    ``refact_galaxy``.  It is the invariant that survives the decision.
+    A check on the transform rather than on the physics: if the spectrum and
+    the trace disagree about how much power is present, the normalisation is
+    wrong regardless of what the tables say.
     """
     _, full, traces = _traces()
-    measured = traces.var(axis=(0, 2))
-    expected = (2.0 * np.abs(full) ** 2).sum(axis=-1).mean(axis=0) / N_SAMPLES ** 2
+    measured = (traces ** 2).sum(axis=-1)
+    expected = 2.0 * (np.abs(full[:, :, 1:-1]) ** 2).sum(axis=-1) / N_SAMPLES
+    expected += (np.abs(full[:, :, 0]) ** 2 + np.abs(full[:, :, -1]) ** 2) / N_SAMPLES
     assert np.allclose(measured, expected, rtol=1e-9), (
-        'time-domain variance %s does not match the spectrum energy %s'
-        % (measured, expected))
+        'Parseval violated: spectrum and trace disagree about total power')
 
 
 def test_reproducible_with_a_seed():
-    r"""A fixed seed gives identical output, and different seeds do not."""
-    a, _, _ = _traces(seed=7)
-    b, _, _ = _traces(seed=7)
-    c, _, _ = _traces(seed=8)
+    r"""The same seed gives the same noise; a different one does not."""
+    a = galactic_noise(LST_HOUR, N_SAMPLES, FREQS_MHZ, nb_ant=4, seed=7)
+    b = galactic_noise(LST_HOUR, N_SAMPLES, FREQS_MHZ, nb_ant=4, seed=7)
+    c = galactic_noise(LST_HOUR, N_SAMPLES, FREQS_MHZ, nb_ant=4, seed=8)
     assert np.array_equal(a, b), 'same seed gave different noise'
     assert not np.array_equal(a, c), 'different seeds gave identical noise'
 
 
 def test_all_three_arms_are_populated():
-    r"""No arm is silently zero.
+    r"""Every antenna arm carries noise, and none dominates the others.
 
-    The Z arm is vertical and sees less sky than X and Y, so it is the one a
-    shape or transpose error would most plausibly blank without the result
-    looking obviously wrong.
+    Guards against an indexing error that fills one arm and leaves the rest
+    at zero -- which would still produce plausible-looking traces.
     """
-    band, _, _ = _traces()
-    power = (np.abs(band) ** 2).mean(axis=(0, 2))
+    _, _, traces = _traces()
+    power = (traces ** 2).mean(axis=(0, 2))
     assert (power > 0).all(), 'an antenna arm carries no noise: %s' % power
     assert power.min() / power.max() > 0.1, (
-        'one arm is implausibly quieter than the others: %s' % power)
+        'the arms differ by more than 10x, which looks like an indexing '
+        'error rather than antenna response: %s' % power)
+
+
+@pytest.mark.parametrize('size_out', [1024, 2048, 4096, 8192])
+def test_level_does_not_depend_on_transform_length(size_out):
+    r"""The noise level is a physical quantity, not a property of the FFT.
+
+    Asking for a longer transform must not change how many microvolts of
+    noise an antenna sees.  This is the sharpest self-contained statement
+    available about the normalisation: it needs no external reference, and a
+    scaling that carried a stray factor of `size_out` or its square root
+    would fail here immediately.
+    """
+    _, _, reference = _traces(size_out=N_SAMPLES)
+    _, _, traces = _traces(size_out=size_out)
+    assert np.allclose(traces.std(axis=(0, 2)), reference.std(axis=(0, 2)),
+                       rtol=1e-6), (
+        'RMS at size_out=%d is %s, against %s at %d; the normalisation '
+        'depends on the transform length'
+        % (size_out, traces.std(axis=(0, 2)), reference.std(axis=(0, 2)),
+           N_SAMPLES))
 
 
 # --------------------------------------------------------------------------
-# the normalisation itself
+# The tables, and the levels they produce.
 # --------------------------------------------------------------------------
 
-@pytest.mark.parametrize("du_type", ["GP300", "GP300_nec", "GP300_mat"])
-def test_simulated_rms_is_the_table_over_root_two(du_type):
-    r"""The simulated RMS is :math:`1/\sqrt2` of the table it was built from.
+@pytest.mark.parametrize('du_type', MODELS)
+def test_each_model_reads_one_table_of_its_own(du_type):
+    r"""Each antenna model opens exactly one table, and its own.
 
-    This is the sharp statement the decision rests on.  It is asserted rather
-    than recorded because it is a property of the code as written: if someone
-    applies PR 153 without also settling the definitional question, this test
-    fails and says which constant changed.
+    Replaces three tests of defects that are now fixed: ``nec`` and ``mat``
+    used to be byte-identical files, the default ``GP300`` used to recompute
+    its table from a MATLAB file through ``h5py``, and the ``hfss`` tables
+    were opened by no ``du_type`` at all.
 
-    Compare each ``du_type`` against **its own** table; the four antenna
-    models differ in absolute level by up to a factor of two, so comparing
-    across them measures the model difference and not the normalisation.
-    """
-    _, _, traces = _traces(du_type=du_type)
-    ratio = traces.std(axis=(0, 2)) / _reference(du_type)
-    assert np.allclose(ratio, 1.0 / np.sqrt(2.0), rtol=0.02), (
-        '%s: simulated / tabulated = %s, expected 1/sqrt(2) = %.4f'
-        % (du_type, np.round(ratio, 4), 1.0 / np.sqrt(2.0)))
-
-
-@pytest.mark.parametrize("size_out", [1024, 2048, 4096])
-def test_normalisation_does_not_depend_on_transform_length(size_out):
-    r"""``size_out`` cancels: the RMS is a property of the model, not the FFT.
-
-    A normalisation that leaked the transform length would make the noise
-    level depend on the trace length chosen by the caller, which would be a
-    much worse defect than a constant factor.  It does not.
-    """
-    _, _, traces = _traces(size_out=size_out, nb_ant=200)
-    ratio = traces.std(axis=(0, 2)) / _reference("GP300")
-    assert np.allclose(ratio, 1.0 / np.sqrt(2.0), rtol=0.02), (
-        'size_out=%d gave ratio %s' % (size_out, np.round(ratio, 4)))
-
-
-# --------------------------------------------------------------------------
-# the shipped tables
-# --------------------------------------------------------------------------
-
-@pytest.mark.parametrize("kind", ["Vocmax_30-250MHz_uVperMHz",
-                                  "Pocmax_30-250_Watt_per_MHz",
-                                  "Voutmax_30-250MHz_uVperMHz"])
-def test_nec_and_mat_tables_are_the_same_file(kind):
-    r"""Records that the NEC and MATLAB tables are byte-identical.
-
-    :func:`galactic_noise` documents ``GP300_nec`` and ``GP300_mat`` as "the
-    NEC or MATLAB variants" of the antenna response, but all three pairs of
-    shipped ``.npy`` tables have the same SHA-256, so the two options select
-    the same numbers.  One of the files was presumably copied over the other.
-
-    Asserted so that it becomes a *passing* test the day someone restores the
-    distinct table -- at which point this test fails and points at the
-    docstring that then needs no change.
-    """
-    digests = {}
-    for variant in ("nec", "mat"):
-        path = grand_add_path_data("noise/%s_%s.npy" % (kind, variant))
-        with open(path, "rb") as handle:
-            digests[variant] = hashlib.sha256(handle.read()).hexdigest()
-    assert digests["nec"] == digests["mat"], (
-        '%s: nec and mat now differ (%s vs %s) -- the docstring of '
-        'galactic_noise can drop its caveat' % (kind, digests["nec"][:12],
-                                                digests["mat"][:12]))
-
-
-def test_gp300_is_the_hfss_model_at_a_different_normalisation():
-    r"""``GP300`` and the ``hfss`` table are one model at two normalisations.
-
-    The ratio between them is flat across the band to a few percent, which is
-    what a normalisation difference looks like; against the ``nec`` table the
-    ratio varies by an order of magnitude more, which is what a genuinely
-    different antenna model looks like.  This is the check that explains why
-    an earlier version of this file measured 0.33 instead of
-    :math:`1/\sqrt2`.
-    """
-    gp300 = _gp300_internal_table()[:, :, LST_HOUR - 1]
-    hfss = np.transpose(np.load(grand_add_path_data(
-        "noise/Vocmax_30-250MHz_uVperMHz_hfss.npy")), (0, 2, 1))[:, :, LST_HOUR - 1]
-    nec = np.transpose(np.load(grand_add_path_data(
-        "noise/Vocmax_30-250MHz_uVperMHz_nec.npy")), (0, 2, 1))[:, :, LST_HOUR - 1]
-
-    flat = (gp300 / hfss)[:, 0]
-    varying = (gp300 / nec)[:, 0]
-    assert flat.std() / flat.mean() < 0.05, (
-        'GP300 / hfss is not flat (%.1f%%); they may not be the same model'
-        % (100 * flat.std() / flat.mean()))
-    assert varying.std() / varying.mean() > 0.05, (
-        'GP300 / nec became flat (%.1f%%); nec may have been overwritten'
-        % (100 * varying.std() / varying.mean()))
-
-
-def test_hfss_tables_are_not_reachable_through_du_type():
-    r"""Records that the ``hfss`` tables ship but no ``du_type`` opens them.
-
-    ``galactic_noise`` accepts ``GP300``, ``GP300_nec`` and ``GP300_mat``.  The
-    first recomputes the voltage from the MATLAB power file; the other two read
-    the ``nec`` and ``mat`` tables.  The three ``*_hfss.npy`` files are never
-    opened, even though they are the highest-level tables shipped, so a study
-    that wanted them would have to load them by hand.
-
-    Checked by recording every path the function actually opens, rather than by
-    grepping the source: the docstring names the hfss tables in order to warn
-    about exactly this, so a text search finds them and proves nothing.
+    Recorded by watching what the function opens rather than by reading the
+    source, because the module docstring names these files and a text search
+    would find them and prove nothing.
     """
     from grand.sim.noise import galaxy
 
-    opened = []
+    opened, real_load = [], galaxy.np.load
 
-    # Bind the originals before patching.  `galaxy.np` is the numpy module
-    # itself, so a recorder that called `np.load` would call its own
-    # replacement and recurse.
-    real_load, real_h5 = galaxy.np.load, galaxy.h5py.File
-
-    def record_load(path, *args, **kwargs):
+    def recording_load(path, *args, **kwargs):
         opened.append(str(path))
         return real_load(path, *args, **kwargs)
 
-    def record_h5(path, *args, **kwargs):
-        opened.append(str(path))
-        return real_h5(path, *args, **kwargs)
-
-    galaxy.np.load, galaxy.h5py.File = record_load, record_h5
+    galaxy.np.load = recording_load
     try:
-        for du_type in ("GP300", "GP300_nec", "GP300_mat"):
-            galactic_noise(float(LST_HOUR), 256, FREQS_MHZ, nb_ant=1, seed=0,
-                           du_type=du_type)
+        galactic_noise(LST_HOUR, N_SAMPLES, FREQS_MHZ, nb_ant=2, seed=1,
+                       du_type=du_type)
     finally:
-        galaxy.np.load, galaxy.h5py.File = real_load, real_h5
+        galaxy.np.load = real_load
 
-    assert opened, 'no data file was opened; the recording hook did not work'
-    hfss = [path for path in opened if "hfss" in path]
-    assert not hfss, (
-        'a du_type now reads an hfss table (%s); this test and the caveat in '
-        'the galactic_noise docstring are stale' % ', '.join(hfss))
+    tables = [p for p in opened if p.endswith('.npy')]
+    assert len(tables) == 1, (
+        '%s opened %d tables, expected exactly one: %s'
+        % (du_type, len(tables), tables))
+    assert tables[0].endswith('galactic_PL_per_Hz_gp13_%s.npy'
+                              % ('GP300' if du_type == 'GP300' else du_type)), (
+        '%s read %s, which is not its own table' % (du_type, tables[0]))
 
 
-if __name__ == '__main__':
-    for du in ("GP300", "GP300_nec", "GP300_mat"):
-        _, _, tr = _traces(du_type=du)
-        ratio = tr.std(axis=(0, 2)) / _reference(du)
-        print('%-10s simulated / tabulated : %s   (1/sqrt2 = %.4f)'
-              % (du, np.round(ratio, 4), 1 / np.sqrt(2)))
+def test_the_three_models_give_different_noise():
+    r"""The models are genuinely distinct, which they did not used to be.
+
+    ``nec`` and ``mat`` were byte-identical tables, so two of the three
+    ``du_type`` values were the same run under different names.  Now each has
+    its own :math:`P_L` table and the levels differ.
+    """
+    levels = {du: _traces(du)[2].std(axis=(0, 2)) for du in MODELS}
+    for a, b in (('GP300', 'GP300_nec'), ('GP300', 'GP300_mat'),
+                 ('GP300_nec', 'GP300_mat')):
+        assert not np.allclose(levels[a], levels[b], rtol=1e-6), (
+            '%s and %s produce identical noise: %s' % (a, b, levels[a]))
+
+
+@pytest.mark.parametrize('du_type', MODELS)
+def test_rms_level_is_unchanged(du_type):
+    r"""The level each model produces is the level recorded when it landed.
+
+    A regression pin, not a validation.  It does not establish that the
+    absolute scale is right -- that rests on how the :math:`P_L` tables were
+    generated, which is not in this repository -- but it does mean that a
+    change to those tables, to the transform, or to the interpolation shows
+    up as a failing test rather than as a quietly different noise floor.
+
+    If this fails after a deliberate table update, re-measure and update
+    `PINNED_RMS_UV`, and say so in the commit message.
+    """
+    _, _, traces = _traces(du_type)
+    measured = traces.std(axis=(0, 2))
+    assert np.allclose(measured, PINNED_RMS_UV[du_type], rtol=2e-4), (
+        '%s RMS is %s uV, pinned at %s'
+        % (du_type, np.round(measured, 4), PINNED_RMS_UV[du_type]))
+
+
+# --------------------------------------------------------------------------
+# Input validation, which the rewrite added.
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize('bad_lst', [-1.0, 24.0, 25.5, float('nan')])
+def test_rejects_impossible_sidereal_times(bad_lst):
+    r"""LST outside ``[0, 24)`` raises rather than wrapping silently."""
+    with pytest.raises(ValueError):
+        galactic_noise(bad_lst, N_SAMPLES, FREQS_MHZ, nb_ant=2, seed=1)
+
+
+def test_rejects_an_unknown_antenna_model():
+    r"""An unrecognised ``du_type`` raises, naming what is available."""
+    with pytest.raises(ValueError) as raised:
+        galactic_noise(LST_HOUR, N_SAMPLES, FREQS_MHZ, nb_ant=2, seed=1,
+                       du_type='GP300_nonexistent')
+    assert 'GP300' in str(raised.value), (
+        'the error does not say which models exist: %s' % raised.value)
+
+
+def test_rejects_a_non_uniform_frequency_grid():
+    r"""A frequency grid that is not uniformly spaced raises.
+
+    The interpolation onto the requested grid assumes uniform bins in order
+    to rescale the RMS to the bin width; a ragged grid would silently give
+    the wrong level.
+    """
+    ragged = np.array([30.0, 31.0, 33.0, 36.0, 40.0])
+    with pytest.raises(ValueError):
+        galactic_noise(LST_HOUR, N_SAMPLES, ragged, nb_ant=2, seed=1)
