@@ -10,6 +10,22 @@ response, the Galactic noise and the radio-frequency chain, to the digitized
 voltage a detection unit records.  It also defines the data format the
 collaboration uses, and the coordinate systems everything is expressed in.
 
+.. admonition:: Work is happening on ``dev-next``, and nothing is being deleted
+   :class: important
+
+   ``dev-next`` is the integration branch for the repository overhaul, cut
+   from ``dev``.  All new work lands there.
+
+   **If it goes wrong, the recovery is one step: unfreeze** ``dev`` **and
+   carry on.**
+
+   That holds because ``dev``, ``master`` and all thirty-eight branches stay
+   untouched until the final phase of the plan, months from now — and
+   ``master`` is already tagged ``archive/master-2025-03``, so it is
+   recoverable from any clone whatever happens to the branch name.  Nothing
+   in this overhaul is irreversible, and nothing is thrown away to make it
+   work.
+
 .. note::
 
    **This documentation is under construction.**  It is being rebuilt as part

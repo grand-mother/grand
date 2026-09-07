@@ -62,14 +62,18 @@ a third abandoned trunk.
       `0.1.0.dev1` to mark the change), so the question is narrowed to the
       files already on disk: they carry no stamp, and an absent stamp is the
       only thing distinguishing them.
-- [ ] Write the rollback sentence somewhere visible
+- [x] Write the rollback sentence somewhere visible — the README, above the
+      fold, and the documentation landing page. Both say the same thing: if
+      `dev-next` goes wrong, unfreeze `dev` and carry on.
 - [ ] Fix a first version number and target date
 
 ### Phase 0 — integration branch
 - [x] Cut `dev-next` from `dev@1ca1847d`
 - [x] Push `dev-next` to origin
 - [ ] Announce the freeze date for `dev`
-- [ ] Tag `master` as `archive/master-2025-03`
+- [x] Tag `master` as `archive/master-2025-03` — pushed, pointing at `b8338a3`
+      (2025-03-04). Tagging deletes nothing; `master` stays until Phase 10,
+      which retires it *to* this tag rather than discarding it.
 
 ### Phase 1 — one environment
 - [x] Write `env/conda/grand-dev.yml`, consolidating four dependency lists

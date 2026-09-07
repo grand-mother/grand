@@ -20,6 +20,19 @@ Offline data handling, simulation and analysis for the
 > green as each piece lands rather than being added after the fact. See
 > [`docs/dev/RECOVERY_PLAN.md`](docs/dev/RECOVERY_PLAN.md).
 
+## Work is happening on `dev-next`, and nothing is being deleted
+
+`dev-next` is the integration branch for the repository overhaul, cut from
+`dev`. All new work lands there.
+
+**If it goes wrong, the recovery is one step: unfreeze `dev` and carry on.**
+
+That is true because `dev`, `master` and all thirty-eight branches stay
+untouched until the final phase of the plan, months from now — and `master`
+is already tagged `archive/master-2025-03`, so it is recoverable from any
+clone whatever happens to the branch name. Nothing in this overhaul is
+irreversible, and nothing is thrown away to make it work.
+
 ## What it does
 
 GRANDlib performs end-to-end simulation of the detector: from an electric
