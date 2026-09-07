@@ -9,3 +9,5 @@
 # allow this spescific small precomputed file for galactic noise
 !noise/
 !noise/galactic_PL_per_Hz_gp13_GP300.npy
+!noise/galactic_PL_per_Hz_gp13_GP300_nec.npy
+!noise/galactic_PL_per_Hz_gp13_GP300_mat.npy
