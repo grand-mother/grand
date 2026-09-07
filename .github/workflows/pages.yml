@@ -7,7 +7,10 @@ name: Documentation Deployment
 
 on:
   push:
-    branches: [main]
+    # `dev-next` as well as `main`: the documentation is built from the
+    # integration branch until Phase 9 promotes it, and `main` stays listed so
+    # nothing has to change on the day it does.
+    branches: [main, dev-next]
   workflow_dispatch:
 
 permissions:
