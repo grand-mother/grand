@@ -41,6 +41,7 @@ table of its own.
 import numpy as np
 import pytest
 
+from grand import grand_add_path_data
 from grand.sim.noise.galaxy import galactic_noise
 
 #: Sidereal hour to sample.  Integer hours land exactly on a table bin.
@@ -55,6 +56,15 @@ N_ANTENNAS = 600
 FREQS_MHZ = np.arange(30.0, 251.0)
 
 MODELS = ("GP300", "GP300_nec", "GP300_mat")
+
+#: The 20-minute LST bin `LST_HOUR` falls in, and the native table bin
+#: width. Both are properties of the shipped tables, not choices.
+LST_BIN = 54
+BIN_WIDTH_HZ = 1e6
+
+#: Antenna impedance used to build the tables; Re(Z) turns available
+#: power into open-circuit voltage.
+Z_ANT_FILE = 'detector/RFchain_v2/Z_ant_3.2m.csv'
 
 #: Time-domain RMS per arm, in microvolts, at `LST_HOUR` with seed 1.
 #: Measured on dev_snonis @ 0205c15.  These are pinned, not derived: they exist
@@ -209,6 +219,52 @@ def test_the_three_models_give_different_noise():
                  ('GP300_nec', 'GP300_mat')):
         assert not np.allclose(levels[a], levels[b], rtol=1e-6), (
             '%s and %s produce identical noise: %s' % (a, b, levels[a]))
+
+
+@pytest.mark.parametrize('du_type', MODELS)
+def test_level_matches_the_tables_and_the_stated_relation(du_type):
+    r"""The simulated level is the one the tables and the physics predict.
+
+    This is the check that makes the rest more than self-consistency.  The
+    prediction is built here from the documented relation and the shipped
+    inputs, not by calling anything in :mod:`grand.sim.noise.galaxy`:
+
+    .. math::  \sigma_k^2 = 4 P_L(f_k)\, \Delta f\, \mathrm{Re}(Z_{\rm ant}(f_k))
+
+    per 1 MHz table bin, summed in quadrature over the band -- which is the
+    time-domain variance, because a conjugate pair under a backward-normalised
+    ``irfft`` contributes exactly :math:`\sigma_k^2`.  Converting volts to
+    microvolts is the last step.
+
+    Agreement is to about 0.4 %, not exactly one: the code interpolates the
+    table onto the requested frequency grid and selects the nearest of 72 LST
+    bins, while the prediction reads the native grid and bin directly.  The
+    tolerance is set to accommodate that and nothing larger -- a factor of
+    :math:`\sqrt2`, a factor of two, or a missing bin-width would all fail by
+    orders of magnitude more.
+
+    What this does **not** establish is that the :math:`P_L` tables are
+    themselves right.  That depends on the sky model and antenna response used
+    to produce them, which are not in this repository.  It establishes that
+    the code turns those tables into voltages the way it says it does.
+    """
+    zant = np.loadtxt(grand_add_path_data(Z_ANT_FILE), delimiter=',',
+                      skiprows=1)
+    rant = np.column_stack([zant[:, 1], zant[:, 3], zant[:, 5]])
+
+    table = np.load(grand_add_path_data(
+        'noise/galactic_PL_per_Hz_gp13_%s.npy'
+        % ('GP300' if du_type == 'GP300' else du_type)))
+    variance_v2 = (4.0 * table[:, LST_BIN, :] * BIN_WIDTH_HZ * rant).sum(axis=0)
+    predicted_uv = np.sqrt(variance_v2) * 1e6
+
+    _, _, traces = _traces(du_type)
+    measured = traces.std(axis=(0, 2))
+
+    assert np.allclose(measured, predicted_uv, rtol=0.01), (
+        '%s: simulated %s uV against %s predicted from the tables; ratio %s'
+        % (du_type, np.round(measured, 2), np.round(predicted_uv, 2),
+           np.round(measured / predicted_uv, 4)))
 
 
 @pytest.mark.parametrize('du_type', MODELS)
