@@ -11,97 +11,71 @@ rather than staying here.
 
 .. _issue-galactic-noise-normalisation:
 
-Galactic-noise normalisation: which constant is right depends on one definition
---------------------------------------------------------------------------------
+Galactic-noise normalisation: resolved, RMS
+---------------------------------------------
 
-:Status: open, blocking — but the question is now sharp
-:Affects: every simulated voltage and everything downstream — trigger
-          studies, sensitivity estimates, Data Challenge outputs
-:Blocks: ``dev_snonis`` (PR 153), ``refact_galaxy`` (PR 146)
+:Status: **resolved 2026-09-07.** Merged from ``dev_snonis`` @ ``0205c15``
+:Affected: every simulated voltage and everything downstream — trigger
+           studies, sensitivity estimates, Data Challenge outputs
 :Test: ``tests/sim/test_galactic_noise_normalisation.py``
 
-:func:`grand.sim.noise.galaxy.galactic_noise` constructs the spectrum as
+**The question was:** ``galaxy.py`` scaled the noise spectrum by
+``size_out / 2``; PR 153 proposed ``size_out / sqrt(2)``; and which was right
+turned on whether the tabulated ``Vocmax_...`` quantity was an RMS or a
+maximum. Measured against the table each ``du_type`` actually read, the
+simulated RMS came out at exactly :math:`1/\sqrt2` of the tabulated value —
+consistent with the table being an RMS and the code treating it as a maximum.
+But the filename said *max*, and nothing in the repository could settle it.
 
-.. code-block:: python
+**The answer is RMS.** Stavros Nonis re-derived the chain: the calculation
+starts from the available power spectral density :math:`P_L`, from which the
+open-circuit voltage is reconstructed as
 
-    amp   = rng.normal(loc=0, scale=v_amplitude[np.newaxis, ...],
-                       size=(nb_ant, 3, nb_freq))
-    phase = 2 * np.pi * rng.random(size=(nb_ant, 3, nb_freq))
-    v_complex = np.abs(amp * size_out / 2) * np.exp(1j * phase)
+.. math::  V_{\rm oc,RMS}^2 = 4 P_L \,\mathrm{Re}(Z_{\rm ant})
 
-where ``v_amplitude`` is the tabulated voltage spectral density, converted to
-a per-bin amplitude by multiplication with :math:`\sqrt{\Delta f}`.  The
-branch ``dev_snonis`` changes the constant from ``size_out / 2`` to
-``size_out / sqrt(2)``, which scales every simulated noise voltage by about
-1.41.
+so the quantity used as the Gaussian standard deviation is an RMS **by
+construction**, not by convention. ``size_out / sqrt(2)`` is therefore
+correct, and every simulated voltage produced before this merge was low by
+:math:`\sqrt2`.
 
-**Measurement.**  Made on 2 September 2026, comparing each ``du_type``
-against the table that ``du_type`` actually reads, at LST 18 h, with 221 bins
-of 1 MHz placed in a transform of length ``size_out``:
+**What changed with it.** ``0205c15`` also supplies matching :math:`P_L`
+tables for ``GP300_nec`` and ``GP300_mat``, so all three antenna models now
+follow one calculation, each reading one distinct table of its own. That
+retires the separate table defect recorded below: ``nec`` and ``mat`` used to
+be byte-identical files, the default ``GP300`` recomputed its own from a
+MATLAB file through ``h5py``, and the ``hfss`` tables were reachable from no
+``du_type``.
 
-=================  =====================  ==============================
-``du_type``        simulated / tabulated  compare :math:`1/\sqrt2=0.7071`
-=================  =====================  ==============================
-``GP300``          0.7050                 −0.3 %
-``GP300_nec``      0.7049                 −0.3 %
-``GP300_mat``      0.7049                 −0.3 %
-=================  =====================  ==============================
+**What is still not verified here.** The absolute scale rests on how the
+:math:`P_L` tables were generated, which is not in this repository. The FFT
+normalisation, LST selection, RMS level for all three models and the
+integration through ``Efield2Voltage`` including the RF chain were validated
+by their author. The test file asserts what this repository can check —
+Parseval, seed reproducibility, all three arms populated, a level independent
+of transform length — and pins the resulting RMS per model as a regression
+guard, saying explicitly that a pin is not a validation.
 
-The ratio is :math:`1/\sqrt2` to a fraction of a percent, and it does not
-move with ``size_out`` (1024, 2048, 4096 all give the same value) or with the
-number of antennas.  The implementation produces an RMS that is exactly
-:math:`1/\sqrt2` of the tabulated value — which is the relation between the
-RMS and the peak of a sinusoid.
-
-**So the decision reduces to one definitional question**, and each answer
-picks a different constant:
-
-=========================================================  ==============================
-If ``Vocmax_30-250MHz_uVperMHz`` is a **maximum**           the current ``size_out/2`` is right
-If it is an **RMS** spectral density                        PR 153's ``size_out/sqrt(2)`` is right
-=========================================================  ==============================
-
-The filename says *max*.  Nothing else in the repository states which is
-meant, and the question belongs to the authors of the table.
-
-.. note::
-
-   **Correction to an earlier write-up.**  A measurement made on 30 August
-   2026 reported a ratio of 0.33, concluded that "neither candidate is 1",
-   and inferred an unexplained factor of roughly 2.  That comparison ran the
-   default ``GP300`` simulation against ``Vocmax_..._hfss.npy`` — a table
-   that ``GP300`` never reads.  Those two are the same antenna model at two
-   different normalisations (see below), so the missing factor was the
-   normalisation difference between the tables, not a defect in the
-   transform.  Compared like with like, there is no unexplained factor.
-
-**What is not in doubt.**  The implementation is internally consistent: the
-time series obtained from the returned spectrum carries that spectrum's
-energy, to one part in :math:`10^9`.  Whatever convention is chosen, the
-transform itself is right.
-
-**A second, separate discrepancy.**  Section 8.2 of `arXiv:2408.10926
-<https://arxiv.org/abs/2408.10926>`_ states that the module randomises the
-*phase* of the sky-averaged noise.  The code also randomises the modulus,
-drawing it from a normal distribution and taking the absolute value.  The two
-agree in mean power and differ in their fluctuations, so this is not
-necessarily a defect — but the published description does not match either
-candidate implementation, and one of the two should be corrected.
-
-**Why it matters.**  A 1.41 error in noise amplitude is not cosmetic in an
-experiment whose sensitivity is set by a trigger threshold.  Until this is
-resolved, results that depend on the noise level should record which version
-of :mod:`grand.sim.noise.galaxy` produced them; ``TRun.software_version``
-exists for exactly that.
+**Reprocessing.** Anything simulated with the old constant is low by
+:math:`\sqrt2` in the noise, and the plan still carries the open item of
+deciding what, if anything, is reprocessed.
 
 .. _issue-galactic-noise-tables:
 
 The shipped Galactic-noise tables do not say what the docstring says
 --------------------------------------------------------------------
 
-:Status: open, not blocking
-:Affects: any study that selects a ``du_type``
+:Status: **resolved 2026-09-07** by the same merge as the entry above
+:Affected: any study that selected a ``du_type`` before that date
 :Test: ``tests/sim/test_galactic_noise_normalisation.py``
+
+.. note::
+
+   Everything below describes the state before ``dev_snonis`` @ ``0205c15``.
+   Each model now reads one distinct :math:`P_L` table of its own; the
+   ``h5py`` path and the unreachable ``hfss`` tables are gone. It is kept
+   because files simulated before that date were produced under exactly the
+   conditions described here, and knowing which ``du_type`` was nominally
+   selected does not tell you which table was actually read.
 
 Three separate problems with the data files under ``data/noise/``, all found
 while settling the normalisation question above.

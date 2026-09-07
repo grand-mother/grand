@@ -194,6 +194,14 @@ Galactic noise
 
 ``data/noise/`` holds two generations of the model.
 
+.. note::
+
+   **Superseded on 2026-09-07.**  Galactic noise now reads
+   ``galactic_PL_per_Hz_gp13_GP300{,_nec,_mat}.npy`` — available power
+   spectral density, one distinct table per antenna model.  The ``Vocmax_``
+   and ``Pocmax_`` tables below are still shipped and still describe files
+   simulated before that date, but no code path opens them.
+
 **The tables.**  ``Vocmax_30-250MHz_uVperMHz_{hfss,nec,mat}.npy``, with
 matching ``Pocmax_...`` (power) and ``Voutmax_...`` (after the chain) sets.
 Each is shape ``(221, 24, 3)`` — frequency, LST hour, arm — and

@@ -109,7 +109,11 @@ a third abandoned trunk.
 - [x] `dev_Event_write` — tshower writing
 - [ ] `dev_fix_root_warnings_lwp_new_fields` — **blocked, see below**
 - [ ] `dev_fix_root_warnings_aoi_levels_lwp` — blocked behind it
-- [ ] `dev_snonis` — conflict on `galaxy.py`, plus the physics decision
+- [x] `dev_snonis` — **merged 2026-09-07** on `merge/dev_snonis`. The physics
+      decision was answered by its author: the tabulated quantity is an RMS by
+      construction, so `size_out/sqrt(2)` is right. Both conflicts resolved
+      deliberately — `.gitignore` ours, `galaxy.py` their code in our docstring
+      style. See `issue-galactic-noise-normalisation`.
 - [ ] `dev_database` — conflict on `granddb/datamanager.py`
 - [ ] After the `sim2root/` branches land: fix the CoREAS site table
       (`issue-coreas-site-table`). Unknown sites raise `ValueError` on an
@@ -119,7 +123,10 @@ a third abandoned trunk.
       `dev_io_root_testmerges` is in flight over that directory.
 
 ### Phase 5 — the decisions
-- [ ] Galactic noise: fix or rewrite
+- [x] Galactic noise: fix or rewrite — **answered**, and the fix merged. Still
+      open behind it: whether anything simulated with the old constant gets
+      reprocessed, and what becomes of `refact_galaxy`, which rewrites the
+      same model in new modules.
 - [ ] Where reconstruction lives
 - [ ] Whether GRANDlib splits (`grandio_light`)
 - [ ] Docker: publish an image, or state that it is unsupported — see *Blocked
@@ -268,38 +275,33 @@ images stay pullable while nobody maintains them. Detail, measurements and the
 two loose ends (arm64 untested; a 2025 image nothing can pull) are in *Open
 scope question: is Docker supported?* below. **Needs the collaboration.**
 
-**Galactic noise.** `dev_snonis` changes the normalisation by a factor of about
-1.41; `refact_galaxy` rewrites the model in new modules alongside the old one.
-Both cannot land. Section 8.2 of the paper describes phase-only randomisation
-while the code also randomises the modulus, so the published description does
-not match either implementation exactly.
+**Galactic noise — answered 2026-09-07, and merged.** The question was whether
+the tabulated `Vocmax` quantity was an RMS or a maximum: the first made
+PR 153's `size_out/sqrt(2)` right, the second made the existing `size_out/2`
+right. Measured here, the simulated RMS sat at exactly 1/√2 of the tabulated
+value for every `du_type`, which was consistent with either reading and settled
+neither.
 
-Re-measured 2026-09-02 (`tests/sim/test_galactic_noise_normalisation.py`).
-Against the table that each `du_type` **actually reads**, the simulated RMS is
-`1/√2` of the tabulated value — 0.7050 against 0.7071, for every `du_type`, and
-independent of `size_out` and of the number of antennas.
+Stavros Nonis settled it by re-deriving the chain rather than by measuring its
+output. The calculation starts from the available power spectral density `P_L`
+and reconstructs the open-circuit voltage as `V_oc,RMS² = 4 P_L Re(Z_ant)`, so
+the quantity is an RMS **by construction**. `size_out/sqrt(2)` is correct, and
+every voltage simulated before this merge is low by √2.
 
-> **Correction.** The measurement dated 2026-08-30 reported 0.33 and an
-> unexplained factor of roughly 2. It compared the default `GP300` simulation
-> against `Vocmax_..._hfss.npy`, a table `GP300` never reads; those two are the
-> same antenna model at normalisations differing by ≈2.16. Compared like with
-> like there is no unexplained factor, and the √2 framing was right.
+`0205c15` also supplies matching `P_L` tables for `GP300_nec` and `GP300_mat`,
+retiring the separate defect that those two tables were byte-identical and that
+the `hfss` tables were reachable from no `du_type` at all.
 
-So the decision reduces to one definitional question, and each answer picks a
-different constant:
+Three things remain open behind it, and none of them is the constant:
 
-| if `Vocmax_..._uVperMHz` is a… | then |
-|---|---|
-| **maximum** | the current `size_out/2` is right, and PR 153 would break it |
-| **RMS** | PR 153's `size_out/sqrt(2)` is right |
-
-The filename says *max*. That is for the table's authors (PengFei / Xidian, or
-Stavros).
-
-Three further problems in the same data, found while settling this: the `_nec`
-and `_mat` tables are byte-identical, the default `GP300` reads neither, and
-the `_hfss` tables are unreachable from any `du_type`. A noise level quoted
-without its `du_type` is ambiguous by a factor of two.
+- **Reprocessing.** Anything simulated with the old constant is low by √2. What
+  gets redone, if anything, is still undecided — it is listed under *Before you
+  start* and has been since the plan was written.
+- **`refact_galaxy` (PR 146)** rewrites the same model in new modules alongside
+  the old one. It and the merged fix cannot both stand.
+- **The paper.** Section 8.2 describes phase-only randomisation while the code
+  also randomises the modulus, so the published description matches neither
+  implementation exactly. That is a paper question, not a code one.
 
 ## Open scope question: is Docker supported?
 

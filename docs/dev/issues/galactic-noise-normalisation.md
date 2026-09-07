@@ -1,4 +1,15 @@
-<!-- Ready to post as a GitHub issue on grand-mother/grand. Not yet posted.
+<!-- SUPERSEDED 2026-09-07 -- DO NOT POST.
+
+     The question this draft asks was answered by Stavros Nonis and the fix is
+     merged (dev_snonis @ 0205c15). The tabulated quantity is an RMS by
+     construction -- V_oc,RMS^2 = 4 P_L Re(Z_ant) -- so size_out/sqrt(2) is
+     correct. See issue-galactic-noise-normalisation in docs/source/known_issues.rst.
+
+     Kept as a record of how the question was framed while it was open, and
+     because the measurements in it are still accurate for files simulated
+     before that date. Posting it now would ask a question that has an answer.
+
+     Original header:
      Title:  Galactic-noise normalisation: one definition decides between two constants
      Labels: bug, physics, blocking -->
 
