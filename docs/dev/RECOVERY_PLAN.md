@@ -118,10 +118,15 @@ a third abandoned trunk.
       by tests meanwhile; neither is touched here, because
       `dev_io_root_testmerges` is in flight over that directory.
 
-### Phase 5 — the three decisions
+### Phase 5 — the decisions
 - [ ] Galactic noise: fix or rewrite
 - [ ] Where reconstruction lives
 - [ ] Whether GRANDlib splits (`grandio_light`)
+- [ ] Docker: publish an image, or state that it is unsupported — see *Blocked
+      on a decision*. The engineering is done either way; what is missing is
+      the answer, and the 2023 images stay pullable until there is one.
+- [ ] NUTRIG field names — listed under *Blocked on a decision*, and the only
+      one of these that unblocks a branch today
 
 ### Phase 6 — delineate input, processing, output
 - [ ] Extract the pure kernel — arrays in, arrays out, no filesystem
@@ -239,6 +244,29 @@ moderate, 1 low — reported on every push. Not looked at yet.
 for the same quantity. Same author, same type, same meaning. Field names enter
 the ROOT schema and the data contract, so this needs lwpiotr. Until it is
 settled, `_aoi_levels_lwp` is blocked behind it.
+
+**Docker: publish an image, or say we do not.** The engineering is finished —
+`env/docker/grandlib.dockerfile` builds an image on ROOT 6.36 matching the
+conda environment, CI builds it on every trigger and 459 tests pass inside it.
+Nothing is published, deliberately: pushing to a registry is a statement about
+what the collaboration distributes.
+
+What makes this urgent rather than optional is that the *current* state is the
+bad one. `grandlib/dev:1.2` is still pullable, so people pull it, and get ROOT
+6.26 from January 2023 — a different branch of `grand/dataio/descriptors.py`
+from everyone else, silently. A stale published image is worse than no
+published image, and that is what we have.
+
+- **Supported** → push what that Dockerfile builds, keep the CI job, retire
+  `env/docker_*` in Phase 10, and accept that the image is now owned: rebuilt
+  when ROOT moves, when dependencies move, when a CVE lands in the base.
+- **Not supported** → say so on the installation page, retire all eleven
+  Dockerfiles including the new one, and point people at conda.
+
+Either answer is respectable. Continuing without one is not, because the 2023
+images stay pullable while nobody maintains them. Detail, measurements and the
+two loose ends (arm64 untested; a 2025 image nothing can pull) are in *Open
+scope question: is Docker supported?* below. **Needs the collaboration.**
 
 **Galactic noise.** `dev_snonis` changes the normalisation by a factor of about
 1.41; `refact_galaxy` rewrites the model in new modules alongside the old one.
