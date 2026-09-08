@@ -25,6 +25,7 @@ means "contains, most recently", which is a fact; "was branched from" is an
 inference that happens to be right most of the time.
 """
 import collections
+import datetime
 import pathlib
 import subprocess
 import sys
@@ -197,7 +198,7 @@ def build(info):
 
     ngen = max(columns) + 1
     width = X0 * 2 + (ngen - 1) * COL + BOX_W
-    height = TOP + max(len(v) for v in columns.values()) * ROW + 44
+    height = TOP + max(len(v) for v in columns.values()) * ROW + 62
 
     at = {}
     for gen, names in columns.items():
@@ -209,12 +210,32 @@ def build(info):
            % (width, height, width, height, SANS),
            '<rect width="%d" height="%d" fill="#FFFFFF"/>' % (width, height),
            '<text x="%d" y="34" font-size="15" font-weight="600" fill="#22313A">'
-           'Every branch, and where it came from</text>' % X0,
-           '<text x="%d" y="52" font-size="10" fill="#5A6A73">%d branches. Each '
-           'is joined to its nearest ancestor, so columns are generations, oldest '
-           'on the left. Green is contained in dev-next, amber still carries '
-           'patches, blue is the trunk. Bottom right of each box: last commit and '
-           'author.</text>' % (X0, len(info))]
+           'Every branch in grand and its status</text>' % X0,
+           '<text x="%d" y="52" font-size="10" fill="#5A6A73">%d branches, joined '
+           'to their nearest ancestor. Columns are generations, oldest on the '
+           'left.</text>' % (X0, len(info))]
+
+    # A worked example of a box, in grey, so the caption does not have to
+    # describe one in words.
+    lx, ly = width - X0 - BOX_W, 34
+    out.append('<text x="%.1f" y="%.1f" font-size="9" font-weight="600" '
+               'fill="#7A8994">WHAT EACH BOX SHOWS</text>' % (lx, ly - 8))
+    out.append('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" '
+               'fill="#F4F6F7" stroke="#B7C4CC" stroke-width="1.1" '
+               'stroke-dasharray="4 3"/>' % (lx, ly, BOX_W, BOX_H))
+    out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="9" '
+               'font-weight="600" fill="#5A6A73">branch-name</text>'
+               % (lx + 8, ly + 14, MONO))
+    out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#7A8994">'
+               'what it is, in a few words</text>' % (lx + 8, ly + 26))
+    out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
+               'fill="#5A6A73">status vs trunk</text>' % (lx + 8, ly + 39, MONO))
+    out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
+               'fill="#7A8994" text-anchor="end">last commit, author</text>'
+               % (lx + BOX_W - 8, ly + 39, MONO))
+    out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#7A8994">'
+               'green: in dev-next  ·  amber: still out  ·  blue: the trunk'
+               '</text>' % (lx, ly + BOX_H + 13))
 
     out.append('<text x="%d" y="88" font-size="9" font-weight="600" '
                'fill="#5A6A73">INFRASTRUCTURE</text>' % X0)
@@ -228,18 +249,31 @@ def build(info):
                       TEXT[state], "✓" if state == "done" else "○",
                       esc(label)))
 
+    # The span of last-commit dates in each column, so a reader can see the
+    # generations are also eras: the roots stopped in 2023, the rightmost
+    # column is this month.
+    for gen, names in sorted(columns.items()):
+        dates = sorted(info[n]["last"] for n in names)
+        span = ("%s/%s" % (dates[0][2:4], dates[0][5:7]) if dates[0] == dates[-1]
+                else "%s/%s - %s/%s" % (dates[0][2:4], dates[0][5:7],
+                                        dates[-1][2:4], dates[-1][5:7]))
+        out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="9" '
+                   'font-weight="600" fill="#5A6A73" text-anchor="middle">%s</text>'
+                   % (X0 + gen * COL + BOX_W / 2.0, TOP - 14, MONO, esc(span)))
+
     for name, entry in info.items():
         parent = entry["parent"]
         if not parent or parent not in at:
             continue
         px, py = at[parent]
         cx, cy = at[name]
-        colour = "#9FCBB6" if entry["state"] != "unmerged" else "#D8C9A6"
+        # One colour throughout. The line says who came from whom; whether a
+        # branch is in or out is the box's colour, and encoding it twice only
+        # makes the two compete.
         mid = px + BOX_W + (cx - px - BOX_W) / 2.0
         out.append('<path d="M %.1f %.1f H %.1f V %.1f H %.1f" fill="none" '
-                   'stroke="%s" stroke-width="1"/>'
-                   % (px + BOX_W, py + BOX_H / 2.0, mid, cy + BOX_H / 2.0,
-                      cx, colour))
+                   'stroke="#C3CDD4" stroke-width="1"/>'
+                   % (px + BOX_W, py + BOX_H / 2.0, mid, cy + BOX_H / 2.0, cx))
 
     for name, entry in info.items():
         x, y = at[name]
@@ -274,6 +308,22 @@ def build(info):
                    'fill="#7A8994" text-anchor="end">%s %s</text>'
                    % (x + BOX_W - 8, y + 39, MONO, esc(entry["last"][2:]),
                       esc(entry["author"][:15])))
+
+    # Where this picture came from. A diagram with stored contents is a
+    # measurement, and a measurement without a timestamp is an anecdote.
+    script = "docs/dev/make_branch_diagram.py"
+    commit = git("log", "-1", "--format=%h", "--", script) or "uncommitted"
+    dirty = git("status", "--porcelain", "--", script)
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
+               'fill="#9AA7AF" text-anchor="end">%s</text>'
+               % (width - X0, height - 26, MONO,
+                  esc("generated %s by %s" % (stamp, script))))
+    out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
+               'fill="#9AA7AF" text-anchor="end">%s</text>'
+               % (width - X0, height - 15, MONO,
+                  esc("script at commit %s%s" % (commit,
+                      " (modified since)" if dirty else ""))))
 
     out.append("</svg>")
     return "\n".join(out)
