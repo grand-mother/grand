@@ -12,7 +12,28 @@ from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
 import grand.dataio
-from line_profiler import profile
+
+try:
+    from line_profiler import profile
+except ImportError:
+
+    def profile(func):
+        """Returns *func* unchanged, standing in for ``line_profiler.profile``.
+
+        ``line_profiler`` is an optional development dependency, so the
+        decorator has to keep working when it is absent.
+
+        Parameters
+        ----------
+        func : callable
+            The function that would have been profiled.
+
+        Returns
+        -------
+        callable
+            ``func`` itself, unmodified.
+        """
+        return func
 
 
 @dataclass
@@ -452,12 +473,27 @@ class Event:
         if self.file_tefield:
             # If initialising trees requested
             if init_trees:
-                tree_name = "tefield"
-                # If specific tree level was requested
-                if tefield_level:
-                    tree_name += f"_{tefield_level}"
+                # The analysis level is not part of the tree name: every file
+                # stores its tree as "tefield" and records the level in the
+                # tree's UserInfo. Selecting a level therefore means selecting
+                # a file, which only the DataDirectory knows how to do.
+                level_tree = None
+                if tefield_level is not None:
+                    if self.directory is None:
+                        print(f"Efield level {tefield_level} was requested, but this event "
+                              "was not opened from a directory. Falling back to the level "
+                              "of the file that is open.")
+                    else:
+                        level_tree = getattr(self.directory, f"tefield_l{tefield_level}", None)
+                        if level_tree is None:
+                            print(f"No Efield tree of level {tefield_level} in the "
+                                  "directory. Falling back to the default level.")
+
+                if level_tree is not None:
+                    self.tefield_level = tefield_level
+                    self.tefield = level_tree
                 # Check the Efield tree existence
-                if tefield := self.file_tefield.Get(tree_name):
+                elif tefield := self.file_tefield.Get("tefield"):
                     self.tefield = TEfield(_tree=tefield)
                 else:
                     print("No Efield tree. Efield information will not be available.")
@@ -730,7 +766,7 @@ class Event:
 
                 self.antennas.append(a)
 
-                self._all_antennas = {}
+            self._all_antennas = {}
 
             # ToDo: it seems that all antennas of the array may be needed in AOI, so perhaps they should be advanced from an internal variable
             for i in range(len(self.trun.du_id)):
@@ -783,14 +819,11 @@ class Event:
         for i in range(trace_cnt):
             # Fill the voltage trace part
             v = Voltage()
-            # trr = self.tvoltage.trace[i]
             if not use_trawvoltage:
                 trace = self.tvoltage.trace[i]
-                # tx = self.tvoltage.trace[i][0]
                 tx = trace[0]
             else:
                 trace = self.tvoltage.trace_ch[i]
-                # tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
                 tx = trace[trawvoltage_channels[0]]
             v.n_points = len(tx)
             # ToDo: That's the trigger time for now, and should be the start time of the trace
@@ -802,11 +835,7 @@ class Event:
             if not use_trawvoltage:
                 v.trace.y = trace[1]
                 v.trace.z = trace[2]
-                # v.trace.y = self.tvoltage.trace[i][1]
-                # v.trace.z = self.tvoltage.trace[i][2]
             else:
-                # v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
-                # v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
                 v.trace.y = trace[trawvoltage_channels[1]]
                 v.trace.z = trace[trawvoltage_channels[2]]
 
@@ -861,15 +890,12 @@ class Event:
         for i in range(len(self.tefield.trace)):
             v = Efield()
             trace = self.tefield.trace[i]
-            # tx = self.tefield.trace[i][0]
             tx = trace[0]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
-            # v.trace.y = self.tefield.trace[i][1]
-            # v.trace.z = self.tefield.trace[i][2]
             v.trace.y = trace[1]
             v.trace.z = trace[2]
 

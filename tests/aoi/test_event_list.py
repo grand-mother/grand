@@ -28,7 +28,7 @@ class FakeDataDirectory:
 
 class FakeEvent:
     """Minimal fake to stand in for grand.aoi.event.Event"""
-    def __init__(self):
+    def __init__(self, tefield_level=None):
         self.filled = False
         self.fill_args = None
         self._entry_number = None
@@ -36,6 +36,7 @@ class FakeEvent:
         self.event_number = None
         self.file = None
         self.directory = None
+        self.tefield_level = tefield_level
 
     def fill_event_from_trees(self, **kwargs):
         # record that we were called and with what

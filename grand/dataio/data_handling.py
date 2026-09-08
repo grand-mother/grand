@@ -404,7 +404,6 @@ class DataFile:
                         if isinstance(value,str):
                             t.GetUserInfo().Add(ROOT.TNamed(key, value))
                         else:
-                            print(key, value, type(value))
                             if isinstance(value, datetime.datetime):
                                 t.GetUserInfo().Add(ROOT.TParameter(int)(key, int(value.timestamp())))
                             else:

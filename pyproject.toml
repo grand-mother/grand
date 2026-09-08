@@ -74,7 +74,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "coverage", "pylint", "mypy", "black", "ruff"]
+dev = [
+    "pytest", "pytest-cov", "coverage", "pylint", "mypy", "black", "ruff",
+    # grand.aoi.event carries @profile hooks for line-by-line profiling.
+    # They degrade to a no-op when this is absent, so it stays optional.
+    "line_profiler",
+]
 docs = [
     "sphinx", "sphinx-rtd-theme", "sphinx-copybutton", "numpydoc",
     "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel",
