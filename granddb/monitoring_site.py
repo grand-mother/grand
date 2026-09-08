@@ -11,14 +11,19 @@
 @project     GRAND
 """
 
-#from grand.dataio import TADC, TEfield, TVoltage, TRawVoltage
+# `from grand.aoi import *` stood here and supplied Path, TRun, TRawVoltage,
+# DataDirectory and np -- none of which grand.aoi owns; they leaked through its
+# own imports.  Named directly, from where they actually come.  The commented
+# grand.dataio line above them was what the star import had made redundant.
+from pathlib import Path
+import numpy as np
+from grand.dataio import TRawVoltage, TRun, DataDirectory
 import psycopg2
 from psycopg2.extras import execute_values
 import os
 from collections import defaultdict
 from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
-from grand.aoi import *
 from functools import wraps
 import inspect
 import random
