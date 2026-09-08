@@ -495,6 +495,29 @@ stamp is the only way to tell two such files apart.'''),
     code(r'''handle.trun.get_entry(0)
 for field_name in ('run_number', 'site', 'site_layout', 'analysis_level'):
     print("%-16s %r" % (field_name, getattr(handle.trun, field_name, None)))'''),
+    md(r'''That paragraph was not hypothetical. The normalisation did change, in
+September 2026, by a factor of $\sqrt2$ (notebook 05, section 7), and
+`TRun.software_version` records what produced the *run* rather than what
+produced the *voltages*.
+
+So `TVoltage` now carries `grandlib_version` of its own, written by
+`Efield2Voltage` at the moment the traces are computed. Files written before
+that change do not have the branch, and it reads back as an empty string --
+which is the useful part: an empty stamp is not missing information, it is the
+statement *this predates September 2026*, and the $\sqrt2$ question applies to
+every voltage in it.'''),
+    code(r'''from importlib.metadata import version
+from grand.dataio.event_trees import TVoltage
+
+old_file = ("../sim2root/Common/sim_Xiaodushan_20221026_000000_RUN0_CD_ZHAireS_0000/"
+            "voltage_5388-23832_L0_0000.root")
+older = TVoltage(_file_name=old_file)
+older.get_entry(0)
+
+print("a voltage file from before the change: %r" % (older.grandlib_version,))
+print("what one written now would carry:      %r" % version("grand"))
+print()
+print("An empty stamp dates the file rather than leaving it undated.")'''),
     footer(
         r'''[01 — Coordinate systems](01_coordinates.ipynb)''',
         r'''[03 — The antenna response](03_antenna_response.ipynb)''',
