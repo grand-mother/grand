@@ -380,3 +380,123 @@ def test_the_altitude_override_is_still_in_place():
         'the override has drifted %d lines from the read; anything between '
         'them that uses `altitude` is using centimetres'
         % (override_at - read_at))
+
+
+# --------------------------------------------------------------------------
+# `read_list_of_params` in sim2root/CoREASRawRoot/CorsikaInfoFuncs.py returned
+# the builtin `list` for any keyword that was not in the file: the local
+# variable holding the result shadowed the builtin and was never assigned when
+# the loop found nothing.  On Python 3.9 and later `list[0]` is a generic
+# alias rather than an error, so the absence travelled silently into the ROOT
+# trees.  Fixed September 2026; these tests keep it fixed.
+# --------------------------------------------------------------------------
+
+def _corsika_info():
+    r"""Returns ``CorsikaInfoFuncs`` as an imported module.
+
+    Returns
+    -------
+    module
+        ``sim2root/CoREASRawRoot/CorsikaInfoFuncs.py``, loaded by path.  It is
+        a leaf module that does nothing at import, so this is cheap.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location('corsika_info_funcs',
+                                                  CORSIKA_INFO)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _inp_file(tmp_path, with_parallel):
+    r"""Writes a minimal CORSIKA ``.inp``, with or without a PARALLEL card.
+
+    THIN is written before THINH deliberately.  Lookup is a substring test, so
+    ``"THIN" in "THINH ..."`` is true and a file listing THINH first would have
+    ``read_list_of_params(f, "THIN")`` return the hadronic values.  That trap
+    is not what these tests are about, but it is why the order here is fixed.
+    """
+    lines = [
+        'RUNNR   100001',
+        'ECUTS   0.05 0.05 0.001 0.001',
+        'THIN    1.E-6 1.E2 0.',
+        'THINH   1.E0 1.E2',
+    ]
+    if with_parallel:
+        lines.append('PARALLEL 1000. 10000. 1 F')
+    path = tmp_path / 'SIM100001.inp'
+    path.write_text('\n'.join(lines) + '\n')
+    return str(path)
+
+
+@needs_corsika_info
+def test_an_absent_keyword_returns_none_not_the_builtin_list(tmp_path):
+    r"""The regression itself: absence must not come back as ``list``.
+
+    Both halves matter.  ``is None`` is the contract callers now check, and
+    ``is not list`` is the specific wrong answer that used to be returned --
+    a test asserting only the first would still pass if some later edit
+    reintroduced a bare ``return list`` under a different name.
+    """
+    module = _corsika_info()
+    values = module.read_list_of_params(_inp_file(tmp_path, False), 'PARALLEL')
+
+    assert values is not list, (
+        'an absent keyword is returning the builtin list again; on Python 3.9+ '
+        'the caller then stores list[0] rather than failing')
+    assert values is None
+
+
+@needs_corsika_info
+def test_a_present_keyword_still_reads_its_values(tmp_path):
+    r"""The fix must not have cost the ordinary case."""
+    module = _corsika_info()
+    values = module.read_list_of_params(_inp_file(tmp_path, True), 'PARALLEL')
+
+    assert isinstance(values, list)
+    assert [float(value) for value in values[:2]] == [1000.0, 10000.0]
+
+
+@needs_corsika_info
+def test_a_required_keyword_that_is_missing_names_itself_and_the_file(tmp_path):
+    r"""``read_required_list_of_params`` fails where the absence happens.
+
+    The point of the helper is the message: before it, a missing ECUTS reached
+    ``ecuts[3]`` and raised somewhere else entirely, naming neither the
+    keyword nor the file it was expected in.
+    """
+    module = _corsika_info()
+    path = tmp_path / 'no-ecuts.inp'
+    path.write_text('RUNNR   100001\n')
+
+    with pytest.raises(ValueError) as raised:
+        module.read_required_list_of_params(str(path), 'ECUTS')
+
+    message = str(raised.value)
+    assert 'ECUTS' in message
+    assert 'no-ecuts.inp' in message
+
+
+@needs_corsika_info
+def test_the_coreas_converter_tolerates_a_missing_parallel_card():
+    r"""Issue #147: a non-parallel CoREAS run writes no PARALLEL card.
+
+    Read statically -- the converter cannot be imported.  The branch on
+    ``parallel is None`` is what makes the absence survivable; an earlier
+    proposal on ``147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root``
+    wrapped the subscript in ``try/except`` instead, which never fired because
+    the absence did not raise.
+    """
+    converter = ROOT / 'sim2root' / 'CoREASRawRoot' / 'CoreasToRawROOT.py'
+    if not converter.exists():
+        pytest.skip('the CoREAS converter is not present')
+
+    text = converter.read_text(encoding='utf-8', errors='replace')
+
+    assert 'if parallel is None:' in text, (
+        'the missing-PARALLEL branch is gone; a non-parallel CoREAS run will '
+        'subscript None')
+    assert 'except' not in text.split('parallel = read_list_of_params')[1][:400], (
+        'the PARALLEL handling is back to catching an exception that a missing '
+        'keyword does not raise')

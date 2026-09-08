@@ -55,18 +55,47 @@ def read_params(input_file, param):
 
 # read a list of values from SIM.reas or RUN.inp
 def read_list_of_params(input_file, param):
+    """Read the list of numbers given for ``param``, or None if it is absent.
+
+    ``param`` is matched as a substring of a line, so the first line containing
+    it that also parses as a list of numbers wins.
+
+    Returns None when the parameter is not in the file.  Callers must check:
+    some CORSIKA keywords are genuinely optional (PARALLEL is only written by
+    parallel CoREAS runs), and until September 2026 this function returned the
+    builtin ``list`` in that case -- the local variable shadowed it and was
+    never assigned.  That was not an error on Python 3.9 and later, where
+    ``list[0]`` is a generic alias rather than a failure, so a missing keyword
+    reached the ROOT trees as ``list[0]`` instead of a number.
+    """
     # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
+    values = None
     with open(input_file, "r") as datafile:
         for line in datafile:
             if param in line:
                 line = line.lstrip()
                 if find_input_vals_list(line):
-                    list = find_input_vals_list(line)
-                    print(param, "=", list)
+                    values = find_input_vals_list(line)
+                    print(param, "=", values)
                     break 
                 # this is a problem for AutomaticTimeBoundaries, because it also shows up in other comments
                 # therefore, just break after the first one is found. this can definitely be improved
-    return list
+    return values
+
+
+def read_required_list_of_params(input_file, param):
+    """``read_list_of_params`` for a keyword the conversion cannot do without.
+
+    Raises with the parameter and the file named, rather than letting the
+    absence travel on into a subscript of None several lines later.
+    """
+    values = read_list_of_params(input_file, param)
+    if values is None:
+        raise ValueError(
+            f"{param} not found in {input_file}, and it is needed to fill the "
+            f"raw ROOT shower fields. Check that the .inp file is complete."
+        )
+    return values
 
 
 

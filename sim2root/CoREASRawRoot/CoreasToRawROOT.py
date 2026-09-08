@@ -181,7 +181,7 @@ def CoreasToRawRoot(file, simID=None):
 
   RandomSeed = read_params(inp_input, "SEED")
 
-  ecuts = read_list_of_params(inp_input, "ECUTS")
+  ecuts = read_required_list_of_params(inp_input, "ECUTS")
   # 0: hadrons & nuclei, 1: muons, 2: e-, 3: photons
   GammaEnergyCut    = ecuts[3]
   ElectronEnergyCut = ecuts[2]
@@ -191,8 +191,16 @@ def CoreasToRawRoot(file, simID=None):
   MesonEnergyCut    = HadronEnergyCut # mesons are hadronic, so this should be fine
 
   parallel = read_list_of_params(inp_input, "PARALLEL") # COREAS-only
-  ECTCUT = parallel[0]
-  ECTMAX = parallel[1]
+  if parallel is None:
+    # A non-parallel CoREAS run writes no PARALLEL card. That is not an error;
+    # the two fields simply have no value, and -1 is this converter's "not
+    # available". Resolves issue #147.
+    print("[WARNING] No PARALLEL found in inp file. Setting ECTCUT and ECTMAX to -1.")
+    ECTCUT = -1
+    ECTMAX = -1
+  else:
+    ECTCUT = parallel[0]
+    ECTMAX = parallel[1]
   
   # PARALLEL = [ECTCUT, ECTMAX, MPIID, FECTOUT]
   # ECTCUT: limit for subshowers GeV
@@ -202,9 +210,9 @@ def CoreasToRawRoot(file, simID=None):
 
   # In Zhaires converter: RelativeThinning, WeightFactor
   # I have:
-  Thin  = read_list_of_params(inp_input, "THIN")
+  Thin  = read_required_list_of_params(inp_input, "THIN")
   # THIN = [limit, weight, Rmax]
-  ThinH = read_list_of_params(inp_input, "THINH")
+  ThinH = read_required_list_of_params(inp_input, "THINH")
   # THINH = [limit, weight] for hadrons
   
   ##########################################
