@@ -45,6 +45,7 @@ Measured in the built environment on 2026-09-08:
 | CI | `Code Quality`, `Tests` and `Documentation Deployment` green on `dev-next` |
 | Branch protection | `dev-next`: force-push and deletion blocked, enforced on admins |
 | Tag | `v0.1.0-dev.27` |
+| Promotion | exit criteria now written, in Phase 9. 1 and 2 met (`dev-next` carries all of `dev`; all four workflows green); 3, 4 and 5 outstanding — clean-machine install, an archive tag for `dev`, the freeze announcement; 6 is checked on the day |
 
 ## Phases
 
@@ -54,7 +55,8 @@ a third abandoned trunk.
 
 ### Before you start
 - [x] Name an owner per phase — Mauricio Bustamante, all phases
-- [ ] Draft and send the freeze announcement for `dev`
+- [ ] Draft and send the freeze announcement for `dev` — **exit criterion 5**;
+      promotion cannot happen while work still lands on `dev`
 - [ ] Decide the reprocessing policy for the √2 noise change — **now live.**
       The fix is merged, so every simulated voltage produced from 2026-09-07
       is √2 higher than everything before it. New files now say which code
@@ -80,7 +82,8 @@ a third abandoned trunk.
 - [x] Build it — 4.1 GB, ROOT 6.36.04, Python 3.12.14, `--solver=libmamba`
 - [x] Run `env/setup.sh` — TURTLE and GULL compile, `_core.abi3.so` builds
 - [x] Add `pyproject.toml` — `pip install -e .` works
-- [ ] Verify the four-command install on a *clean* machine
+- [ ] Verify the four-command install on a *clean* machine — **exit criterion 3**,
+      and the only one that needs work rather than a decision
 
 ### Phase 2 — restore CI
 - [x] Read the logs of a cancelled run and confirm the cause — see `FINDINGS_CI.md`
@@ -251,7 +254,61 @@ a third abandoned trunk.
       `sim2root/Common/sim_*/`, the largest a single 86 MB voltage file
 
 ### Phase 9 — promote to `main`
-- [ ] Confirm exit criteria
+
+**Exit criteria.** These were referred to for weeks and written down nowhere,
+so here they are. They are deliberately about *safety*, not *completeness*.
+Phase 9 exists to stop this becoming a third abandoned trunk, and every week
+`dev-next` spends unpromoted is a week it looks more like the two it replaces.
+The refactor and the open decisions continue afterwards, on a trunk people are
+actually using — that is the point of having one.
+
+Measured 2026-09-08.
+
+1. **The trunk is the real trunk.** `git cherry dev-next dev` reports nothing,
+   or each commit it does report is listed here with a reason for leaving it.
+   *Met: 0 commits on `dev` that `dev-next` lacks.*
+
+2. **CI completes, and is green.** The failure that started all this was 36
+   consecutive cancelled runs and a `tests.yml` that had never produced one, so
+   "configured" is not the bar; a completed successful run on `dev-next` is.
+   *Met: Code Quality, Tests, Notebooks and Documentation Deployment have all
+   completed successfully.*
+
+3. **The install works for someone who is not us.** The four-command install,
+   run on a machine that is not the author's, from a clean checkout.
+   ***Not met** — the last open item in Phase 1, and the only criterion here
+   that needs work rather than a decision.*
+
+4. **Rollback is a tag, not a promise.** The README says recovery is "unfreeze
+   `dev` and carry on". That holds while `dev` is a branch someone could move
+   or delete. `master` has `archive/master-2025-03`; `dev` has nothing.
+   ***Not met** — `dev` needs an archive tag before promotion, not during
+   Phase 10.*
+
+5. **The freeze is announced and observed.** Promoting while work still lands
+   on `dev` forks the collaboration rather than moving it.
+   ***Not met** — the announcement is still to be sent.*
+
+6. **The front page is true on the day.** Test count, published documentation,
+   and the install commands, checked at the moment of promotion rather than
+   remembered from the week before.
+
+**Explicitly not gates**, so that nobody waits for them:
+
+- The Phase 5 decisions — reconstruction, the `grandio_light` split, Docker
+  publishing. They are about the library's future, not about which branch is
+  the default.
+- Phase 6, the refactor. It is the reason to want a trunk, not a precondition
+  for having one, and the golden-file regression exists to make it safe to do
+  afterwards.
+- The NUTRIG field names. Two commits.
+- The external check against a published figure. A validation goal that may
+  never be reachable, since the √2 fix means today's code cannot reproduce a
+  pre-2026-09-07 figure of any voltage-derived quantity.
+- Phases 8 and 10 cleanup. The plan already says nothing is deleted before
+  Phase 10, and promotion is not a deletion.
+
+- [ ] Tag `dev` as `archive/dev-2026-09`, so criterion 4 is met
 - [ ] Note: promoting also unblocks `workflow_dispatch`. GitHub only offers it
       for workflows present on the *default* branch, so every manual workflow
       added on `dev-next` — `docker.yml` today — is untriggerable from the
