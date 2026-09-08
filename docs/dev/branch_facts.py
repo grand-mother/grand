@@ -167,12 +167,21 @@ VERDICTS = {
         "one. lib/ tracks only readme.md today. Nothing here applies to the "
         "tree as it now stands."),
     "no-astropy": ("no",
-        "Edits grand/simulation/antenna/, which was renamed to grand/sim/ "
-        "years ago. Work in progress against paths that no longer exist."),
+        "Two independent reasons, either sufficient. All three files it edits "
+        "are gone -- grand/simulation/ was renamed to grand/sim/ in d1ac041, "
+        "so the test-merge is three modify/delete conflicts. And its goal has "
+        "already been met by another route: astropy appears nowhere on the "
+        "trunk, not in pyproject.toml, not in the conda environment, and in "
+        "no import under grand/, granddb/ or sim2root/. What is left is "
+        "scaffolding for a finished migration -- a grand_astropy flag "
+        "threaded through code that no longer exists."),
     "dependabot/pip/binder/pillow-9.3.0": ("no",
-        "Bumps binder/requirements.txt. binder/ exists only on master and is "
-        "the abandoned Binder experiment. The alert it answers does not apply "
-        "to the trunk."),
+        "One line, bumping Pillow in binder/requirements.txt. binder/ was "
+        "deleted from the trunk in January 2025 by b9a540b, \"clear not "
+        "used\", and survives only on master and main. The test-merge is a "
+        "modify/delete conflict, so taking it would resurrect a directory "
+        "removed on purpose. It does not answer the security alert either: "
+        "that alert is against master, which merging here does not touch."),
     "dev_downsample_and_ADCconversion_Jelena": ("no",
         "Superseded on physics, not on line count. Its voltage_to_adc "
         "decimates with trace[:, ::4] and no anti-alias filter, and never "
@@ -213,8 +222,19 @@ VERDICTS = {
 #:
 #: A verdict in :data:`VERDICTS` is a recommendation. An entry here is a
 #: decision. Only add one when it has actually been taken.
+#:
+#: Each value is ``(date, one line saying why)``. The one-liner is written out
+#: rather than taken from the first sentence of the verdict, which turned out
+#: to be a preamble -- "Two independent reasons, either sufficient." is not a
+#: reason.
 DECIDED = {
-    "dependabot/pip/binder/pillow-9.3.0": "2026-09-08",
+    "dependabot/pip/binder/pillow-9.3.0": ("2026-09-08",
+        "binder/ was deleted from the trunk in January 2025, so merging would "
+        "resurrect it; and the security alert is against master, which this "
+        "would not touch"),
+    "no-astropy": ("2026-09-08",
+        "astropy is already gone from the trunk entirely, and all three files "
+        "the branch edits were renamed away in d1ac041"),
 }
 
 

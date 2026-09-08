@@ -109,8 +109,13 @@ widen the box without checking the columns still fit.
   use the circles, which survive copy-paste.
 - The amber/red split is the difference between a question nobody has answered
   and one that has been closed. A verdict in `VERDICTS` is a recommendation; an
-  entry in `DECIDED`, with the date it was agreed, is what turns a branch red.
-  Add to `DECIDED` only when the decision has actually been taken.
+  entry in `DECIDED` is what turns a branch red. Add one only when the decision
+  has actually been taken.
+- **To record a decision**, add to `DECIDED` in `docs/dev/branch_facts.py`:
+  `"branch-name": ("YYYY-MM-DD", "one line saying why")`, and regenerate. The
+  date and the line appear in the *Decisions taken* table at the top of
+  `BRANCHES.md`, which is the running log — it is generated, so it cannot fall
+  out of step with the colours.
 - *Commits* counts everything on a branch since it diverged. *Own* counts the
   patches that are in no other branch. For an old branch these can be very
   different numbers — `snonis_sim2root_test_merge` has 279 and 2 — and *Own* is

@@ -75,7 +75,8 @@ def summary_row(name, entry):
         mark = "\U0001F7E2"
     elif facts.display_state(name, entry) == "retired":
         mark = "\U0001F534"
-        merged = "**no, and never will** (decided %s)" % facts.DECIDED[name]
+        merged = ("**no, and never will** (decided %s)"
+                  % facts.DECIDED[name][0])
     else:
         mark, merged = "\U0001F7E1", "**no**"
 
@@ -174,6 +175,31 @@ def build(info):
         "",
         "---",
         "",
+    ]
+
+    # The decision log. Generated from DECIDED, so it cannot fall out of step
+    # with the colours -- a hand-kept list beside a generated one is how the
+    # old branch table in the plan came to be wrong.
+    if facts.DECIDED:
+        taken = sorted(facts.DECIDED.items(), key=lambda kv: kv[1][0],
+                       reverse=True)
+        out += ["## Decisions taken (%d)" % len(taken),
+                "",
+                "Dispositions that have been agreed. Everything not listed "
+                "here is still an open question, whatever this document "
+                "recommends.",
+                "",
+                "| Decided | Branch | Disposition | Why, in short |",
+                "|---|---|---|---|"]
+        for name, (when, why) in taken:
+            action = facts.VERDICTS.get(name, ("", ""))[0]
+            label = ACTIONS.get(action, ("--", ""))[0]
+            mark = "\U0001F534" if action == "no" else "\U0001F7E1"
+            out.append("| %s | %s `%s` | %s | %s. |"
+                       % (when, mark, cell(name), label, cell(why)))
+        out += ["", "---", ""]
+
+    out += [
         "## Still out (%d)" % len(unmerged),
         "",
         "These carry patches that are in no other branch. Reasons are below "
@@ -193,7 +219,7 @@ def build(info):
         action, reason = facts.VERDICTS.get(
             name, ("", "Not yet reviewed."))
         label, gloss = ACTIONS.get(action, ("Not yet reviewed", ""))
-        decided = facts.DECIDED.get(name)
+        decided = facts.DECIDED.get(name, (None, None))[0]
         out += ["#### %s `%s` — %s"
                 % ("\U0001F534" if decided and action == "no"
                    else "\U0001F7E1", name, label),

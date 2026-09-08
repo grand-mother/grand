@@ -179,7 +179,7 @@ def build(info):
         if state == "retired":
             # Decided against, not merely unmerged. The date is the decision's,
             # not a commit's.
-            note = "not merging %s" % facts.DECIDED[name][2:]
+            note = "not merging %s" % facts.DECIDED[name][0][2:]
         elif state == "merged":
             # "merged <date> <sha>" only when a merge commit names the branch.
             # Otherwise it is contained but nothing took it by name -- a
