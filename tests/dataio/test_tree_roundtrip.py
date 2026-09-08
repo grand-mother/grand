@@ -9,14 +9,14 @@ declared ``int``, a nested vector flattened on the way out, a value silently
 truncated by its width.
 
 Nothing checked that before.  ``test_integration.py`` round-trips four fields
-of three classes; the data model has 276 branch fields across eleven classes,
+of three classes; the data model has 278 branch fields across eleven classes,
 so 271 of them were written by code no test had ever read back.
 
 The test is generic on purpose.  It reads each field's C++ type out of its
 descriptor, makes up a value of that type, writes, closes the file, reopens
 it, and compares.  A field added tomorrow is covered the day it is added,
 without anyone remembering to extend this file -- which is the only way a
-coverage claim over 276 fields stays true.
+coverage claim over 278 fields stays true.
 """
 
 import dataclasses
@@ -370,7 +370,7 @@ def test_the_comparison_would_notice_a_changed_value():
 
     A comparison helper that returned True unconditionally -- through a bare
     ``except``, a length mismatch swallowed, a tolerance far too loose --
-    would leave 276 fields looking checked and checked by nothing.  These are
+    would leave 278 fields looking checked and checked by nothing.  These are
     the cases it must reject.
     """
     assert _matches([1.5, 2.5], [1.5, 2.5], 'float')

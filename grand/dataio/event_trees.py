@@ -814,6 +814,14 @@ class TRawVoltage(MotherEventTree):
     trace_ch: StdVectorListDesc = field(default=StdVectorListDesc("vector<vector<float>>"))
     """Voltage traces for channels 1,2,3,4 in muV"""
 
+    ## NUTRIG correlation with X
+    nutrig_rhox: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """NUTRIG correlation with X"""
+
+    ## NUTRIG correlation with Y
+    nutrig_rhoy: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    """NUTRIG correlation with Y"""
+
 
 @dataclass
 ## The class for storing voltage traces and associated values for each event

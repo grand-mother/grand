@@ -97,11 +97,11 @@ class RootTreesTest(TestCase):
     #
     # What covers these classes instead is generated from the classes:
     #
-    #   tests/dataio/schema_snapshot.json     pins all 304 fields of all 11
+    #   tests/dataio/schema_snapshot.json     pins all 306 fields of all 11
     #                                         tree classes, regenerated with
     #                                         --write rather than typed out
     #   tests/dataio/test_tree_roundtrip.py   writes and reads back every one
-    #                                         of the 276 branch fields
+    #                                         of the 278 branch fields
     #
     # That covers all four -- TRunVoltage 18 fields, TADC 111, TRunShowerSim
     # 14, TShowerSim 34 -- and checks the values survive a write, which hasattr

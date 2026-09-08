@@ -159,6 +159,8 @@
     "gps_warnings": "<class 'grand.dataio.descriptors.StdVectorListDesc'>",
     "ioff": "<class 'grand.dataio.descriptors.StdVectorListDesc'>",
     "is_tchain": "<class 'bool'>",
+    "nutrig_rhox": "<class 'grand.dataio.descriptors.StdVectorListDesc'>",
+    "nutrig_rhoy": "<class 'grand.dataio.descriptors.StdVectorListDesc'>",
     "run_number": "<class 'grand.dataio.descriptors.TTreeScalarDesc'>",
     "time_nanoseconds": "<class 'grand.dataio.descriptors.TTreeScalarDesc'>",
     "time_seconds": "<class 'grand.dataio.descriptors.TTreeScalarDesc'>",
