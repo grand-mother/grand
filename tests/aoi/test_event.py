@@ -1,4 +1,5 @@
 import inspect
+import pathlib
 
 import numpy as np
 import pytest
@@ -350,3 +351,72 @@ def test_fill_event_from_trees_forwards_the_workaround_flag():
     source = inspect.getsource(Event.fill_event_from_trees)
     assert "self.fill_antennas(gp300_workaround=gp300_workaround)" in source
     assert "self.fill_antennas(gp300_workaround=True)" not in source
+
+
+# --------------------------------------------------------------------------
+# Choosing the analysis level of the electric-field tree. The level is not in
+# the tree name -- every file calls its tree "tefield" and records the level
+# in the tree's metadata -- so asking for one is really a statement about
+# which file is open, and the code has to check rather than assume.
+# --------------------------------------------------------------------------
+
+SIM_DIR = pathlib.Path(__file__).resolve().parents[2] / (
+    "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN0_CD_ZHAireS_0000")
+EFIELD_L1 = SIM_DIR / "efield_5388-23832_L1_0000.root"
+RUN_L1 = SIM_DIR / "run_0_L1_0000.root"
+
+
+def _event_on_the_level_one_file():
+    """An Event wired to the level-1 efield file, without a directory."""
+    import ROOT
+
+    e = Event()
+    e.file_trun = ROOT.TFile.Open(str(RUN_L1))
+    e.file_tefield = ROOT.TFile.Open(str(EFIELD_L1))
+    return e
+
+
+@pytest.mark.skipif(not EFIELD_L1.exists() or not RUN_L1.exists(),
+                    reason="the L1 simulation files are not present")
+def test_requesting_the_level_the_open_file_holds_is_accepted():
+    e = _event_on_the_level_one_file()
+    e.fill_event_from_trees(entry_number=0, tefield_level=1)
+    assert e.tefield is not None
+    assert e.tefield.analysis_level == 1
+    assert e.tefield_level == 1
+
+
+@pytest.mark.skipif(not EFIELD_L1.exists() or not RUN_L1.exists(),
+                    reason="the L1 simulation files are not present")
+def test_requesting_a_level_the_open_file_does_not_hold_is_refused():
+    """Reading a different level than the one asked for is invisible to the
+    caller, and leaving the tree unset is not a state the rest of Event
+    supports -- it indexes the filled traces and assumes one survived. So the
+    request is refused outright."""
+    e = _event_on_the_level_one_file()
+    with pytest.raises(ValueError, match="analysis level 1, not the requested 0"):
+        e.fill_event_from_trees(entry_number=0, tefield_level=0)
+
+
+@pytest.mark.skipif(not EFIELD_L1.exists() or not RUN_L1.exists(),
+                    reason="the L1 simulation files are not present")
+def test_requesting_no_level_reads_whatever_is_there():
+    e = _event_on_the_level_one_file()
+    e.fill_event_from_trees(entry_number=0)
+    assert e.tefield is not None
+    assert e.tefield.analysis_level == 1
+
+
+def test_an_event_with_no_efield_and_no_voltage_has_no_antennas():
+    """`event_dus_indices` was left unbound when neither tree was present, so
+    the loop over it raised instead of yielding an empty antenna list. The
+    level check above made that reachable by refusing a mismatched tree."""
+    e = Event()
+    e.site = "Xiaodushan"
+    e.trun = DummyRunForAntennas()
+    e.tefield = None
+    e.tvoltage = None
+
+    e.fill_antennas(gp300_workaround=True)
+
+    assert e.antennas == []

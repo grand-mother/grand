@@ -353,11 +353,24 @@ class Event:
             Open the trees before reading.
         gp300_workaround : bool, optional
             Apply the GP300 antenna-ordering workaround.
+        tefield_level : int, optional
+            Analysis level of the electric-field tree to read. The level is
+            recorded in the tree's metadata rather than in its name, so
+            choosing one means choosing a file and needs `directory` to be
+            set. Without one, the level of the open file is checked against
+            this. `None` reads whatever is there.
 
         Returns
         -------
         bool
             True when the event was found and populated.
+
+        Raises
+        ------
+        ValueError
+            When `tefield_level` names a level the data does not hold. Reading
+            a different level than the one asked for would not be visible to
+            the caller, so it is refused instead.
         """
         # Check if any of the files exist
         if not self._file and not self.file_trun and not self.file_trunrawvoltage and not self.file_tvoltage and not self.file_tefield and not self.file_tshower and not self.file_tsimshower:
@@ -485,24 +498,26 @@ class Event:
                 # stores its tree as "tefield" and records the level in the
                 # tree's UserInfo. Selecting a level therefore means selecting
                 # a file, which only the DataDirectory knows how to do.
-                level_tree = None
-                if tefield_level is not None:
-                    if self.directory is None:
-                        print(f"Efield level {tefield_level} was requested, but this event "
-                              "was not opened from a directory. Falling back to the level "
-                              "of the file that is open.")
-                    else:
-                        level_tree = getattr(self.directory, f"tefield_l{tefield_level}", None)
-                        if level_tree is None:
-                            print(f"No Efield tree of level {tefield_level} in the "
-                                  "directory. Falling back to the default level.")
-
-                if level_tree is not None:
+                if tefield_level is not None and self.directory is not None:
+                    self.tefield = getattr(self.directory, f"tefield_l{tefield_level}", None)
+                    if self.tefield is None:
+                        raise ValueError(
+                            f"No Efield tree of analysis level {tefield_level} in "
+                            f"{self.directory.dir_name}.")
                     self.tefield_level = tefield_level
-                    self.tefield = level_tree
                 # Check the Efield tree existence
                 elif tefield := self.file_tefield.Get("tefield"):
                     self.tefield = TEfield(_tree=tefield)
+                    # Without a directory there is no choice of file, so the
+                    # level is whatever the open one holds. Read it back rather
+                    # than assume it is the one that was asked for.
+                    if tefield_level is not None:
+                        if self.tefield.analysis_level != tefield_level:
+                            raise ValueError(
+                                f"The open Efield file holds analysis level "
+                                f"{self.tefield.analysis_level}, not the requested "
+                                f"{tefield_level}.")
+                        self.tefield_level = tefield_level
                 else:
                     print("No Efield tree. Efield information will not be available.")
                     # Make tefield really None
@@ -762,7 +777,10 @@ class Event:
 
 
         else:
-            # Fill the antenna part
+            # Fill the antenna part. With neither tree there is nothing to say
+            # which DUs took part, so the event simply has no antennas -- the
+            # name used to be left unbound and the loop below raised.
+            event_dus_indices = []
             if self.tefield is not None: event_dus_indices = self.tefield.get_dus_indices_in_run(self.trun)
             elif self.tvoltage is not None: event_dus_indices = self.tvoltage.get_dus_indices_in_run(self.trun)
             for i in range(len(event_dus_indices)):
