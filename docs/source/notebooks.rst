@@ -38,7 +38,7 @@ rebuild::
     python notebooks/make_notebooks.py --no-execute   # while drafting
 
 Generating them keeps the title format, the navigation footers and the shared
-conventions structural rather than something seven JSON files have to agree
+conventions structural rather than something nine JSON files have to agree
 about, and makes review a diff of Python instead of a diff of embedded output.
 The build refuses to finish if a notebook fails to execute, comes back without
 stored outputs — which renders blank on GitHub — or is left on disk not
@@ -99,6 +99,15 @@ Available
    measures what the regression catches.  Shows that with a symmetric input a
    swapped antenna arm is completely invisible, which is why the reference
    input is asymmetric.
+
+`09. Reading events <https://github.com/grand-mother/grand/blob/dev-next/notebooks/09_reading_events.ipynb>`_
+   ``grand.aoi``, the layer above ``grand.dataio``: it hands back an event
+   rather than branches, with its antennas on one common clock.  Covers the
+   trap that ``EventList`` reuses a single ``Event`` object, so collecting
+   events in a list gives the same one ten times over; which analysis level
+   you get when a directory holds both; and the difference between
+   ``event.shower`` and ``event.simshower``.  Ends by reading one event
+   through both layers and comparing them.
 
 .. note::
 

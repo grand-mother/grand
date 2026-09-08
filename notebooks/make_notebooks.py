@@ -2227,6 +2227,270 @@ def build(execute=True, only=None):
           % (len(selected), len(books)))
 
 
+# ------------------------------------------------------- 09_reading_events.ipynb
+books['09_reading_events.ipynb'] = notebook(
+    r'''09 — Reading events''',
+    r'''Notebook 02 is about `grand.dataio`, which reads and writes the trees. This
+one is about `grand.aoi`, which sits on top of it, and the difference is worth
+stating plainly before any code:
+
+**`dataio` gives you branches. `aoi` gives you an event.**
+
+Read a `TEfield` directly and you get parallel arrays — a list of traces, a
+list of detector-unit ids, a list of second and nanosecond counts — and it is
+your job to keep them lined up and to work out what "the same moment" means
+across units that did not start recording together. `aoi` does that join and
+hands back an `Event`: antennas with positions, traces on one common clock,
+and the shower that produced them.
+
+That convenience has a price, and this notebook is as much about the price as
+the convenience. One trap in particular will bite anyone who writes the
+obvious thing, and it is in section 3.''',
+    [
+    md(r'''## 1. Opening a directory
+
+`EventList` takes a directory in the sim2root layout — one tree per file — and
+indexes the events across it.'''),
+    code(r'''import contextlib
+import io
+import logging
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ROOT reports every branch a file does not carry; those lines would sit
+# between each command below and its answer.
+logging.getLogger("grand").setLevel(logging.ERROR)
+
+from grand.aoi.event_list import EventList
+
+DIR = "../sim2root/Common/sim_Xiaodushan_20221026_000000_RUN0_CD_ZHAireS_0000"
+
+events = EventList(DIR)
+print("events indexed: %d" % len(events.event_list))
+print("first four (event, run): %s" % (events.event_list[:4],))
+print("last:                    %s" % (events.event_list[-1],))'''),
+    md(r'''Iterating gives an `Event`. Everything on it is an object rather than an index
+into a parallel array.'''),
+    code(r'''event = next(iter(events))
+
+print()
+print("run %s, event %s" % (event.run_number, event.event_number))
+print("  antennas %d   efields %d   voltages %d"
+      % (len(event.antennas), len(event.efields), len(event.voltages)))'''),
+    md(r'''Four lines of narration arrived before the answer. `Event.fill_event_from_trees`
+announces each tree it loads with a bare `print`, once per event, so a
+ten-event loop prints forty lines before its first result. They are not log
+records — `logging.getLogger("grand").setLevel(...)`, which quietens ROOT
+elsewhere in these notebooks, does not reach them.
+
+Nothing in the library turns them off, so the rest of this notebook silences
+them at the call site. Worth knowing before you wonder why a script that reads
+a thousand events produces four thousand lines of chatter.'''),
+    code(r'''@contextlib.contextmanager
+def quiet():
+    """Swallows aoi's per-event narration for the duration of the block."""
+    with contextlib.redirect_stdout(io.StringIO()):
+        yield
+
+
+with quiet():
+    event = next(iter(EventList(DIR)))
+
+antenna = event.antennas[0]
+position = np.ravel([antenna.position.x, antenna.position.y, antenna.position.z])
+print("antenna[0]: du %s at (%.1f, %.1f, %.1f) m"
+      % (antenna.id, position[0], position[1], position[2]))
+
+efield = event.efields[0]
+print("efield[0] : %d points, peak %.1f uV/m"
+      % (efield.n_points, np.abs(efield.trace.x).max()))'''),
+    md(r'''`position.x` is a length-1 array rather than a float — the coordinate classes
+carry arrays throughout — so `np.ravel` is usually what you want before
+printing or comparing.
+
+## 2. The trap: there is only ever one Event
+
+`EventList` reuses a single `Event` and refills it on each step. That is
+intended rather than accidental — `tests/aoi/test_event_list.py` pins the
+behaviour — but it means the obvious way to collect events silently gives you
+the same one, several times over.'''),
+    code(r'''with quiet():
+    collected = [event for event in EventList(DIR)]
+
+print("collected          : %d" % len(collected))
+print("distinct objects   : %d" % len({id(event) for event in collected}))
+print("event numbers held : %s" % [int(e.event_number) for e in collected[:5]])
+print()
+print("Every entry is the same object, holding the event the loop ended on:")
+print("  last in the index: %s" % (EventList(DIR).event_list[-1],))'''),
+    md(r'''Ten entries, one object, and every one of them reports the last event in the
+directory.
+
+The fix is to take what you need **inside** the loop rather than keeping the
+event itself. Anything you hold on to — a trace, an antenna, a shower — is a
+reference into an object that is about to be overwritten, so copy the numbers
+out, not the container.'''),
+    code(r'''with quiet():
+    summary = []
+    for event in EventList(DIR):
+        peak = max(float(np.abs(e.trace.x).max()) for e in event.efields)
+        summary.append((int(event.event_number), len(event.antennas), peak))
+
+print("%-10s %-10s %s" % ("event", "antennas", "peak |Ex| (uV/m)"))
+for number, n_ant, peak in summary:
+    print("%-10d %-10d %8.1f" % (number, n_ant, peak))'''),
+    md(r'''Ten different events now, with the antenna multiplicity varying from a handful
+to a couple of hundred.
+
+## 3. One clock for the whole event
+
+This is what `aoi` gives you that the trees do not. Detector units trigger at
+different absolute times, so their traces do not correspond sample for sample.
+`aoi` reads each unit's start time and builds `t_vector`, a time axis in
+nanoseconds relative to the earliest unit in the event.'''),
+    code(r'''with quiet():
+    event = next(iter(EventList(DIR)))
+
+print("%-6s %-22s %14s %14s" % ("du", "start (ns, epoch)", "t_vector[0]", "peak at"))
+for e in event.efields:
+    t = np.ravel(e.t_vector)
+    peak_at = t[np.argmax(np.abs(np.ravel(e.trace.x)))]
+    print("%-6s %-22s %11.1f ns %11.1f ns"
+          % (e.du_id, e.t0.astype("int64"), t[0], peak_at))'''),
+    md(r'''The units are spread over about nine microseconds of arrival time. Sample 0 of
+one trace is not sample 0 of another, and any comparison that ignores that is
+comparing different instants.
+
+With a common axis, sampling the whole array at one moment is a single
+call.'''),
+    code(r'''instant = 4000.0                       # ns on the event's own clock
+values = event.get_voltage_at_time(instant)
+print("get_voltage_at_time(%.0f) -> %s   (unit, arm)" % (instant, np.shape(values)))
+
+# The analytic envelope is available the same way, and is usually what you want
+# for a peak search: it does not depend on where a zero crossing happened to fall.
+envelope = event.get_hilbert_voltage_at_time(instant)
+print("get_hilbert_voltage_at_time      -> %s" % (np.shape(envelope),))
+print()
+e = event.efields[0]
+print("du %s: trace peak %.1f, envelope peak %.1f uV/m"
+      % (e.du_id, np.abs(e.trace.x).max(), np.abs(e.hilbert_trace.x).max()))'''),
+    code(r'''fig, ax = plt.subplots(figsize=(9, 3.4))
+for e in event.efields:
+    ax.plot(np.ravel(e.t_vector), np.ravel(e.trace.x), lw=0.9, label="du %s" % e.du_id)
+ax.set_xlabel("time on the event's clock (ns)")
+ax.set_ylabel(r"$E_x$ ($\mu$V/m)")
+ax.set_title("seven units, one axis")
+ax.legend(fontsize=7, ncol=4); fig.tight_layout()'''),
+    md(r'''## 4. Which analysis level are you reading?
+
+Notebook 02 records that with an L0 and an L1 file side by side, the bare
+`directory.tefield` follows the **highest** level. `aoi` inherits that, and the
+consequence is larger than it sounds, because the two levels are not the same
+data under a different name.'''),
+    code(r'''from grand.dataio.event_trees import TEfield
+
+for level, name in ((0, "efield_5388-23832_L0_0000.root"),
+                    (1, "efield_5388-23832_L1_0000.root")):
+    tree = TEfield(_file_name="%s/%s" % (DIR, name))
+    tree.get_event(13020, 0)
+    trace = np.asarray(tree.trace, dtype=np.float64)
+    print("L%d  %-16s peak %7.1f uV/m   analysis_level %s"
+          % (level, str(trace.shape), np.abs(trace).max(), tree.analysis_level))'''),
+    md(r'''L0 is the raw simulation at 0.5 ns; L1 is band-limited and resampled to 2 ns.
+Four times fewer samples, and a peak lower by a factor of about four and a
+half. The peak is the filter's doing rather than the resampling's: restricting
+a sharp pulse to a narrower band spreads it in time and lowers its maximum.
+Ask for "the efield" in a directory holding both and you get L1, without being
+told.
+
+Say which you want.'''),
+    code(r'''for level in (0, 1, None):
+    with quiet():
+        first = next(iter(EventList(DIR, tefield_level=level)))
+    n = len(np.ravel(first.efields[0].trace.x))
+    print("tefield_level=%-5s -> %5d samples per trace" % (level, n))
+print()
+print("None is not 'the default level'; it is 'whichever is highest'.")'''),
+    md(r'''## 5. Closing the loop
+
+Everything above is convenience, and convenience is worth nothing if the
+numbers moved on the way through. So read the same event through both layers
+and compare.'''),
+    code(r'''with quiet():
+    event = next(iter(EventList(DIR)))
+
+through_aoi = np.array([[np.ravel(e.trace.x), np.ravel(e.trace.y), np.ravel(e.trace.z)]
+                        for e in event.efields])
+ids_aoi = [e.du_id for e in event.efields]
+
+tree = TEfield(_file_name="%s/efield_5388-23832_L1_0000.root" % DIR)
+tree.get_event(event.event_number, event.run_number)
+through_dataio = np.asarray(tree.trace, dtype=np.float64)
+
+print("aoi    %s  du ids %s" % (through_aoi.shape, ids_aoi))
+print("dataio %s  du ids %s" % (through_dataio.shape, list(tree.du_id)))
+print()
+print("same order         : %s" % (ids_aoi == list(tree.du_id)))
+print("largest difference : %g" % np.abs(through_aoi - through_dataio).max())'''),
+    md(r'''Identical, and in the same order. `aoi` re-presents the traces; it does not
+touch them.
+
+That the comparison is against L1 rather than L0 is section 4 restated. Had it
+been made against the L0 file it would have disagreed by a factor of four in
+length, and the layer would have looked broken when it was the level that
+differed.
+
+## 6. Showers: there are two, and one is often absent'''),
+    code(r'''with quiet():
+    event = next(iter(EventList(DIR)))
+
+print("event.shower    : %s" % type(event.shower).__name__)
+print("event.simshower : %s" % type(event.simshower).__name__)
+print()
+shower = event.simshower
+print("zenith   %.2f deg" % np.ravel(shower.zenith)[0])
+print("azimuth  %.2f deg" % np.ravel(shower.azimuth)[0])
+print("energy   %.3g GeV" % np.ravel(shower.energy_primary)[0])
+print("core     %s m" % np.round(np.ravel(shower.core_ground_pos), 1))'''),
+    md(r'''`event.shower` is `None` here, and that is not a defect. It is filled from the
+level-1 shower tree, which holds *reconstructed* parameters; this directory has
+only the level-0 tree, the simulation truth, which is `event.simshower`.
+
+So `event.shower is None` means "nothing has reconstructed this yet", while
+`event.simshower` means "this is what was thrown in". Code that reaches for
+`event.shower` on simulated data finds nothing, and the fix is to know which of
+the two you wanted.
+
+## 7. What this layer does not do
+
+**It does not resample.** Traces come back exactly as stored, at whatever level
+was read; section 5 is the evidence. `t_vector` is metadata about them, not a
+regridding.
+
+**It does not check that a directory is coherent.** Files are grouped by name,
+and notebook 02's section 4 lists the ways that grouping can mislead.
+
+**Antenna positions are not always read the same way.** At the GP300, GP80 and
+GP13 sites they are recomputed from each unit's GPS fix; everywhere else —
+including the Xiaodushan data used here — they are taken from `TRun.du_xyz`.
+The code marks that branch as a workaround and does not say what it works
+around, so treat the two as separately derived rather than as one number
+reached two ways. If you work at one of those three sites and a position looks
+wrong, this is the first thing to check.
+
+**Nothing here validates the physics.** These are the numbers as recorded.
+Notebooks 03 to 06 cover where they come from, and 08 covers what keeps them
+from changing by accident.'''),
+    footer(
+        r'''[02 — Reading and writing GRAND data](02_data_model.ipynb) — the layer underneath''',
+        r'''[06 — From electric field to ADC](06_efield_to_adc.ipynb) — how the traces were produced''',
+        r'''[08 — Pinning the chain](08_pipeline_regression.ipynb) — keeping them from drifting''',
+    ),
+    ])
+
+
 if __name__ == '__main__':
 
     argv = sys.argv[1:]
