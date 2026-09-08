@@ -33,7 +33,7 @@ Measured in the built environment on 2026-09-08:
 
 | | |
 |---|---|
-| Merge queue | 7 of 9 merged; 1 blocked on the NUTRIG name, 1 in doubt |
+| Merge queue | 8 of 9 merged; **nothing blocked**; 1 in doubt (`dev_database`) |
 | Test suite | **566 passed, 10 skipped, 10 xfailed, 1 xpassed, 0 failed** |
 | Coverage | 71 % over `grand/` |
 | Regression against `dev` | none — identical failure set |
@@ -143,13 +143,13 @@ a third abandoned trunk.
 - [x] `dev_nutrig_fields` — NUTRIG fields in TADC
 - [x] `dev_reprocessing` — Snakemake pipeline
 - [x] `dev_Event_write` — tshower writing
-- [~] `dev_fix_root_warnings_lwp_new_fields` — **half merged 2026-09-08.** The
-      branch carries four commits and only two are about NUTRIG. `53f13e4`
-      (TChain metadata) and `50551bc` (event-copy counts) touch
-      `data_handling.py` and `scripts/extract_events.py`, share no file with
-      the NUTRIG pair, and are now in. What remains blocked is `d637ae3` +
-      `1ec360e`, which add the correlation fields to `TADC` under a name that
-      collides with the merged `nutrig_rhox`/`rhoy`.
+- [x] `dev_fix_root_warnings_lwp_new_fields` — **merged in two halves.** The two
+      commits that were not about NUTRIG went in on 2026-09-08; the two that
+      were followed the same day, once lwpiotr chose `nutrig_rhox`/`nutrig_rhoy`
+      and confirmed the `TRawVoltage` change travels with the merge. `TADC`
+      keeps the pair it already had; `TRawVoltage` gains its own as `float`.
+      The branch's `correlation_x`/`_y` were dropped: the same quantity under
+      the name that lost.
 - [x] `dev_fix_root_warnings_aoi_levels_lwp` — **merged 2026-09-08. It was
         never blocked**: none of its eight commits touches `event_trees.py` and
         neither disputed name appears in it. It carried four defects, fixed on
@@ -379,13 +379,12 @@ Litter for Phase 10: `origin` still carries a
 
 ## Blocked on a decision
 
-**NUTRIG field names.** `dev_nutrig_fields` adds `nutrig_rhox`/`nutrig_rhoy` to
-`TADC`; `dev_fix_root_warnings_lwp_new_fields` adds `correlation_x`/`correlation_y`
-for the same quantity. Same author, same type, same meaning. Field names enter
-the ROOT schema and the data contract, so this needs lwpiotr. It now blocks
-only the two commits of `_lwp_new_fields` that add the colliding pair.
-`_aoi_levels_lwp` was listed here as blocked behind it and was not: it went in
-on 2026-09-08 without touching the question.
+**~~NUTRIG field names.~~ Answered 2026-09-08.** `dev_nutrig_fields` added
+`nutrig_rhox`/`nutrig_rhoy` to `TADC`; `dev_fix_root_warnings_lwp_new_fields`
+added `correlation_x`/`correlation_y` for the same quantity. lwpiotr chose the
+first and confirmed the `TRawVoltage` pair travels with the merge. Both are in.
+Nothing in the queue is blocked on a decision now. `_aoi_levels_lwp` was listed
+here as blocked behind this and never was.
 
 *(The galactic-noise entry that stood here is gone: answered, merged, and its
 provenance recorded in `data_files.rst` on 2026-09-07. What remains of it is
