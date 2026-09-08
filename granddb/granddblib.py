@@ -20,7 +20,13 @@ from sqlalchemy import func
 from granddb.rootdblib import Dataset, RootFile
 
 logger = mlg.get_logger_for_script(__name__)
-mlg.create_output_for_logger("debug", log_stdout=True)
+# No create_output_for_logger here.  This is a library module, and the note
+# quoted at the top of grand/manage_log.py is explicit: do not add handlers
+# to a library's loggers, because that is the application's prerogative.
+# This line configured the `grand` logger -- the whole library's, not just
+# granddb's -- for anyone who merely imported this module, and together with
+# its twin in the other file left two handlers attached, so every record was
+# emitted twice.  Callers configure their own; the scripts in this package do.
 
 
 def casttodb(value):

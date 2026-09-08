@@ -15,6 +15,10 @@ def main():
     which meant that merely importing this module parsed ``sys.argv`` and
     built a :class:`DataManager` -- opening the configured database.
     """
+    # WARNING is what this script effectively ran at before granddb's library
+    # modules stopped configuring logging on its behalf.
+    mlg.create_output_for_logger("warning", log_stdout=True)
+
     argParser = argparse.ArgumentParser()
     argParser.add_argument("-c", "--config",default="config.ini", help="Config file to use")
     args = argParser.parse_args()

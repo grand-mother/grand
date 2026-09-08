@@ -68,6 +68,15 @@ Usage example:
     file="Coarse3.root"
     print(dm.get_file(file))
 
+Importing granddb does not turn logging on. Until 2026-09-08 it did, as a side
+effect, and it configured the whole `grand` library's logger rather than its
+own -- twice over, so every record appeared twice. That is the application's
+job, not a library's; the note quoted at the top of `grand/manage_log.py` says
+so. To see what the data manager is doing, ask for it:
+
+    import grand.manage_log as mlg
+    mlg.create_output_for_logger("info", log_stdout=True)
+
 Search can be restricted/forced on only one repository by specifiying the repository name as second argument to the get function:
 
     print(dm.get_file(file, "CCIN2P3"))
