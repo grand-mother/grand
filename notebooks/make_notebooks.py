@@ -1823,7 +1823,11 @@ Same input, same seed, same configuration. The comparison is bin by bin at a
 relative tolerance of $10^{-9}$ — tight enough that any physically meaningful
 change fails, loose enough that NumPy reassociating a floating-point sum
 between versions does not."""),
-    code(r"""import tempfile, pathlib
+    code(r"""import logging, tempfile, pathlib
+
+# ROOT announces every tree it creates. Four such lines would sit between
+# the command below and its answer, so the logger is quietened here.
+logging.getLogger("grand").setLevel(logging.ERROR)
 
 fresh = golden._run_chain(pathlib.Path(tempfile.mkdtemp()))
 
@@ -1843,9 +1847,13 @@ axes[1].plot(t_ns, (fresh - stored)[0].T, lw=1)
 axes[1].set_xlabel("time (ns)"); axes[1].set_ylabel(r"difference ($\mu$V)")
 axes[1].set_title("this run minus the reference")
 fig.tight_layout()"""),
-    md(r"""The difference panel is flat at zero, and that is the whole point: the
-scale on the right is $10^{-15}$ or so, which is floating-point noise rather
-than a result.
+    md(r"""The difference panel is flat at exactly zero, not nearly zero. The same seed
+on the same platform reproduces the reference bit for bit, so the right-hand
+axis has no scale to speak of.
+
+Worth noticing rather than glossing over: the comparison uses a tolerance of
+$10^{-9}$, and that margin is there to survive a NumPy or BLAS upgrade
+reassociating a floating-point sum, not because anything here needs it today.
 
 ## What it catches
 
@@ -1853,9 +1861,9 @@ The regression is only worth having if it fails when it should. The galactic
 noise normalisation moved by $\sqrt2$ on 2026-09-07 — a real change, correctly
 made — and that is exactly the size of thing this must not let through."""),
     code(r"""for label, factor in [("unchanged", 1.0),
-                      (r"a $\sqrt2$ normalisation change", np.sqrt(2)),
+                      ("a sqrt(2) normalisation change", np.sqrt(2)),
                       ("a 0.01 % drift", 1.0001),
-                      ("one sample perturbed by 1 part in $10^6$", None)]:
+                      ("one sample nudged by 1 part in a million", None)]:
     if factor is None:
         perturbed = stored.copy()
         perturbed[1, 2, 300] *= 1.000001
