@@ -8,7 +8,9 @@ after any merge::
 
     python docs/dev/make_recovery_diagram.py
 
-Writes ``docs/source/_static/recovery.svg``.  Colours follow the recovery
+Writes ``resources/dev/dev-next/recovery.svg`` and a copy at
+``docs/source/recovery.svg`` -- the plan that embeds it is read both on GitHub
+and through Sphinx, which resolve the path differently.  Colours follow the recovery
 plan: green done, amber blocked or in progress, grey not started.
 """
 
@@ -102,7 +104,7 @@ def box(x, y, w, h, state, lines, small=False):
 
 
 def main():
-    r"""Writes the diagram to ``docs/source/_static/recovery.svg``."""
+    r"""Writes the diagram to both of its homes."""
     s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
          'width="100%%" font-family="IBM Plex Sans, sans-serif">' % (W, H)]
     # An explicit light surface.  The labels are dark by design, and the SVG
@@ -235,11 +237,18 @@ def main():
                  % (X0, 549 + i * 17, esc(note)))
 
     s.append('</svg>')
-    out = os.path.join(os.path.dirname(os.path.dirname(
-        os.path.abspath(__file__))), 'source', '_static', 'recovery.svg')
-    with open(out, 'w') as handle:
-        handle.write('\n'.join(s) + '\n')
-    print('wrote %s' % out)
+    svg = '\n'.join(s) + '\n'
+    # Written to the dev-next paperwork, where the plan that embeds it lives,
+    # and to docs/ for the documentation build. One writer, so no drift.
+    root = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))))
+    for out in (os.path.join(root, 'resources', 'dev', 'dev-next',
+                             'recovery.svg'),
+                os.path.join(root, 'docs', 'source', 'recovery.svg')):
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with open(out, 'w') as handle:
+            handle.write(svg)
+        print('wrote %s' % out)
 
 
 if __name__ == '__main__':

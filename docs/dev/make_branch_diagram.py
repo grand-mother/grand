@@ -12,7 +12,11 @@ to right from the oldest roots to ``dev-next``.
 
     python docs/dev/make_branch_diagram.py
 
-Writes ``docs/source/_static/branches.svg``. Everything except the one-line
+Writes ``resources/dev/dev-next/branches.svg``, and a copy at
+``docs/source/branches.svg``. Two copies because the recovery plan embeds this
+picture and is read in two places: GitHub resolves the image beside the plan,
+Sphinx relative to ``docs/source/``, and no single relative path satisfies
+both. Everything except the
 descriptions is read from git at build time, so the picture cannot drift from
 the repository the way a hand-maintained list does.
 
@@ -25,70 +29,13 @@ means "contains, most recently", which is a fact; "was branched from" is an
 inference that happens to be right most of the time.
 """
 import collections
-import datetime
 import pathlib
-import subprocess
 import sys
 
-#: Two-to-four words per branch. The only hand-maintained data here; git knows
-#: the rest. A branch with no entry is drawn with an empty description rather
-#: than omitted, so a new one appears as soon as it is pushed.
-DESCRIPTIONS = {
-    "dev-next": "the new trunk",
-    "dev": "the old trunk",
-    "master": "old default branch",
-    "main": "abandoned 2023 trunk",
-    "event-viewer": "event viewer",
-    "dev_fix_root_warnings_lwp": "ROOT 6.38 warnings",
-    "dev_fix_root_warnings_lwp_new_fields": "NUTRIG name clash",
-    "dev_fix_root_warnings_aoi_levels_lwp": "levels, +40% speed",
-    "dev_nutrig_fields": "NUTRIG fields in TADC",
-    "dev_reprocessing": "Snakemake pipeline",
-    "dev_Event_write": "tshower writing",
-    "dev_aoi_unittest": "aoi unit tests",
-    "dev_snonis": "noise sqrt2 fix",
-    "dev_database": "data catalogue",
-    "dev_io_root": "ROOT I/O layer",
-    "dev_io_root_testmerges": "I/O test merges",
-    "dev_sim2root": "sim2root converters",
-    "dev_sim2root_merge": "sim2root merge",
-    "dev_sim2root_merge__merge_with_dev": "sim2root into dev",
-    "dev_sim2root_merge__merge_with_dev_fix_fields": "sim2root field fixes",
-    "dev_imports": "import cleanup",
-    "ci/docker-test": "docker CI trial",
-    "copilot/add-color-coded-diagram": "diagram experiment",
-    "radio": "2020 lib/ work",
-    "refact_galaxy": "rival galaxy refactor",
-    "dev_marion": "reconstruction package",
-    "grandio_light": "the package split",
-    "dev_downsample_and_ADCconversion_Jelena": "ADC conversion",
-    "masterkastner": "docstrings, old docs",
-    "beta_dc1": "DC1 analysis scripts",
-    "dc2_debug_xmax": "DC2 xmax debugging",
-    "dev_leisos": "recursive coreas pipeline",
-    "dev_event_viewer": "event viewer examples",
-    "snonis_sim2root_test_merge": "galaxy test notebook",
-    "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root":
-        "non-parallel CoREAS",
-    "tian-conda-arm": "ARM install notes",
-    "no-astropy": "drop astropy",
-    "dependabot/pip/binder/pillow-9.3.0": "abandoned auto-PR",
-}
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-#: Names too long for a box. Display only -- git is always asked about the real
-#: name, so an abbreviation here cannot break a lookup, which is a mistake the
-#: first version of this script made.
-SHORT = {
-    "dev_fix_root_warnings_lwp_new_fields": "dev_fix_root_..._new_fields",
-    "dev_fix_root_warnings_aoi_levels_lwp": "dev_fix_root_..._aoi_levels",
-    "dev_sim2root_merge__merge_with_dev": "dev_sim2root_..._with_dev",
-    "dev_sim2root_merge__merge_with_dev_fix_fields": "dev_sim2root_..._fix_flds",
-    "dev_downsample_and_ADCconversion_Jelena": "dev_downsample_..._Jelena",
-    "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root":
-        "147-non-parallel-coreas",
-    "dependabot/pip/binder/pillow-9.3.0": "dependabot/...pillow",
-    "copilot/add-color-coded-diagram": "copilot/add-color-coded",
-}
+import branch_facts as facts                                  # noqa: E402
+from branch_facts import DESCRIPTIONS, SHORT, collect, git    # noqa: E402,F401
 
 WORK = [("conda env", "done"), ("setup.sh", "done"), ("pyproject", "done"),
         ("Sphinx docs", "done"), ("schema test", "done"), ("CI green", "done"),
@@ -109,75 +56,12 @@ X0, TOP = 40, 168
 CHAR_W = 5.45
 
 
-def git(*args):
-    r"""Returns the stdout of a git command, stripped."""
-    return subprocess.run(["git"] + list(args), capture_output=True,
-                          text=True).stdout.strip()
-
-
 def esc(text):
     r"""Escapes the five XML characters."""
     for a, b in (("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"),
                  ('"', "&quot;"), ("'", "&apos;")):
         text = text.replace(a, b)
     return text
-
-
-def collect():
-    r"""Reads every branch from git and works out how they are related.
-
-    Returns
-    -------
-    dict
-        Branch name to a dict carrying ``last``, ``author``, ``parent``,
-        ``generation``, ``state``, ``ahead``, ``merged_on`` and ``merged_by``.
-    """
-    heads = [h for h in git("for-each-ref", "--format=%(refname:short)",
-                            "refs/remotes/origin").split()
-             if h not in ("origin/HEAD", "origin")]
-
-    info, tip = {}, {}
-    for head in heads:
-        name = head.replace("origin/", "")
-        tip[name] = git("rev-parse", head)
-        last, author = (git("log", "-1", "--format=%ad|%an", "--date=short",
-                            head).split("|") + ["?"])[:2]
-        ahead = sum(1 for line in git("cherry", "dev-next", head).split("\n")
-                    if line.startswith("+"))
-        state = ("trunk" if name == "dev-next"
-                 else "unmerged" if ahead else "merged")
-        merged_on = merged_by = ""
-        if state == "merged":
-            path = [x for x in git("log", "--ancestry-path", "--merges",
-                                   "--reverse", "--format=%h|%ad", "--date=short",
-                                   "%s..dev-next" % head).split("\n") if x.strip()]
-            if path:
-                merged_by, merged_on = path[0].split("|")
-            else:
-                merged_on = "ancestor"
-        info[name] = dict(last=last, author=author, state=state, ahead=ahead,
-                          merged_on=merged_on, merged_by=merged_by)
-
-    by_sha = {sha: name for name, sha in tip.items()}
-    for name in info:
-        contained = [by_sha[s] for s in set(git("rev-list", tip[name]).split())
-                     & set(by_sha) if by_sha[s] != name]
-        info[name]["parent"] = (max(contained, key=lambda n: info[n]["last"])
-                                if contained else None)
-
-    depth = {}
-
-    def generation(name, guard=0):
-        if name in depth:
-            return depth[name]
-        parent = info[name]["parent"]
-        depth[name] = (0 if parent is None or guard > 40
-                       else generation(parent, guard + 1) + 1)
-        return depth[name]
-
-    for name in info:
-        info[name]["generation"] = generation(name)
-    return info
 
 
 def build(info):
@@ -312,9 +196,7 @@ def build(info):
     # Where this picture came from. A diagram with stored contents is a
     # measurement, and a measurement without a timestamp is an anecdote.
     script = "docs/dev/make_branch_diagram.py"
-    commit = git("log", "-1", "--format=%h", "--", script) or "uncommitted"
-    dirty = git("status", "--porcelain", "--", script)
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    stamp, commit = facts.provenance(script)
     out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
                'fill="#9AA7AF" text-anchor="end">%s</text>'
                % (width - X0, height - 26, MONO,
@@ -322,15 +204,19 @@ def build(info):
     out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
                'fill="#9AA7AF" text-anchor="end">%s</text>'
                % (width - X0, height - 15, MONO,
-                  esc("script at commit %s%s" % (commit,
-                      " (modified since)" if dirty else ""))))
+                  esc("script at commit %s" % commit)))
 
     out.append("</svg>")
     return "\n".join(out)
 
 
 if __name__ == "__main__":
-    root = pathlib.Path(__file__).resolve().parents[2]
-    target = root / "docs" / "source" / "_static" / "branches.svg"
-    target.write_text(build(collect()), encoding="utf-8")
-    print("wrote %s" % target, file=sys.stderr)
+    svg = build(collect())
+    # The diagram lives with the rest of the dev-next paperwork. The copy
+    # under docs/ is what Sphinx and the roadmap page include; one script
+    # writes both, so the two cannot drift.
+    for target in (facts.ROOT / "resources" / "dev" / "dev-next" / "branches.svg",
+                   facts.ROOT / "docs" / "source" / "branches.svg"):
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(svg, encoding="utf-8")
+        print("wrote %s" % target, file=sys.stderr)
