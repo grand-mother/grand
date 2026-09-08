@@ -1,7 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 752" width="1480" height="752" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
-<rect width="1480" height="752" fill="#FFFFFF"/>
-<text x="40" y="34" font-size="15" font-weight="600" fill="#22313A">Every branch, and where it came from</text>
-<text x="40" y="52" font-size="10" fill="#5A6A73">38 branches. Each is joined to its nearest ancestor, so columns are generations, oldest on the left. Green is contained in dev-next, amber still carries patches, blue is the trunk. Bottom right of each box: last commit and author.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 770" width="1480" height="770" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
+<rect width="1480" height="770" fill="#FFFFFF"/>
+<text x="40" y="34" font-size="15" font-weight="600" fill="#22313A">Every branch in grand and its status</text>
+<text x="40" y="52" font-size="10" fill="#5A6A73">38 branches, joined to their nearest ancestor. Columns are generations, oldest on the left.</text>
+<text x="1208.0" y="26.0" font-size="9" font-weight="600" fill="#7A8994">WHAT EACH BOX SHOWS</text>
+<rect x="1208.0" y="34.0" width="232" height="46" rx="4" fill="#F4F6F7" stroke="#B7C4CC" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="1216.0" y="48.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#5A6A73">branch-name</text>
+<text x="1216.0" y="60.0" font-size="8" fill="#7A8994">what it is, in a few words</text>
+<text x="1216.0" y="73.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#5A6A73">status vs trunk</text>
+<text x="1432.0" y="73.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">last commit, author</text>
+<text x="1208.0" y="93.0" font-size="8" fill="#7A8994">green: in dev-next  ·  amber: still out  ·  blue: the trunk</text>
 <text x="40" y="88" font-size="9" font-weight="600" fill="#5A6A73">INFRASTRUCTURE</text>
 <rect x="40.0" y="98" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="47.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ conda env</text>
 <rect x="158.0" y="98" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="165.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ setup.sh</text>
@@ -12,38 +19,43 @@
 <rect x="748.0" y="98" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="755.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ 593 tests</text>
 <rect x="866.0" y="98" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="873.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ cov 73%</text>
 <rect x="984.0" y="98" width="108" height="22" rx="3" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1"/><text x="991.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#7A8994">○ interface</text>
-<path d="M 564.0 245.0 H 594.0 V 191.0 H 624.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 1148.0 245.0 H 1178.0 V 245.0 H 1208.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 564.0 245.0 H 594.0 V 569.0 H 624.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 407.0 H 332.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 299.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 1148.0 191.0 H 1178.0 V 191.0 H 1208.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 856.0 245.0 H 886.0 V 677.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 515.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 564.0 245.0 H 594.0 V 245.0 H 624.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 677.0 H 332.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 564.0 245.0 H 594.0 V 407.0 H 624.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 1148.0 353.0 H 1178.0 V 299.0 H 1208.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 353.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 1148.0 353.0 H 1178.0 V 353.0 H 1208.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 461.0 H 332.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 564.0 245.0 H 594.0 V 299.0 H 624.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 353.0 H 332.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 515.0 H 332.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 461.0 H 916.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 569.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 245.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 191.0 H 332.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 299.0 H 332.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 564.0 299.0 H 594.0 V 461.0 H 624.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 564.0 245.0 H 594.0 V 353.0 H 624.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 856.0 353.0 H 886.0 V 191.0 H 916.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 623.0 H 916.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 245.0 H 332.0" fill="none" stroke="#9FCBB6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 569.0 H 332.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 856.0 299.0 H 886.0 V 407.0 H 916.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 272.0 191.0 H 302.0 V 623.0 H 332.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
-<path d="M 564.0 245.0 H 594.0 V 515.0 H 624.0" fill="none" stroke="#D8C9A6" stroke-width="1"/>
+<text x="156.0" y="154.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#5A6A73" text-anchor="middle">20/01 - 23/07</text>
+<text x="448.0" y="154.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#5A6A73" text-anchor="middle">24/01 - 25/03</text>
+<text x="740.0" y="154.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#5A6A73" text-anchor="middle">25/03 - 25/09</text>
+<text x="1032.0" y="154.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#5A6A73" text-anchor="middle">25/06 - 26/09</text>
+<text x="1324.0" y="154.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#5A6A73" text-anchor="middle">26/06 - 26/09</text>
+<path d="M 564.0 245.0 H 594.0 V 191.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 1148.0 245.0 H 1178.0 V 245.0 H 1208.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 245.0 H 594.0 V 569.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 407.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 299.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 1148.0 191.0 H 1178.0 V 191.0 H 1208.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 245.0 H 886.0 V 677.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 515.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 245.0 H 594.0 V 245.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 677.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 245.0 H 594.0 V 407.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 1148.0 353.0 H 1178.0 V 299.0 H 1208.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 353.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 1148.0 353.0 H 1178.0 V 353.0 H 1208.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 461.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 245.0 H 594.0 V 299.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 353.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 515.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 461.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 569.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 245.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 191.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 299.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 299.0 H 594.0 V 461.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 245.0 H 594.0 V 353.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 353.0 H 886.0 V 191.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 623.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 245.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 569.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 856.0 299.0 H 886.0 V 407.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 272.0 191.0 H 302.0 V 623.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
+<path d="M 564.0 245.0 H 594.0 V 515.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
 <rect x="624.0" y="168.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
 <text x="632.0" y="182.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">147-non-parallel-coreas</text>
 <text x="632.0" y="194.0" font-size="8" fill="#5A6A73">non-parallel CoREAS</text>
@@ -234,4 +246,6 @@
 <text x="632.0" y="518.0" font-size="8" fill="#5A6A73">ARM install notes</text>
 <text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">1 patch out</text>
 <text x="848.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-03-07 Tien</text>
+<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 15:15 UTC by docs/dev/make_branch_diagram.py</text>
+<text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit b6c0547</text>
 </svg>
