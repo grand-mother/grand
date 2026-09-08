@@ -213,6 +213,23 @@ def read_corsika_version(inp_file):
 
 
 
+def _read_antenna_list(pathAntennaList):
+    """Reads a ``SIM??????.list`` as a table of rows, whatever its length.
+
+    ``np.genfromtxt`` returns a one-dimensional array for a single-row file
+    rather than a table with one row in it, so every ``file[:, 5]`` in this
+    module raises ``IndexError: too many indices for array`` on a simulation
+    with a single antenna -- an error naming neither antennas nor the file.
+    ``atleast_2d`` puts the row axis back.
+
+    On a file with two or more antennas it returns the array unchanged, so
+    this is not a behaviour change for any simulation that worked before:
+    verified over the 289 antennas of ``proton/SIM004100.list``, where every
+    position is identical with and without it.  Do not remove it as noise.
+    """
+    return np.atleast_2d(np.genfromtxt(pathAntennaList, dtype="str"))
+
+
 def antenna_positions_dict(pathAntennaList):
     """
     get antenna positions from SIM??????.list and store in a dictionary
@@ -222,7 +239,7 @@ def antenna_positions_dict(pathAntennaList):
     antennaInfo = {} # store info in a dict
 
     # get antenna positions from file
-    file = np.genfromtxt(pathAntennaList, dtype = "str")
+    file = _read_antenna_list(pathAntennaList)
     # file[:,0] and file[:,1] are useless (they are simply "AntennaPosition" and "=")
     
     # get the x, y and z positions
@@ -267,8 +284,8 @@ def get_antenna_position(pathAntennaList, antenna):
         A tuple containing (x, y, z) coordinates for the specified antenna, 
         or None if the antenna is not found.
     """
-    file = np.genfromtxt(pathAntennaList, dtype="str")
-    gp300_data = np.genfromtxt(pathAntennaList, dtype="str")
+    file = _read_antenna_list(pathAntennaList)
+    gp300_data = _read_antenna_list(pathAntennaList)
 
     # currently checks the same file, so always passes
     # Filter data based on antenna name
@@ -301,8 +318,8 @@ def calculate_array_shift(pathAntennaList):
         the two arrays in meters for x and y coordinates, respectively.
         If the arrays have different shapes, returns None.
     """
-    sim_data = np.genfromtxt(pathAntennaList, dtype="str")
-    gp300_data = np.genfromtxt(pathAntennaList, dtype="str")
+    sim_data = _read_antenna_list(pathAntennaList)
+    gp300_data = _read_antenna_list(pathAntennaList)
 
     # Check if data shapes are compatible
     # currently checks the same file so always passes

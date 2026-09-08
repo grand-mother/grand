@@ -508,3 +508,64 @@ def test_the_coreas_converter_tolerates_a_missing_parallel_card():
     assert 'except' not in text.split('parallel = read_list_of_params')[1][:400], (
         'the PARALLEL handling is back to catching an exception that a missing '
         'keyword does not raise')
+
+
+# --------------------------------------------------------------------------
+# The antenna-list readers in CorsikaInfoFuncs assumed `np.genfromtxt` returns
+# a table.  It returns a one-dimensional array for a single-row file, so a
+# simulation with one antenna raised `IndexError: too many indices for array`
+# from `file[:, 5]`, naming neither antennas nor the file.  Fixed September
+# 2026 with `_read_antenna_list`; these tests keep the row axis in place.
+# --------------------------------------------------------------------------
+
+def _antenna_list(tmp_path, rows):
+    r"""Writes a CoREAS ``.list`` with `rows` antennas.
+
+    The format is ``AntennaPosition = x y z name``, with positions in
+    centimetres, which is what the readers divide by 100.
+    """
+    path = tmp_path / 'SIM000001.list'
+    path.write_text(''.join(
+        'AntennaPosition = %.2f %.2f %.2f ant%d\n' % (-310078.36 + i * 100,
+                                                      -700000.0, 120000.0, i)
+        for i in range(rows)))
+    return str(path)
+
+
+@needs_corsika_info
+@pytest.mark.parametrize('rows', [1, 2, 5])
+def test_the_antenna_list_reads_at_any_length(tmp_path, rows):
+    r"""One antenna is a list like any other.
+
+    Parametrised from one upward because one is the case that used to raise:
+    `np.genfromtxt` drops the row axis for a single-row file, and every reader
+    in the module indexes ``[:, 5]``.
+    """
+    module = _corsika_info()
+    path = _antenna_list(tmp_path, rows)
+
+    info = module.antenna_positions_dict(path)
+    assert len(info['name']) == rows
+    assert list(info['name'])[0] == 'ant0'
+
+    position = module.get_antenna_position(path, 'ant0')
+    assert position is not None, 'ant0 is in the file it was read from'
+    x, y, z = position
+    assert x == pytest.approx(-3100.7836)   # centimetres to metres
+    assert y == pytest.approx(-7000.0)
+    assert z == pytest.approx(1200.0)
+
+
+@needs_corsika_info
+def test_a_single_antenna_no_longer_raises_index_error(tmp_path):
+    r"""Pinned on its own, naming the error it used to raise.
+
+    The parametrised test above would still pass if someone reintroduced the
+    bug for the one-row case only and the fixture happened to have two rows.
+    """
+    module = _corsika_info()
+    path = _antenna_list(tmp_path, 1)
+    try:
+        module.antenna_positions_dict(path)
+    except IndexError as error:
+        pytest.fail('a one-antenna list raises again: %s' % error)
