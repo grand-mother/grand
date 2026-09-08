@@ -20,10 +20,10 @@ QUEUE = [
     ('dev_nutrig_fields',              'NUTRIG fields in TADC',   'done'),
     ('dev_reprocessing',               'Snakemake pipeline',      'done'),
     ('dev_Event_write',                'tshower writing',         'done'),
-    ('..._lwp_new_fields',             'name clash: NUTRIG',      'blocked'),
+    ('..._lwp_new_fields',             'name clash: NUTRIG',      'done'),
     ('..._aoi_levels_lwp',             'levels, +40% speed',      'done'),
     ('dev_snonis',                     'noise √2 fix',            'done'),
-    ('dev_database',                   'nothing unmerged?',       'todo'),
+    ('dev_database',                   'already an ancestor',     'done'),
 ]
 
 # (label, state) for the infrastructure track
@@ -37,7 +37,7 @@ WORK = [
     ('Sphinx docs',    'done'),
     ('schema test',    'done'),
     ('CI green',       'done'),
-    ('566 tests',      'done'),
+    ('593 tests',      'done'),
     ('cov 73%',        'done'),
     ('interface',      'todo'),
 ]
@@ -51,11 +51,18 @@ W, H = 1080, 620
 SPINE_Y = 392
 X0, X1 = 90, 990
 BOX_W, BOX_H = 204, 40
-# Columns follow the data: the queue is drawn as two rows, merged above the
-# spine and blocked below, and the wider of the two sets the grid. Hardcoding
-# it at 4 clipped the fifth box off the canvas the day a fifth branch merged.
-COLS = max(sum(1 for q in QUEUE if q[2] == 'done'),
-           sum(1 for q in QUEUE if q[2] != 'done'))
+# Four boxes to a row, and rows wrap.  This was `max(len(merged), len(blocked))`
+# so that the grid followed the data -- which fixed one bug and introduced
+# another: the column *count* grew with the queue while BOX_W stayed at 204, so
+# from six branches onward the boxes overlapped each other.  They had been
+# overlapping unnoticed for some time when the queue reached eight.
+#
+# Four is what fits: four boxes of 204 across the 900px between X0 and X1 leaves
+# 28px between them.  A fifth cannot fit without shrinking the box below the
+# width its longest label needs.
+COLS = 4
+MAX_PER_ROW = COLS
+ROW_GAP = 78
 COL_GAP = (X1 - X0 - BOX_W) / (COLS - 1)
 
 # Approximate advance width of IBM Plex Mono, as a fraction of font size.
@@ -132,7 +139,19 @@ def main():
 
     merged = [q for q in QUEUE if q[2] == 'done']
     stuck = [q for q in QUEUE if q[2] != 'done']
-    rows = [(merged, 190, 'merged'), (stuck, 268, 'blocked')]
+
+    # Merged first, then blocked, each wrapped at MAX_PER_ROW and stacked
+    # downward.  With nothing blocked the queue simply uses both rows.
+    rows, top = [], 190
+    for items, label in ((merged, 'merged'), (stuck, 'blocked')):
+        for start in range(0, len(items), MAX_PER_ROW):
+            rows.append((items[start:start + MAX_PER_ROW], top, label))
+            top += ROW_GAP
+    if rows and rows[-1][1] + BOX_H >= SPINE_Y:
+        raise SystemExit(
+            'the queue no longer fits above the spine: %d rows reach y=%d, and '
+            'the spine is at %d. Raise H and SPINE_Y, or shorten the queue.'
+            % (len(rows), rows[-1][1] + BOX_H, SPINE_Y))
 
     joins = []
     for items, top, _ in rows:

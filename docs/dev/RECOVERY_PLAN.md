@@ -33,8 +33,8 @@ Measured in the built environment on 2026-09-08:
 
 | | |
 |---|---|
-| Merge queue | 8 of 9 merged; **nothing blocked**; 1 in doubt (`dev_database`) |
-| Test suite | **566 passed, 10 skipped, 10 xfailed, 1 xpassed, 0 failed** |
+| Merge queue | **done.** 8 merged, `dev_database` struck as an ancestor with nothing to merge. The one open Phase 4 item is the CoREAS site table, which waits on the `sim2root` branches |
+| Test suite | **593 passed, 10 skipped, 10 xfailed, 1 xpassed, 0 failed** |
 | Coverage | 73 % over `grand/`; 20 % over `granddb/`, measured from 2026-09-08; 63 % together |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
@@ -42,10 +42,10 @@ Measured in the built environment on 2026-09-08:
 | Documentation | 23 authored pages + API over 33 of 34 modules + the Handbook; **zero warnings**; **published at https://grand-mother.github.io/grand/** |
 | Known issues | 17, of which 2 resolved on 2026-09-07 |
 | Notebooks | 10, generated and executed by `notebooks/make_notebooks.py`, each stamped with the commit and time it was built |
-| CI | `Code Quality`, `Tests` and `Documentation Deployment` green on `dev-next` |
+| CI | `Code Quality`, `Tests`, `Notebooks` and `Documentation Deployment` green on `dev-next` |
 | Branch protection | `dev-next`: force-push and deletion blocked, enforced on admins |
 | Tag | `v0.1.0-dev.27` |
-| Promotion | exit criteria now written, in Phase 9. 1 and 2 met (`dev-next` carries all of `dev`; all four workflows green); 3, 4 and 5 outstanding — clean-machine install, an archive tag for `dev`, the freeze announcement; 6 is checked on the day |
+| Promotion | exit criteria in Phase 9. **1, 2 and 4 met** — `dev-next` carries all of `dev`, all four workflows green, `dev` tagged `archive/dev-2026-09`. **3 and 5 outstanding**: the clean-machine install, and the freeze announcement. 6 is checked on the day |
 
 ## Phases
 
@@ -268,6 +268,21 @@ a third abandoned trunk.
          stop installing handlers on the `grand` logger, which had left two
          attached and every record printed twice.
       6. First tests -- 19 of them, none needing PostgreSQL.
+      7. `granddb/` joins the coverage measurement. The tests already ran, since
+         they live under `tests/`; coverage did not, so a package that ships in
+         every wheel was reporting none while the figure was presented as the
+         project's. 73 % over `grand/`, 20 % over `granddb/`, 63 % together --
+         stated separately rather than blended.
+
+      Since: the local file search is covered (593 tests), and the two
+      monitoring modules import for the first time. `monitoring_dbconf.py` has
+      never been in this repository -- checked against all 2589 files ever
+      added on any branch -- and exists only on the production machine. Their
+      import is now guarded, narrowed to that one module so that a *broken*
+      conf file on that machine still raises as it does today; an example says
+      what the file must contain; and `granddb/.gitignore` stops the real one
+      being staged, which nothing did before, on a checkout where it sits
+      untracked beside the database password.
 
       What it found: `register_dataset_in_db`'s `--repository` flag was read
       and never passed on; `trunnoiseToDB` named two fields `TRunNoise` has
