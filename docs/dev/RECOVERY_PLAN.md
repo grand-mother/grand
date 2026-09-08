@@ -140,7 +140,13 @@ a third abandoned trunk.
 - [x] `dev_nutrig_fields` — NUTRIG fields in TADC
 - [x] `dev_reprocessing` — Snakemake pipeline
 - [x] `dev_Event_write` — tshower writing
-- [ ] `dev_fix_root_warnings_lwp_new_fields` — **blocked, see below**
+- [~] `dev_fix_root_warnings_lwp_new_fields` — **half merged 2026-09-08.** The
+      branch carries four commits and only two are about NUTRIG. `53f13e4`
+      (TChain metadata) and `50551bc` (event-copy counts) touch
+      `data_handling.py` and `scripts/extract_events.py`, share no file with
+      the NUTRIG pair, and are now in. What remains blocked is `d637ae3` +
+      `1ec360e`, which add the correlation fields to `TADC` under a name that
+      collides with the merged `nutrig_rhox`/`rhoy`.
 - [ ] `dev_fix_root_warnings_aoi_levels_lwp` — blocked behind it
 - [x] `dev_snonis` — **merged into `dev-next` 2026-09-07**. The physics
       decision was answered by its author: the tabulated quantity is an RMS by
