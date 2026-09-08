@@ -107,16 +107,6 @@ and the collaboration has not decided whether it wants to.
 for.  Use the conda environment above unless you have a specific reason not
 to.
 
-Not yet available
------------------
-
-.. warning::
-
-   ``pip install -e .`` does not work: there is no ``pyproject.toml`` at the
-   repository root, so GRANDlib cannot be installed as a package and is used
-   from the source tree via ``env/setup.sh``.  Adding it is Phase 1b of the
-   repository overhaul, tracked in PR 154.
-
 Troubleshooting
 ---------------
 
@@ -127,5 +117,25 @@ persist.  Clean them before retrying::
     source env/setup.sh
 
 **ARM processors.**  The environment is verified on x86-64.  Apple Silicon
-and other ARM hosts have known problems compiling TURTLE and GULL; see
-``env/conda/readme.md``.
+and other ARM hosts have known problems compiling TURTLE and GULL.
+
+.. admonition:: One route that has worked on ARM
+   :class: tip
+
+   Contributed by Tien in March 2025 and not re-tested since, so treat it as a
+   starting point rather than a supported path.  The conda environment itself
+   is built for amd64, and the trouble begins at the TURTLE and GULL
+   compilation rather than at the environment.
+
+   1. Create the conda environment and install the Python packages, following
+      ``env/conda/admin/readme.md``.
+   2. Build ``turtle`` and ``gull`` by hand instead of leaving them to
+      ``env/setup.sh``.
+   3. Clone ``grand`` and run ``source env/setup.sh``.
+   4. Check the result with ``python -c "import grand"``.
+
+   Most of what goes wrong is a path that points at the wrong place, which is
+   usually easy to correct once the failure is read.  If you get this working,
+   please say so on the `collaboration issues tracker
+   <https://github.com/grand-mother/collaboration-issues/issues>`_, so that it
+   can be promoted from one person's anecdote to an instruction.

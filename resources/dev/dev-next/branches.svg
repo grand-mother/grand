@@ -8,7 +8,8 @@
 <text x="1216.0" y="60.0" font-size="8" fill="#7A8994">what it is, in a few words</text>
 <text x="1216.0" y="73.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#5A6A73">status vs trunk</text>
 <text x="1432.0" y="73.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">last commit, author</text>
-<text x="1208.0" y="93.0" font-size="8" fill="#7A8994">green: in dev-next  ·  amber: still out  ·  red: decided against  ·  blue: the trunk</text>
+<text x="1208.0" y="93.0" font-size="8" fill="#7A8994">green: in dev-next · amber: still out · red: decided against</text>
+<text x="1208.0" y="104.0" font-size="8" fill="#7A8994">purple: content taken, patch not merged · blue: the trunk</text>
 <text x="40" y="88" font-size="9" font-weight="600" fill="#5A6A73">INFRASTRUCTURE</text>
 <rect x="40.0" y="98" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="47.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ conda env</text>
 <rect x="158.0" y="98" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="165.0" y="113" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ setup.sh</text>
@@ -241,11 +242,11 @@
 <text x="340.0" y="626.0" font-size="8" fill="#5A6A73">galaxy test notebook</text>
 <text x="340.0" y="639.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">2 patches out</text>
 <text x="556.0" y="639.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">24-04-05 snonis</text>
-<rect x="624.0" y="492.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
-<text x="632.0" y="506.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">tian-conda-arm</text>
+<rect x="624.0" y="492.0" width="232" height="46" rx="4" fill="#EFE9F5" stroke="#6B4E8E" stroke-width="1.1"/>
+<text x="632.0" y="506.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#6B4E8E">tian-conda-arm</text>
 <text x="632.0" y="518.0" font-size="8" fill="#5A6A73">ARM install notes</text>
-<text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">1 patch out</text>
+<text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#6B4E8E">content in 26-09-08</text>
 <text x="848.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-03-07 Tien</text>
-<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 19:17 UTC by docs/dev/make_branch_diagram.py</text>
-<text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit a092c5e</text>
+<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 19:41 UTC by docs/dev/make_branch_diagram.py</text>
+<text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit a092c5e (modified since)</text>
 </svg>

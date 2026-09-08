@@ -142,11 +142,30 @@ VERDICTS = {
         "scripts/ADanalysis.py and TDAnalysis.py, 312 lines, absent from the "
         "trunk. Test-merges clean. From 2023, so confirm DC1 analysis is "
         "still wanted before taking it."),
-    "tian-conda-arm": ("merge-hand",
-        "Ten lines of ARM install notes in env/conda/readme.md. Conflicts "
-        "only because the trunk added 52 lines to the same file; the content "
-        "does not overlap. The readme already mentions ARM twice, so fold "
-        "the steps in rather than appending."),
+    "tian-conda-arm": ("absorb",
+        "Ten lines of ARM install notes, and **nothing else**: one commit "
+        "whose parent is the merge-base itself, touching one file, adding ten "
+        "lines and removing none. No code of any kind."
+        "\n\n"
+        "The content was worth having -- it is the only written record of "
+        "getting GRANDlib running natively on ARM -- but not as written. Its "
+        "opening sentence, \"ARM cpu is compatible with the grandlib "
+        "environment for conda\", contradicts the warning twenty lines above "
+        "it in the same file, which says the environment is amd64 only with "
+        "arm64 work in progress. Both are describing the same thing from "
+        "different ends: the trouble starts at the TURTLE and GULL "
+        "compilation, and Tien's step 2 is the workaround for exactly that. "
+        "The link also pointed at `master`, which Phase 9 retires."
+        "\n\n"
+        "So it was rewritten into `docs/source/installation.rst` as a `tip` "
+        "admonition under the existing ARM paragraph, which until then said "
+        "only that there were known problems and pointed at a readme. "
+        "Attributed to Tien with the date, and marked as not re-tested -- this "
+        "machine is x86-64, so nobody here can verify it."
+        "\n\n"
+        "The branch is therefore **absorbed, not merged**. `git cherry` will "
+        "report it outstanding for ever, because a paragraph rewritten into "
+        "another file has no patch in common with the original."),
     "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root": ("no",
         "One commit, one file, one hunk: eight lines wrapping the PARALLEL "
         "read in `try/except` so that a non-parallel CoREAS run, which writes "
@@ -302,6 +321,10 @@ DECIDED = {
     "no-astropy": ("2026-09-08",
         "astropy is already gone from the trunk entirely, and all three files "
         "the branch edits were renamed away in d1ac041"),
+    "tian-conda-arm": ("2026-09-08",
+        "content taken: rewritten as a tip admonition in "
+        "docs/source/installation.rst, attributed and marked untested. The "
+        "branch's own patch is not merged and will not be"),
     "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root":
         ("2026-09-08",
          "the fix works, but the trunk repaired the reader at the root and "
@@ -323,11 +346,27 @@ def display_state(name, entry):
     Returns
     -------
     str
-        One of ``trunk``, ``merged``, ``retired``, ``unmerged`` or ``gone``.
-        ``retired`` is a branch that has been decided against: it still
-        carries patches of its own and never will be merged. ``unmerged`` is
-        the same situation with the decision still open, which is why the two
-        cannot share a colour.
+        One of ``trunk``, ``merged``, ``absorbed``, ``retired``, ``unmerged``
+        or ``gone``.
+
+    Notes
+    -----
+    Four of these describe a branch that git still reports as unmerged, and
+    they are kept apart because they answer different questions:
+
+    ``unmerged``
+        Carries patches of its own, and what to do about it is open.
+    ``retired``
+        Decided against. It will never be merged.
+    ``absorbed``
+        Its *content* is in the trunk, rewritten or moved, but its patch is
+        not and never will be -- ``git cherry`` compares patch identity, so a
+        paragraph rewritten into another file matches nothing. Calling this
+        "merged" would claim the patch is contained, and calling it "retired"
+        would claim the work was rejected. Both are false, and the question a
+        reader actually has is whether the work was lost.
+    ``gone``
+        Merged and since deleted, so the question does not arise.
     """
     if name == TRUNK:
         return "trunk"
@@ -335,8 +374,12 @@ def display_state(name, entry):
         return "gone"
     if entry["state"] == "merged":
         return "merged"
-    if name in DECIDED and VERDICTS.get(name, ("", ""))[0] == "no":
-        return "retired"
+    if name in DECIDED:
+        action = VERDICTS.get(name, ("", ""))[0]
+        if action == "no":
+            return "retired"
+        if action == "absorb":
+            return "absorbed"
     return "unmerged"
 
 

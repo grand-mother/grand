@@ -42,11 +42,14 @@ WORK = [("conda env", "done"), ("setup.sh", "done"), ("pyproject", "done"),
         ("593 tests", "done"), ("cov 73%", "done"), ("interface", "todo")]
 
 FILL = {"trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
-        "retired": "#F7E6E7", "done": "#E1F1EA", "todo": "#EDF1F3"}
+        "retired": "#F7E6E7", "absorbed": "#EFE9F5",
+        "done": "#E1F1EA", "todo": "#EDF1F3"}
 EDGE = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
-        "retired": "#A9484E", "done": "#1D7A57", "todo": "#BCC7CE"}
+        "retired": "#A9484E", "absorbed": "#6B4E8E",
+        "done": "#1D7A57", "todo": "#BCC7CE"}
 TEXT = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
-        "retired": "#A9484E", "done": "#1D7A57", "todo": "#7A8994"}
+        "retired": "#A9484E", "absorbed": "#6B4E8E",
+        "done": "#1D7A57", "todo": "#7A8994"}
 
 MONO = "IBM Plex Mono, monospace"
 SANS = "IBM Plex Sans, Helvetica, Arial, sans-serif"
@@ -118,8 +121,11 @@ def build(info):
                'fill="#7A8994" text-anchor="end">last commit, author</text>'
                % (lx + BOX_W - 8, ly + 39, MONO))
     out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#7A8994">'
-               'green: in dev-next  ·  amber: still out  ·  red: decided '
-               'against  ·  blue: the trunk</text>' % (lx, ly + BOX_H + 13))
+               'green: in dev-next · amber: still out · red: decided against'
+               '</text>' % (lx, ly + BOX_H + 13))
+    out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#7A8994">'
+               'purple: content taken, patch not merged · blue: the trunk'
+               '</text>' % (lx, ly + BOX_H + 24))
 
     out.append('<text x="%d" y="88" font-size="9" font-weight="600" '
                'fill="#5A6A73">INFRASTRUCTURE</text>' % X0)
@@ -176,7 +182,10 @@ def build(info):
         out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#5A6A73">%s</text>'
                    % (x + 8, y + 26, esc(DESCRIPTIONS.get(name, ""))))
 
-        if state == "retired":
+        if state == "absorbed":
+            # Its content is in, its patch is not. Both halves matter.
+            note = "content in %s" % facts.DECIDED[name][0][2:]
+        elif state == "retired":
             # Decided against, not merely unmerged. The date is the decision's,
             # not a commit's.
             note = "not merging %s" % facts.DECIDED[name][0][2:]

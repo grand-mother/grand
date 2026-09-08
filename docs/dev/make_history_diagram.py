@@ -46,11 +46,11 @@ TRUNKS = ["master", "dev", "main", "dev-next"]
 CUT_FROM = {"main": "dev", "dev-next": "dev"}
 
 FILL = {"trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
-        "retired": "#F7E6E7", "gone": "#ECEFF1"}
+        "retired": "#F7E6E7", "absorbed": "#EFE9F5", "gone": "#ECEFF1"}
 EDGE = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
-        "retired": "#A9484E", "gone": "#AEBAC2"}
+        "retired": "#A9484E", "absorbed": "#6B4E8E", "gone": "#AEBAC2"}
 TEXT = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
-        "retired": "#A9484E", "gone": "#8B99A3"}
+        "retired": "#A9484E", "absorbed": "#6B4E8E", "gone": "#8B99A3"}
 
 MONO = "IBM Plex Mono, monospace"
 SANS = "IBM Plex Sans, Helvetica, Arial, sans-serif"
@@ -433,7 +433,8 @@ def panel(width, n_rows, n_merges):
     # exist to draw.
     rows = (("merged", "in dev-next"), ("unmerged", "still out, undecided"),
             ("retired", "decided against")), \
-           (("trunk", "the trunk"), ("gone", "merged, then deleted")),
+           (("absorbed", "content taken, patch not merged"),
+            ("trunk", "the trunk"), ("gone", "merged, then deleted")),
     for r, group in enumerate(rows):
         lx = x + 10
         for state, text in group:

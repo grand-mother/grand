@@ -102,11 +102,18 @@ widen the box without checking the columns still fit.
 ## Conventions
 
 - 🟢 green: contained in `dev-next`. 🟡 amber: still carrying its own patches,
-  and what to do about it is an **open question**. 🔴 red: still carrying its
-  own patches and it has been **decided** that it will never be merged. 🔵 blue:
-  the trunk. Grey, in `history.svg` only: merged and since deleted. The same
-  colours as the diagrams; Markdown has no colour of its own, so the documents
-  use the circles, which survive copy-paste.
+  and what to do about it is an **open question**. 🔴 red: decided against — it
+  will never be merged. 🟣 purple: its **content** is in the trunk, rewritten or
+  moved, but its patch is not and never will be. 🔵 blue: the trunk. Grey, in
+  `history.svg` only: merged and since deleted. The same colours as the
+  diagrams; Markdown has no colour of its own, so the documents use the
+  circles, which survive copy-paste.
+- Purple exists because `git cherry` compares patch identity. A paragraph
+  rewritten into another file matches nothing, so such a branch reads as
+  unmerged for ever. Green would claim the patch is contained and red would
+  claim the work was rejected; both are false, and the question a reader has is
+  whether the work was lost. `tian-conda-arm` is the first: ten lines of ARM
+  notes, rewritten into `docs/source/installation.rst`.
 - The amber/red split is the difference between a question nobody has answered
   and one that has been closed. A verdict in `VERDICTS` is a recommendation; an
   entry in `DECIDED` is what turns a branch red. Add one only when the decision

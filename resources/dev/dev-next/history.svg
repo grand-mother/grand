@@ -261,8 +261,8 @@
 <text x="1135.2" y="471.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_sim2root_..._with_dev</text>
 <rect x="1124.6" y="548.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
 <text x="1135.6" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">copilot/add-color-coded</text>
-<rect x="1126.2" y="569.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
-<text x="1137.2" y="576.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">tian-conda-arm</text>
+<rect x="1126.2" y="569.0" width="4.0" height="9" rx="4.5" fill="#EFE9F5" stroke="#6B4E8E" stroke-width="1"/>
+<text x="1137.2" y="576.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#6B4E8E">tian-conda-arm</text>
 <rect x="1132.8" y="590.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
 <text x="1143.8" y="597.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_vs_code</text>
 <rect x="1170.0" y="254.0" width="233.5" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
@@ -305,10 +305,12 @@
 <text x="1505.5" y="107.0" font-size="7.4" fill="#7A8994">still out, undecided</text>
 <rect x="1597.5" y="100.0" width="8" height="8" rx="4" fill="#F7E6E7" stroke="#A9484E"/>
 <text x="1608.5" y="107.0" font-size="7.4" fill="#7A8994">decided against</text>
-<rect x="1428.0" y="113.0" width="8" height="8" rx="4" fill="#D5E8F5" stroke="#1F5C82"/>
-<text x="1439.0" y="120.0" font-size="7.4" fill="#7A8994">the trunk</text>
-<rect x="1486.5" y="113.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
-<text x="1497.5" y="120.0" font-size="7.4" fill="#7A8994">merged, then deleted</text>
-<text x="1740.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 19:17 UTC by docs/dev/make_history_diagram.py</text>
-<text x="1740.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit ccc2d1b</text>
+<rect x="1428.0" y="113.0" width="8" height="8" rx="4" fill="#EFE9F5" stroke="#6B4E8E"/>
+<text x="1439.0" y="120.0" font-size="7.4" fill="#7A8994">content taken, patch not merged</text>
+<rect x="1575.5" y="113.0" width="8" height="8" rx="4" fill="#D5E8F5" stroke="#1F5C82"/>
+<text x="1586.5" y="120.0" font-size="7.4" fill="#7A8994">the trunk</text>
+<rect x="1634.0" y="113.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
+<text x="1645.0" y="120.0" font-size="7.4" fill="#7A8994">merged, then deleted</text>
+<text x="1740.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 19:41 UTC by docs/dev/make_history_diagram.py</text>
+<text x="1740.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit ccc2d1b (modified since)</text>
 </svg>

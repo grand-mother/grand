@@ -33,6 +33,7 @@ ACTIONS = {
     "merge": ("Merge", "test-merges clean"),
     "merge-hand": ("Merge by hand", "conflicts, but only on context"),
     "cherry-pick": ("Cherry-pick", "take part of it, never the branch"),
+    "absorb": ("Absorbed", "its content is in; its patch never will be"),
     "no": ("Do not merge", "nothing to take that the trunk does not have"),
     "decide": ("Decision needed", "a question, not a merge"),
     "ask": ("Ask the author", "needs its author before anything else"),
@@ -73,6 +74,10 @@ def summary_row(name, entry):
             # history says which commits were its own.
             merged = "yes, in trunk by %s" % where
         mark = "\U0001F7E2"
+    elif facts.display_state(name, entry) == "absorbed":
+        mark = "\U0001F7E3"
+        merged = ("**no** — but its content is in (%s)"
+                  % facts.DECIDED[name][0])
     elif facts.display_state(name, entry) == "retired":
         mark = "\U0001F534"
         merged = ("**no, and never will** (decided %s)"
@@ -152,11 +157,19 @@ def build(info):
         "",
         "\U0001F7E2 in the trunk  ·  \U0001F7E1 still out, undecided  ·  "
         "\U0001F534 decided against, will never be merged  ·  "
+        "\U0001F7E3 content taken, patch not merged  ·  "
         "\U0001F535 the trunk itself",
         "",
-        "A verdict is a recommendation until it is agreed. The red ones have "
-        "been agreed and are settled; the amber ones are still open questions, "
-        "which is why they do not share a colour.",
+        "A verdict is a recommendation until it is agreed. The red and purple "
+        "ones have been agreed and are settled; the amber ones are still open "
+        "questions, which is why they do not share a colour.",
+        "",
+        "Purple is the awkward case and it is worth stating plainly. `git "
+        "cherry` compares patch identity, so a branch whose content was "
+        "rewritten into a different file will be reported as unmerged for "
+        "ever. Calling it green would claim the patch is contained; calling "
+        "it red would claim the work was rejected. Neither is true, and the "
+        "question a reader has is simply whether the work was lost.",
         "",
         "*Created* is the first commit that was the branch's own. Branches that "
         "were merged and then deleted are not listed: this is a document to "
@@ -194,7 +207,8 @@ def build(info):
         for name, (when, why) in taken:
             action = facts.VERDICTS.get(name, ("", ""))[0]
             label = ACTIONS.get(action, ("--", ""))[0]
-            mark = "\U0001F534" if action == "no" else "\U0001F7E1"
+            mark = {"no": "\U0001F534",
+                    "absorb": "\U0001F7E3"}.get(action, "\U0001F7E1")
             out.append("| %s | %s `%s` | %s | %s. |"
                        % (when, mark, cell(name), label, cell(why)))
         out += ["", "---", ""]
@@ -220,9 +234,11 @@ def build(info):
             name, ("", "Not yet reviewed."))
         label, gloss = ACTIONS.get(action, ("Not yet reviewed", ""))
         decided = facts.DECIDED.get(name, (None, None))[0]
-        out += ["#### %s `%s` — %s"
-                % ("\U0001F534" if decided and action == "no"
-                   else "\U0001F7E1", name, label),
+        head_mark = "\U0001F7E1"
+        if decided:
+            head_mark = {"no": "\U0001F534",
+                         "absorb": "\U0001F7E3"}.get(action, head_mark)
+        out += ["#### %s `%s` — %s" % (head_mark, name, label),
                 "",
                 "*%s*%s" % (facts.DESCRIPTIONS.get(name, "no description"),
                             " — %s" % gloss if gloss else ""),
