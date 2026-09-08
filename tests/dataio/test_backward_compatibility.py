@@ -39,9 +39,22 @@ XIAODUSHAN = FIXTURES / 'sim_Xiaodushan_20221026_000000_RUN0_CD_ZHAireS_0000'
 #: one of these from that file is the interesting case: the branch does not
 #: exist, and the question is whether the reader says so, raises, or invents
 #: something.
-FIELDS_ADDED_SINCE_2024 = ['nutrig_rhox', 'nutrig_rhoy', 'gps_receiver_mode',
-                           'adc_temp', 'hardware_id', 'data_format_version',
-                           'trigger_status', 'pps_id']
+#:
+#: This is all of them, not a sample: ``TADC`` declares 111 fields today and
+#: that file carries 86 branches, and the 24 below are the difference less
+#: ``is_tchain``, which is an internal flag rather than a branch.  Listing
+#: only some of them, as this did until 2026-09-08, left the rest of the
+#: difference unexercised.
+FIELDS_ADDED_SINCE_2024 = [
+    'adaq_version', 'adc_temp', 'data_format_version', 'dudaq_version',
+    'fpga_temp', 'gps_disciplining_activity', 'gps_disciplining_mode',
+    'gps_gnss_decoding', 'gps_minor_alarms', 'gps_receiver_mode',
+    'gps_sec_sun', 'gps_self_survey', 'gps_week_num', 'hardware_id',
+    'notch_filters_no_ch', 'nutrig_rhox', 'nutrig_rhoy', 'pps_id',
+    'trigger_ddr_storage', 'trigger_external_test_pulse_period',
+    'trigger_pattern_20Hz', 'trigger_pattern_ch0_ch1_ch2',
+    'trigger_pattern_ch0_ch1_notch2', 'trigger_status',
+]
 
 
 def _open(cls, path):

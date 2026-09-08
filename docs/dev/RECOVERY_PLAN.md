@@ -116,7 +116,7 @@ a third abandoned trunk.
 - [x] Parseval invariant for galactic noise — `tests/sim/test_galactic_noise_normalisation.py`
 - [x] Tree schema snapshot — `tests/dataio/test_schema_snapshot.py`
 - [x] Tree schema round-trip — `tests/dataio/test_tree_roundtrip.py`. All
-      275 branch fields of the eleven tree classes are written, the file is
+      276 branch fields of the eleven tree classes are written, the file is
       closed, reopened and compared field by field. It is generic over the
       descriptors, so a field added tomorrow is covered the day it is added.
       Found one thing: fourteen `unsigned char` fields read back as

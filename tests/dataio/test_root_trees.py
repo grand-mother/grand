@@ -83,163 +83,29 @@ class RootTreesTest(TestCase):
         self.trun.du_feb=[1,2,3]
         self.trun.t_bin_size=[1.,2.,3.]
 
-    @unittest.skip("Some TRunVoltage attributes may have changed. Test needs verification against current schema.")
-    def test_trunvoltage(self):
-        self.trunvolt = groot.TRunVoltage()
-        self.assertTrue(self.trunvolt._file is None)
-        self.assertTrue(hasattr(self.trunvolt, 'digi_ctrl'))
-        #self.assertTrue(hasattr(self.trunvolt, 'firmware_version'))
-        self.assertTrue(hasattr(self.trunvolt, 'trace_length'))
-        self.assertTrue(hasattr(self.trunvolt, 'trigger_position'))
-        self.assertTrue(hasattr(self.trunvolt, 'adc_sampling_frequency'))
-        self.assertTrue(hasattr(self.trunvolt, 'adc_sampling_resolution'))
-        self.assertTrue(hasattr(self.trunvolt, 'adc_input_channels'))
-        self.assertTrue(hasattr(self.trunvolt, 'adc_enabled_channels'))
-        self.assertTrue(hasattr(self.trunvolt, 'gain'))
-        self.assertTrue(hasattr(self.trunvolt, 'adc_conversion'))
-        self.assertTrue(hasattr(self.trunvolt, 'digi_prepost_trig_windows'))
-        self.assertTrue(hasattr(self.trunvolt, 'channel_properties_x'))
-        self.assertTrue(hasattr(self.trunvolt, 'channel_properties_y'))
-        self.assertTrue(hasattr(self.trunvolt, 'channel_properties_z'))
-        self.assertTrue(hasattr(self.trunvolt, 'channel_trig_settings_x'))
-        self.assertTrue(hasattr(self.trunvolt, 'channel_trig_settings_y'))
-        self.assertTrue(hasattr(self.trunvolt, 'channel_trig_settings_z'))
-        self.trunvolt.digi_ctrl=[[1,2,3]]
-        #self.trunvolt.firmware_version=[1]
-        self.trunvolt.trace_length=[1]
-        self.trunvolt.trigger_position=[[1,2,3]]
-        self.trunvolt.adc_sampling_frequency=[1]
-        self.trunvolt.adc_sampling_resolution=[1]
-        self.trunvolt.adc_input_channels=[1]
-        self.trunvolt.adc_enabled_channels=[1]
-        self.trunvolt.gain=[1]
-        self.trunvolt.adc_conversion=[[1,2,3]]
-        self.trunvolt.digi_prepost_trig_windows=[[1,2,3]]
-        self.trunvolt.channel_properties_x=[[1,2,3]]
-        self.trunvolt.channel_properties_y=[[1,2,3]]
-        self.trunvolt.channel_properties_z=[[1,2,3]]
-        self.trunvolt.channel_trig_settings_x=[[1,2,3]]
-        self.trunvolt.channel_trig_settings_y=[[1,2,3]]
-        self.trunvolt.channel_trig_settings_z=[[1,2,3]]
-
-    @unittest.skip("Some TADC attributes have changed names (e.g., adc_input_channels -> adc_input_channels_ch). "
-                   "Test needs to be updated to match current dataio schema.")
-    def test_tadc(self):
-        self.tadc = groot.TADC()
-        self.assertTrue(self.tadc._file is None)
-        self.assertTrue(hasattr(self.tadc, 'event_size'))
-        self.assertTrue(hasattr(self.tadc, 't3_number'))
-        self.assertTrue(hasattr(self.tadc, 'first_du'))
-        self.assertTrue(hasattr(self.tadc, 'time_seconds'))
-        self.assertTrue(hasattr(self.tadc, 'time_nanoseconds'))
-        self.assertTrue(hasattr(self.tadc, 'event_type'))
-        self.assertTrue(hasattr(self.tadc, 'event_version'))
-        self.assertTrue(hasattr(self.tadc, 'event_id'))
-        self.assertTrue(hasattr(self.tadc, 'du_count'))
-        self.assertTrue(hasattr(self.tadc, 'du_id'))
-        self.assertTrue(hasattr(self.tadc, 'du_seconds'))
-        self.assertTrue(hasattr(self.tadc, 'du_nanoseconds'))
-        self.assertTrue(hasattr(self.tadc, 'trigger_position'))
-        self.assertTrue(hasattr(self.tadc, 'trigger_flag'))
-        self.assertTrue(hasattr(self.tadc, 'atm_temperature'))
-        self.assertTrue(hasattr(self.tadc, 'atm_pressure'))
-        self.assertTrue(hasattr(self.tadc, 'atm_humidity'))
-        self.assertTrue(hasattr(self.tadc, 'acceleration_x'))
-        self.assertTrue(hasattr(self.tadc, 'acceleration_y'))
-        self.assertTrue(hasattr(self.tadc, 'acceleration_z'))
-        self.assertTrue(hasattr(self.tadc, 'battery_level'))
-        self.assertTrue(hasattr(self.tadc, 'firmware_version'))
-        self.assertTrue(hasattr(self.tadc, 'adc_sampling_frequency'))
-        self.assertTrue(hasattr(self.tadc, 'adc_sampling_resolution'))
-        self.assertTrue(hasattr(self.tadc, 'adc_input_channels'))
-        self.assertTrue(hasattr(self.tadc, 'adc_enabled_channels'))
-        self.assertTrue(hasattr(self.tadc, 'adc_samples_count_total'))
-        self.assertTrue(hasattr(self.tadc, 'adc_samples_count_channel0'))
-        self.assertTrue(hasattr(self.tadc, 'adc_samples_count_channel1'))
-        self.assertTrue(hasattr(self.tadc, 'adc_samples_count_channel2'))
-        self.assertTrue(hasattr(self.tadc, 'adc_samples_count_channel3'))
-        self.assertTrue(hasattr(self.tadc, 'trigger_pattern'))
-        self.assertTrue(hasattr(self.tadc, 'trigger_rate'))
-        self.assertTrue(hasattr(self.tadc, 'clock_tick'))
-        self.assertTrue(hasattr(self.tadc, 'clock_ticks_per_second'))
-        self.assertTrue(hasattr(self.tadc, 'gps_offset'))
-        self.assertTrue(hasattr(self.tadc, 'gps_leap_second'))
-        self.assertTrue(hasattr(self.tadc, 'gps_status'))
-        self.assertTrue(hasattr(self.tadc, 'gps_alarms'))
-        self.assertTrue(hasattr(self.tadc, 'gps_warnings'))
-        self.assertTrue(hasattr(self.tadc, 'gps_time'))
-        self.assertTrue(hasattr(self.tadc, 'gps_long'))
-        self.assertTrue(hasattr(self.tadc, 'gps_lat'))
-        self.assertTrue(hasattr(self.tadc, 'gps_alt'))
-        self.assertTrue(hasattr(self.tadc, 'gps_temp'))
-        self.assertTrue(hasattr(self.tadc, 'digi_ctrl'))
-        self.assertTrue(hasattr(self.tadc, 'digi_prepost_trig_windows'))
-        self.assertTrue(hasattr(self.tadc, 'channel_properties0'))
-        self.assertTrue(hasattr(self.tadc, 'channel_properties1'))
-        self.assertTrue(hasattr(self.tadc, 'channel_properties2'))
-        self.assertTrue(hasattr(self.tadc, 'channel_properties3'))
-        self.assertTrue(hasattr(self.tadc, 'channel_trig_settings0'))
-        self.assertTrue(hasattr(self.tadc, 'channel_trig_settings1'))
-        self.assertTrue(hasattr(self.tadc, 'channel_trig_settings2'))
-        self.assertTrue(hasattr(self.tadc, 'channel_trig_settings3'))
-        self.assertTrue(hasattr(self.tadc, 'ioff'))
-        self.assertTrue(hasattr(self.tadc, 'trace_ch'))
-        self.tadc.event_size=1
-        self.tadc.t3_number=1
-        self.tadc.first_du=0
-        self.tadc.time_seconds=1
-        self.tadc.time_nanoseconds=1
-        self.tadc.event_type=1
-        self.tadc.event_version=1
-        self.tadc.du_count=3
-        self.tadc.event_id=[1]
-        self.tadc.du_id=[1]
-        self.tadc.du_seconds=[1]
-        self.tadc.du_nanoseconds=[1]
-        self.tadc.trigger_position=[1]
-        self.tadc.trigger_flag=[1]
-        self.tadc.atm_temperature=[1]
-        self.tadc.atm_pressure=[1]
-        self.tadc.atm_humidity=[1]
-        self.tadc.acceleration_x=[1]
-        self.tadc.acceleration_y=[1]
-        self.tadc.acceleration_z=[1]
-        self.tadc.battery_level=[1]
-        self.tadc.firmware_version=[1]
-        self.tadc.adc_sampling_resolution=[1]
-        self.tadc.adc_input_channels=[1]
-        self.tadc.adc_enabled_channels=[1]
-        self.tadc.adc_samples_count_total=[1]
-        self.tadc.adc_samples_count_channel0=[1]
-        self.tadc.adc_samples_count_channel1=[1]
-        self.tadc.adc_samples_count_channel2=[1]
-        self.tadc.adc_samples_count_channel3=[1]
-        self.tadc.trigger_pattern=[1]
-        self.tadc.trigger_rate=[1]
-        self.tadc.clock_tick=[1]
-        self.tadc.clock_ticks_per_second=[1]
-        self.tadc.gps_offset=[1]
-        self.tadc.gps_leap_second=[1]
-        self.tadc.gps_status=[1]
-        self.tadc.gps_alarms=[1]
-        self.tadc.gps_warnings=[1]
-        self.tadc.gps_time=[1]
-        self.tadc.gps_long=[1]
-        self.tadc.gps_lat=[1]
-        self.tadc.gps_alt=[1]
-        self.tadc.gps_temp=[1]
-        self.tadc.digi_ctrl=[1]
-        self.tadc.digi_prepost_trig_windows=[1]
-        self.tadc.channel_properties0=[1]
-        self.tadc.channel_properties1=[1]
-        self.tadc.channel_properties2=[1]
-        self.tadc.channel_properties3=[1]
-        self.tadc.channel_trig_settings0=[1]
-        self.tadc.channel_trig_settings1=[1]
-        self.tadc.channel_trig_settings2=[1]
-        self.tadc.channel_trig_settings3=[1]
-        self.tadc.ioff=[1]
-        self.tadc.trace_ch=[1]
+    # Removed 2026-09-08: test_trunvoltage, test_tadc, test_trunshowersim and
+    # test_tshowersim.  Between them they made 110 hasattr checks that a field
+    # exists on a tree.  73c959d switched all four off in January because the
+    # schema had drifted under them, with a note that they needed updating;
+    # they were never updated, and they still fail if re-enabled.
+    #
+    # 31 of those 110 names no longer exist on their class, renamed or dropped
+    # -- adc_input_channels is adc_input_channels_ch now, and so on for the
+    # other 30.  Rewriting the lists would just produce a fresh hand-maintained
+    # copy of the names that happen to exist today, which is the thing that
+    # rotted in the first place.
+    #
+    # What covers these classes instead is generated from the classes:
+    #
+    #   tests/dataio/schema_snapshot.json     pins all 304 fields of all 11
+    #                                         tree classes, regenerated with
+    #                                         --write rather than typed out
+    #   tests/dataio/test_tree_roundtrip.py   writes and reads back every one
+    #                                         of the 276 branch fields
+    #
+    # That covers all four -- TRunVoltage 18 fields, TADC 111, TRunShowerSim
+    # 14, TShowerSim 34 -- and checks the values survive a write, which hasattr
+    # never did.
 
     def test_trawvoltage(self):
         self.trvolt = groot.TRawVoltage()
@@ -420,88 +286,7 @@ class RootTreesTest(TestCase):
         self.trunesim.sim_name='x'
         self.trunesim.sim_version='x'
 
-    @unittest.skip("Some TRunShowerSim attributes may have changed. Test needs verification against current schema.")
-    def test_trunshowersim(self):
-        self.trunssim = groot.TRunShowerSim()
-        self.assertTrue(self.trunssim._file is None)
-        self.assertTrue(hasattr(self.trunssim, 'rel_thin'))
-        self.assertTrue(hasattr(self.trunssim, 'weight_factor'))
-        self.assertTrue(hasattr(self.trunssim, 'lowe_cut_e'))
-        self.assertTrue(hasattr(self.trunssim, 'lowe_cut_gamma'))
-        self.assertTrue(hasattr(self.trunssim, 'lowe_cut_mu'))
-        self.assertTrue(hasattr(self.trunssim, 'lowe_cut_meson'))
-        self.assertTrue(hasattr(self.trunssim, 'lowe_cut_nucleon'))
-        self.assertTrue(hasattr(self.trunssim, 'site'))
-        self.assertTrue(hasattr(self.trunssim, 'sim_name'))
-        self.assertTrue(hasattr(self.trunssim, 'sim_version'))
-        self.trunssim.rel_thin=1
-        self.trunssim.weight_factor=1
-        self.trunssim.lowe_cut_e=1
-        self.trunssim.lowe_cut_gamma=1
-        self.trunssim.lowe_cut_mu=1
-        self.trunssim.lowe_cut_meson=1
-        self.trunssim.lowe_cut_nucleon=1
-        self.trunssim.site='x'
-        self.trunssim.sim_name='x'
-        self.trunssim.sim_version='x'
 
-    @unittest.skip("Some TShowerSim attributes may have changed. Test needs verification against current schema.")
-    def test_tshowersim(self):
-        self.tshsim = groot.TShowerSim()
-        self.assertTrue(self.tshsim._file is None)
-        self.assertTrue(hasattr(self.tshsim, 'input_name'))
-        self.assertTrue(hasattr(self.tshsim, 'event_date'))
-        self.assertTrue(hasattr(self.tshsim, 'rnd_seed'))
-        self.assertTrue(hasattr(self.tshsim, 'sim_primary_energy'))
-        self.assertTrue(hasattr(self.tshsim, 'sim_primary_type'))
-        self.assertTrue(hasattr(self.tshsim, 'sim_primary_inj_alt_shc'))
-        self.assertTrue(hasattr(self.tshsim, 'sim_primary_inj_dir_shc'))
-        self.assertTrue(hasattr(self.tshsim, 'hadronic_model'))
-        self.assertTrue(hasattr(self.tshsim, 'low_energy_model'))
-        self.assertTrue(hasattr(self.tshsim, 'cpu_time'))
-        self.assertTrue(hasattr(self.tshsim, 'long_depth'))
-        self.assertTrue(hasattr(self.tshsim, 'long_eminus'))
-        self.assertTrue(hasattr(self.tshsim, 'long_eplus'))
-        self.assertTrue(hasattr(self.tshsim, 'long_muminus'))
-        self.assertTrue(hasattr(self.tshsim, 'long_muplus'))
-        self.assertTrue(hasattr(self.tshsim, 'long_gamma'))
-        self.assertTrue(hasattr(self.tshsim, 'long_hadron'))
-        self.assertTrue(hasattr(self.tshsim, 'long_gamma_elow'))
-        self.assertTrue(hasattr(self.tshsim, 'long_e_elow'))
-        self.assertTrue(hasattr(self.tshsim, 'long_e_edep'))
-        self.assertTrue(hasattr(self.tshsim, 'long_mu_elow'))
-        self.assertTrue(hasattr(self.tshsim, 'long_mu_edep'))
-        self.assertTrue(hasattr(self.tshsim, 'long_hadron_elow'))
-        self.assertTrue(hasattr(self.tshsim, 'long_hadron_edep'))
-        #self.assertTrue(hasattr(self.tshsim, 'long_neutrinos'))
-        self.assertTrue(hasattr(self.tshsim, 'tested_core_positions'))
-        self.tshsim.input_name='x'
-        self.tshsim.event_date=1
-        self.tshsim.rnd_seed=1
-        self.tshsim.sim_primary_energy=[1]
-        self.tshsim.sim_primary_type=['x']
-        self.tshsim.sim_primary_inj_point_shc=[[1,2,3]]
-        self.tshsim.sim_primary_inj_alt_shc=[1]
-        self.tshsim.sim_primary_inj_dir_shc=[[1,2,3]]
-        self.tshsim.hadronic_model='x'
-        self.tshsim.low_energy_model='x'
-        self.tshsim.cpu_time=1
-        self.tshsim.long_depth=[1]
-        self.tshsim.long_eminus=[1]
-        self.tshsim.long_eplus=[1]
-        self.tshsim.long_muminus=[1]
-        self.tshsim.long_muplus=[1]
-        self.tshsim.long_gamma=[1]
-        self.tshsim.long_hadron=[1]
-        self.tshsim.long_gamma_elow=[1]
-        self.tshsim.long_e_elow=[1]
-        self.tshsim.long_e_edep=[1]
-        self.tshsim.long_mu_elow=[1]
-        self.tshsim.long_mu_edep=[1]
-        self.tshsim.long_hadron_elow=[1]
-        self.tshsim.long_hadron_edep=[1]
-        #self.tshsim.long_neutrinos=[1]
-        self.tshsim.tested_core_positions=[[1,2,3]]
 
     def test_trunnoise(self):
         self.trnoise = groot.TRunNoise()
