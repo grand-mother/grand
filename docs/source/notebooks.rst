@@ -92,9 +92,12 @@ Available
    :ref:`issue-geoid-longitude-convention`.
 
 `08. Pinning the chain <https://github.com/grand-mother/grand/blob/dev-next/notebooks/08_pipeline_regression.ipynb>`_
-   How a golden-file regression locks in the chain's answer so that a change
-   to it becomes deliberate rather than silent — what it catches, what it
-   cannot tell you, and when to regenerate it.
+   For the person about to change the chain: what will tell you the answer
+   moved.  Runs the simulation with one thing different at a time — noise
+   off, RF chain off, a different sidereal hour, a different seed — and
+   measures what the regression catches.  Shows that with a symmetric input a
+   swapped antenna arm is completely invisible, which is why the reference
+   input is asymmetric.
 
 .. note::
 

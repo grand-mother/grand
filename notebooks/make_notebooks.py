@@ -1763,145 +1763,247 @@ def check():
 
 # ------------------------------------------------- 08_pipeline_regression.ipynb
 books['08_pipeline_regression.ipynb'] = notebook(
-    r"""08 — Pinning the chain""",
-    r"""Every other notebook here explains what GRANDlib computes. This one is about
-knowing when the answer *changes*, which is a different problem and, during a
-refactor, the more pressing one.
+    r'''08 — Pinning the chain''',
+    r'''The other notebooks explain what GRANDlib computes. This one is for the person
+about to change it, and it answers one question: **if I alter the chain, what
+will tell me the answer moved?**
 
-The chain has many stages — shower, effective length, galactic noise, the RF
-chain, digitisation — and each is checked against something. What was not
-checked, until now, is the composition: every stage can be individually
-self-consistent while the whole produces different numbers than it did last
-month. Nothing in the test suite would have noticed.
+Today, one thing does. `tests/sim/test_pipeline_golden.py` runs shower to
+voltage on a fixed input with a fixed seed and compares against a stored
+result. Everything below is an experiment on that test — what it catches, how
+large a change has to be before it notices, and the one class of mistake it
+would miss if the input were chosen carelessly.
 
-A **golden-file regression** is the cheap answer. Run the chain once on a fixed
-input with a fixed seed, store the result, and compare against it forever
-after.
-
-Be clear about what that is and is not. It **locks in** today's answer; it does
-not **validate** it. If the code is wrong today, the reference is wrong too and
-the test will happily agree with it. What it buys is that a change to the
-answer becomes visible and deliberate rather than silent — which is exactly
-what you want before rewriting the thing that produces it.""",
+Be clear what a stored reference is. It **locks in** today's answer; it does not
+**validate** it. If the code is wrong today, the reference is wrong too and the
+comparison will agree with it forever. Its value is that a change becomes
+*visible and deliberate* — which is what you want immediately before rewriting
+the thing that produces it, and Phase 6 of the recovery plan does exactly
+that.''',
     [
-    md(r"""## The input, and why it looks like that
+    md(r'''## What is actually pinned
 
-Three detection units, each carrying the same Gaussian pulse at a different
-amplitude on each arm — 1.0, 0.6, 0.2.
-
-The asymmetry is deliberate. If the three arms carried equal amplitudes, then
-swapping two of them, or mis-ordering the detection units, would produce
-exactly the same output and the regression would pass through the error. Made
-asymmetric, any such mistake changes the numbers."""),
-    code(r"""import json
+Three detection units, a Gaussian pulse on each of the three arms, through the
+antenna response, the galactic noise and the RF chain. Before comparing
+anything, look at the scale — a tolerance means nothing until you know what it
+is a tolerance *of*.'''),
+    code(r'''import json, logging, tempfile, pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 
-import tests.sim.test_pipeline_golden as golden
-
-print("seed  ", golden.SEED)
-print("params", golden.PARAMS)
-print("stored", golden.GOLDEN.name)"""),
-    md(r"""## What the stored reference says about itself
-
-The file records the version, commit, seed and configuration that produced it.
-
-That is not bureaucracy. Three galactic-noise tables arrived in this repository
-as `.npy` files with no record of how they were made, and closing that gap took
-a round trip to their author. A reference file whose whole purpose is to be
-compared against is the last place to repeat that."""),
-    code(r"""with np.load(golden.GOLDEN, allow_pickle=False) as data:
-    stored = data["voltage"]
-    provenance = json.loads(str(data["provenance"]))
-
-print(json.dumps(provenance, indent=2, sort_keys=True))
-print()
-print("shape", stored.shape, " peak %.1f uV" % np.abs(stored).max())"""),
-    md(r"""## Running the chain and comparing
-
-Same input, same seed, same configuration. The comparison is bin by bin at a
-relative tolerance of $10^{-9}$ — tight enough that any physically meaningful
-change fails, loose enough that NumPy reassociating a floating-point sum
-between versions does not."""),
-    code(r"""import logging, tempfile, pathlib
-
-# ROOT announces every tree it creates. Four such lines would sit between
-# the command below and its answer, so the logger is quietened here.
+# ROOT announces every tree it creates; those lines would sit between each
+# command below and its answer.
 logging.getLogger("grand").setLevel(logging.ERROR)
 
-fresh = golden._run_chain(pathlib.Path(tempfile.mkdtemp()))
+import tests.sim.test_pipeline_golden as golden
 
-agree = np.allclose(fresh, stored, rtol=1e-9, atol=0.0)
-worst = np.abs(fresh - stored).max()
-print("reproduces the reference:", agree)
-print("largest disagreement:    %.3g uV" % worst)"""),
-    code(r"""fig, axes = plt.subplots(1, 2, figsize=(11, 3.6))
+with np.load(golden.GOLDEN, allow_pickle=False) as data:
+    reference = data["voltage"]
+    provenance = json.loads(str(data["provenance"]))
 
-t_ns = np.arange(stored.shape[2]) * golden.T_BIN_NS
+print("produced by GRANDlib", provenance["grandlib_version"],
+      "at", provenance["commit"])
+print("seed", provenance["seed"], " params", provenance["params"])
+print()
+print("shape        ", reference.shape, "  (unit, arm, sample)")
+print("peak         %8.1f uV" % np.abs(reference).max())'''),
+    md(r'''The reference carries its own provenance — version, commit, seed and
+configuration. That is not bureaucracy: three galactic-noise tables arrived in
+this repository as bare `.npy` files with no record of how they were made, and
+closing that gap took a round trip to their author. A file whose whole purpose
+is to be compared against is the last place to repeat it.
+
+Now the scale. The pulse sits on a galactic-noise floor, and the ratio between
+them is what decides whether a given perturbation is detectable at all.'''),
+    code(r'''# The noise floor: sample the tail, away from the pulse.
+tail = reference[:, :, 400:]
+floor = tail.std()
+
+print("noise floor  %8.2f uV  (RMS, samples 400-511)" % floor)
+print("peak         %8.1f uV" % np.abs(reference).max())
+print("ratio        %8.0f" % (np.abs(reference).max() / floor))
+print()
+print("a 1e-9 relative tolerance is %.2e uV — far below the noise floor,"
+      % (1e-9 * np.abs(reference).max()))
+print("so the test is pinning the exact realisation, not a statistical level.")'''),
+    code(r'''fig, ax = plt.subplots(figsize=(9, 3.4))
+t_ns = np.arange(reference.shape[2]) * golden.T_BIN_NS
 for arm, name in enumerate(("SN", "EW", "Z")):
-    axes[0].plot(t_ns, stored[0, arm], lw=1, label=name)
-axes[0].set_xlabel("time (ns)"); axes[0].set_ylabel(r"voltage ($\mu$V)")
-axes[0].set_title("stored reference, unit 0"); axes[0].legend(fontsize=8)
+    ax.plot(t_ns, reference[0, arm], lw=1, label=name)
+ax.axhspan(-floor, floor, color="grey", alpha=0.25,
+           label="noise floor (1 RMS)")
+ax.set_xlabel("time (ns)"); ax.set_ylabel(r"voltage ($\mu$V)")
+ax.set_title("what is pinned: unit 0, three arms")
+ax.legend(fontsize=8, ncol=4); fig.tight_layout()'''),
+    md(r'''## Reproducing it
 
-axes[1].plot(t_ns, (fresh - stored)[0].T, lw=1)
-axes[1].set_xlabel("time (ns)"); axes[1].set_ylabel(r"difference ($\mu$V)")
-axes[1].set_title("this run minus the reference")
-fig.tight_layout()"""),
-    md(r"""The difference panel is flat at exactly zero, not nearly zero. The same seed
-on the same platform reproduces the reference bit for bit, so the right-hand
-axis has no scale to speak of.
+Same input, same seed, same configuration.'''),
+    code(r'''def run(seed=golden.SEED, **overrides):
+    """Runs the chain once and returns the voltage traces."""
+    from grand import Efield2Voltage
+    work = pathlib.Path(tempfile.mkdtemp())
+    efield = golden._build_input(work)
+    signal = Efield2Voltage(efield, str(work / "v.root"), seed=seed)
+    params = dict(golden.PARAMS); params.update(overrides)
+    signal.params.update(params)
+    signal.compute_voltage()
+    return np.asarray(signal.vout, dtype=np.float64)
 
-Worth noticing rather than glossing over: the comparison uses a tolerance of
-$10^{-9}$, and that margin is there to survive a NumPy or BLAS upgrade
-reassociating a floating-point sum, not because anything here needs it today.
 
-## What it catches
+fresh = run()
+print("largest disagreement with the reference: %g uV"
+      % np.abs(fresh - reference).max())'''),
+    md(r'''Exactly zero — bit for bit, not nearly. The $10^{-9}$ tolerance in the test
+exists so that a NumPy or BLAS upgrade reassociating a floating-point sum does
+not fail the build; nothing here needs it today.
 
-The regression is only worth having if it fails when it should. The galactic
-noise normalisation moved by $\sqrt2$ on 2026-09-07 — a real change, correctly
-made — and that is exactly the size of thing this must not let through."""),
-    code(r"""for label, factor in [("unchanged", 1.0),
-                      ("a sqrt(2) normalisation change", np.sqrt(2)),
-                      ("a 0.01 % drift", 1.0001),
-                      ("one sample nudged by 1 part in a million", None)]:
-    if factor is None:
-        perturbed = stored.copy()
-        perturbed[1, 2, 300] *= 1.000001
-    else:
-        perturbed = stored * factor
-    passes = np.allclose(perturbed, stored, rtol=1e-9, atol=0.0)
-    print("%-42s %s" % (label, "passes" if passes else "CAUGHT"))"""),
-    md(r"""## When to regenerate it
+## What it catches, for real
 
-Rarely, and never casually:
+The interesting question is not whether the comparison works but **what size of
+mistake it detects**. So: change the chain, genuinely, and measure. Each row
+below re-runs the whole simulation with one thing different.'''),
+    code(r'''rows = []
+for label, seed, over in [
+        ("nothing (control)",            golden.SEED, {}),
+        ("galactic noise switched off",  golden.SEED, dict(add_noise=False)),
+        ("RF chain switched off",        golden.SEED, dict(add_rf_chain=False)),
+        ("sidereal time 18 h -> 19 h",   golden.SEED, dict(lst=19.0)),
+        ("a different noise seed",       1,           {}),
+]:
+    out = run(seed=seed, **over)
+    delta = np.abs(out - reference).max()
+    caught = not np.allclose(out, reference, rtol=1e-9, atol=0.0)
+    rows.append((label, delta, delta / np.abs(reference).max(), caught))
+
+print("%-30s %12s %10s   %s" % ("change", "max |diff|", "relative", "caught?"))
+for label, delta, rel, caught in rows:
+    # The control has nothing to catch, so "no" there is the right answer
+    # rather than a failure; say so instead of printing a bare NO.
+    verdict = "yes" if caught else ("--" if delta == 0 else "MISSED")
+    print("%-30s %9.4g uV %9.3g   %s" % (label, delta, rel, verdict))'''),
+    md(r'''Two of those deserve comment.
+
+**A different seed changes the answer by more than switching the noise off.**
+That is not a bug: a fresh seed draws a completely different noise realisation,
+statistically identical but numerically unrelated. It is the clearest
+demonstration that this test pins one particular realisation, not a physical
+level. Change the seed deliberately and the test fails, correctly.
+
+**One hour of sidereal time moves the answer by 2 %.** The sky is not uniform,
+so the galactic background genuinely differs. Small, real, and well above the
+tolerance.
+
+## The mistake the input is designed to catch
+
+The reference input is deliberately asymmetric — the three arms carry the same
+pulse at amplitudes 1.0, 0.6 and 0.2.
+
+That looked fussy when it was written. It is the difference between catching a
+swapped antenna arm and not, and it can be shown rather than argued.'''),
+    code(r'''from grand import Efield2Voltage
+from grand.dataio.event_trees import TEfield, TShower
+from grand.dataio.run_trees import TRun
+
+
+def run_with_amplitudes(amplitudes, swap_two_arms=False):
+    """Builds an input with the given per-arm amplitudes and runs the chain."""
+    work = pathlib.Path(tempfile.mkdtemp())
+    path = str(work / "e.root")
+
+    trun = TRun(path)
+    trun.run_number = 0
+    trun.du_id = list(range(golden.N_DU))
+    trun.du_xyz = [[0., 0., 0.], [500., 0., 0.], [0., 500., 0.]]
+    trun.t_bin_size = [golden.T_BIN_NS] * golden.N_DU
+    trun.origin_geoid = golden.SITE
+    trun.fill(); trun.write()
+
+    t = np.arange(golden.N_SAMPLES) * golden.T_BIN_NS
+    pulse = np.exp(-((t - golden.PEAK_NS) ** 2) / (2 * golden.WIDTH_NS ** 2))
+    amps = list(amplitudes)
+    if swap_two_arms:
+        amps[0], amps[1] = amps[1], amps[0]      # SN <-> EW
+    trace = np.stack([np.stack([pulse * a for a in amps])
+                      for _ in range(golden.N_DU)]).astype(np.float32)
+
+    efield = TEfield(path)
+    efield.run_number, efield.event_number = 0, 0
+    efield.du_id = list(range(golden.N_DU))
+    efield.du_nanoseconds = [0] * golden.N_DU
+    efield.du_seconds = [0] * golden.N_DU
+    efield.trace = trace
+    efield.fill(); efield.write()
+
+    shower = TShower(path)
+    shower.run_number, shower.event_number = 0, 0
+    shower.zenith, shower.azimuth = 85.0, 0.0
+    shower.energy_primary = 3.98e9
+    shower.shower_core_pos = [0.0, 0.0, 1200.0]
+    shower.xmax_pos_shc = [0.0, 0.0, 10000.0]
+    shower.fill(); shower.write()
+
+    signal = Efield2Voltage(path, str(work / "v.root"), seed=golden.SEED)
+    signal.params.update(golden.PARAMS)
+    signal.compute_voltage()
+    return np.asarray(signal.vout, dtype=np.float64)
+
+
+for name, amps in [("asymmetric  1.0 / 0.6 / 0.2   (what we use)", (1.0, 0.6, 0.2)),
+                   ("symmetric   1.0 / 1.0 / 1.0", (1.0, 1.0, 1.0))]:
+    normal = run_with_amplitudes(amps)
+    swapped = run_with_amplitudes(amps, swap_two_arms=True)
+    delta = np.abs(normal - swapped).max()
+    print("%-44s swap changes it by %8.4g uV   %s"
+          % (name, delta, "detected" if delta > 0 else "INVISIBLE"))'''),
+    md(r'''With a symmetric input, swapping two antenna arms changes **nothing** — the
+error passes straight through the regression and every other test in the suite.
+With the asymmetric input it shows up.
+
+The change is small, about 0.1 % of the peak, but the comparison is exact, so
+size does not matter — only that it is non-zero.
+
+This is the general lesson, and it outlives this notebook: **a regression test
+is only as good as the asymmetry of its input.** Symmetric inputs hide exactly
+the class of bug — swapped components, transposed indices, mis-ordered units —
+that is hardest to find by reading code.
+
+## When it fails
+
+A failure prints the version and commit that made the reference, and the
+location and size of the largest disagreement. The question is then which of
+two things happened.
+
+**You meant it.** A corrected constant, a new antenna model, a deliberate
+change to the chain. The galactic-noise fix of 2026-09-07 was one of these: it
+moved every voltage by $\sqrt2$, correctly. Regenerate, and say why in the
+commit message:
 
 ```
 python tests/sim/test_pipeline_golden.py --write
 ```
 
-Do that only when the answer is *meant* to change — a corrected constant, a new
-antenna model, a deliberate change to the chain — and say why in the commit
-message. The stored provenance then records which version produced the new
-reference, so the next person can see what they are comparing against.
+**You did not.** Then the failure is the point, and the numbers above are how
+you locate it. Compare the size and shape of the disagreement against the
+table: a factor of order one suggests a stage switched on or off, a couple of
+per cent suggests a changed input or configuration, and something confined to
+one arm suggests an indexing error.
 
-If the test fails and you did not intend a change, that is the regression doing
-its job. Find out what moved before regenerating; regenerating first destroys
-the evidence.
+**Do not regenerate first.** The reference is the only record of what the
+answer used to be, and overwriting it destroys the evidence you need.
 
-## What this does not do
+## What this cannot tell you
 
-It does not tell you the chain is correct. Nothing in this repository does,
-end to end — the closest we have is the galactic-noise level, which is rebuilt
-from the shipped tables and the documented relation and agrees exactly
-(notebook 05).
+That the chain is right. Nothing in this repository establishes that end to
+end. The closest is the galactic-noise level, rebuilt independently from the
+shipped tables and the documented relation (notebook 05).
 
-An external check would mean reproducing a published figure, which needs the
-inputs behind it to still exist. Until then, this is what stands between a
-refactor and a silently different answer."""),
+An external check means reproducing a published result, which needs the inputs
+behind it to still exist. Until someone confirms they do, this is what stands
+between a refactor and a silently different answer.'''),
     footer(
-        r"""[06 — From electric field to ADC](06_efield_to_adc.ipynb) — the chain being pinned here""",
-        r"""[05 — Galactic noise](05_galactic_noise.ipynb) — the one stage that is checked against its own inputs""",
-        r"""[04 — The RF chain](04_rf_chain.ipynb) — where most of the shape comes from""",
+        r'''[06 — From electric field to ADC](06_efield_to_adc.ipynb) — the chain being pinned here''',
+        r'''[05 — Galactic noise](05_galactic_noise.ipynb) — the one stage checked against its own inputs''',
+        r'''[04 — The RF chain](04_rf_chain.ipynb) — where most of the pulse shape comes from''',
     ),
     ])
 
