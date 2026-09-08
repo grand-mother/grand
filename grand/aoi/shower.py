@@ -10,6 +10,9 @@ from grand import CartesianRepresentation
 class Shower:
     """A class for holding a shower"""
 
+    primary_type: str = ""
+    """Shower primary particle type, such as proton, Fe, etc."""
+
     energy_em: float = 0
     """Shower from e+- (ie related to radio emission) (GeV)"""
 
@@ -27,6 +30,9 @@ class Shower:
 
     zenith: float = 0
     """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
+
+    magnetic_field: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    """Magnetic field parameters: Inclination, Declination, modulus"""
 
     ## Direction of origin (ToDo: is it the same as origin of the coordinate system?)
     _origin_geoid: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))

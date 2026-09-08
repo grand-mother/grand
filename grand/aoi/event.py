@@ -12,6 +12,7 @@ from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent
 import grand.dataio
+from line_profiler import profile
 
 
 @dataclass
@@ -177,6 +178,9 @@ class Event:
     _event_trees: list = None
     _trees: list = None
 
+    # Choose the level of the efield
+    tefield_level: int  = None
+
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
         # If the file name was given, init the Event from trees
@@ -259,7 +263,11 @@ class Event:
             self.tvoltage = self.directory.tvoltage
         if self.directory.ftefield:
             self.file_tefield = self.directory.ftefield.f
-            self.tefield = self.directory.tefield
+            # If the efield level was not specified, use the default one
+            if self.tefield_level is None:
+                self.tefield = self.directory.tefield
+            else:
+                self.tefield = getattr(self.directory, f"tefield_l{self.tefield_level}")
         if self.directory.ftshower_l1:
             self.file_tshower = self.directory.ftshower_l1.f
             self.tshower = self.directory.tshower_l1
@@ -295,7 +303,7 @@ class Event:
         self._origin_geoid = CartesianRepresentation(x=v[0], y=v[1], z=v[2])
 
     ## Fill this event from trees
-    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True, gp300_workaround=True):
+    def fill_event_from_trees(self, event_number=None, run_number=None, entry_number=None, simshower=False, use_trawvoltage=False, trawvoltage_channels=[0,1,2], init_trees=True, gp300_workaround=True, tefield_level=None):
         """Fill this event from trees
 
         Parameters
@@ -444,8 +452,12 @@ class Event:
         if self.file_tefield:
             # If initialising trees requested
             if init_trees:
+                tree_name = "tefield"
+                # If specific tree level was requested
+                if tefield_level:
+                    tree_name += f"_{tefield_level}"
                 # Check the Efield tree existence
-                if tefield := self.file_tefield.Get("tefield"):
+                if tefield := self.file_tefield.Get(tree_name):
                     self.tefield = TEfield(_tree=tefield)
                 else:
                     print("No Efield tree. Efield information will not be available.")
@@ -718,6 +730,21 @@ class Event:
 
                 self.antennas.append(a)
 
+                self._all_antennas = {}
+
+            # ToDo: it seems that all antennas of the array may be needed in AOI, so perhaps they should be advanced from an internal variable
+            for i in range(len(self.trun.du_id)):
+                a = Antenna()
+                a.id = self.trun.du_id[i]
+                a.position.x = self.trun.du_xyz[i][0]
+                a.position.y = self.trun.du_xyz[i][1]
+                a.position.z = self.trun.du_xyz[i][2]
+                a.tilt.x = 0
+                a.tilt.y = 0
+
+                self._all_antennas[a.id] = a
+
+
 
     ## Fill part of the event from the Voltage tree
     def fill_event_from_voltage_tree(self, use_trawvoltage=False, trawvoltage_channels=(0,1,2)):
@@ -756,10 +783,15 @@ class Event:
         for i in range(trace_cnt):
             # Fill the voltage trace part
             v = Voltage()
+            # trr = self.tvoltage.trace[i]
             if not use_trawvoltage:
-                tx = self.tvoltage.trace[i][0]
+                trace = self.tvoltage.trace[i]
+                # tx = self.tvoltage.trace[i][0]
+                tx = trace[0]
             else:
-                tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
+                trace = self.tvoltage.trace_ch[i]
+                # tx = self.tvoltage.trace_ch[i][trawvoltage_channels[0]]
+                tx = trace[trawvoltage_channels[0]]
             v.n_points = len(tx)
             # ToDo: That's the trigger time for now, and should be the start time of the trace
             v.t0 = np.datetime64(self.tvoltage.du_seconds[i]*1000000000+self.tvoltage.du_nanoseconds[i], "ns")
@@ -768,11 +800,15 @@ class Event:
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
             if not use_trawvoltage:
-                v.trace.y = self.tvoltage.trace[i][1]
-                v.trace.z = self.tvoltage.trace[i][2]
+                v.trace.y = trace[1]
+                v.trace.z = trace[2]
+                # v.trace.y = self.tvoltage.trace[i][1]
+                # v.trace.z = self.tvoltage.trace[i][2]
             else:
-                v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
-                v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
+                # v.trace.y = self.tvoltage.trace_ch[i][trawvoltage_channels[1]]
+                # v.trace.z = self.tvoltage.trace_ch[i][trawvoltage_channels[2]]
+                v.trace.y = trace[trawvoltage_channels[1]]
+                v.trace.z = trace[trawvoltage_channels[2]]
 
             # Generate the time array
             v.calculate_t_vector(min_t0)
@@ -824,14 +860,18 @@ class Event:
         # Loop through traces
         for i in range(len(self.tefield.trace)):
             v = Efield()
-            tx = self.tefield.trace[i][0]
+            trace = self.tefield.trace[i]
+            # tx = self.tefield.trace[i][0]
+            tx = trace[0]
             v.n_points = len(tx)
             v.t0 = np.datetime64(self.tefield.du_seconds[i] * 1000000000 + self.tefield.du_nanoseconds[i], "ns")
             # The default size of the CartesianRepresentation is wrong. ToDo: it should have some resize
             v.trace = CartesianRepresentation(x=np.zeros(len(tx), np.float64), y=np.zeros(len(tx), np.float64), z=np.zeros(len(tx), np.float64))
             v.trace.x = tx
-            v.trace.y = self.tefield.trace[i][1]
-            v.trace.z = self.tefield.trace[i][2]
+            # v.trace.y = self.tefield.trace[i][1]
+            # v.trace.z = self.tefield.trace[i][2]
+            v.trace.y = trace[1]
+            v.trace.z = trace[2]
 
             # Generate the time array
             v.calculate_t_vector(min_t0)
@@ -875,6 +915,8 @@ class Event:
             ret = tree.get_entry(self._entry_number)
         else:
             ret = tree.get_event(self.event_number, self.run_number)
+        ## Shower primary particle type
+        shower.primary_type = tree.primary_type
         ## Shower energy from e+- (ie related to radio emission) (GeV)
         shower.energy_em = tree.energy_em
         ## Shower total energy of the primary (including muons, neutrinos, ...) (GeV)
@@ -891,6 +933,8 @@ class Event:
         shower.origin_geoid = self.trun.origin_geoid
         ## Poistion of the core on the ground in the site's reference frame
         shower.core_ground_pos = tree.shower_core_pos
+        ## Magnetic field in the place of shower
+        shower.magnetic_field = tree.magnetic_field
 
         return ret
 
