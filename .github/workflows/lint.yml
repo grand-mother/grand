@@ -36,8 +36,13 @@ jobs:
       # The D rules are the docstring ratchet: pyproject.toml carries a
       # per-file-ignores list of modules not yet converted to numpydoc.  That
       # list may shrink and must never grow, which is what this enforces.
+      #
+      # granddb/ joined on 2026-09-08.  It ships in every wheel -- the `grand*`
+      # package glob in pyproject.toml matches it -- so it belongs in the same
+      # gate as grand/, and its 212 pre-existing findings are baselined in that
+      # same table rather than fixed in one pass.
       - name: Ruff
-        run: ruff check grand/ tests/ quality/ notebooks/ docs/dev/
+        run: ruff check grand/ tests/ quality/ notebooks/ docs/dev/ granddb/
 
   handbook:
     name: Handbook PDF

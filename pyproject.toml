@@ -167,6 +167,13 @@ convention = "numpy"
 # loses its "D"; a file cleaned of a rule loses that rule.  New entries are not
 # added -- new code is written clean.
 #
+# One exception, and only one: code that has never been linted at all, entering
+# the scope for the first time.  That is not new debt, it is debt becoming
+# visible, and baselining it is the same act that recorded the original 336
+# findings above.  It has happened once since: granddb/ on 2026-09-08, when it
+# turned out to ship in every wheel while sitting outside every gate.  If you
+# find yourself adding an entry for any other reason, the answer is no.
+#
 # grand/geo/coordinates.py came off the D list on 2026-08-30, the first module
 # fully converted.
 
@@ -227,3 +234,21 @@ convention = "numpy"
 "tests/recon/test_elec_field.py" = ["F841"]
 "tests/recon/test_params_shower.py" = ["F841"]
 "tests/sim/test_antenna.py" = ["F841"]
+
+# granddb, baselined 2026-09-08 when it entered the lint scope.  212 findings
+# in code CI had never looked at.  The F-rules here are real: F403/F405 are
+# `import *`, F401 unused imports, F841 unused variables.  They come off in
+# stages 3 and 4; the D entries follow module by module as elsewhere.
+"granddb/ReadRootForDb.py" = ["D", "E402"]
+"granddb/__init__.py" = ["D"]
+"granddb/datamanager.py" = ["D", "E401", "E714", "F541"]
+"granddb/docker/test.py" = ["D"]
+"granddb/granddblib.py" = ["D", "E401", "E713", "F541"]
+"granddb/monitoring.py" = ["D", "F401", "F403", "F405", "F541", "F841"]
+"granddb/monitoring_site.py" = ["D", "F401", "F403", "F405", "F541", "F841"]
+"granddb/refresh_mat_views.py" = ["D"]
+"granddb/register_dataset_in_db.py" = ["D", "E401", "F401"]
+"granddb/register_dir_in_db.py" = ["D", "E401", "F401"]
+"granddb/register_file_in_db.py" = ["D", "E401", "F401"]
+"granddb/register_in_db.py" = ["D", "E401", "F401"]
+"granddb/rootdblib.py" = ["D"]

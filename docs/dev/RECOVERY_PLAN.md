@@ -38,7 +38,7 @@ Measured in the built environment on 2026-09-08:
 | Coverage | 71 % over `grand/` |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
-| Lint | clean over `grand/ tests/ quality/ notebooks/ docs/dev/` |
+| Lint | clean over `grand/ tests/ quality/ notebooks/ docs/dev/ granddb/` — granddb joined 2026-09-08, its 212 findings baselined in the ratchet |
 | Documentation | 23 authored pages + API over 33 of 34 modules + the Handbook; **zero warnings**; **published at https://grand-mother.github.io/grand/** |
 | Known issues | 17, of which 2 resolved on 2026-09-07 |
 | Notebooks | 9, generated and executed by `notebooks/make_notebooks.py`, each stamped with the commit and time it was built |

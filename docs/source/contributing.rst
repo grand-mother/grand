@@ -39,9 +39,14 @@ Everything CI runs, you can run.  Nothing here needs a container.
     python notebooks/make_notebooks.py                  # the notebooks
     python quality/docstring_coverage.py                # docstring coverage
 
-The lint scope is exactly what the CI job checks.  ``sim2root/``, ``granddb/``,
-``examples/`` and ``src_outlib/`` are **not** linted — see :doc:`sim2root` for
-why, and do not take their style as a model.
+The lint scope is exactly what the CI job checks.  ``granddb/`` joined it on
+2026-09-08: it ships in every wheel, since the ``grand*`` package glob matches
+it, so it belongs in the same gate as ``grand/``.  Its pre-existing findings are
+baselined in the ratchet below rather than fixed in one pass, so do not take its
+current style as a model either.
+
+``sim2root/``, ``examples/`` and ``src_outlib/`` are still **not** linted — see
+:doc:`sim2root` for why.
 
 The lint ratchet
 ----------------
