@@ -35,7 +35,7 @@ Measured in the built environment on 2026-09-08:
 |---|---|
 | Merge queue | 8 of 9 merged; **nothing blocked**; 1 in doubt (`dev_database`) |
 | Test suite | **566 passed, 10 skipped, 10 xfailed, 1 xpassed, 0 failed** |
-| Coverage | 73 % over `grand/`; 17 % over `granddb/`, measured from 2026-09-08; 62 % together |
+| Coverage | 73 % over `grand/`; 20 % over `granddb/`, measured from 2026-09-08; 63 % together |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
 | Lint | clean over `grand/ tests/ quality/ notebooks/ docs/dev/ granddb/` — granddb joined 2026-09-08, its 212 findings baselined in the ratchet |
