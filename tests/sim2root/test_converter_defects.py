@@ -383,12 +383,13 @@ def test_the_altitude_override_is_still_in_place():
 
 
 # --------------------------------------------------------------------------
-# `read_list_of_params` in sim2root/CoREASRawRoot/CorsikaInfoFuncs.py returned
-# the builtin `list` for any keyword that was not in the file: the local
-# variable holding the result shadowed the builtin and was never assigned when
-# the loop found nothing.  On Python 3.9 and later `list[0]` is a generic
-# alias rather than an error, so the absence travelled silently into the ROOT
-# trees.  Fixed September 2026; these tests keep it fixed.
+# `read_list_of_params` in sim2root/CoREASRawRoot/CorsikaInfoFuncs.py raised
+# `UnboundLocalError` for any keyword that was not in the file.  Its result was
+# held in a local named `list`, and assigning that name anywhere in the body
+# makes it local throughout, so `return list` on the not-found path referred to
+# a variable that had never been assigned rather than to the builtin.  The
+# error named neither the keyword nor the file, and arrived from inside a
+# conversion run.  Fixed September 2026; these tests keep it fixed.
 # --------------------------------------------------------------------------
 
 def _corsika_info():
@@ -431,20 +432,23 @@ def _inp_file(tmp_path, with_parallel):
 
 
 @needs_corsika_info
-def test_an_absent_keyword_returns_none_not_the_builtin_list(tmp_path):
-    r"""The regression itself: absence must not come back as ``list``.
+def test_an_absent_keyword_returns_none_rather_than_raising(tmp_path):
+    r"""The regression itself: absence is a value, not an exception.
 
-    Both halves matter.  ``is None`` is the contract callers now check, and
-    ``is not list`` is the specific wrong answer that used to be returned --
-    a test asserting only the first would still pass if some later edit
-    reintroduced a bare ``return list`` under a different name.
+    ``is not list`` is checked as well as ``is None`` because the obvious wrong
+    repair is to stop the ``UnboundLocalError`` by making the name refer to the
+    builtin -- renaming the local, or initialising it to ``list``.  That would
+    return the type object, and on Python 3.9 and later ``list[0]`` is a
+    generic alias rather than an error, so the absence would reach the ROOT
+    trees as ``list[0]`` instead of failing.  Trading a loud error for a silent
+    wrong number is the one outcome worse than the original.
     """
     module = _corsika_info()
     values = module.read_list_of_params(_inp_file(tmp_path, False), 'PARALLEL')
 
     assert values is not list, (
-        'an absent keyword is returning the builtin list again; on Python 3.9+ '
-        'the caller then stores list[0] rather than failing')
+        'an absent keyword now returns the builtin list; the caller will store '
+        'list[0], which is a generic alias and not an error')
     assert values is None
 
 
@@ -483,10 +487,14 @@ def test_the_coreas_converter_tolerates_a_missing_parallel_card():
     r"""Issue #147: a non-parallel CoREAS run writes no PARALLEL card.
 
     Read statically -- the converter cannot be imported.  The branch on
-    ``parallel is None`` is what makes the absence survivable; an earlier
-    proposal on ``147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root``
-    wrapped the subscript in ``try/except`` instead, which never fired because
-    the absence did not raise.
+    ``parallel is None`` is what makes the absence survivable.
+
+    ``147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root`` proposed
+    a bare ``try/except`` around the subscript instead.  That does work -- the
+    ``UnboundLocalError`` is an exception like any other -- but it catches
+    every other failure too, including an unreadable file, and writes -1 for
+    all of them; and it leaves ECUTS, THIN and THINH raising the same
+    unhelpful error.
     """
     converter = ROOT / 'sim2root' / 'CoREASRawRoot' / 'CoreasToRawROOT.py'
     if not converter.exists():

@@ -61,12 +61,16 @@ def read_list_of_params(input_file, param):
     it that also parses as a list of numbers wins.
 
     Returns None when the parameter is not in the file.  Callers must check:
-    some CORSIKA keywords are genuinely optional (PARALLEL is only written by
-    parallel CoREAS runs), and until September 2026 this function returned the
-    builtin ``list`` in that case -- the local variable shadowed it and was
-    never assigned.  That was not an error on Python 3.9 and later, where
-    ``list[0]`` is a generic alias rather than a failure, so a missing keyword
-    reached the ROOT trees as ``list[0]`` instead of a number.
+    some CORSIKA keywords are genuinely optional -- PARALLEL is only written by
+    parallel CoREAS runs.
+
+    Until September 2026 this function held its result in a local named
+    ``list``.  Assigning that name anywhere in the body makes it local
+    throughout, so the not-found path did not return the builtin: it raised
+    ``UnboundLocalError: cannot access local variable 'list' where it is not
+    associated with a value``, from inside a conversion run, naming neither the
+    keyword nor the file.  Returning None instead lets the caller say which
+    keyword was missing and decide whether that is an error.
     """
     # works for both SIM.reas and RUN.inp, as long as you are looking for numbers
     values = None

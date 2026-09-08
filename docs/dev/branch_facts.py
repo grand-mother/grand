@@ -148,11 +148,20 @@ VERDICTS = {
         "does not overlap. The readme already mentions ARM twice, so fold "
         "the steps in rather than appending."),
     "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root": ("no",
-        "The problem is real -- a non-parallel CoREAS run writes no PARALLEL "
-        "card -- but the fix cannot work: it wraps the subscript in "
-        "try/except, and a missing keyword raised nothing to catch, because "
-        "read_list_of_params returned the builtin list. Fixed properly on the "
-        "trunk in September 2026. Close the branch."),
+        "The problem is real and the fix works. A non-parallel CoREAS run "
+        "writes no PARALLEL card, and the reader raised UnboundLocalError -- "
+        "its result was held in a local named `list`, which made the name "
+        "local throughout, so the not-found path returned a variable that had "
+        "never been assigned. The branch's bare try/except does catch that."
+        "\n\n"
+        "It is superseded rather than wrong. The trunk fixed the reader itself "
+        "in September 2026: absence now returns None, PARALLEL is handled on "
+        "an explicit `is None`, and ECUTS, THIN and THINH raise an error "
+        "naming the keyword and the file instead of the same unhelpful "
+        "UnboundLocalError. The branch's bare `except:` catches every other "
+        "failure too -- an unreadable file included -- and writes -1 for all "
+        "of them. The two conflict, and the trunk's version is the one to "
+        "keep. Close the branch and the issue."),
     "dev_leisos": ("cherry-pick",
         "A real fix in get_antenna_position (an `or` that should be an `and`, "
         "plus guarded assignment) under 35,000 lines of committed CORSIKA "
