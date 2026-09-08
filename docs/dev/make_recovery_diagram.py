@@ -21,7 +21,7 @@ QUEUE = [
     ('dev_reprocessing',               'Snakemake pipeline',      'done'),
     ('dev_Event_write',                'tshower writing',         'done'),
     ('..._lwp_new_fields',             'name clash: NUTRIG',      'blocked'),
-    ('..._aoi_levels_lwp',             'levels, +40% speed',      'blocked'),
+    ('..._aoi_levels_lwp',             'levels, +40% speed',      'done'),
     ('dev_snonis',                     'noise √2 fix',            'done'),
     ('dev_database',                   'nothing unmerged?',       'todo'),
 ]
@@ -37,7 +37,7 @@ WORK = [
     ('Sphinx docs',    'done'),
     ('schema test',    'done'),
     ('CI green',       'done'),
-    ('532 tests',      'done'),
+    ('566 tests',      'done'),
     ('cov 71%',        'done'),
     ('interface',      'todo'),
 ]
