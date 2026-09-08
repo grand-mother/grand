@@ -31,6 +31,7 @@ import pandas as pd
 # http://holoviews.org/getting_started/index.html
 import panel as pn
 import holoviews as hv
+from bokeh.models import TapTool
 from holoviews import opts, dim
 
 from scipy.signal import hilbert
@@ -64,6 +65,28 @@ color_options = ['Blues', 'Reds', 'RdBu_r', 'RdYlBu_r',
                  'magma_r', 'mako_r', 'plasma_r', 'rainbow',
                  'seismic', 'summer_r', 'spring', 'terrain_r', 'turbo',
                  'viridis_r', 'vlag', 'winter_r', 'colorblind']
+
+
+def _tap_only_this_layer(plot, element):
+    """Points the figure's tap tool at this element's glyphs alone.
+
+    A HoloViews plot hook.  Called after the Bokeh figure is built, with
+    `plot.handles['glyph_renderer']` being the renderer for the element the
+    hook is attached to.
+
+    Parameters
+    ----------
+    plot : holoviews.plotting.bokeh.ElementPlot
+        The plot being built.
+    element : holoviews.Element
+        The element being drawn.  Unused; the hook signature requires it.
+    """
+    renderer = plot.handles.get('glyph_renderer')
+    if renderer is None:
+        return
+    for tool in plot.state.toolbar.tools:
+        if isinstance(tool, TapTool):
+            tool.renderers = [renderer]
 
 
 class EventViewer:
@@ -787,7 +810,15 @@ class EventViewer:
             self.plot_hits, streams=[self.stream_hits]
         )
         # tap hits antenna to plot its electric field traces.
-        dmap_hits_plot.opts(opts.Points(tools=['tap', 'hover']))
+        # The tap tool has to be restricted to this layer.  Bokeh gives it
+        # renderers='auto', meaning every renderer on the figure, and this
+        # figure is an overlay: the 288-antenna background array sits under
+        # every hit, so a tap resolved against the background instead and the
+        # Selection1D stream below never fired.  The trace stayed on whichever
+        # antenna it started with, which looked like a viewer with no
+        # interaction at all.
+        dmap_hits_plot.opts(opts.Points(tools=['tap', 'hover'],
+                                        hooks=[_tap_only_this_layer]))
 
         # Shower core
         pcore = hv.DynamicMap(

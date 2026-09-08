@@ -144,3 +144,45 @@ def test_an_out_of_range_event_says_so_instead_of_failing_obscurely():
 
     message = str(raised.value)
     assert '999' in message and 'event' in message.lower()
+
+
+@needs_viewer
+@needs_sample
+def test_the_tap_tool_is_restricted_to_the_hit_antennas():
+    r"""Clicking an antenna must select it, and this is what makes it work.
+
+    Bokeh gives a tap tool ``renderers='auto'``, meaning every renderer on the
+    figure.  The array plot is an overlay -- the full 288-antenna layout, then
+    the hit antennas, then the shower core -- and the background sits under
+    every hit, so taps resolved against the background and the ``Selection1D``
+    stream never fired.  The trace stayed on whichever antenna it started
+    with, which reads as a viewer with no interaction at all.
+
+    Checked at the Bokeh level because the click itself cannot be: there is no
+    browser here.  Verified by hand in one, 2026-09-09, by clicking two
+    different antennas and watching the title and trace follow.
+    """
+    from bokeh.models import TapTool
+    import holoviews as holo
+
+    module = _viewer_module()
+    viewer = module.EventViewer(datadir=str(SAMPLE), event=0)
+    viewer.view(serve=False)
+
+    figure = holo.renderer('bokeh').get_plot(viewer.dmap).state
+    taps = [tool for tool in figure.toolbar.tools if isinstance(tool, TapTool)]
+    assert len(taps) == 1, 'expected exactly one tap tool, found %d' % len(taps)
+
+    renderers = taps[0].renderers
+    assert renderers != 'auto', (
+        "the tap tool is back to renderers='auto', so it will resolve against "
+        'the background array and clicking an antenna will do nothing')
+    assert len(renderers) == 1, (
+        'the tap tool covers %d renderers; it must cover only the hit '
+        'antennas' % len(renderers))
+
+    hit_counts = {len(r.data_source.data['X']) for r in renderers
+                  if 'X' in r.data_source.data}
+    assert hit_counts and max(hit_counts) < 288, (
+        'the tap tool is pointed at a layer with %s points, which looks like '
+        'the 288-antenna background rather than the hits' % hit_counts)

@@ -1,9 +1,10 @@
 # Event viewer
 
-A view of one simulated event: the GP300 array, with the antennas that were hit
-coloured by peak time; the electric-field trace and Hilbert envelope of one of
-them; the shower parameters; and interpolated peak-amplitude maps in the ground
-plane, the shower plane and the angular plane.
+An interactive view of one simulated event: the GP300 array, with the antennas
+that were hit coloured by peak time; click one and its electric-field trace and
+Hilbert envelope appear beside it. Below are the shower parameters and
+interpolated peak-amplitude maps in the ground plane, the shower plane and the
+angular plane.
 
 It runs as a small web application in your browser.
 
@@ -42,15 +43,6 @@ Originally [rameshkoirala/EventViewer](https://github.com/rameshkoirala/EventVie
 
 Stated plainly so nobody loses an afternoon discovering it:
 
-- **Clicking an antenna does not change the trace.** This is the feature the
-  tool most looks like it has. The trace shown is whichever antenna the
-  `Selection1D` stream starts on — the middle one of the hit list — and it
-  stays there. Verified by clicking, in a browser, on two different hit
-  antennas: the title stayed on the same antenna both times. The `tap` tool is
-  listed at `dmap_hits_plot.opts(...)`, so the intent is there and something
-  further down does not connect; making `tap` the active tool does not fix it
-  either. Diagnosing it properly was out of scope for the repair that made the
-  viewer runnable.
 - **The Play button does nothing.** `animate` is not wired to it and is marked
   in the source as needing an update. The **Browse** file input and the colour
   selector are inert for the same reason.
@@ -76,11 +68,17 @@ sample run committed to this repository and renders it, which is what forces
 the interactive callbacks to execute. It skips unless the `viewer` extra is
 installed, and CI installs it.
 
-What the test does not do is click anything. It proves the interface builds
-and draws; the interactive selection above is broken and a rendering test
-cannot see that.
+It also checks that the tap tool is restricted to the hit antennas, which is
+what makes clicking work. Bokeh gives a tap tool every renderer on the figure
+by default, and this figure is an overlay: the 288-antenna background sits
+under every hit, so taps resolved against the background and selecting an
+antenna did nothing at all. A plot hook pins the tool to the hits layer.
 
-That test is the reason this file can promise the viewer starts and draws. It had stopped
+The click itself cannot be tested here — there is no browser — so that part
+was verified by hand in one, on 2026-09-09, by clicking two different antennas
+and watching the title and the trace follow.
+
+That test is the reason this file can promise the viewer works. It had stopped
 being runnable by anyone but its author — a hard-coded event index of 862, a
 data path on her machine, and a class that raised `NameError` if imported
 rather than run — and none of that was visible, because nothing exercised it.
