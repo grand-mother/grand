@@ -11,7 +11,7 @@ pathspec
 pillow
 psycopg2-binary
 py
-pynac
+pynacl
 pyparsing
 scp
 sqlalchemy

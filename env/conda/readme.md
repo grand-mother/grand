@@ -76,6 +76,9 @@ pip install -r reqmt_db.txt
 
 `reqmt_db.txt` is in grand/env/conda directory like `reqmt_grandenv_2509.yml`.
 
+Note that `grand-dev.yml` now installs what `granddb` needs on its own, so
+this overlay is only for environments not built from that file.
+
 
 ### Clone grand package and initialisation
 

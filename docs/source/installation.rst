@@ -79,10 +79,17 @@ documentation dependencies that nothing declared at all.
 Optional overlays
 -----------------
 
-Database work needs additional packages, kept separate because most users
-never touch PostgreSQL::
+The conda environment above already carries what ``granddb`` needs —
+``sqlalchemy``, ``psycopg2``, ``paramiko``, ``sshtunnel`` and ``scp``.  It
+ships as part of this package, so its dependencies belong in the environment
+rather than in an overlay a contributor might not have when running the tests.
 
-    pip install -r env/conda/reqmt_db.txt
+Installing outside conda, take them from the package's own extra::
+
+    pip install -e '.[db]'
+
+``env/conda/reqmt_db.txt`` predates that extra and is kept for existing
+workflows; it installs a wider set than ``granddb`` actually uses.
 
 The Snakemake reprocessing pipeline is likewise not in the core environment —
 ``conda-forge`` has no ``snakemake-minimal`` build for every platform, and

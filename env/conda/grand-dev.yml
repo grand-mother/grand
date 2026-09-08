@@ -10,7 +10,9 @@
 #     source env/setup.sh          # compiles TURTLE and GULL via src/Makefile
 #     pytest
 #
-# Database work needs the separate overlay in reqmt_db.txt; most users do not.
+# granddb, the data catalogue, ships as part of this package, so its
+# dependencies are here rather than in an overlay -- see the block at the
+# bottom.  reqmt_db.txt remains for installing outside conda.
 name: grand-dev
 channels:
   - conda-forge
@@ -63,4 +65,21 @@ dependencies:
   # platform, and the reprocessing pipeline (dev_reprocessing) is the only
   # thing that needs it.  It belongs in a pipeline overlay, not the core
   # development environment -- most contributors never run Snakemake.
+  #
+  # --- granddb, the data catalogue ---
+  # These were an optional overlay while granddb sat outside the lint and test
+  # gates.  It does not sit outside them any more: `include = ["grand*"]` in
+  # pyproject.toml matches `granddb`, so it ships in every wheel, and a
+  # distributed package belongs inside the gates that cover the rest.  Tests
+  # cannot skip their way to passing, so the dependencies have to be in the
+  # environment CI builds -- this file, for both the test and the lint job.
+  #
+  # Note the name: conda-forge calls it `psycopg2`, where the pip extra in
+  # pyproject.toml calls it `psycopg2-binary`.  Same library, different
+  # packaging of libpq.
+  - sqlalchemy
+  - psycopg2
+  - paramiko
+  - sshtunnel
+  - scp
   - pip
