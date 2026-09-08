@@ -71,11 +71,12 @@ Available
    :ref:`the known issue <issue-vga-gain-ignored>`.
 
 `05. Galactic noise <https://github.com/grand-mother/grand/blob/dev-next/notebooks/05_galactic_noise.ipynb>`_
-   The LFMap-derived tables, the diurnal cycle, the spectral shape, and a
-   worked measurement of the normalisation showing that the simulated RMS is
-   :math:`1/\sqrt2` of the tabulated value.  Also shows that ``du_type``
-   changes the absolute level by up to a factor of two.  See
-   :ref:`issue-galactic-noise-normalisation`.
+   Follows one number — the microvolts of noise on an antenna arm — from the
+   LFMap radio sky to a simulated trace, and then checks it.  The sky is 180
+   times brighter at 30 MHz than at 250, which is why every noise spectrum
+   falls so steeply; the level varies by a third over a sidereal day; and the
+   expected level, rebuilt independently from the shipped tables and the
+   antenna impedance, agrees with the simulation to a few tenths of a percent.
 
 `06. From electric field to ADC counts <https://github.com/grand-mother/grand/blob/dev-next/notebooks/06_efield_to_adc.ipynb>`_
    The whole chain on a fixture built in the notebook: each stage isolated,

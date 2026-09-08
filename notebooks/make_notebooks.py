@@ -889,258 +889,248 @@ invisible one.'''),
     ),
     ])
 
-# --------------------------------------------------- 05_galactic_noise.ipynb
+# ----------------------------------------------------- 05_galactic_noise.ipynb
 books['05_galactic_noise.ipynb'] = notebook(
     r'''05 — Galactic noise''',
-    r'''Below about 100 MHz the sky is bright. The Galactic synchrotron background is
-the dominant noise source for GRAND, larger than the receiver's own noise, and
-it is not constant: as the Earth turns, the Galactic plane rises and sets, and
-the noise level follows local sidereal time.
+    r'''GRAND's sensitivity floor is not its electronics. It is the Galaxy.
 
-That matters for two reasons. The obvious one is the trigger threshold. The
-subtler one is that the noise level is a *calibration signal* — it is the one
-input whose amplitude is known independently of the instrument, so comparing
-measured to predicted Galactic noise is how the absolute response of a
-detection unit gets checked in the field.''',
+Below about 300 MHz the sky is a bright radio source — thousands of kelvin of
+synchrotron emission from cosmic-ray electrons in the Galactic magnetic field —
+and any antenna pointed at it receives that power whether you want it or not.
+Every trigger threshold, every sensitivity estimate and every detection
+significance in GRAND rests on how large that floor is.
+
+This notebook follows **one number** — the microvolts of noise on one antenna
+arm — from the radio sky to a simulated trace, and then checks it. Each step
+below is a real array shipped with the package, so the chain can be walked
+rather than described.
+
+The last step is worth flagging in advance. The expected noise level can be
+rebuilt here, independently of the simulation code, from the tables and the
+antenna impedance. It agrees to a fraction of a percent. That closes a loop
+which was an open question in this repository until September 2026.''',
     [
+    md(r'''## 1. The sky
+
+The LFMap survey gives brightness temperature over the sky as a function of
+frequency. GRANDlib ships it as one array per megahertz, each unpacking into
+right ascension, a polar angle, and temperature on a 72 × 36 grid.'''),
     code(r'''import numpy as np
 import matplotlib.pyplot as plt
-
 from grand import grand_add_path_data
-from grand.sim.noise.galaxy import galactic_noise
 
-# The tabulated model is defined on a 1 MHz grid from 30 to 250 MHz.  Asking for
-# a different grid interpolates; asking outside the range extrapolates silently,
-# so stay inside it.
-freqs_mhz = np.arange(30.0, 251.0)
+ra, polar, temp_30 = np.load(grand_add_path_data("noise/LFmap/LFmapshort30.npy"))
+temp_250 = np.load(grand_add_path_data("noise/LFmap/LFmapshort250.npy"))[2]
 
-# size_out is the length of the padded time trace the spectrum will eventually be
-# transformed back into.  It enters the amplitude normalisation, which is the
-# subject of section 6.
-SIZE_OUT = 1024
-
-# f_lst is the local sidereal time in hours; seed makes the draw reproducible.
-v = galactic_noise(f_lst=18.0, size_out=SIZE_OUT, freqs_mhz=freqs_mhz,
-                   nb_ant=4, seed=0)
-print("shape (n_ant, 3 arms, n_freq):", v.shape, v.dtype)'''),
-    md(r'''## 1. The tabulated model
-
-The underlying tables come from LFMap sky brightness temperatures folded
-through the antenna response of notebook 03. They are stored per frequency, per
-hour of LST, per arm.
-
-The transpose in the next cell is not cosmetic: it is exactly what `galaxy.py`
-does internally, and the resulting axis order is what every slice below
-assumes.'''),
-    code(r'''tab = np.load(grand_add_path_data("noise/Vocmax_30-250MHz_uVperMHz_nec.npy"))
-print("as stored :", tab.shape, "  (frequency, LST hour, arm)")
-
-tab = np.transpose(tab, (0, 2, 1))          # what galaxy.py does
-print("as used   :", tab.shape, "  (frequency, arm, LST hour)")
-
-# Index 17 is LST 18 h: the code indexes with lst - 1, so hour h is column h-1.
-print("one LST slice:", tab[:, :, 17].shape, " -> 221 frequencies x 3 arms at LST 18 h")'''),
-    md(r'''## 2. Noise against local sidereal time
-
-This is the diurnal cycle. Each arm sees the Galactic plane differently
-because each arm points differently — which is exactly the asymmetry notebook
-03 measured.'''),
-    code(r'''lst_hours = np.arange(1, 25)
-
-fig, ax = plt.subplots(figsize=(7.5, 4))
-for i, arm in enumerate('XYZ'):
-    # Quadrature sum over frequency: the band-integrated amplitude, since power
-    # adds and the table holds amplitudes.
-    y = np.sqrt(np.sum(tab[:, i, :] ** 2, axis=0))
-    ax.plot(lst_hours, y, marker='o', ms=3, label='%s arm' % arm)
-
-ax.set_xlabel('local sidereal time [h]')
-ax.set_ylabel(r'band-integrated $V_{\rm oc}$ [$\mu$V]')
-ax.set_title('Galactic noise over one sidereal day')
-ax.set_xticks(np.arange(0, 25, 3))
-ax.grid(alpha=.3)
-ax.legend()
-fig.tight_layout()
-
-for i, arm in enumerate('XYZ'):
-    y = np.sqrt(np.sum(tab[:, i, :] ** 2, axis=0))
-    print("%s arm: max at LST %2d h, min at LST %2d h, ratio %.2f"
-          % (arm, lst_hours[y.argmax()], lst_hours[y.argmin()], y.max() / y.min()))'''),
-    md(r'''The maxima land at different sidereal hours for different arms — LST 22 h for
-X, 17 h for Y, 15 h for Z — because each arm weights the sky differently. The
-Z arm is blind at zenith, as notebook 03 measured, so it peaks when the
-Galactic plane is low. Fig. 7 of
-[arXiv:2408.10926](https://arxiv.org/abs/2408.10926) shows the same behaviour.
-
-The peak-to-trough swing is modest — 35 % to 45 % depending on the arm — but
-the trigger rate depends on the threshold steeply enough that it is not a
-detail.'''),
-    md(r'''## 3. Spectral shape
-
-The sky brightness temperature follows a steep power law, roughly
-$T \propto \nu^{-2.5}$. What the antenna *sees* is much flatter than that,
-because the effective length of notebook 03 rises with frequency across most
-of the band and partly cancels the sky's fall.'''),
-    code(r'''fig, ax = plt.subplots(figsize=(7.5, 4))
-for hour in (6, 12, 18, 24):
-    ax.loglog(np.arange(30., 251.), tab[:, 0, hour - 1], label='LST %d h' % hour)
-
-ax.set_xlabel('frequency [MHz]')
-ax.set_ylabel(r'$V_{\rm oc}$ [$\mu$V/MHz]')
-ax.set_title('X arm spectrum at four sidereal times')
-ax.grid(alpha=.3, which='both')
-ax.legend()
-fig.tight_layout()
-
-# Quantify the "much flatter than nu^-2.5" claim: over a factor 8.3 in
-# frequency, a nu^-2.5 sky would fall by a factor ~200.
-lo, hi = tab[0, 0, 17], tab[-1, 0, 17]
-print("LST 18 h, X arm: %.1f uV/MHz at 30 MHz -> %.2f uV/MHz at 250 MHz"
-      % (lo, hi))
-print("   falls by a factor %.1f, against ~%.0f for a bare nu^-2.5 sky"
-      % (lo / hi, (250 / 30.) ** 2.5))'''),
-    md(r'''## 4. One realisation
-
-`galactic_noise` returns a *random draw*, not the table: a complex spectrum per
-antenna and arm, with amplitude set by the table and phase randomised. Fixing
-`seed` makes it reproducible.'''),
-    code(r'''v = galactic_noise(18.0, SIZE_OUT, freqs_mhz, nb_ant=200, seed=1)
-
-fig, ax = plt.subplots(1, 2, figsize=(11, 3.8))
-for i, arm in enumerate('XYZ'):
-    ax[0].plot(freqs_mhz, np.abs(v[0, i]), lw=.8, label=arm)     # one antenna
-    ax[1].plot(freqs_mhz, np.mean(np.abs(v[:, i]), axis=0), label=arm)  # averaged
-
-ax[0].set_title('one antenna, one draw')
-ax[1].set_title('mean over 200 antennas')
-for a in ax:
-    a.set_xlabel('frequency [MHz]')
-    a.set_ylabel(r'$|V|$ [$\mu$V]')
-    a.grid(alpha=.3)
-    a.legend()
-fig.tight_layout()'''),
-    md(r'''Averaging over antennas recovers the smooth tabulated shape, as it must.
-Neighbouring detection units get **independent** draws: spatial coherence of
-the Galactic background is not modelled, on the argument that the array is
-sparse compared with the coherence scale.'''),
-    md(r'''## 5. Reproducibility, and one thing to watch
-
-Two calls with the same seed agree exactly; without a seed they do not. The
-tests depend on this.'''),
-    code(r'''a = galactic_noise(18.0, SIZE_OUT, freqs_mhz, nb_ant=2, seed=42)
-b = galactic_noise(18.0, SIZE_OUT, freqs_mhz, nb_ant=2, seed=42)
-c = galactic_noise(18.0, SIZE_OUT, freqs_mhz, nb_ant=2)          # no seed
-print("same seed identical :", np.array_equal(a, b))
-print("no seed identical   :", np.array_equal(a, c))
-
-# f_lst is truncated with int(), not interpolated, so the LST axis has 1 h
-# resolution.  Same seed and same hour-bin therefore give the same draw.
-d = galactic_noise(18.0, SIZE_OUT, freqs_mhz, nb_ant=2, seed=7)
-e = galactic_noise(18.9, SIZE_OUT, freqs_mhz, nb_ant=2, seed=7)
-print("LST 18.0 h and 18.9 h identical:", np.array_equal(d, e))'''),
-    md(r'''The last line is a real limitation: `f_lst` is truncated with `int()`, so the
-LST axis has 1-hour resolution and 18.9 h is silently treated as 18 h. For a
-noise level that varies by 35–45 % over a day, hour-quantisation is a
-few-percent effect — tolerable, but it should be interpolation, and the `TODO`
-in the source says so.'''),
-    md(r'''## 6. The normalisation, and how to check it yourself
-
-The amplitude of the returned spectrum is scaled by a constant involving
-`size_out`, and there is an open PR (#153) that changes it from `size_out/2`
-to `size_out/sqrt(2)` — a factor of 1.41 on every simulated noise voltage, and
-therefore on every trigger threshold downstream.
-
-Parseval's theorem decides it, provided the comparison is made against the
-table the simulation actually used. **That last clause matters**: the three
-`du_type` values read different files, and those files differ in absolute
-level by up to a factor of two, so comparing across them measures the model
-difference rather than the normalisation.'''),
-    code(r'''from scipy import fft
-
-freqs = np.arange(30., 251.)
-N_ANT, N = 600, 2048
-
-for du, path in [('GP300_nec', "noise/Vocmax_30-250MHz_uVperMHz_nec.npy"),
-                 ('GP300_mat', "noise/Vocmax_30-250MHz_uVperMHz_mat.npy")]:
-    # The reference: what the table says the band RMS should be at LST 18 h.
-    ref_tab = np.transpose(np.load(grand_add_path_data(path)), (0, 2, 1))
-    ref = np.sqrt(np.sum(ref_tab[:, :, 17] ** 2, axis=0))
-
-    # The simulation, transformed back to the time domain.  The 221 in-band bins
-    # are placed at indices 30..250 of a length-N/2+1 one-sided spectrum, which
-    # is what efield2voltage effectively does; irfft then gives a real trace.
-    v = galactic_noise(18.0, N, freqs, nb_ant=N_ANT, seed=0, du_type=du)
-    full = np.zeros((N_ANT, 3, N // 2 + 1), dtype=complex)
-    full[:, :, 30:251] = v
-    sim = np.std(fft.irfft(full, n=N, axis=-1), axis=-1).mean(axis=0)
-
-    print("%-10s simulated/tabulated = %s   (1/sqrt2 = %.4f)"
-          % (du, np.round(sim / ref, 4), 1 / np.sqrt(2)))'''),
-    md(r'''The ratio is $1/\sqrt{2}$ — to about 0.3 %, for every arm, and (you can check)
-independently of `size_out` and of the number of antennas. That is exactly the
-relation between the RMS and the peak of a sinusoid.
-
-So the code produces an RMS equal to the tabulated value divided by $\sqrt2$,
-and the whole decision reduces to one definitional question:
-
-> **Is `Vocmax_30-250MHz_uVperMHz` an RMS voltage spectral density, or a
-> maximum?**
-
-| if the table is a… | then the right constant is |
-|---|---|
-| **maximum** | `size_out/2` — the current code is right, and PR #153 would break it |
-| **RMS** | `size_out/sqrt(2)` — PR #153 is right |
-
-The filename says *max*. Nothing else in the repository states which is meant,
-and the question belongs to whoever produced the tables — it is not something
-the code can answer.
-
-Until it is answered, quote the version of `grand.sim.noise.galaxy` that
-produced any absolute noise level; `TRun.software_version` exists for that.
-Relative statements — spectral shape, LST dependence, ratios between arms —
-are unaffected, because the disputed factor is a single constant applied to
-every model alike.
-
-Pinned by `tests/sim/test_galactic_noise_normalisation.py` and written up in
-`docs/dev/issues/galactic-noise-normalisation.md`.'''),
-    md(r'''## 7. A trap: `du_type` changes the answer by a factor of two
-
-The three antenna models are not three normalisations of one number. Two of
-them are the *same file*, and the default reads neither.'''),
-    code(r'''import hashlib
-
-# If two selectors read byte-identical files they cannot be different models.
-for kind in ('Vocmax_30-250MHz_uVperMHz', 'Pocmax_30-250_Watt_per_MHz'):
-    h = {}
-    for variant in ('hfss', 'nec', 'mat'):
-        with open(grand_add_path_data("noise/%s_%s.npy" % (kind, variant)), 'rb') as fh:
-            h[variant] = hashlib.sha256(fh.read()).hexdigest()[:12]
-    print("%-30s nec=%s mat=%s  identical: %s"
-          % (kind, h['nec'], h['mat'], h['nec'] == h['mat']))
-
+print("grid          ", temp_30.shape, " (72 x 36 over the sky)")
+print("ra            %.2f to %.2f rad" % (ra.min(), ra.max()))
+print("polar angle   %.2f to %.2f rad" % (polar.min(), polar.max()))
 print()
-print("band-integrated V_oc at LST 18 h, per arm:")
-for variant in ('hfss', 'nec', 'mat'):
-    t = np.transpose(np.load(grand_add_path_data(
-        "noise/Vocmax_30-250MHz_uVperMHz_%s.npy" % variant)), (0, 2, 1))
-    print("   %-5s %s uV" % (variant,
-                             np.round(np.sqrt(np.sum(t[:, :, 17] ** 2, axis=0)), 1)))'''),
-    md(r'''`_nec` and `_mat` are byte-identical, so `du_type='GP300_nec'` and
-`du_type='GP300_mat'` give the same numbers despite the docstring calling them
-different antenna simulations. And the default, `du_type='GP300'`, reads
-*neither* — it recomputes the voltage from `PG_ALL_jifen.mat` as
-$V_{\rm oc}^2 = 4PR_{\rm ant}$, landing about 40 % below the `nec` tables and
-a factor 2.1 below the `hfss` tables, which no `du_type` reaches at all.
+print("T at  30 MHz  %8.0f to %8.0f K" % (temp_30.min(), temp_30.max()))
+print("T at 250 MHz  %8.0f to %8.0f K" % (temp_250.min(), temp_250.max()))
+print("median ratio  %8.0f" % (np.median(temp_30) / np.median(temp_250)))'''),
+    md(r'''Two hundred thousand kelvin at the bottom of the band, two thousand at the
+top. **That factor of ~180 across GRAND's own band is the single most important
+fact about its noise**, and it is why every spectrum later in this notebook
+falls steeply to the right.
 
-**A Galactic noise level quoted without its `du_type` is ambiguous by a factor
-of two.** This is separate from the $\sqrt2$ question above; see the
-[known issues page](https://grand-mother.github.io/grand-docs/known_issues.html).'''),
+The bright ridge in the maps below is the Galactic plane sweeping through the
+field of view as the Earth turns — which is also why the noise depends on the
+time of day.'''),
+    code(r'''fig, axes = plt.subplots(1, 2, figsize=(11, 3.4))
+for ax, t, f in ((axes[0], temp_30, 30), (axes[1], temp_250, 250)):
+    im = ax.imshow(t.T, origin="lower", aspect="auto", cmap="inferno",
+                   extent=[0, 24, 0, 180])
+    ax.set_xlabel("right ascension (h)")
+    ax.set_ylabel("polar angle (deg)")
+    ax.set_title("LFMap sky at %d MHz" % f)
+    fig.colorbar(im, ax=ax, label="K")
+fig.tight_layout()'''),
+    md(r'''## 2. From a hot sky to a voltage
+
+An antenna does not measure temperature. The chain from one to the other, with
+the units that matter at each step:
+
+| step | quantity | units |
+|---|---|---|
+| the sky | brightness temperature $T(\alpha,\delta,\nu)$ | K |
+| the antenna | effective length $\vec{h}(\theta,\phi,\nu)$ | m |
+| integrate $T$ against $\lvert h_\theta\rvert^2+\lvert h_\phi\rvert^2$ | open-circuit voltage $V_{\rm oc,RMS}^2/\mathrm{Hz}$ | V²/Hz |
+| divide by $4\,\mathrm{Re}(Z_{\rm ant})$ | available power $P_L$ | W/Hz |
+
+That last division is a convention, and it is where the historical confusion in
+this repository lived. Available power is what a matched load would draw; it
+carries the antenna impedance with it, so a voltage can always be recovered
+from it, and **the recovered voltage is an RMS by construction** — not by
+choice of definition.
+
+`Compute_Plot_Galactic_Noise.py` performs the integration and ships the result.
+What GRANDlib reads at simulation time is the last row of that table.'''),
+    code(r'''du_types = ("GP300", "GP300_nec", "GP300_mat")
+
+tables = {}
+for du in du_types:
+    name = "noise/galactic_PL_per_Hz_gp13_%s.npy" % du
+    tables[du] = np.load(grand_add_path_data(name))
+
+print("%-11s %-14s %s" % ("du_type", "shape", "P_L at 18 h, 50 MHz, SN arm"))
+for du, table in tables.items():
+    print("%-11s %-14s %.3e W/Hz" % (du, table.shape, table[20, 54, 0]))'''),
+    md(r'''`(221, 72, 3)` — 30 to 250 MHz in 1 MHz steps, 72 sidereal-time bins at
+20-minute spacing, three antenna arms.
+
+The three models differ only in the antenna response used to produce them:
+`GP300` from an HFSS simulation, `GP300_nec` from NEC, `GP300_mat` from MATLAB.
+They are close but not identical, and each has its own table — worth saying,
+because until September 2026 two of these files were byte-identical and the
+default read neither.
+
+## 3. The level to expect
+
+The practical question. Integrating the table over the band gives the RMS
+open-circuit voltage an antenna arm actually sees.'''),
+    code(r'''zant = np.loadtxt(grand_add_path_data("detector/RFchain_v2/Z_ant_3.2m.csv"),
+                  delimiter=",", skiprows=1)
+r_ant = np.column_stack([zant[:, 1], zant[:, 3], zant[:, 5]])   # Re Z, per arm
+BIN_HZ = 1e6
+
+def rms_uv(table, lst_bin):
+    """Open-circuit RMS voltage per arm, in microvolts, at one LST bin."""
+    variance = 4.0 * table[:, lst_bin, :] * BIN_HZ * r_ant       # V^2 per bin
+    return np.sqrt(variance.sum(axis=0)) * 1e6
+
+print("%-11s %8s %8s %8s   (uV RMS at LST 18 h)" % ("du_type", "SN", "EW", "Z"))
+for du, table in tables.items():
+    print("%-11s %s" % (du, "  ".join("%6.1f  " % v for v in rms_uv(table, 54))))'''),
+    md(r'''Around 30 to 40 µV. That is the number to have in mind: a GRAND antenna sits
+on a galactic noise floor of a few tens of microvolts, and a shower pulse has to
+compete with it.
+
+The three models agree to about 10 %, which is a fair statement of how well the
+antenna response is known.
+
+## 4. Sidereal time
+
+The Galactic plane rises and sets, and the noise follows it. The cell below
+measures how much.'''),
+    code(r'''hours = np.arange(72) / 3.0
+levels = np.array([rms_uv(tables["GP300"], b) for b in range(72)])
+
+fig, ax = plt.subplots(figsize=(9, 3.2))
+for arm, name in enumerate(("SN", "EW", "Z")):
+    ax.plot(hours, levels[:, arm], lw=1.4, label=name)
+ax.set_xlabel("local sidereal time (h)")
+ax.set_ylabel(r"open-circuit noise ($\mu$V RMS)")
+ax.set_xlim(0, 24); ax.legend(fontsize=8)
+ax.set_title("the Galaxy passing overhead")
+fig.tight_layout()
+
+print("quietest %.1f uV at %.1f h,  busiest %.1f uV at %.1f h,  ratio %.2f"
+      % (levels[:, 0].min(), hours[levels[:, 0].argmin()],
+         levels[:, 0].max(), hours[levels[:, 0].argmax()],
+         levels[:, 0].max() / levels[:, 0].min()))'''),
+    md(r'''About a third, between the quietest hour and the busiest — smaller than the
+spread between antenna models is large, but not negligible.
+
+**A quoted noise level without a sidereal time is incomplete.** This is not a
+defect; it is the sky. But "the GRAND noise floor is X µV" is an unfinished
+sentence, and comparisons between studies need to fix the hour before they mean
+anything.
+
+## 5. What the simulation returns
+
+`galactic_noise` draws one realisation: complex Fourier coefficients whose
+magnitudes follow the table and whose phases are random.'''),
+    code(r'''from grand.sim.noise.galaxy import galactic_noise
+
+FREQS = np.arange(30.0, 251.0)
+SIZE = 2048
+
+spectrum = galactic_noise(18.0, SIZE, FREQS, nb_ant=200, seed=1,
+                          du_type="GP300")
+full = np.zeros((200, 3, SIZE // 2 + 1), dtype=complex)
+full[:, :, 30:251] = spectrum
+traces = np.fft.irfft(full, n=SIZE, axis=-1)
+
+print("spectrum", spectrum.shape, "  traces", traces.shape)
+print("trace RMS per arm: %s uV"
+      % "  ".join("%.1f" % v for v in traces.std(axis=(0, 2))))'''),
+    code(r'''fig, axes = plt.subplots(1, 2, figsize=(11, 3.2))
+axes[0].plot(np.arange(SIZE) * 0.5, traces[0, 0], lw=0.7)
+axes[0].set_xlabel("time (ns)"); axes[0].set_ylabel(r"voltage ($\mu$V)")
+axes[0].set_title("one realisation, SN arm")
+
+for arm, name in enumerate(("SN", "EW", "Z")):
+    axes[1].loglog(FREQS, np.abs(spectrum[0, arm]), lw=0.8, label=name)
+axes[1].set_xlabel("frequency (MHz)"); axes[1].set_ylabel("|V| (arb.)")
+axes[1].set_title("its spectrum"); axes[1].legend(fontsize=8)
+fig.tight_layout()'''),
+    md(r'''The spectrum falls steeply with frequency, which is the sky map from section 1
+seen a different way.
+
+Note that the *same seed gives the same noise*, which matters more than it
+sounds: a simulation whose noise changes between runs cannot be compared with
+itself. Notebook 08 pins exactly this.
+
+## 6. Closing the loop
+
+Everything above was description. This is the check.
+
+The prediction is rebuilt here from the shipped tables and the antenna
+impedance, using only the relation in section 2 — nothing from
+`grand.sim.noise.galaxy`. If the simulation and the prediction agree, then the
+code turns the tables into voltages the way the physics says it should.'''),
+    code(r'''predicted = rms_uv(tables["GP300"], 54)
+simulated = traces.std(axis=(0, 2))
+
+print("%-12s %8s %8s %8s" % ("", "SN", "EW", "Z"))
+print("%-12s %s" % ("predicted", "  ".join("%7.2f " % v for v in predicted)))
+print("%-12s %s" % ("simulated", "  ".join("%7.2f " % v for v in simulated)))
+print("%-12s %s" % ("ratio", "  ".join("%7.4f " % v
+                                       for v in simulated / predicted)))'''),
+    md(r'''Within a few tenths of a percent, and that residual is not an error in either
+side — it is the finite draw. With 200 antennas the sample RMS scatters about
+its expectation by roughly
+
+$$\frac{1}{\sqrt{2\,n_{\rm ant}N_{\rm eff}}},\qquad
+  N_{\rm eff}=\frac{(\sum_k\sigma_k^2)^2}{\sum_k\sigma_k^4}$$
+
+which is a few tenths of a percent here. `tests/sim/test_galactic_noise_normalisation.py`
+makes this a test, with the tolerance derived from that expression rather than
+chosen.
+
+**This is the loop closing.** Stavros Nonis generates the tables as
+$P_L = V_{\rm oc,RMS}^2/[4\,\mathrm{Re}(Z_{\rm ant})]$ from the LFMap sky; the
+simulation inverts that relation; and the cell above rebuilds it a third time,
+independently. Sky temperature to simulated voltage, checked at both ends.
+
+## 7. If you hold files from before September 2026
+
+Until 2026-09-07 the simulation scaled the spectrum by `size_out/2` rather than
+`size_out/sqrt(2)`, on the unresolved assumption that the tabulated quantity
+might be a maximum rather than an RMS. It is an RMS, by construction — see
+section 2 — so:
+
+> **Every simulated voltage produced before 2026-09-07 is low by $\sqrt2$.**
+
+New files record the version that wrote them, in `TVoltage.grandlib_version`.
+Files with no stamp predate the fix. Whether anything is reprocessed is an open
+question for the collaboration, not a code one.
+
+## 8. What is still not checked here
+
+The LFMap sky model itself. Sections 3 to 6 verify that GRANDlib turns the
+tables into voltages correctly; nothing in this repository re-derives the
+brightness temperatures of section 1, or the antenna effective lengths they are
+integrated against. Those come from outside, and are documented in
+[data files](../docs/source/data_files.rst) rather than reproduced.'''),
     footer(
-        r'''[03 — The antenna response](03_antenna_response.ipynb) — the effective length these tables were folded through''',
-        r'''[04 — The RF chain](04_rf_chain.ipynb) — what the noise passes through next''',
-        r'''[06 — From electric field to ADC counts](06_efield_to_adc.ipynb)''',
+        r'''[03 — The antenna response](03_antenna_response.ipynb) — the effective length this integrates against''',
+        r'''[06 — From electric field to ADC](06_efield_to_adc.ipynb) — where this noise is added to a shower''',
+        r'''[08 — Pinning the chain](08_pipeline_regression.ipynb) — how the level is kept from drifting''',
     ),
     ])
+
 
 # --------------------------------------------------- 06_efield_to_adc.ipynb
 books['06_efield_to_adc.ipynb'] = notebook(
