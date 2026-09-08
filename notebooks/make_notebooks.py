@@ -1313,7 +1313,8 @@ estimate the noise from "the part of the trace away from the pulse".
 near 10 and is comfortably detectable. Drop the input to 1 µV/m and
 $V_{\rm oc}$ falls to 0.3 µV against a noise RMS of several hundred — a
 signal-to-noise of 0.03, invisible. GRAND's sensitivity is set by exactly this
-ratio, which is why the open $\sqrt2$ question of notebook 05 is not a detail.
+ratio, which is why the $\sqrt2$ normalisation settled on 2026-09-07 was not a
+detail: it moved every voltage below by that factor.
 
 **The Z arm output is tiny — and not for the reason you would guess.**'''),
     md(r'''## 4. A trap: arm X is not "the X component of E"
@@ -1424,8 +1425,9 @@ which is why the schema and the frame handling matter as much as the physics.
 
 Three limitations that apply to any number produced here:
 
-- absolute noise levels are subject to the open $\sqrt2$ question, and depend
-  on `du_type` by up to a factor of two (notebook 05);
+- absolute noise levels changed by $\sqrt2$ on 2026-09-07, when the tabulated
+  quantity was confirmed to be an RMS; anything simulated before that is low by
+  that factor (notebook 05);
 - `vga_gain` is ignored, so this is a 20 dB chain regardless of what is
   requested (notebook 04);
 - the arms are not Cartesian field components (section 4).'''),
@@ -1757,6 +1759,143 @@ def check():
               % len(books))
         return 0
     return 1
+
+
+# ------------------------------------------------- 08_pipeline_regression.ipynb
+books['08_pipeline_regression.ipynb'] = notebook(
+    r"""08 — Pinning the chain""",
+    r"""Every other notebook here explains what GRANDlib computes. This one is about
+knowing when the answer *changes*, which is a different problem and, during a
+refactor, the more pressing one.
+
+The chain has many stages — shower, effective length, galactic noise, the RF
+chain, digitisation — and each is checked against something. What was not
+checked, until now, is the composition: every stage can be individually
+self-consistent while the whole produces different numbers than it did last
+month. Nothing in the test suite would have noticed.
+
+A **golden-file regression** is the cheap answer. Run the chain once on a fixed
+input with a fixed seed, store the result, and compare against it forever
+after.
+
+Be clear about what that is and is not. It **locks in** today's answer; it does
+not **validate** it. If the code is wrong today, the reference is wrong too and
+the test will happily agree with it. What it buys is that a change to the
+answer becomes visible and deliberate rather than silent — which is exactly
+what you want before rewriting the thing that produces it.""",
+    [
+    md(r"""## The input, and why it looks like that
+
+Three detection units, each carrying the same Gaussian pulse at a different
+amplitude on each arm — 1.0, 0.6, 0.2.
+
+The asymmetry is deliberate. If the three arms carried equal amplitudes, then
+swapping two of them, or mis-ordering the detection units, would produce
+exactly the same output and the regression would pass through the error. Made
+asymmetric, any such mistake changes the numbers."""),
+    code(r"""import json
+import numpy as np
+import matplotlib.pyplot as plt
+
+import tests.sim.test_pipeline_golden as golden
+
+print("seed  ", golden.SEED)
+print("params", golden.PARAMS)
+print("stored", golden.GOLDEN.name)"""),
+    md(r"""## What the stored reference says about itself
+
+The file records the version, commit, seed and configuration that produced it.
+
+That is not bureaucracy. Three galactic-noise tables arrived in this repository
+as `.npy` files with no record of how they were made, and closing that gap took
+a round trip to their author. A reference file whose whole purpose is to be
+compared against is the last place to repeat that."""),
+    code(r"""with np.load(golden.GOLDEN, allow_pickle=False) as data:
+    stored = data["voltage"]
+    provenance = json.loads(str(data["provenance"]))
+
+print(json.dumps(provenance, indent=2, sort_keys=True))
+print()
+print("shape", stored.shape, " peak %.1f uV" % np.abs(stored).max())"""),
+    md(r"""## Running the chain and comparing
+
+Same input, same seed, same configuration. The comparison is bin by bin at a
+relative tolerance of $10^{-9}$ — tight enough that any physically meaningful
+change fails, loose enough that NumPy reassociating a floating-point sum
+between versions does not."""),
+    code(r"""import tempfile, pathlib
+
+fresh = golden._run_chain(pathlib.Path(tempfile.mkdtemp()))
+
+agree = np.allclose(fresh, stored, rtol=1e-9, atol=0.0)
+worst = np.abs(fresh - stored).max()
+print("reproduces the reference:", agree)
+print("largest disagreement:    %.3g uV" % worst)"""),
+    code(r"""fig, axes = plt.subplots(1, 2, figsize=(11, 3.6))
+
+t_ns = np.arange(stored.shape[2]) * golden.T_BIN_NS
+for arm, name in enumerate(("SN", "EW", "Z")):
+    axes[0].plot(t_ns, stored[0, arm], lw=1, label=name)
+axes[0].set_xlabel("time (ns)"); axes[0].set_ylabel(r"voltage ($\mu$V)")
+axes[0].set_title("stored reference, unit 0"); axes[0].legend(fontsize=8)
+
+axes[1].plot(t_ns, (fresh - stored)[0].T, lw=1)
+axes[1].set_xlabel("time (ns)"); axes[1].set_ylabel(r"difference ($\mu$V)")
+axes[1].set_title("this run minus the reference")
+fig.tight_layout()"""),
+    md(r"""The difference panel is flat at zero, and that is the whole point: the
+scale on the right is $10^{-15}$ or so, which is floating-point noise rather
+than a result.
+
+## What it catches
+
+The regression is only worth having if it fails when it should. The galactic
+noise normalisation moved by $\sqrt2$ on 2026-09-07 — a real change, correctly
+made — and that is exactly the size of thing this must not let through."""),
+    code(r"""for label, factor in [("unchanged", 1.0),
+                      (r"a $\sqrt2$ normalisation change", np.sqrt(2)),
+                      ("a 0.01 % drift", 1.0001),
+                      ("one sample perturbed by 1 part in $10^6$", None)]:
+    if factor is None:
+        perturbed = stored.copy()
+        perturbed[1, 2, 300] *= 1.000001
+    else:
+        perturbed = stored * factor
+    passes = np.allclose(perturbed, stored, rtol=1e-9, atol=0.0)
+    print("%-42s %s" % (label, "passes" if passes else "CAUGHT"))"""),
+    md(r"""## When to regenerate it
+
+Rarely, and never casually:
+
+```
+python tests/sim/test_pipeline_golden.py --write
+```
+
+Do that only when the answer is *meant* to change — a corrected constant, a new
+antenna model, a deliberate change to the chain — and say why in the commit
+message. The stored provenance then records which version produced the new
+reference, so the next person can see what they are comparing against.
+
+If the test fails and you did not intend a change, that is the regression doing
+its job. Find out what moved before regenerating; regenerating first destroys
+the evidence.
+
+## What this does not do
+
+It does not tell you the chain is correct. Nothing in this repository does,
+end to end — the closest we have is the galactic-noise level, which is rebuilt
+from the shipped tables and the documented relation and agrees exactly
+(notebook 05).
+
+An external check would mean reproducing a published figure, which needs the
+inputs behind it to still exist. Until then, this is what stands between a
+refactor and a silently different answer."""),
+    footer(
+        r"""[06 — From electric field to ADC](06_efield_to_adc.ipynb) — the chain being pinned here""",
+        r"""[05 — Galactic noise](05_galactic_noise.ipynb) — the one stage that is checked against its own inputs""",
+        r"""[04 — The RF chain](04_rf_chain.ipynb) — where most of the shape comes from""",
+    ),
+    ])
 
 
 def build(execute=True, only=None):

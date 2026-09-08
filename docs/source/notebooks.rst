@@ -91,6 +91,11 @@ Available
    two silent ``nan`` returns, one of which is
    :ref:`issue-geoid-longitude-convention`.
 
+`08. Pinning the chain <https://github.com/grand-mother/grand/blob/dev-next/notebooks/08_pipeline_regression.ipynb>`_
+   How a golden-file regression locks in the chain's answer so that a change
+   to it becomes deliberate rather than silent — what it catches, what it
+   cannot tell you, and when to regenerate it.
+
 .. note::
 
    Notebook 07 needs SRTM elevation tiles, which are not in version control.

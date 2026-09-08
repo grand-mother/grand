@@ -98,7 +98,21 @@ a third abandoned trunk.
 
 ### Phase 3 — tests before features
 - [x] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
-- [ ] End-to-end numerical regression against Fig. 6 of the paper
+- [x] End-to-end numerical regression — `tests/sim/test_pipeline_golden.py`,
+      with `tests/sim/pipeline_golden.npz` (21 kB) and notebook 08.
+      **Not** against Fig. 6: nothing in the repository records what that
+      figure shows, and reproducing it needs its inputs to still exist. This
+      pins the chain's own answer instead — shower to voltage, fixed input,
+      fixed seed, compared bin by bin at 1e-9. It locks behaviour in rather
+      than validating it, and says so. Built now because Phase 6 rewrites
+      this chain and claims not to change the answer; built afterwards it
+      would only bless whatever the refactor produced.
+- [ ] External check against a published result — Fig. 6 of the paper, or
+      any figure whose inputs survive. Needs an author to confirm the shower,
+      antenna model and configuration behind it still exist. Note that the
+      √2 fix means today's code cannot reproduce a pre-2026-09-07 figure of
+      any voltage-derived quantity, so such a test may have to assert
+      disagreement with the paper, deliberately.
 - [x] Parseval invariant for galactic noise — `tests/sim/test_galactic_noise_normalisation.py`
 - [x] Tree schema snapshot — `tests/dataio/test_schema_snapshot.py`
 - [x] Tree schema round-trip — `tests/dataio/test_tree_roundtrip.py`. All
