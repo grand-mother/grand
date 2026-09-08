@@ -2491,6 +2491,205 @@ from changing by accident.'''),
     ])
 
 
+# -------------------------------------------------------------- 10_finding_data.ipynb
+books['10_finding_data.ipynb'] = notebook(
+    r'''10 — Finding data''',
+    r'''Every other notebook here starts with a file already in hand. This one is
+about getting it, and the package that does that is `granddb`, which ships with
+GRANDlib and answers one question:
+
+**where is this file, and can you put it on my disk?**
+
+GRAND data lives in several places at once — local disks, CC-IN2P3 over SSH,
+web repositories — and a PostgreSQL catalogue records what is where. The
+reputation of that catalogue puts people off, so the first thing worth saying
+is the thing this notebook demonstrates: **you do not need a database to find
+files.** The `[database]` section of a granddb config file is optional, and
+everything below runs without one.''',
+    [
+    md(r'''## 1. The config file
+
+`granddb` is driven by an ini file rather than by arguments. It is worth
+building one here rather than describing it, because the format is documented
+in prose in `granddb/readme.md` and nowhere else.'''),
+    code(r'''import tempfile, pathlib, textwrap
+
+# granddb installs no logging of its own -- it is a library, and the note at
+# the top of grand/manage_log.py says a library should not. Ask for output.
+import grand.manage_log as mlg
+mlg.create_output_for_logger("error", log_stdout=True)
+
+from granddb.datamanager import DataManager
+
+work = pathlib.Path(tempfile.mkdtemp())
+incoming = work / "incoming"
+(incoming / "run7").mkdir(parents=True)
+
+# A few files to find later, one of them buried.
+(incoming / "efield_5388_L0.root").write_text("pretend this is a trace")
+(incoming / "run7" / "efield_6914_L0.root").write_text("and so is this")
+
+config = work / "config.ini"
+config.write_text(textwrap.dedent("""\
+    [general]
+    provider = "A notebook"
+
+    [directories]
+    localdir = ["%s"]
+    """ % incoming))
+
+print(config.read_text())'''),
+    md(r'''Two sections, and no database. `provider` is who you are — it is stamped on
+anything you register. `localdir` is where your data lives.'''),
+    code(r'''dm = DataManager(str(config))
+
+print("provider    ", dm.provider())
+print("incoming    ", dm.incoming())
+print("database    ", dm.database())
+print("repositories", list(dm.repositories()))'''),
+    md(r'''Three things in that output are worth stopping on.
+
+**`database` is `None`,** and nothing complained. That is the section being
+optional, and it is what makes the rest of this notebook — and granddb's own
+tests — possible without a server.
+
+**`incoming` is the first entry of `localdir`.** The list is ordered, and the
+first one is special: it is where fetched files are put. A reader could
+reasonably take the list for a set.
+
+**`repositories` contains `localdir`,** which was never declared as one. Local
+directories behave as a repository named `localdir`, so you can address them
+the same way as a remote.
+
+## 2. Finding a file'''),
+    code(r'''found = dm.get_file("efield_5388_L0.root")
+print(found)
+print(type(found).__name__)'''),
+    md(r'''A `Path`, not a string. It was a string until June 2025, when
+`dev_database` changed `return str(found_file)` to `return found_file`; code
+that concatenates the result rather than passing it to `open` predates that.
+
+The search descends, so a file need not sit at the top of a `localdir`:'''),
+    code(r'''print(dm.get_file("efield_6914_L0.root"))   # two directories down
+print(dm.get_file("no-such-file.root"))     # absence is a value, not an exception'''),
+    md(r'''`None` rather than an exception matters: `register_file` and the command-line
+scripts all branch on it.
+
+## 3. Asking for one place in particular
+
+A second argument restricts the search to one repository, and a third to a
+directory inside it — the readme calls that a "one time shot", for a file
+somewhere the config file has never heard of.'''),
+    code(r'''print(dm.get_file("efield_6914_L0.root", "localdir", str(incoming / "run7")))'''),
+    md(r'''And if that directory does not exist, the search does not fail — it falls back
+to the path from the config file. That behaviour arrived with the same June
+2025 commit, and it is the difference between a typo costing you a lookup and
+costing you an afternoon.'''),
+    code(r'''print(dm.get_file("efield_5388_L0.root", "localdir", str(work / "typo-here")))'''),
+    md(r'''## 4. Repositories you have not got
+
+Remote repositories are declared the same way. Nothing below is contacted —
+this notebook has no credentials and CI has no network — but the shape is the
+point, and it is the part the readme spends most of its words on.
+
+```ini
+[repositories]
+; Name = [protocol, server, port, [paths]]
+CC  = ["ssh",   "cca.in2p3.fr", 22,  ["/sps/grand/", "/sps/trend/"]]
+WEB = ["https", "github.com",   443, ["/grand-mother/data_challenge1/raw/main/"]]
+
+[credentials]
+; Name = [user, keyfile]
+CC = ["mylogin", ""]
+```
+
+`ssh`, `https`, `http` and `local` are the protocols. With those in place,
+`dm.get_file("Coarse3.root")` looks locally first, then through each
+repository in turn, copies the first match into the incoming folder, and
+returns its path.
+
+**A credentials entry is a login and a key file. There is no third field.**
+That is not a convention, it is enforced: `Credentials.__init__` takes
+`(name, user, keyfile)` and sets its password to the empty string, so there is
+nowhere in the file for a password to live. If one is needed to decrypt a key,
+it is asked for interactively. Use an `ssh-agent` and you will not be asked.'''),
+    code(r'''import inspect
+from granddb.datamanager import Credentials
+
+print(inspect.signature(Credentials.__init__))
+print("password after parsing:", repr(Credentials("CC", "mylogin", "").password()))'''),
+    md(r'''## 5. What the database is actually for
+
+Finding a file needs no database. Four things do:
+
+| | |
+|---|---|
+| `dm.register_file(...)` | record a file, its contents and where it lives |
+| `dm.register_dataset(...)` | the same for a directory |
+| `dm.SearchFileInDB(name)` | ask *which repositories* hold a file, without walking them |
+| `granddb/monitoring.py` | the site monitoring, which is all database |
+
+Registration is the interesting one, because it does not stop at the file
+name. `granddb/rootdblib.py` carries a mapping per tree type — `trunToDB`,
+`tshowerToDB` and so on — from a field on a GRAND tree class to a database
+column, so a registered file is catalogued by what is *inside* it: run and
+event numbers, zenith, energy, analysis level. That is what makes
+`SearchFileInDB` more than a filename lookup.
+
+Those mappings are the one part of granddb with a real trap in it, and it is
+worth knowing about even if you never register anything: they name tree fields
+as strings, and `granddblib` reads them back with a plain `getattr`. Rename a
+field in `grand/dataio/event_trees.py` and the mapping points at nothing. As of
+September 2026 a test checks every mapping against the live tree classes —
+it found `trunnoiseToDB` asking for `GalNoiseMap`, which `TRunNoise` has never
+had.'''),
+    code(r'''from granddb.rootdblib import RootFile
+import dataclasses, grand.dataio as gd
+
+print("%-22s %-16s %s" % ("mapping", "tree class", "fields mapped"))
+for name in ("trunToDB", "tshowerToDB", "trunnoiseToDB"):
+    mapping = getattr(RootFile, name)
+    cls = getattr(gd, {"trunToDB": "TRun", "tshowerToDB": "TShower",
+                       "trunnoiseToDB": "TRunNoise"}[name])
+    live = {f.name for f in dataclasses.fields(cls)}
+    keys = [k for k in mapping if k != "table"]
+    print("%-22s %-16s %d, all present: %s"
+          % (name, cls.__name__, len(keys), all(k in live for k in keys)))'''),
+    md(r'''## 6. Running it from the command line
+
+Five scripts wrap the same object, and they take the config file with `-c`:
+
+```bash
+python -m granddb.register_file_in_db    -c config.ini  file.root
+python -m granddb.register_dir_in_db     -c config.ini  somedir/
+python -m granddb.register_dataset_in_db -c config.ini  somedir/
+python -m granddb.refresh_mat_views      -c config.ini
+```
+
+Each needs a `[database]` section, since registering is what they do.
+
+Two notes on them, both dated September 2026. Importing one of these modules
+used to run it — `parse_args()` and a database connection at import — so they
+now have a `main()` and a `__main__` guard; the commands above are unchanged.
+And `register_file_in_db` calls `os._exit(0)` after its first file, so passing
+it several registers one; the comment beside it says that avoids a deadlock in
+ROOT.
+
+## 7. Where this leaves you
+
+If you want a file and know its name, you need six lines of ini and
+`get_file`. If you want to ask *which* files exist with some property, you
+need the catalogue, and the catalogue needs a server someone else runs.
+
+Most people only ever want the first.'''),
+    footer(
+        r'''[02 — Reading and writing GRAND data](02_data_model.ipynb) — what to do with the file once you have it''',
+        r'''[09 — Reading events](09_reading_events.ipynb) — the same files as events rather than paths''',
+        r'''`granddb/readme.md` — the full ini format, including the database and registerer sections''',
+    ),
+    ])
+
+
 if __name__ == '__main__':
 
     argv = sys.argv[1:]

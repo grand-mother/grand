@@ -38,7 +38,7 @@ rebuild::
     python notebooks/make_notebooks.py --no-execute   # while drafting
 
 Generating them keeps the title format, the navigation footers and the shared
-conventions structural rather than something nine JSON files have to agree
+conventions structural rather than something ten JSON files have to agree
 about, and makes review a diff of Python instead of a diff of embedded output.
 The build refuses to finish if a notebook fails to execute, comes back without
 stored outputs — which renders blank on GitHub — or is left on disk not
@@ -108,6 +108,15 @@ Available
    you get when a directory holds both; and the difference between
    ``event.shower`` and ``event.simshower``.  Ends by reading one event
    through both layers and comparing them.
+
+`10. Finding data <https://github.com/grand-mother/grand/blob/dev-next/notebooks/10_finding_data.ipynb>`_
+   ``granddb``, the data catalogue that ships with GRANDlib and answers "where
+   is this file?".  Builds a config file, finds files in local directories and
+   their subdirectories, and shows what the ``[repositories]`` and
+   ``[credentials]`` sections look like.  The point it exists to make: **you do
+   not need a database to find files** — the ``[database]`` section is optional
+   and the whole notebook runs without one.  Says plainly which four things do
+   need the catalogue.
 
 .. note::
 
