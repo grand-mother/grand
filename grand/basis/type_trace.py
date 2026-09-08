@@ -1,3 +1,15 @@
+"""The two kinds of trace a detector unit carries.
+
+:class:`ElectricField` is the field at the antenna, before the instrument
+touches it; :class:`Voltage` is what comes out of it.  Both are dataclasses
+over a time axis, and both cache their own transform.
+
+They are not symmetric, which is worth knowing before reaching for one:
+``ElectricField`` carries the antenna position and the coordinate frame its
+three components are expressed in, and ``Voltage`` carries neither -- only
+``t`` and ``V``.  A voltage trace therefore cannot say what frame it is in,
+and the caller has to keep track.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -114,11 +126,12 @@ class ElectricField:
 
 @dataclass
 class Voltage:
-    r"""A three-component voltage trace, with its time axis and frame.
+    r"""A three-component voltage trace and its time axis.
 
-    Holds the samples for one detection unit: three components against a
-    shared time axis, together with the coordinate frame they are expressed
-    in.
+    Holds the samples for one detection unit: ``V`` against ``t``.  Unlike
+    :class:`ElectricField` it carries no position and no coordinate frame --
+    the fields are ``t`` and ``V`` and nothing else -- so what frame the
+    components are in is the caller's to remember.
     """
     t: np.ndarray  # [s]
     V: np.ndarray  # [?]

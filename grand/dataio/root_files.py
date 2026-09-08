@@ -339,9 +339,13 @@ class _FileEventBase:
 
 @lru_cache(maxsize=None)
 def get_file_event(f_name):
-    """Event factory
+    """Event factory.
 
-    Return an event ROOT file (Efield or voltage) with trun, tshower synchronize on same event
+    Returns a reader for an event ROOT file, with ``trun`` and ``tshower``
+    synchronised on the same event.  Which reader depends on the trees the
+    file holds, and there are three, tried in this order: ``tefield`` gives a
+    :class:`FileEfield`, ``tvoltage`` a :class:`FileVoltage`, and ``tadc`` a
+    :class:`FileAdc`.  A file holding none of them raises.
 
     Parameters
     ----------
