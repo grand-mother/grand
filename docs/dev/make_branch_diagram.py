@@ -177,8 +177,17 @@ def build(info):
                    % (x + 8, y + 26, esc(DESCRIPTIONS.get(name, ""))))
 
         if state == "merged":
-            note = ("merged: ancestor" if entry["merged_on"] == "ancestor"
-                    else "merged %s %s" % (entry["merged_on"][2:], entry["merged_by"]))
+            # "merged <date> <sha>" only when a merge commit names the branch.
+            # Otherwise it is contained but nothing took it by name -- a
+            # fast-forward, a squash, a rebase -- and naming the first merge
+            # that happens to contain it would credit another branch's merge.
+            if entry["merged_on"] == "ancestor":
+                note = "merged: ancestor"
+            elif entry["merge_named"]:
+                note = "merged %s %s" % (entry["merged_on"][2:],
+                                         entry["merged_by"])
+            else:
+                note = "in trunk by %s" % entry["merged_on"][2:]
         elif state == "unmerged":
             note = "%d patch%s out" % (entry["ahead"],
                                        "" if entry["ahead"] == 1 else "es")

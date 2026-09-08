@@ -300,8 +300,14 @@ def collect(include_historical=False):
     dict
         Branch name to a dict carrying ``last``, ``author``, ``created``,
         ``creator``, ``commits``, ``ahead``, ``state``, ``live``,
-        ``merged_on``, ``merged_by``, ``parent``, ``children`` and
-        ``generation``.
+        ``merged_on``, ``merged_by``, ``merge_named``, ``parent``,
+        ``children`` and ``generation``.
+
+        ``merge_named`` is False when the branch is contained in the trunk but
+        no merge commit names it -- merged by fast-forward, squash or rebase.
+        For those, ``merged_by`` is empty and ``created``, ``creator`` and
+        ``commits`` cannot be recovered: nothing in the history distinguishes
+        the branch's commits from the trunk's.
     """
     merges = _merges_by_branch()
 
@@ -339,6 +345,7 @@ def collect(include_historical=False):
         # commit count, because it is also the only reliable way to count.
         took = list(merges.get(name, []))
         entry["merged_on"] = entry["merged_by"] = ""
+        entry["merge_named"] = False
         if entry["state"] == "merged":
             # For a branch whose ref still exists, the merge that introduced
             # it is the first one on the ancestry path from its tip to the
@@ -356,15 +363,24 @@ def collect(include_historical=False):
             # bearing its name is not the one that brought in what it now
             # holds. Naming it would be a plausible, wrong answer.
             named = [sha for sha in took if _is_ancestor(tip[name], sha)]
-            if path:
-                entry["merged_by"], entry["merged_on"] = path[0].split("|")
-            elif named:
+            # A merge that *names* the branch is the one that took it, and
+            # its second parent is the branch. A merge merely found on the
+            # ancestry path is only the first merge that contains the branch,
+            # which is a different claim: for ci/docker-test that is the merge
+            # of dev_snonis, and counting commits from it would attribute
+            # dev_snonis's work to ci/docker-test. So the date is taken from
+            # either, and the commits only from a named merge.
+            if named:
                 entry["merged_by"] = git("log", "-1", "--format=%h", named[0])
                 entry["merged_on"] = git("log", "-1", "--format=%ad",
                                          "--date=short", named[0])
+                entry["merge_named"] = True
+                took = named
+            elif path:
+                _, entry["merged_on"] = path[0].split("|")
             else:
-                # Contained, but no single merge can be pointed at: the branch
-                # arrived through some other route, or in pieces.
+                # Contained, but nothing to point at: merged by fast-forward,
+                # squashed, or rebased, all of which leave no marker at all.
                 entry["merged_on"] = "ancestor"
 
         # Commits belonging to the branch. For one that was merged, that is
@@ -421,6 +437,48 @@ def collect(include_historical=False):
     for name in info:
         info[name]["generation"] = generation(name)
     return info
+
+
+def merge_events():
+    r"""Every merge in the trunk's history: what went in, and into what.
+
+    Returns
+    -------
+    list of dict
+        One entry per merge commit reachable from the trunk, oldest first,
+        with ``source``, ``target``, ``date`` and ``sha``.  ``target`` is None
+        when the subject does not name one -- a pull request records only the
+        head branch, and a plain ``git merge`` on a checked-out branch records
+        neither.  Callers decide what to do with that; the history diagram
+        routes it to whichever trunk was current at the time.
+
+    Notes
+    -----
+    Read from merge *subjects*, which is the only record of a branch that has
+    since been deleted, and is therefore as good as the person who wrote them.
+    A subject somebody edited by hand is a subject this cannot parse.
+    """
+    out = []
+    for entry in _lines(git("log", "--merges", "--reverse",
+                            "--format=%H%x1f%ad%x1f%s", "--date=short", TRUNK)):
+        sha, date, subject = (entry.split("\x1f") + ["", ""])[:3]
+        source = target = ""
+        if "Merge pull request #" in subject:
+            source = subject.partition(" from ")[2].partition("/")[2].strip()
+        elif "branch '" in subject:
+            source = subject.partition("'")[2].partition("'")[0]
+            after = subject.partition("'")[2].partition("'")[2]
+            if " into " in after:
+                target = after.partition(" into ")[2].strip().strip("'\"")
+        for prefix in ("refs/remotes/origin/", "refs/heads/", "origin/"):
+            if source.startswith(prefix):
+                source = source[len(prefix):]
+            if target.startswith(prefix):
+                target = target[len(prefix):]
+        if source:
+            out.append(dict(source=source, target=target or None, date=date,
+                            sha=git("log", "-1", "--format=%h", sha)))
+    return out
 
 
 def provenance(script):

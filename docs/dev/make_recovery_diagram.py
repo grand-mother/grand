@@ -1,47 +1,45 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-r"""Draws the dev-next recovery diagram.
-
-The state lives in `STATE` below and the geometry is computed, so updating
-the picture means editing one list rather than moving shapes.  Regenerate
-after any merge::
+r"""Draws where the dev-next recovery has got to, phase by phase.
 
     python docs/dev/make_recovery_diagram.py
 
 Writes ``resources/dev/dev-next/recovery.svg`` and a copy at
 ``docs/source/recovery.svg`` -- the plan that embeds it is read both on GitHub
-and through Sphinx, which resolve the path differently.  Colours follow the recovery
-plan: green done, amber blocked or in progress, grey not started.
+and through Sphinx, which resolve the path differently.
+
+**This used to show the merge queue as well.** It no longer does:
+``branches.svg`` and ``BRANCHES.md`` show every branch and its status, in more
+detail and read from git rather than from a list somebody maintained. Two
+pictures of the same thing is how the merge queue here came to show a decision
+as blocked three days after it was settled. This one now answers a question
+the other two cannot: *how far along is the repair*.
+
+Everything except the blocked decisions is **parsed out of the plan** --
+the phase headings and their ``- [x]`` / ``- [ ]`` checkboxes. Ticking a box
+in ``RECOVERY_PLAN.md`` and regenerating is the whole update procedure, and
+the diagram cannot claim a phase is finished while the plan says otherwise.
 """
 
 import os
+import re
 
-# (branch, one-line description, state) -- state in {'done','blocked','todo'}
-QUEUE = [
-    ('dev_fix_root_warnings_lwp',      'ROOT 6.38 warnings',      'done'),
-    ('dev_nutrig_fields',              'NUTRIG fields in TADC',   'done'),
-    ('dev_reprocessing',               'Snakemake pipeline',      'done'),
-    ('dev_Event_write',                'tshower writing',         'done'),
-    ('..._lwp_new_fields',             'name clash: NUTRIG',      'done'),
-    ('..._aoi_levels_lwp',             'levels, +40% speed',      'done'),
-    ('dev_snonis',                     'noise √2 fix',            'done'),
-    ('dev_database',                   'already an ancestor',     'done'),
-]
+#: The plan, relative to the repository root.
+PLAN = os.path.join('resources', 'dev', 'dev-next', 'RECOVERY_PLAN.md')
 
-# (label, state) for the infrastructure track
-# Nine, not eleven: at this width a tenth box truncates its own label, and
-# a diagram that abbreviates "conda env" to "conda e..." is worse than one
-# that says less.  Check `fit` against the box width before adding to this.
-WORK = [
-    ('conda env',      'done'),
-    ('setup.sh',       'done'),
-    ('pyproject',      'done'),
-    ('Sphinx docs',    'done'),
-    ('schema test',    'done'),
-    ('CI green',       'done'),
-    ('593 tests',      'done'),
-    ('cov 73%',        'done'),
-    ('interface',      'todo'),
+#: Phases whose remaining work is waiting on a decision rather than on effort.
+#: Progress alone cannot tell these apart -- an untouched phase and one that
+#: nobody may touch look identical in the checkboxes -- so this is the one
+#: judgement in the picture.
+BLOCKED_PHASES = {'5'}
+
+#: What those decisions are. Hand-maintained: they are prose, and there is
+#: nowhere to read them from. Keep them in step with the plan's *Blocked on a
+#: decision* section -- the NUTRIG entry outlived its answer here by three days.
+NOTES = [
+    'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration',
+    'Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration',
+    'Reprocessing: the noise fix raises every simulated voltage by √2 — needs the collaboration',
 ]
 
 FILL = {'done': '#E1F1EA', 'doing': '#E2F0F0', 'blocked': '#F6EDDA', 'todo': '#EDF1F3'}
@@ -49,34 +47,39 @@ EDGE = {'done': '#1D7A57', 'doing': '#0E6E70', 'blocked': '#8A6210', 'todo': '#B
 TEXT = {'done': '#1D7A57', 'doing': '#0E6E70', 'blocked': '#8A6210', 'todo': '#7A8994'}
 MARK = {'done': '✓', 'doing': '◐', 'blocked': '✗', 'todo': '○'}
 
-W, H = 1080, 620
-SPINE_Y = 392
+W = 1080
 X0, X1 = 90, 990
-BOX_W, BOX_H = 204, 40
-# Four boxes to a row, and rows wrap.  This was `max(len(merged), len(blocked))`
-# so that the grid followed the data -- which fixed one bug and introduced
-# another: the column *count* grew with the queue while BOX_W stayed at 204, so
-# from six branches onward the boxes overlapped each other.  They had been
-# overlapping unnoticed for some time when the queue reached eight.
-#
-# Four is what fits: four boxes of 204 across the 900px between X0 and X1 leaves
-# 28px between them.  A fifth cannot fit without shrinking the box below the
-# width its longest label needs.
+BOX_W, BOX_H = 204, 58
 COLS = 4
-MAX_PER_ROW = COLS
-ROW_GAP = 78
 COL_GAP = (X1 - X0 - BOX_W) / (COLS - 1)
+ROW_TOP, ROW_GAP = 108, 74
 
-# Approximate advance width of IBM Plex Mono, as a fraction of font size.
-# Used to keep labels inside their boxes: the diagram is regenerated as the
-# state changes, so a label that fits today must not overflow tomorrow.
-MONO_ADV = 0.60
+#: Names too long for a box at the title size. Display only.
+SHORT_NAMES = {
+    'delineate input, processing, output': 'delineate I/O',
+    'tests before features': 'tests first',
+    'governance and weight': 'governance',
+}
+
+# Approximate advance width as a fraction of font size, per family. The small
+# lines are set in the sans face, which is appreciably narrower than the mono
+# one; using the mono figure for both truncated them a third of a line early.
+MONO_ADV, SANS_ADV = 0.60, 0.50
 
 
-def fit(text, width, size):
-    r"""Returns `text` shortened with an ellipsis to fit `width` at `size`."""
-    budget = int(width / (size * MONO_ADV))
-    return text if len(text) <= budget else text[:max(1, budget - 1)] + '\u2026'
+def fit(text, width, size, adv=MONO_ADV):
+    r"""Returns `text` shortened at a word boundary to fit `width` at `size`.
+
+    Breaking mid-word and appending an ellipsis is worse than dropping the
+    word: "Announce the freeze dat…" reads as a typo, not as an abbreviation.
+    """
+    budget = int(width / (size * adv))
+    if len(text) <= budget:
+        return text
+    cut = text[:budget - 1]
+    if ' ' in cut[budget // 2:]:
+        cut = cut[:cut.rindex(' ')]
+    return cut.rstrip(' ,;:—-') + '…'
 
 
 def esc(s):
@@ -84,164 +87,176 @@ def esc(s):
     return (s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
 
 
-def box(x, y, w, h, state, lines, small=False):
-    r"""Returns the SVG for one labelled box."""
-    out = ['<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="4" '
-           'fill="%s" stroke="%s" stroke-width="1.2"/>'
-           % (x, y, w, h, FILL[state], EDGE[state])]
-    fs = 9.5 if small else 10.5
-    ty = y + (h - len(lines) * (fs + 2.5)) / 2 + fs
-    for i, line in enumerate(lines):
-        line = fit(line, w - 12, fs if i == 0 else fs - 0.8)
-        weight = '600' if i == 0 else '400'
-        fill = TEXT[state] if i == 0 else '#4C5C69'
-        out.append('<text x="%.1f" y="%.1f" font-family="IBM Plex Mono, '
-                   'monospace" font-size="%.1f" font-weight="%s" fill="%s" '
-                   'text-anchor="middle">%s</text>'
-                   % (x + w / 2, ty + i * (fs + 2.5), fs if i == 0 else fs - 0.8,
-                      weight, fill, esc(line)))
+def plain(s):
+    r"""Strips the markdown a plan item carries, leaving readable prose.
+
+    Parameters
+    ----------
+    s : str
+        One checklist item, possibly with backticks, bold, strikethrough or
+        links in it.
+
+    Returns
+    -------
+    str
+        The same text with the markup removed and whitespace collapsed.
+    """
+    s = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', s)
+    s = s.replace('**', '').replace('~~', '').replace('`', '')
+    s = re.sub(r'\*([^*]+)\*', r'\1', s)
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip(' .—-')
+
+
+def phases(root):
+    r"""Reads the phases and their progress out of the recovery plan.
+
+    Parameters
+    ----------
+    root : str
+        Repository root.
+
+    Returns
+    -------
+    list of dict
+        One entry per phase, in plan order, with ``number``, ``name``,
+        ``done``, ``total``, ``state`` and ``next`` (the first open item, or
+        an empty string).
+
+    Raises
+    ------
+    SystemExit
+        If the plan cannot be found or has no phase headings.  A diagram drawn
+        from an empty parse would be a picture of nothing, drawn confidently.
+    """
+    path = os.path.join(root, PLAN)
+    if not os.path.exists(path):
+        raise SystemExit('cannot find the plan at %s' % path)
+    with open(path, encoding='utf-8') as handle:
+        text = handle.read()
+
+    out = []
+    for block in re.split(r'^### Phase ', text, flags=re.M)[1:]:
+        heading = block.split('\n', 1)[0]
+        body = re.split(r'\n#{2,3} ', block)[0]
+        number, _, name = heading.partition('—')
+        items = re.findall(r'^- \[([x ])\] (.*(?:\n      .*)*)', body, re.M)
+        done = sum(1 for mark, _ in items if mark == 'x')
+        total = len(items)
+        nxt = next((plain(body_) for mark, body_ in items if mark == ' '), '')
+        number = number.strip()
+        if total and done == total:
+            state = 'done'
+        elif number in BLOCKED_PHASES:
+            state = 'blocked'
+        elif done:
+            state = 'doing'
+        else:
+            state = 'todo'
+        out.append(dict(number=number, name=plain(name), done=done,
+                        total=total, state=state, next=nxt))
+    if not out:
+        raise SystemExit('no phase headings found in %s' % path)
+    return out
+
+
+def phase_box(x, y, phase):
+    r"""Returns the SVG for one phase: title, progress bar, count and next step.
+
+    Parameters
+    ----------
+    x, y : float
+        Top-left corner.
+    phase : dict
+        One entry from :func:`phases`.
+
+    Returns
+    -------
+    str
+        The SVG for the box.
+    """
+    state = phase['state']
+    inner = BOX_W - 18
+    out = ['<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="%s" '
+           'stroke="%s" stroke-width="1.2"/>'
+           % (x, y, BOX_W, BOX_H, FILL[state], EDGE[state])]
+
+    name = SHORT_NAMES.get(phase['name'], phase['name'])
+    title = '%s %s %s' % (MARK[state], phase['number'], name)
+    out.append('<text x="%.1f" y="%.1f" font-family="IBM Plex Mono, monospace" '
+               'font-size="10" font-weight="600" fill="%s">%s</text>'
+               % (x + 9, y + 17, TEXT[state], esc(fit(title, inner, 10))))
+
+    frac = phase['done'] / phase['total'] if phase['total'] else 0.0
+    out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="5" rx="2.5" '
+               'fill="#FFFFFF" stroke="%s" stroke-width="0.7"/>'
+               % (x + 9, y + 25, inner, EDGE[state]))
+    if frac:
+        out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="5" rx="2.5" '
+                   'fill="%s"/>' % (x + 9, y + 25, inner * frac, EDGE[state]))
+
+    count = ('all %d done' % phase['total'] if frac == 1
+             else '%d of %d done' % (phase['done'], phase['total']))
+    out.append('<text x="%.1f" y="%.1f" font-size="8.5" font-weight="600" '
+               'fill="%s">%s</text>' % (x + 9, y + 43, TEXT[state], count))
+    if phase['next']:
+        out.append('<text x="%.1f" y="%.1f" font-size="8.5" fill="#7A8994">'
+                   'next: %s</text>'
+                   % (x + 9, y + 53,
+                      esc(fit(phase['next'], inner - 26, 8.5, SANS_ADV))))
     return '\n'.join(out)
 
 
 def main():
     r"""Writes the diagram to both of its homes."""
-    s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
-         'width="100%%" font-family="IBM Plex Sans, sans-serif">' % (W, H)]
-    # An explicit light surface.  The labels are dark by design, and the SVG
-    # is embedded both in the Sphinx docs (light) and in the recovery plan
-    # (which follows the reader's theme); without a background of its own the
-    # text would disappear against a dark page.
-    s.append('<rect width="%d" height="%d" rx="6" fill="#FBFCFC" '
-             'stroke="#D8DEE3"/>' % (W, H))
+    root = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))))
+    data = phases(root)
 
-    # --- title and legend -------------------------------------------------
+    rows = (len(data) + COLS - 1) // COLS
+    notes_top = ROW_TOP + rows * ROW_GAP + 22
+    height = int(notes_top + 26 + len(NOTES) * 17 + 22)
+
+    s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
+         'width="100%%" font-family="IBM Plex Sans, sans-serif">' % (W, height)]
+    # An explicit light surface: the labels are dark by design, and this is
+    # embedded in pages that follow the reader's theme.
+    s.append('<rect width="%d" height="%d" rx="6" fill="#FBFCFC" '
+             'stroke="#D8DEE3"/>' % (W, height))
+
+    total_done = sum(p['done'] for p in data)
+    total_all = sum(p['total'] for p in data)
     s.append('<text x="%d" y="34" font-size="15" font-weight="600" '
-             'fill="#14202A">dev-next recovery</text>' % X0)
+             'fill="#14202A">dev-next recovery, by phase</text>' % X0)
+    s.append('<text x="%d" y="52" font-size="10" fill="#5A6A73">%d of %d items '
+             'done across %d phases. Read from the plan\'s own checkboxes; '
+             'every branch and its status is in branches.svg.</text>'
+             % (X0, total_done, total_all, len(data)))
+
     lx = X0
     for state, label in [('done', 'done'), ('doing', 'in progress'),
-                         ('blocked', 'blocked'), ('todo', 'not started')]:
-        s.append('<rect x="%d" y="46" width="9" height="9" rx="2" fill="%s" '
+                         ('blocked', 'blocked on a decision'),
+                         ('todo', 'not started')]:
+        s.append('<rect x="%d" y="66" width="9" height="9" rx="2" fill="%s" '
                  'stroke="%s"/>' % (lx, FILL[state], EDGE[state]))
-        s.append('<text x="%d" y="54.5" font-size="10" fill="#4C5C69">%s</text>'
+        s.append('<text x="%d" y="74.5" font-size="10" fill="#4C5C69">%s</text>'
                  % (lx + 14, label))
         lx += 26 + len(label) * 5.6
 
-    # --- infrastructure track (above the spine) ---------------------------
-    s.append('<text x="%d" y="92" font-size="10.5" font-weight="600" '
-             'fill="#0E6E70" letter-spacing="0.08em">INFRASTRUCTURE</text>' % X0)
-    iw = (X1 - X0) / len(WORK)
-    for i, (label, state) in enumerate(WORK):
-        x = X0 + i * iw
-        s.append(box(x, 104, iw - 10, 30, state, ['%s %s' % (MARK[state], label)],
-                     small=True))
+    for i, phase in enumerate(data):
+        x = X0 + (i % COLS) * COL_GAP
+        y = ROW_TOP + (i // COLS) * ROW_GAP
+        s.append(phase_box(x, y, phase))
 
-    # --- the merge queue, in two rows: merged above, blocked below -------
-    s.append('<text x="%d" y="176" font-size="10.5" font-weight="600" '
-             'fill="#0E6E70" letter-spacing="0.08em">MERGE QUEUE</text>' % X0)
-
-    merged = [q for q in QUEUE if q[2] == 'done']
-    stuck = [q for q in QUEUE if q[2] != 'done']
-
-    # Merged first, then blocked, each wrapped at MAX_PER_ROW and stacked
-    # downward.  With nothing blocked the queue simply uses both rows.
-    rows, top = [], 190
-    for items, label in ((merged, 'merged'), (stuck, 'blocked')):
-        for start in range(0, len(items), MAX_PER_ROW):
-            rows.append((items[start:start + MAX_PER_ROW], top, label))
-            top += ROW_GAP
-    if rows and rows[-1][1] + BOX_H >= SPINE_Y:
-        raise SystemExit(
-            'the queue no longer fits above the spine: %d rows reach y=%d, and '
-            'the spine is at %d. Raise H and SPINE_Y, or shorten the queue.'
-            % (len(rows), rows[-1][1] + BOX_H, SPINE_Y))
-
-    joins = []
-    for items, top, _ in rows:
-        for i, (name, desc, state) in enumerate(items):
-            cx = X0 + i * COL_GAP + BOX_W / 2
-            s.append(box(cx - BOX_W / 2, top, BOX_W, BOX_H, state, [name, desc]))
-            joins.append((cx, top + BOX_H, state))
-
-    # Connectors run from each box down to its node on the spine.  Merged
-    # boxes meet the spine directly below themselves; blocked ones meet it
-    # further right, past the point work has reached.
-    # Spine nodes are spaced evenly across the whole spine, independent of
-    # where the boxes sit: the merged boxes already span the full width, so
-    # dropping each node directly below its box would leave no spine for the
-    # blocked ones.  Order along the spine is merge order.
-    n_done = len(merged)
-    total = len(joins)
-    node_step = (X1 - X0) / total
-    node_x = [X0 + (i + 0.5) * node_step for i in range(total)]
-    done_x = node_x[n_done - 1] + node_step / 2 if n_done else X0
-
-    for k, (cx, y_from, state) in enumerate(joins):
-        nx = node_x[k]
-        colour = EDGE[state]
-        dash = '' if state == 'done' else ' stroke-dasharray="3 3" opacity="0.8"'
-        elbow = SPINE_Y - (30 if state != 'done' else 46)
-        s.append('<path d="M %.1f %.1f L %.1f %.1f L %.1f %.1f L %.1f %.1f" '
-                 'stroke="%s" stroke-width="1.3" fill="none"%s/>'
-                 % (cx, y_from, cx, elbow, nx, elbow, nx, SPINE_Y - 7,
-                    colour, dash))
-        s.append('<circle cx="%.1f" cy="%d" r="4.5" fill="%s" stroke="%s" '
-                 'stroke-width="1.4"/>' % (nx, SPINE_Y, FILL[state], EDGE[state]))
-        s.append('<text x="%.1f" y="%d" font-size="8" font-weight="700" '
-                 'fill="%s" text-anchor="middle">%s</text>'
-                 % (nx, SPINE_Y + 2.6, TEXT[state], MARK[state]))
-
-    # --- the spine --------------------------------------------------------
-    s.append('<line x1="%d" y1="%d" x2="%.1f" y2="%d" stroke="#1D7A57" '
-             'stroke-width="3"/>' % (X0 - 40, SPINE_Y, done_x, SPINE_Y))
-    s.append('<line x1="%.1f" y1="%d" x2="%d" y2="%d" stroke="#BCC7CE" '
-             'stroke-width="3" stroke-dasharray="5 4"/>'
-             % (done_x, SPINE_Y, X1 + 30, SPINE_Y))
-    s.append('<circle cx="%d" cy="%d" r="6" fill="#0E6E70"/>' % (X0 - 40, SPINE_Y))
-    s.append('<text x="%d" y="%d" font-size="9.5" font-family="IBM Plex Mono, '
-             'monospace" fill="#4C5C69" text-anchor="middle">dev@1ca1847</text>'
-             % (X0 - 40, SPINE_Y + 22))
-    s.append('<path d="M %d %d l -10 -5.5 l 0 11 z" fill="#7A8994"/>'
-             % (X1 + 40, SPINE_Y))
-    s.append('<text x="%d" y="%d" font-size="11" font-weight="600" '
-             'fill="#4C5C69" text-anchor="middle">main</text>'
-             % (X1 + 8, SPINE_Y - 14))
-
-    # --- phase strip (below) ---------------------------------------------
-    s.append('<text x="%d" y="470" font-size="10.5" font-weight="600" '
-             'fill="#0E6E70" letter-spacing="0.08em">PHASES</text>' % X0)
-    phases = [('0 branch', 'done'), ('1 env', 'done'), ('2 CI', 'done'),
-              ('3 tests', 'done'), ('4 merge', 'blocked'),
-              ('5 decide', 'blocked'), ('6 interface', 'todo'), ('7 docs', 'doing'),
-              ('8 govern', 'todo'), ('9 promote', 'todo'), ('10 cleanup', 'todo')]
-    pw = (X1 - X0) / len(phases)
-    for i, (label, state) in enumerate(phases):
-        x = X0 + i * pw
-        s.append('<rect x="%.1f" y="482" width="%.1f" height="24" rx="3" '
-                 'fill="%s" stroke="%s"/>' % (x, pw - 5, FILL[state], EDGE[state]))
-        s.append('<text x="%.1f" y="498" font-size="9" fill="%s" '
-                 'text-anchor="middle">%s</text>'
-                 % (x + (pw - 5) / 2, TEXT[state], esc(label)))
-
-    # --- the decisions blocking the queue ---------------------------------
-    # The header sits at 530 rather than 538 so that a fourth line still
-    # clears the bottom edge at H=620.  Check that before adding a fifth.
-    s.append('<text x="%d" y="530" font-size="10.5" font-weight="600" '
-             'fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION</text>'
-             % X0)
-    notes = ['NUTRIG field names: nutrig_rhox/rhoy or correlation_x/y — needs lwpiotr',
-             'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration',
-             'Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration',
-             'Reprocessing: the noise fix raises every simulated voltage by √2 — needs the collaboration']
-    for i, note in enumerate(notes):
-        s.append('<text x="%d" y="%d" font-size="10.5" fill="#4C5C69">• %s</text>'
-                 % (X0, 549 + i * 17, esc(note)))
+    s.append('<text x="%d" y="%d" font-size="10.5" font-weight="600" '
+             'fill="#8A6210" letter-spacing="0.08em">BLOCKED ON A DECISION'
+             '</text>' % (X0, notes_top))
+    for i, note in enumerate(NOTES):
+        s.append('<text x="%d" y="%d" font-size="10.5" fill="#4C5C69">• %s'
+                 '</text>' % (X0, notes_top + 19 + i * 17, esc(note)))
 
     s.append('</svg>')
     svg = '\n'.join(s) + '\n'
-    # Written to the dev-next paperwork, where the plan that embeds it lives,
-    # and to docs/ for the documentation build. One writer, so no drift.
-    root = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.abspath(__file__))))
     for out in (os.path.join(root, 'resources', 'dev', 'dev-next',
                              'recovery.svg'),
                 os.path.join(root, 'docs', 'source', 'recovery.svg')):
