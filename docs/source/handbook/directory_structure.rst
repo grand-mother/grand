@@ -839,26 +839,26 @@ DockerHub Publishing
 Python Dependencies (Docker)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``requirements.txt``
+``requirements.txt`` lists the Python packages the image needs, without
+versions, and is what ``base.dockerfile`` installs.
 
-- ``requirements_vers.txt`` – pinned versions
+A second file, ``requirements_vers.txt``, used to sit beside it holding the
+same list pinned to the versions current in 2022, and this page told you to
+install it.  It was removed on 2026-09-08.  Nothing built it — the Dockerfiles
+have always installed the unpinned list — and it had not been updated since
+February 2023, so following that instruction installed a four-year-old
+environment, including a ``Pillow`` with a critical advisory against it.  It
+was invisible to Dependabot, which does not scan that file name, so nothing
+would have told you.
 
-**Sample:**
-
-.. code:: bash
-
-   numpy==1.22.1
-   scipy==1.7.3
-   matplotlib==3.5.1
-   uproot==4.3.7
-   psycopg2==2.9.5
-   SQLAlchemy==1.4.44
-
-**Install with:**
+If you want a reproducible environment, use the conda one rather than pinning
+this list by hand:
 
 .. code:: bash
 
-   pip install -r requirements_vers.txt
+   conda env create -f env/conda/grand-dev.yml --solver=libmamba
+   conda activate grand-dev
+   source env/setup.sh
 
 Examples
 --------

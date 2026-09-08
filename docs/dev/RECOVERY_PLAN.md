@@ -298,7 +298,27 @@ the workflow's trigger alongside `main`. The personal fork that served as a
 stopgap can come down.
 
 **24 Dependabot alerts on the default branch** — 1 critical, 15 high, 7
-moderate, 1 low — reported on every push. Not looked at yet.
+moderate, 1 low. Looked at 2026-09-08: **all 24 are one file**,
+`binder/requirements.txt`, and 19 of them are Pillow. That file exists only on
+`master` — not on `dev`, not on `dev-next` — and is a 2022 scratch experiment
+with mybinder.org whose readme is pasted links and an error message, with no
+badge anywhere and pointing at a branch that no longer exists. Nothing installs
+it, nothing under `grand/` imports PIL, and the critical one (CVE-2023-50447)
+needs `ImageMath.eval` on attacker input. **They should clear when `dev-next`
+becomes the default branch**; do not dismiss them, or a recurrence would be
+hidden.
+
+Two things that look like this problem and are not. `env/docker_amd64/requirements_vers.txt`
+carries the same 2022 pins — 42 of 43 packages at identical versions, `Pillow`
+one patch older — and has sat on the default branch throughout without ever
+raising an alert: Dependabot's pip scanner does not match that file name, so it
+never will. It was removed on 2026-09-08 along with the handbook instruction
+that told people to install it, which was the only thing referencing it. And
+`Pillow` *is* installed in the working environment, at 12.3.0, pulled in by
+matplotlib rather than declared by us — patched, not vulnerable.
+
+Litter for Phase 10: `origin` still carries a
+`dependabot/pip/binder/pillow-9.3.0` branch from an abandoned auto-PR.
 
 ## Blocked on a decision
 
