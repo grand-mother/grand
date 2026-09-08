@@ -18,7 +18,7 @@ Offline data handling, simulation and analysis for the
 > **Some badges above are not green yet.** Continuous integration is being
 > rebuilt and the package is not yet on PyPI. They are here so that they turn
 > green as each piece lands rather than being added after the fact. See
-> [`docs/dev/RECOVERY_PLAN.md`](docs/dev/RECOVERY_PLAN.md).
+> [`resources/dev/dev-next/RECOVERY_PLAN.md`](resources/dev/dev-next/RECOVERY_PLAN.md).
 
 ## Work is happening on `dev-next`, and nothing is being deleted
 

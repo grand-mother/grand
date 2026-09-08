@@ -194,7 +194,7 @@ Common mistakes
    A worked notebook is planned for this page — the frames and conversions
    end to end, with a detector layout drawn in ``GRANDCS`` and again in
    geodetic coordinates, a shower axis in both, and a terrain profile along
-   it. Tracked in ``docs/dev/RECOVERY_PLAN.md``.
+   it. Tracked in ``resources/dev/dev-next/RECOVERY_PLAN.md``.
 
 Reference
 ---------

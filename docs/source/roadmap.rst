@@ -3,8 +3,8 @@ Recovery plan
 
 Where this repository is going, and why it needed a plan at all.
 
-This page renders `docs/dev/RECOVERY_PLAN.md
-<https://github.com/grand-mother/grand/blob/dev-next/docs/dev/RECOVERY_PLAN.md>`_
+This page renders `resources/dev/dev-next/RECOVERY_PLAN.md
+<https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/RECOVERY_PLAN.md>`_
 directly, so there is one source of truth, updated in the same commits as the
 work it describes.  It is a **working document**: the unticked boxes are what
 has not been done yet, and they are meant to be visible.
@@ -26,5 +26,5 @@ has not been done yet, and they are meant to be visible.
 
 ----
 
-.. include:: ../dev/RECOVERY_PLAN.md
+.. include:: ../../resources/dev/dev-next/RECOVERY_PLAN.md
    :parser: myst

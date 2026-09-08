@@ -5,7 +5,7 @@ full audit and the reasoning behind each phase, is kept as a Claude artifact;
 this file is the copy that lives with the code and is updated in the same
 commits as the work.
 
-![recovery status](../source/_static/recovery.svg)
+![recovery status](recovery.svg)
 
 That is the merge *queue* — the branches curated for merging — against the
 infrastructure work. It is deliberately a summary; the branch-by-branch picture
@@ -561,6 +561,7 @@ earlier.
 | The Docker route cannot work | **It works.** 459 tests pass in the 2023 image. |
 | `vga_gain` loads the 20 dB table regardless | It loads `feb+amfitler+biast.s2p`, which is not a VGA table at all. |
 | *(not filed)* `MatchingNetwork` treats dB magnitudes as linear | **Correct as written.** Its files declare `# hz S ma R 50`; the dB-declaring files are the ones whose classes do call `db2reim`. A comment now says so at the line. |
+| *(2026-09-08)* Four duplicated docstring parameter blocks were fixed in `rf_chain.py` | The same commit had left four more in `grand/sim/detector/adc.py`. A package-wide sweep now confirms none remain. |
 
 The pattern: each was a *real observation* wrapped in a *guessed cause*, and in
 each case the guess was more dramatic than the truth. The observation that two
@@ -581,7 +582,13 @@ correct is worth a comment, because the next reader will make the same guess.
 
 ## Branches carrying unique work
 
-![every branch and its status](../source/_static/branches.svg)
+![every branch and its status](branches.svg)
+
+The branch-by-branch record is **[`BRANCHES.md`](BRANCHES.md)**: every branch
+the repository has ever had — 69 of them, including the 31 that were merged and
+then deleted — with who made it, what it came off, what came out of it, and
+whether it should be merged. It is generated from git by
+`docs/dev/make_branch_inventory.py`; this section carries only the decisions.
 
 Re-measured 2026-09-08 with `git cherry` against `dev-next`. Of 38 remote
 branches, 19 are fully contained, 5 are ahead only by commits whose patches are
@@ -596,30 +603,39 @@ and they turn out to be eras: the leftmost stopped being touched in 2023.
 recovery *and* both branches still carrying live work, so `refact_galaxy` and
 `dev_marion` are siblings of the queue rather than strangers to it.
 
-**Two are live work in `grand/` and neither was on the old list:**
+### What to do with the fifteen
 
-| Branch | Patches | Last | Content |
-|---|---|---|---|
-| `dev_marion` | 7 | 2026-02 | **An entire `grand/analysis/` package, 38 files**: shower reconstruction, the SWF model, energy reconstruction, amplitude profile and footprint display, with a README. Merges clean. This is Phase 5's "where reconstruction lives" question — which is not abstract, because an implementation already exists and sits alongside `grand/recon/`. |
-| `refact_galaxy` | 12 | 2026-02 | **711 lines across the galactic-noise code**: a parallel implementation in `galaxy_new.py`, `galatic_ant_asd.py` and `galatic_ant_component.py`, plus 19 changed lines in `galaxy.py`. **Conflicts.** It overlaps exactly what came in from `dev_snonis`, and one commit — "galaxy.py always remove 1 to lst but I don't understand why. remove it." — is about the LST indexing the normalisation depends on. Two people refactored this independently; one was merged and verified without knowing of the other. |
+Three review passes, 2026-09-08. Only **three of the fifteen merge cleanly**;
+every other candidate conflicts, most of them only on context.
 
-**The rest:**
+| | Branches | |
+|---|---|---|
+| **Merge** | `dev_event_viewer`, `dev_marion`, `beta_dc1` | Test-merge clean. `dev_marion` is also Phase 5's "where reconstruction lives"; `beta_dc1` is from 2023, so confirm DC1 analysis is still wanted. |
+| **Merge by hand** | `tian-conda-arm` | Ten lines of ARM notes; conflicts only because the trunk added 52 lines to the same readme. |
+| **Cherry-pick** | `dev_leisos`, `masterkastner` | A real `get_antenna_position` fix under 35,000 lines of committed CORSIKA data; and 34 lines of docstrings under 192 files of rebuilt docs. |
+| **Do not merge** | `radio`, `no-astropy`, `dependabot/…pillow`, `dev_downsample_…_Jelena`, `dc2_debug_xmax`, `147-add-option-…` | Obsolete paths, superseded implementations, live debug hacks, or a fix that cannot work. |
+| **Decision, not a merge** | `grandio_light`, `snonis_sim2root_test_merge` | The package split, and an angular-convention change. Both are collaboration questions. |
+| **Ask the author** | `refact_galaxy` | luckyjim's parallel galactic-noise implementation, overlapping work already verified here. |
 
-| Branch | Patches | Last | Content |
-|---|---|---|---|
-| `radio` | 20 | 2020-01 | Against `lib/`, which now holds only a readme. Almost certainly obsolete, but it is the largest patch count here and nobody has looked. |
-| `grandio_light` | 6 | 2025-08 | 596 files. This *is* the "does GRANDlib split" decision, not an input to it. |
-| `dev_downsample_and_ADCconversion_Jelena` | 4 | 2024-01 | `grand/sim/ADCconverter.py` and `efield2voltage.py`. Conflicts. |
-| `masterkastner` | 3 | 2024-08 | 201 files, but 171 are the old `sphinx_docs/` tree, rebuilt since. The salvage is 5 modules' docstrings. |
-| `beta_dc1` | 3 | 2023-01 | `scripts/ADanalysis.py`, `TDAnalysis.py` |
-| `dc2_debug_xmax` | 2 | 2024-12 | DC2 polarisation-voltage debugging |
-| `dev_leisos` | 2 | 2024-10 | recursive `coreas_pipeline`, 34 files under `sim2root/` |
-| `dev_event_viewer` | 2 | 2025-05 | 4 files under `examples/` |
-| `snonis_sim2root_test_merge` | 2 | 2024-04 | galaxy test notebook |
-| `147-add-option-…` | 1 | 2025-09 | non-parallel CoREAS support |
-| `tian-conda-arm` | 1 | 2025-03 | ARM install notes |
-| `no-astropy` | 1 | 2021-07 | Valentin Niess, pre-dates most of the tree |
-| `dependabot/pip/binder/pillow-9.3.0` | 1 | 2022-12 | An abandoned auto-PR against `binder/`, which exists only on `master`. Delete. |
+Reasons for each are in [`BRANCHES.md`](BRANCHES.md#why-one-by-one).
+
+**Merge order.** Take the three clean ones first, then `tian-conda-arm`. Four of
+the remaining candidates touch `grand/sim/efield2voltage.py`, so merge nothing
+else into that file in parallel — each merge moves the conflict surface for the
+rest.
+
+### What the third pass changed
+
+The first two passes read diff *summaries*. The third read the code, and four
+verdicts moved. Recorded here rather than edited away, because they are all one
+mistake: **a diffstat is not a diff.**
+
+| Read as | Actually |
+|---|---|
+| `dc2_debug_xmax` is cosmetic churn — reformatting and log-level changes | It contains two live debug hacks: `for du_idx in range(2)` under a `'Reduce DU to 2'` warning, and an `if True:` block placing every antenna at the shower core. Merging would silently corrupt every simulation. Do-not-merge for a far stronger reason than "churn". |
+| `snonis_sim2root_test_merge` carries a cherry-pickable 14-line `coordinates.py` fix | It redefines the **angular convention** across all four core transforms — θ→180−θ, φ→φ+180, azimuth and elevation redefined. Every angle in the codebase moves. It also raises on array input (`if phi==360`), and its other half is already on the trunk. Not a cherry-pick: a collaboration decision. |
+| `147-add-option-…` is a small live fix worth merging | Its `try/except` never fires. A missing keyword did not raise: `read_list_of_params` returned the builtin `list`, and `list[0]` is a generic alias on Python 3.9+. Real problem, ineffective fix — [fixed properly on the trunk](../../../sim2root/CoREASRawRoot/CorsikaInfoFuncs.py) instead. |
+| Branch size measured by `git diff merge-base..branch` | For an old branch that replays everything already merged by another route. `snonis_sim2root_test_merge` shows 279 commits and has **two** patches of its own; `beta_dc1` shows 333 and has three. `BRANCHES.md` reports both numbers side by side for exactly this reason. |
 
 ## Tools
 
