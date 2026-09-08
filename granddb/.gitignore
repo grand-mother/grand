@@ -1,0 +1,7 @@
+# Local settings that hold credentials. Neither has ever been in this
+# repository and neither should be, but nothing stopped a `git add -A` in the
+# production checkout at CC-IN2P3 from staging one -- so this does.
+#
+# Each ships an .example beside it, which is what these rules must not catch.
+monitoring_dbconf.py
+config.ini

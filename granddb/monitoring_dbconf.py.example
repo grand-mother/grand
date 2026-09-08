@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+"""Database settings for monitoring.py and monitoring_site.py.
+
+Copy this file to ``monitoring_dbconf.py`` beside it and fill in the values.
+That copy is deliberately not in version control -- it holds a password -- and
+``granddb/.gitignore`` makes sure it cannot be committed by accident.
+
+Two connections, because these scripts read from one database and write to
+another:
+
+``MDB_CONFIG``
+    The **main** GRAND database.  ``get_files`` queries its ``convertion`` and
+    ``transfer`` tables to find newly recorded files to process.  Only
+    ``monitoring.py`` uses it; ``monitoring_site.py`` is given a file with
+    ``-f`` and never asks.
+
+``DB_CONFIG``
+    The **monitoring** database, written by everything else here: the
+    ``mesures``, ``spectres`` and ``frequences`` tables.
+
+Each is passed straight to ``psycopg2.connect(**...)``, so the keys are libpq
+connection options.  The five below are the usual set; ``connect_timeout``,
+``sslmode`` and the rest of libpq's options are accepted too.  An unknown key
+is rejected outright -- ``psycopg2`` raises ``ProgrammingError: invalid dsn``
+rather than ignoring it -- so a typo here fails loudly.
+
+Without this file both modules still import, and fail at the first database
+access instead.  That is deliberate, so that the code can be read and checked
+by people who will never run it against a database.
+"""
+
+#: The main GRAND database: read by monitoring.py's get_files().
+MDB_CONFIG = {
+    "host": "",
+    "port": 5432,
+    "dbname": "",
+    "user": "",
+    "password": "",
+}
+
+#: The monitoring database: written by save_temps, save_spectres and save_freqs.
+DB_CONFIG = {
+    "host": "",
+    "port": 5432,
+    "dbname": "",
+    "user": "",
+    "password": "",
+}

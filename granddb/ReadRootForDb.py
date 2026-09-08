@@ -1,4 +1,4 @@
-from datamanager import DataManager
+from granddb.datamanager import DataManager
 
 
 

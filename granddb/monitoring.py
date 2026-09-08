@@ -29,7 +29,27 @@ import random
 import time
 import grand.manage_log as mlg
 import argparse
-import granddb.monitoring_dbconf as monitoring_dbconf
+# granddb/monitoring_dbconf.py is not in this repository and never has been.
+# It exists only on the production machine at CC-IN2P3, where these jobs run,
+# and defines DB_CONFIG and MDB_CONFIG: two dicts of psycopg2.connect() keyword
+# arguments, for the monitoring database and the main one respectively.
+#
+# Guarded so that the module can be imported without it -- before this, anyone
+# without the file got ModuleNotFoundError at import and could not so much as
+# read the module, which is why it has no tests. The first database access
+# fails instead.
+#
+# The except is narrowed to this one module deliberately. A plain
+# `except ImportError` would also swallow a *broken* conf file on the
+# production machine -- an ImportError raised from inside it -- and bind None,
+# hiding the real cause until first use. This form re-raises that unchanged,
+# so it is a no-op wherever the file is present and sound.
+try:
+    import granddb.monitoring_dbconf as monitoring_dbconf
+except ModuleNotFoundError as _err:
+    if _err.name != "granddb.monitoring_dbconf":
+        raise
+    monitoring_dbconf = None
 
 
 
