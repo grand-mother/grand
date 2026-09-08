@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 968" width="1180" height="968" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
+<rect width="1180" height="968" fill="#FFFFFF"/>
+<text x="40" y="34" font-size="15" font-weight="600" fill="#22313A">Every branch, against dev-next</text>
+<text x="40" y="52" font-size="10" fill="#5A6A73">37 branches. Left: contained in dev-next, with the merge that brought it in. Right: still carrying patches of its own.</text>
+<text x="40" y="76" font-size="9" font-weight="600" fill="#5A6A73">INFRASTRUCTURE</text>
+<rect x="40.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="47.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ conda env</text>
+<rect x="158.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="165.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ setup.sh</text>
+<rect x="276.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="283.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ pyproject</text>
+<rect x="394.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="401.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ Sphinx docs</text>
+<rect x="512.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="519.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ schema test</text>
+<rect x="630.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="637.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ CI green</text>
+<rect x="748.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="755.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ 593 tests</text>
+<rect x="866.0" y="86" width="108" height="22" rx="3" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/><text x="873.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#1D7A57">✓ cov 73%</text>
+<rect x="984.0" y="86" width="108" height="22" rx="3" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1"/><text x="991.0" y="101" font-family="IBM Plex Mono, monospace" font-size="9" fill="#7A8994">○ interface</text>
+<line x1="590" y1="128" x2="590" y2="902" stroke="#22313A" stroke-width="2.5"/>
+<text x="590" y="120" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#22313A" text-anchor="middle">dev-next</text>
+<rect x="190.0" y="150.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="163.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_fix_root_warnings_lwp</text><text x="198.0" y="174.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">ROOT 6.38 warnings</text>
+<line x1="440.0" y1="165.0" x2="590" y2="165.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="165.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="161.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-02 · 00ea628</text>
+<rect x="190.0" y="184.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="197.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_nutrig_fields</text><text x="198.0" y="208.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">NUTRIG fields in TADC</text>
+<line x1="440.0" y1="199.0" x2="590" y2="199.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="199.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="195.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-02 · 6f4eeaf</text>
+<rect x="190.0" y="218.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="231.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_reprocessing</text><text x="198.0" y="242.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">Snakemake pipeline</text>
+<line x1="440.0" y1="233.0" x2="590" y2="233.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="233.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="229.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-02 · 401658c</text>
+<rect x="190.0" y="252.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="265.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_Event_write</text><text x="198.0" y="276.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">tshower writing</text>
+<line x1="440.0" y1="267.0" x2="590" y2="267.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="267.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="263.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-02 · 4a43515</text>
+<rect x="190.0" y="286.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="299.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_aoi_unittest</text><text x="198.0" y="310.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">aoi unit tests</text>
+<line x1="440.0" y1="301.0" x2="590" y2="301.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="301.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="297.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-02 · 64e9a00</text>
+<rect x="190.0" y="320.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="333.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_snonis</text><text x="198.0" y="344.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">noise √2 fix</text>
+<line x1="440.0" y1="335.0" x2="590" y2="335.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="335.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="331.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-07 · 08e0fbd</text>
+<rect x="190.0" y="354.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="367.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_fix_root_warnings_..._new_fields</text><text x="198.0" y="378.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">NUTRIG name clash</text>
+<line x1="440.0" y1="369.0" x2="590" y2="369.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="369.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="365.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-08 · 13c45c3</text>
+<rect x="190.0" y="388.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="401.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_fix_root_warnings_aoi_levels_lwp</text><text x="198.0" y="412.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">levels, +40% speed</text>
+<line x1="440.0" y1="403.0" x2="590" y2="403.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="403.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="399.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-08 · 8fb7ded</text>
+<rect x="190.0" y="422.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="435.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_database</text><text x="198.0" y="446.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">data catalogue</text>
+<line x1="440.0" y1="437.0" x2="590" y2="437.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="437.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="433.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2025-06-03 · 93b8ab3</text>
+<rect x="190.0" y="456.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="469.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_io_root</text><text x="198.0" y="480.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">ROOT I/O layer</text>
+<line x1="440.0" y1="471.0" x2="590" y2="471.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="471.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="467.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2025-05-28 · 7905017</text>
+<rect x="190.0" y="490.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="503.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_io_root_testmerges</text><text x="198.0" y="514.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">I/O test merges</text>
+<line x1="440.0" y1="505.0" x2="590" y2="505.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="505.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="501.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">ancestor</text>
+<rect x="190.0" y="524.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="537.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_sim2root</text><text x="198.0" y="548.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">sim2root converters</text>
+<line x1="440.0" y1="539.0" x2="590" y2="539.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="539.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="535.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">ancestor</text>
+<rect x="190.0" y="558.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="571.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_sim2root_merge</text><text x="198.0" y="582.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">sim2root merge</text>
+<line x1="440.0" y1="573.0" x2="590" y2="573.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="573.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="569.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2025-01-25 · e86428c</text>
+<rect x="190.0" y="592.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="605.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_sim2root_..._with_dev</text><text x="198.0" y="616.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">sim2root into dev</text>
+<line x1="440.0" y1="607.0" x2="590" y2="607.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="607.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="603.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">ancestor</text>
+<rect x="190.0" y="626.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="639.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_sim2root_..._fix_fields</text><text x="198.0" y="650.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">sim2root field fixes</text>
+<line x1="440.0" y1="641.0" x2="590" y2="641.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="641.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="637.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2025-05-27 · 93a021b</text>
+<rect x="190.0" y="660.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="673.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_imports</text><text x="198.0" y="684.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">import cleanup</text>
+<line x1="440.0" y1="675.0" x2="590" y2="675.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="675.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="671.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">ancestor</text>
+<rect x="190.0" y="694.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="707.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">ci/docker-test</text><text x="198.0" y="718.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">docker CI trial</text>
+<line x1="440.0" y1="709.0" x2="590" y2="709.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="709.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="705.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-07 · 08e0fbd</text>
+<rect x="190.0" y="728.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="741.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">event-viewer</text><text x="198.0" y="752.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">event viewer</text>
+<line x1="440.0" y1="743.0" x2="590" y2="743.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="743.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="739.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2023-07-04 · 4d7f5b0</text>
+<rect x="190.0" y="762.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="775.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">copilot/add-color-coded-diagram</text><text x="198.0" y="786.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">diagram experiment</text>
+<line x1="440.0" y1="777.0" x2="590" y2="777.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="777.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="773.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2025-03-17 · b069bc1</text>
+<rect x="190.0" y="796.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="809.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev</text><text x="198.0" y="820.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">the old trunk</text>
+<line x1="440.0" y1="811.0" x2="590" y2="811.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="811.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="807.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2026-09-02 · 00ea628</text>
+<rect x="190.0" y="830.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="843.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">master</text><text x="198.0" y="854.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">old default branch</text>
+<line x1="440.0" y1="845.0" x2="590" y2="845.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="845.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="841.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">2025-03-17 · b069bc1</text>
+<rect x="190.0" y="864.0" width="250.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/><text x="198.0" y="877.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">main</text><text x="198.0" y="888.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">abandoned 2023 trunk</text>
+<line x1="440.0" y1="879.0" x2="590" y2="879.0" stroke="#1D7A57" stroke-width="1.2"/>
+<circle cx="590" cy="879.0" r="3" fill="#1D7A57"/>
+<text x="515.0" y="875.0" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="#1D7A57" text-anchor="middle">ancestor</text>
+<rect x="740.0" y="150.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="163.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">radio</text><text x="748.0" y="174.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">2020 lib/ work</text>
+<line x1="590" y1="165.0" x2="740.0" y2="165.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="184.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="197.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">refact_galaxy</text><text x="748.0" y="208.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">rival galaxy refactor</text>
+<line x1="590" y1="199.0" x2="740.0" y2="199.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="218.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="231.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dev_marion</text><text x="748.0" y="242.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">reconstruction package</text>
+<line x1="590" y1="233.0" x2="740.0" y2="233.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="252.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="265.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">grandio_light</text><text x="748.0" y="276.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">the package split</text>
+<line x1="590" y1="267.0" x2="740.0" y2="267.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="286.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="299.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dev_downsample_..._Jelena</text><text x="748.0" y="310.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">ADC conversion</text>
+<line x1="590" y1="301.0" x2="740.0" y2="301.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="320.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="333.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">masterkastner</text><text x="748.0" y="344.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">docstrings, old docs</text>
+<line x1="590" y1="335.0" x2="740.0" y2="335.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="354.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="367.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">beta_dc1</text><text x="748.0" y="378.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">DC1 analysis scripts</text>
+<line x1="590" y1="369.0" x2="740.0" y2="369.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="388.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="401.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dc2_debug_xmax</text><text x="748.0" y="412.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">DC2 xmax debugging</text>
+<line x1="590" y1="403.0" x2="740.0" y2="403.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="422.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="435.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dev_leisos</text><text x="748.0" y="446.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">recursive coreas pipeline</text>
+<line x1="590" y1="437.0" x2="740.0" y2="437.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="456.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="469.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dev_event_viewer</text><text x="748.0" y="480.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">event viewer examples</text>
+<line x1="590" y1="471.0" x2="740.0" y2="471.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="490.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="503.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">snonis_sim2root_test_merge</text><text x="748.0" y="514.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">galaxy test notebook</text>
+<line x1="590" y1="505.0" x2="740.0" y2="505.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="524.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="537.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">147-add-option-...-sim2root</text><text x="748.0" y="548.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">non-parallel CoREAS</text>
+<line x1="590" y1="539.0" x2="740.0" y2="539.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="558.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="571.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">tian-conda-arm</text><text x="748.0" y="582.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">ARM install notes</text>
+<line x1="590" y1="573.0" x2="740.0" y2="573.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="592.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="605.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">no-astropy</text><text x="748.0" y="616.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">drop astropy</text>
+<line x1="590" y1="607.0" x2="740.0" y2="607.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<rect x="740.0" y="626.0" width="250.0" height="30.0" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/><text x="748.0" y="639.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dependabot/...pillow-9.3.0</text><text x="748.0" y="650.0" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="8" fill="#5A6A73">abandoned auto-PR</text>
+<line x1="590" y1="641.0" x2="740.0" y2="641.0" stroke="#C9B48A" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="40" y="942" font-size="9" fill="#5A6A73">A dashed line is a branch that has never been merged; the solid green ones carry the date and commit that brought the branch in.</text>
+</svg>
