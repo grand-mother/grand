@@ -46,12 +46,6 @@ class ADC:
         units       : uV
         description : Array of downsamplef voltage traces, with shape (N_du,3,N_samples)
 
-        Parameters
-        ----------
-        voltage_trace : ndarray
-            Trace to resample.
-        input_sampling_rate_mhz : float
-            Its current sampling rate, in MHz.
         '''
         if self.sampling_rate != input_sampling_rate_mhz : 
           #compute the fft
@@ -91,10 +85,6 @@ class ADC:
         units       : ADC counts (least significant bits)
         description : The digitized array of ADC traces, with shape (N_du,3,N_samples)
 
-        Parameters
-        ----------
-        voltage_trace : ndarray
-            Voltage trace, in microvolts.
         '''
         
         # Convert voltage to ADC
@@ -124,10 +114,6 @@ class ADC:
         units       : ADC counts (least significant bits)
         description : Array of saturated ADC traces, with shape (N_du,3,N_samples)
 
-        Parameters
-        ----------
-        adc_trace : ndarray
-            Digitised trace, in counts.
         '''
         
         saturated_adc_trace = np.where(np.abs(adc_trace)<self.max_bit_value,
@@ -161,13 +147,6 @@ class ADC:
         type        : np.ndarray[int]
         units       : ADC counts (least significant bits)
         description : Array of ADC traces with shape (N_du,3,N_samples)
-
-        Parameters
-        ----------
-        voltage_trace : ndarray
-            Voltage trace to digitise.
-        noise_trace : ndarray, optional
-            Noise to add before digitising.
 
         Examples
         --------
