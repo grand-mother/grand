@@ -162,10 +162,32 @@ VERDICTS = {
         "Of 201 files, 192 are the old sphinx_docs/ tree, rebuilt since. "
         "What is left is 34 lines of docstrings across five live files under "
         "grand/basis/ and grand/dataio/. Worth taking; the rest is not."),
-    "radio": ("no",
-        "Adds lib/python/grand/, a package layout that predates the current "
-        "one. lib/ tracks only readme.md today. Nothing here applies to the "
-        "tree as it now stands."),
+    "radio": ("decide",
+        "**Held open deliberately, 2026-09-08.** The branch itself will not be "
+        "merged: 27 files and 7,410 lines from December 2019 under "
+        "lib/python/grand/, a layout the project abandoned -- lib/ tracks only "
+        "readme.md today -- and most of it is superseded (computevoltage by "
+        "grand/sim/efield2voltage.py, AiresInfoFunctions and "
+        "CoreasInfoFunctions by sim2root/, and shower, detector, frame and "
+        "signal_processing by grand/sim/, grand/geo/ and grand/basis/)."
+        "\n\n"
+        "What is open is one file. `lib/python/grand/radio/interpolation.py` "
+        "(808 lines, Anne Zilles, December 2019) implements `interpolate_trace` "
+        "and `do_interpolation`: interpolating an electric-field trace to an "
+        "arbitrary antenna position from a star-shape simulation. **There is "
+        "no equivalent anywhere on the trunk.** Every interpolation call in "
+        "grand/ and sim2root/ -- five of them, in basis/signal.py, "
+        "sim/noise/galaxy.py and sim/detector/rf_chain.py -- is one-dimensional "
+        "along frequency or time: signal resampling, galactic-noise spectra, "
+        "RF-chain response. sim2root knows about star-shapes (`--star_shape`, "
+        "a separate run per event) but only to package them into ROOT, never "
+        "to interpolate between antennas."
+        "\n\n"
+        "So deleting this branch would delete the only spatial trace "
+        "interpolation the repository has. The question to answer before "
+        "closing it is whether that capability is wanted, and if so who ports "
+        "it -- Anne Zilles wrote it, and it is star-shape work. Until then the "
+        "branch stays amber: this is an open question, not a settled no."),
     "no-astropy": ("no",
         "Two independent reasons, either sufficient. All three files it edits "
         "are gone -- grand/simulation/ was renamed to grand/sim/ in d1ac041, "

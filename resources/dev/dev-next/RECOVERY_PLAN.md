@@ -620,9 +620,14 @@ every other candidate conflicts, most of them only on context.
 | **Merge** | `dev_event_viewer`, `dev_marion`, `beta_dc1` | Test-merge clean. `dev_marion` is also Phase 5's "where reconstruction lives"; `beta_dc1` is from 2023, so confirm DC1 analysis is still wanted. |
 | **Merge by hand** | `tian-conda-arm` | Ten lines of ARM notes; conflicts only because the trunk added 52 lines to the same readme. |
 | **Cherry-pick** | `dev_leisos`, `masterkastner` | A real `get_antenna_position` fix under 35,000 lines of committed CORSIKA data; and 34 lines of docstrings under 192 files of rebuilt docs. |
-| **Do not merge** | `radio`, `no-astropy`, `dependabot/…pillow`, `dev_downsample_…_Jelena`, `dc2_debug_xmax`, `147-add-option-…` | Obsolete paths, superseded implementations, live debug hacks, or a fix that cannot work. |
-| **Decision, not a merge** | `grandio_light`, `snonis_sim2root_test_merge` | The package split, and an angular-convention change. Both are collaboration questions. |
+| **Do not merge** | `no-astropy`, `dependabot/…pillow`, `dev_downsample_…_Jelena`, `dc2_debug_xmax`, `147-add-option-…` | Obsolete paths, superseded implementations, live debug hacks, or a fix that cannot work. |
+| **Decision, not a merge** | `grandio_light`, `snonis_sim2root_test_merge`, `radio` | The package split; an angular-convention change; and the only spatial trace interpolation in the repository, on a branch that is otherwise dead. |
 | **Ask the author** | `refact_galaxy` | luckyjim's parallel galactic-noise implementation, overlapping work already verified here. |
+
+Decisions actually taken, with dates, are logged in the *Decisions taken*
+table at the top of [`BRANCHES.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/BRANCHES.md).
+A branch is amber until a decision is recorded there and red once it is: the
+difference between a question nobody has answered and one that is closed.
 
 Reasons for each are in [`BRANCHES.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/BRANCHES.md#why-one-by-one).
 

@@ -246,6 +246,6 @@
 <text x="632.0" y="518.0" font-size="8" fill="#5A6A73">ARM install notes</text>
 <text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">1 patch out</text>
 <text x="848.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-03-07 Tien</text>
-<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 17:11 UTC by docs/dev/make_branch_diagram.py</text>
-<text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit ccc2d1b (modified since)</text>
+<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 17:21 UTC by docs/dev/make_branch_diagram.py</text>
+<text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit a092c5e</text>
 </svg>
