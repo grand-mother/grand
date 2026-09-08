@@ -243,8 +243,8 @@
 <text x="1025.0" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#A9484E">masterkastner</text>
 <rect x="1016.0" y="380.0" width="9.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
 <text x="1032.2" y="387.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_update_readme_for_paper</text>
-<rect x="1047.1" y="548.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
-<text x="1058.1" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dev_leisos</text>
+<rect x="1047.1" y="548.0" width="4.0" height="9" rx="4.5" fill="#F7E6E7" stroke="#A9484E" stroke-width="1"/>
+<text x="1058.1" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#A9484E">dev_leisos</text>
 <rect x="1053.8" y="401.0" width="110.1" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
 <text x="1170.9" y="408.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_fix_dc2</text>
 <rect x="1078.2" y="254.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
@@ -311,6 +311,6 @@
 <text x="1586.5" y="120.0" font-size="7.4" fill="#7A8994">the trunk</text>
 <rect x="1634.0" y="113.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
 <text x="1645.0" y="120.0" font-size="7.4" fill="#7A8994">merged, then deleted</text>
-<text x="1740.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 20:41 UTC by docs/dev/make_history_diagram.py</text>
+<text x="1740.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 21:05 UTC by docs/dev/make_history_diagram.py</text>
 <text x="1740.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 4a00370</text>
 </svg>

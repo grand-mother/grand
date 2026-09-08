@@ -152,10 +152,10 @@
 <text x="340.0" y="356.0" font-size="8" fill="#5A6A73">I/O test merges</text>
 <text x="340.0" y="369.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#1D7A57">merged: ancestor</text>
 <text x="556.0" y="369.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-01-08 lwpiotr</text>
-<rect x="332.0" y="492.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
-<text x="340.0" y="506.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dev_leisos</text>
+<rect x="332.0" y="492.0" width="232" height="46" rx="4" fill="#F7E6E7" stroke="#A9484E" stroke-width="1.1"/>
+<text x="340.0" y="506.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#A9484E">dev_leisos</text>
 <text x="340.0" y="518.0" font-size="8" fill="#5A6A73">recursive coreas pipeline</text>
-<text x="340.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">2 patches out</text>
+<text x="340.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#A9484E">not merging 26-09-08</text>
 <text x="556.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">24-10-04 Leisos</text>
 <rect x="916.0" y="438.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
 <text x="924.0" y="452.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">dev_marion</text>
@@ -247,6 +247,6 @@
 <text x="632.0" y="518.0" font-size="8" fill="#5A6A73">ARM install notes</text>
 <text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#6B4E8E">content in 26-09-08</text>
 <text x="848.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-03-07 Tien</text>
-<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 20:40 UTC by docs/dev/make_branch_diagram.py</text>
+<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 21:04 UTC by docs/dev/make_branch_diagram.py</text>
 <text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 4a00370</text>
 </svg>
