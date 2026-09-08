@@ -524,6 +524,83 @@ branch deletion.
 copy and ``src_outlib/`` as abandoned.  If you find yourself editing the
 latter, you are almost certainly in the wrong file.
 
+.. _issue-coreas-xmax-unbound:
+
+The CoREAS converter crashes on the repository's own test fixture
+------------------------------------------------------------------
+
+:Status: **open**
+:Found: 2026-09-08, while checking whether branch
+        ``147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root``
+        was superseded
+
+The normal invocation of the CoREAS converter, on the CoREAS simulation
+committed in this repository, fails:
+
+.. code-block:: text
+
+    $ cd sim2root/CoREASRawRoot
+    $ python CoreasToRawROOT.py -d proton
+    ...
+      File "CoreasToRawROOT.py", line 361, in CoreasToRawRoot
+        RawShower.xmax_pos_shc = Xmax_NWU
+                                 ^^^^^^^^
+    UnboundLocalError: cannot access local variable 'Xmax_NWU' where it is
+    not associated with a value
+    $ echo $?
+    1
+
+It also leaves a **447-byte** ``Coreas_004100.rawroot`` behind — the file is
+opened before the crash — where a complete one is about 1.4 MB. A caller that
+checks for the file rather than the exit status sees output.
+
+**The cause.** ``Xmax_NWU`` is computed at line 154, inside
+
+.. code-block:: python
+
+    if read_params(reas_input, "ShowerZenithAngle"):
+
+and used unconditionally at line 361. The ``else`` branch never assigns it.
+Both lines came in together, in ``b4baed1``, *"add calculation of Xmax cart.
+position to rawroot"*.
+
+**Why the else branch is the normal path.** CoREAS writes two kinds of
+``.reas``. The short ``SIMxxxxxx.reas`` holds the CoREAS settings — core
+coordinates, time resolution, refractive index — and has no
+``ShowerZenithAngle``. The long per-event ``SIMxxxxxx-<id>-<id>.reas`` does.
+Directory mode globs
+
+.. code-block:: python
+
+    available_reas_files = glob.glob(path + "SIM??????.reas")
+
+which is exactly six characters and therefore matches **only the short file**.
+So ``read_params`` returns ``None``, the ``else`` branch runs — reading zenith
+and azimuth from the ``.inp`` instead, which is what it is there for — and the
+unconditional use at line 361 raises. The author of the ``else`` branch knew
+the short file lacks these keys; the Xmax work was simply added to the other
+branch only.
+
+**The fix is not obvious, which is why this is filed rather than patched.**
+The ``else`` branch cannot compute an Xmax position: it hard-codes
+
+.. code-block:: python
+
+    DepthOfShowerMaximum = -1
+    DistanceOfShowerMaximum = -1
+
+so the spherical vector would be built from a distance of -1 m. Computing
+``Xmax_NWU`` there would store a confidently wrong position rather than a
+missing one. The options are to write the converter's ``-1`` sentinel, to read
+the long ``.reas`` when it is present, or to refuse the conversion — and which
+is right is a question for whoever owns ``sim2root/``.
+
+**Why it survived.** Nothing runs this converter. ``tests/sim2root/`` reads the
+sources with :mod:`ast` and never imports them, for the reasons given at the
+top of that file, so a crash on the committed fixture is invisible to the test
+suite. Whatever the fix, it should come with a test that actually runs the
+conversion — the fixture is already in the repository.
+
 .. _issue-nutrig-field-names:
 
 Two names for the NUTRIG correlation fields
