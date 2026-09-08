@@ -1,5 +1,8 @@
+import inspect
+
 import numpy as np
 import pytest
+from grand.aoi.antenna import Antenna
 from grand.aoi.event import Event
 from grand.aoi.timetrace import Voltage
 
@@ -226,3 +229,124 @@ def test_fill_efield_tree_raises_treeexists_when_tefield_present():
     e.tefield = object()
     with pytest.raises(Exception):
         e.fill_efield_tree(overwrite=False)
+
+# --------------------------------------------------------------------------
+# The GP300/GP80/GP13 workaround. No site in any file we hold matches those
+# names, so nothing below can be reached through real data -- these fakes are
+# the only thing standing between the workaround and a silent regression.
+# --------------------------------------------------------------------------
+
+
+class _GPSWorkaroundEntered(Exception):
+    """Signals that fill_antennas took the GPS branch."""
+
+
+class DummyAntennaTree:
+    """Stands in for tefield inside fill_antennas.
+
+    The GPS branch opens with a call to `draw`, so raising there pinpoints the
+    moment the branch is entered without having to fake the coordinate
+    transforms that follow it.
+    """
+
+    def __init__(self, n_event_dus=2, du_id=None):
+        self._n = n_event_dus
+        self.du_id = du_id if du_id is not None else []
+
+    def draw(self, *args, **kwargs):
+        raise _GPSWorkaroundEntered()
+
+    def get_dus_indices_in_run(self, trun):
+        return list(range(self._n))
+
+    def get_event(self, event_number, run_number):
+        return 1
+
+    def get_entry(self, entry_number):
+        return 1
+
+
+class DummyRunForAntennas:
+    """Stands in for trun inside fill_antennas."""
+
+    def __init__(self, n_dus=3):
+        self.du_id = list(range(100, 100 + n_dus))
+        self.du_xyz = [[float(i), float(i) + 0.5, float(i) + 0.25]
+                       for i in range(n_dus)]
+        self.du_tilt = [[0.0, 0.0] for _ in range(n_dus)]
+
+
+def _event_at_site(site, n_event_dus=2, du_id=None):
+    """Builds an Event whose only purpose is to reach fill_antennas."""
+    e = Event()
+    e.site = site
+    e.trun = DummyRunForAntennas()
+    e.tefield = DummyAntennaTree(n_event_dus, du_id)
+    e.tvoltage = None
+    return e
+
+
+@pytest.mark.parametrize("site", ["GP300", "GP80", "GP13"])
+def test_workaround_runs_at_every_gp_site_when_asked(site):
+    """All three site names opt into the workaround."""
+    e = _event_at_site(site)
+    with pytest.raises(_GPSWorkaroundEntered):
+        e.fill_antennas(gp300_workaround=True)
+
+
+@pytest.mark.parametrize("site", ["GP300", "GP80", "GP13"])
+def test_the_flag_switches_the_workaround_off_at_every_gp_site(site):
+    """`and` binds tighter than `or`.
+
+    Written without parentheses, the condition gated only the GP300 arm, and
+    GP80 and GP13 took the workaround whatever the caller asked for.
+    """
+    e = _event_at_site(site)
+    e.fill_antennas(gp300_workaround=False)
+    assert len(e.antennas) == 2
+    assert e._all_antennas_key == ("run", site)
+
+
+def test_a_site_outside_the_three_never_takes_the_workaround():
+    e = _event_at_site("Xiaodushan")
+    e.fill_antennas(gp300_workaround=True)
+    assert e._all_antennas_key == ("run", "Xiaodushan")
+
+
+def test_run_built_positions_do_not_suppress_the_gps_calculation():
+    """The two branches fill `_all_antennas` from different sources.
+
+    The GPS branch treats a non-empty dict as work already done, so a dict left
+    behind by the ordinary branch used to make it skip and hand back positions
+    taken from `du_xyz` instead of from GPS.
+    """
+    e = _event_at_site("GP13")
+    e.fill_antennas(gp300_workaround=False)
+    assert e._all_antennas, "the ordinary branch should have filled the dict"
+    assert e._all_antennas_key == ("run", "GP13")
+
+    with pytest.raises(_GPSWorkaroundEntered):
+        e.fill_antennas(gp300_workaround=True)
+
+
+def test_gps_built_positions_are_reused_for_the_same_site():
+    """The cache still does its job: the GPS draw is expensive and runs once."""
+    e = _event_at_site("GP13", du_id=[100])
+    cached = Antenna()
+    cached.id = 100
+    cached.position.x, cached.position.y, cached.position.z = 1.0, 2.0, 3.0
+    cached.tilt.x, cached.tilt.y = 0.0, 0.0
+    e._all_antennas = {100: cached}
+    e._all_antennas_key = ("gps", "GP13")
+
+    e.fill_antennas(gp300_workaround=True)
+
+    assert len(e.antennas) == 1
+    assert e.antennas[0].position.x == 1.0
+
+
+def test_fill_event_from_trees_forwards_the_workaround_flag():
+    """The parameter used to be documented, accepted, and then ignored."""
+    source = inspect.getsource(Event.fill_event_from_trees)
+    assert "self.fill_antennas(gp300_workaround=gp300_workaround)" in source
+    assert "self.fill_antennas(gp300_workaround=True)" not in source

@@ -63,6 +63,14 @@ class Event:
     _all_antennas: dict = None
     """All antennas in the run - a workaround for lack of antennas in GP300"""
 
+    _all_antennas_key: tuple = None
+    """How and for which site `_all_antennas` was built, as ``(source, site)``.
+
+    The dict is filled either from GPS coordinates (``"gps"``) or from the run's
+    own `du_xyz` (``"run"``), which are not interchangeable. Reusing it across a
+    change of either would hand back positions derived the other way.
+    """
+
     # voltages: list[Voltage] = None
     voltages: list = None
     """Voltages from different antennas"""
@@ -566,7 +574,7 @@ class Event:
                     # Make tsimshower really None
                     self.tsimshower = None
 
-        self.fill_antennas(gp300_workaround=True)
+        self.fill_antennas(gp300_workaround=gp300_workaround)
 
         # Set the event number and run number in somewhat ugly way - from the first non None tree
         for t in [self.tvoltage, self.tefield, self.tshower, self.tsimshower]:
@@ -674,7 +682,8 @@ class Event:
         self.antennas = []
 
         # For GP300 for now, get the GPS coordinates for each DU and calculate the x/y/z here
-        if gp300_workaround and "GP300" in self.site or "GP80" in self.site or "GP13" in self.site:
+        if gp300_workaround and ("GP300" in self.site or "GP80" in self.site
+                                 or "GP13" in self.site):
 
             # Get the tree we are using
             cur_tree = None
@@ -685,8 +694,9 @@ class Event:
             else:
                 raise "Can't calculate antennas positions"
 
-            # If this is the first time we calculate antennas positions
-            if not self._all_antennas:
+            # If this is the first time we calculate antennas positions, or
+            # the ones we hold were not built from GPS for this same site
+            if not self._all_antennas or self._all_antennas_key != ("gps", self.site):
                 print("GP300 workaround: calculating all antennas positions")
                 from grand import Geodetic, GRANDCS
 
@@ -728,6 +738,7 @@ class Event:
 
                     self._all_antennas[a.id] = a
 
+                self._all_antennas_key = ("gps", self.site)
 
             # Fill the antenna part
             event_dus = cur_tree.du_id
@@ -779,6 +790,8 @@ class Event:
                 a.tilt.y = 0
 
                 self._all_antennas[a.id] = a
+
+            self._all_antennas_key = ("run", self.site)
 
 
 
