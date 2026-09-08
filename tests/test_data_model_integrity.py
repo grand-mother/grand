@@ -63,7 +63,16 @@ def test_tracked_files_in_managed_directories_exist(directory):
     step deleted the directory it lives in and restored only what the archive
     contains.
     """
-    missing = [p for p in _tracked(directory) if not p.exists()]
+    tracked = _tracked(directory)
+    if not tracked:
+        # data/.gitignore excludes everything but the three noise tables, so
+        # this is the expected state for the other two directories. Said out
+        # loud, because a green pass here would otherwise imply a check that
+        # did not happen.
+        pytest.skip('nothing is version-controlled under data/%s, so there is '
+                    'nothing for this to check' % directory)
+
+    missing = [p for p in tracked if not p.exists()]
     assert not missing, (
         '%d version-controlled file(s) under data/%s are not on disk: %s. '
         'Something removed them -- most likely data/download_data_grand.py, '

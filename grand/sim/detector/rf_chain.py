@@ -619,16 +619,6 @@ class MatchingNetwork(GenericProcessingDU):
             interpolated onto it, and are zero outside the 30-250 MHz band they
             were measured over.
 
-        Notes
-        -----
-        Results are stored on the instance rather than returned; the chain reads
-        them when it cascades the stages.
-
-        Parameters
-        ----------
-        freqs_mhz : ndarray, shape (n_freq,)
-            Output frequency axis, in MHz.
-
         Returns
         -------
         None
@@ -788,16 +778,6 @@ class gaa_frontend0db(GenericProcessingDU):
             Output frequency axis, in MHz.  The tabulated S-parameters are
             interpolated onto it, and are zero outside the 30-250 MHz band they
             were measured over.
-
-        Notes
-        -----
-        Results are stored on the instance rather than returned; the chain reads
-        them when it cascades the stages.
-
-        Parameters
-        ----------
-        freqs_mhz : ndarray, shape (n_freq,)
-            Output frequency axis, in MHz.
 
         Returns
         -------
@@ -1500,16 +1480,6 @@ class Rfchain_elements_db(GenericProcessingDU):
             interpolated onto it, and are zero outside the 30-250 MHz band they
             were measured over.
 
-        Notes
-        -----
-        Results are stored on the instance rather than returned; the chain reads
-        them when it cascades the stages.
-
-        Parameters
-        ----------
-        freqs_mhz : ndarray, shape (n_freq,)
-            Output frequency axis, in MHz.
-
         Returns
         -------
         None
@@ -1611,16 +1581,6 @@ class Rfchain_elements_db_rad(GenericProcessingDU):
             Output frequency axis, in MHz.  The tabulated S-parameters are
             interpolated onto it, and are zero outside the 30-250 MHz band they
             were measured over.
-
-        Notes
-        -----
-        Results are stored on the instance rather than returned; the chain reads
-        them when it cascades the stages.
-
-        Parameters
-        ----------
-        freqs_mhz : ndarray, shape (n_freq,)
-            Output frequency axis, in MHz.
 
         Returns
         -------
@@ -1914,16 +1874,6 @@ class Zload_arb(GenericProcessingDU):
             Output frequency axis, in MHz.  The tabulated S-parameters are
             interpolated onto it, and are zero outside the 30-250 MHz band they
             were measured over.
-
-        Notes
-        -----
-        Results are stored on the instance rather than returned; the chain reads
-        them when it cascades the stages.
-
-        Parameters
-        ----------
-        freqs_mhz : ndarray, shape (n_freq,)
-            Output frequency axis, in MHz.
 
         Returns
         -------
