@@ -374,8 +374,9 @@ VERDICTS = {
         "from 51.6 to 84.2 degrees. Subtract the site altitude and the "
         "geometry becomes self-consistent to a tenth of a metre. The direction "
         "feeding the antenna response is wrong by 1 degree for a distant Xmax "
-        "and 7 degrees for a close one. Filed separately; the branch records "
-        "no conclusion of its own, and there is no third commit."),
+        "and 7 degrees for a close one. Filed as grand-mother/grand#160; the "
+        "branch itself records no conclusion and there is no third commit. It "
+        "was cut ten days after issue #106 reported the symptom."),
 
     "snonis_sim2root_test_merge": ("decide",
         "Not the small fix it looks like. coordinates.py here redefines the "
