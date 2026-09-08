@@ -186,3 +186,72 @@ def test_the_tap_tool_is_restricted_to_the_hit_antennas():
     assert hit_counts and max(hit_counts) < 288, (
         'the tap tool is pointed at a layer with %s points, which looks like '
         'the 288-antenna background rather than the hits' % hit_counts)
+
+
+@needs_viewer
+@needs_sample
+def test_the_animation_reveals_antennas_progressively():
+    r"""The Play button's time bins must span the data.
+
+    ``tstep`` was a fixed 1500 -- seconds -- while peak times across an event
+    span some 40 microseconds.  The bins ran from -3000 s to +3000 s, so the
+    animation showed three empty frames and then two full ones.  It is a frame
+    count now, which has no units to get wrong.
+    """
+    import numpy as np
+
+    module = _viewer_module()
+    viewer = module.EventViewer(datadir=str(SAMPLE), event=0)
+    viewer.view(serve=False)
+
+    peaktime = np.asarray(viewer.peaktime, dtype=float)
+    revealed = [int((peaktime <= boundary).sum()) for boundary in viewer.tbins]
+
+    assert revealed == sorted(revealed), 'antennas must only ever be added'
+    assert revealed[-1] == len(peaktime), 'the last frame must show them all'
+    assert len(set(revealed)) > 5, (
+        'only %d distinct frames: the animation is a jump, not a reveal'
+        % len(set(revealed)))
+
+
+@needs_viewer
+def test_the_play_button_is_connected():
+    r"""Pinned because it was not.
+
+    ``self.play_button.on_click(self.animate)`` sat commented out, so the
+    button did nothing at all.
+    """
+    source = VIEWER.read_text(encoding='utf-8')
+    assert 'self.play_button.on_click(self.animate)' in source
+    assert '# self.play_button.on_click' not in source, (
+        'the Play button has been disconnected again')
+
+
+@needs_viewer
+@needs_sample
+def test_a_different_run_can_be_loaded_from_the_box():
+    r"""Typing a run directory reloads the viewer.
+
+    The widget used to be a ``FileInput``, which uploads the bytes of a single
+    file and so cannot express a run -- a directory of several ROOT files.
+    Nothing was wired to it either.
+    """
+    import types
+
+    other = SAMPLE.parent / 'sim_Xiaodushan_20221026_000000_RUN0_CD_ZHAireS_0000'
+    if not other.is_dir():
+        pytest.skip('the second sample run is not present')
+
+    module = _viewer_module()
+    viewer = module.EventViewer(datadir=str(SAMPLE), event=0)
+    viewer.view(serve=False)
+    before = len(viewer.hitX)
+
+    viewer._load_directory(types.SimpleNamespace(new=str(other)))
+    assert viewer.datadir == str(other)
+    assert len(viewer.hitX) != before, (
+        'the run changed but the hit antennas did not, so nothing reloaded')
+
+    # A path that does not exist must be refused, not half-applied.
+    viewer._load_directory(types.SimpleNamespace(new='/no/such/run'))
+    assert viewer.datadir == str(other)

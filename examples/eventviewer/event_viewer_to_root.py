@@ -126,8 +126,15 @@ class EventViewer:
         self.event = event
         self.host = host
         self.port = port
-        # Time step to look for antennae begin hit
-        self.tstep = 1500
+        # How many frames the Play animation steps through.  This used to be
+        # a fixed time step of 1500, in seconds, while peak times span some
+        # 40 microseconds: the bins ran from -3000 s to +3000 s and the
+        # animation showed three empty frames and then two full ones.  A frame
+        # count needs no units and cannot go stale against the data.
+        self.n_frames = 60
+        # Set by animate(); None when no animation is running.
+        self._animation = None
+        self._frame = 0
         # Minimum radio frequency in hertz
         self.fmin = 50.e6
         # Maximum radio frequency in hertz
@@ -248,8 +255,8 @@ class EventViewer:
         # Additional info
         self.palette_color = self.select_color()
         # Time boundary to look for hits
-        self.tbins = np.arange(min(self.peaktime)-2*self.tstep,
-                               max(self.peaktime)+2*self.tstep, self.tstep)
+        self.tbins = np.linspace(min(self.peaktime), max(self.peaktime),
+                                 self.n_frames)
         self.nhits = len(self.hitX)
 
     def get_trace(self):
@@ -351,7 +358,11 @@ class EventViewer:
             curve = c1*c2*c3
             return curve
 
-        # index here is a list with 1 entry.
+        # index here is a list with 1 entry.  It can point past the end
+        # after a smaller run is loaded, since the selection stream keeps its
+        # value across the reload.
+        if index[0] >= len(self.trace_collection):
+            return hv.Curve([], 'Time Bins', 'E-field Trace')
         antEtrace = self.trace_collection[index[0]]
         antEtrace.opts(width=side_width, height=side_height, show_grid=True,
                        fontsize={'title': 16,
@@ -608,69 +619,92 @@ class EventViewer:
         return plot_ca
 
     def animate(self, event):
-        """Control Play button. Plot hits binned in time.
+        """Runs the Play button: reveals antennas in the order they were hit.
 
-        THIS FUNCTION NEEDS TO BE UPDATED
+        Click once to start, again to stop.
+
+        This used to be a `while` loop that pushed every frame as fast as it
+        could, with no yield.  That blocks the server thread, so the browser
+        received the frames coalesced and saw the finished picture rather than
+        an animation.  It also began by reloading an HDF5 file chosen in a
+        Browse widget, which is from the tool's HDF5 days and does not apply to
+        a ROOT run directory.  Both are gone.
+
+        Parameters
+        ----------
+        event : param.parameterized.Event
+            Supplied by Panel.  Unused.
         """
-        if self.play_button.name == '▶ Play':
-            self.play_button.name = '❚❚ Pause'
-            # Check if the input file name has been changed.
-            # If changed start plotting the new event
-            # after 'Play' button is clicked.
-            filename0 = self.input_file.filename
-            try:
-                if filename0 is not None:
-                    findex0 = np.where(
-                        '/' == np.array([i for i in filename0]))[0]
-                    if len(findex0) != 0:
-                        filename = datadir + filename0[findex0[-1]+1:]
-                    else:
-                        filename = datadir + filename0
+        if self._animation is not None:
+            self._stop_animation()
+            return
 
-                    if filename != self.hdffile:
-                        # if new hdf file provided, start from the beginning.
-                        self.hdffile = filename
-                        # get hitX, hitY, ..., tbins for new input hdf file.
-                        self.get_data()
-                        # get electric field traces from new input hdf file.
-                        self.get_trace()
-                        # sending nothing, calling to replot with updated data.
-                        self.stream_ring.send(data=[])
+        self.play_button.name = '\u275a\u275a Pause'
+        self._frame = 0
+        # 60 ms a frame: about four seconds end to end, and slow enough that
+        # each update reaches the browser as its own frame.
+        self._animation = pn.state.add_periodic_callback(
+            self._advance_animation, period=60, count=len(self.tbins) + 1)
 
-                    if self.choose_color.value != self.select_color():
-                        self.get_data()
-                        self.stream_ring.send(data=[])
+    def _stop_animation(self):
+        """Stops the animation and shows every hit antenna again."""
+        if self._animation is not None:
+            self._animation.stop()
+            self._animation = None
+        self.play_button.name = '\u25b6 Play'
+        self._send_hits(np.ones(len(self.peaktime), dtype=bool))
 
-                self.plt_core = True
-                indx = 0
-                # loop over all hits and send data via pipe to plot one by one.
-                while indx < len(self.tbins):
-                    # It is faster to plot and hit-evolution looks smooth
-                    # if hits are binned in time steps.
-                    mask = self.peaktime <= self.tbins[indx]
-                    # select x-coordinate of hit antennae before a given time.
-                    x = np.array(self.hitX)[mask]
-                    # select y-coordinate of hit antennae before a given time.
-                    y = np.array(self.hitY)[mask]
-                    # select list of time before the boundary time.
-                    t = np.array(self.peaktime)[mask]
-                    # Weight based on peak amplitude.
-                    # This is an adhoc weight and has no physical meaning.
-                    wt = np.array(self.Eweight)[mask]
-                    # select color from a palette that was created
-                    # based on time of hit.
-                    color = np.array(self.palette_color)[mask]
-                    # tunnel hits info to a dynamic map.
-                    self.stream_hits.send((x, y, t, wt, color))
-                    indx += 1
+    def _advance_animation(self):
+        """Draws one frame of the Play animation."""
+        if self._frame >= len(self.tbins):
+            self._stop_animation()
+            return
+        self._send_hits(np.asarray(self.peaktime) <= self.tbins[self._frame])
+        self._frame += 1
 
-                # Show play button after an event is displayed.
-                self.play_button.name = '▶ Play'
+    def _send_hits(self, mask):
+        """Sends the antennas selected by `mask` to the hits plot.
 
-            except FileNotFoundError:
-                # After all hits are plotted, change 'Pause' button to 'Play'.
-                print("ERROR: Choose a file to display event.")
-                self.play_button.name = '▶ Play'
+        Parameters
+        ----------
+        mask : numpy.ndarray of bool
+            One entry per hit antenna.  The weights are an ad-hoc size scale
+            with no physical meaning, as elsewhere in this file.
+        """
+        self.stream_hits.send((np.asarray(self.hitX)[mask],
+                               np.asarray(self.hitY)[mask],
+                               np.asarray(self.peaktime)[mask],
+                               np.asarray(self.Eweight)[mask],
+                               np.asarray(self.palette_color)[mask]))
+
+    def _load_directory(self, event):
+        """Loads a different run, typed into the box beside the Play button.
+
+        Parameters
+        ----------
+        event : param.parameterized.Event
+            Panel's change event; `event.new` is the path typed.
+        """
+        path = (event.new or '').strip()
+        if not path or path == self.datadir:
+            return
+        if not os.path.isdir(path):
+            print("No such run directory: %s" % path)
+            return
+
+        if self._animation is not None:
+            self._stop_animation()
+
+        self.datadir = path
+        self.event = 0
+        self.get_data()
+        self.get_trace()
+
+        # stream_ring drives the shower table and the amplitude maps;
+        # stream_hits drives the array. Both need the new data.
+        self.stream_ring.send(data=[])
+        self._send_hits(np.ones(len(self.peaktime), dtype=bool))
+        print("Loaded %s" % path)
 
     def plot_hits(self, data):
         """Control evolution of hits on detector geometry.
@@ -753,8 +787,13 @@ class EventViewer:
 
         # =====================================================================
         # Browse event file to display
-        self.input_file = pn.widgets.FileInput(accept='.hdf5, .root')
-        # self.input_file.filename = self.hdffile
+        # A run is a directory of several ROOT files, so a FileInput -- which
+        # uploads the bytes of one file -- cannot express one. This takes a
+        # path instead, and loads it when you press Enter.
+        self.input_dir = pn.widgets.TextInput(
+            value=self.datadir, width=side_width * 2,
+            placeholder='path to a run directory, then Enter')
+        self.input_dir.param.watch(self._load_directory, 'value')
         # get updated position of antennae, (i.e. posx, posy)
         self.get_geometry()
         # get updated hitAnt, hitX, hitY, hitT etc...
@@ -791,7 +830,7 @@ class EventViewer:
 
         # =====================================================================
         # FUNCTION self.animate NEEDS UPDATE
-        # self.play_button.on_click(self.animate)
+        self.play_button.on_click(self.animate)
         # =====================================================================
 
         # data is predefined variable in hv and it has to be supplied.
@@ -880,7 +919,7 @@ class EventViewer:
 
         layout = pn.GridSpec(width=1500, height=main_height)
         layout[0:5, 0:7] = self.play_button  # "play" butoon
-        layout[0:5, 7:50] = self.input_file  # "Browse" button
+        layout[0:5, 7:50] = self.input_dir  # run directory box
         layout[0:5, 51:70] = self.choose_color  # "choose color" button
 
         layout[6:th, 0:dw] = self.dmap  # Event display (footprint)

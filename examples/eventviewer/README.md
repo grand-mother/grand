@@ -27,6 +27,10 @@ python examples/eventviewer/event_viewer_to_root.py \
 It prints a URL; open it. `--event N` chooses which event (default 0), and
 `--port` moves it if 46813 is taken.
 
+**Play** steps through the event in time, revealing each antenna as its signal
+arrives; click again to stop. The box beside it takes a run directory — type a
+path and press Enter to load a different run without restarting.
+
 By default it serves on **localhost**, visible only to you. `--host 0.0.0.0`
 publishes it to everyone who can reach your machine, which on a shared cluster
 is everyone. That is occasionally what you want and never what you want by
@@ -43,9 +47,8 @@ Originally [rameshkoirala/EventViewer](https://github.com/rameshkoirala/EventVie
 
 Stated plainly so nobody loses an afternoon discovering it:
 
-- **The Play button does nothing.** `animate` is not wired to it and is marked
-  in the source as needing an update. The **Browse** file input and the colour
-  selector are inert for the same reason.
+- **The colour selector is inert.** Changing it does nothing until something
+  else redraws the array.
 - **The background array is not your array.** `GP300propsedLayout.dat` is the
   *proposed* 2021 layout, 288 antennas on a 1 km grid. The antennas drawn as
   hit come from your data, but the grey array behind them does not, and the
@@ -77,6 +80,8 @@ antenna did nothing at all. A plot hook pins the tool to the hits layer.
 The click itself cannot be tested here — there is no browser — so that part
 was verified by hand in one, on 2026-09-09, by clicking two different antennas
 and watching the title and the trace follow.
+
+It also covers the Play animation's time bins and loading a run from the box.
 
 That test is the reason this file can promise the viewer works. It had stopped
 being runnable by anyone but its author — a hard-coded event index of 862, a
