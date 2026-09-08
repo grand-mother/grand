@@ -186,7 +186,10 @@ a third abandoned trunk.
       open behind it: whether anything simulated with the old constant gets
       reprocessed, and what becomes of `refact_galaxy`, which rewrites the
       same model in new modules.
-- [ ] Where reconstruction lives
+- [ ] Where reconstruction lives — **note that an implementation already
+      exists**: `dev_marion` adds `grand/analysis/`, 38 files, alongside the
+      `grand/recon/` already on `dev-next`. It merges clean. The decision is
+      which of the two is the reconstruction, not whether to write one.
 - [ ] Whether GRANDlib splits (`grandio_light`)
 - [ ] Docker: publish an image, or state that it is unsupported — see *Blocked
       on a decision*. The engineering is done either way; what is missing is
@@ -573,18 +576,35 @@ correct is worth a comment, because the next reader will make the same guess.
 
 ## Branches carrying unique work
 
-Verified with `git cherry`, so distance behind `dev` is not the criterion.
-Salvage before Phase 10 deletes anything:
+Re-measured 2026-09-08 with `git cherry` against `dev-next`. Of 38 remote
+branches, 19 are fully contained, 5 are ahead only by commits whose patches are
+already in under other ids, and **15 carry genuinely unmerged patches** — not
+the seven this table listed before. Salvage before Phase 10 deletes anything.
 
-| Branch | Unmerged | Content |
-|---|---|---|
-| `masterkastner` | 3 | docstrings for five modules |
-| `beta_dc1` | 3 | `scripts/ADanalysis.py`, `TDAnalysis.py` |
-| `dev_leisos` | 2 | recursive `coreas_pipeline` |
-| `dc2_debug_xmax` | 2 | DC2 polarisation-voltage debugging |
-| `snonis_sim2root_test_merge` | 2 | galaxy test notebook |
-| `tian-conda-arm` | 1 | ARM install notes |
-| `147-add-option-…` | 1 | non-parallel CoREAS support |
+**Two are live work in `grand/` and neither was on the old list:**
+
+| Branch | Patches | Last | Content |
+|---|---|---|---|
+| `dev_marion` | 7 | 2026-02 | **An entire `grand/analysis/` package, 38 files**: shower reconstruction, the SWF model, energy reconstruction, amplitude profile and footprint display, with a README. Merges clean. This is Phase 5's "where reconstruction lives" question — which is not abstract, because an implementation already exists and sits alongside `grand/recon/`. |
+| `refact_galaxy` | 12 | 2026-02 | **711 lines across the galactic-noise code**: a parallel implementation in `galaxy_new.py`, `galatic_ant_asd.py` and `galatic_ant_component.py`, plus 19 changed lines in `galaxy.py`. **Conflicts.** It overlaps exactly what came in from `dev_snonis`, and one commit — "galaxy.py always remove 1 to lst but I don't understand why. remove it." — is about the LST indexing the normalisation depends on. Two people refactored this independently; one was merged and verified without knowing of the other. |
+
+**The rest:**
+
+| Branch | Patches | Last | Content |
+|---|---|---|---|
+| `radio` | 20 | 2020-01 | Against `lib/`, which now holds only a readme. Almost certainly obsolete, but it is the largest patch count here and nobody has looked. |
+| `grandio_light` | 6 | 2025-08 | 596 files. This *is* the "does GRANDlib split" decision, not an input to it. |
+| `dev_downsample_and_ADCconversion_Jelena` | 4 | 2024-01 | `grand/sim/ADCconverter.py` and `efield2voltage.py`. Conflicts. |
+| `masterkastner` | 3 | 2024-08 | 201 files, but 171 are the old `sphinx_docs/` tree, rebuilt since. The salvage is 5 modules' docstrings. |
+| `beta_dc1` | 3 | 2023-01 | `scripts/ADanalysis.py`, `TDAnalysis.py` |
+| `dc2_debug_xmax` | 2 | 2024-12 | DC2 polarisation-voltage debugging |
+| `dev_leisos` | 2 | 2024-10 | recursive `coreas_pipeline`, 34 files under `sim2root/` |
+| `dev_event_viewer` | 2 | 2025-05 | 4 files under `examples/` |
+| `snonis_sim2root_test_merge` | 2 | 2024-04 | galaxy test notebook |
+| `147-add-option-…` | 1 | 2025-09 | non-parallel CoREAS support |
+| `tian-conda-arm` | 1 | 2025-03 | ARM install notes |
+| `no-astropy` | 1 | 2021-07 | Valentin Niess, pre-dates most of the tree |
+| `dependabot/pip/binder/pillow-9.3.0` | 1 | 2022-12 | An abandoned auto-PR against `binder/`, which exists only on `master`. Delete. |
 
 ## Tools
 
