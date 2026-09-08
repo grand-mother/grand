@@ -38,7 +38,7 @@ WORK = [
     ('schema test',    'done'),
     ('CI green',       'done'),
     ('566 tests',      'done'),
-    ('cov 71%',        'done'),
+    ('cov 73%',        'done'),
     ('interface',      'todo'),
 ]
 

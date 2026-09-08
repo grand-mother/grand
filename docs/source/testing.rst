@@ -18,12 +18,15 @@ Current state, on the ``dev-next`` branch:
 .. code-block:: text
 
     459 passed, 13 skipped, 10 xfailed, 1 xpassed
-    coverage: 71%
+    coverage: 73% over grand/, 17% over granddb/, 62% together
 
 Layout
 ------
 
-``tests/`` mirrors the package.  ``tests/geo/`` is the oldest and best
+``tests/`` mirrors the package.  ``tests/granddb/`` is the newest, added on
+2026-09-08 when granddb entered the test and lint gates; it needs no
+PostgreSQL, because the ``[database]`` section of a granddb config file is
+optional and the first test pins that.  ``tests/geo/`` is the oldest and best
 covered; ``tests/dataio/`` and ``tests/aoi/`` arrived together and are the
 largest; ``tests/sim/`` is the thinnest relative to what it guards.
 
@@ -91,7 +94,7 @@ Measured with:
 
 .. code-block:: bash
 
-    pytest tests/ -q --cov=grand --cov-report=term
+    pytest tests/ -q --cov=grand --cov=granddb --cov-report=term
 
 64% today.  The number is worth less than it looks: line coverage counts
 executed lines, not verified behaviour, and the end-to-end test executed a

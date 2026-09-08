@@ -25,7 +25,7 @@
 <rect x="690.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
 <text x="735.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ 566 tests</text>
 <rect x="790.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.2"/>
-<text x="835.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ cov 71%</text>
+<text x="835.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#1D7A57" text-anchor="middle">✓ cov 73%</text>
 <rect x="890.0" y="104.0" width="90.0" height="30.0" rx="4" fill="#EDF1F3" stroke="#BCC7CE" stroke-width="1.2"/>
 <text x="935.0" y="122.5" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#7A8994" text-anchor="middle">○ interface</text>
 <text x="90" y="176" font-size="10.5" font-weight="600" fill="#0E6E70" letter-spacing="0.08em">MERGE QUEUE</text>

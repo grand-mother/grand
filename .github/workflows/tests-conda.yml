@@ -169,7 +169,10 @@ jobs:
       - name: Run the suite
         run: |
           source env/setup.sh
-          pytest tests/ -q --cov=grand --cov-report=xml --cov-report=term
+          # --cov=granddb as well as grand: granddb ships in every wheel, so
+          # leaving it unmeasured reported a coverage figure for part of the
+          # package while presenting it as the whole.
+          pytest tests/ -q --cov=grand --cov=granddb --cov-report=xml --cov-report=term
 
       # NOTE: this upload currently fails, and does so silently.  Codecov
       # answers

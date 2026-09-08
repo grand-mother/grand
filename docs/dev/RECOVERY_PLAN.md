@@ -35,7 +35,7 @@ Measured in the built environment on 2026-09-08:
 |---|---|
 | Merge queue | 8 of 9 merged; **nothing blocked**; 1 in doubt (`dev_database`) |
 | Test suite | **566 passed, 10 skipped, 10 xfailed, 1 xpassed, 0 failed** |
-| Coverage | 71 % over `grand/` |
+| Coverage | 73 % over `grand/`; 17 % over `granddb/`, measured from 2026-09-08; 62 % together |
 | Regression against `dev` | none — identical failure set |
 | Environment | builds; `env/setup.sh` completes; `pip install -e .` works |
 | Lint | clean over `grand/ tests/ quality/ notebooks/ docs/dev/ granddb/` — granddb joined 2026-09-08, its 212 findings baselined in the ratchet |
@@ -245,6 +245,40 @@ a third abandoned trunk.
       the merge queue into conflicts. **No nbstripout**: the stored outputs are
       what a reader sees on GitHub, so stripping them is the opposite of what
       is wanted here.
+- [x] **granddb brought inside the gates, 2026-09-08.** It ships in every wheel
+      -- the `grand*` package glob in `pyproject.toml` matches `granddb` -- and
+      a comment above that glob claimed for months that it did not. Meanwhile it
+      was in no lint scope, had no tests, and its dependencies were an optional
+      overlay that no workflow installed. Seven stages:
+
+      1. Its dependencies join `env/conda/grand-dev.yml`, the file CI builds
+         from. Until then four of its five modules could not even be imported.
+      2. `ruff` covers `granddb/`; its 212 findings baselined on the existing
+         ratchet, whose rule was amended to say what it always meant -- code
+         entering scope for the first time is debt becoming visible, not new
+         debt.
+      3. 56 mechanical findings fixed; eight of thirteen baseline entries shrink.
+      4. `from grand.aoi import *` replaced by explicit imports in the two
+         monitoring modules; the baseline becomes docstrings-only.
+      5. The five command-line scripts get a `main()`, so importing one stops
+         parsing `sys.argv` and opening a database; and two *library* modules
+         stop installing handlers on the `grand` logger, which had left two
+         attached and every record printed twice.
+      6. First tests -- 19 of them, none needing PostgreSQL.
+
+      What it found: `register_dataset_in_db`'s `--repository` flag was read
+      and never passed on; `trunnoiseToDB` named two fields `TRunNoise` has
+      never had, so registering such a tree would raise; `DataManager` shared
+      one credentials dictionary across every instance, so two managers built
+      from different config files saw each other's logins; `reqmt_db.txt` asked
+      for `pynac`, a symbolic-algebra library, where `pynacl` was meant; and
+      `ReadRootForDb.py` is a personal scratch file that cannot run for anyone.
+
+      Still outside: `monitoring.py` and `monitoring_site.py` import
+      `granddb.monitoring_dbconf`, which has never existed in this repository
+      and is not gitignored. They ship and cannot be imported by anyone.
+      Supplying it is a decision for their author.
+
 - [ ] Move large ROOT fixtures to a fetched bundle
 - [x] Delete the stray `GP300` file — done in 3a2ec1a
 - [ ] ~~Delete `createAIP.jar`~~ — **it is in use**: `scripts/archiving/

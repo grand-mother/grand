@@ -379,7 +379,7 @@ Three sets of actions were deliberately **not** bumped.
    **The fix needs repository admin**: add ``CODECOV_TOKEN`` to the repository
    secrets.  The workflow already passes it, so nothing here changes when it
    appears.  Until then, coverage is available locally with
-   ``pytest tests/ -q --cov=grand --cov-report=term``, and the badge in the
+   ``pytest tests/ -q --cov=grand --cov=granddb --cov-report=term``, and the badge in the
    README will not reflect reality.
 
 The GitHub Pages actions in ``pages.yml``
