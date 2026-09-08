@@ -165,12 +165,15 @@ a third abandoned trunk.
       construction, so `size_out/sqrt(2)` is right. Both conflicts resolved
       deliberately — `.gitignore` ours, `galaxy.py` their code in our docstring
       style. See `issue-galactic-noise-normalisation`.
-- [ ] `dev_database` — **the stated reason does not hold.** `git cherry` reports
-      0 commits it carries that `dev-next` lacks, and `git merge-tree
-      --write-tree` reports no conflict. Its tip is `dc565b3`, June 2025. Either
-      its work arrived by another route and this entry is stale, or the conflict
-      is about something other than unmerged commits. Needs its author before it
-      is either merged or struck.
+- [x] `dev_database` — **struck 2026-09-08: there is nothing to merge.** Its tip
+      `dc565b3` *is* the merge-base with `dev-next`, so the branch is a strict
+      ancestor: 0 commits ahead, 286 behind. Its work arrived through
+      `dev_Event_write` and `dev_aoi_unittest`, which were cut from a `dev`
+      lineage that already carried fleg's merge of it (`93b8ab3`, June 2025) --
+      a merge that is in `dev-next` but not in `origin/dev`. `dev-next` has
+      since moved well past it: `granddb/monitoring*.py` did not exist on the
+      branch, and `datamanager.py` differs by 166 lines. Worth telling fleg the
+      branch can be deleted; nothing waits on it.
 - [ ] After the `sim2root/` branches land: fix the CoREAS site table
       (`issue-coreas-site-table`). Unknown sites raise `ValueError` on an
       empty unpacking — Xiaodushan among them — and the table's centimetre
@@ -342,7 +345,8 @@ Measured 2026-09-08.
 - Phases 8 and 10 cleanup. The plan already says nothing is deleted before
   Phase 10, and promotion is not a deletion.
 
-- [ ] Tag `dev` as `archive/dev-2026-09`, so criterion 4 is met
+- [x] Tag `dev` as `archive/dev-2026-09` — pushed, pointing at `1ca1847`, which
+      is the commit `dev-next` was cut from. **Criterion 4 met.**
 - [ ] Note: promoting also unblocks `workflow_dispatch`. GitHub only offers it
       for workflows present on the *default* branch, so every manual workflow
       added on `dev-next` — `docker.yml` today — is untriggerable from the
