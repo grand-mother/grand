@@ -36,7 +36,7 @@ def main():
     for dir in args.dirs:
         try:
             logger.info(f'Register ${dir}')
-            dm.new_register_dataset(dir)
+            dm.new_register_dataset(dir, repository=repo_name)
         except Exception as e:
             logger.error(f'Error when importing {dir}. Skipping.')
             logger.error(f'Error was {e}.')
