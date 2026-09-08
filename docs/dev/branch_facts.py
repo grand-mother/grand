@@ -371,10 +371,16 @@ def collect(include_historical=False):
         # everything its merges brought in -- a branch merged repeatedly over
         # years is undercounted by looking at the last merge alone.
         own = []
-        for sha in took:
-            if git("rev-parse", "-q", "--verify", "%s^2" % sha):
-                own += _lines(git("rev-list", "%s^1..%s^2" % (sha, sha)))
+        if entry["state"] == "merged":
+            for sha in took:
+                if git("rev-parse", "-q", "--verify", "%s^2" % sha):
+                    own += _lines(git("rev-list", "%s^1..%s^2" % (sha, sha)))
         if not own:
+            # An unmerged branch's own commits are simply what the trunk does
+            # not have. Reading them from merges that name the branch would
+            # describe an older state of it: beta_dc1 was merged in 2022 and
+            # committed to again in 2023, and counting from those merges dated
+            # its creation a year before its oldest surviving commit.
             base = git("merge-base", TRUNK, tip[name])
             if base and base != tip[name]:
                 own = _lines(git("rev-list", "%s..%s" % (base, tip[name])))

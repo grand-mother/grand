@@ -85,6 +85,6 @@ widen the box without checking the columns still fit.
   🔵 blue: the trunk. The same colours as the diagram; Markdown has no colour of
   its own, so the documents use the circles, which survive copy-paste.
 - *Commits* counts everything on a branch since it diverged. *Own* counts the
-  patches that are in no other branch. For an old branch these are very
-  different numbers — `beta_dc1` has 333 and 3 — and *Own* is the one a merge
-  decision turns on.
+  patches that are in no other branch. For an old branch these can be very
+  different numbers — `snonis_sim2root_test_merge` has 279 and 2 — and *Own* is
+  the one a merge decision turns on.

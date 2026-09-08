@@ -584,7 +584,7 @@ correct is worth a comment, because the next reader will make the same guess.
 
 ![every branch and its status](branches.svg)
 
-The branch-by-branch record is **[`BRANCHES.md`](BRANCHES.md)**: every branch
+The branch-by-branch record is **[`BRANCHES.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/BRANCHES.md)**: every branch
 the repository has ever had — 69 of them, including the 31 that were merged and
 then deleted — with who made it, what it came off, what came out of it, and
 whether it should be merged. It is generated from git by
@@ -617,7 +617,7 @@ every other candidate conflicts, most of them only on context.
 | **Decision, not a merge** | `grandio_light`, `snonis_sim2root_test_merge` | The package split, and an angular-convention change. Both are collaboration questions. |
 | **Ask the author** | `refact_galaxy` | luckyjim's parallel galactic-noise implementation, overlapping work already verified here. |
 
-Reasons for each are in [`BRANCHES.md`](BRANCHES.md#why-one-by-one).
+Reasons for each are in [`BRANCHES.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/BRANCHES.md#why-one-by-one).
 
 **Merge order.** Take the three clean ones first, then `tian-conda-arm`. Four of
 the remaining candidates touch `grand/sim/efield2voltage.py`, so merge nothing
@@ -634,8 +634,9 @@ mistake: **a diffstat is not a diff.**
 |---|---|
 | `dc2_debug_xmax` is cosmetic churn — reformatting and log-level changes | It contains two live debug hacks: `for du_idx in range(2)` under a `'Reduce DU to 2'` warning, and an `if True:` block placing every antenna at the shower core. Merging would silently corrupt every simulation. Do-not-merge for a far stronger reason than "churn". |
 | `snonis_sim2root_test_merge` carries a cherry-pickable 14-line `coordinates.py` fix | It redefines the **angular convention** across all four core transforms — θ→180−θ, φ→φ+180, azimuth and elevation redefined. Every angle in the codebase moves. It also raises on array input (`if phi==360`), and its other half is already on the trunk. Not a cherry-pick: a collaboration decision. |
-| `147-add-option-…` is a small live fix worth merging | Its `try/except` never fires. A missing keyword did not raise: `read_list_of_params` returned the builtin `list`, and `list[0]` is a generic alias on Python 3.9+. Real problem, ineffective fix — [fixed properly on the trunk](../../../sim2root/CoREASRawRoot/CorsikaInfoFuncs.py) instead. |
-| Branch size measured by `git diff merge-base..branch` | For an old branch that replays everything already merged by another route. `snonis_sim2root_test_merge` shows 279 commits and has **two** patches of its own; `beta_dc1` shows 333 and has three. `BRANCHES.md` reports both numbers side by side for exactly this reason. |
+| `147-add-option-…` is a small live fix worth merging | Its `try/except` never fires. A missing keyword did not raise: `read_list_of_params` returned the builtin `list`, and `list[0]` is a generic alias on Python 3.9+. Real problem, ineffective fix — [fixed properly on the trunk](https://github.com/grand-mother/grand/blob/dev-next/sim2root/CoREASRawRoot/CorsikaInfoFuncs.py) instead. |
+| Branch size measured by `git diff merge-base..branch` | For an old branch that replays everything already merged by another route. `snonis_sim2root_test_merge` shows 279 commits and has **two** patches of its own. `BRANCHES.md` reports both numbers side by side for exactly this reason. |
+| *(found by the post-implementation audit)* `beta_dc1` has 333 commits | **Three.** The 333 was produced by the inventory collector itself, which read an unmerged branch's commits from six 2022 merges naming it rather than from the trunk's merge-base — describing a state the branch left in 2023. Fixed, and the figure it had been quoted as an example in three documents was corrected with it. |
 
 ## Tools
 

@@ -81,8 +81,8 @@ def summary_row(name, entry):
 
     # "Own" is git cherry: patches that are in no other branch. It is the
     # number a merge decision turns on, and for an old branch it is nothing
-    # like the commit count -- beta_dc1 has 333 commits since it diverged and
-    # three patches of its own.
+    # like the commit count -- snonis_sim2root_test_merge has 279 commits
+    # since it diverged and two patches of its own.
     own = str(entry["ahead"]) if entry["state"] == "unmerged" else "--"
 
     return "| " + " | ".join([
@@ -148,10 +148,10 @@ def build(info):
         "",
         "*Commits* counts everything on the branch since it diverged. *Own* "
         "counts the patches that are in no other branch, which is what a "
-        "merge decision turns on and is often a much smaller number: "
-        "`beta_dc1` has 333 commits and three patches of its own, "
-        "`snonis_sim2root_test_merge` 279 and two. Reading the first number "
-        "as the second is the mistake this column exists to prevent.",
+        "merge decision turns on and is sometimes a much smaller number: "
+        "`snonis_sim2root_test_merge` has 279 commits and two patches of its "
+        "own. Reading the first number as the second is the mistake this "
+        "column exists to prevent.",
         "",
         "The verdicts were last reviewed end to end on %s."
         % facts.VERDICTS_REVIEWED,
