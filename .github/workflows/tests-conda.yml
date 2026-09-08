@@ -166,6 +166,15 @@ jobs:
       - name: Install the package
         run: pip install -e . --no-deps --no-build-isolation
 
+      # The event viewer in examples/ needs a web-plotting stack that is not
+      # part of the environment: pure-Python wheels, a few seconds to install.
+      # Without this step tests/examples/ skips, and the viewer would rot on
+      # the server exactly as it did before -- unnoticed, because a skipped
+      # test looks like a passing one at a glance. Drop this step and the
+      # tests still pass; they just stop guarding anything.
+      - name: Install the viewer extra
+        run: pip install -e ".[viewer]" --no-build-isolation
+
       - name: Run the suite
         run: |
           source env/setup.sh

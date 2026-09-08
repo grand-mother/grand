@@ -25,13 +25,13 @@ SOFTWARE.
 """
 
 import argparse
+import os
 import numpy as np
 import pandas as pd
 # http://holoviews.org/getting_started/index.html
 import panel as pn
 import holoviews as hv
 from holoviews import opts, dim
-from astropy.time import Time
 
 from scipy.signal import hilbert
 import scipy.interpolate as scipolate
@@ -39,6 +39,31 @@ import mix  # functions written by Valentin Decoene.
 import seaborn as sns  # used for color pallettes.
 
 from grand.aoi import EventList
+
+
+# Defaults at module scope, so that importing this file and constructing an
+# EventViewer works.  They used to be assigned only inside the __main__ block
+# while methods read them as globals, so `EventViewer()` raised NameError for
+# anyone who imported the module instead of running it.
+DEFAULT_GEOFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "GP300propsedLayout.dat")
+LOGO_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "logo_withoutbords.png")
+
+main_width = 750    # width of the main plot
+main_height = 700   # height of the main plot
+side_width = 350    # width of trace plots
+side_height = 300   # height of trace plots
+img_width = 380     # width of the side kXB, kX(kXB) image
+img_height = 300    # height of the side kXB, kX(kXB) image
+
+color_options = ['Blues', 'Reds', 'RdBu_r', 'RdYlBu_r',
+                 'RdYlGn_r', 'Wistia', 'YlGn', 'YlGnBu',
+                 'autumn_r', 'cividis_r', 'coolwarm',
+                 'copper_r', 'gist_earth_r', 'gnuplot_r',
+                 'magma_r', 'mako_r', 'plasma_r', 'rainbow',
+                 'seismic', 'summer_r', 'spring', 'terrain_r', 'turbo',
+                 'viridis_r', 'vlag', 'winter_r', 'colorblind']
 
 
 class EventViewer:
@@ -52,10 +77,32 @@ class EventViewer:
     $ pip3 install bokeh
     """
 
-    def __init__(self):
+    def __init__(self, datadir, geofile=None, event=0,
+                 host="localhost", port=46813):
+        """Builds a viewer for one event.
+
+        Parameters
+        ----------
+        datadir : str
+            Directory of a GRAND run, as `grand.aoi.EventList` reads it.
+        geofile : str, optional
+            Antenna layout drawn as the background.  Defaults to the 2021
+            proposed GP300 layout beside this file, which is *not* the array
+            in the data -- see the README.
+        event : int, optional
+            Which event to show, by entry number.  Default 0.
+        host : str, optional
+            Address to serve on.  Defaults to localhost; pass "0.0.0.0" to
+            publish it, knowing that is what you are doing.
+        port : int, optional
+            Port to serve on.
+        """
         print("Initialization")
-        self.geofile = geofile
+        self.geofile = geofile if geofile is not None else DEFAULT_GEOFILE
         self.datadir = datadir
+        self.event = event
+        self.host = host
+        self.port = port
         # Time step to look for antennae begin hit
         self.tstep = 1500
         # Minimum radio frequency in hertz
@@ -92,8 +139,15 @@ class EventViewer:
         el = EventList(self.datadir)
         print("Number of events: %i" % el.get_number_of_events())
 
-        # Iterate through some events
-        for i in range(862, 863):  # 862, 980, 994 GOOD EVENTS
+        # One event, chosen by the caller.  This used to be
+        # `range(862, 863)`, so any run with fewer than 863 events died here
+        # with "zero-size array to reduction operation minimum".
+        n_events = el.get_number_of_events()
+        if not 0 <= self.event < n_events:
+            raise SystemExit(
+                "event %d is out of range: this run has %d events, so --event "
+                "takes 0 to %d" % (self.event, n_events, n_events - 1))
+        for i in [self.event]:
             e = el.get_event(entry_number=i)
             print(f"Event {i}, "
                   + f"du_id {e.efields[0].du_id}, "
@@ -129,11 +183,9 @@ class EventViewer:
         # =====================================================================
         # DUPLICATE, PUT THIS IN A FUNCTION
         # =====================================================================
-        self.t0 = np.zeros(len(self.antpos))
         self.peaktime = np.zeros(len(self.antpos))
         self.peakamplitude = np.zeros(len(self.antpos))
         for i in range(len(self.antpos)):
-            self.t0[i] = Time(e.efields[i].t0).jd
             efield_filt = mix.filters_root(e.efields[i].t_vector*1.e-9,
                                            e.efields[i].trace,
                                            FREQMIN=self.fmin,
@@ -336,7 +388,7 @@ class EventViewer:
 
     def peak_amplitude_ground_plane(self, data):
         """Plot interpolated peak amplitude in ground plane."""
-        X, Y = np.meshgrid(np.linspace(self.hitX.min(), self.hitY.max(), 200),
+        X, Y = np.meshgrid(np.linspace(self.hitX.min(), self.hitX.max(), 200),
                            np.linspace(self.hitY.min(), self.hitY.max(), 200))
         inter_peakamp_grd = scipolate.Rbf(
             self.hitX, self.hitY, self.peakamplitude,
@@ -665,7 +717,7 @@ class EventViewer:
             self.choose_color.value, len(self.hitX)).as_hex()
         return self.color_pallete
 
-    def view(self):
+    def view(self, serve=True):
         """View figures.
 
         All necessary process are called and managed from here.
@@ -805,7 +857,7 @@ class EventViewer:
         layout[eh:2*eh, dw:dw+ew] = self.antEtrace_h  # Hilbert envelop
 
         # Grand logo.
-        layout[3:lh+5, dw+ew+8:tw-3] = 'logo_withoutbords.png'
+        layout[3:lh+5, dw+ew+8:tw-3] = LOGO_FILE
 
         # Event Info.
         layout[lh+12:2*eh, dw+ew+3:tw] = self.shower_info
@@ -814,8 +866,16 @@ class EventViewer:
         layout[2*eh+3:th, dw+4+2*w2:dw+4+3*w2] = self.cerenkov_grd
         layout[2*eh+3:th, dw+4+3*w2:tw] = self.cerenkov_ang
 
-        pn.serve(layout, address='0.0.0.0', port=46813, show=False)
-#        layout.show()
+        # Returning the layout rather than only serving it is what makes
+        # this testable: tests/examples/test_eventviewer.py builds it against
+        # the sample run and never starts a server.
+        if not serve:
+            return layout
+
+        # localhost by default: this used to bind 0.0.0.0 on a fixed port,
+        # which publishes the viewer to everyone on a shared machine.
+        pn.serve(layout, address=self.host, port=self.port, show=False)
+        return layout
 
 
 if __name__ == '__main__':
@@ -823,42 +883,29 @@ if __name__ == '__main__':
     hv.extension('bokeh', 'matplotlib')
     hv.plotting.mpl.MPLPlot.fig_latex = True
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Interactive viewer for one simulated GRAND event.")
     parser.add_argument(
-        "--gf",
-        # Proposed geometry of GP300 detector. NEED UPDATE
-        default="./GP300propsedLayout.dat",
-        help="Geometry of antenna in GP300.")
+        "--datadir", required=True,
+        help="Directory of a GRAND run, e.g. "
+             "sim2root/Common/sim_Xiaodushan_..._ZHAireS_0000/")
     parser.add_argument(
-        "--datadir",
-        default="./../../scripts/data_test/"
-        + "/sim_Xiaodushan_20221025_220000_RUN0_CD_ZHAireS_0000/",
-        help="Provide path to the directory where data are stored.")
+        "--event", type=int, default=0,
+        help="Which event to show, by entry number. Default 0.")
+    parser.add_argument(
+        "--gf", default=DEFAULT_GEOFILE,
+        # The 2021 proposed GP300 layout, drawn as the background. It is not
+        # the array in the data file. NEED UPDATE
+        help="Antenna layout drawn as the background.")
+    parser.add_argument(
+        "--host", default="localhost",
+        help="Address to serve on. Default localhost; \"0.0.0.0\" publishes "
+             "it to the network.")
+    parser.add_argument(
+        "--port", type=int, default=46813, help="Port to serve on.")
     args = parser.parse_args()
 
-    geofile = args.gf
-    datadir = args.datadir
-
-    if datadir == "":
-        raise Exception(
-            "Provide path to your data directory."
-            + "Run: python3 event_viewer_to_root.py --datadir <path>")
-
-    # Size of plots
-    main_width = 750  # widht of the main plot.
-    main_height = 700  # height of the main plot
-    side_width = 350  # width of trace plots.
-    side_height = 300  # height of trace plots.
-    img_width = 380  # width of side kXB, kX(kXB) image.
-    img_height = 300  # height of side kXB, kX(kXB) image.
-
-    color_options = ['Blues', 'Reds', 'RdBu_r', 'RdYlBu_r',
-                     'RdYlGn_r', 'Wistia', 'YlGn', 'YlGnBu',
-                     'autumn_r', 'cividis_r', 'coolwarm',
-                     'copper_r', 'gist_earth_r', 'gnuplot_r',
-                     'magma_r', 'mako_r', 'plasma_r', 'rainbow',
-                     'seismic', 'summer_r', 'spring', 'terrain_r', 'turbo',
-                     'viridis_r', 'vlag', 'winter_r', 'colorblind']
-
-    eventviewer = EventViewer()
+    eventviewer = EventViewer(datadir=args.datadir, geofile=args.gf,
+                              event=args.event, host=args.host,
+                              port=args.port)
     eventviewer.view()

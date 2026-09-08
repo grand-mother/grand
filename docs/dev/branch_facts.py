@@ -130,10 +130,6 @@ VERDICTS_REVIEWED = "2026-09-08"
 #: branch), ``no`` (nothing to take), ``decide`` (a question for the
 #: collaboration, not a merge), ``ask`` (needs its author first).
 VERDICTS = {
-    "dev_event_viewer": ("merge",
-        "Four new files under examples/eventviewer/, May 2025. Test-merges "
-        "clean and touches nothing else. The 864-line viewer enters lint "
-        "scope on merge, so expect to baseline or clean it."),
     "dev_marion": ("merge",
         "The reconstruction package: 38 new files under grand/analysis/. "
         "Test-merges clean. Merging is easy; the open question is whether "

@@ -88,6 +88,14 @@ docs = [
     "numpy", "scipy", "matplotlib",
 ]
 db = ["sqlalchemy", "psycopg2-binary", "paramiko", "sshtunnel", "scp"]
+# examples/eventviewer/ only.  Kept out of the main dependency list because
+# these are a web-plotting stack of their own -- installing them for everyone
+# would grow the environment for a tool most people never open.
+#   pip install -e ".[viewer]"
+# seaborn is here for one call, but not droppable: three of the viewer's
+# colour options (mako_r, vlag, colorblind) are seaborn palettes with no
+# matplotlib equivalent, and the selector is on the live path.
+viewer = ["panel", "holoviews", "bokeh", "pandas", "seaborn"]
 
 [project.urls]
 Homepage = "https://github.com/grand-mother/grand"
