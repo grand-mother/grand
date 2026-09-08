@@ -7,10 +7,15 @@ commits as the work.
 
 ![recovery status](../source/_static/recovery.svg)
 
-Regenerate the diagram after any change of state:
+That is the merge *queue* — the branches curated for merging — against the
+infrastructure work. It is deliberately a summary; the branch-by-branch picture
+is further down, under [Branches carrying unique work](#branches-carrying-unique-work).
+
+Regenerate both diagrams after any change of state:
 
 ```bash
-python docs/dev/make_recovery_diagram.py
+python docs/dev/make_recovery_diagram.py   # the queue and the phases
+python docs/dev/make_branch_diagram.py     # every branch, read from git
 ```
 
 ## Why this exists
@@ -576,10 +581,20 @@ correct is worth a comment, because the next reader will make the same guess.
 
 ## Branches carrying unique work
 
+![every branch and its status](../source/_static/branches.svg)
+
 Re-measured 2026-09-08 with `git cherry` against `dev-next`. Of 38 remote
 branches, 19 are fully contained, 5 are ahead only by commits whose patches are
 already in under other ids, and **15 carry genuinely unmerged patches** — not
 the seven this table listed before. Salvage before Phase 10 deletes anything.
+
+The diagram above is generated from git rather than maintained by hand —
+parentage, dates, authors, merge commits and state are all read at build time,
+which is why it cannot drift the way this table did. Columns are generations,
+and they turn out to be eras: the leftmost stopped being touched in 2023.
+`dev_io_root` is the parent of eight, including everything merged during this
+recovery *and* both branches still carrying live work, so `refact_galaxy` and
+`dev_marion` are siblings of the queue rather than strangers to it.
 
 **Two are live work in `grand/` and neither was on the old list:**
 
