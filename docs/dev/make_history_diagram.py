@@ -46,11 +46,11 @@ TRUNKS = ["master", "dev", "main", "dev-next"]
 CUT_FROM = {"main": "dev", "dev-next": "dev"}
 
 FILL = {"trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
-        "gone": "#ECEFF1"}
+        "retired": "#F7E6E7", "gone": "#ECEFF1"}
 EDGE = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
-        "gone": "#AEBAC2"}
+        "retired": "#A9484E", "gone": "#AEBAC2"}
 TEXT = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
-        "gone": "#8B99A3"}
+        "retired": "#A9484E", "gone": "#8B99A3"}
 
 MONO = "IBM Plex Mono, monospace"
 SANS = "IBM Plex Sans, Helvetica, Arial, sans-serif"
@@ -62,7 +62,7 @@ BAR_H = 9
 X0 = 58                   # left edge of the time area
 LABEL_PAD = 7
 CHAR_W = 4.35             # advance of the 7.2px mono label
-PANEL_W = 300             # reserved at the right for the legend panel
+PANEL_W = 358             # reserved at the right for the legend panel
 
 ONE_DAY = datetime.timedelta(days=1)
 
@@ -118,12 +118,13 @@ def trunk_spans():
 
 
 def state_of(name, entry):
-    r"""Returns the colour key for a branch."""
-    if name == facts.TRUNK:
-        return "trunk"
-    if not entry["live"]:
-        return "gone"
-    return "unmerged" if entry["state"] == "unmerged" else "merged"
+    r"""Returns the colour key for a branch.
+
+    Delegates to :func:`branch_facts.display_state` so that this diagram,
+    ``branches.svg`` and ``BRANCHES.md`` cannot disagree about what colour a
+    branch is.
+    """
+    return facts.display_state(name, entry)
 
 
 def layout(info, spans, outgoing):
@@ -386,8 +387,12 @@ def panel(width, n_rows, n_merges):
 
     A caption describing a row in words is harder to follow than a row with
     the parts named, which is why ``branches.svg`` has one of these too.
+
+    The vertical positions are laid out from a single list of bands rather
+    than by subtracting from the box height, which is how an earlier version
+    came to draw its last note on top of its colour key.
     """
-    w, h = 288, 96
+    w, h = 322, 104
     x, y = width - w - 24, 26
     out = ['<text x="%.1f" y="%.1f" font-size="9" font-weight="600" '
            'fill="#7A8994">HOW TO READ A ROW</text>' % (x, y - 6),
@@ -395,9 +400,10 @@ def panel(width, n_rows, n_merges):
            'fill="#F8FAFB" stroke="#B7C4CC" stroke-width="1.1" '
            'stroke-dasharray="4 3"/>' % (x, y, w, h)]
 
-    bx, by = x + 42, y + 26
+    # The worked row.
+    bx, by = x + 46, y + 24
     out.append('<path d="M %.1f %.1f L %.1f %.1f" stroke="#AEBAC2" '
-               'stroke-width="0.9" opacity="0.7"/>' % (bx, by - 15, bx, by))
+               'stroke-width="0.9" opacity="0.7"/>' % (bx, by - 14, bx, by))
     out.append('<rect x="%.1f" y="%.1f" width="66" height="9" rx="4.5" '
                'fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>'
                % (bx, by - 4.5))
@@ -405,32 +411,38 @@ def panel(width, n_rows, n_merges):
                'font-weight="500" fill="#1D7A57">branch-name</text>'
                % (bx + 73, by + 2.4, MONO))
     out.append('<path d="M %.1f %.1f L %.1f %.1f" stroke="#1D7A57" '
-               'stroke-width="0.9" opacity="0.6"/>' % (bx + 66, by, bx + 66,
-                                                       by + 15))
+               'stroke-width="0.9" opacity="0.6"/>'
+               % (bx + 66, by, bx + 66, by + 13))
     out.append('<circle cx="%.1f" cy="%.1f" r="1.9" fill="#1D7A57" '
-               'opacity="0.8"/>' % (bx + 66, by + 15))
-
-    for label, dx, dy, anchor in (("forked", -4, -17, "end"),
-                                  ("life", 33, -9, "middle"),
-                                  ("merged in", 70, 26, "start")):
+               'opacity="0.8"/>' % (bx + 66, by + 13))
+    for label, dx, dy, anchor in (("forked", -4, -16, "end"),
+                                  ("life", 33, -8, "middle"),
+                                  ("merged in", 72, 17, "start")):
         out.append('<text x="%.1f" y="%.1f" font-size="7.4" fill="#8B99A3" '
                    'text-anchor="%s">%s</text>'
                    % (bx + dx, by + dy, anchor, label))
 
-    lx = x + 10
     for i, line in enumerate((
             'dashed: in the trunk, but no merge commit names it',
             'amber with no line out: forked and never came back')):
         out.append('<text x="%.1f" y="%.1f" font-size="7.4" fill="#8B99A3">%s'
-                   '</text>' % (x + 10, y + h - 36 + i * 10, line))
-    for state, text in (("merged", "in dev-next"), ("unmerged", "still out"),
-                        ("trunk", "the trunk"), ("gone", "merged, deleted")):
-        out.append('<rect x="%.1f" y="%.1f" width="8" height="8" rx="4" '
-                   'fill="%s" stroke="%s"/>' % (lx, y + h - 17, FILL[state],
-                                                EDGE[state]))
-        out.append('<text x="%.1f" y="%.1f" font-size="7.4" fill="#7A8994">%s'
-                   '</text>' % (lx + 11, y + h - 10, text))
-        lx += 22 + len(text) * 4.0
+                   '</text>' % (x + 10, y + 52 + i * 10, line))
+
+    # Two rows of swatches: five of them will not fit across this box, and
+    # shortening the labels to make them fit loses the distinction the colours
+    # exist to draw.
+    rows = (("merged", "in dev-next"), ("unmerged", "still out, undecided"),
+            ("retired", "decided against")), \
+           (("trunk", "the trunk"), ("gone", "merged, then deleted")),
+    for r, group in enumerate(rows):
+        lx = x + 10
+        for state, text in group:
+            out.append('<rect x="%.1f" y="%.1f" width="8" height="8" rx="4" '
+                       'fill="%s" stroke="%s"/>'
+                       % (lx, y + 74 + r * 13, FILL[state], EDGE[state]))
+            out.append('<text x="%.1f" y="%.1f" font-size="7.4" fill="#7A8994">'
+                       '%s</text>' % (lx + 11, y + 81 + r * 13, text))
+            lx += 22 + len(text) * 4.05
     return "\n".join(out)
 
 

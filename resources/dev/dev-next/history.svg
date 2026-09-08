@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1706 651" width="1706" height="651" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
-<rect width="1706" height="651" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1764 651" width="1764" height="651" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
+<rect width="1764" height="651" fill="#FFFFFF"/>
 <text x="58" y="34" font-size="15" font-weight="600" fill="#22313A">Every branch and merge in grand, 2019 to 2026</text>
 <text x="58" y="52" font-size="10" fill="#5A6A73">69 branches over 7 years, oldest at the top. Context for the recovery rather than part of it: most of these no longer exist.</text>
 <line x1="58.0" y1="112" x2="58.0" y2="617" stroke="#EEF1F3" stroke-width="1"/>
@@ -197,8 +197,8 @@
 <text x="733.4" y="450.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_dc1_fleg</text>
 <rect x="701.5" y="296.0" width="23.5" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
 <text x="731.9" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">beta_dc1</text>
-<rect x="711.7" y="338.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
-<text x="722.7" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dependabot/...pillow</text>
+<rect x="711.7" y="338.0" width="4.0" height="9" rx="4.5" fill="#F7E6E7" stroke="#A9484E" stroke-width="1"/>
+<text x="722.7" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#A9484E">dependabot/...pillow</text>
 <rect x="738.7" y="275.0" width="30.6" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
 <text x="776.3" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">infra_conda</text>
 <rect x="745.8" y="422.0" width="37.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
@@ -287,26 +287,28 @@
 <text x="1367.1" y="450.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_fix_root_..._new_fields</text>
 <rect x="1403.5" y="296.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
 <text x="1414.5" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">ci/docker-test</text>
-<text x="1394.0" y="20.0" font-size="9" font-weight="600" fill="#7A8994">HOW TO READ A ROW</text>
-<rect x="1394.0" y="26.0" width="288" height="96" rx="4" fill="#F8FAFB" stroke="#B7C4CC" stroke-width="1.1" stroke-dasharray="4 3"/>
-<path d="M 1436.0 37.0 L 1436.0 52.0" stroke="#AEBAC2" stroke-width="0.9" opacity="0.7"/>
-<rect x="1436.0" y="47.5" width="66" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
-<text x="1509.0" y="54.4" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">branch-name</text>
-<path d="M 1502.0 52.0 L 1502.0 67.0" stroke="#1D7A57" stroke-width="0.9" opacity="0.6"/>
-<circle cx="1502.0" cy="67.0" r="1.9" fill="#1D7A57" opacity="0.8"/>
-<text x="1432.0" y="35.0" font-size="7.4" fill="#8B99A3" text-anchor="end">forked</text>
-<text x="1469.0" y="43.0" font-size="7.4" fill="#8B99A3" text-anchor="middle">life</text>
-<text x="1506.0" y="78.0" font-size="7.4" fill="#8B99A3" text-anchor="start">merged in</text>
-<text x="1404.0" y="86.0" font-size="7.4" fill="#8B99A3">dashed: in the trunk, but no merge commit names it</text>
-<text x="1404.0" y="96.0" font-size="7.4" fill="#8B99A3">amber with no line out: forked and never came back</text>
-<rect x="1404.0" y="105.0" width="8" height="8" rx="4" fill="#E1F1EA" stroke="#1D7A57"/>
-<text x="1415.0" y="112.0" font-size="7.4" fill="#7A8994">in dev-next</text>
-<rect x="1470.0" y="105.0" width="8" height="8" rx="4" fill="#F6EDDA" stroke="#8A6210"/>
-<text x="1481.0" y="112.0" font-size="7.4" fill="#7A8994">still out</text>
-<rect x="1528.0" y="105.0" width="8" height="8" rx="4" fill="#D5E8F5" stroke="#1F5C82"/>
-<text x="1539.0" y="112.0" font-size="7.4" fill="#7A8994">the trunk</text>
-<rect x="1586.0" y="105.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
-<text x="1597.0" y="112.0" font-size="7.4" fill="#7A8994">merged, deleted</text>
-<text x="1682.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 16:43 UTC by docs/dev/make_history_diagram.py</text>
-<text x="1682.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 5ad07fe</text>
+<text x="1418.0" y="20.0" font-size="9" font-weight="600" fill="#7A8994">HOW TO READ A ROW</text>
+<rect x="1418.0" y="26.0" width="322" height="104" rx="4" fill="#F8FAFB" stroke="#B7C4CC" stroke-width="1.1" stroke-dasharray="4 3"/>
+<path d="M 1464.0 36.0 L 1464.0 50.0" stroke="#AEBAC2" stroke-width="0.9" opacity="0.7"/>
+<rect x="1464.0" y="45.5" width="66" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1537.0" y="52.4" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">branch-name</text>
+<path d="M 1530.0 50.0 L 1530.0 63.0" stroke="#1D7A57" stroke-width="0.9" opacity="0.6"/>
+<circle cx="1530.0" cy="63.0" r="1.9" fill="#1D7A57" opacity="0.8"/>
+<text x="1460.0" y="34.0" font-size="7.4" fill="#8B99A3" text-anchor="end">forked</text>
+<text x="1497.0" y="42.0" font-size="7.4" fill="#8B99A3" text-anchor="middle">life</text>
+<text x="1536.0" y="67.0" font-size="7.4" fill="#8B99A3" text-anchor="start">merged in</text>
+<text x="1428.0" y="78.0" font-size="7.4" fill="#8B99A3">dashed: in the trunk, but no merge commit names it</text>
+<text x="1428.0" y="88.0" font-size="7.4" fill="#8B99A3">amber with no line out: forked and never came back</text>
+<rect x="1428.0" y="100.0" width="8" height="8" rx="4" fill="#E1F1EA" stroke="#1D7A57"/>
+<text x="1439.0" y="107.0" font-size="7.4" fill="#7A8994">in dev-next</text>
+<rect x="1494.5" y="100.0" width="8" height="8" rx="4" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="1505.5" y="107.0" font-size="7.4" fill="#7A8994">still out, undecided</text>
+<rect x="1597.5" y="100.0" width="8" height="8" rx="4" fill="#F7E6E7" stroke="#A9484E"/>
+<text x="1608.5" y="107.0" font-size="7.4" fill="#7A8994">decided against</text>
+<rect x="1428.0" y="113.0" width="8" height="8" rx="4" fill="#D5E8F5" stroke="#1F5C82"/>
+<text x="1439.0" y="120.0" font-size="7.4" fill="#7A8994">the trunk</text>
+<rect x="1486.5" y="113.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
+<text x="1497.5" y="120.0" font-size="7.4" fill="#7A8994">merged, then deleted</text>
+<text x="1740.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 17:05 UTC by docs/dev/make_history_diagram.py</text>
+<text x="1740.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 5ad07fe (modified since)</text>
 </svg>

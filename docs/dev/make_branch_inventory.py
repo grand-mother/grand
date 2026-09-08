@@ -73,12 +73,17 @@ def summary_row(name, entry):
             # history says which commits were its own.
             merged = "yes, in trunk by %s" % where
         mark = "\U0001F7E2"
+    elif facts.display_state(name, entry) == "retired":
+        mark = "\U0001F534"
+        merged = "**no, and never will** (decided %s)" % facts.DECIDED[name]
     else:
         mark, merged = "\U0001F7E1", "**no**"
 
     action = facts.VERDICTS.get(name, ("", ""))[0]
     verdict = ACTIONS[action][0] if action else (
         "--" if entry["state"] != "unmerged" else "not yet reviewed")
+    if name in facts.DECIDED:
+        verdict = "**%s** — decided" % verdict
 
     children = entry["children"]
     feeds = ", ".join("`%s`" % c for c in children[:3])
@@ -144,8 +149,13 @@ def build(info):
         "so it cannot go stale."
         % (len(info), len(unmerged), len(merged)),
         "",
-        "\U0001F7E2 in the trunk  ·  \U0001F7E1 still out  ·  "
+        "\U0001F7E2 in the trunk  ·  \U0001F7E1 still out, undecided  ·  "
+        "\U0001F534 decided against, will never be merged  ·  "
         "\U0001F535 the trunk itself",
+        "",
+        "A verdict is a recommendation until it is agreed. The red ones have "
+        "been agreed and are settled; the amber ones are still open questions, "
+        "which is why they do not share a colour.",
         "",
         "*Created* is the first commit that was the branch's own. Branches that "
         "were merged and then deleted are not listed: this is a document to "
@@ -183,13 +193,19 @@ def build(info):
         action, reason = facts.VERDICTS.get(
             name, ("", "Not yet reviewed."))
         label, gloss = ACTIONS.get(action, ("Not yet reviewed", ""))
-        out += ["#### `%s` — %s" % (name, label),
+        decided = facts.DECIDED.get(name)
+        out += ["#### %s `%s` — %s"
+                % ("\U0001F534" if decided and action == "no"
+                   else "\U0001F7E1", name, label),
                 "",
                 "*%s*%s" % (facts.DESCRIPTIONS.get(name, "no description"),
                             " — %s" % gloss if gloss else ""),
                 "",
                 reason,
                 ""]
+        if decided:
+            out += ["**Decided %s.** This is settled, not a proposal." % decided,
+                    ""]
 
     out += ["---", "", "## The trunk", "", header, rule]
     out += [summary_row(n, info[n]) for n in trunk]

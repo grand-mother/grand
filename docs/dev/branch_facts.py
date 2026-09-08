@@ -206,6 +206,48 @@ VERDICTS = {
 }
 
 
+#: Dispositions that have been *agreed*, with the date. A branch listed here
+#: whose verdict is ``no`` will never be merged, and both diagrams colour it
+#: apart from the rest so that a reader can see the difference between a
+#: question nobody has answered and one that has been closed.
+#:
+#: A verdict in :data:`VERDICTS` is a recommendation. An entry here is a
+#: decision. Only add one when it has actually been taken.
+DECIDED = {
+    "dependabot/pip/binder/pillow-9.3.0": "2026-09-08",
+}
+
+
+def display_state(name, entry):
+    r"""Returns the colour key for a branch.
+
+    Parameters
+    ----------
+    name : str
+        Branch name.
+    entry : dict
+        Its record from :func:`collect`.
+
+    Returns
+    -------
+    str
+        One of ``trunk``, ``merged``, ``retired``, ``unmerged`` or ``gone``.
+        ``retired`` is a branch that has been decided against: it still
+        carries patches of its own and never will be merged. ``unmerged`` is
+        the same situation with the decision still open, which is why the two
+        cannot share a colour.
+    """
+    if name == TRUNK:
+        return "trunk"
+    if not entry.get("live", True):
+        return "gone"
+    if entry["state"] == "merged":
+        return "merged"
+    if name in DECIDED and VERDICTS.get(name, ("", ""))[0] == "no":
+        return "retired"
+    return "unmerged"
+
+
 def git(*args):
     r"""Returns the stdout of a git command, stripped.
 

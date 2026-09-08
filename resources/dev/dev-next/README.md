@@ -101,9 +101,16 @@ widen the box without checking the columns still fit.
 
 ## Conventions
 
-- 🟢 green: contained in `dev-next`. 🟡 amber: still carrying its own patches.
-  🔵 blue: the trunk. The same colours as the diagram; Markdown has no colour of
-  its own, so the documents use the circles, which survive copy-paste.
+- 🟢 green: contained in `dev-next`. 🟡 amber: still carrying its own patches,
+  and what to do about it is an **open question**. 🔴 red: still carrying its
+  own patches and it has been **decided** that it will never be merged. 🔵 blue:
+  the trunk. Grey, in `history.svg` only: merged and since deleted. The same
+  colours as the diagrams; Markdown has no colour of its own, so the documents
+  use the circles, which survive copy-paste.
+- The amber/red split is the difference between a question nobody has answered
+  and one that has been closed. A verdict in `VERDICTS` is a recommendation; an
+  entry in `DECIDED`, with the date it was agreed, is what turns a branch red.
+  Add to `DECIDED` only when the decision has actually been taken.
 - *Commits* counts everything on a branch since it diverged. *Own* counts the
   patches that are in no other branch. For an old branch these can be very
   different numbers — `snonis_sim2root_test_merge` has 279 and 2 — and *Own* is
