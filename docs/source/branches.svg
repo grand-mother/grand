@@ -56,10 +56,10 @@
 <path d="M 856.0 299.0 H 886.0 V 407.0 H 916.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
 <path d="M 272.0 191.0 H 302.0 V 623.0 H 332.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
 <path d="M 564.0 245.0 H 594.0 V 515.0 H 624.0" fill="none" stroke="#C3CDD4" stroke-width="1"/>
-<rect x="624.0" y="168.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
-<text x="632.0" y="182.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">147-non-parallel-coreas</text>
+<rect x="624.0" y="168.0" width="232" height="46" rx="4" fill="#F7E6E7" stroke="#A9484E" stroke-width="1.1"/>
+<text x="632.0" y="182.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#A9484E">147-non-parallel-coreas</text>
 <text x="632.0" y="194.0" font-size="8" fill="#5A6A73">non-parallel CoREAS</text>
-<text x="632.0" y="207.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">1 patch out</text>
+<text x="632.0" y="207.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#A9484E">not merging 26-09-08</text>
 <text x="848.0" y="207.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-09-29 Jelena Köhler</text>
 <rect x="40.0" y="276.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
 <text x="48.0" y="290.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">beta_dc1</text>
@@ -246,6 +246,6 @@
 <text x="632.0" y="518.0" font-size="8" fill="#5A6A73">ARM install notes</text>
 <text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">1 patch out</text>
 <text x="848.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-03-07 Tien</text>
-<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 17:26 UTC by docs/dev/make_branch_diagram.py</text>
+<text x="1440.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 19:17 UTC by docs/dev/make_branch_diagram.py</text>
 <text x="1440.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit a092c5e</text>
 </svg>

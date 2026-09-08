@@ -33,7 +33,7 @@ ACTIONS = {
     "merge": ("Merge", "test-merges clean"),
     "merge-hand": ("Merge by hand", "conflicts, but only on context"),
     "cherry-pick": ("Cherry-pick", "take part of it, never the branch"),
-    "no": ("Do not merge", "nothing here applies"),
+    "no": ("Do not merge", "nothing to take that the trunk does not have"),
     "decide": ("Decision needed", "a question, not a merge"),
     "ask": ("Ask the author", "needs its author before anything else"),
 }

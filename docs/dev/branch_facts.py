@@ -148,20 +148,56 @@ VERDICTS = {
         "does not overlap. The readme already mentions ARM twice, so fold "
         "the steps in rather than appending."),
     "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root": ("no",
-        "The problem is real and the fix works. A non-parallel CoREAS run "
-        "writes no PARALLEL card, and the reader raised UnboundLocalError -- "
-        "its result was held in a local named `list`, which made the name "
-        "local throughout, so the not-found path returned a variable that had "
-        "never been assigned. The branch's bare try/except does catch that."
+        "One commit, one file, one hunk: eight lines wrapping the PARALLEL "
+        "read in `try/except` so that a non-parallel CoREAS run, which writes "
+        "no PARALLEL card, gets -1 rather than an error."
         "\n\n"
-        "It is superseded rather than wrong. The trunk fixed the reader itself "
-        "in September 2026: absence now returns None, PARALLEL is handled on "
-        "an explicit `is None`, and ECUTS, THIN and THINH raise an error "
-        "naming the keyword and the file instead of the same unhelpful "
-        "UnboundLocalError. The branch's bare `except:` catches every other "
-        "failure too -- an unreadable file included -- and writes -1 for all "
-        "of them. The two conflict, and the trunk's version is the one to "
-        "keep. Close the branch and the issue."),
+        "**The fix works.** An earlier reading here said it could not, on the "
+        "grounds that a missing keyword raised nothing to catch. That was "
+        "wrong: `read_list_of_params` held its result in a local named "
+        "`list`, and assigning that name anywhere in the body makes it local "
+        "throughout, so the not-found path raised `UnboundLocalError` rather "
+        "than returning the builtin. The bare `except:` catches it. The wrong "
+        "claim came from testing a scratch function that really did return "
+        "the builtin, instead of the branch's own code."
+        "\n\n"
+        "**What was tested, end to end.** Two working trees identical except "
+        "for the two converter files, both running the real "
+        "`CoreasToRawROOT.py` over the repository's own fixture at "
+        "`sim2root/CoREASRawRoot/proton/`, with the `PARALLEL` card deleted "
+        "from `SIM004100.inp`. Reading the values back out of the ROOT trees "
+        "that each produced:"
+        "\n\n"
+        "| | output | `parallel_ectcut` | `parallel_ectmax` |\n"
+        "|---|---|---|---|\n"
+        "| branch | `Coreas_004100.root` | -1.0 | -1.0 |\n"
+        "| `dev-next` | `Coreas_004100.rawroot` | -1.0 | -1.0 |"
+        "\n\n"
+        "Identical, in the written file rather than in a reconstruction of "
+        "the code. Both also print the same warning, because the trunk's "
+        "wording was taken from this branch."
+        "\n\n"
+        "Two confounds had to be cleared first, both of which would have given "
+        "a wrong answer. `Coreas_004100.rawroot` is **committed in the "
+        "repository**, so it was copied into both scratch trees and the first "
+        "read picked up the stale file for the branch, reporting the original "
+        "PARALLEL values of 1000 and 100000. And the two versions write "
+        "different names -- `.root` against `.rawroot` -- so a glob for one "
+        "reported the branch as having produced nothing when it had exited 0."
+        "\n\n"
+        "**Why superseded rather than merged.** The trunk fixed the reader "
+        "itself in September 2026, so absence is a value: `PARALLEL` is "
+        "handled on an explicit `is None`, and `ECUTS`, `THIN` and `THINH` "
+        "raise an error naming the keyword and the file. The branch guards "
+        "only `PARALLEL`, leaving the other three raising the original "
+        "`UnboundLocalError`, which names neither. Its bare `except:` also "
+        "catches every other failure -- a missing or unreadable .inp included "
+        "-- and writes -1 for all of them. The two edits are in the same "
+        "block, so this is either/or, and the trunk's is the one to keep."
+        "\n\n"
+        "The branch's contribution was identifying a real problem, and that "
+        "is worth crediting when issue #147 is closed against the trunk."),
+
     "dev_leisos": ("cherry-pick",
         "A real fix in get_antenna_position (an `or` that should be an `and`, "
         "plus guarded assignment) under 35,000 lines of committed CORSIKA "
@@ -266,6 +302,11 @@ DECIDED = {
     "no-astropy": ("2026-09-08",
         "astropy is already gone from the trunk entirely, and all three files "
         "the branch edits were renamed away in d1ac041"),
+    "147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root":
+        ("2026-09-08",
+         "the fix works, but the trunk repaired the reader at the root and "
+         "produces the identical stored result -- verified end to end, both "
+         "converters writing -1 into parallel_ectcut and parallel_ectmax"),
 }
 
 

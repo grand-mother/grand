@@ -630,6 +630,14 @@ table at the top of [`BRANCHES.md`](https://github.com/grand-mother/grand/blob/d
 A branch is amber until a decision is recorded there and red once it is: the
 difference between a question nobody has answered and one that is closed.
 
+**Three settled so far**, all 2026-09-08 and all "do not merge":
+`dependabot/…pillow`, `no-astropy` and `147-add-option-…`. One was
+deliberately *not* settled: `radio` is held amber because it carries the only
+spatial trace interpolation in the repository. Going through them one at a time
+has been worth it — two of the first four changed shape once the code was run
+rather than read, and `147-add-option-…` was being rejected for a reason that
+turned out to be false.
+
 Reasons for each are in [`BRANCHES.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/BRANCHES.md#why-one-by-one).
 
 **Merge order.** Take the three clean ones first, then `tian-conda-arm`. Four of
