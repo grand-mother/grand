@@ -103,9 +103,14 @@ Issues = "https://github.com/grand-mother/grand/issues"
 # than here.
 
 [tool.setuptools.packages.find]
-# granddb and sim2root are deliberately excluded.  granddb is a separate
-# concern with its own database dependencies, and sim2root is a set of
-# converter scripts that are run, not imported.
+# `grand*` also matches `granddb`, which therefore ships: `pip install
+# grand[db]` gets both it and the sqlalchemy/psycopg2/paramiko/sshtunnel/scp
+# it needs.  That is intended -- it is how you fetch and catalogue GRAND data
+# -- but note that it means granddb is a distributed part of this package and
+# belongs inside the same lint and test gates as `grand/`, which it is not in
+# yet.  This comment used to claim granddb was excluded; it never was.
+#
+# sim2root really is excluded: converter scripts that are run, not imported.
 include = ["grand*"]
 
 [tool.setuptools.package-data]
