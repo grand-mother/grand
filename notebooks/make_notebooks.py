@@ -43,6 +43,7 @@ example.
 """
 
 import pathlib
+import sys
 import time
 
 import nbformat as nbf
@@ -1029,8 +1030,8 @@ print("quietest %.1f uV at %.1f h,  busiest %.1f uV at %.1f h,  ratio %.2f"
       % (levels[:, 0].min(), hours[levels[:, 0].argmin()],
          levels[:, 0].max(), hours[levels[:, 0].argmax()],
          levels[:, 0].max() / levels[:, 0].min()))'''),
-    md(r'''About a third, between the quietest hour and the busiest — smaller than the
-spread between antenna models is large, but not negligible.
+    md(r'''About a third, between the quietest hour and the busiest — larger than the
+spread between the three antenna models, and not something to average over.
 
 **A quoted noise level without a sidereal time is incomplete.** This is not a
 defect; it is the sky. But "the GRAND noise floor is X µV" is an unfinished
@@ -1998,6 +1999,39 @@ between a refactor and a silently different answer.'''),
     ])
 
 
+def _check_kernel_is_this_interpreter():
+    r"""Refuses to execute under a different interpreter than this one.
+
+    `kernel_name='python3'` is resolved by jupyter from a search path in which
+    a user-level kernelspec shadows the environment's own. The notebooks import
+    ROOT and grand, so running them under whatever `python3` happens to name
+    either fails outright or, worse, succeeds against a different version of the
+    package than the one being documented.
+
+    Raises
+    ------
+    SystemExit
+        When `python3` resolves to an interpreter other than the running one.
+    """
+    from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel
+
+    try:
+        argv0 = KernelSpecManager().get_kernel_spec('python3').argv[0]
+    except NoSuchKernel:
+        raise SystemExit(
+            'No "python3" jupyter kernel is registered. Register this '
+            'interpreter with:\n    %s -m ipykernel install --user'
+            % sys.executable)
+
+    if pathlib.Path(argv0).resolve() != pathlib.Path(sys.executable).resolve():
+        raise SystemExit(
+            'The "python3" jupyter kernel is %s, but this script is running '
+            'under %s.\nThe notebooks would be executed by the wrong '
+            'interpreter. Register this one with:\n'
+            '    %s -m ipykernel install --user'
+            % (argv0, sys.executable, sys.executable))
+
+
 def build(execute=True, only=None):
     r"""Writes every notebook, executes it, and checks the directory is coherent.
 
@@ -2024,21 +2058,26 @@ def build(execute=True, only=None):
         if not selected:
             raise SystemExit('--only matched no notebooks: %s' % ', '.join(only))
 
-    for name, nb in selected.items():
-        nbf.write(nb, HERE / name)
-    print('  wrote %d notebook%s%s'
-          % (len(selected), '' if len(selected) == 1 else 's',
-             '' if not only else ' (of %d)' % len(books)))
-
     if not execute:
+        for name, nb in selected.items():
+            nbf.write(nb, HERE / name)
+        print('  wrote %d notebook%s%s (not executed)'
+              % (len(selected), '' if len(selected) == 1 else 's',
+                 '' if not only else ' (of %d)' % len(books)))
         return
 
     from nbclient import NotebookClient
     from nbclient.exceptions import CellExecutionError
 
+    _check_kernel_is_this_interpreter()
+
     failed = []
-    for path in sorted(HERE / name for name in selected):
-        nb = nbf.read(path, as_version=4)
+    for name in sorted(selected):
+        path = HERE / name
+        # Built above but deliberately not yet on disk: a notebook is written
+        # only once it has executed, so a failure here leaves the previous
+        # good copy untouched rather than stripping it to a blank one.
+        nb = selected[name]
         started = time.perf_counter()
         try:
             # Twenty minutes is generous for these -- the slowest is 06, which
@@ -2084,7 +2123,6 @@ def build(execute=True, only=None):
 
 
 if __name__ == '__main__':
-    import sys
 
     argv = sys.argv[1:]
     if '--check' in argv:
