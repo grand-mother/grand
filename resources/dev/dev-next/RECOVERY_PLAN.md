@@ -199,8 +199,9 @@ a third abandoned trunk.
 - [ ] Docker: publish an image, or state that it is unsupported — see *Blocked
       on a decision*. The engineering is done either way; what is missing is
       the answer, and the 2023 images stay pullable until there is one.
-- [ ] NUTRIG field names — listed under *Blocked on a decision*, and the only
-      one of these that unblocks a branch today
+- [x] NUTRIG field names — **answered 2026-09-08.** lwpiotr chose
+      `nutrig_rhox`/`nutrig_rhoy`, and both branches are in. Nothing in the
+      queue is blocked on a decision now.
 
 ### Phase 6 — delineate input, processing, output
 - [ ] Extract the pure kernel — arrays in, arrays out, no filesystem
@@ -370,10 +371,10 @@ Measured 2026-09-08.
 
 - [x] Tag `dev` as `archive/dev-2026-09` — pushed, pointing at `1ca1847`, which
       is the commit `dev-next` was cut from. **Criterion 4 met.**
-- [ ] Note: promoting also unblocks `workflow_dispatch`. GitHub only offers it
-      for workflows present on the *default* branch, so every manual workflow
-      added on `dev-next` — `docker.yml` today — is untriggerable from the
-      Actions tab until this lands.
+> **Note.** Promoting also unblocks `workflow_dispatch`. GitHub only offers it
+> for workflows present on the *default* branch, so every manual workflow added
+> on `dev-next` — `docker.yml` today — is untriggerable from the Actions tab
+> until this lands.
 - [ ] Archive the 2023 `main`, free the name
 - [ ] Rename `dev-next`, set default, move protection
 - [ ] Announce with the install commands
@@ -589,6 +590,12 @@ the repository has ever had — 69 of them, including the 31 that were merged an
 then deleted — with who made it, what it came off, what came out of it, and
 whether it should be merged. It is generated from git by
 `docs/dev/make_branch_inventory.py`; this section carries only the decisions.
+It lists the branches that exist today: a branch that was merged and deleted
+cannot be acted on, and belongs in the history rather than in a work list.
+
+For context rather than for action, `history.svg` in the same folder draws all
+69 branches the repository has ever had on a time axis, back to the first
+commit in June 2019, with the merges between them.
 
 Re-measured 2026-09-08 with `git cherry` against `dev-next`. Of 38 remote
 branches, 19 are fully contained, 5 are ahead only by commits whose patches are

@@ -1,0 +1,312 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1706 651" width="1706" height="651" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
+<rect width="1706" height="651" fill="#FFFFFF"/>
+<text x="58" y="34" font-size="15" font-weight="600" fill="#22313A">Every branch and merge in grand, 2019 to 2026</text>
+<text x="58" y="52" font-size="10" fill="#5A6A73">69 branches over 7 years, oldest at the top. Context for the recovery rather than part of it: most of these no longer exist.</text>
+<line x1="58.0" y1="112" x2="58.0" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="61.0" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2019</text>
+<line x1="161.5" y1="112" x2="161.5" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="164.5" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2020</text>
+<line x1="348.1" y1="112" x2="348.1" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="351.1" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2021</text>
+<line x1="534.2" y1="112" x2="534.2" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="537.2" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2022</text>
+<line x1="720.3" y1="112" x2="720.3" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="723.3" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2023</text>
+<line x1="906.4" y1="112" x2="906.4" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="909.4" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2024</text>
+<line x1="1093.0" y1="112" x2="1093.0" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="1096.0" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2025</text>
+<line x1="1279.1" y1="112" x2="1279.1" y2="617" stroke="#EEF1F3" stroke-width="1"/>
+<text x="1282.1" y="106" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#9AA7AF">2026</text>
+<path d="M 182.9 279.5 L 182.9 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="182.9" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 506.7 300.5 L 506.7 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="506.7" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 523.0 279.5 L 523.0 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="523.0" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 513.8 321.5 L 513.8 279.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="513.8" cy="279.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 523.0 258.5 L 523.0 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="523.0" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 525.0 342.5 L 525.0 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="525.0" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 561.8 405.5 L 561.8 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="561.8" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 601.5 300.5 L 601.5 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="601.5" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 626.5 426.5 L 626.5 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="626.5" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 626.5 384.5 L 626.5 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="626.5" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 636.2 258.5 L 636.2 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="636.2" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 636.7 279.5 L 636.7 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="636.7" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 674.9 363.5 L 674.9 405.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="674.9" cy="405.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 661.7 321.5 L 661.7 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="661.7" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 664.2 405.5 L 664.2 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="664.2" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 674.4 447.5 L 674.4 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="674.4" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 676.0 405.5 L 676.0 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="676.0" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 690.2 405.5 L 690.2 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="690.2" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 711.7 405.5 L 711.7 300.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="711.7" cy="300.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 711.7 300.5 L 711.7 167.0" stroke="#8A6210" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="711.7" cy="167.0" r="1.9" fill="#8A6210" opacity="0.6"/>
+<path d="M 726.4 447.5 L 726.4 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="726.4" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 769.3 279.5 L 769.3 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="769.3" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 783.0 426.5 L 783.0 552.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="783.0" cy="552.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 1084.9 510.5 L 1084.9 363.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1084.9" cy="363.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1147.1 363.5 L 1147.1 300.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1147.1" cy="300.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 857.0 321.5 L 857.0 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="857.0" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 893.7 363.5 L 893.7 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="893.7" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 894.7 342.5 L 894.7 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="894.7" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 897.8 405.5 L 897.8 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="897.8" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 899.8 384.5 L 899.8 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="899.8" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 1052.8 300.5 L 1052.8 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1052.8" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 918.1 510.5 L 918.1 405.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="918.1" cy="405.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 920.7 405.5 L 920.7 426.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="920.7" cy="426.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 925.8 447.5 L 925.8 552.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="925.8" cy="552.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 928.9 552.5 L 928.9 363.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="928.9" cy="363.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 930.9 405.5 L 930.9 552.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="930.9" cy="552.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 931.9 552.5 L 931.9 426.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="931.9" cy="426.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 940.1 510.5 L 940.1 426.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="940.1" cy="426.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 932.9 573.5 L 932.9 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="932.9" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 935.0 573.5 L 935.0 510.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="935.0" cy="510.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 940.6 426.5 L 940.6 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="940.6" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 959.4 363.5 L 959.4 510.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="959.4" cy="510.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 979.3 321.5 L 979.3 510.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="979.3" cy="510.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 1025.2 384.5 L 1025.2 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1025.2" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 1096.6 279.5 L 1096.6 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1096.6" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1104.2 363.5 L 1104.2 342.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1104.2" cy="342.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1102.7 510.5 L 1102.7 342.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1102.7" cy="342.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1167.5 363.5 L 1167.5 531.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1167.5" cy="531.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1167.0 279.5 L 1167.0 531.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1167.0" cy="531.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1133.3 594.5 L 1133.3 167.0" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1133.3" cy="167.0" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 1157.8 531.5 L 1157.8 363.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1157.8" cy="363.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1160.8 531.5 L 1160.8 300.5" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1160.8" cy="300.5" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1163.9 405.5 L 1163.9 531.5" stroke="#AEBAC2" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1163.9" cy="531.5" r="1.9" fill="#AEBAC2" opacity="0.6"/>
+<path d="M 1167.5 531.5 L 1167.5 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1167.5" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1168.0 363.5 L 1168.0 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1168.0" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1171.6 258.5 L 1171.6 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1171.6" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1171.0 300.5 L 1171.0 167.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1171.0" cy="167.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1403.5 405.5 L 1403.5 219.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1403.5" cy="219.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1403.5 363.5 L 1403.5 219.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1403.5" cy="219.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1403.5 342.5 L 1403.5 219.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1403.5" cy="219.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1403.5 258.5 L 1403.5 219.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1403.5" cy="219.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1403.5 489.5 L 1403.5 219.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1403.5" cy="219.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 1406.6 426.5 L 1406.6 219.0" stroke="#1D7A57" stroke-width="0.7" fill="none" opacity="0.32"/>
+<circle cx="1406.6" cy="219.0" r="1.9" fill="#1D7A57" opacity="0.6"/>
+<path d="M 814.1 258.5 L 814.1 167.0" stroke="#1D7A57" stroke-width="0.7" stroke-dasharray="2 2" fill="none" opacity="0.42"/>
+<path d="M 1105.3 342.5 L 1105.3 167.0" stroke="#1D7A57" stroke-width="0.7" stroke-dasharray="2 2" fill="none" opacity="0.42"/>
+<path d="M 1131.3 552.5 L 1131.3 167.0" stroke="#1D7A57" stroke-width="0.7" stroke-dasharray="2 2" fill="none" opacity="0.42"/>
+<path d="M 1406.6 447.5 L 1406.6 219.0" stroke="#1D7A57" stroke-width="0.7" stroke-dasharray="2 2" fill="none" opacity="0.42"/>
+<path d="M 1406.1 300.5 L 1406.1 219.0" stroke="#1D7A57" stroke-width="0.7" stroke-dasharray="2 2" fill="none" opacity="0.42"/>
+<rect x="58.0" y="135.5" width="1066.6" height="11" rx="5.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1131.6" y="144.6" font-family="IBM Plex Mono, monospace" font-size="8.4" font-weight="600" fill="#1D7A57">master</text>
+<rect x="58.0" y="161.5" width="1296.6" height="11" rx="5.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1361.6" y="170.6" font-family="IBM Plex Mono, monospace" font-size="8.4" font-weight="600" fill="#1D7A57">dev</text>
+<rect x="813.6" y="187.5" width="4.0" height="11" rx="5.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="824.6" y="196.6" font-family="IBM Plex Mono, monospace" font-size="8.4" font-weight="600" fill="#1D7A57">main</text>
+<rect x="1354.6" y="213.5" width="52.0" height="11" rx="5.5" fill="#D5E8F5" stroke="#1F5C82" stroke-width="1"/>
+<text x="1413.6" y="222.6" font-family="IBM Plex Mono, monospace" font-size="8.4" font-weight="600" fill="#1F5C82">dev-next</text>
+<rect x="150.3" y="254.0" width="20.4" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="177.7" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">radio</text>
+<rect x="154.9" y="275.0" width="28.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="189.9" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">update</text>
+<rect x="444.0" y="254.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="455.0" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">no-astropy</text>
+<rect x="492.4" y="275.0" width="30.6" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="530.0" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">grand_coordinates</text>
+<rect x="501.6" y="296.0" width="5.1" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="513.7" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_tool4qual</text>
+<rect x="501.6" y="317.0" width="12.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="520.8" y="324.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">merge_grand_coordinates</text>
+<rect x="522.5" y="254.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="533.5" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">mypy_correction</text>
+<rect x="524.5" y="338.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="535.5" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dependabot/pip/quality/lxml-4.6.5</text>
+<rect x="547.5" y="359.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="558.5" y="366.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_noAppim</text>
+<rect x="549.5" y="380.0" width="77.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="633.5" y="387.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dependabot/pip/binder/pillow-9.0.1</text>
+<rect x="551.0" y="401.0" width="10.7" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="568.8" y="408.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_docker</text>
+<rect x="601.5" y="296.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="612.5" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_jupyter</text>
+<rect x="604.6" y="422.0" width="21.9" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="633.5" y="429.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_binder</text>
+<rect x="629.1" y="254.0" width="7.1" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="643.2" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dependabot/pip/quality/lxml-4.9.1</text>
+<rect x="636.2" y="275.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="647.2" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_xdu_rf</text>
+<rect x="658.1" y="317.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="669.1" y="324.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_dc1_EfieldROOT</text>
+<rect x="658.1" y="359.0" width="509.9" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1175.0" y="366.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_io_root</text>
+<rect x="664.2" y="401.0" width="47.4" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="718.7" y="408.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_dc1</text>
+<rect x="665.3" y="443.0" width="61.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="733.4" y="450.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_dc1_fleg</text>
+<rect x="701.5" y="296.0" width="23.5" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="731.9" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">beta_dc1</text>
+<rect x="711.7" y="338.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="722.7" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dependabot/...pillow</text>
+<rect x="738.7" y="275.0" width="30.6" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="776.3" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">infra_conda</text>
+<rect x="745.8" y="422.0" width="37.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="790.0" y="429.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_28-factory-event</text>
+<rect x="763.1" y="464.0" width="191.7" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="961.9" y="471.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">snonis_sim2root_test_merge</text>
+<rect x="763.1" y="485.0" width="333.5" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1103.6" y="492.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_io_root_testmerges</text>
+<rect x="763.1" y="506.0" width="366.1" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1136.2" y="513.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_sim2root</text>
+<rect x="763.1" y="527.0" width="404.3" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1174.5" y="534.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_sim2root_..._fix_flds</text>
+<rect x="765.2" y="548.0" width="41.8" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="814.0" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_dc1_merge</text>
+<rect x="813.6" y="254.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="824.6" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">event-viewer</text>
+<rect x="814.6" y="296.0" width="356.4" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1178.0" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_database</text>
+<rect x="843.2" y="317.0" width="13.8" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="864.0" y="324.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">debug_dev_io_root</text>
+<rect x="891.1" y="275.0" width="515.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1413.1" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_snonis</text>
+<rect x="894.2" y="338.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="905.2" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_Jelena</text>
+<rect x="897.8" y="380.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="908.8" y="387.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">74_dev_sim2root</text>
+<rect x="897.8" y="401.0" width="33.1" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="937.9" y="408.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">73_dev_efield2voltage</text>
+<rect x="915.1" y="254.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="926.1" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dev_downsample_..._Jelena</text>
+<rect x="917.6" y="422.0" width="22.9" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="947.6" y="429.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_update_trace_ci32</text>
+<rect x="920.7" y="443.0" width="5.1" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="932.8" y="450.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">multievent_73_dev_efield2voltage</text>
+<rect x="920.7" y="548.0" width="11.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="938.9" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">73_dev_for_merge</text>
+<rect x="932.9" y="569.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="943.9" y="576.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_sim2root_efield2efield</text>
+<rect x="978.3" y="317.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="989.3" y="324.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_sim1root</text>
+<rect x="1014.0" y="338.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1025.0" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">masterkastner</text>
+<rect x="1016.0" y="380.0" width="9.2" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="1032.2" y="387.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_update_readme_for_paper</text>
+<rect x="1047.1" y="548.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1058.1" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dev_leisos</text>
+<rect x="1053.8" y="401.0" width="110.1" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="1170.9" y="408.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_fix_dc2</text>
+<rect x="1078.2" y="254.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1089.2" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_imports</text>
+<rect x="1079.8" y="317.0" width="5.6" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1092.4" y="324.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dc2_debug_xmax</text>
+<rect x="1083.3" y="422.0" width="126.4" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1216.8" y="429.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">grandio_light</text>
+<rect x="1104.2" y="338.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1115.2" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_sim2root_merge</text>
+<rect x="1113.9" y="443.0" width="49.5" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1170.4" y="450.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dev_event_viewer</text>
+<rect x="1120.6" y="464.0" width="7.6" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1135.2" y="471.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_sim2root_..._with_dev</text>
+<rect x="1124.6" y="548.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1135.6" y="555.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">copilot/add-color-coded</text>
+<rect x="1126.2" y="569.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1137.2" y="576.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">tian-conda-arm</text>
+<rect x="1132.8" y="590.0" width="4.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
+<text x="1143.8" y="597.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">dev_vs_code</text>
+<rect x="1170.0" y="254.0" width="233.5" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1410.5" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_Event_write</text>
+<rect x="1213.9" y="317.0" width="92.8" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1313.7" y="324.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">refact_galaxy</text>
+<rect x="1218.0" y="338.0" width="185.6" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1410.5" y="345.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_reprocessing</text>
+<rect x="1231.2" y="380.0" width="4.0" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1242.2" y="387.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">147-non-parallel-coreas</text>
+<rect x="1232.2" y="485.0" width="171.3" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1410.5" y="492.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_aoi_unittest</text>
+<rect x="1245.5" y="359.0" width="158.1" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1410.5" y="366.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_nutrig_fields</text>
+<rect x="1290.4" y="296.0" width="8.7" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
+<text x="1306.0" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">dev_marion</text>
+<rect x="1318.4" y="401.0" width="85.1" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1410.5" y="408.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_fix_root_warnings_lwp</text>
+<rect x="1331.7" y="422.0" width="75.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1413.6" y="429.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_fix_root_..._aoi_levels</text>
+<rect x="1356.1" y="443.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1367.1" y="450.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">dev_fix_root_..._new_fields</text>
+<rect x="1403.5" y="296.0" width="4.0" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1414.5" y="303.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">ci/docker-test</text>
+<text x="1394.0" y="20.0" font-size="9" font-weight="600" fill="#7A8994">HOW TO READ A ROW</text>
+<rect x="1394.0" y="26.0" width="288" height="96" rx="4" fill="#F8FAFB" stroke="#B7C4CC" stroke-width="1.1" stroke-dasharray="4 3"/>
+<path d="M 1436.0 37.0 L 1436.0 52.0" stroke="#AEBAC2" stroke-width="0.9" opacity="0.7"/>
+<rect x="1436.0" y="47.5" width="66" height="9" rx="4.5" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1"/>
+<text x="1509.0" y="54.4" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#1D7A57">branch-name</text>
+<path d="M 1502.0 52.0 L 1502.0 67.0" stroke="#1D7A57" stroke-width="0.9" opacity="0.6"/>
+<circle cx="1502.0" cy="67.0" r="1.9" fill="#1D7A57" opacity="0.8"/>
+<text x="1432.0" y="35.0" font-size="7.4" fill="#8B99A3" text-anchor="end">forked</text>
+<text x="1469.0" y="43.0" font-size="7.4" fill="#8B99A3" text-anchor="middle">life</text>
+<text x="1506.0" y="78.0" font-size="7.4" fill="#8B99A3" text-anchor="start">merged in</text>
+<text x="1404.0" y="86.0" font-size="7.4" fill="#8B99A3">dashed: in the trunk, but no merge commit names it</text>
+<text x="1404.0" y="96.0" font-size="7.4" fill="#8B99A3">amber with no line out: forked and never came back</text>
+<rect x="1404.0" y="105.0" width="8" height="8" rx="4" fill="#E1F1EA" stroke="#1D7A57"/>
+<text x="1415.0" y="112.0" font-size="7.4" fill="#7A8994">in dev-next</text>
+<rect x="1470.0" y="105.0" width="8" height="8" rx="4" fill="#F6EDDA" stroke="#8A6210"/>
+<text x="1481.0" y="112.0" font-size="7.4" fill="#7A8994">still out</text>
+<rect x="1528.0" y="105.0" width="8" height="8" rx="4" fill="#D5E8F5" stroke="#1F5C82"/>
+<text x="1539.0" y="112.0" font-size="7.4" fill="#7A8994">the trunk</text>
+<rect x="1586.0" y="105.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
+<text x="1597.0" y="112.0" font-size="7.4" fill="#7A8994">merged, deleted</text>
+<text x="1682.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-08 16:43 UTC by docs/dev/make_history_diagram.py</text>
+<text x="1682.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 5ad07fe</text>
+</svg>
