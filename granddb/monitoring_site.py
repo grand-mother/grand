@@ -14,10 +14,8 @@
 #from grand.dataio import TADC, TEfield, TVoltage, TRawVoltage
 import psycopg2
 from psycopg2.extras import execute_values
-import glob
 import os
 from collections import defaultdict
-import matplotlib.pyplot as plt
 from datetime import datetime, timezone
 from concurrent.futures import ProcessPoolExecutor
 from grand.aoi import *
@@ -26,7 +24,6 @@ import inspect
 import random
 import time
 import grand.manage_log as mlg
-import sqlite3
 import argparse
 import granddb.monitoring_dbconf as monitoring_dbconf
 
@@ -48,7 +45,7 @@ def with_db_cursor(func):
                         expects_conn = 'conn' in params
                         return func(cur, conn, *args, **kwargs) if expects_conn else func(cur, *args, **kwargs)
 
-            except psycopg2.errors.DeadlockDetected as e:
+            except psycopg2.errors.DeadlockDetected:
                 conn.rollback()
                 if retries >= max_retries:
                     logger.error(f"deadlock... end after {retries} retries")
@@ -391,5 +388,5 @@ if __name__ == "__main__":
         results = executor.map(process_file, filepaths)
         for result in results:  # This will raise any exceptions from workers
             pass  # or handle results if needed
-    logger.info(f"End of monitoring")
+    logger.info("End of monitoring")
 

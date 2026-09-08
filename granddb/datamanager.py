@@ -3,7 +3,8 @@ import scp
 import paramiko
 import json
 from configparser import ConfigParser
-import urllib.request, urllib.error
+import urllib.request
+import urllib.error
 import os
 import shutil
 from granddb.granddblib import Database
@@ -118,7 +119,7 @@ class DataManager:
                     cred = self._credentials[db[7]]
                 self._database = Database(db[0], db[1], db[2], db[3], db[4], db[5], db[6], cred)
                 dbrepos = self._database.get_repos()
-                if not (dbrepos is None):
+                if dbrepos is not None:
                     for repo in dbrepos:
                         dbpaths = repo["path"].strip("{}").split(",")
                         paths = dbpaths
@@ -207,15 +208,15 @@ class DataManager:
         res = None
         # Check if file is a simple name or full path name
         if os.path.dirname(file) != "":
-            if not (path is None) and (path != os.path.dirname(file)):
+            if path is not None and (path != os.path.dirname(file)):
                 logger.warning(f"path given in filename ({os.path.dirname(file)}) and in repository path ({path}) are different ! The path {os.path.dirname(file)} from file will be used !")
             path = os.path.dirname(file)
             file = os.path.basename(file)
 
         # if repository is given we get file directly from this repo
-        if not (repository is None):
+        if repository is not None:
             rep = self.getrepo(repository)
-            if not (rep is None):
+            if rep is not None:
                 logger.debug(f"search in repository {rep.name()} {path}")
                 res = rep.get_file(file, path, grab=grab)
         # if no repo specified, we search everywhere
@@ -224,7 +225,7 @@ class DataManager:
                 logger.debug(f"search in repository {rep.name()} {path}")
                 res = rep.get_file(file, path, grab=grab)
                 logger.debug(f"res is {res}")
-                if not (res is None):
+                if res is not None:
                     break
         return res
 
@@ -232,15 +233,15 @@ class DataManager:
         res = None
         # Check if directory is a simple name or full path name
         if os.path.dirname(directory) != "":
-            if not (path is None) and (path != os.path.dirname(directory)):
+            if path is not None and (path != os.path.dirname(directory)):
                 logger.warning(f"path given in dataset ({os.path.dirname(directory)}) and in repository path ({path}) are different ! The path {os.path.dirname(directory)} from dataset will be used !")
             path = os.path.dirname(os.path.normpath(directory))
             directory = os.path.basename(os.path.normpath(directory))
 
         # if repository is given we get directory directly from this repo
-        if not (repository is None):
+        if repository is not None:
             rep = self.getrepo(repository)
-            if not (rep is None):
+            if rep is not None:
                 logger.debug(f"Search in repository {rep.name()} {path}")
                 res = rep.get_dataset(directory, path)
         # if no repo specified, we search everywhere
@@ -249,7 +250,7 @@ class DataManager:
                 logger.debug(f"Search in repository {rep.name()} {path}")
                 res = rep.get_dataset(directory, path)
                 logger.debug(f"res is {res}")
-                if not (res is None):
+                if res is not None:
                     break
         return res
 
@@ -308,7 +309,7 @@ class DataManager:
                 else:
                     logger.error(f"Dataset {directory} was not found in repository {repository.name()} thus cannot be registered")
         else:
-            logger.error(f"No repository found.")
+            logger.error("No repository found.")
         return directory
 
     def new_register_dataset(self,directory,repository=None, provider=None):
@@ -536,7 +537,7 @@ class DatasourceLocal(Datasource):
         # TODO : Check that path is in self.paths(), if not then copy in incoming ?
         found_file = None
         # Path is given : we only search in that path
-        if not (path is None):
+        if path is not None:
             my_path = Path(path)
             if not my_path.exists():
                 logger.debug(f"path {path}  not found (seems not exists) ! Will use path defined in config.ini !")
@@ -569,7 +570,7 @@ class DatasourceLocal(Datasource):
                     if my_file.is_file():
                         found_file = my_file
                         break
-                if not my_file is None and my_file.is_file():
+                if my_file is not None and my_file.is_file():
                     break
                 #if my_file.is_file():
                 #    found_file = path + file
@@ -577,7 +578,7 @@ class DatasourceLocal(Datasource):
                 else:
                     logger.debug(f"File {file} not found in localdir {path}")
 
-        if not found_file is None:
+        if found_file is not None:
             logger.debug(f"File found in localdir {found_file}")
 
         return found_file
@@ -587,7 +588,7 @@ class DatasourceLocal(Datasource):
         # TODO : Check that path is in self.paths(), if not then copy in incoming ?
         found_file = None
         # Path is given : we only search in that path
-        if not (path is None):
+        if path is not None:
             my_path = Path(path)
             if not my_path.exists():
                 logger.debug(f"path {path}  not found (seems not exists) ! Will use {self.path()} path defined in config.ini !")
@@ -627,12 +628,12 @@ class DatasourceLocal(Datasource):
                     found_file = my_file
                     break
 
-                if not my_file is None and my_file.is_dir():
+                if my_file is not None and my_file.is_dir():
                     break
                 else:
                     logger.debug(f"dataset {file} not found in localdir {path}")
 
-        if not found_file is None:
+        if found_file is not None:
             logger.debug(f"Dataset found in localdir {found_file}")
 
         return found_file
@@ -738,8 +739,8 @@ class DatasourceSsh(Datasource):
         #import getpass
         localfile = None
         client = self.set_client()
-        if not(client is None):
-            if not (path is None):
+        if client is not None:
+            if path is not None:
                 logger.debug(f"search {file} in {path} @ {self.name()}")
                 localfile = self._get_file(client, path, file, grab=grab)
                 if localfile is None:
@@ -748,7 +749,7 @@ class DatasourceSsh(Datasource):
                 for path in self.paths():
                     logger.debug(f"search {file} in {path}@ {self.name()}")
                     localfile = self._get_file(client, path, file,grab=grab)
-                    if not (localfile is None):
+                    if localfile is not None:
                         break
                     else:
                         logger.debug(f"file {file} not found in {path} @ {self.name()}")
@@ -763,8 +764,8 @@ class DatasourceSsh(Datasource):
         #import getpass
         localfile = None
         client = self.set_client()
-        if not(client is None):
-            if not (path is None):
+        if client is not None:
+            if path is not None:
                 logger.debug(f"search {file} in {path} @ {self.name()}")
                 localfile = self.get_dir(client, path, file)
                 if localfile is None:
@@ -773,7 +774,7 @@ class DatasourceSsh(Datasource):
                 for path in self.paths():
                     logger.debug(f"search {file} in {path}@ {self.name()}")
                     localfile = self.get_dir(client, path, file)
-                    if not (localfile is None):
+                    if localfile is not None:
                         break
                     else:
                         logger.debug(f"Dataset {file} not found in {path} @ {self.name()}")
@@ -867,7 +868,7 @@ class DatasourceHttp(Datasource):
     # TODO: implement authentification
     def get_file(self, file, path=None, grab=True):
         localfile = None
-        if not (path is None):
+        if path is not None:
             url = self._protocol + '://' + self.server() + '/' + path + '/' + file
             localfile = self._get_file(url, file,grab)
 
@@ -876,7 +877,7 @@ class DatasourceHttp(Datasource):
             for path in self.paths():
                 url = self._protocol + '://' + self.server() + '/' + path + '/' + file
                 localfile = self._get_file(url, file, grab)
-                if not (localfile is None):
+                if localfile is not None:
                     break
 
 

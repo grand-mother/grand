@@ -1,8 +1,7 @@
-import sys, os, getopt
+import os
 import grand.manage_log as mlg
 from granddb.datamanager import DataManager
 import argparse
-from icecream import ic
 
 logger = mlg.get_logger_for_script(__name__)
 

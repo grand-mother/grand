@@ -1,4 +1,5 @@
-import time, getpass
+import time
+import getpass
 from datetime import datetime
 from urllib.parse import quote_plus
 import psycopg2
@@ -159,7 +160,7 @@ class Database:
 
         except Exception as e:
             logger.error(f"Failed to configure tunnel with key: {e}")
-            logger.info(f"Try with passwd")
+            logger.info("Try with passwd")
             try_again = True
 
         if try_again:
@@ -176,7 +177,7 @@ class Database:
                 self.server.start()
             except Exception as e:
                 logger.error(f"Failed to configure tunnel with passwd: {e}")
-                logger.error(f"Exiting")
+                logger.error("Exiting")
                 exit(1)
                 #raise RuntimeError("Failed to configure tunnel") from e
 
@@ -560,7 +561,7 @@ class Database:
                                 if table == "events":
                                     eventlist.append([run, event])
 
-                                if not (run, event) in ttrees[treename]:
+                                if (run, event) not in ttrees[treename]:
                                     ttrees[treename][(run, event)] = {}
                                 rfile.TreeList[treename].get_event(event, run)
                                 for param, field in getattr(rfile, treetype + "ToDB").items():
@@ -862,7 +863,7 @@ class Database:
                                 if table == "events":
                                     eventlist.append([run, event])
 
-                                if not (run, event) in ttrees[treename]:
+                                if (run, event) not in ttrees[treename]:
                                     ttrees[treename][(run, event)] = {}
                                 #rfile.TreeList[treename].get_event(event, run)
                                 treeobject.get_event(event, run)
