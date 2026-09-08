@@ -115,8 +115,14 @@ class RootFile:
     trunnoiseToDB = {
         'table': 'trunnoise',
         'run_number': 'run_number',
-        'GalNoiseMap': 'galnoisemap',
-        'GalNoiseLST': 'galnoiselst'
+        # These read 'GalNoiseMap' and 'GalNoiseLST' until 2026-09-08. TRunNoise
+        # has never carried either spelling -- its fields are gal_noise_map and
+        # gal_noise_LST -- and the consumer in granddblib reads them with a bare
+        # getattr, so registering a file holding a trunnoise tree raised
+        # AttributeError. No file in this repository has one, which is why it
+        # went unnoticed.
+        'gal_noise_map': 'galnoisemap',
+        'gal_noise_LST': 'galnoiselst'
     }
     trunefieldsimdataToDB = {
         'table': 'trunefieldsim',

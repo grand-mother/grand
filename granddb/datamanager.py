@@ -64,6 +64,17 @@ class DataManager:
     _provider = None
 
     def __init__(self, file=os.path.join(os.path.dirname(__file__), 'config.ini')):
+        # The three mutable attributes above are declared at class level, which
+        # in a plain class means one object shared by every instance -- and
+        # this method fills them with `self._x[name] = ...`, so before 2026-09-08
+        # a second manager inherited the first one's credentials, directories
+        # and repositories, and the first gained the second's. Bound per
+        # instance here instead. The class-level declarations are left as the
+        # type statement they read as.
+        self._directories = []
+        self._repositories = {}
+        self._credentials = {}
+
         configur = ConfigParser()
         # by default configparser convert all keys to lowercase... but we don't want !
         configur.optionxform = lambda option: option
