@@ -51,6 +51,10 @@ from tests.sim.test_pipeline_end_to_end import (  # noqa: E402
 
 GOLDEN = pathlib.Path(__file__).with_name('pipeline_golden.npz')
 
+#: Relative tolerance of the comparison below.  See that test's docstring for
+#: why it is 1e-6 and not tighter.
+TOLERANCE = 1e-6
+
 #: Fixed across the reference and every comparison.  A different seed is a
 #: different answer, so this is part of the contract, not a detail.
 SEED = 0
@@ -218,10 +222,24 @@ def test_the_chain_reproduces_the_reference(traces):
     r"""Shower to voltage gives the stored answer, bin for bin.
 
     The tolerance is tight rather than exact.  The same seed on the same
-    platform reproduces bit-for-bit, but NumPy and BLAS are entitled to
-    reassociate floating-point sums between versions, and a test that failed
-    on a library upgrade would be noise.  ``1e-9`` relative is far below any
-    change that could matter physically and far above that reassociation.
+    machine reproduces bit-for-bit, but NumPy and BLAS are entitled to
+    reassociate floating-point sums, and a test that failed on a library
+    upgrade or a different CPU would be noise.
+
+    It was ``1e-9``, and that was too tight -- not for library versions but
+    for *hardware*.  Through 2026-09-08 and -09 this test failed on one leg of
+    the CI matrix and passed on the other, with the failing leg alternating
+    between ROOT 6.36 and 6.38 across five runs; the same commit passed both
+    legs on some runs and failed one on others.  The ROOT version was
+    incidental -- what varied was which GitHub runner each leg landed on, and
+    numpy takes different vectorised paths on different CPUs.  Locally the
+    test is deterministic: eight consecutive runs agreed, and forcing one,
+    two and eight BLAS threads changed nothing.
+
+    ``1e-6`` still has all the power that matters.  A real change to the chain
+    is of order one -- the galactic-noise fix on 2026-09-07 moved every
+    voltage by 41% -- so this is five orders of magnitude below anything
+    physical, and above the reassociation that made the suite flaky.
 
     A failure here means the chain now answers differently.  That may be
     correct -- the galactic-noise fix on 2026-09-07 changed every voltage by
@@ -238,16 +256,25 @@ def test_the_chain_reproduces_the_reference(traces):
         'the chain now returns %s, the reference holds %s'
         % (traces.shape, stored.shape))
 
-    if not np.allclose(traces, stored, rtol=1e-9, atol=0.0):
-        worst = np.unravel_index(np.argmax(np.abs(traces - stored)),
-                                 stored.shape)
+    # Relative, computed explicitly, so that a failure says how far off it
+    # is.  The old message printed both values to six figures and read
+    # "1276.82 against 1276.82", which gives a reader nothing to judge.
+    with np.errstate(divide='ignore', invalid='ignore'):
+        relative = np.abs(traces - stored) / np.abs(stored)
+    relative[~np.isfinite(relative)] = 0.0
+    worst = np.unravel_index(np.argmax(relative), stored.shape)
+
+    if relative[worst] > TOLERANCE:
         pytest.fail(
             'the chain no longer reproduces the reference made by GRANDlib '
-            '%s at %s. Largest disagreement at du=%d arm=%d sample=%d: '
-            '%.6g against %.6g. If this change is intended, regenerate with '
-            '`python %s --write` and say why in the commit message.'
+            '%s at %s. Largest relative disagreement %.3g (tolerance %g), at '
+            'du=%d arm=%d sample=%d: %.10g against %.10g. A difference near '
+            'the tolerance is floating-point reassociation and the tolerance '
+            'should move; one far above it is a real change, and if it is '
+            'intended, regenerate with `python %s --write` and say why in the '
+            'commit message.'
             % (recorded.get('grandlib_version'), recorded.get('commit'),
-               worst[0], worst[1], worst[2],
+               relative[worst], TOLERANCE, worst[0], worst[1], worst[2],
                traces[worst], stored[worst], __file__))
 
 
