@@ -123,3 +123,7 @@ If you are citing GRANDlib in a document that will be uploaded to the arXiv, ple
     year = "2024"
    }
 
+Acknowledgements
+----------------
+
+The GRAND Collaboration acknowledges the support from the National Science Centre Poland for NCN OPUS grant no. 2022/45/B/ST2/02889.
