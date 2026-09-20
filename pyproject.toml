@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "cffi", "pycparser", "py-minisign"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grand"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "cffi",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["grand*"]
