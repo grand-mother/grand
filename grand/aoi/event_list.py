@@ -130,6 +130,8 @@ class EventList:
             return data_input.tvoltage.get_entries()
         elif hasattr(data_input, "trawvoltage") and data_input.trawvoltage:
             return data_input.trawvoltage.get_entries()
+        #elif hasattr(data_input, "trecons") and data_input.trecons:
+        #    return data_input.trecons.get_entries()
         else:
             print("Can not find any tree to provide the number of events in the file.")
             return None

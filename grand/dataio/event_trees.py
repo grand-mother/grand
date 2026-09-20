@@ -997,3 +997,107 @@ class TShowerSim(MotherEventTree):
     """statistical weight given to the event"""
     tested_cores: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
     """tested core positions"""
+
+@dataclass
+class TRecons(MotherEventTree):
+    """TTree to store reconstruction results per event"""
+
+    _type: str = "recons"
+    _tree_name: str = "trecons"
+
+    # Event identifiers
+    run_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    event_number: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+    
+    #Event processing
+    ## Maximum amplitude of the Hilbert envelope
+    ## (in ADC counts or µV/m depending on the input)
+    peak_amps:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Time corresponding to the peak amplitude (in seconds)
+    peak_time: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Antenna positions in the GRAND detector reference frame (in meters)
+    Xants:  StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    ## Number of triggered antennas
+    du_count: TTreeScalarDesc = field(default=TTreeScalarDesc(np.uint32))
+
+    # Plane Wave Fits (PWF) reconstruction outputs 
+    ## Shower zenith angle from PWF (in radians)
+    ## Coordinate system: NWU, origin at layout center, "coming from"
+    zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Shower azimuth angle from PWF (in radians)
+    ## Coordinate system: NWU, origin at layout center, "coming from"
+    azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Non-reduced chi² from PWF
+    ## Divide by du_count to obtain the reduced chi²
+    chi2_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+
+    # Spherical Wave Fits (SWF) Reconstruction outputs 
+    ## polar zenith from SWF (in rad) 
+    zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## polar azimuth from SWF (in rad)
+    azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Distance between the reconstructed Xsource and the origin = layout center (in meters)
+    r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Emission time from SWF (in seconds)
+    t_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Reconstructed shower emission point (Xsource) in GRAND detector frame (in meters)
+    ## x = r_xmax * sin(theta_swf) * cos(phi_swf)
+    ## y = r_xmax * sin(theta_swf) * sin(phi_swf)
+    ## z = r_xmax * cos(theta_swf)
+    Xsource: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
+    ## Non-reduced chi² from SWF
+    ## Divide by du_count to obtain the reduced chi²
+    chi2_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Distance between the reconstructed Xsource and each antenna (in meters)
+    distance_source_antenna:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
+
+    # Angular Distribution Function (ADF)
+    ## Shower zenith angle from ADF (in radians)
+    ## Coordinate system: NWU, origin at layout center, "coming from"
+    zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Shower azimuth angle from ADF (in radians)
+    ## Coordinate system: NWU, origin at layout center, "coming from"
+    azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Width parameter from ADF fit (delta_omega)
+    width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Scaling factor A from ADF fit
+    scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Non-reduced chi² from ADF
+    ## Divide by du_count to obtain the reduced chi²
+    chi2_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## Azimuth angle in the shower plane (in radians)
+    eta: StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Angular distance to the shower axis (in radians)
+    omega:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    ## Cherenkov angle (computed using a two emission points toy model) (in radians)
+    omega_cr:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
+    # Amplitude predicted by the ADF model at each antenna
+    ## (in ADC counts or µV/m)
+    adf_amplitude:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
+
+    ## (Electromagnetic energy in eV, obtained directly from voltage data)
+    energy_elm_voltage:  TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+
+
+    ## Cramér-Rao (lower) bound (CRB)
+    ## CRB of shower zenith angle from ADF (in radians)
+    crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower azimuth angle from ADF (in radians)
+    crb_azimuth_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of scaling factor A from ADF fit
+    crb_scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of width parameter from ADF fit (delta_omega)
+    crb_width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower zenith from SWF (in rad)
+    crb_zenith_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower azimuth from SWF (in rad)
+    crb_azimuth_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of distance between the reconstructed Xsource and the origin = layout center (in meters)
+    crb_r_xmax: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of emission time from SWF (in seconds)
+    crb_t_s: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower zenith from PWF (in radians)
+    crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+    ## CRB of shower azimuth from PWF (in radians)
+    crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+
