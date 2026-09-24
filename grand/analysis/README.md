@@ -23,7 +23,9 @@ This module contains analysis tools for the **reconstruction of events in direct
   - `cherenkov_angle.py`: compute the Cherenkov angle using a two-emission-point toy model around the reconstructed Xsource obtained with SWF.  
     The Cherenkov angle is the point on the ground where the light path between the two points is minimal.
 
-- **`example`** – Example script `main.py` directly applicable to the 73 selected candidates (`Flagged_events_July_October.txt`).  
+- **`examples/analysis/`** (at the repository root; moved out of the package on
+  2026-09-24 so that installing GRANDlib does not install 0.9 MB of example
+  data) – Example scripts `main_AOI.py` and `main_DOI.py`, directly applicable to the 73 selected candidates (`Flagged_events_July_October.txt`).  
   The script processes the ROOT files (stores peak times and amplitudes), applies the reconstruction (on ADC data), and computes the energy.  
   The results of the reconstruction are stored in `recons_CR_candidates.root`.
 
