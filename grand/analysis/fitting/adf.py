@@ -54,20 +54,25 @@ def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAlt
     return eta, omega, omega_cr, l_ant, adf
 
 def ADF_loss(params, Aants, Xants, Xsource, uncertainty=0.075):
-    """
-    Compute chi² for the ADF function.
-    
-    Inputs:
-        params  : either a list/array [theta, phi, delta_omega, amplitude]
-                  or four separate scalars (theta, phi, delta_omega, amplitude)
-        Aants   : measured peak amplitudes (N,)
-        Xants   : antenna positions (N,3)
-        Xsource : shower source position (3,) (from SWF)
-        uncertainty : relative uncertainty on amplitudes (default: 7.5%)
-    
+    """Compute chi² for the ADF function.
+
+    Parameters
+    ----------
+    params : sequence of float
+        ``[theta, phi, delta_omega, amplitude]``.
+    Aants : ndarray
+        Measured peak amplitudes, shape (N,).
+    Xants : ndarray
+        Antenna positions, shape (N, 3).
+    Xsource : ndarray
+        Shower source position, shape (3,) (from SWF).
+    uncertainty : float, optional
+        Relative uncertainty on amplitudes (default: 7.5%).
+
     Returns
     -------
-        chi² value
+    float
+        chi² value.
     """
     theta, phi, delta_omega, amplitude = params
 
