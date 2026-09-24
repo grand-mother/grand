@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The CoREAS site table is in metres and names an unknown site.** It
+  stored altitudes in centimetres (kept out of the output only by a later
+  override line) and crashed on any other site with "not enough values to
+  unpack". Xiaodushan, a real GRAND site, was one of them. It now raises
+  `ValueError: unknown site 'Xiaodushan': ... knows only Dunhuang, Lenghu`.
+
 - **The event viewer's vxB axes point the right way.** It treated
   `magnetic_field` -- [inclination, declination, strength] -- as a vector
   and normalised it, giving a field 104° from the real one at Xiaodushan

@@ -203,13 +203,13 @@ a third abandoned trunk.
       since moved well past it: `granddb/monitoring*.py` did not exist on the
       branch, and `datamanager.py` differs by 166 lines. Worth telling fleg the
       branch can be deleted; nothing waits on it.
-- [ ] After the `sim2root/` branches land: fix the CoREAS site table
-      (`issue-coreas-site-table`). Unknown sites raise `ValueError` on an
-      empty unpacking — Xiaodushan among them — and the table's centimetre
-      altitudes are one line away from reaching the output. Both are pinned
-      by tests meanwhile. The reason they were left — that
-      `dev_io_root_testmerges` was in flight over that directory — turned
-      out to be stale; see *Corrections*.
+- [x] Fix the CoREAS site table (`issue-coreas-site-table`) — **done
+      2026-09-24.** Unknown sites, Xiaodushan among them, crashed on an empty
+      unpacking; they now raise an error naming the site and the sites the
+      table knows. The altitudes were in centimetres, one line away from
+      reaching the output; they are now in metres. It had been left for
+      after `dev_io_root_testmerges` landed, a reason that turned out to be
+      stale; see *Corrections*.
 - [x] Fix the CoREAS converter's crash on its own fixture
       (`issue-coreas-xmax-unbound`, #159) — **done 2026-09-24.** The
       branch without `DistanceOfShowerMaximum` now writes NaN for Xmax

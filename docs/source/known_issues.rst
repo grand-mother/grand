@@ -1205,12 +1205,10 @@ at that point the compatibility break has happened anyway.
 The CoREAS site table knows two sites, and stores their altitudes in centimetres
 ---------------------------------------------------------------------------------
 
-:Status: open — one live defect, one dormant landmine, both in five lines
+:Status: **fixed** 2026-09-24 — kept here until it appears in a release changelog
 :Affects: converting any CoREAS simulation of a site other than Dunhuang or
-          Lenghu; and, if one line moves, every CoREAS conversion
+          Lenghu (now a clear error); the altitudes are now in metres
 :Test: ``tests/sim2root/test_converter_defects.py``
-:Blocked by: nothing since 2026-09-24 — ``dev_io_root_testmerges``, once
-             thought in flight over ``sim2root/``, carries no patch of its own
 
 ``read_lat_long_alt`` in ``sim2root/CoREASRawRoot/CorsikaInfoFuncs.py`` maps a
 site name to its coordinates:
@@ -1274,7 +1272,24 @@ Delete or reorder that one line and every CoREAS conversion is wrong by a
 factor of 100 in the array origin, silently, because nothing downstream checks
 whether an altitude is plausible.
 
-**Why it was not fixed here.** ``dev_io_root_testmerges`` was believed to be
+**The fix.** The table is now a dictionary, ``SITES``, with altitudes in
+metres (1142.0 and 2800.0), and an unknown site raises::
+
+    ValueError: unknown site 'Xiaodushan': the CoREAS converter knows only
+    Dunhuang, Lenghu. Add it to SITES in .../CorsikaInfoFuncs.py, with its
+    altitude in metres.
+
+Metres, rather than keeping CORSIKA's centimetres, because the value's only
+consumer is ``RawShower.site_alt``, which the ZHAireS reader fills in
+metres; converting at the source removes the factor of 100 instead of
+depending on the override line staying put. The override stays: it sets
+``site_alt`` to the simulation's observation level, which is the height the
+shower was simulated at. Xiaodushan was not added to the table: the only
+coordinates for it in the repository are the ZHAireS runs' two-decimal
+``origin_geoid``, too coarse to put beside the six-decimal entries, and
+adding a site is a one-line change once its surveyed coordinates are known.
+
+**Why it was not fixed earlier.** ``dev_io_root_testmerges`` was believed to be
 in flight over ``sim2root/``. On 2026-09-24 its only commit outside
 ``dev-next`` proved to be a 2025 merge of ``dev``, with no patch of its own,
 and merging it conflicts in nothing under ``sim2root/``, so that reason has

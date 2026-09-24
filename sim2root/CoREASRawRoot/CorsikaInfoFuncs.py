@@ -140,15 +140,46 @@ def read_site(input_file):
         site = atmos
     return site
 
+#: Latitude and longitude in degrees, altitude in **metres**.
+#:
+#: The altitudes used to be stored in centimetres (114200, 280000), CORSIKA's
+#: own unit, and handed to RawShower.site_alt, whose other producer -- the
+#: ZHAireS reader -- writes metres.  Harmless only because CoreasToRawROOT.py
+#: overwrites the value with the observation level three lines later; see
+#: issue-coreas-site-table in docs/source/known_issues.rst.  Metres here
+#: removes the factor of 100 rather than relying on that line staying put.
+SITES = {
+    "Dunhuang": (40.142132, 94.661880, 1142.0),
+    "Lenghu": (38.7348, 93.3306, 2800.0),
+}
+
+
 def read_lat_long_alt(site):
-    #from site param only
-    if site == "Dunhuang":
-        latitude, longitude, altitude = [40.142132, 94.661880, 114200] # alt in cm
-    elif site == "Lenghu":
-        latitude, longitude, altitude = [38.7348, 93.3306, 280000] # alt in cm
-    else:
-        latitude, longitude, altitude = []
-    return latitude, longitude, altitude
+    r"""Returns the coordinates of a named GRAND site.
+
+    Parameters
+    ----------
+    site : str
+        The site name, as the CORSIKA ``.inp`` file gives it.
+
+    Returns
+    -------
+    tuple of float
+        ``(latitude, longitude, altitude)``: degrees, degrees, metres.
+
+    Raises
+    ------
+    ValueError
+        For a site the table does not know.  It used to unpack an empty list
+        and fail with "not enough values to unpack", naming neither the site
+        nor the table -- Xiaodushan, a real GRAND site, among them.
+    """
+    if site not in SITES:
+        raise ValueError(
+            "unknown site %r: the CoREAS converter knows only %s. Add it to "
+            "SITES in %s, with its altitude in metres."
+            % (site, ", ".join(sorted(SITES)), __file__))
+    return SITES[site]
 
 
 

@@ -288,76 +288,56 @@ def test_the_site_table_answers_for_the_two_sites_it_knows(site):
 
 
 @needs_corsika_info
-def test_the_site_table_raises_for_every_other_site():
-    r"""Any site the table does not know crashes on an empty unpacking.
+def test_an_unknown_site_is_named_in_the_error():
+    r"""A site the table does not know raises an error that names it.
 
-    The ``else`` branch is ``latitude, longitude, altitude = []``, so an
-    unrecognised site does not fall back, warn, or return ``None`` -- it
-    raises ``ValueError: not enough values to unpack``, from inside a
-    conversion run, with a message that names neither the site nor the table.
-
-    Xiaodushan is the case that matters: it is a real GRAND site, the ZHAireS
-    fixtures in this repository are simulations of it, and a CoREAS
-    simulation of the same site cannot be converted.
-
-    This is pinned rather than fixed because ``dev_io_root_testmerges`` is in
-    flight over ``sim2root/``; see the module docstring. The fix is two lines
-    -- raise something that names the site, or read the site list from a data
-    file -- and belongs after that branch lands.
+    It used to unpack an empty list and fail with "not enough values to
+    unpack", naming neither the site nor the table.  Xiaodushan is the case
+    that mattered: a real GRAND site, simulated by the ZHAireS fixtures here,
+    whose CoREAS simulations could not be converted and gave no hint why.
+    Fixed 2026-09-24; see ``issue-coreas-site-table``.
     """
     read_lat_long_alt = _read_lat_long_alt()
 
     with pytest.raises(ValueError) as raised:
         read_lat_long_alt('Xiaodushan')
 
-    assert 'unpack' in str(raised.value), (
-        'the failure mode changed; if the table now raises deliberately, '
-        'this test and the known-issues entry are stale')
-    assert 'Xiaodushan' not in str(raised.value), (
-        'the error now names the site, which is the fix -- update this test')
+    message = str(raised.value)
+    assert 'Xiaodushan' in message, 'the error does not name the site'
+    for known in KNOWN_SITES:
+        assert known in message, (
+            'the error does not list %s among the sites it knows' % known)
 
 
 @needs_corsika_info
-def test_the_site_table_altitudes_are_in_centimetres():
-    r"""The table's altitudes are 100x the site altitude in metres.
+def test_the_site_table_altitudes_are_in_metres():
+    r"""The table's altitudes are the sites' altitudes in metres.
 
-    Dunhuang is at 1142 m and the table says 114200; Lenghu is at 2800 m and
-    the table says 280000. A comment on each line says ``# alt in cm``, so
-    this is deliberate and matches CORSIKA's own units -- but the value is
-    handed to ``RawShower.site_alt``, whose other producer (the ZHAireS
-    reader) writes metres, and no unit is recorded anywhere in the schema.
-
-    It is currently dormant. ``CoreasToRawROOT.py`` overwrites the altitude
-    with the observation level in metres three lines after reading it, which
-    it has done since ``0694fa9`` (2024-11-04, "save obs level as site
-    altitude"). Before that the centimetre value reached the output, and it
-    is still visible in the April 2024 fixture: ``run_1_L0_0000.root`` of the
-    Dunhuang set carries ``origin_geoid = [40.14, 94.66, 114200]`` where the
-    ZHAireS fixtures carry ``1264``.
-
-    So the table is a landmine rather than a bug: deleting or reordering the
-    override reintroduces a silent factor of 100 in an altitude. This test
-    states the unit so that the next person to touch those lines has to
-    notice it.
+    They were in centimetres (114200, 280000) until 2026-09-24 -- CORSIKA's
+    unit -- and were handed to ``RawShower.site_alt``, whose other producer
+    writes metres.  Only the override in the next test kept the factor of
+    100 out of the output; the April 2024 Dunhuang fixture, written before
+    that override existed, still carries ``origin_geoid[2] = 114200``.
     """
     read_lat_long_alt = _read_lat_long_alt()
 
     for site, metres in (('Dunhuang', 1142.0), ('Lenghu', 2800.0)):
         _, _, altitude = read_lat_long_alt(site)
-        assert altitude / metres == pytest.approx(100.0, abs=1.0), (
-            '%s is at %.0f m and the table says %r, which is neither metres '
-            'nor centimetres; the unit may have been changed without the '
-            'callers being updated' % (site, metres, altitude))
+        assert altitude == pytest.approx(metres, abs=1.0), (
+            '%s is at %.0f m and the table says %r; the table is in metres '
+            'and callers rely on it' % (site, metres, altitude))
 
 
 @needs_corsika_info
 def test_the_altitude_override_is_still_in_place():
-    r"""``CoreasToRawROOT.py`` still overwrites the centimetre altitude.
+    r"""``CoreasToRawROOT.py`` sets the site altitude from the observation level.
 
-    The line that keeps the test above dormant. If it goes, the site table's
-    centimetres reach ``site_alt`` and then ``origin_geoid``, and every
-    CoREAS conversion is wrong by 100x in the array origin -- silently,
-    because nothing downstream checks the magnitude of an altitude.
+    The simulation's observation level is the height the shower was
+    simulated at, so it is the right ``site_alt`` whatever the table says.
+    Until 2026-09-24 this line was also what kept the table's centimetres
+    out of the output; the table is now in metres, so losing the line would
+    no longer mean a factor of 100, but it would still swap the simulated
+    height for a nominal one.
 
     Read statically: the converter cannot be imported, and the property is
     about the source anyway.
@@ -377,15 +357,15 @@ def test_the_altitude_override_is_still_in_place():
                            if line.startswith('altitude = CorePosition[2]'))
     except StopIteration:
         pytest.fail('the site table is read or overridden differently now; '
-                    'check whether the centimetre value still reaches '
-                    'RawShower.site_alt')
+                    'check that RawShower.site_alt is still the observation '
+                    'level rather than the nominal site altitude')
 
     assert override_at > read_at, (
-        'the override no longer follows the table read, so the centimetre '
-        'altitude may now be what gets written')
+        'the override no longer follows the table read, so the nominal '
+        'site altitude may now be what gets written')
     assert override_at - read_at < 10, (
         'the override has drifted %d lines from the read; anything between '
-        'them that uses `altitude` is using centimetres'
+        'them that uses `altitude` is using the nominal site altitude'
         % (override_at - read_at))
 
 
