@@ -107,6 +107,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **Star-shape trace interpolation is kept, in `examples/old/radio/`.** From
+  the 2019 `radio` branch (Anne Zilles, Valentin Niess): the only code in the
+  repository that interpolates an electric-field trace to a new antenna
+  position. Copied with the two helpers it imports; it does not run as it is,
+  and the README says what porting would take. The rest of the branch is
+  rewritten on the trunk or unfinished, so the branch is retired.
+
 - **The DC1 analysis scripts are kept, in `examples/old/dc1/`.** `beta_dc1`
   (grand-oma, January 2023) was merged to keep its two display scripts and
   their history. They use the pre-2023 API and do not run; the README lists

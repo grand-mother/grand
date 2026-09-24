@@ -350,7 +350,14 @@ VERDICTS = {
         "claimed a coordinate frame the class does not have, its only fields "
         "being `t` and `V`."),
 
-    "radio": ("decide",
+    "radio": ("absorb",
+        "**Decided 2026-09-24: its one unique file kept, branch retired.** "
+        "interpolation.py, with the frame.py and utils.py it imports, was copied "
+        "to examples/old/radio/ with a README crediting Anne Zilles and Valentin "
+        "Niess. A second review file by file found nothing else without a "
+        "trunk equivalent: early-late correction, LDF and polarisation are "
+        "stubs returning 0. The branch can be deleted."
+        "\n\n"
         "**Held open deliberately, 2026-09-08.** The branch itself will not be "
         "merged: 27 files and 7,410 lines from December 2019 under "
         "lib/python/grand/, a layout the project abandoned -- lib/ tracks only "
@@ -540,6 +547,10 @@ VERDICTS = {
 #: to be a preamble -- "Two independent reasons, either sufficient." is not a
 #: reason.
 DECIDED = {
+    "radio": ("2026-09-24",
+        "content taken: its star-shape trace interpolation, the only spatial "
+        "interpolation in the repository, copied with its two helpers to "
+        "examples/old/radio/. The rest is rewritten on the trunk or stubs"),
     "snonis_sim2root_test_merge": ("2026-09-24",
         "not merged: GRAND keeps \"comes from\" angles. Run on event 1618's "
         "Xmax, dev-next's transform returns the file's stored zenith and "
