@@ -179,6 +179,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- **The Handbook's "Directory Structure" page is maintained by hand.**
+  `docs/dev/build_handbook.py` rewrote every Handbook page from the LaTeX
+  source, and in September 2026 a regeneration silently undid the 2026-09-08
+  correction on that page, which removed the instruction to install
+  `requirements_vers.txt`: a 2022 pin set including a Pillow with a critical
+  advisory. The correction was restored at the time; the decision now (the
+  repository owner's) is that the hand edit wins. The generator keeps any page
+  listed in `HAND_MAINTAINED`, and refuses, before touching anything, if such
+  a page no longer matches a section of the source. The PDF is built from the
+  LaTeX and still carries the old instruction.
+
 - **`grand.recon` removed.** It held two classes with a constructor and
   nothing else; reconstruction is `grand.analysis`.
 
