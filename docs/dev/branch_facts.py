@@ -490,7 +490,7 @@ VERDICTS = {
         "branch itself records no conclusion and there is no third commit. It "
         "was cut ten days after issue #106 reported the symptom."),
 
-    "snonis_sim2root_test_merge": ("decide",
+    "snonis_sim2root_test_merge": ("no",
         "Not the small fix it looks like. coordinates.py here redefines the "
         "angular convention across all four core transforms -- theta to "
         "180-theta, phi to phi+180, azimuth and elevation redefined -- so "
@@ -498,7 +498,7 @@ VERDICTS = {
         "arrays: `if phi==360` raises on the normal call. The other half "
         "(du_type through Efield2Voltage) is already on the trunk. The "
         "convention is a collaboration decision, not a cherry-pick."),
-    "grandio_light": ("decide",
+    "grandio_light": ("no",
         "594 edits to live files and 295,000 deletions: this is the proposal "
         "to split GRANDlib into a light I/O package, not a change to review. "
         "It needs an answer to the split question before it needs a merge."),
