@@ -58,6 +58,7 @@ DESCRIPTIONS = {
     "radio": "2020 lib/ work",
     "refact_galaxy": "rival galaxy refactor",
     "dev_marion": "reconstruction package",
+    "dev-next-ipfxhh": "recovery working branch",
     "grandio_light": "the package split",
     "dev_downsample_and_ADCconversion_Jelena": "ADC conversion",
     "masterkastner": "docstrings, old docs",
