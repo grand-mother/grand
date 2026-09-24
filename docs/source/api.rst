@@ -144,6 +144,8 @@ Reconstruction
 :term:`Xmax` and an electromagnetic-energy proxy from recorded times and
 amplitudes. It needs the optional ``iminuit`` dependency
 (``pip install -e ".[analysis]"``; it is in the conda environment).
+Notebook 11 (see :doc:`notebooks`) runs the chain step by step, on showers
+with a known answer and on ten GP13 candidates.
 
 .. note::
 

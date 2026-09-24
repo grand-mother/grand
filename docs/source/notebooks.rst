@@ -38,7 +38,7 @@ rebuild::
     python notebooks/make_notebooks.py --no-execute   # while drafting
 
 Generating them keeps the title format, the navigation footers and the shared
-conventions structural rather than something ten JSON files have to agree
+conventions structural rather than something a dozen JSON files have to agree
 about, and makes review a diff of Python instead of a diff of embedded output.
 The build refuses to finish if a notebook fails to execute, comes back without
 stored outputs — which renders blank on GitHub — or is left on disk not
@@ -118,9 +118,33 @@ Available
    and the whole notebook runs without one.  Says plainly which four things do
    need the catalogue.
 
+`11. Reconstructing a shower <https://github.com/grand-mother/grand/blob/dev-next/notebooks/11_reconstruction.ipynb>`_
+   ``grand.analysis``, the reconstruction package: from the peak times and
+   amplitudes the antennas recorded back to the shower's direction, the
+   distance to its source and an energy estimate. Runs each step — plane
+   wave, spherical wave, angular distribution function, energy proxy — on a
+   shower it generated, so the answer is known, then the whole chain as
+   ``examples/analysis/main_AOI.py`` runs it. Ends on the ten GP13 cosmic-ray
+   candidates shipped with the examples, where the data parts company with
+   the model: most timing fits have χ²/ndf far above 1, and 8 of 10
+   amplitude fits stop on a bound. Says plainly that the fits are checked for
+   self-consistency only, not yet against simulated showers.
+
+`12. The event viewer <https://github.com/grand-mother/grand/blob/dev-next/notebooks/12_event_viewer.ipynb>`_
+   How to run ``examples/eventviewer/``, from the command line and from
+   Python, and what each of its panels computes, redrawn as static figures.
+   Covers the magnetic-field fix that turned the shower-plane axes the right
+   way in September 2026, and measures how far the angular plane is off on
+   the committed samples because of their Xmax
+   (:ref:`issue-xmax-sample-vintage`): 6.5° for one event, 1° for the other.
+
 .. note::
 
    Notebook 07 needs SRTM elevation tiles, which are not in version control.
    The cells that need them detect their absence and say so, so the notebook
    still runs on a fresh checkout; ``topography.update_data()`` fetches what a
    region needs.
+
+   Notebook 11 needs ``iminuit``, which the conda environment carries;
+   elsewhere, ``pip install -e ".[analysis]"``. Notebook 12 needs the viewer's
+   plotting stack, which it does not: ``pip install -e ".[viewer]"``.

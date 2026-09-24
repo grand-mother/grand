@@ -96,6 +96,33 @@ def test_the_spherical_fit_recovers_direction_and_distance(antennas):
     assert t_s == pytest.approx(emitted, rel=1e-4)
 
 
+def test_the_adf_fit_recovers_direction_width_and_scale(antennas):
+    r"""Amplitudes from ``ADF_parameters`` fit back to the shower that made them.
+
+    The amplitude fit is the one independent of timing, and it had no test.
+    A source 40 km away at zenith 75 degrees; started a quarter of a degree
+    off, well inside ``recons_ADF``'s bounds of 2 and 1 degrees around its
+    starting direction.  Checked away from the width and scale bounds too,
+    since a fit stopped on a bound returns plausible-looking numbers.
+    """
+    from grand.analysis.fitting.adf import ADF_parameters, recons_ADF
+    from grand.analysis.fitting.spherical import compute_Xsource_cartesian_coords
+
+    zenith, azimuth = np.deg2rad(75.0), np.deg2rad(40.0)
+    width, scale = 2.0, 5.0e7
+    source = compute_Xsource_cartesian_coords(zenith, azimuth, 40000.0)[0]
+    amplitudes = ADF_parameters(zenith, azimuth, width, scale, antennas, source)[-1]
+
+    theta, phi, width_fit, scale_fit = recons_ADF(
+        zenith + np.deg2rad(0.25), azimuth - np.deg2rad(0.25),
+        amplitudes, antennas, source)
+
+    assert np.degrees(theta) == pytest.approx(75.0, abs=1e-3)
+    assert np.degrees(phi) == pytest.approx(40.0, abs=1e-3)
+    assert width_fit == pytest.approx(width, rel=1e-3)
+    assert scale_fit == pytest.approx(scale, rel=1e-3)
+
+
 def test_the_reconstruction_uses_comes_from_angles():
     r"""The shower axis points *away* from where the angles say it came from.
 
