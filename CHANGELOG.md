@@ -69,6 +69,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **A `Tests gate` CI check** that is green only when the test suite ran and
+  passed, or when a commit changed documentation only, in which case it says
+  that nothing ran. A skipped test job used to read as a pass. Designed to be
+  the required check for `dev-next`; making it required is an admin setting.
+
 - **Acknowledgement of the NCN OPUS grant** (no. 2022/45/B/ST2/02889) in
   `README.md`, copied verbatim from `dev`, where it was added to `README.rst`
   on 2026-09-15 after `dev-next` had replaced that file.

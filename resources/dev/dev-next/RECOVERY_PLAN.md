@@ -117,6 +117,16 @@ a third abandoned trunk.
       reviews, because there is no second maintainer to approve and a required
       check that a path filter skips would produce an unmergeable PR. Widen it
       the first time someone else merges here, not on a date.
+- [x] A `Tests gate` check that is green only when the suite ran and passed
+      — **added 2026-09-24.** A skipped job reads as a pass, so a
+      documentation-only commit looked exactly like a tested one; eight of
+      twelve runs in September were skips. The gate always runs, fails if code
+      changed and the suite did not run or did not pass, and on a docs-only
+      commit passes while saying in the run summary that nothing ran.
+      Because it always reports, it can be a required check without making
+      docs-only PRs unmergeable, which was the reason given above for
+      requiring none. Making it required is an admin setting; see *Needs
+      repository admin*.
 
 ### Phase 3 — tests before features
 - [x] Merge `dev_aoi_unittest`, stripped of its summary docs and stray artifacts
@@ -429,7 +439,14 @@ Measured 2026-09-08.
 
 ## Needs repository admin
 
-Neither can be done from a branch; both are one-time settings.
+None of these can be done from a branch; all are one-time settings.
+
+**Make `Tests gate` a required check on `dev-next`.** Settings → Branches →
+the `dev-next` rule → *Require status checks to pass* → add `Tests gate`.
+It is the one check designed for this: it reports on every commit, including
+docs-only ones, and is green only when the suite ran and passed or when
+nothing it covers changed. Until it is required, it informs but does not
+block.
 
 **`CODECOV_TOKEN` is missing.** The coverage upload has never worked — Codecov
 answers `Token required because branch is protected`, and the repository has
