@@ -234,14 +234,14 @@ a third abandoned trunk.
       exists**: `dev_marion` adds `grand/analysis/`, 38 files, alongside the
       `grand/recon/` already on `dev-next`. It merges clean. The decision is
       which of the two is the reconstruction, not whether to write one.
-      Measured 2026-09-24 in [`DECISIONS.md`](DECISIONS.md): it also adds a
+      Measured 2026-09-24 in [`DECISIONS.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/DECISIONS.md): it also adds a
       27-field `TRecons` tree and needs an undeclared `iminuit`.
 - [ ] Whether GRANDlib splits (`grandio_light`). Measured in
-      [`DECISIONS.md`](DECISIONS.md): the branch deletes the physics, but
+      [`DECISIONS.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/DECISIONS.md): the branch deletes the physics, but
       the I/O code barely depends on it, so lazy imports in
       `grand/__init__.py` would give an I/O-only GRANDlib without the branch.
 - [ ] GRAND's angle convention (`snonis_sim2root_test_merge`). Measured in
-      [`DECISIONS.md`](DECISIONS.md): the stored angles are "comes from",
+      [`DECISIONS.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/DECISIONS.md): the stored angles are "comes from",
       which `dev-next` reproduces exactly; the branch flips them and raises
       on arrays.
 - [ ] Docker: publish an image, or state that it is unsupported — see *Blocked
