@@ -66,5 +66,5 @@ Every entry below was checked against the package rather than assumed.
      - :ref:`issue-docker-unmaintained`
    * - Reconstruction
      - Describes ``grand/recon/`` as "Reconstruction Algorithms" and ``grand.aoi`` as providing "filtering and reconstruction".
-     - ``grand.recon`` is a placeholder: two classes with a constructor and no other method. No reconstruction is implemented in GRANDlib.
+     - ``grand.recon`` was a placeholder: two classes with a constructor and no other method. It was removed in 2026-09, when reconstruction arrived as ``grand.analysis``: direction, Xmax distance and an energy proxy.
      - :doc:`../api`

@@ -22,23 +22,28 @@ LFMap.  What GRANDlib owns is three things:
 Composition
 -----------
 
-Measured on the ``dev`` branch, by lines of Python:
+Measured on ``dev-next`` on 2026-09-24, in lines of Python (``wc -l`` over
+each subpackage):
 
 ======================================  =====  =====
 Subpackage                              Lines  Share
 ======================================  =====  =====
-``grand.sim`` — instrument response     4510   31.9%
-``grand.dataio`` — data model           3696   26.1%
-``grand.geo`` — geometry and geodesy    2375   16.8%
-``grand.aoi`` — user-facing API         1602   11.3%
-``grand.basis`` — traces and array viz  1512   10.7%
-``grand.recon`` — reconstruction        28     0.2%
+``grand.sim`` — instrument response     5855   29.2%
+``grand.dataio`` — data model           5086   25.4%
+``grand.geo`` — geometry and geodesy    3857   19.2%
+``grand.aoi`` — user-facing API         2171   10.8%
+``grand.basis`` — traces and array viz  1908   9.5%
+``grand.analysis`` — reconstruction     1163   5.8%
 ======================================  =====  =====
 
-The last row is the thing to notice.  The pipeline runs forward only:
-shower to field to voltage to ADC.  Reconstruction — recovering direction,
-core position, energy and depth of shower maximum from recorded voltages —
-is where the experiment's real questions live, and it is not yet here.
+The pipeline runs forward, shower to field to voltage to ADC, and since
+2026-09 it also runs back: :mod:`grand.analysis` (Marion Guelfand, merged
+from ``dev_marion``) reconstructs arrival direction, the distance to the
+shower maximum and an electromagnetic-energy proxy from recorded times and
+amplitudes, with plane-wave, spherical-wave and ADF fits. It is young: its
+tests show the fits recover what their own forward models generate, not yet
+that they agree with simulated or measured showers. It replaced
+``grand.recon``, a placeholder of two empty constructors.
 
 Layering
 --------
@@ -90,5 +95,6 @@ A fourth edge would close a second cycle and does not, because it is deferred:
 if a genuine back-edge is unavoidable — but breaking the ``geo`` edge properly
 is worth more than adding another deferred import.
 
-:mod:`grand.recon` has no edges in either direction: nothing imports it, and it
-imports nothing.  It is a placeholder with two constructors and no algorithm.
+:mod:`grand.analysis` sits on top: it imports geometry (through the package
+namespace, ``from grand import Geodetic``) and nothing in ``grand`` imports it
+back.

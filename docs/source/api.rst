@@ -140,20 +140,31 @@ without the caller handling ROOT trees directly.
 Reconstruction
 --------------
 
-.. warning::
+:mod:`grand.analysis` reconstructs arrival direction, the distance to
+:term:`Xmax` and an electromagnetic-energy proxy from recorded times and
+amplitudes. It needs the optional ``iminuit`` dependency
+(``pip install -e ".[analysis]"``; it is in the conda environment).
 
-   :mod:`grand.recon` is a **placeholder**.  Both classes below define a
-   constructor and nothing else — there is no reconstruction algorithm in
-   GRANDlib.  Direction, energy and :term:`Xmax` estimation live in separate
-   collaboration code.
+.. note::
 
-   The GRANDlib Handbook describes this package as "Reconstruction
-   Algorithms", which overstates what is here.
+   New in 2026-09, from ``dev_marion``. Its tests show that each fit recovers
+   what its own forward model generates; agreement with simulated or measured
+   showers is not yet tested. It replaced ``grand.recon``, a placeholder of
+   two empty constructors.
 
-.. automodule:: grand.recon.elec_field
+.. automodule:: grand.analysis.fitting.plane_wave
    :members:
 
-.. automodule:: grand.recon.params_shower
+.. automodule:: grand.analysis.fitting.spherical
+   :members:
+
+.. automodule:: grand.analysis.fitting.adf
+   :members:
+
+.. automodule:: grand.analysis.energy_reco.voltage
+   :members:
+
+.. automodule:: grand.analysis.signals.extraction
    :members:
 
 Support
