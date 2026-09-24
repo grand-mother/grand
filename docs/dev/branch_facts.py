@@ -523,6 +523,12 @@ VERDICTS = {
 #: to be a preamble -- "Two independent reasons, either sufficient." is not a
 #: reason.
 DECIDED = {
+    "snonis_sim2root_test_merge": ("2026-09-24",
+        "not merged: GRAND keeps \"comes from\" angles. Run on event 1618's "
+        "Xmax, dev-next's transform returns the file's stored zenith and "
+        "azimuth exactly and the branch's returns the opposite direction, and "
+        "raises on arrays. Its other half, du_type through Efield2Voltage, "
+        "was already on the trunk. Pinned by tests/geo/test_angle_convention.py"),
     "grandio_light": ("2026-09-24",
         "not merged: it got an I/O-only GRANDlib by deleting the physics. "
         "grand/__init__.py now loads lazily instead, so import grand.dataio "

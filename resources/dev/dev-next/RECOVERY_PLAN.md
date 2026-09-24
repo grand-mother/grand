@@ -241,7 +241,8 @@ a third abandoned trunk.
       [`DECISIONS.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/DECISIONS.md): the branch deletes the physics, but
       the I/O code barely depends on it, so lazy imports in
       `grand/__init__.py` would give an I/O-only GRANDlib without the branch.
-- [ ] GRAND's angle convention (`snonis_sim2root_test_merge`). Measured in
+- [x] GRAND's angle convention (`snonis_sim2root_test_merge`) — **decided
+      2026-09-24: "comes from" stays, branch not merged.** Measured in
       [`DECISIONS.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/DECISIONS.md): the stored angles are "comes from",
       which `dev-next` reproduces exactly; the branch flips them and raises
       on arrays.

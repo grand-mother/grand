@@ -69,6 +69,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **GRAND's angle convention is stated and pinned.** A shower's zenith and
+  azimuth name where it comes from; the coordinates page now says so, and
+  `tests/geo/test_angle_convention.py` checks the core transform against the
+  ZHAireS summaries. Chosen over `snonis_sim2root_test_merge`, which flipped
+  the transforms and would have put every computed angle at odds with every
+  stored one.
+
 - **Decision material for the three branches waiting on the collaboration**
   (`dev_marion`, `grandio_light`, `snonis_sim2root_test_merge`), in
   `resources/dev/dev-next/DECISIONS.md`: what each changes, what merging it

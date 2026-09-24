@@ -88,6 +88,12 @@ If no, close it.
 
 ## 3. `snonis_sim2root_test_merge` — which way do GRAND's angles point?
 
+> **Decided 2026-09-24: "comes from" stays; branch not merged.** The
+> convention is now stated in the coordinates documentation and pinned by
+> `tests/geo/test_angle_convention.py`, which checks the core transform
+> against both committed ZHAireS summaries. With the branch's lines applied,
+> all three of its tests fail.
+
 **What it is.** snonis's branch, January–April 2024. Half of it,
 propagating `du_type` through `Efield2Voltage`, is already on the trunk.
 The other half changes the angle convention in six core functions of
