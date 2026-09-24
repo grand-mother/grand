@@ -69,6 +69,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **Decision material for the three branches waiting on the collaboration**
+  (`dev_marion`, `grandio_light`, `snonis_sim2root_test_merge`), in
+  `resources/dev/dev-next/DECISIONS.md`: what each changes, what merging it
+  would also do, and the question it asks, each measured.
+
 - **The schema snapshot notices new trees.** It compared only a hard-coded
   list of tree classes, so a new tree -- the largest format change there is
   -- passed unseen: `dev_marion`'s 27-field `TRecons` left it green. A new
