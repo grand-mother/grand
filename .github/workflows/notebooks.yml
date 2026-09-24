@@ -63,6 +63,13 @@ jobs:
           source env/setup.sh
           pip install -e . --no-deps --no-build-isolation
 
+      # Notebook 12 drives the event viewer, whose plotting stack (panel,
+      # holoviews, bokeh, seaborn) is an optional extra rather than part of
+      # the conda environment -- the same step tests-conda.yml runs for the
+      # viewer's test.
+      - name: Install the viewer extra
+        run: pip install -e ".[viewer]" --no-build-isolation
+
       - name: Execute every notebook
         run: |
           source env/setup.sh
