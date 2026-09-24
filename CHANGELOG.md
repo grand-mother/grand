@@ -107,6 +107,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **The DC1 analysis scripts are kept, in `examples/old/dc1/`.** `beta_dc1`
+  (grand-oma, January 2023) was merged to keep its two display scripts and
+  their history. They use the pre-2023 API and do not run; the README lists
+  the four renames needed to port them.
+
 - **Two notebooks: reconstruction, and the event viewer.**
   `notebooks/11_reconstruction.ipynb` runs `grand.analysis` step by step: plane
   wave, spherical wave, angular distribution function and energy proxy. It

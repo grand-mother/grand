@@ -1,7 +1,7 @@
 # DC1 analysis scripts (archived)
 
 Two display scripts for the 10-second data taken at Nançay in July 2022,
-written by grand-oma (Olivier Martineau) and committed in January 2023 on the
+written by grand-oma (signed "OMH" in the source) and committed in January 2023 on the
 `beta_dc1` branch. Kept here, with their history, when that branch was merged
 on 2026-09-24.
 
