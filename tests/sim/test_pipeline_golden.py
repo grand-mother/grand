@@ -51,8 +51,8 @@ from tests.sim.test_pipeline_end_to_end import (  # noqa: E402
 
 GOLDEN = pathlib.Path(__file__).with_name('pipeline_golden.npz')
 
-#: Relative tolerance of the comparison below.  See that test's docstring for
-#: why it is 1e-6 and not tighter.
+#: Tolerance of the comparison below, as a fraction of each trace's peak.  See
+#: that test's docstring for why it is measured against the peak.
 TOLERANCE = 1e-6
 
 #: Fixed across the reference and every comparison.  A different seed is a
@@ -236,10 +236,23 @@ def test_the_chain_reproduces_the_reference(traces):
     test is deterministic: eight consecutive runs agreed, and forcing one,
     two and eight BLAS threads changed nothing.
 
-    ``1e-6`` still has all the power that matters.  A real change to the chain
-    is of order one -- the galactic-noise fix on 2026-09-07 moved every
-    voltage by 41% -- so this is five orders of magnitude below anything
-    physical, and above the reassociation that made the suite flaky.
+    ``1e-6`` per sample was not enough either, because the measure was wrong,
+    not the number.  Each difference was divided by *that sample's own value*,
+    so a sample near a zero crossing turned rounding into a large "relative"
+    error.  On 2026-09-24 one CI leg failed at 2.59e-5 on a sample of -1.178
+    in a trace that peaks at 3258: the absolute difference, 3.05e-5, was
+    9.4e-9 of the peak, and the float32 rounding step at the peak is 2.4e-4.
+    No per-sample tolerance fixes that; any sample close enough to zero
+    fails it.
+
+    So the difference is now measured against the trace's own scale -- the
+    peak of each DU and arm in the reference -- which is what "the chain
+    answers differently" means.  ``1e-6`` of the peak still has all the power
+    that matters. A real change is of order one -- the galactic-noise fix on
+    2026-09-07 moved every voltage by 41% -- and checked against the stored
+    reference, a 1e-5 change everywhere, a one-sample time shift and a 1%
+    glitch in a single sample all fail, while the 2026-09-24 CI output passes
+    at 9.4e-9.
 
     A failure here means the chain now answers differently.  That may be
     correct -- the galactic-noise fix on 2026-09-07 changed every voltage by
@@ -256,19 +269,20 @@ def test_the_chain_reproduces_the_reference(traces):
         'the chain now returns %s, the reference holds %s'
         % (traces.shape, stored.shape))
 
-    # Relative, computed explicitly, so that a failure says how far off it
-    # is.  The old message printed both values to six figures and read
-    # "1276.82 against 1276.82", which gives a reader nothing to judge.
+    # Relative to each trace's peak, computed explicitly, so that a failure
+    # says how far off it is.  Relative to the sample itself it was
+    # ill-conditioned near zero crossings; see the docstring.
+    scale = np.abs(stored).max(axis=-1, keepdims=True)
     with np.errstate(divide='ignore', invalid='ignore'):
-        relative = np.abs(traces - stored) / np.abs(stored)
+        relative = np.abs(traces - stored) / scale
     relative[~np.isfinite(relative)] = 0.0
     worst = np.unravel_index(np.argmax(relative), stored.shape)
 
     if relative[worst] > TOLERANCE:
         pytest.fail(
             'the chain no longer reproduces the reference made by GRANDlib '
-            '%s at %s. Largest relative disagreement %.3g (tolerance %g), at '
-            'du=%d arm=%d sample=%d: %.10g against %.10g. A difference near '
+            '%s at %s. Largest disagreement %.3g of the trace peak (tolerance '
+            '%g), at du=%d arm=%d sample=%d: %.10g against %.10g. A difference near '
             'the tolerance is floating-point reassociation and the tolerance '
             'should move; one far above it is a real change, and if it is '
             'intended, regenerate with `python %s --write` and say why in the '
