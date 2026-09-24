@@ -148,9 +148,13 @@ def measure(tests_summary=None, tests_source=None):
         ("Test suite", tests_cell),
         ("Lint", measure_lint()),
         ("Branches", "%d contained in `dev-next`, **%d still out**, %d decided "
-                     "against, %d absorbed"
+                     "against, %d absorbed%s"
                      % (state.count("merged"), state.count("unmerged"),
-                        state.count("retired"), state.count("absorbed"))),
+                        state.count("retired"), state.count("absorbed"),
+                        # The working branch is neither in nor out: its own
+                        # commits are the open pull request.  See WORKING.
+                        ", plus the working branch"
+                        if "working" in state else "")),
         ("Known issues", "%d documented in `known_issues.rst`: %d open, %d "
                          "settled%s"
                          % (n_issues, n_open, n_settled,

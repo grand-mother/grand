@@ -36,8 +36,10 @@ BLOCKED_PHASES = {'5'}
 #: What those decisions are. Hand-maintained: they are prose, and there is
 #: nowhere to read them from. Keep them in step with the plan's *Blocked on a
 #: decision* section -- the NUTRIG entry outlived its answer here by three days.
+#: "Scope" (where reconstruction lives, whether GRANDlib splits) was removed
+#: 2026-09-24: both were decided that day -- grand.analysis merged, lazy
+#: imports instead of a split.  See DECISIONS.md.
 NOTES = [
-    'Scope: where reconstruction lives, and whether GRANDlib splits — needs the collaboration',
     'Docker: publish an image on ROOT 6.36, or state that Docker is unsupported — needs the collaboration',
     'Reprocessing: the noise fix raises every simulated voltage by √2 — needs the collaboration',
 ]

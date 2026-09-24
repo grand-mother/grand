@@ -45,11 +45,11 @@ TRUNKS = ["master", "dev", "main", "dev-next"]
 #: A trunk with no entry starts at its oldest commit.
 CUT_FROM = {"main": "dev", "dev-next": "dev"}
 
-FILL = {"trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
+FILL = {"working": "#EAF3F9", "trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
         "retired": "#F7E6E7", "absorbed": "#EFE9F5", "gone": "#ECEFF1"}
-EDGE = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
+EDGE = {"working": "#5B8DB3", "trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
         "retired": "#A9484E", "absorbed": "#6B4E8E", "gone": "#AEBAC2"}
-TEXT = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
+TEXT = {"working": "#3F6F94", "trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
         "retired": "#A9484E", "absorbed": "#6B4E8E", "gone": "#8B99A3"}
 
 MONO = "IBM Plex Mono, monospace"
@@ -392,7 +392,7 @@ def panel(width, n_rows, n_merges):
     than by subtracting from the box height, which is how an earlier version
     came to draw its last note on top of its colour key.
     """
-    w, h = 322, 104
+    w, h = 322, 117
     x, y = width - w - 24, 26
     out = ['<text x="%.1f" y="%.1f" font-size="9" font-weight="600" '
            'fill="#7A8994">HOW TO READ A ROW</text>' % (x, y - 6),
@@ -428,13 +428,14 @@ def panel(width, n_rows, n_merges):
         out.append('<text x="%.1f" y="%.1f" font-size="7.4" fill="#8B99A3">%s'
                    '</text>' % (x + 10, y + 52 + i * 10, line))
 
-    # Two rows of swatches: five of them will not fit across this box, and
+    # Rows of swatches: five of them will not fit across this box, and
     # shortening the labels to make them fit loses the distinction the colours
     # exist to draw.
     rows = (("merged", "in dev-next"), ("unmerged", "still out, undecided"),
             ("retired", "decided against")), \
            (("absorbed", "content taken, patch not merged"),
-            ("trunk", "the trunk"), ("gone", "merged, then deleted")),
+            ("trunk", "the trunk"), ("gone", "merged, then deleted")), \
+           (("working", "the working branch: its own commits are an open PR"),),
     for r, group in enumerate(rows):
         lx = x + 10
         for state, text in group:

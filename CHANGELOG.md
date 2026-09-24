@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The recovery paperwork counts branches correctly.** The plan said "5
+  still out" when three were: `docs/dev/branch_facts.py` measured branches
+  against the local `dev-next`, which can lag the remote, and counted the
+  recovery's own working branch as undecided work. It now measures against
+  `origin/dev-next` and shows that branch as the working branch. The
+  regenerated diagrams also show the 634 tests CI reports, and no longer list
+  the reconstruction scope as blocked, since it was decided on 2026-09-24.
+
 - **Installed GRANDlib contains the Galactic noise model.** `grand/sim/noise/`
   had no `__init__.py`, so package discovery skipped it and a built package
   shipped without `galaxy.py`. Found by a new test that checks every

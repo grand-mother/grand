@@ -39,15 +39,15 @@ from branch_facts import DESCRIPTIONS, SHORT, collect, git    # noqa: E402,F401
 
 WORK = [("conda env", "done"), ("setup.sh", "done"), ("pyproject", "done"),
         ("Sphinx docs", "done"), ("schema test", "done"), ("CI green", "done"),
-        ("593 tests", "done"), ("cov 73%", "done"), ("interface", "todo")]
+        ("634 tests", "done"), ("cov 73%", "done"), ("interface", "todo")]
 
-FILL = {"trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
+FILL = {"working": "#EAF3F9", "trunk": "#D5E8F5", "merged": "#E1F1EA", "unmerged": "#F6EDDA",
         "retired": "#F7E6E7", "absorbed": "#EFE9F5",
         "done": "#E1F1EA", "todo": "#EDF1F3"}
-EDGE = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
+EDGE = {"working": "#5B8DB3", "trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
         "retired": "#A9484E", "absorbed": "#6B4E8E",
         "done": "#1D7A57", "todo": "#BCC7CE"}
-TEXT = {"trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
+TEXT = {"working": "#3F6F94", "trunk": "#1F5C82", "merged": "#1D7A57", "unmerged": "#8A6210",
         "retired": "#A9484E", "absorbed": "#6B4E8E",
         "done": "#1D7A57", "todo": "#7A8994"}
 
@@ -126,6 +126,9 @@ def build(info):
     out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#7A8994">'
                'purple: content taken, patch not merged · blue: the trunk'
                '</text>' % (lx, ly + BOX_H + 24))
+    out.append('<text x="%.1f" y="%.1f" font-size="8" fill="#7A8994">'
+               'pale blue: the working branch, its patches an open PR'
+               '</text>' % (lx, ly + BOX_H + 35))
 
     out.append('<text x="%d" y="88" font-size="9" font-weight="600" '
                'fill="#5A6A73">INFRASTRUCTURE</text>' % X0)
@@ -204,6 +207,9 @@ def build(info):
         elif state == "unmerged":
             note = "%d patch%s out" % (entry["ahead"],
                                        "" if entry["ahead"] == 1 else "es")
+        elif state == "working":
+            note = "%d patch%s in its open PR" % (
+                entry["ahead"], "" if entry["ahead"] == 1 else "es")
         else:
             note = "the trunk"
         out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="7" '
