@@ -80,6 +80,10 @@ dev = [
     # They degrade to a no-op when this is absent, so it stays optional.
     "line_profiler",
 ]
+# grand.analysis only: every fitting module imports iminuit.  Optional
+# because `import grand` and everything outside grand.analysis work without
+# it -- most users read and simulate, and never reconstruct.
+analysis = ["iminuit"]
 docs = [
     "sphinx", "sphinx-rtd-theme", "sphinx-copybutton", "numpydoc",
     "myst-parser", "jupyter-sphinx", "sphinxcontrib-bibtex", "ipykernel",

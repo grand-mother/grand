@@ -58,6 +58,11 @@ dependencies:
   - jupyter-sphinx
   - sphinxcontrib-bibtex   # the References page
   - ipykernel
+  # --- grand.analysis, the reconstruction package (from dev_marion) ---
+  # Every fitting module imports it.  Not needed by `import grand` or by
+  # anything else, which is why pyproject.toml makes it an optional extra;
+  # it is here so that CI and contributors test the package.
+  - iminuit
   # --- needed by work now in flight ---
   - lmfit                  # docker list only, never in conda
   - numba                  # docker list only, never in conda
