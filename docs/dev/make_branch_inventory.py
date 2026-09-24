@@ -74,6 +74,9 @@ def summary_row(name, entry):
             # history says which commits were its own.
             merged = "yes, in trunk by %s" % where
         mark = "\U0001F7E2"
+    elif facts.display_state(name, entry) == "working":
+        mark = "\U0001F537"
+        merged = "**not yet** — its own commits are an open pull request"
     elif facts.display_state(name, entry) == "absorbed":
         mark = "\U0001F7E3"
         merged = ("**no** — but its content is in (%s)"
@@ -134,11 +137,14 @@ def build(info):
     """
     stamp, commit = facts.provenance("docs/dev/make_branch_inventory.py")
 
-    unmerged = sorted((n for n, e in info.items() if e["state"] == "unmerged"),
+    unmerged = sorted((n for n, e in info.items() if e["state"] == "unmerged"
+                       and facts.display_state(n, e) != "working"),
                       key=lambda n: info[n]["last"], reverse=True)
+    working = [n for n, e in info.items()
+               if facts.display_state(n, e) == "working"]
     merged = sorted((n for n, e in info.items() if e["state"] == "merged"),
                     key=lambda n: info[n]["last"], reverse=True)
-    trunk = [n for n, e in info.items() if e["state"] == "trunk"]
+    trunk = [n for n, e in info.items() if e["state"] == "trunk"] + working
 
     out = [
         "# Every branch in grand, and what should happen to it",
@@ -150,15 +156,18 @@ def build(info):
         "verdicts in `docs/dev/branch_facts.py`, and run it again.",
         "",
         "%d branches exist in the repository today: %d still carrying patches "
-        "of their own, %d contained in `dev-next`, and the trunk itself. "
+        "of their own, %d contained in `dev-next`, and the trunk itself%s. "
         "Everything except the descriptions and the verdicts is read from git, "
         "so it cannot go stale."
-        % (len(info), len(unmerged), len(merged)),
+        % (len(info), len(unmerged), len(merged),
+           " and the branch its pull requests come from" if working else ""),
         "",
         "\U0001F7E2 in the trunk  ·  \U0001F7E1 still out, undecided  ·  "
         "\U0001F534 decided against, will never be merged  ·  "
         "\U0001F7E3 content taken, patch not merged  ·  "
-        "\U0001F535 the trunk itself",
+        "\U0001F535 the trunk itself  ·  "
+        "\U0001F537 the working branch, whose own commits are an open pull "
+        "request",
         "",
         "A verdict is a recommendation until it is agreed. The red and purple "
         "ones have been agreed and are settled; the amber ones are still open "
@@ -249,7 +258,9 @@ def build(info):
             out += ["**Decided %s.** This is settled, not a proposal." % decided,
                     ""]
 
-    out += ["---", "", "## The trunk", "", header, rule]
+    out += ["---", "", "## The trunk" + (", and its working branch"
+                                         if working else ""),
+            "", header, rule]
     out += [summary_row(n, info[n]) for n in trunk]
 
     out += ["", "---", "",

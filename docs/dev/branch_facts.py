@@ -30,6 +30,22 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 #: The branch everything is measured against.
 TRUNK = "dev-next"
 
+#: The ref git measures against: the trunk as published, not the local branch
+#: of the same name.  Branch tips are read from ``refs/remotes/origin``, so the
+#: trunk has to be read from there too.  Until 2026-09-24 this was the bare
+#: name, which resolves to a local ``dev-next`` when one exists; in a clone
+#: whose local ``dev-next`` lagged the remote by three merges, ``dev_marion``
+#: read as still out and the working branch as 39 patches ahead instead of 1.
+TRUNK_REF = "origin/" + TRUNK
+
+#: The branch the recovery's pull requests come from.  Whenever the paperwork
+#: is regenerated it carries the commits of the pull request being prepared --
+#: often only the paperwork itself -- so git reports it as unmerged at exactly
+#: the moment the count is taken.  Counted as "still out", it made the plan
+#: read "5 still out" on 2026-09-24 when four were.  Its commits are not
+#: undecided work: each one reaches the trunk through a reviewed pull request.
+WORKING = {"dev-next-ipfxhh"}
+
 #: Two-to-four words per branch. Git knows the rest.
 DESCRIPTIONS = {
     "dev-next": "the new trunk",
@@ -591,8 +607,8 @@ def display_state(name, entry):
     Returns
     -------
     str
-        One of ``trunk``, ``merged``, ``absorbed``, ``retired``, ``unmerged``
-        or ``gone``.
+        One of ``trunk``, ``merged``, ``working``, ``absorbed``, ``retired``,
+        ``unmerged`` or ``gone``.
 
     Notes
     -----
@@ -610,6 +626,9 @@ def display_state(name, entry):
         "merged" would claim the patch is contained, and calling it "retired"
         would claim the work was rejected. Both are false, and the question a
         reader actually has is whether the work was lost.
+    ``working``
+        A branch in ``WORKING``: its unmerged commits are an open pull
+        request, not a decision anyone has to make.
     ``gone``
         Merged and since deleted, so the question does not arise.
     """
@@ -619,6 +638,8 @@ def display_state(name, entry):
         return "gone"
     if entry["state"] == "merged":
         return "merged"
+    if name in WORKING:
+        return "working"
     if name in DECIDED:
         action = VERDICTS.get(name, ("", ""))[0]
         if action == "no":
@@ -664,7 +685,7 @@ def _merges_by_branch():
         Branch name to a list of merge commit SHAs, oldest first.
     """
     out = {}
-    for entry in _lines(git("log", "--merges", "--format=%H%x1f%s", TRUNK)):
+    for entry in _lines(git("log", "--merges", "--format=%H%x1f%s", TRUNK_REF)):
         sha, _, subject = entry.partition("\x1f")
         name = ""
         if "Merge pull request #" in subject:
@@ -756,7 +777,7 @@ def collect(include_historical=False):
     for name, entry in info.items():
         last, author = (git("log", "-1", "--format=%ad|%an", "--date=short",
                             tip[name]).split("|") + ["?"])[:2]
-        ahead = sum(1 for line in git("cherry", TRUNK, tip[name]).split("\n")
+        ahead = sum(1 for line in git("cherry", TRUNK_REF, tip[name]).split("\n")
                     if line.startswith("+"))
         entry["state"] = ("trunk" if name == TRUNK
                           else "unmerged" if ahead else "merged")
@@ -777,7 +798,7 @@ def collect(include_historical=False):
             path = [x for x in git("log", "--ancestry-path", "--merges",
                                    "--reverse", "--format=%h|%ad",
                                    "--date=short",
-                                   "%s..%s" % (tip[name], TRUNK)).split("\n")
+                                   "%s..%s" % (tip[name], TRUNK_REF)).split("\n")
                     if x.strip()] if entry["live"] else []
             # A merge named for the branch only settles the question if it
             # actually contains the branch's tip. dev_sim2root was merged in
@@ -819,7 +840,7 @@ def collect(include_historical=False):
             # describe an older state of it: beta_dc1 was merged in 2022 and
             # committed to again in 2023, and counting from those merges dated
             # its creation a year before its oldest surviving commit.
-            base = git("merge-base", TRUNK, tip[name])
+            base = git("merge-base", TRUNK_REF, tip[name])
             if base and base != tip[name]:
                 own = _lines(git("rev-list", "%s..%s" % (base, tip[name])))
         own = list(dict.fromkeys(own))
@@ -882,7 +903,7 @@ def merge_events():
     """
     out = []
     for entry in _lines(git("log", "--merges", "--reverse",
-                            "--format=%H%x1f%ad%x1f%s", "--date=short", TRUNK)):
+                            "--format=%H%x1f%ad%x1f%s", "--date=short", TRUNK_REF)):
         sha, date, subject = (entry.split("\x1f") + ["", ""])[:3]
         source = target = ""
         if "Merge pull request #" in subject:
