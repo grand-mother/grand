@@ -523,6 +523,12 @@ VERDICTS = {
 #: to be a preamble -- "Two independent reasons, either sufficient." is not a
 #: reason.
 DECIDED = {
+    "grandio_light": ("2026-09-24",
+        "not merged: it got an I/O-only GRANDlib by deleting the physics. "
+        "grand/__init__.py now loads lazily instead, so import grand.dataio "
+        "loads only the data layer and works without the compiled core, with "
+        "nothing deleted. A separately published grandlib-io package remains "
+        "possible on top of that and was not decided"),
     "dev": ("2026-09-24",
         "content taken: 7cd02097's grant acknowledgement copied verbatim into "
         "README.md. dev itself is not merged; this covers that one commit"),

@@ -133,6 +133,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Changed
 
+- **Reading GRAND files no longer loads the physics.** `grand/__init__.py`
+  loads its public names on first use instead of importing the geometry and
+  simulation code eagerly. `import grand.dataio` now loads the data layer
+  only, and works without the compiled C core; `import grand` and
+  `grand.geo.coordinates` no longer need ROOT. Every public name still
+  resolves, and `from grand import *` now works (it raised on `adc`, listed
+  in `__all__` but never imported). Chosen over the `grandio_light` branch,
+  which reached the same goal by deleting the physics.
+
 - Merged from the outstanding queue: `dev_fix_root_warnings_lwp` (ROOT 6.38
   warnings), `dev_nutrig_fields`, `dev_reprocessing` (Snakemake pipeline),
   `dev_Event_write`, and `dev_aoi_unittest` (~3000 lines of tests, stripped of

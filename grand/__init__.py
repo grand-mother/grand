@@ -56,34 +56,101 @@ def grand_add_path_data(s_file):
     return os.path.join(GRAND_DATA_PATH, s_file)
 
 
-from grand.geo import geomagnet, topography
-from grand.geo.topography import geoid_undulation, Reference, Topography
-from grand.geo import coordinates
-from grand.geo.geomagnet import Geomagnet
-from grand.geo.coordinates import (
-    Coordinates,
-    CartesianRepresentation,
-    SphericalRepresentation,
-    GeodeticRepresentation,
-    Geodetic,
-    GRANDCS,
-    LTP,
-    ECEF,
-    HorizontalVector,
-    Horizontal,
-    HorizontalRepresentation,
-    Rotation,
-)
-import grand.dataio.protocol as store
-from grand.sim import efield2voltage
-from grand.sim.efield2voltage import Efield2Voltage
-from grand.sim.detector.antenna_model import tabulated_antenna_model, AntennaModel
-from grand.sim.detector.process_ant import AntennaProcessing
-from grand.sim.detector.rf_chain import RFChain
-from grand.sim.detector.adc import ADC
-from grand.sim.noise.galaxy import galactic_noise
-from grand.sim.shower.gen_shower import ShowerEvent
-from grand.sim.shower.pdg import ParticleCode
+# The public names below are loaded on first use, not at import.
+#
+# They used to be imported here eagerly, so *any* import from the package --
+# ``import grand.dataio`` to read a file -- loaded 13 grand.sim and 6 grand.geo
+# modules and the compiled C core (TURTLE, GULL).  Reading GRAND files
+# therefore required building C extensions whose only purpose is coordinate
+# and topography physics, and failed with "No module named 'grand._core'"
+# when they were absent.  The ``grandio_light`` branch proposed deleting the
+# physics from the repository to get an I/O-only package; loading lazily gets
+# the same result without deleting anything.  See
+# resources/dev/dev-next/DECISIONS.md.
+#
+# Behaviour for users is unchanged: ``grand.Geodetic``,
+# ``from grand import Efield2Voltage`` and ``from grand import *`` all work,
+# importing the module that defines the name at that moment (PEP 562).
+_LAZY = {
+    # name: (module, attribute or None for the module itself)
+    "geomagnet": ("grand.geo.geomagnet", None),
+    "topography": ("grand.geo.topography", None),
+    "coordinates": ("grand.geo.coordinates", None),
+    "geoid_undulation": ("grand.geo.topography", "geoid_undulation"),
+    "Reference": ("grand.geo.topography", "Reference"),
+    "Topography": ("grand.geo.topography", "Topography"),
+    "Geomagnet": ("grand.geo.geomagnet", "Geomagnet"),
+    "Coordinates": ("grand.geo.coordinates", "Coordinates"),
+    "CartesianRepresentation": ("grand.geo.coordinates", "CartesianRepresentation"),
+    "SphericalRepresentation": ("grand.geo.coordinates", "SphericalRepresentation"),
+    "GeodeticRepresentation": ("grand.geo.coordinates", "GeodeticRepresentation"),
+    "Geodetic": ("grand.geo.coordinates", "Geodetic"),
+    "GRANDCS": ("grand.geo.coordinates", "GRANDCS"),
+    "LTP": ("grand.geo.coordinates", "LTP"),
+    "ECEF": ("grand.geo.coordinates", "ECEF"),
+    "HorizontalVector": ("grand.geo.coordinates", "HorizontalVector"),
+    "Horizontal": ("grand.geo.coordinates", "Horizontal"),
+    "HorizontalRepresentation": ("grand.geo.coordinates", "HorizontalRepresentation"),
+    "Rotation": ("grand.geo.coordinates", "Rotation"),
+    "store": ("grand.dataio.protocol", None),
+    "efield2voltage": ("grand.sim.efield2voltage", None),
+    "Efield2Voltage": ("grand.sim.efield2voltage", "Efield2Voltage"),
+    "tabulated_antenna_model": ("grand.sim.detector.antenna_model", "tabulated_antenna_model"),
+    "AntennaModel": ("grand.sim.detector.antenna_model", "AntennaModel"),
+    "AntennaProcessing": ("grand.sim.detector.process_ant", "AntennaProcessing"),
+    "RFChain": ("grand.sim.detector.rf_chain", "RFChain"),
+    # Listed in __all__ since before this change but never actually imported,
+    # so ``from grand import *`` raised AttributeError on it.
+    "adc": ("grand.sim.detector.adc", None),
+    "ADC": ("grand.sim.detector.adc", "ADC"),
+    "galactic_noise": ("grand.sim.noise.galaxy", "galactic_noise"),
+    "ShowerEvent": ("grand.sim.shower.gen_shower", "ShowerEvent"),
+    "ParticleCode": ("grand.sim.shower.pdg", "ParticleCode"),
+}
+
+
+def __getattr__(name):
+    r"""Loads a public name, or a subpackage, the first time it is asked for.
+
+    Parameters
+    ----------
+    name : str
+        The attribute requested from the ``grand`` package.
+
+    Returns
+    -------
+    object
+        The module or object that name refers to.  It is also stored on the
+        package, so this runs once per name.
+    """
+    import importlib
+
+    if name in _LAZY:
+        module_name, attribute = _LAZY[name]
+        module = importlib.import_module(module_name)
+        value = module if attribute is None else getattr(module, attribute)
+    else:
+        # ``grand.sim`` and the like after a bare ``import grand``: the
+        # subpackages used to be loaded as a side effect of the eager imports.
+        try:
+            value = importlib.import_module("grand." + name)
+        except ModuleNotFoundError as error:
+            if error.name != "grand." + name:
+                raise
+            raise AttributeError("module 'grand' has no attribute %r" % name) from None
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    r"""Lists the lazily loaded names alongside the ones already present.
+
+    Returns
+    -------
+    list of str
+        Every public name of the package.
+    """
+    return sorted(set(globals()) | set(_LAZY))
 
 
 __all__ = [

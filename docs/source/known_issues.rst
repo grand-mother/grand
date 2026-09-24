@@ -830,9 +830,12 @@ always doing the work.
 The package cannot be imported without ROOT
 --------------------------------------------
 
-:Status: open
-:Affects: documentation builds, unit tests of pure functions, any use of the
-          coordinate or geometry code on its own
+:Status: **partly fixed** 2026-09-24 — ``import grand`` and the coordinate
+         code no longer need ROOT; the data layer, topography and simulation
+         still do
+:Affects: documentation builds, and anything using topography or simulation
+          without ROOT
+:Test: ``tests/test_lazy_imports.py``
 
 ``grand/dataio/descriptors.py`` evaluates ``ROOT.gROOT.GetVersionInt() >= 63600``
 at module import time, and :mod:`grand.geo.topography` imports
@@ -842,6 +845,27 @@ document it — the Sphinx configuration carries a typed mock for this reason.
 
 Deferring the version check to first use, and breaking the geometry-to-dataio
 dependency, are part of the interface work.
+
+**What changed on 2026-09-24.** ``grand/__init__.py`` imported the geometry
+and simulation code eagerly, so *every* import pulled in ROOT through the
+chain above. It now loads its public names on first use (PEP 562). Measured
+with ROOT made unimportable:
+
+===================================  ==========  ==========
+Import                               Before      After
+===================================  ==========  ==========
+``import grand``                     fails       works
+``import grand.geo.coordinates``     fails       works
+``import grand.geo.topography``      fails       fails
+``import grand.dataio``              fails       fails
+``import grand.sim.efield2voltage``  fails       fails
+===================================  ==========  ==========
+
+The data layer needing ROOT is expected: it *is* the ROOT I/O. The last two
+rows are the chain described above, and still open. Separately, with ROOT
+present but the compiled C core absent, ``import grand.dataio`` now works
+(it used to fail with ``No module named 'grand._core'``), because the
+physics is no longer loaded to read a file.
 
 .. _issue-missing-endtoend-fixture:
 

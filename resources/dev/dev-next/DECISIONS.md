@@ -48,6 +48,13 @@ stub files), which suggests someone once planned for it to live here.
 
 ## 2. `grandio_light` — should GRANDlib ship an I/O-only version?
 
+> **Decided 2026-09-24: lazy imports, branch not merged.** `grand/__init__.py`
+> now loads its public names on first use. Measured afterwards,
+> `import grand.dataio` loads only the data layer and works without the
+> compiled core, and every public name still resolves; the full suite gives
+> identical results before and after. Pinned by `tests/test_lazy_imports.py`.
+> Whether to also publish a separate `grandlib-io` package is still open.
+
 **What it is.** luckyjim's proposal, December 2024 – August 2025, for a
 "light" GRANDlib that can read and write GRAND's ROOT files without the
 physics. The branch does this by **deleting** the physics from the
