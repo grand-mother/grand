@@ -1,3 +1,5 @@
+"""Angles between the shower axis, the antennas and the geomagnetic field."""
+
 import grand.analysis.coords.array_shower as co
 import numpy as np
 import grand.analysis.constants as cons
@@ -52,9 +54,9 @@ def omega(theta, phi, Xants, Xsource):
     return np.arccos(cos_omega)  
 
 def sin_geomag_angle(theta, phi, B=cons.Bn):
-    """
-    Computes the sine of the geomagnetic angle (alpha) between the shower axis
-    and the geomagnetic field.
+    """Compute the sine of the geomagnetic angle (alpha).
+
+    The angle is between the shower axis and the geomagnetic field.
 
     Parameters
     ----------

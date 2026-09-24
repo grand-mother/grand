@@ -1,13 +1,13 @@
+"""Shower core and Cherenkov footprint on the ground."""
+
 import numpy as np 
-import matplotlib.pyplot as plt
-import pandas as pd
 import grand.analysis.constants as cons
 
 
 def compute_core(k, Xsource, groundAltitude=cons.groundAltitude):
-    """
-    Compute the shower core position as the intersection of the shower axis
-    with the ground plane.
+    """Compute the shower core position.
+
+    The core is the intersection of the shower axis with the ground plane.
 
     Warning
     -------
@@ -42,8 +42,8 @@ def compute_core(k, Xsource, groundAltitude=cons.groundAltitude):
     return(xc)
 
 def generate_cone_surface_vectors(k, omega, n=10):
-    """
-    Generate vectors uniformly distributed on a cone surface.
+    """Generate vectors uniformly distributed on a cone surface.
+
     This cone represents the Cherenkov emission cone. 
     The cone axis is aligned with the shower direction, and the opening angle corresponds to the Cherenkov angle.
     The generated vectors sample the surface of this cone and are used to compute the projected Cherenkov footprint on the ground.
@@ -63,7 +63,6 @@ def generate_cone_surface_vectors(k, omega, n=10):
         Unit vectors lying on the surface of the Cherenkov cone, aligned
     with the shower axis.
     """
-
     # Generate n uniform angles around the axis (azimuthal angle)
     theta = np.linspace(0, 2 * np.pi, n, endpoint=False)
 

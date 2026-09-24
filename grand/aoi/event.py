@@ -10,7 +10,7 @@ from grand import CartesianRepresentation
 from grand.aoi.timetrace import Voltage, Efield, TreeExists
 from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
-from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent, TRecons 
+from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent 
 import grand.dataio
 
 try:

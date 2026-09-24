@@ -1,9 +1,10 @@
+"""Cherenkov angle from a two-emission-point model around the source."""
+
 import numpy as np
 import grand.analysis.physics as atm
 
 
 def compute_Cerenkov(Xant, K, xsourceDist, Xsource, delta):
-
     """
     Compute Cherenkov angle by minimizing the time delay between light rays from shower points and the observer.
 
@@ -14,10 +15,10 @@ def compute_Cerenkov(Xant, K, xsourceDist, Xsource, delta):
     - Xsource : np.array, shape (3,) -> position of Xsource 
     - delta : float -> distance along shower axis to points before/after Xmax
 
-    Returns:
+    Returns
+    -------
     - omega_cr : float -> Cherenkov angle in radians
     """
-
     # Compute coordinates of point before Xmax
     Xb = Xsource - delta*K
     # Compute coordinates of point after Xmax
@@ -63,10 +64,10 @@ def compute_delay(omega,Xmax, Xa, Xb,Xant,U,K,alpha,delta,xmaxDist):
     - delta : float -> distance along shower axis from Xmax
     - xmaxDist : float -> distance from Xmax to shower core along K
 
-    Returns:
+    Returns
+    -------
     - res : float -> residual (should be zero for correct Cherenkov angle)
     """
-
     X = compute_observer_position(omega,Xmax,Xant,U,K,xmaxDist,alpha)
     # print('omega = ',omega,'X_obs = ',X)
     n2 = atm.ZHSEffectiveRefractionIndex(Xa,X)
@@ -78,11 +79,10 @@ def compute_delay(omega,Xmax, Xa, Xb,Xant,U,K,alpha,delta,xmaxDist):
     return(res)
 
 def minor_equation(omega, n2, n1, alpha, delta, xmaxDist):
+    """Compute time delay (in m).
 
-    '''
-    Compute time delay (in m)
-    Compute [c*delta(t)]^2    
-    '''
+    Compute [c*delta(t)]^2
+    """
     sa = np.sin(alpha)
     saw = np.sin(alpha+omega)
     com = np.cos(omega)
@@ -106,10 +106,10 @@ def compute_observer_position(omega,Xmax,Xant,U,K,xmaxDist,alpha):
     - xmaxDist : float -> distance from Xmax to shower core
     - alpha : float -> angle between shower direction and vector to antenna
 
-    Returns:
+    Returns
+    -------
     - X : np.array, shape (3,) -> computed observer position
     """
-
     # Compute rotation axis. Make sure it is normalized
     Rot_axis = np.cross(U,K)
     Rot_axis /= np.linalg.norm(Rot_axis)
@@ -138,7 +138,8 @@ def rotation(angle,axis):
     - angle : float -> rotation angle in radians
     - axis : np.array, shape (3,) -> unit rotation axis
 
-    Returns:
+    Returns
+    -------
     - mat : np.array, shape (3,3) -> rotation matrix
     """
     ca = np.cos(angle)
@@ -149,9 +150,7 @@ def rotation(angle,axis):
     return (mat)
 
 def der(func,x,args=[], eps=1e-7):
-    '''
-    Forward estimate of derivative
-    '''
+    """Forward estimate of derivative."""
     return ((func(x+eps,*args)-func(x,*args))/eps)
 
 def newton(func,x0,tol=1e-7,nstep_max = 100, args = [], verbose=False):
@@ -166,16 +165,19 @@ def newton(func,x0,tol=1e-7,nstep_max = 100, args = [], verbose=False):
     - args : list -> extra arguments to func
     - verbose : bool -> print iteration info
 
-    Returns:
+    Returns
+    -------
     - x : float -> estimated zero of func
     """
-    rel_error = np.infty
+    # np.inf, not np.infty: the alias was removed in NumPy 2.0, and this line
+    # made every Cherenkov-angle computation raise AttributeError.
+    rel_error = np.inf
     xold = x0
     nstep = 0
     while ((rel_error > tol) and (nstep<nstep_max)):
         x = xold - func(xold,*args)/der(func,xold,args=args)
         nstep += 1
-        if verbose==True:
+        if verbose:
             print ("x at iteration",nstep, 'is ',x)
         rel_error = np.abs((x-xold)/xold)
         xold = x

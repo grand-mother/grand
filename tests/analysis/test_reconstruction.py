@@ -131,3 +131,15 @@ def test_the_energy_proxy_does_not_take_arrays_yet():
 
     with pytest.raises(ValueError):
         recons_energy_from_voltage(np.array([3.0e7, 1.0]), 0.8)
+
+
+def test_the_cherenkov_solver_runs_under_numpy_2():
+    r"""``newton`` finds a root.  It began ``rel_error = np.infty``.
+
+    That alias was removed in NumPy 2.0, so the Cherenkov-angle solver raised
+    ``AttributeError`` before its first iteration on the project's own
+    environment (NumPy 2.5).  Fixed 2026-09-24.
+    """
+    from grand.analysis.physics.cherenkov_angle import newton
+
+    assert newton(lambda x: x * x - 2.0, 1.0) == pytest.approx(np.sqrt(2.0), rel=1e-9)

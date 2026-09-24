@@ -1,3 +1,5 @@
+"""Shower direction vectors and the rotation into the shower frame."""
+
 import numpy as np
 
 def shower_direction_vector(theta, phi):
@@ -7,10 +9,10 @@ def shower_direction_vector(theta, phi):
     theta : zenith angle in radians
     phi   : azimuth angle in radians
 
-    Returns:
+    Returns
+    -------
         K : numpy array of shape (3,)
     """
-
     ct = np.cos(theta)
     st = np.sin(theta)
     cp = np.cos(phi)
@@ -32,7 +34,6 @@ def transformation_matrix(theta, phi, Bvec):
     phi   : azimuth angle (rad)
     Bvec  : global magnetic field vector (3,)
     """
-
     K = shower_direction_vector(theta, phi)
 
     KxB = np.cross(K, Bvec)
@@ -54,7 +55,6 @@ def to_shower_frame(theta, phi, Bvec, Xant, Xsource):
     Returns:
         X_shower : coordinates in the shower frame
     """
-
     M = transformation_matrix(theta, phi, Bvec)
     dX = Xant - Xsource              # N x 3
     # projection onto shower frame

@@ -1,3 +1,5 @@
+"""Peak amplitude and peak time extraction from antenna traces."""
+
 # Created by Marion Guelfand at 19/01/2026
 
 import numpy as np

@@ -1,9 +1,10 @@
+"""Angular distribution function (ADF) fit of the antenna amplitudes."""
+
 import numpy as np 
 import grand.analysis.constants as cons
 import grand.analysis.physics as che
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom.angles as an
-import sys
 #print(sys.path)
 from iminuit import minimize
 
@@ -20,14 +21,14 @@ def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAlt
         Bvec   : (3,) magnetic field
         groundAltitude : altitude of ground
     
-    Returns:
+    Returns
+    -------
         eta       : (N,) azimuthal angle in shower plane
         omega     : (N,) angle wrt shower axis
         omega_cr  : (N,) Cherenkov angle for each antenna
         l_ant     : (N,) distance from Xsource to antenna
         adf       : (N,) ADF amplitude for each antenna
     """
-
     K = co.shower_direction_vector(theta, phi)
    
     asym_coeff = -0.003*np.rad2deg(theta)+0.220
@@ -62,10 +63,10 @@ def ADF_loss(params, Aants, Xants, Xsource, uncertainty=0.075):
         Xsource : shower source position (3,) (from SWF)
         uncertainty : relative uncertainty on amplitudes (default: 7.5%)
     
-    Returns:
+    Returns
+    -------
         chi² value
     """
-
     theta, phi, delta_omega, amplitude = params
 
     # Compute model
@@ -90,13 +91,13 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
         Xants     : antenna positions (N,3)
         Xsource   : Xsource position (3,)
     
-    Returns:
+    Returns
+    -------
         theta_adf     : reconstructed zenith angle (rad)
         phi_adf       : reconstructed azimuth angle (rad)
         delta_omega   : best-fit ADF shape parameter
         amplitude     : best-fit ADF amplitude
     """
-
     # Define bounds for each parameter
     bounds = [
         [theta_pwf - 2*np.pi/180, theta_pwf + 2*np.pi/180],
@@ -125,12 +126,12 @@ def recons_ADF(theta_pwf, phi_pwf, Aants, Xants, Xsource):
     return theta_adf, phi_adf, delta_omega, amplitude
 
 def ADF_fun(l_ant, amplitude, omega_cr, delta_omega):
-    """
-    Compute a simple model of the ADF for a shower on all omega values.
-    Don't consider geomagnetic effect (very low) and average cherenkov angle along all eta values
+    """Compute a simple model of the ADF for a shower on all omega values.
 
-    Parameters:
-    -----------
+    Don't consider geomagnetic effect (very low) and average cherenkov angle along all eta values.
+
+    Parameters
+    ----------
     l_ant : float
         Mean distance from the antennas to the shower source (in meters). 
     amplitude : float
@@ -140,8 +141,8 @@ def ADF_fun(l_ant, amplitude, omega_cr, delta_omega):
     delta_omega : float
         Width parameter of the ADF.
 
-    Returns:
-    --------
+    Returns
+    -------
     omega : np.ndarray
         Array of angles (in radians) over which the ADF is evaluated.
     f_adf : np.ndarray

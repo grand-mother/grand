@@ -1,3 +1,5 @@
+"""Spherical-wave fit of the arrival direction and source distance."""
+
 import numpy as np
 import grand.analysis.physics as phy
 import grand.analysis.constants as cons
@@ -5,9 +7,8 @@ from scipy.optimize import differential_evolution
 
 
 def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_light):
+    r"""Define Chi2 by summing model residuals over antennas (i).
 
-    '''
-    Defines Chi2 by summing model residuals over antennas  (i):
     loss = \sum_i ( cr(tants[i]-t_s) - \sqrt{(Xants[i,0]-x_s)**2)+(Xants[i,1]-y_s)**2+(Xants[i,2]-z_s)**2} )**2
     where:
     Xants are the antenna positions (shape=(nants,3))
@@ -39,9 +40,12 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
     -------
     float
         Chi-square value (normalized if sigma is provided).
-    '''
+    """
     nants = tants.shape[0]
-    ct = np.cos(theta); st = np.sin(theta); cp = np.cos(phi); sp = np.sin(phi)
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    cp = np.cos(phi)
+    sp = np.sin(phi)
     K = np.array([-st*cp,-st*sp,-ct])
     Xmax = -r_xmax * K + np.array([0.,0.,cons.groundAltitude]) # Xmax is in the opposite direction to shower propagation.
     # Make sure Xants and tants are compatible
@@ -60,7 +64,7 @@ def SWF_loss(theta, phi, r_xmax, t_s, Xants, tants, sigma = None, cr=cons.c_ligh
     chi2 = tmp
     if sigma is not None:
         sigma = cr*sigma
-    if sigma == None:
+    if sigma is None:
         return chi2
     return(chi2/(sigma**2))
 
@@ -93,7 +97,6 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tuple
         (theta_swf, phi_swf, r_xmax_swf, t_s_swf)
     """
-
     # Parameter bounds for the differential evolution
     bounds = [[theta_pwf-5*np.pi/180,theta_pwf+5*np.pi/180],
                 [phi_pwf-5*np.pi/180,phi_pwf+5*np.pi/180], 
@@ -138,9 +141,9 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
 
 
 def compute_Xsource_cartesian_coords(theta_swf, phi_swf, r_xmax, groundAltitude=cons.groundAltitude):
-    """
-    Compute the Cartesian coordinates of the emission point (Xsource)
-    from spherical coordinates.
+    """Compute the Cartesian coordinates of the emission point (Xsource).
+
+    From spherical coordinates.
 
     Parameters
     ----------
@@ -158,7 +161,10 @@ def compute_Xsource_cartesian_coords(theta_swf, phi_swf, r_xmax, groundAltitude=
     np.ndarray
         Cartesian coordinates of the source in GRAND detector frame, shape (1, 3).
     """
-    st=np.sin(theta_swf); ct=np.cos(theta_swf); sp=np.sin(phi_swf); cp=np.cos(phi_swf) 
+    st = np.sin(theta_swf)
+    ct = np.cos(theta_swf)
+    sp = np.sin(phi_swf)
+    cp = np.cos(phi_swf)
     K = [-st*cp,-st*sp,-ct]
     Xsource = np.column_stack((-r_xmax*K[0], -r_xmax*K[1], groundAltitude-r_xmax*K[2]))
     return Xsource
@@ -194,7 +200,10 @@ def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltit
         Expected arrival times at each antenna, shape (N,).
     """
     nants = Xants.shape[0]
-    ct = np.cos(theta); st = np.sin(theta); cp = np.cos(phi); sp = np.sin(phi)
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    cp = np.cos(phi)
+    sp = np.sin(phi)
     K = np.array([-st*cp, -st*sp, -ct])
     Xsource = -r_xsource * K + np.array([0., 0., groundAltitude])
     tants = np.zeros(nants)

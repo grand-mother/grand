@@ -1,5 +1,10 @@
-from grand import ECEF, Geodetic, Geomagnet, GRANDCS, LTP
-from grand import topography, Reference, geoid_undulation
+"""Physical constants and site defaults used by the reconstruction.
+
+The geomagnetic field is evaluated at import, at the GP13 DAQ position,
+with ``x`` along magnetic north.
+"""
+
+from grand import Geodetic, Geomagnet
 import numpy as np
 
 c_light = 2.997924580e8

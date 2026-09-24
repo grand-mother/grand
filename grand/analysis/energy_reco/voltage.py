@@ -1,10 +1,11 @@
+"""Electromagnetic-energy proxy from the fitted radio amplitude."""
 
-import numpy as np 
+
 
 def recons_energy_from_voltage(amplitude, sin_alpha, a=1.96e7, b=7.90e6):
-    """
-    Reconstructs the electromagnetic energy from the measured radio signal amplitude in ADC counts.
-    Just a first proxy
+    """Reconstruct the electromagnetic energy from the fitted radio amplitude.
+
+    The amplitude is in ADC counts. Just a first proxy.
 
     Parameters
     ----------
@@ -27,7 +28,6 @@ def recons_energy_from_voltage(amplitude, sin_alpha, a=1.96e7, b=7.90e6):
         voltage-based energy proxy fails, as this reconstruction is not very robust
         and should only be interpreted as a first-order estimator.
     """
-    
     energy = (amplitude / sin_alpha - b) / a   
     energy =max(energy, 0.0) * 1e18 
     return energy

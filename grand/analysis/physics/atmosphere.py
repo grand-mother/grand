@@ -1,8 +1,24 @@
+"""Refractive index of the atmosphere, locally and averaged along a path."""
+
 import numpy as np
 import grand.analysis.constants as cons
 
 def RefractionIndexAtPosition(X):
+    """Return the refractive index at position ``X``.
 
+    Exponential refractivity model, with the altitude taken over a spherical
+    Earth.
+
+    Parameters
+    ----------
+    X : array-like
+        Position in metres, shape (3,).
+
+    Returns
+    -------
+    float
+        Refractive index.
+    """
     R2 = X[0]*X[0] + X[1]*X[1]
     h = (np.sqrt( (X[2]+cons.R_earth)**2 + R2 ) - cons.R_earth)/1e3 # Altitude in km
     rh = cons.ns*np.exp(cons.kr*h)
@@ -11,7 +27,23 @@ def RefractionIndexAtPosition(X):
     return (n)
 
 def ZHSEffectiveRefractionIndex(X0,Xa):
+    """Return the refractive index averaged between ``X0`` and ``Xa``.
 
+    As in ZHS: the refractivity is integrated along the straight path from
+    the emission point to the antenna.
+
+    Parameters
+    ----------
+    X0 : array-like
+        Emission point in metres, shape (3,).
+    Xa : array-like
+        Antenna position in metres, shape (3,).
+
+    Returns
+    -------
+    float
+        Effective refractive index along the path.
+    """
     R02 = X0[0]**2 + X0[1]**2
     
     # Altitude of emission in km
@@ -19,8 +51,6 @@ def ZHSEffectiveRefractionIndex(X0,Xa):
     # print('Altitude of emission in km = ',h0)
     # print(h0)
     
-    # Refractivity at emission 
-    rh0 = cons.ns*np.exp(cons.kr*h0)
 
     modr = np.sqrt(R02)
     # print(modr)

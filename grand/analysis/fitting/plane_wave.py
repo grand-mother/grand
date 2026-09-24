@@ -1,22 +1,26 @@
+"""Plane-wave fit of the arrival direction from antenna times."""
+
 
 import grand.analysis.constants as cons
 import numpy as np
 from scipy.linalg import cho_factor, cho_solve
-from scipy.optimize import fsolve, brentq
+from scipy.optimize import brentq
 
 def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm, sigma=None):
-    """
-    Solve the minimization problem using a semi-analytical approach.
+    """Solve the minimization problem using a semi-analytical approach.
+
     (see section 2.1.2)
 
-    Parameters:
+    Parameters
+    ----------
     Xants (ndarray): Antenna positions in meters, shape (nants, 3).
     tants (ndarray): Antenna arrival times in seconds, shape (nants,).
     verbose (bool): Verbose output, default is False.
     c (float): Speed of light in m/s, default is  299792458 m/s
     n (float or ndarray): Indices of refraction (vector or constant), default is 1.000136
 
-    Returns:
+    Returns
+    -------
     ndarray: Theta and phi angles in radians.
     """
     nants = tants.shape[0]
@@ -67,6 +71,21 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     return np.array([theta_opt, phi_opt])
 
 def mean(X:np.ndarray, sigma=None):
+    """Return the mean of ``X`` along its first axis, weighted by ``sigma``.
+
+    Parameters
+    ----------
+    X : ndarray
+        Values, one row per antenna.
+    sigma : ndarray, optional
+        Uncertainties: a vector weights each row by ``1/sigma``, a covariance
+        matrix by the column sums of its inverse.  Unweighted if omitted.
+
+    Returns
+    -------
+    ndarray
+        The (weighted) mean.
+    """
     if type(sigma) is np.ndarray and sigma.ndim==1:
         return ( 1/(1/sigma).sum() ) * ( (1/sigma) @ X )
     elif type(sigma) is np.ndarray and sigma.ndim==2:
@@ -81,10 +100,10 @@ def _inv_cho(A):
     return A_inv
 
 def PWF_loss(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n_atm, sigma=None):
-    '''
-    Defines Chi2 by summing model residuals over individual antennas, 
-    after maximizing likelihood over reference time.
-    '''
+    """Define Chi2 by summing model residuals over individual antennas.
+
+    After maximizing likelihood over reference time.
+    """
     nants = tants.shape[0]
     if (Xants.shape[0] != nants):
         print("Shapes of tants and Xants are incompatible", tants.shape, Xants.shape)
@@ -97,12 +116,11 @@ def PWF_loss(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n_atm,
     return(chi2/(sigma**2))
 
 def PWF_residuals(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n_atm):
+    """Compute timing residuals for each antenna using the plane wave model.
 
-    '''
-    Computes timing residuals for each antenna using plane wave model
     Note that this is defined at up to an additive constant, that when minimizing
     the loss over it, amounts to centering the residuals.
-    '''
+    """
     nants = tants.shape[0]
     # Make sure tants and Xants are compatible
     if (Xants.shape[0] != nants):
@@ -115,11 +133,12 @@ def PWF_residuals(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n
     return (res)
 
 def PWF_model(params, Xants, c=cons.c_light,  n=cons.n_atm, groundAltitude=cons.groundAltitude):
-    '''
-    Generates plane wavefront timings
-    '''
+    """Generate plane wavefront timings."""
     theta, phi = params
-    ct = np.cos(theta); st = np.sin(theta); cp = np.cos(phi); sp=np.sin(phi)
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    cp = np.cos(phi)
+    sp = np.sin(phi)
     K = np.array([-st*cp,-st*sp,-ct])
     dX = Xants - np.array([0.,0., groundAltitude])
     tants = np.dot(dX,K) / (c / n)
