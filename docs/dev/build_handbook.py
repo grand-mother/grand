@@ -91,6 +91,15 @@ ERRATA = [
      'other method. It was removed in 2026-09, when reconstruction arrived as '
      '``grand.analysis``: direction, Xmax distance and an energy proxy.',
      ':doc:`../api`'),
+    ('Python dependencies (Docker)',
+     'Tells readers to ``pip install -r requirements_vers.txt`` for pinned '
+     'versions.',
+     'Do not. That file was a 2022 pin set -- numpy 1.22.1, and a Pillow '
+     'with a critical advisory -- that nothing ever built from, and it was '
+     'removed on 2026-09-08. Use the conda environment, '
+     '``env/conda/grand-dev.yml``. The online Directory Structure page is '
+     'already corrected; the PDF is compiled from the unchanged source.',
+     ':doc:`../installation`'),
 ]
 
 
