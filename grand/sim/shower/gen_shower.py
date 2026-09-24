@@ -8,6 +8,7 @@ from typing import Optional, Union
 
 import numpy as np
 
+from grand.dataio.xmax_frame import xmax_above_ground
 from grand.sim.shower.pdg import ParticleCode
 #from grand.basis.type_trace import ElectricField, Voltage
 #from grand.dataio import io_node as io
@@ -124,7 +125,10 @@ class ShowerEvent:
 
         #logger.info(f"Site position long lat: {s_pos}")
         logger.info(f"Site origin [lat, long, height]: {origin_geoid}")
-        xmax = d_shower.xmax_pos_shc
+        # The committed samples store Xmax above sea level rather than above
+        # the ground (grand-mother/grand#160); xmax_above_ground tells which.
+        xmax, _ = xmax_above_ground(d_shower.xmax_pos_shc, d_shower.zenith,
+                                    d_shower.azimuth, self.origin_geoid[2])
         logger.info(f"xmax in shower coordinate: {xmax}")
         self.maximum = LTP(x=xmax[0], y=xmax[1], z=xmax[2], frame=self.frame)
 

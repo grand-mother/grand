@@ -17,6 +17,7 @@ import numpy as np
 import ROOT
 
 import grand.dataio as groot
+from grand.dataio.xmax_frame import xmax_above_ground
 from grand.basis.traces_event import Handling3dTraces
 
 logger = getLogger(__name__)
@@ -322,13 +323,16 @@ class _FileEventBase:
         xmax_temp = self.tt_shower.xmax_pos_shc
         d_simu["xmax_pos_shc"] = xmax_temp
         d_simu["xmax_pos"] = self.tt_shower.xmax_pos
-        # FIX parameters
-        # logger.warn("DC2 FIX to define 'xmax_pos' in DU Frame")
-        # DC2 FIX: Xmax don't the right value
-        # https://github.com/grand-mother/collab-issues/issues/34
         d_simu["FIX_xmax_pos_grandlib"] = xmax_temp + d_simu["shower_core_pos"]
-        # DC2 FIX: correct value of Xmax
-        d_simu["FIX_xmax_pos"] = d_simu["FIX_xmax_pos_grandlib"] - np.array([0, 0, origin_geoid[2]])
+        # Xmax in the site frame.  This was the "DC2 FIX" (collab-issues#34),
+        # which always subtracted origin_geoid[2]: right for files written
+        # before the ZHAireS converter did that subtraction itself, 1264 m low
+        # for files written after (grand-mother/grand#160).  The frame is now
+        # read from the file's own geometry.
+        above_ground, frame = xmax_above_ground(
+            xmax_temp, d_simu["zenith"], d_simu["azimuth"], origin_geoid[2])
+        d_simu["xmax_frame"] = frame
+        d_simu["FIX_xmax_pos"] = above_ground + np.asarray(d_simu["shower_core_pos"])
         return d_simu
 
 

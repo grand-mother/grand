@@ -12,6 +12,7 @@ from grand.aoi.antenna import Antenna
 from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent 
 import grand.dataio
+from grand.dataio.xmax_frame import xmax_above_ground
 
 try:
     from line_profiler import profile
@@ -990,7 +991,10 @@ class Event:
         ## Shower Xmax [g/cm2]
         shower.Xmax = tree.xmax_grams
         ## Shower position in the site's reference frame
-        shower.Xmaxpos = tree.xmax_pos_shc
+        # Above the ground whichever frame the file used (grand-mother/grand#160).
+        shower.Xmaxpos, _ = xmax_above_ground(
+            tree.xmax_pos_shc, tree.zenith, tree.azimuth,
+            self.trun.origin_geoid[2])
         ## Shower azimuth
         shower.azimuth = tree.azimuth
         ## Shower zenith

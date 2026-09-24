@@ -18,17 +18,13 @@ one of each:
   that subtraction.  They were produced before it existed, so their ``z`` is
   the raw AIRES value, 1264 m too high.
 
-* ``grand/dataio/root_files.py`` compensates for exactly that, subtracting
-  ``origin_geoid[2]`` in ``get_simu_parameters`` under the name
-  ``FIX_xmax_pos`` (the "DC2 FIX", collab-issues#34).
+* ``grand/dataio/root_files.py`` used to compensate for exactly that,
+  always subtracting ``origin_geoid[2]`` (the "DC2 FIX", collab-issues#34):
+  right for the samples, 1264 m low for anything the current converter wrote.
 
-Those last two cancel, which is why the shipped samples read correctly today.
-They cancel *only* for data of that vintage.  Regenerate the samples with the
-current converter -- an ordinary, unremarkable thing to do -- and the
-compensation is applied to data that no longer needs it, putting Xmax 1264 m
-**below** where it belongs, silently.  The third test states that trap so that
-whoever regenerates the samples meets it as a failure rather than as a subtly
-wrong reconstruction months later.
+Decided 2026-09-24 (grand-mother/grand#160): the readers detect the frame
+from the file's own geometry, ``grand/dataio/xmax_frame.py``, so both
+vintages read correctly.  The third test runs the real reader on both.
 
 These tests run the real converters on the repository's own fixtures.  Nothing
 here reasons from the source text: the units question was settled once by
@@ -210,9 +206,8 @@ def test_the_committed_zhaires_sample_predates_that_subtraction(tmp_path):
 
     Not a defect in today's converter -- the test above shows it writes the
     ground-relative value -- but a property of the committed artefact, which
-    was produced before the subtraction existed.  It is pinned because the
-    "DC2 FIX" in ``grand/dataio/root_files.py`` is calibrated to it, so the
-    two are a matched pair and neither can be changed alone.
+    was produced before the subtraction existed.  It is pinned so the reader
+    test below keeps exercising a file stored above sea level.
     """
     import uproot
 
@@ -231,9 +226,9 @@ def test_the_committed_zhaires_sample_predates_that_subtraction(tmp_path):
         'origin_geoid[2] and the .sry ground altitude have diverged; the '
         'cancellation this file describes no longer holds as described')
     assert float(shipped[2]) == pytest.approx(raw_z, abs=1.0), (
-        'the committed sample no longer carries the sea-level Xmax. If it '
-        'was regenerated with the current converter, the DC2 FIX in '
-        'grand/dataio/root_files.py now over-corrects it -- see the next test')
+        'the committed sample no longer carries the sea-level Xmax. If it was '
+        'regenerated, the reader test below still covers the new file, but '
+        'no test covers a sea-level one any more')
 
 
 def _run_sim2root(raw, workdir):
@@ -291,24 +286,14 @@ def _reader_xmax_z(efield, event_number):
 
 
 @needs_root
-def test_the_dc2_xmax_fix_is_right_only_for_the_committed_sample(tmp_path):
-    r"""The DC2 FIX is calibrated to the stale sample, not to the converter.
+def test_the_reader_places_xmax_right_on_both_vintages(tmp_path):
+    r"""The committed sample and fresh converter output read the same.
 
-    ``get_simu_parameters`` in ``grand/dataio/root_files.py`` computes::
-
-        FIX_xmax_pos = xmax_pos_shc + shower_core_pos - [0, 0, origin_geoid[2]]
-
-    Against the committed sample that lands on the right answer, because the
-    sample's ``xmax_pos_shc`` is high by exactly ``origin_geoid[2]``.  Against
-    data from today's converter the input is already correct and the same
-    subtraction puts Xmax 1264 m underground.
-
-    Both halves go through the real reader, not a copy of its formula, so
-    this test fails if the reader is changed as well as if the data is.
-    Regenerating the samples -- the natural response to the test above --
-    fails it too.  Either way it has done its job, and should be rewritten to
-    assert whatever convention the collaboration settles on.  See
-    ``issue-xmax-sample-vintage`` in the known-issues page.
+    The sample stores Xmax above sea level, today's converter above the
+    ground.  ``get_simu_parameters`` detects which and must put Xmax at the
+    ``.sry`` truth for both.  Until 2026-09-24 it subtracted the ground
+    altitude unconditionally, and the fresh file came out 1264 m low; this
+    test asserted that trap then, and asserts the fix now.
     """
     folder = ZHAIRES_EVENTS[1618]
     committed = SAMPLE / 'efield_1618-13790_L0_0000.root'
@@ -319,17 +304,17 @@ def test_the_dc2_xmax_fix_is_right_only_for_the_committed_sample(tmp_path):
     truth = raw_z - ground
 
     assert _reader_xmax_z(committed, 1618) == pytest.approx(truth, abs=1.0), (
-        'on the committed sample, FIX_xmax_pos no longer matches the .sry; '
-        'the sample or the reader changed')
+        'on the committed sample (Xmax stored above sea level), FIX_xmax_pos '
+        'no longer matches the .sry')
 
     _convert_zhaires(folder, 1618, tmp_path)
     fresh = _run_sim2root(tmp_path / 'raw_1618.root', tmp_path)
     fresh_z = _reader_xmax_z(fresh, 1618)
 
-    assert fresh_z == pytest.approx(truth - ground, abs=1.0), (
+    assert fresh_z == pytest.approx(truth, abs=1.0), (
         'FIX_xmax_pos is %.1f m on freshly converted data, against a true '
-        '%.1f m. If it is now right, root_files.py learned to tell the two '
-        'vintages apart: rewrite this test to assert that.' % (fresh_z, truth))
+        '%.1f m. A difference of %.0f m means the ground altitude was '
+        'subtracted from data that did not need it.' % (fresh_z, truth, ground))
 
 
 @needs_root

@@ -218,12 +218,14 @@ a third abandoned trunk.
       first time. NaN was a choice the known-issues entry had left to the
       owners of `sim2root/`; the fixture's long `.reas` would give a real
       position, and that stays open for them.
-- [ ] Decide the Xmax convention across samples and readers
-      (`issue-xmax-sample-vintage`, #160). The committed ZHAireS samples
-      and `root_files.py`'s DC2 FIX must change together: regenerate and
-      delete the fix, or keep both and make the reader detect the
-      convention. `tests/sim2root/test_xmax_frame.py` fails on either, by
-      design.
+- [x] Decide the Xmax convention across samples and readers
+      (`issue-xmax-sample-vintage`, #160). **Decided 2026-09-24: keep the
+      samples, detect the convention.** `grand/dataio/xmax_frame.py` reads it
+      from the file's geometry, since Xmax must lie along the stored direction.
+      `root_files.py`, `gen_shower.py`, `aoi/event.py` and the event viewer all
+      use it. `tests/sim2root/test_xmax_frame.py` runs the real reader on the
+      committed sample and on fresh converter output, and fails if the old
+      unconditional subtraction is put back.
 
 ### Phase 5 — the decisions
 - [x] Galactic noise: fix or rewrite — **answered**, and the fix merged. Still
