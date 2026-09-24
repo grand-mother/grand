@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The golden pipeline test no longer fails at random on CI.** It divided
+  each difference by that sample's own value, so rounding on a sample near a
+  zero crossing read as a large relative error. On 2026-09-24 one leg failed
+  at 2.59e-5 on a sample of -1.178 in a trace peaking at 3258, where the
+  actual difference was 9.4e-9 of the peak. Differences are now measured
+  against each trace's peak; real changes (the √2 noise fix, a one-sample
+  shift, a 1e-5 change) still fail it.
+
 - **The CoREAS converter runs on its own fixture.** `CoreasToRawROOT.py -d
   proton` raised `UnboundLocalError: Xmax_NWU` partway through and left a
   447-byte `.rawroot` behind (grand-mother/grand#159). `Xmax_NWU` was computed
@@ -53,6 +61,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   the first column past its rule.
 
 ### Added
+
+- **Acknowledgement of the NCN OPUS grant** (no. 2022/45/B/ST2/02889) in
+  `README.md`, copied verbatim from `dev`, where it was added to `README.rst`
+  on 2026-09-15 after `dev-next` had replaced that file.
 
 - **One environment for everything.** `env/conda/grand-dev.yml` consolidates
   four dependency lists that had drifted apart: the previous runtime file, the

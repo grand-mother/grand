@@ -121,6 +121,11 @@ If GRANDlib contributes to work you publish, please cite:
 }
 ```
 
+## Acknowledgements
+
+The GRAND Collaboration acknowledges the support from the National Science
+Centre Poland for NCN OPUS grant no. 2022/45/B/ST2/02889.
+
 ## License
 
 LGPL-3.0. See [LICENSE](LICENSE) and [COPYING.LESSER](COPYING.LESSER).
