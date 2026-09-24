@@ -1,5 +1,7 @@
-.. This page is generated from resources/GRANDlib_Handbook.zip
-   by docs/dev/build_handbook.py.  Do not edit it by hand.
+.. This page was generated from resources/GRANDlib_Handbook.zip by
+   docs/dev/build_handbook.py, and is now maintained by hand: it carries a
+   correction (2026-09-08) that the source does not.  The generator leaves it
+   alone -- see HAND_MAINTAINED there.  Edit it directly.
 
 Directory Structure
 ===================

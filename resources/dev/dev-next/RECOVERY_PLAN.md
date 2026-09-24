@@ -290,6 +290,11 @@ a third abandoned trunk.
 - [x] Diagrams: frames, pipeline, data model, antenna arms, RF chain, module
       dependencies
 - [x] The GRANDlib Handbook included as its own section, with errata
+- [x] Generator vs hand edit on `handbook/directory_structure.rst`, decided
+      2026-09-24: the hand edit wins. `build_handbook.py` now leaves pages in
+      `HAND_MAINTAINED` alone. Verified by running it: every other page came
+      out byte-identical, that one unchanged; an unknown entry is refused
+      before any page is deleted.
 - [x] ~~Make `-W` the gate~~ — **won't do.** `jupyter-sphinx` reports
       anything a cell writes to stderr as a warning, and ROOT's JIT writes a
       CPU-feature diagnostic there on some processors. Under `-W` that fails

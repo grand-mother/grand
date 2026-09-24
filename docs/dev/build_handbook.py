@@ -18,7 +18,9 @@ reader will see them.
 **The output is generated.  Do not edit** ``docs/source/handbook/*.rst`` --
 run this script instead.  Corrections belong either upstream in the Handbook
 source or in the ``ERRATA`` table below, which is rendered into the landing
-page and into the affected sections.
+page and into the affected sections.  The exceptions are the pages in
+``HAND_MAINTAINED``, which carry corrections written directly into them; this
+script leaves those alone.
 
 Requires pandoc.  If it is absent the script says so and exits non-zero; the
 handbook pages are committed, so a checkout without pandoc still builds the
@@ -37,6 +39,20 @@ ROOT = HERE.parent.parent
 ZIP = ROOT / 'resources' / 'GRANDlib_Handbook.zip'
 OUT = ROOT / 'docs' / 'source' / 'handbook'
 TEX = 'GRANDlib_Handbook_Expanded.tex'
+
+#: Pages edited by hand after conversion, which this script must not overwrite.
+#: Each maps to why.  Regenerating used to delete and rewrite every page, and in
+#: September 2026 that silently undid the correction below; the decision then
+#: (the repository owner's, 2026-09-24) was that the hand edit wins.  A page
+#: here is no longer generated: if the Handbook source changes that section,
+#: port the change by hand.
+HAND_MAINTAINED = {
+    'directory_structure':
+        'Corrected by hand on 2026-09-08 (3a91507c): "Python Dependencies '
+        '(Docker)" told readers to pip install requirements_vers.txt, a 2022 '
+        'pin set carrying a Pillow with a critical advisory; the file was '
+        'removed and the section now points at the conda environment.',
+}
 
 #: Statements in the Handbook that the code contradicts.  Each was checked
 #: against the package rather than assumed; the "checked" column names the test
@@ -361,19 +377,31 @@ def slug(title):
 
 def main():
     r"""Converts the Handbook and writes the Sphinx pages."""
-    OUT.mkdir(parents=True, exist_ok=True)
-    for stale in OUT.glob('*.rst'):
-        stale.unlink()
-
     sections = redistribute_substitutions(
         [(title, repair(normalise_headings(body)))
          for title, body in split(convert())])
     print('  %d sections' % len(sections))
 
+    # A hand-maintained page whose section vanished from the source would drop
+    # out of the toctree and be orphaned without anyone being told.  Checked
+    # before anything on disk is touched, so a refusal leaves the pages whole.
+    orphans = set(HAND_MAINTAINED) - {slug(title) for title, _ in sections}
+    if orphans:
+        raise SystemExit('hand-maintained pages no longer match a Handbook '
+                         'section: %s' % ', '.join(sorted(orphans)))
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    for stale in OUT.glob('*.rst'):
+        if stale.stem not in HAND_MAINTAINED:
+            stale.unlink()
+
     names = []
     for title, body in sections:
         name = slug(title)
         names.append((name, title))
+        if name in HAND_MAINTAINED and (OUT / ('%s.rst' % name)).exists():
+            print('  kept %s.rst: maintained by hand (see HAND_MAINTAINED)' % name)
+            continue
         header = ('.. This page is generated from resources/GRANDlib_Handbook.zip\n'
                   '   by docs/dev/build_handbook.py.  Do not edit it by hand.\n\n')
         banner = ''
