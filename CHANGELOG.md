@@ -69,6 +69,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **The schema snapshot notices new trees.** It compared only a hard-coded
+  list of tree classes, so a new tree -- the largest format change there is
+  -- passed unseen: `dev_marion`'s 27-field `TRecons` left it green. A new
+  test finds every tree class in the data modules and fails on any that is
+  not pinned. It also found `TRunRawVoltage`, on the trunk and never pinned;
+  it is now in the snapshot.
+
 - **A `Tests gate` CI check** that is green only when the test suite ran and
   passed, or when a commit changed documentation only, in which case it says
   that nothing ran. A skipped test job used to read as a pass. Designed to be
