@@ -143,3 +143,26 @@ def test_the_cherenkov_solver_runs_under_numpy_2():
     from grand.analysis.physics.cherenkov_angle import newton
 
     assert newton(lambda x: x * x - 2.0, 1.0) == pytest.approx(np.sqrt(2.0), rel=1e-9)
+
+
+def test_importing_the_package_does_not_evaluate_the_geomagnetic_field():
+    r"""``constants.Bn`` is computed when read, not at import.
+
+    Evaluating it needs the compiled core and the geomagnetic data, so doing
+    it at import made every ``grand.analysis`` import need both, and broke
+    the documentation build, which mocks the core (PR #165, first CI run).
+    Checked in a fresh interpreter, where nothing has read it yet.
+    """
+    import subprocess
+    import sys
+
+    code = ('import grand.analysis.fitting, grand.analysis.geom, '
+            'grand.analysis.constants as c\n'
+            'print("Bn" in vars(c))\n'
+            'print(abs(sum(x * x for x in c.Bn) - 1.0) < 1e-12)')
+    done = subprocess.run([sys.executable, '-c', code], capture_output=True,
+                          text=True, timeout=600)
+    assert done.returncode == 0, done.stderr[-2000:]
+    computed_at_import, unit_on_read = done.stdout.split()
+    assert computed_at_import == 'False', 'the field is evaluated at import again'
+    assert unit_on_read == 'True', 'constants.Bn is not a unit vector when read'

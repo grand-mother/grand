@@ -53,7 +53,7 @@ def omega(theta, phi, Xants, Xsource):
 
     return np.arccos(cos_omega)  
 
-def sin_geomag_angle(theta, phi, B=cons.Bn):
+def sin_geomag_angle(theta, phi, B=None):
     """Compute the sine of the geomagnetic angle (alpha).
 
     The angle is between the shower axis and the geomagnetic field.
@@ -65,13 +65,15 @@ def sin_geomag_angle(theta, phi, B=cons.Bn):
     phi : float or array-like
         Azimuth angle(s) of the shower in radians.
     B : array-like, shape (3,), optional
-        Geomagnetic field vector (default: cons.Bn).
+        Geomagnetic field vector (default: ``constants.Bn``, read when called).
 
     Returns
     -------
     sin_alpha : float or ndarray
         Sine of the geomagnetic angle
     """
+    if B is None:
+        B = cons.Bn
     K = co.shower_direction_vector(theta, phi)
     sin_alpha = np.cross(K.T,B)
     sin_alpha = np.linalg.norm(sin_alpha)

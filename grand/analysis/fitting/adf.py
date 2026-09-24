@@ -8,7 +8,7 @@ import grand.analysis.geom.angles as an
 #print(sys.path)
 from iminuit import minimize
 
-def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAltitude=cons.groundAltitude, Bvec=cons.Bvec):
+def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAltitude=cons.groundAltitude, Bvec=None):
     """
     Compute all geometric parameters for the ADF function.
     
@@ -29,6 +29,8 @@ def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAlt
         l_ant     : (N,) distance from Xsource to antenna
         adf       : (N,) ADF amplitude for each antenna
     """
+    if Bvec is None:
+        Bvec = cons.Bvec
     K = co.shower_direction_vector(theta, phi)
    
     asym_coeff = -0.003*np.rad2deg(theta)+0.220
