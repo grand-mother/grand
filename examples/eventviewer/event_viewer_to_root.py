@@ -193,13 +193,26 @@ class EventViewer:
         self.x_xmax, self.y_xmax, self.z_xmax = e.tsimshower.xmax_pos_shc
         self.slant_xmax = e.tsimshower.xmax_grams
 
-        # Magnetic field
-        Bfield = e.tsimshower.magnetic_field
-        Bnorm = np.sqrt(np.sum(Bfield**2))
-        print("Bfield norm = %.2e muT (unsure unit)" % Bnorm)
-        self.bx = Bfield[0]/Bnorm
-        self.by = Bfield[1]/Bnorm
-        self.bz = Bfield[2]/Bnorm
+        # Magnetic field.  ``magnetic_field`` is not a vector: the converters
+        # store [inclination, declination, strength] -- degrees, degrees, and
+        # a strength whose unit differs between them (ZHAireS writes 56.48 uT,
+        # the CoREAS sample 0.565 G).  This used to normalise those three
+        # numbers as if they were Bx, By, Bz, which at Xiaodushan gives a
+        # "field" 104 degrees from the real one and turns the vxB axes of the
+        # shower-plane and angular-plane panels by 91-114 degrees.
+        #
+        # The direction is built in the frame of the antenna positions and of
+        # the shower direction below: x North, y West, z Up.  The field dips
+        # below the horizon by the inclination, and its horizontal part lies
+        # the declination east of north, i.e. towards -y.  Only the direction
+        # is used, so the strength and its unit do not matter here.
+        inclination, declination, strength = e.tsimshower.magnetic_field
+        inc, dec = np.deg2rad(inclination), np.deg2rad(declination)
+        print("B field: inclination %.2f deg, declination %.2f deg, strength "
+              "%.4g (unit as stored)" % (inclination, declination, strength))
+        self.bx = np.cos(inc) * np.cos(dec)
+        self.by = -np.cos(inc) * np.sin(dec)
+        self.bz = -np.sin(inc)
 
         # Antenna postions
         self.antpos = np.array([[ant.position.x[0],
