@@ -19,6 +19,17 @@ diagram and inventory generators.
 
 ``--check`` rewrites nothing and exits non-zero if the file would change, which
 is what a CI job would call.
+
+``--tests-summary`` and ``--tests-source`` take the test result from somewhere
+else instead of running pytest here -- for a machine that cannot run the whole
+suite, such as one without the antenna data model::
+
+    python docs/dev/update_recovery_plan.py \
+        --tests-summary "616 passed, 10 skipped, 11 xfailed" \
+        --tests-source "CI run 36017933785 on c3b2caa5"
+
+The source is printed beside the numbers, so the plan never presents a count
+from elsewhere as one measured where the rest of the block was.
 """
 import argparse
 import datetime
@@ -103,8 +114,15 @@ def count_issues():
     return total, opened, settled, unclear
 
 
-def measure():
+def measure(tests_summary=None, tests_source=None):
     r"""Returns the rows of the generated block.
+
+    Parameters
+    ----------
+    tests_summary : str, optional
+        A pytest summary line to report instead of running the suite here.
+    tests_source : str, optional
+        Where that summary came from; required with it, and shown beside it.
 
     Returns
     -------
@@ -120,9 +138,14 @@ def measure():
     tag = run(["git", "describe", "--tags", "--abbrev=0"]).strip() or "none"
     head = run(["git", "rev-parse", "--short", "HEAD"]).strip()
 
-    tests = measure_tests()
+    if tests_summary:
+        tests_cell = "**%s** — reported by %s, not run here" % (
+            tests_summary.strip(), tests_source.strip())
+    else:
+        tests = measure_tests()
+        tests_cell = "**%s**" % tests if tests else "could not be run here"
     rows = [
-        ("Test suite", "**%s**" % tests if tests else "could not be run here"),
+        ("Test suite", tests_cell),
         ("Lint", measure_lint()),
         ("Branches", "%d contained in `dev-next`, **%d still out**, %d decided "
                      "against, %d absorbed"
@@ -161,7 +184,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--check", action="store_true",
                         help="rewrite nothing; exit 1 if the plan is stale")
+    parser.add_argument("--tests-summary",
+                        help="a pytest summary line to report instead of "
+                             "running the suite here")
+    parser.add_argument("--tests-source",
+                        help="where --tests-summary came from, e.g. a CI run")
     args = parser.parse_args()
+    if bool(args.tests_summary) != bool(args.tests_source):
+        parser.error("--tests-summary and --tests-source go together: a count "
+                     "without its source cannot be checked")
+    if args.tests_summary and not re.search(r"\d+ passed", args.tests_summary):
+        parser.error("--tests-summary does not look like a pytest summary line")
 
     if not PLAN.exists():
         raise SystemExit("cannot find the plan at %s" % PLAN)
@@ -171,7 +204,7 @@ def main():
             "the plan carries no measured block. Add\n\n  %s\n  %s\n\nwhere "
             "the generated table should go." % (BEGIN, END))
 
-    block = render(measure())
+    block = render(measure(args.tests_summary, args.tests_source))
     pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.S)
     updated = pattern.sub(lambda _: block, text, count=1)
 
