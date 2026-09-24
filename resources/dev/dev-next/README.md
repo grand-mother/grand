@@ -1,7 +1,7 @@
 # `dev-next` paperwork
 
 Everything that describes the state of the `dev-next` recovery: the plan, the
-branch record, and the two diagrams. Five of these six files are generated —
+branch record, and the two diagrams. The counts and diagrams here are generated —
 edit the generator, not the file.
 
 ## What is here
@@ -14,6 +14,14 @@ edit the generator, not the file.
 | [`recovery.svg`](recovery.svg) | How far the repair has got, phase by phase. Read from the plan's own checkboxes. | `docs/dev/make_recovery_diagram.py` |
 | [`history.svg`](history.svg) | Every branch and merge since 2019, on a time axis. Context, not a working document. | `docs/dev/make_history_diagram.py` |
 | `README.md` | This file. | — |
+
+`RECOVERY_PLAN.md` is the one hand-written document, and deliberately so: the
+phases, decisions and corrections are judgements somebody has to make. But its
+*counts* are generated — the block between `<!-- measured: begin -->` and
+`<!-- measured: end -->` is owned by `docs/dev/update_recovery_plan.py`. On
+2026-09-24 the plan still claimed "593 passed" and "15 carry genuinely
+unmerged patches" when the numbers were 601 and 6; the last person to change
+the repository was not the last person to edit the sentence about it.
 
 `RECOVERY_PLAN.md` embeds both diagrams and links `BRANCHES.md`, so reading the
 plan is reading all of it. The plan is also rendered as the documentation's
@@ -29,7 +37,11 @@ python docs/dev/make_branch_inventory.py
 python docs/dev/make_branch_diagram.py
 python docs/dev/make_recovery_diagram.py
 python docs/dev/make_history_diagram.py
+python docs/dev/update_recovery_plan.py
 ```
+
+`update_recovery_plan.py --check` rewrites nothing and exits non-zero if the
+plan is stale, which is what a CI job would call.
 
 Each prints what it wrote. None of them takes an argument, and all four are
 safe to re-run: they overwrite in place and read the repository as it stands.
