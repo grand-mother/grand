@@ -15,6 +15,27 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The CoREAS converter runs on its own fixture.** `CoreasToRawROOT.py -d
+  proton` raised `UnboundLocalError: Xmax_NWU` partway through and left a
+  447-byte `.rawroot` behind (grand-mother/grand#159). `Xmax_NWU` was computed
+  only when the `.reas` carries `ShowerZenithAngle`, and the short
+  `SIMxxxxxx.reas` that directory mode reads never does. That branch has no
+  `DistanceOfShowerMaximum`, so it now writes NaN for the position; zeros would
+  have read downstream as a real Xmax at the array origin. The CoREAS chain now
+  runs end to end through `sim2root.py` for the first time, and writes
+  `origin_geoid[2] = 1200` in metres, where the 2024 fixture carries `114200`.
+
+  NaN is one of several defensible choices, and the known-issues entry had
+  left that choice to the owners of `sim2root/`. Reading the long per-event
+  `.reas`, which the fixture has, would give a real position instead. See
+  `issue-coreas-xmax-unbound`.
+
+- **A vertical CoREAS shower keeps its own parameters.** The same converter
+  tested `if read_params(...ShowerZenithAngle):`, so a zenith of exactly 0.0
+  was falsy and fell through to hard-coded Dunhuang values. It now tests for
+  presence (`is not None`). This one is reasoned from `read_params`, not
+  measured; no fixture has a vertical shower.
+
 - **Tree classes can be constructed again under NumPy 2.** `TRun()`,
   `TADC()` and every other tree raised `ValueError: setting an array element
   with a sequence`. `TTreeScalarDesc.__set__` bound `value` to the same array
@@ -59,6 +80,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   under any convention and recording what does not; descriptor-default
   regression covering every tree class.
 
+- **The converters are run, not just read.** `tests/sim2root/test_xmax_frame.py`
+  runs the ZHAireS and CoREAS converters on the repository's own fixtures and
+  checks Xmax against the ZHAireS `.sry` summaries. Until now `tests/sim2root/`
+  only parsed the sources, which is how a crash on the committed CoREAS
+  fixture went unnoticed. Each test was checked to fail with its defect put
+  back.
+
 - **Tools.** `quality/premerge_check.py` reports what a branch adds and flags
   fields that duplicate an existing field's meaning; `quality/docstring_coverage.py`
   measures the numpydoc conversion; `docs/dev/make_recovery_diagram.py` and
@@ -82,5 +110,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   the known-issues page.
 - Two branches add the same NUTRIG correlation fields to `TADC` under
   different names; the schema decision is unresolved.
+- **The committed ZHAireS samples put Xmax 1264 m too high, and one reader
+  corrects for it** (grand-mother/grand#160). The converter itself is right:
+  run on the committed `.sry` files today, it writes the ground-relative
+  height exactly (4499.41 m for event 1618). The samples predate that
+  subtraction. `root_files.py` compensates with its "DC2 FIX"; `gen_shower.py`
+  (antenna response) and `aoi/event.py` do not. So on the committed samples
+  those two are wrong, and on regenerated samples `root_files.py` would be
+  wrong instead, by 1264 m in the other direction. No vintage of the data
+  makes every reader right. See `issue-xmax-sample-vintage`;
+  `tests/sim2root/test_xmax_frame.py` fails if either the samples or the
+  reader changes alone, so the two cannot drift apart unnoticed.
 - CI has not completed a run in a long time, for three independent reasons
   recorded in `docs/dev/FINDINGS_CI.md`.

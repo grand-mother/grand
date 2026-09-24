@@ -529,10 +529,12 @@ latter, you are almost certainly in the wrong file.
 The CoREAS converter crashes on the repository's own test fixture
 ------------------------------------------------------------------
 
-:Status: **open**
+:Status: **fixed** 2026-09-24 (grand-mother/grand#159), with a choice the
+         owners of ``sim2root/`` may want to revisit — see *The fix* below
 :Found: 2026-09-08, while checking whether branch
         ``147-add-option-to-read-in-non-parallel-coreas-sims-in-sim2root``
         was superseded
+:Test: ``tests/sim2root/test_xmax_frame.py``, which runs the conversion
 
 The normal invocation of the CoREAS converter, on the CoREAS simulation
 committed in this repository, fails:
@@ -595,11 +597,97 @@ missing one. The options are to write the converter's ``-1`` sentinel, to read
 the long ``.reas`` when it is present, or to refuse the conversion — and which
 is right is a question for whoever owns ``sim2root/``.
 
-**Why it survived.** Nothing runs this converter. ``tests/sim2root/`` reads the
-sources with :mod:`ast` and never imports them, for the reasons given at the
-top of that file, so a crash on the committed fixture is invisible to the test
-suite. Whatever the fix, it should come with a test that actually runs the
-conversion — the fixture is already in the repository.
+**The fix, and the choice it makes.** The ``else`` branch now assigns
+
+.. code-block:: python
+
+    Xmax_NWU = np.full(3, np.nan)
+
+with a printed warning. Of the options above, this is closest to the
+sentinel, except that it uses NaN rather than ``-1``: a ``-1`` or zero
+vector is a valid-looking position, and nothing downstream checks its
+range, whereas NaN propagates visibly. The conversion now completes (a
+1.4 MB file), and the whole CoREAS chain runs through ``sim2root.py``,
+writing ``origin_geoid[2] = 1200`` — metres, from the observation level.
+
+This settles the crash, not the design question. The fixture also carries
+the long per-event ``SIM004100-001004105-000000001.reas``, so the option
+that yields a *real* Xmax — read the long file when it is present — remains
+open, and it belongs to the owners of ``sim2root/``.
+
+The same commit changes the branch test to
+``read_params(...) is not None``. Tested for truth, a genuine
+``ShowerZenithAngle`` of 0.0 — a vertical shower — was falsy and took the
+hard-coded Dunhuang branch. No fixture has a vertical shower, so that change
+is reasoned from ``read_params``, not measured.
+
+**Why it survived.** Nothing ran this converter. ``tests/sim2root/`` read the
+sources with :mod:`ast` and never imported them, for the reasons given at the
+top of ``test_converter_defects.py``, so a crash on the committed fixture was
+invisible to the test suite. ``test_xmax_frame.py`` now runs it as a
+subprocess on the committed fixture, and was checked to fail with the fix
+removed.
+
+.. _issue-xmax-sample-vintage:
+
+The committed ZHAireS samples carry Xmax 1264 m too high, and only one reader corrects it
+------------------------------------------------------------------------------------------
+
+:Status: open — a decision, not a patch
+:Found: 2026-09 (grand-mother/grand#160); cause settled 2026-09-24
+:Affects: ``grand/sim/shower/gen_shower.py`` and ``grand/aoi/event.py`` on
+          the committed samples; ``grand/dataio/root_files.py`` on any
+          regenerated sample
+:Test: ``tests/sim2root/test_xmax_frame.py``
+
+``xmax_pos_shc`` is Xmax in shower-core coordinates, whose origin is the core
+on the ground, so its ``z`` is a height *above the ground*. In every
+ZHAireS-derived sample under ``sim2root/Common/``, ``z`` is instead the AIRES
+value measured from sea level: 1264 m too high, exactly ``origin_geoid[2]``.
+
+**The converter is not the cause.** Run today on the ``.sry`` files committed
+for events 1618 and 13790, ``ZHAireSRawToRawROOT.py`` writes the
+ground-relative value exactly, checked against the ``.sry`` itself rather than
+the converter's arithmetic:
+
+==========  ==================  ===================  ===========================
+Event       ``.sry`` Xmax *z*   Written today        Committed sample
+==========  ==================  ===================  ===========================
+1618        5763.41 m           4499.41 m            5763.4 m
+13790       13927.77 m          12663.77 m           13927.8 m
+==========  ==================  ===================  ===========================
+
+The ground is at 1264.0 m in both ``.sry`` files and in ``origin_geoid``.
+``sim2root.py`` copies the field through unchanged. The samples predate the
+``- GroundAltitude`` in the converter; both arrived in one squashed import,
+so history cannot date the change.
+
+**One reader compensates.** ``get_simu_parameters`` in
+``grand/dataio/root_files.py`` computes
+
+.. code-block:: python
+
+    FIX_xmax_pos = xmax_pos_shc + shower_core_pos - [0, 0, origin_geoid[2]]
+
+under the comment "DC2 FIX" (collab-issues#34). On the committed samples the
+two errors cancel and ``FIX_xmax_pos`` is right. The other readers take the
+raw field: ``gen_shower.py`` builds the shower maximum that feeds the antenna
+response from it, and ``aoi/event.py`` stores it as ``Xmaxpos``. On the
+committed samples, those are 1264 m high.
+
+**Regenerating the samples does not fix it; it moves it.** On fresh output
+the raw field is right, so ``gen_shower.py`` and ``aoi/event.py`` become
+correct, and ``FIX_xmax_pos`` lands at 3235.4 m for event 1618 — 1264 m below
+Xmax. No vintage of the data makes every reader correct; the samples and the
+DC2 FIX have to change together.
+
+**What would settle it.** One decision, in one of two forms: regenerate the
+samples and delete the DC2 FIX in the same change; or keep the samples and
+make ``root_files.py`` detect which convention it is reading. Data from DC2
+itself was processed under the old convention, so the second may be needed
+regardless. ``test_the_dc2_xmax_fix_is_right_only_for_the_committed_sample``
+fails whichever is done, and should then be rewritten to assert the new
+behaviour.
 
 .. _issue-nutrig-field-names:
 
@@ -1052,7 +1140,8 @@ The CoREAS site table knows two sites, and stores their altitudes in centimetres
 :Affects: converting any CoREAS simulation of a site other than Dunhuang or
           Lenghu; and, if one line moves, every CoREAS conversion
 :Test: ``tests/sim2root/test_converter_defects.py``
-:Blocked by: ``dev_io_root_testmerges``, which is in flight over ``sim2root/``
+:Blocked by: nothing since 2026-09-24 — ``dev_io_root_testmerges``, once
+             thought in flight over ``sim2root/``, carries no patch of its own
 
 ``read_lat_long_alt`` in ``sim2root/CoREASRawRoot/CorsikaInfoFuncs.py`` maps a
 site name to its coordinates:
@@ -1116,9 +1205,12 @@ Delete or reorder that one line and every CoREAS conversion is wrong by a
 factor of 100 in the array origin, silently, because nothing downstream checks
 whether an altitude is plausible.
 
-**Why it is not fixed here.** ``dev_io_root_testmerges`` is in flight over
-``sim2root/``. The fix is small — raise something that names the site, and
-either convert in the table or record the unit — but it belongs after that
-branch lands, for the same reason as the other ``sim2root`` entries in this
-page. Five tests pin both halves in the meantime, including one that fails if
-the override line moves away from the read.
+**Why it was not fixed here.** ``dev_io_root_testmerges`` was believed to be
+in flight over ``sim2root/``. On 2026-09-24 its only commit outside
+``dev-next`` proved to be a 2025 merge of ``dev``, with no patch of its own,
+and merging it conflicts in nothing under ``sim2root/``, so that reason has
+lapsed. The fix is small — raise something that
+names the site, and either convert in the table or record the unit — and it
+is left to whoever owns ``sim2root/``, because which unit the table should
+hold is their call. Five tests pin both halves in the meantime, including
+one that fails if the override line moves away from the read.

@@ -26,7 +26,7 @@ Those last two cancel, which is why the shipped samples read correctly today.
 They cancel *only* for data of that vintage.  Regenerate the samples with the
 current converter -- an ordinary, unremarkable thing to do -- and the
 compensation is applied to data that no longer needs it, putting Xmax 1264 m
-**below** where it belongs, silently.  The last test states that trap so that
+**below** where it belongs, silently.  The third test states that trap so that
 whoever regenerates the samples meets it as a failure rather than as a subtly
 wrong reconstruction months later.
 
@@ -47,6 +47,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 ZHAIRES_CONVERTER = ROOT / 'sim2root' / 'ZHAireSRawRoot' / 'ZHAireSRawToRawROOT.py'
 COREAS_CONVERTER = ROOT / 'sim2root' / 'CoREASRawRoot' / 'CoreasToRawROOT.py'
 COREAS_FIXTURE = ROOT / 'sim2root' / 'CoREASRawRoot' / 'proton'
+SIM2ROOT = ROOT / 'sim2root' / 'Common' / 'sim2root.py'
 
 #: The two committed ZHAireS events, and the sample directory built from them.
 ZHAIRES_EVENTS = {
@@ -235,44 +236,100 @@ def test_the_committed_zhaires_sample_predates_that_subtraction(tmp_path):
         'grand/dataio/root_files.py now over-corrects it -- see the next test')
 
 
+def _run_sim2root(raw, workdir):
+    r"""Runs ``sim2root.py`` on a raw file and returns the efield file it wrote.
+
+    Parameters
+    ----------
+    raw : pathlib.Path
+        The raw ROOT file produced by a converter.
+    workdir : pathlib.Path
+        Directory to write the GRANDROOT output into.
+
+    Returns
+    -------
+    pathlib.Path
+        The single ``efield_*.root`` produced.
+    """
+    out = workdir / 'grandroot'
+    out.mkdir()
+    completed = subprocess.run(
+        [sys.executable, str(SIM2ROOT), str(raw), '-o', str(out),
+         '-sl', 'GP300', '-s', 'Xiaodushan'],
+        cwd=str(workdir), env=_env(), capture_output=True, text=True, timeout=1800)
+    assert completed.returncode == 0, (
+        'sim2root.py failed:\n%s\n%s'
+        % (completed.stdout[-2000:], completed.stderr[-2000:]))
+    efields = sorted(out.glob('*/efield_*.root'))
+    assert len(efields) == 1, 'expected one efield file, found %r' % efields
+    return efields[0]
+
+
+def _reader_xmax_z(efield, event_number):
+    r"""Returns ``FIX_xmax_pos[2]`` as ``grand.dataio.root_files`` computes it.
+
+    Parameters
+    ----------
+    efield : pathlib.Path
+        A GRANDROOT efield file.
+    event_number : int
+        The event to read.
+
+    Returns
+    -------
+    float
+        The corrected Xmax height the reader hands its consumers.
+    """
+    from grand.dataio.root_files import get_file_event
+
+    reader = get_file_event(str(efield))
+    for idx in range(64):
+        reader.load_event_idx(idx)
+        if int(reader.tt_event.event_number) == event_number:
+            return float(reader.get_simu_parameters()['FIX_xmax_pos'][2])
+    raise AssertionError('event %d not found in %s' % (event_number, efield))
+
+
 @needs_root
-def test_the_dc2_xmax_fix_would_over_correct_regenerated_data(tmp_path):
+def test_the_dc2_xmax_fix_is_right_only_for_the_committed_sample(tmp_path):
     r"""The DC2 FIX is calibrated to the stale sample, not to the converter.
 
-    ``get_simu_parameters`` computes::
+    ``get_simu_parameters`` in ``grand/dataio/root_files.py`` computes::
 
         FIX_xmax_pos = xmax_pos_shc + shower_core_pos - [0, 0, origin_geoid[2]]
 
     Against the committed sample that lands on the right answer, because the
     sample's ``xmax_pos_shc`` is high by exactly ``origin_geoid[2]``.  Against
     data from today's converter the input is already correct and the same
-    subtraction moves Xmax 1264 m underground.
+    subtraction puts Xmax 1264 m underground.
 
-    This is the failure mode worth guarding: it needs no code change to
-    appear.  Someone regenerates the samples -- the natural response to the
-    test above -- and every consumer of ``FIX_xmax_pos`` silently shifts.
+    Both halves go through the real reader, not a copy of its formula, so
+    this test fails if the reader is changed as well as if the data is.
+    Regenerating the samples -- the natural response to the test above --
+    fails it too.  Either way it has done its job, and should be rewritten to
+    assert whatever convention the collaboration settles on.  See
+    ``issue-xmax-sample-vintage`` in the known-issues page.
     """
     folder = ZHAIRES_EVENTS[1618]
-    if not folder.is_dir():
-        pytest.skip('the ZHAireS fixture is not present')
+    committed = SAMPLE / 'efield_1618-13790_L0_0000.root'
+    if not folder.is_dir() or not committed.is_file():
+        pytest.skip('the ZHAireS fixture or the committed sample is not present')
 
     raw_z, ground = _sry_truth(folder)
-    fields = _convert_zhaires(folder, 1618, tmp_path)
+    truth = raw_z - ground
 
-    fresh_z = float(fields['xmax_pos_shc'][0][2])
-    core_z = float(fields['shower_core_pos'][0][2])
+    assert _reader_xmax_z(committed, 1618) == pytest.approx(truth, abs=1.0), (
+        'on the committed sample, FIX_xmax_pos no longer matches the .sry; '
+        'the sample or the reader changed')
 
-    # What root_files.py would hand a consumer for this event.
-    fixed_z = fresh_z + core_z - ground
+    _convert_zhaires(folder, 1618, tmp_path)
+    fresh = _run_sim2root(tmp_path / 'raw_1618.root', tmp_path)
+    fresh_z = _reader_xmax_z(fresh, 1618)
 
-    assert fixed_z == pytest.approx(raw_z - ground - ground, abs=1.0), (
-        'the DC2 FIX no longer double-subtracts the site altitude for freshly '
-        'converted data. If root_files.py learned to tell the two vintages '
-        'apart, this test has done its job and should be replaced by one '
-        'asserting the corrected behaviour')
-
-    assert fixed_z < 0.0 or fixed_z < (raw_z - ground) - ground / 2.0, (
-        'expected the double subtraction to be plainly visible')
+    assert fresh_z == pytest.approx(truth - ground, abs=1.0), (
+        'FIX_xmax_pos is %.1f m on freshly converted data, against a true '
+        '%.1f m. If it is now right, root_files.py learned to tell the two '
+        'vintages apart: rewrite this test to assert that.' % (fresh_z, truth))
 
 
 @needs_root
