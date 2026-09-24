@@ -165,8 +165,8 @@
 <text x="824.6" y="196.6" font-family="IBM Plex Mono, monospace" font-size="8.4" font-weight="600" fill="#1D7A57">main</text>
 <rect x="1354.6" y="213.5" width="60.2" height="11" rx="5.5" fill="#D5E8F5" stroke="#1F5C82" stroke-width="1"/>
 <text x="1421.8" y="222.6" font-family="IBM Plex Mono, monospace" font-size="8.4" font-weight="600" fill="#1F5C82">dev-next</text>
-<rect x="150.3" y="254.0" width="20.4" height="9" rx="4.5" fill="#F6EDDA" stroke="#8A6210" stroke-width="1"/>
-<text x="177.7" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8A6210">radio</text>
+<rect x="150.3" y="254.0" width="20.4" height="9" rx="4.5" fill="#EFE9F5" stroke="#6B4E8E" stroke-width="1"/>
+<text x="177.7" y="261.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#6B4E8E">radio</text>
 <rect x="154.9" y="275.0" width="28.0" height="9" rx="4.5" fill="#ECEFF1" stroke="#AEBAC2" stroke-width="1"/>
 <text x="189.9" y="282.5" font-family="IBM Plex Mono, monospace" font-size="7.2" font-weight="500" fill="#8B99A3">update</text>
 <rect x="444.0" y="254.0" width="4.0" height="9" rx="4.5" fill="#F7E6E7" stroke="#A9484E" stroke-width="1"/>
@@ -323,6 +323,6 @@
 <text x="1653.0" y="120.0" font-size="7.4" fill="#7A8994">merged, then deleted</text>
 <rect x="1436.0" y="126.0" width="8" height="8" rx="4" fill="#EAF3F9" stroke="#5B8DB3"/>
 <text x="1447.0" y="133.0" font-size="7.4" fill="#7A8994">the working branch: its own commits are an open PR</text>
-<text x="1748.0" y="652.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-24 22:04 UTC by docs/dev/make_history_diagram.py</text>
+<text x="1748.0" y="652.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-24 22:09 UTC by docs/dev/make_history_diagram.py</text>
 <text x="1748.0" y="662.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 7234fae3</text>
 </svg>
