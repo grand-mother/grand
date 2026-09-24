@@ -25,23 +25,23 @@ INK, SOFT, FAINT = '#14202A', '#4C5C69', '#7A8994'
 RULE = '#D8DEE3'
 CYCLE = '#B4472A'
 FILL = {'geo': '#E2F0F0', 'dataio': '#F6EDDA', 'basis': '#E1F1EA',
-        'sim': '#E1F1EA', 'aoi': '#EFE9F5', 'recon': '#F2F3F5'}
+        'sim': '#E1F1EA', 'aoi': '#EFE9F5', 'analysis': '#F3ECE6'}
 EDGE = {'geo': '#0E6E70', 'dataio': '#8A6210', 'basis': '#1D7A57',
-        'sim': '#1D7A57', 'aoi': '#6B4E9B', 'recon': '#9AA5AE'}
+        'sim': '#1D7A57', 'aoi': '#6B4E9B', 'analysis': '#8A4B2A'}
 
-SUB = ('aoi', 'basis', 'dataio', 'geo', 'recon', 'sim')
+SUB = ('aoi', 'analysis', 'basis', 'dataio', 'geo', 'sim')
 
 #: Laid out so that the three edges of the cycle form a visible triangle.
 POS = {'geo': (90, 300), 'dataio': (390, 300), 'basis': (240, 130),
-       'sim': (640, 130), 'aoi': (640, 300), 'recon': (90, 420)}
+       'sim': (640, 130), 'aoi': (640, 430), 'analysis': (90, 430)}
 BW, BH = 170, 76
 
 #: Measured with --measure; see the module docstring.
 EDGES = [('geo', 'dataio', 1, True), ('dataio', 'basis', 1, True),
          ('basis', 'geo', 1, True), ('sim', 'geo', 3, False),
          ('sim', 'basis', 2, False), ('sim', 'dataio', 1, False),
-         ('aoi', 'dataio', 3, False), ('aoi', 'geo', 1, False),
-         ('basis', 'sim', 1, False)]
+         ('aoi', 'dataio', 3, False), ('aoi', 'geo', 6, False),
+         ('basis', 'sim', 1, False), ('analysis', 'geo', 8, False)]
 
 NOTES = {
     'geo': 'coordinates, topography,\ngeomagnet — frames and Earth',
@@ -49,7 +49,7 @@ NOTES = {
     'basis': 'traces, signals,\nDU networks',
     'sim': 'antenna, RF chain,\nnoise, ADC',
     'aoi': 'events and antennas\nas objects',
-    'recon': 'placeholder:\nno algorithm',
+    'analysis': 'reconstruction: direction,\nXmax, energy (2026)',
 }
 
 
@@ -63,6 +63,16 @@ def measure():
         parts = mod.split('.')
         return parts[1] if len(parts) > 1 and parts[1] in SUB else None
 
+    # The name -> (module, attribute) table in grand/__init__.py, read from
+    # the source so that measuring does not import the package.
+    lazy = {}
+    init = ast.parse(pathlib.Path('grand/__init__.py').read_text())
+    for node in ast.walk(init):
+        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
+                and any(getattr(t, 'id', None) == '_LAZY' for t in node.targets)):
+            lazy = {k.value: v.elts[0].value
+                    for k, v in zip(node.value.keys, node.value.values)}
+
     for path in sorted(pathlib.Path('grand').rglob('*.py')):
         if '__pycache__' in str(path):
             continue
@@ -74,7 +84,12 @@ def measure():
             continue
         for node in ast.walk(tree):
             names = []
-            if isinstance(node, ast.ImportFrom) and node.module:
+            if isinstance(node, ast.ImportFrom) and node.module == 'grand':
+                # `from grand import Geodetic` names a subpackage only through
+                # the package's lazy table; resolve each name to its module so
+                # these imports count.  They used to be invisible here.
+                names = [lazy.get(alias.name, 'grand') for alias in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module:
                 names = [node.module]
             elif isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
@@ -170,8 +185,9 @@ def main():
     s.append(label(132, 580, 'basis/pipeline.py imports grand.sim inside a '
                    'function, which is what keeps that second cycle from '
                    'existing at import time.', SOFT, 10.5))
-    s.append(label(28, 604, 'grand.recon has no incoming or outgoing edges: '
-                   'nothing imports it and it imports nothing.', FAINT, 10))
+    s.append(label(28, 604, 'grand.analysis imports geometry through the '
+                   'package namespace (from grand import Geodetic); nothing in '
+                   'grand imports it back.', FAINT, 10))
 
     s.append('</svg>')
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),

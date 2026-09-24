@@ -41,7 +41,10 @@ SNAPSHOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # format documentation.
 TREE_CLASSES = ['TRun', 'TRunVoltage', 'TRunRawVoltage', 'TADC', 'TRawVoltage', 'TVoltage',
                 'TEfield', 'TShower', 'TShowerSim', 'TRunEfieldSim',
-                'TRunShowerSim', 'TRunNoise']
+                'TRunShowerSim', 'TRunNoise',
+                # Reconstruction results, from dev_marion; approved as part of
+                # the format on 2026-09-24 (RECOVERY_PLAN.md, Phase 5).
+                'TRecons']
 
 
 def _collect():

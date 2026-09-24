@@ -167,6 +167,25 @@ horizontal frame is fixed to geographic north, so converting into it assumes
 an ENU basis and a shared origin — components expressed in another Cartesian
 basis give a silently wrong azimuth.
 
+A shower's angles say where it comes from
+-----------------------------------------
+
+A shower's ``zenith`` and ``azimuth`` name the direction it **arrives from**,
+not the direction it travels: a vertical shower has zenith 0, and the shower
+maximum lies *upstream*, at those angles as seen from the core.  The files
+GRANDlib reads, the converters that write them, and the paper's Appendix A
+all use this, and the spherical transform above agrees with it:
+``_cartesian_to_spherical`` applied to Xmax's position relative to the core
+returns the stored zenith and azimuth.  ``tests/geo/test_angle_convention.py``
+checks exactly that against the ZHAireS summaries committed with the example
+events.
+
+Code that needs the direction of travel should negate the arrival vector
+where it needs it, not change the transforms.  A 2024 branch
+(``snonis_sim2root_test_merge``) proposed flipping them to "travels towards";
+it was not merged, on 2026-09-24, because every stored angle would then
+disagree with every computed one.
+
 Common mistakes
 ---------------
 

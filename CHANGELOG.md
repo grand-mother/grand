@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Installed GRANDlib contains the Galactic noise model.** `grand/sim/noise/`
+  had no `__init__.py`, so package discovery skipped it and a built package
+  shipped without `galaxy.py`. Found by a new test that checks every
+  directory of code under `grand/` is packaged; the same test caught
+  `grand/analysis/coords/` before it could ship.
+
+- **The CoREAS site table is in metres and names an unknown site.** It
+  stored altitudes in centimetres (kept out of the output only by a later
+  override line) and crashed on any other site with "not enough values to
+  unpack". Xiaodushan, a real GRAND site, was one of them. It now raises
+  `ValueError: unknown site 'Xiaodushan': ... knows only Dunhuang, Lenghu`.
+
 - **The event viewer's vxB axes point the right way.** It treated
   `magnetic_field` -- [inclination, declination, strength] -- as a vector
   and normalised it, giving a field 104° from the real one at Xiaodushan
@@ -68,6 +80,22 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   the first column past its rule.
 
 ### Added
+
+- **Reconstruction: `grand.analysis`** (Marion Guelfand, from `dev_marion`).
+  Plane-wave, spherical-wave and ADF fits of arrival direction and Xmax
+  distance, an electromagnetic-energy proxy, signal extraction, footprint
+  geometry and a Cherenkov-angle model, with results in a new `TRecons` tree.
+  Needs `iminuit` (`pip install -e ".[analysis]"`; in the conda
+  environment). Tested for self-consistency -- each fit recovers what its
+  forward model generates -- not yet against simulated or measured showers.
+  Examples in `examples/analysis/`.
+
+- **GRAND's angle convention is stated and pinned.** A shower's zenith and
+  azimuth name where it comes from; the coordinates page now says so, and
+  `tests/geo/test_angle_convention.py` checks the core transform against the
+  ZHAireS summaries. Chosen over `snonis_sim2root_test_merge`, which flipped
+  the transforms and would have put every computed angle at odds with every
+  stored one.
 
 - **Decision material for the three branches waiting on the collaboration**
   (`dev_marion`, `grandio_light`, `snonis_sim2root_test_merge`), in
@@ -132,6 +160,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   ignore list may shrink and must never grow.
 
 ### Changed
+
+- **`grand.recon` removed.** It held two classes with a constructor and
+  nothing else; reconstruction is `grand.analysis`.
+
+- **Reading GRAND files no longer loads the physics.** `grand/__init__.py`
+  loads its public names on first use instead of importing the geometry and
+  simulation code eagerly. `import grand.dataio` now loads the data layer
+  only, and works without the compiled C core; `import grand` and
+  `grand.geo.coordinates` no longer need ROOT. Every public name still
+  resolves, and `from grand import *` now works (it raised on `adc`, listed
+  in `__all__` but never imported). Chosen over the `grandio_light` branch,
+  which reached the same goal by deleting the physics.
 
 - Merged from the outstanding queue: `dev_fix_root_warnings_lwp` (ROOT 6.38
   warnings), `dev_nutrig_fields`, `dev_reprocessing` (Snakemake pipeline),

@@ -490,7 +490,7 @@ VERDICTS = {
         "branch itself records no conclusion and there is no third commit. It "
         "was cut ten days after issue #106 reported the symptom."),
 
-    "snonis_sim2root_test_merge": ("decide",
+    "snonis_sim2root_test_merge": ("no",
         "Not the small fix it looks like. coordinates.py here redefines the "
         "angular convention across all four core transforms -- theta to "
         "180-theta, phi to phi+180, azimuth and elevation redefined -- so "
@@ -498,7 +498,7 @@ VERDICTS = {
         "arrays: `if phi==360` raises on the normal call. The other half "
         "(du_type through Efield2Voltage) is already on the trunk. The "
         "convention is a collaboration decision, not a cherry-pick."),
-    "grandio_light": ("decide",
+    "grandio_light": ("no",
         "594 edits to live files and 295,000 deletions: this is the proposal "
         "to split GRANDlib into a light I/O package, not a change to review. "
         "It needs an answer to the split question before it needs a merge."),
@@ -523,6 +523,18 @@ VERDICTS = {
 #: to be a preamble -- "Two independent reasons, either sufficient." is not a
 #: reason.
 DECIDED = {
+    "snonis_sim2root_test_merge": ("2026-09-24",
+        "not merged: GRAND keeps \"comes from\" angles. Run on event 1618's "
+        "Xmax, dev-next's transform returns the file's stored zenith and "
+        "azimuth exactly and the branch's returns the opposite direction, and "
+        "raises on arrays. Its other half, du_type through Efield2Voltage, "
+        "was already on the trunk. Pinned by tests/geo/test_angle_convention.py"),
+    "grandio_light": ("2026-09-24",
+        "not merged: it got an I/O-only GRANDlib by deleting the physics. "
+        "grand/__init__.py now loads lazily instead, so import grand.dataio "
+        "loads only the data layer and works without the compiled core, with "
+        "nothing deleted. A separately published grandlib-io package remains "
+        "possible on top of that and was not decided"),
     "dev": ("2026-09-24",
         "content taken: 7cd02097's grant acknowledgement copied verbatim into "
         "README.md. dev itself is not merged; this covers that one commit"),

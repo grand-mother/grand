@@ -12,6 +12,18 @@ on full git history. Where code is said to fail, it was run.
 
 ## 1. `dev_marion` — does reconstruction live in GRANDlib?
 
+> **Decided 2026-09-24: yes, in `grand/analysis/`; merged.** The branch was
+> merged as it stood, so the history is Marion Guelfand's, and each
+> prerequisite below followed as its own commit: `TRecons` pinned in the
+> schema snapshot; `iminuit` declared (conda environment, and an optional
+> `analysis` extra in `pyproject.toml`); the example data moved to
+> `examples/analysis/`; round-trip tests added before any cleanup; the code
+> brought within the lint gate; and the empty `grand/recon/` removed. Two
+> bugs found on the way were fixed: the Cherenkov solver used `np.infty`,
+> which NumPy 2 removed, and `grand/analysis/coords/` would not have been in
+> a built package. Not yet tested: whether the fits agree with simulated or
+> measured showers.
+
 **What it is.** Marion Guelfand's reconstruction package, January–February
 2026, seven commits. It adds `grand/analysis/` (38 files):
 
@@ -48,6 +60,13 @@ stub files), which suggests someone once planned for it to live here.
 
 ## 2. `grandio_light` — should GRANDlib ship an I/O-only version?
 
+> **Decided 2026-09-24: lazy imports, branch not merged.** `grand/__init__.py`
+> now loads its public names on first use. Measured afterwards,
+> `import grand.dataio` loads only the data layer and works without the
+> compiled core, and every public name still resolves; the full suite gives
+> identical results before and after. Pinned by `tests/test_lazy_imports.py`.
+> Whether to also publish a separate `grandlib-io` package is still open.
+
 **What it is.** luckyjim's proposal, December 2024 – August 2025, for a
 "light" GRANDlib that can read and write GRAND's ROOT files without the
 physics. The branch does this by **deleting** the physics from the
@@ -80,6 +99,12 @@ If no, close it.
 ---
 
 ## 3. `snonis_sim2root_test_merge` — which way do GRAND's angles point?
+
+> **Decided 2026-09-24: "comes from" stays; branch not merged.** The
+> convention is now stated in the coordinates documentation and pinned by
+> `tests/geo/test_angle_convention.py`, which checks the core transform
+> against both committed ZHAireS summaries. With the branch's lines applied,
+> all three of its tests fail.
 
 **What it is.** snonis's branch, January–April 2024. Half of it,
 propagating `du_type` through `Efield2Voltage`, is already on the trunk.

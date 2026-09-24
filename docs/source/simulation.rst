@@ -188,8 +188,9 @@ decide whether a unit would have triggered, which is the step between "a
 signal is present in this trace" and "this event was recorded" — and therefore
 the step between a simulated trace and a sensitivity.
 
-No reconstruction of shower parameters from recorded voltages; ``grand/recon``
-is a stub.
+Reconstruction of shower parameters from recorded times and amplitudes is in
+:mod:`grand.analysis` (since 2026-09), outside the simulation chain described
+here.
 
 No anthropogenic or radio-frequency-interference background; only the Galactic
 component is modelled, and measured noise traces are used where a realistic
