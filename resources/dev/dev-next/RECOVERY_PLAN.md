@@ -64,7 +64,7 @@ Judgements, as of 2026-09-08 unless noted:
 | Documentation | 23 authored pages + API over 33 of 34 modules + the Handbook; **zero warnings**; **published at https://grand-mother.github.io/grand/** |
 | CI | `Code Quality`, `Tests`, `Notebooks` and `Documentation Deployment` green on `dev-next` |
 | Branch protection | `dev-next`: force-push and deletion blocked, enforced on admins |
-| Promotion | exit criteria in Phase 9. **1, 2 and 4 met** — `dev-next` carries all of `dev`, all four workflows green, `dev` tagged `archive/dev-2026-09`. **3 and 5 outstanding**: the clean-machine install, and the freeze announcement. 6 is checked on the day |
+| Promotion | exit criteria in Phase 9. **2 and 4 met** — all four workflows green, `dev` tagged `archive/dev-2026-09`. **1 lapsed on 2026-09-15**: `dev` gained `7cd02097`, Lech Wiktor Piotrowski's four-line acknowledgement of the NCN OPUS grant in `README.rst`, so `dev-next` no longer carries all of `dev`. It needs porting to `README.md` — a funding acknowledgement is not optional — and it is the concrete cost of the freeze never having been announced. **3 and 5 outstanding**: the clean-machine install, and the freeze announcement. 6 is checked on the day |
 
 ## Phases
 
@@ -197,8 +197,23 @@ a third abandoned trunk.
       (`issue-coreas-site-table`). Unknown sites raise `ValueError` on an
       empty unpacking — Xiaodushan among them — and the table's centimetre
       altitudes are one line away from reaching the output. Both are pinned
-      by tests meanwhile; neither is touched here, because
-      `dev_io_root_testmerges` is in flight over that directory.
+      by tests meanwhile. The reason they were left — that
+      `dev_io_root_testmerges` was in flight over that directory — turned
+      out to be stale; see *Corrections*.
+- [x] Fix the CoREAS converter's crash on its own fixture
+      (`issue-coreas-xmax-unbound`, #159) — **done 2026-09-24.** The
+      branch without `DistanceOfShowerMaximum` now writes NaN for Xmax
+      instead of leaving `Xmax_NWU` undefined, and the zenith test checks
+      presence rather than truth. The CoREAS chain runs end to end for the
+      first time. NaN was a choice the known-issues entry had left to the
+      owners of `sim2root/`; the fixture's long `.reas` would give a real
+      position, and that stays open for them.
+- [ ] Decide the Xmax convention across samples and readers
+      (`issue-xmax-sample-vintage`, #160). The committed ZHAireS samples
+      and `root_files.py`'s DC2 FIX must change together: regenerate and
+      delete the fix, or keep both and make the reader detect the
+      convention. `tests/sim2root/test_xmax_frame.py` fails on either, by
+      design.
 
 ### Phase 5 — the decisions
 - [x] Galactic noise: fix or rewrite — **answered**, and the fix merged. Still
@@ -579,6 +594,9 @@ earlier.
 | *(2026-09-08)* Four duplicated docstring parameter blocks were fixed in `rf_chain.py` | The same commit had left four more in `grand/sim/detector/adc.py`. A package-wide sweep now confirms none remain. |
 | *(2026-09-09)* `test_pipeline_golden.py` compares at `rtol=1e-9`, "far above" floating-point reassociation | **Too tight for hardware.** Through 8–9 September the test failed on one leg of the CI matrix and passed on the other, with the failing leg alternating between ROOT 6.36 and 6.38 across five runs — the same commit passing both legs sometimes and one leg other times. The ROOT version was incidental: what varied was which GitHub runner each leg landed on, and numpy takes different vectorised paths on different CPUs. Locally it is deterministic — eight consecutive runs agreed, and one, two and eight BLAS threads changed nothing. Now `1e-6`, which still catches a 0.001% change and the √2 noise fix, and the failure message reports the relative disagreement instead of printing both values to six figures as "1276.82 against 1276.82". |
 | *(2026-09-08)* `read_list_of_params` returned the builtin `list` for a missing keyword, so the absence reached the ROOT trees silently as `list[0]` | **It raised.** Assigning `list` anywhere in the function body makes the name local throughout, so `return list` on the not-found path is an `UnboundLocalError`, not the builtin. I had demonstrated the generic-alias behaviour in a *different* function that really did return the builtin, and carried the conclusion across. The repair on the trunk is still the right one — absence is now a value, and the caller says which keyword was missing — but it fixes a loud error with a bad message, not a silent wrong number. The verdict on `147-add-option-…` changes with it: superseded, not broken. |
+| *(2026-09-08, #160)* Xmax sits 1264 m too high in every ZHAireS sample, and the open half of the question was whether `sim2root` writes it | **The samples are stale, not the converter.** Run on the committed `.sry` files, `ZHAireSRawToRawROOT.py` writes the ground-relative height exactly — 4499.41 m for event 1618, 12663.77 m for 13790 — against the `.sry` itself. The samples predate that subtraction. `root_files.py`'s "DC2 FIX" compensates for exactly this, so `FIX_xmax_pos` is right on the committed samples and would be 1264 m low on regenerated ones, while `gen_shower.py` and `aoi/event.py`, which read the raw field, are wrong on the committed samples. The observation stands; the cause had been assumed to be code. See `issue-xmax-sample-vintage`. |
+| *(2026-09-24)* `test_the_dc2_xmax_fix_would_over_correct_regenerated_data` "fails if root_files.py learns to tell the two vintages apart" | **It could not have.** It recomputed the fix's formula in the test instead of calling `get_simu_parameters`, so changing the reader would have left it green — the scratch-function mistake from the `read_list_of_params` row above, one day later. Pushed in `45e9b36`. Rewritten to call the real reader on both the committed sample and fresh `sim2root` output, and confirmed to fail when the reader's subtraction is removed. |
+| *(2026-09-08)* `sim2root/` fixes must wait for `dev_io_root_testmerges`, which is in flight over the directory | **Nothing is in flight.** Its one commit not in `dev-next` is `bea1952e` (2025-01-08), a merge of `dev` into it, carrying no patch of its own, and `BRANCHES.md` lists it as contained. Merging it into `dev-next` today conflicts in one file, `data/download_data_grand.py`, and in nothing under `sim2root/`. Every open branch was trial-merged on full history with and without the CoREAS fix, and the conflicting files are identical either way. *(A first pass of these checks ran on a shallow clone and gave wrong counts — six conflicts, four commits. Ancestry questions need full history: `git fetch --unshallow` first.)* The site-table fix below is no longer blocked on this ground, though whoever owns `sim2root/` should still make it. |
 
 The pattern: each was a *real observation* wrapped in a *guessed cause*, and in
 each case the guess was more dramatic than the truth. The observation that two

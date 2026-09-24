@@ -26,6 +26,13 @@ here would conflict with that branch and, if it landed afterwards, would
 quietly reintroduce what had been removed.  The order has to be the other way
 round: land the sim2root branches, then fix.  These tests are what makes the
 defect impossible to lose track of in the meantime.
+
+*2026-09-24:* that premise has lapsed.  ``dev_io_root_testmerges`` has one
+commit outside ``dev-next``, a 2025 merge of ``dev`` with no patch of its own,
+so the hunks above are content ``dev-next`` already has by another route, and
+merging the branch today conflicts in nothing under ``sim2root/``.  The
+defects are still left to the owners of ``sim2root/``; see the plan's
+*Corrections* section.
 """
 
 import ast

@@ -135,7 +135,12 @@ def CoreasToRawRoot(file, simID=None):
   GPSNanoSecs = 19961026#read_params(reas_input, "GPSNanoSecs")
   FieldDeclination = read_params(reas_input, "RotationAngleForMagfieldDeclination") # in degrees
 
-  if read_params(reas_input, "ShowerZenithAngle"):
+  # `read_params` returns None for a keyword the file does not carry, so the
+  # question here is "is the card present", not "is it non-zero".  Tested for
+  # truth, a genuine ShowerZenithAngle of 0.0 -- a vertical shower -- is
+  # falsy and silently takes the branch below, which discards the file's own
+  # parameters in favour of hard-coded Dunhuang values.
+  if read_params(reas_input, "ShowerZenithAngle") is not None:
     zenith = read_params(reas_input, "ShowerZenithAngle")
     azimuth = read_params(reas_input, "ShowerAzimuthAngle") + 180 #shift to GRAND conventions
 
@@ -170,6 +175,20 @@ def CoreasToRawRoot(file, simID=None):
     FieldIntensity = 0.5648236565
     FieldInclination = 61.60505071
     GeomagneticAngle = 93.82137564
+
+    # Xmax's cartesian position is derived from DistanceOfShowerMaximum, which
+    # this branch does not have (-1 above, meaning "unknown").  The branch
+    # above defines Xmax_NWU and the write below is unconditional, so leaving
+    # the name undefined here aborts the conversion partway through with
+    # `UnboundLocalError: Xmax_NWU` -- which is what the repository's own
+    # CoREAS fixture does (issue #159).
+    #
+    # NaN rather than zeros: a zero vector reads downstream as a real Xmax
+    # sitting at the array origin, and nothing between here and a plot range
+    # checks it.  NaN propagates visibly instead of being averaged in.
+    print("[WARNING] Xmax position unavailable on this path "
+          "(no DistanceOfShowerMaximum); writing NaN")
+    Xmax_NWU = np.full(3, np.nan)
 
   # from inp file
   nshow = read_params(inp_input, "NSHOW") # number of showers - should always be 1 for coreas, so maybe we dont need this parameter at all

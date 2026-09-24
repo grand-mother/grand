@@ -470,7 +470,12 @@ VERDICTS = {
         "from 51.6 to 84.2 degrees. Subtract the site altitude and the "
         "geometry becomes self-consistent to a tenth of a metre. The direction "
         "feeding the antenna response is wrong by 1 degree for a distant Xmax "
-        "and 7 degrees for a close one. Filed as grand-mother/grand#160; the "
+        "and 7 degrees for a close one. Filed as grand-mother/grand#160. "
+        "Settled 2026-09-24 by running the converter on the committed .sry "
+        "files: today's ZHAireSRawToRawROOT.py writes the ground-relative "
+        "height exactly, so the samples are stale, not the code -- and "
+        "root_files.py's 'DC2 FIX' is calibrated to that staleness (see "
+        "issue-xmax-sample-vintage). The "
         "branch itself records no conclusion and there is no third commit. It "
         "was cut ten days after issue #106 reported the symptom."),
 
