@@ -130,6 +130,17 @@ VERDICTS_REVIEWED = "2026-09-08"
 #: branch), ``no`` (nothing to take), ``decide`` (a question for the
 #: collaboration, not a merge), ``ask`` (needs its author first).
 VERDICTS = {
+    "dev": ("absorb",
+        "The old trunk, which dev-next was cut from and replaces. Everything "
+        "on it was in dev-next until 2026-09-15, when Lech Wiktor Piotrowski "
+        "added one commit, 7cd02097: an acknowledgement of the NCN OPUS grant "
+        "in README.rst, a file dev-next had already replaced with README.md."
+        "\n\n"
+        "The text was copied into README.md verbatim rather than merging dev. "
+        "So git still counts that commit as outstanding, and this entry is "
+        "what marks it as taken. **It covers 7cd02097 only.** If dev shows "
+        "more than one outstanding patch, something new was pushed to it -- "
+        "the freeze has still not been announced -- and needs looking at."),
     "dev_marion": ("merge",
         "The reconstruction package: 38 new files under grand/analysis/. "
         "Test-merges clean. Merging is easy; the open question is whether "
@@ -512,6 +523,9 @@ VERDICTS = {
 #: to be a preamble -- "Two independent reasons, either sufficient." is not a
 #: reason.
 DECIDED = {
+    "dev": ("2026-09-24",
+        "content taken: 7cd02097's grant acknowledgement copied verbatim into "
+        "README.md. dev itself is not merged; this covers that one commit"),
     "dependabot/pip/binder/pillow-9.3.0": ("2026-09-08",
         "binder/ was deleted from the trunk in January 2025, so merging would "
         "resurrect it; and the security alert is against master, which this "

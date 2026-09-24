@@ -54,6 +54,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **Acknowledgement of the NCN OPUS grant** (no. 2022/45/B/ST2/02889) in
+  `README.md`, copied verbatim from `dev`, where it was added to `README.rst`
+  on 2026-09-15 after `dev-next` had replaced that file.
+
 - **One environment for everything.** `env/conda/grand-dev.yml` consolidates
   four dependency lists that had drifted apart: the previous runtime file, the
   pip-installed test and lint tools, a third set under `env/docker_*/` that was

@@ -64,7 +64,7 @@ Judgements, as of 2026-09-08 unless noted:
 | Documentation | 23 authored pages + API over 33 of 34 modules + the Handbook; **zero warnings**; **published at https://grand-mother.github.io/grand/** |
 | CI | `Code Quality`, `Tests`, `Notebooks` and `Documentation Deployment` green on `dev-next` |
 | Branch protection | `dev-next`: force-push and deletion blocked, enforced on admins |
-| Promotion | exit criteria in Phase 9. **2 and 4 met** — all four workflows green, `dev` tagged `archive/dev-2026-09`. **1 lapsed on 2026-09-15**: `dev` gained `7cd02097`, Lech Wiktor Piotrowski's four-line acknowledgement of the NCN OPUS grant in `README.rst`, so `dev-next` no longer carries all of `dev`. It needs porting to `README.md` — a funding acknowledgement is not optional — and it is the concrete cost of the freeze never having been announced. **3 and 5 outstanding**: the clean-machine install, and the freeze announcement. 6 is checked on the day |
+| Promotion | exit criteria in Phase 9. **1, 2 and 4 met** — `dev-next` carries all of `dev`'s content, all four workflows green, `dev` tagged `archive/dev-2026-09`. Criterion 1 lapsed once: on 2026-09-15 `dev` gained `7cd02097`, Lech Wiktor Piotrowski's acknowledgement of the NCN OPUS grant in `README.rst`. On 2026-09-24 the text was copied into `README.md` verbatim, without merging `dev`, so git still counts that one commit as outstanding and `BRANCHES.md` marks it absorbed. It is the cost of the freeze never having been announced: anything else pushed to `dev` needs the same treatment until it is. **3 and 5 outstanding**: the clean-machine install, and the freeze announcement. 6 is checked on the day |
 
 ## Phases
 
