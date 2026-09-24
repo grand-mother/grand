@@ -830,7 +830,7 @@ always doing the work.
 The package cannot be imported without ROOT
 --------------------------------------------
 
-:Status: **partly fixed** 2026-09-24 — ``import grand`` and the coordinate
+:Status: open — **partly fixed** 2026-09-24: ``import grand`` and the coordinate
          code no longer need ROOT; the data layer, topography and simulation
          still do
 :Affects: documentation builds, and anything using topography or simulation
