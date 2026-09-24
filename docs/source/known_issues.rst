@@ -635,8 +635,8 @@ The committed ZHAireS samples carry Xmax 1264 m too high, and only one reader co
 
 :Status: open — a decision, not a patch
 :Found: 2026-09 (grand-mother/grand#160); cause settled 2026-09-24
-:Affects: ``grand/sim/shower/gen_shower.py`` and ``grand/aoi/event.py`` on
-          the committed samples; ``grand/dataio/root_files.py`` on any
+:Affects: ``grand/sim/shower/gen_shower.py``, ``grand/aoi/event.py`` and the
+          event viewer's angular plane on the committed samples; ``grand/dataio/root_files.py`` on any
           regenerated sample
 :Test: ``tests/sim2root/test_xmax_frame.py``
 
@@ -675,6 +675,13 @@ raw field: ``gen_shower.py`` builds the shower maximum that feeds the antenna
 response from it, and ``aoi/event.py`` stores it as ``Xmaxpos``. On the
 committed samples, those are 1264 m high.
 
+The event viewer (``examples/eventviewer/``) also reads the raw field, and
+its *Angular Plane* panel is where the offset is most visible: measured on
+the committed sample, each antenna's angle from Xmax moves by up to 6.5
+degrees for event 1618 and 1.0 degree for the inclined event 13790 once the
+1264 m is removed — against a Cherenkov ring about a degree wide, which is
+what that panel exists to show.
+
 **Regenerating the samples does not fix it; it moves it.** On fresh output
 the raw field is right, so ``gen_shower.py`` and ``aoi/event.py`` become
 correct, and ``FIX_xmax_pos`` lands at 3235.4 m for event 1618 — 1264 m below
@@ -688,6 +695,44 @@ itself was processed under the old convention, so the second may be needed
 regardless. ``test_the_dc2_xmax_fix_is_right_only_for_the_committed_sample``
 fails whichever is done, and should then be rewritten to assert the new
 behaviour.
+
+
+.. _issue-magnetic-field-units:
+
+``magnetic_field`` holds two angles and a strength, in a unit nothing records
+------------------------------------------------------------------------------
+
+:Status: open — one reader fixed 2026-09-24
+:Affects: anything that reads ``TShower.magnetic_field``
+:Test: ``tests/examples/test_eventviewer.py`` (the viewer's use of it)
+
+``magnetic_field`` is not a vector. Both converters store
+``[inclination, declination, strength]``, as ``sim2root.py`` says in a
+comment, but the strength's unit differs between them and is recorded
+nowhere:
+
+==============================================  ===========================
+Sample                                          ``magnetic_field``
+==============================================  ===========================
+``sim_Xiaodushan_..._ZHAireS_0000``             ``[61.6, 0.13, 56.482]`` (µT)
+``sim_Dunhuang_..._CoREAS-NJ_0000``             ``[61.605, 0.125, 0.565]`` (G)
+==============================================  ===========================
+
+The CoREAS converter's comment says it converts gauss to mT, which would
+give 0.0565; the path this fixture takes hard-codes 0.5648 with no
+conversion.
+
+**It has already misled one reader.** The event viewer normalised the three
+numbers as if they were Bx, By, Bz, which at Xiaodushan gives a direction
+104 degrees from the real field and turned the vxB axes of its shower-plane
+and angular-plane panels by 91 to 114 degrees. Fixed on 2026-09-24: it now
+builds the direction from the two angles, and a test compares it with
+GRANDlib's geomagnetic model at the site. The field name, and the absence
+of a unit, invite the same mistake elsewhere.
+
+**What would settle it.** Store one unit (the schema has no place for one),
+or split the field into named components; either is a data-format change
+and belongs to whoever owns ``grand/dataio/``.
 
 .. _issue-nutrig-field-names:
 

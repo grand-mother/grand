@@ -210,3 +210,50 @@ jobs:
           # Empty when the secret is absent, which is the current state; the
           # action then attempts a tokenless upload.
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # One check that says whether the suite passed, for branch protection to
+  # require -- and that cannot be green when the suite never ran.
+  #
+  # Without it, a skipped job reports as a neutral pass, and "Tests" on a
+  # commit reads green in two very different cases: the suite ran and passed,
+  # or `changes` decided the commit was documentation-only and nothing ran.
+  # In September 2026 eight of twelve consecutive runs were skips, and that is
+  # how a regression was nearly attributed to the wrong commit.
+  #
+  # This job always runs, and passes only when:
+  #   - the suite ran and the supported leg (6.36) passed, or
+  #   - `changes` said documentation-only, in which case it says so, in the
+  #     log and in the run summary, instead of looking like a pass.
+  # Anything else fails: `changes` crashing, the suite being skipped when it
+  # should have run, cancelled, or failed.  The 6.38 leg is continue-on-error
+  # (see above), so it does not reach this job's verdict, by design.
+  gate:
+    name: Tests gate
+    needs: [changes, pytest]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          CODE: ${{ needs.changes.outputs.code }}
+          SUITE: ${{ needs.pytest.result }}
+        run: |
+          echo "changes: $CHANGES   code changed: ${CODE:-unknown}   suite: $SUITE"
+          if [ "$CHANGES" != 'success' ]; then
+            echo "::error::Could not work out what changed ($CHANGES), so there is no telling whether the suite should have run."
+            exit 1
+          fi
+          if [ "$CODE" = 'false' ]; then
+            msg='Documentation-only change: the test suite did not run.'
+            echo "::notice::$msg"
+            echo "### $msg" >> "$GITHUB_STEP_SUMMARY"
+            echo 'This check passes because nothing it covers changed, not because tests passed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$SUITE" = 'success' ]; then
+            echo '### The test suite ran and passed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "::error::Code changed but the test suite result is '$SUITE'. Green requires the suite to have run and passed."
+          exit 1

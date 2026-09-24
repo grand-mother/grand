@@ -255,3 +255,51 @@ def test_a_different_run_can_be_loaded_from_the_box():
     # A path that does not exist must be refused, not half-applied.
     viewer._load_directory(types.SimpleNamespace(new='/no/such/run'))
     assert viewer.datadir == str(other)
+
+
+@needs_viewer
+@needs_sample
+def test_the_magnetic_field_points_the_way_the_geomagnetic_model_says():
+    r"""The field that sets the vxB axes is the real one, not three numbers.
+
+    ``magnetic_field`` holds [inclination, declination, strength], and the
+    viewer used to normalise those as if they were Bx, By, Bz.  At Xiaodushan
+    that gave a "field" 104 degrees from the true one, pointing *upwards*, and
+    turned the vxB axes of the shower-plane and angular-plane panels by 91 to
+    114 degrees -- while every other test here passed, because they check that
+    the panels draw, not what they draw.
+
+    The oracle is GRANDlib's own geomagnetic model at the sample's site, not
+    the viewer's arithmetic.  The model answers in east-north-up; the viewer
+    works in GRAND's north-west-up, so the model's vector is rotated into it.
+    The tolerance allows for the two being different epochs of the field
+    model (61.6 against 61.8 degrees of inclination).
+    """
+    import numpy as np
+    import uproot
+    from grand.geo.coordinates import Geodetic
+    from grand.geo.geomagnet import Geomagnet
+
+    module = _viewer_module()
+    viewer = module.EventViewer(datadir=str(SAMPLE), event=0)
+    viewer.view(serve=False)            # loads the event, as a user's run does
+    b_viewer = np.array([viewer.bx, viewer.by, viewer.bz])
+
+    run = sorted(SAMPLE.glob('run_*_L0_*.root'))[0]
+    lat, lon, height = uproot.open(str(run))['trun']['origin_geoid'].array(
+        library='np')[0]
+    model = Geomagnet(location=Geodetic(latitude=float(lat),
+                                        longitude=float(lon),
+                                        height=float(height)))
+    east, north, up = (float(np.ravel(c)[0]) for c in
+                       (model.field.x, model.field.y, model.field.z))
+    b_model = np.array([north, -east, up])
+    b_model /= np.linalg.norm(b_model)
+
+    assert np.linalg.norm(b_viewer) == pytest.approx(1.0, abs=1e-9)
+    assert b_viewer[2] < 0, (
+        'the field points upwards; in the northern hemisphere it dips down')
+    angle = np.degrees(np.arccos(np.clip(b_viewer @ b_model, -1.0, 1.0)))
+    assert angle < 1.0, (
+        'the viewer\'s field is %.1f degrees from the geomagnetic model at '
+        'the site; its vxB axes are rotated by about as much' % angle)

@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The event viewer's vxB axes point the right way.** It treated
+  `magnetic_field` -- [inclination, declination, strength] -- as a vector
+  and normalised it, giving a field 104° from the real one at Xiaodushan
+  and turning its shower-plane and angular-plane axes by 91–114°. It now
+  builds the direction from the angles; a new test compares it with the
+  geomagnetic model at the site, and fails on the old code.
+
 - **The golden pipeline test no longer fails at random on CI.** It divided
   each difference by that sample's own value, so rounding on a sample near a
   zero crossing read as a large relative error. On 2026-09-24 one leg failed
@@ -61,6 +68,23 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   the first column past its rule.
 
 ### Added
+
+- **Decision material for the three branches waiting on the collaboration**
+  (`dev_marion`, `grandio_light`, `snonis_sim2root_test_merge`), in
+  `resources/dev/dev-next/DECISIONS.md`: what each changes, what merging it
+  would also do, and the question it asks, each measured.
+
+- **The schema snapshot notices new trees.** It compared only a hard-coded
+  list of tree classes, so a new tree -- the largest format change there is
+  -- passed unseen: `dev_marion`'s 27-field `TRecons` left it green. A new
+  test finds every tree class in the data modules and fails on any that is
+  not pinned. It also found `TRunRawVoltage`, on the trunk and never pinned;
+  it is now in the snapshot.
+
+- **A `Tests gate` CI check** that is green only when the test suite ran and
+  passed, or when a commit changed documentation only, in which case it says
+  that nothing ran. A skipped test job used to read as a pass. Designed to be
+  the required check for `dev-next`; making it required is an admin setting.
 
 - **Acknowledgement of the NCN OPUS grant** (no. 2022/45/B/ST2/02889) in
   `README.md`, copied verbatim from `dev`, where it was added to `README.rst`
@@ -116,6 +140,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Known
 
+- `magnetic_field` stores [inclination, declination, strength] with the
+  strength in µT from ZHAireS and in gauss from CoREAS, and no unit
+  recorded. See `issue-magnetic-field-units`.
+- The event viewer's angular plane inherits #160: on the committed samples
+  each antenna's angle from Xmax is off by up to 6.5°.
 - The Galactic-noise normalisation does not reproduce the tabulated model: the
   simulated RMS is 0.33 of the Parseval value with the current `size_out/2`,
   and would be 0.47 with the proposed `size_out/sqrt(2)`. Neither is 1. See

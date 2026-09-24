@@ -39,7 +39,7 @@ SNAPSHOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # The tree classes whose layout is a data contract.  Ordered as they appear
 # in the data model, not alphabetically, so the snapshot reads like the
 # format documentation.
-TREE_CLASSES = ['TRun', 'TRunVoltage', 'TADC', 'TRawVoltage', 'TVoltage',
+TREE_CLASSES = ['TRun', 'TRunVoltage', 'TRunRawVoltage', 'TADC', 'TRawVoltage', 'TVoltage',
                 'TEfield', 'TShower', 'TShowerSim', 'TRunEfieldSim',
                 'TRunShowerSim', 'TRunNoise']
 
@@ -92,6 +92,38 @@ def test_schema_matches_snapshot():
             was = recorded.get(cls, {}).get(field)
             assert was == kind, (
                 'type of %s.%s changed from %r to %r' % (cls, field, was, kind))
+
+
+def test_every_tree_class_is_pinned():
+    r"""No tree class escapes the snapshot by not being in `TREE_CLASSES`.
+
+    The snapshot only compares the classes it is told about, so a *new* tree
+    passed it unseen -- which is the largest schema change there is.  Checked
+    on 2026-09-24 against ``dev_marion``, whose ``TRecons`` adds a tree of 27
+    fields and left this file green.  It also found ``TRunRawVoltage``, a tree
+    on the trunk that had never been pinned at all.
+
+    Every subclass of the two mother trees defined in the data modules is a
+    tree; each must be listed above and so recorded in the snapshot.
+    """
+    import inspect
+
+    import grand.dataio.event_trees as et
+    import grand.dataio.run_trees as rt
+
+    mothers = (et.MotherEventTree, rt.MotherRunTree)
+    defined = sorted(
+        name for module in (et, rt)
+        for name, obj in vars(module).items()
+        if inspect.isclass(obj) and obj.__module__ == module.__name__
+        and issubclass(obj, mothers) and obj not in mothers)
+
+    missing = [name for name in defined if name not in TREE_CLASSES]
+    assert not missing, (
+        'tree classes not pinned by the schema snapshot: %s.  A new tree is a '
+        'new part of the data format: add it to TREE_CLASSES in %s, then '
+        'regenerate with `python %s --write` so it appears in the diff.'
+        % (missing, __file__, __file__))
 
 
 def test_no_duplicate_meaning_in_tadc():

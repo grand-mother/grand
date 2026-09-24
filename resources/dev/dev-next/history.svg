@@ -317,6 +317,6 @@
 <text x="1594.5" y="120.0" font-size="7.4" fill="#7A8994">the trunk</text>
 <rect x="1642.0" y="113.0" width="8" height="8" rx="4" fill="#ECEFF1" stroke="#AEBAC2"/>
 <text x="1653.0" y="120.0" font-size="7.4" fill="#7A8994">merged, then deleted</text>
-<text x="1748.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-24 14:41 UTC by docs/dev/make_history_diagram.py</text>
+<text x="1748.0" y="631.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-24 15:03 UTC by docs/dev/make_history_diagram.py</text>
 <text x="1748.0" y="641.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 4a003705</text>
 </svg>
