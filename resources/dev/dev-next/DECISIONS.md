@@ -12,6 +12,18 @@ on full git history. Where code is said to fail, it was run.
 
 ## 1. `dev_marion` — does reconstruction live in GRANDlib?
 
+> **Decided 2026-09-24: yes, in `grand/analysis/`; merged.** The branch was
+> merged as it stood, so the history is Marion Guelfand's, and each
+> prerequisite below followed as its own commit: `TRecons` pinned in the
+> schema snapshot; `iminuit` declared (conda environment, and an optional
+> `analysis` extra in `pyproject.toml`); the example data moved to
+> `examples/analysis/`; round-trip tests added before any cleanup; the code
+> brought within the lint gate; and the empty `grand/recon/` removed. Two
+> bugs found on the way were fixed: the Cherenkov solver used `np.infty`,
+> which NumPy 2 removed, and `grand/analysis/coords/` would not have been in
+> a built package. Not yet tested: whether the fits agree with simulated or
+> measured showers.
+
 **What it is.** Marion Guelfand's reconstruction package, January–February
 2026, seven commits. It adds `grand/analysis/` (38 files):
 

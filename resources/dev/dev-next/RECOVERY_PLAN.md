@@ -230,7 +230,9 @@ a third abandoned trunk.
       open behind it: whether anything simulated with the old constant gets
       reprocessed, and what becomes of `refact_galaxy`, which rewrites the
       same model in new modules.
-- [ ] Where reconstruction lives — **note that an implementation already
+- [x] Where reconstruction lives — **decided 2026-09-24: in GRANDlib, as
+      `grand/analysis/`; `dev_marion` merged with its prerequisites, and the
+      `grand/recon/` placeholder removed.** Note that an implementation already
       exists**: `dev_marion` adds `grand/analysis/`, 38 files, alongside the
       `grand/recon/` already on `dev-next`. It merges clean. The decision is
       which of the two is the reconstruction, not whether to write one.

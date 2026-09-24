@@ -28,12 +28,12 @@ each subpackage):
 ======================================  =====  =====
 Subpackage                              Lines  Share
 ======================================  =====  =====
-``grand.sim`` — instrument response     5855   29.2%
-``grand.dataio`` — data model           5086   25.4%
+``grand.sim`` — instrument response     5856   29.1%
+``grand.dataio`` — data model           5086   25.3%
 ``grand.geo`` — geometry and geodesy    3857   19.2%
 ``grand.aoi`` — user-facing API         2171   10.8%
 ``grand.basis`` — traces and array viz  1908   9.5%
-``grand.analysis`` — reconstruction     1163   5.8%
+``grand.analysis`` — reconstruction     1261   6.3%
 ======================================  =====  =====
 
 The pipeline runs forward, shower to field to voltage to ADC, and since

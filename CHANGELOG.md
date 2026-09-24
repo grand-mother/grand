@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Installed GRANDlib contains the Galactic noise model.** `grand/sim/noise/`
+  had no `__init__.py`, so package discovery skipped it and a built package
+  shipped without `galaxy.py`. Found by a new test that checks every
+  directory of code under `grand/` is packaged; the same test caught
+  `grand/analysis/coords/` before it could ship.
+
 - **The CoREAS site table is in metres and names an unknown site.** It
   stored altitudes in centimetres (kept out of the output only by a later
   override line) and crashed on any other site with "not enough values to
@@ -74,6 +80,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   the first column past its rule.
 
 ### Added
+
+- **Reconstruction: `grand.analysis`** (Marion Guelfand, from `dev_marion`).
+  Plane-wave, spherical-wave and ADF fits of arrival direction and Xmax
+  distance, an electromagnetic-energy proxy, signal extraction, footprint
+  geometry and a Cherenkov-angle model, with results in a new `TRecons` tree.
+  Needs `iminuit` (`pip install -e ".[analysis]"`; in the conda
+  environment). Tested for self-consistency -- each fit recovers what its
+  forward model generates -- not yet against simulated or measured showers.
+  Examples in `examples/analysis/`.
 
 - **GRAND's angle convention is stated and pinned.** A shower's zenith and
   azimuth name where it comes from; the coordinates page now says so, and
@@ -145,6 +160,9 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   ignore list may shrink and must never grow.
 
 ### Changed
+
+- **`grand.recon` removed.** It held two classes with a constructor and
+  nothing else; reconstruction is `grand.analysis`.
 
 - **Reading GRAND files no longer loads the physics.** `grand/__init__.py`
   loads its public names on first use instead of importing the geometry and
