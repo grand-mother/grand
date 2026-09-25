@@ -526,7 +526,18 @@ VERDICTS = {
         "594 edits to live files and 295,000 deletions: this is the proposal "
         "to split GRANDlib into a light I/O package, not a change to review. "
         "It needs an answer to the split question before it needs a merge."),
-    "refact_galaxy": ("ask",
+    "refact_galaxy": ("no",
+        "**Decided 2026-09-25: not merged; nothing to take.** luckyjim agreed "
+        "either way. Checked part by part against dev-next: the asnumpy() "
+        "trace conversion is already on the trunk (efield2voltage.py; 35 ms "
+        "against 483 ms for the sample event, identical values); the removed "
+        "LST offset is already fixed there, at the table's 20-minute "
+        "resolution where the branch rounds to whole hours; the MHz fix "
+        "concerns only the branch's own files; computing the spectrum once "
+        "per run saves a sub-millisecond file load against ~110 ms of noise "
+        "generation per event; and GalacticAntComponent re-implements a model "
+        "the trunk has verified. It also imports logger from ipyparallel."
+        "\n\n"
         "A parallel galactic-noise implementation -- it adds galaxy_new.py "
         "beside galaxy.py rather than replacing it -- and touches "
         "efield2voltage.py and signal.py, which conflict. It overlaps the "
@@ -547,6 +558,11 @@ VERDICTS = {
 #: to be a preamble -- "Two independent reasons, either sufficient." is not a
 #: reason.
 DECIDED = {
+    "refact_galaxy": ("2026-09-25",
+        "not merged, with its author's agreement: what it fixed is already on "
+        "the trunk (asnumpy trace conversion, the LST offset at finer "
+        "resolution), and the rest re-implements the verified noise model for "
+        "a negligible speed-up"),
     "radio": ("2026-09-24",
         "content taken: its star-shape trace interpolation, the only spatial "
         "interpolation in the repository, copied with its two helpers to "
