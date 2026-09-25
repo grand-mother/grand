@@ -107,6 +107,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **Every branch is now settled.** `refact_galaxy`, the last one open, is
+  not merged, with luckyjim's agreement: its fixes are already on the trunk
+  and the rest re-implements the verified galactic-noise model.
+
 - **Star-shape trace interpolation is kept, in `examples/old/radio/`.** From
   the 2019 `radio` branch (Anne Zilles, Valentin Niess): the only code in the
   repository that interpolates an electric-field trace to a new antenna
