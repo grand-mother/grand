@@ -40,6 +40,7 @@ import mix  # functions written by Valentin Decoene.
 import seaborn as sns  # used for color pallettes.
 
 from grand.aoi import EventList
+from grand.dataio.xmax_frame import xmax_above_ground
 
 
 # Defaults at module scope, so that importing this file and constructing an
@@ -190,7 +191,13 @@ class EventViewer:
         self.energy = e.tsimshower.energy_primary/1e9  # GeV to EeV
         self.zenith = np.deg2rad(e.tsimshower.zenith)
         self.azimuth = np.deg2rad(e.tsimshower.azimuth)
-        self.x_xmax, self.y_xmax, self.z_xmax = e.tsimshower.xmax_pos_shc
+        # Above the ground whichever frame the file used: the committed
+        # samples store it above sea level (grand-mother/grand#160), which
+        # put this viewer's angular plane off by up to 6.5 degrees.
+        xmax, self.xmax_frame = xmax_above_ground(
+            e.tsimshower.xmax_pos_shc, e.tsimshower.zenith,
+            e.tsimshower.azimuth, e.trun.origin_geoid[2])
+        self.x_xmax, self.y_xmax, self.z_xmax = xmax
         self.slant_xmax = e.tsimshower.xmax_grams
 
         # Magnetic field.  ``magnetic_field`` is not a vector: the converters

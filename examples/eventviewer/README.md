@@ -64,9 +64,9 @@ Stated plainly so nobody loses an afternoon discovering it:
   fixed.** The shower-plane and angular-plane axes were built by treating the
   stored magnetic-field angles as a vector, which turned them by 91–114°; the
   test below now checks the field against the geomagnetic model. The angular
-  plane is still off on the committed samples, by up to 6.5°, because their
-  Xmax is 1264 m too high (grand-mother/grand#160) — a problem in the samples,
-  not the viewer.
+  plane was off on the committed samples, by up to 6.5°, because they store
+  Xmax 1264 m too high (grand-mother/grand#160); since 2026-09-24 the viewer
+  detects that from the file and corrects it.
 - `mix.py` carries a band-pass filter that duplicates
   `grand.basis.signal.get_filter`. Left alone deliberately: consolidating it
   is a decision about what this tool is for.

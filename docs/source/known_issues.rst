@@ -633,7 +633,7 @@ removed.
 The committed ZHAireS samples carry Xmax 1264 m too high, and only one reader corrects it
 ------------------------------------------------------------------------------------------
 
-:Status: open — a decision, not a patch
+:Status: **fixed** 2026-09-24 — the readers detect the frame; kept here until it appears in a release changelog
 :Found: 2026-09 (grand-mother/grand#160); cause settled 2026-09-24
 :Affects: ``grand/sim/shower/gen_shower.py``, ``grand/aoi/event.py`` and the
           event viewer's angular plane on the committed samples; ``grand/dataio/root_files.py`` on any
@@ -688,13 +688,24 @@ correct, and ``FIX_xmax_pos`` lands at 3235.4 m for event 1618 — 1264 m below
 Xmax. No vintage of the data makes every reader correct; the samples and the
 DC2 FIX have to change together.
 
-**What would settle it.** One decision, in one of two forms: regenerate the
-samples and delete the DC2 FIX in the same change; or keep the samples and
-make ``root_files.py`` detect which convention it is reading. Data from DC2
-itself was processed under the old convention, so the second may be needed
-regardless. ``test_the_dc2_xmax_fix_is_right_only_for_the_committed_sample``
-fails whichever is done, and should then be rewritten to assert the new
-behaviour.
+**How it was settled.** Decided 2026-09-24: keep the samples, and have the
+readers detect the convention, since data from DC2 itself was written under
+the old one. ``grand/dataio/xmax_frame.py`` reads it from the file's own
+geometry: Xmax lies on the shower axis, so the vector from the core to Xmax
+must point along the stored zenith and azimuth. On all twelve committed
+ZHAireS events the ground-relative reading does so to 0.001 degrees and the
+raw one misses by 0.49 to 7.0 degrees. A value that follows neither -- NaN
+from the CoREAS converter, or a synthetic test shower -- is left as stored,
+with a warning.
+
+``root_files.py``, ``gen_shower.py``, ``aoi/event.py`` and the event viewer
+all use it, so every reader is right on both vintages.
+``test_the_reader_places_xmax_right_on_both_vintages`` runs the real reader on
+the committed sample and on fresh converter output, and fails, 1264 m low on
+the fresh file, if the unconditional subtraction is put back.
+
+A vertical shower cannot be told apart this way -- both readings point
+straight up -- and is left as stored.
 
 
 .. _issue-magnetic-field-units:

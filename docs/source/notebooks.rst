@@ -134,9 +134,9 @@ Available
    How to run ``examples/eventviewer/``, from the command line and from
    Python, and what each of its panels computes, redrawn as static figures.
    Covers the magnetic-field fix that turned the shower-plane axes the right
-   way in September 2026, and measures how far the angular plane is off on
-   the committed samples because of their Xmax
-   (:ref:`issue-xmax-sample-vintage`): 6.5° for one event, 1° for the other.
+   way in September 2026, and the Xmax correction that fixed the angular
+   plane on the committed samples (:ref:`issue-xmax-sample-vintage`), which
+   had put it off by 6.5° for one event and 1° for the other.
 
 .. note::
 

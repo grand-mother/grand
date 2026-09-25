@@ -103,7 +103,7 @@
 <rect x="1500.0" y="168.0" width="232" height="46" rx="4" fill="#EAF3F9" stroke="#5B8DB3" stroke-width="1.1"/>
 <text x="1508.0" y="182.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#3F6F94">dev-next-ipfxhh</text>
 <text x="1508.0" y="194.0" font-size="8" fill="#5A6A73">recovery working branch</text>
-<text x="1508.0" y="207.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#3F6F94">2 patches in its open PR</text>
+<text x="1508.0" y="207.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#3F6F94">10 patches in its open PR</text>
 <text x="1724.0" y="207.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">26-09-24 Claude</text>
 <rect x="916.0" y="654.0" width="232" height="46" rx="4" fill="#E1F1EA" stroke="#1D7A57" stroke-width="1.1"/>
 <text x="924.0" y="668.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#1D7A57">dev_Event_write</text>
@@ -235,10 +235,10 @@
 <text x="48.0" y="410.0" font-size="8" fill="#5A6A73">drop astropy</text>
 <text x="48.0" y="423.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#A9484E">not merging 26-09-08</text>
 <text x="264.0" y="423.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">21-07-08 Valentin Niess</text>
-<rect x="40.0" y="438.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
-<text x="48.0" y="452.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">radio</text>
+<rect x="40.0" y="438.0" width="232" height="46" rx="4" fill="#EFE9F5" stroke="#6B4E8E" stroke-width="1.1"/>
+<text x="48.0" y="452.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#6B4E8E">radio</text>
 <text x="48.0" y="464.0" font-size="8" fill="#5A6A73">2020 lib/ work</text>
-<text x="48.0" y="477.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#8A6210">20 patches out</text>
+<text x="48.0" y="477.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#6B4E8E">content in 26-09-24</text>
 <text x="264.0" y="477.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">20-01-19 Olivier Martine</text>
 <rect x="916.0" y="384.0" width="232" height="46" rx="4" fill="#F6EDDA" stroke="#8A6210" stroke-width="1.1"/>
 <text x="924.0" y="398.0" font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600" fill="#8A6210">refact_galaxy</text>
@@ -255,6 +255,6 @@
 <text x="632.0" y="518.0" font-size="8" fill="#5A6A73">ARM install notes</text>
 <text x="632.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#6B4E8E">content in 26-09-08</text>
 <text x="848.0" y="531.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#7A8994" text-anchor="end">25-03-07 Tien</text>
-<text x="1732.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-24 17:05 UTC by docs/dev/make_branch_diagram.py</text>
+<text x="1732.0" y="744.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">generated 2026-09-24 22:09 UTC by docs/dev/make_branch_diagram.py</text>
 <text x="1732.0" y="755.0" font-family="IBM Plex Mono, monospace" font-size="7" fill="#9AA7AF" text-anchor="end">script at commit 7234fae3</text>
 </svg>

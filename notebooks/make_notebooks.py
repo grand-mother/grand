@@ -3333,9 +3333,8 @@ home is a browser tab. This notebook does three things with it:
 2. **opens up** what it computes, drawing each panel as a static figure, so
    you know what you are looking at before you look at it — and so this page
    has pictures on GitHub, which cannot display the interactive version;
-3. says plainly **what to trust**: one of its panels was wrong until September
-   2026, and another is still off on the committed sample data, for a reason
-   that lies outside the viewer.
+3. says plainly **what to trust**: two of its panels were wrong until September
+   2026, one because of the viewer and one because of the sample data.
 
 **Prerequisites**: the `grand-dev` environment plus the viewer's plotting
 stack, which is not part of the normal environment:
@@ -3581,7 +3580,7 @@ turned by about 100° about the origin, so any pattern that lines up with
 $\mathbf{v}\times\mathbf{B}$ — the polarisation, and the asymmetry of the
 footprint — lined up with the wrong axis.
 
-## 6. The angular plane, and a caveat that is not the viewer's
+## 6. The angular plane, and the Xmax it measures from
 
 The **Angular Plane** redraws the same antennas by *angle* rather than
 distance: how far off the axis each one is, as seen **from Xmax**. The radius
@@ -3590,18 +3589,21 @@ shower plane. In this plane the Cherenkov ring has a physical radius — the
 Cherenkov angle, around a degree — and the fourth panel, **Cherenkov Angle**,
 plots amplitude against $\omega$ directly so you can read it off.
 
-That makes the panel only as good as the Xmax position it measures from, and
-**on the sample data committed to this repository, Xmax is 1264 m too high**.
-The samples predate a fix in the ZHAireS converter and store Xmax's height
-above sea level where the format means height above the ground; the ground at
-Xiaodushan is at 1264 m. It is
-[grand-mother/grand#160](https://github.com/grand-mother/grand/issues/160), and
-its [known-issues entry](https://grand-mother.github.io/grand-docs/known_issues.html#issue-xmax-sample-vintage)
-explains why regenerating the samples does not simply fix it.
+That makes the panel only as good as the Xmax position it measures from.
+**The sample data committed to this repository stores Xmax 1264 m too high**:
+it predates a fix in the ZHAireS converter, and holds Xmax's height above sea
+level where the format means height above the ground (the ground at
+Xiaodushan is at 1264 m). That is
+[grand-mother/grand#160](https://github.com/grand-mother/grand/issues/160).
 
-The viewer reads the field as stored, so its angular plane inherits the
-offset. Measure it on both events in this run, by moving Xmax down by 1264 m
-and computing the angles again:'''),
+Since 2026-09-24 the viewer, like GRANDlib's readers, works out which of the
+two a file holds, from the file itself: Xmax lies on the shower axis, so it
+must point along the stored arrival direction, and only one reading does
+(`grand/dataio/xmax_frame.py`). `viewer.xmax_frame` says what it found.
+
+Here is what that correction is worth, on both events in this run: the
+angles as the viewer now computes them, against the angles from Xmax as
+stored:'''),
     code(r'''GROUND = 1264.0                                      # metres; origin_geoid[2] of the sample
 
 def angles_from_xmax(v):
@@ -3616,18 +3618,18 @@ for n in (0, 1):
     with contextlib.redirect_stdout(io.StringIO()):
         v = ev.EventViewer(SAMPLE, event=n)
         v.view(serve=False)
-    as_stored = angles_from_xmax(v)
-    v.z_xmax -= GROUND
     corrected = angles_from_xmax(v)
-    v.z_xmax += GROUND                                  # leave the viewer as it was
+    v.z_xmax += GROUND                                  # Xmax as the file stores it
+    as_stored = angles_from_xmax(v)
+    v.z_xmax -= GROUND                                  # leave the viewer as it was
     viewers[n] = (v, as_stored, corrected)
-    print("event %d: zenith %.1f deg, Xmax %.1f km above the core as stored"
-          % (n, np.degrees(v.zenith), v.z_xmax / 1e3))
+    print("event %d: zenith %.1f deg, file stores Xmax %s; %.1f km above the ground"
+          % (n, np.degrees(v.zenith), v.xmax_frame, v.z_xmax / 1e3))
     print("         omega moves by up to %.2f deg; antennas span %.2f-%.2f deg, then %.2f-%.2f deg"
           % (np.abs(corrected - as_stored).max(), as_stored.min(), as_stored.max(),
              corrected.min(), corrected.max()))'''),
-    md(r'''For the steep shower, event 1, the angles move by 6.5°, far more than the
-width of a Cherenkov ring. There is little to see in it, though: that event
+    md(r'''For the steep shower, event 1, reading Xmax as stored would move the angles
+by 6.5°, far more than the width of a Cherenkov ring. There is little to see in it, though: that event
 reached only five antennas, all faint. The inclined shower, event 0, has its
 Xmax much farther away, so the same 1264 m moves its angles by about 1° —
 comparable with the ring itself, and on 44 antennas.
@@ -3637,8 +3639,8 @@ event 0:'''),
     code(r'''v, as_stored, corrected = viewers[0]
 
 fig, ax = plt.subplots(figsize=(6.5, 4))
-ax.plot(as_stored, v.peakamplitude, "o", mfc="none", label="Xmax as stored (what the viewer shows)")
-ax.plot(corrected, v.peakamplitude, "o", label="Xmax 1264 m lower")
+ax.plot(as_stored, v.peakamplitude, "o", mfc="none", label="Xmax as stored (before 2026-09-24)")
+ax.plot(corrected, v.peakamplitude, "o", label="Xmax above the ground (what the viewer shows)")
 ax.set_xlabel(r"$\omega$, angle from the axis seen from Xmax [deg]")
 ax.set_ylabel("peak amplitude [uV/m]")
 ax.set_title("Event 0, zenith %.1f deg" % np.degrees(v.zenith))
@@ -3648,10 +3650,9 @@ plt.show()'''),
 out to about 0.7°, dim beyond 1°. That is the shape notebook 11 fits. Measured
 from the stored Xmax the same antennas scatter: the brightest reads 1.7°, and
 antennas of equal amplitude sit a degree apart, because moving the apex by
-1264 m changes each antenna's angle by a different amount. When you read the
-angular plane or the Cherenkov-angle panel on these samples, read them as
-illustrations of what the panels do, not as measurements. Data
-produced by the current converter does not have the offset.
+1264 m changes each antenna's angle by a different amount. That scatter is
+what the angular plane and the Cherenkov-angle panel showed on these samples
+until the viewer learned to tell the two apart.
 
 The ground and shower-plane panels do not use Xmax and are unaffected.
 
@@ -3699,7 +3700,7 @@ people read these notebooks, shows neither.
 | Footprint, peak times, traces | reads the data and draws it; nothing to go wrong beyond the band-pass choice |
 | Background array | the 2021 *proposed* layout, not the array in the data |
 | Shower plane | correct since September 2026; before that, axes rotated by 91–114° |
-| Angular plane, Cherenkov angle | correct method; on the committed samples, off by up to several degrees because of their Xmax (#160) |
+| Angular plane, Cherenkov angle | correct since 2026-09-24 on both kinds of file; before, off by up to 6.5° on the committed samples (#160) |
 | Colour selector | inert: changing it does nothing until something else redraws |
 
 The viewer's test, `tests/examples/test_eventviewer.py`, builds the whole page
