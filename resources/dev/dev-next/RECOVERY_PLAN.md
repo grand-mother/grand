@@ -470,8 +470,8 @@ Measured 2026-09-08.
       against), and #149, #151 and #153, whose commits are all on `dev-next`.
       #150 (Cramér-Rao bounds) was ported to `dev-next` by hand, since it
       targets `dev`; its only content not already there came in with the
-      port. #154 (unified install) stays open: it proposes a newer build
-      than `dev-next`'s, not an older one.
+      port. #154 (unified install, a Zig-based installer) was closed the
+      same day: the collaboration keeps the pip and Docker installations.
 - [ ] Delete `tests_with_docker.yml` from the 34 branches that still carry it.
       It pins the retired `ubuntu-20.04` runner, so every push to those
       branches queues 24 h and is cancelled — 41 such runs since 2025-08-07.

@@ -15,8 +15,9 @@
 #     conda activate grand-dev
 #     pip install -e ".[dev]"
 #
-# See PR 154 (unified_install), which addresses the same problem; whichever
-# lands, there should be exactly one of them.
+# PR 154 (unified_install) proposed a single Zig-based installer instead; it
+# was closed on 2026-09-28, the collaboration keeping the pip and Docker
+# installations.
 
 [build-system]
 requires = ["setuptools>=68"]
