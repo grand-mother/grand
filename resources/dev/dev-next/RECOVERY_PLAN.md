@@ -465,7 +465,13 @@ Measured 2026-09-08.
       33 branches qualify; `master`, `dev`, `main` and `ci/docker-test` are
       kept for their own phases. `BRANCHES.md` keeps listing archived
       branches, read from their tags.
-- [ ] Close PRs 9, 49, 52
+- [x] Close PRs 9, 49, 52 — **done 2026-09-28**, with the other open pull
+      requests that the recovery had settled: #146 (`refact_galaxy`, decided
+      against), and #149, #151 and #153, whose commits are all on `dev-next`.
+      #150 (Cramér-Rao bounds) was ported to `dev-next` by hand, since it
+      targets `dev`; its only content not already there came in with the
+      port. #154 (unified install) stays open: it proposes a newer build
+      than `dev-next`'s, not an older one.
 - [ ] Delete `tests_with_docker.yml` from the 34 branches that still carry it.
       It pins the retired `ubuntu-20.04` runner, so every push to those
       branches queues 24 h and is cancelled — 41 such runs since 2025-08-07.

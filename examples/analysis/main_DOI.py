@@ -8,7 +8,8 @@ import grand.analysis.constants as cons
 import grand.analysis.energy_reco as en
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom as geom
-from grand.dataio import TShower, TRawVoltage
+import grand.analysis.cramer_rao_bounds as crb
+from grand.dataio import TRecons, TRawVoltage
 import config as conf
 
 
@@ -58,13 +59,13 @@ def read_event_list(txt_file, start_line, stop_line='None'):
 # ---------------------------------------------------------------
 file_path = conf.antenna_file
 column_names = ['antenna_ID', 'x', 'y', 'z'] 
-antenna_position = pd.read_csv(file_path, sep='\s+', names=column_names, header=None)
+antenna_position = pd.read_csv(file_path, sep=r'\s+', names=column_names, header=None)
 antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int) 
 
 # ---------------------------------------------------------------
-# Initialize TShower object to store reconstructed events
+# Initialize TRecons object to store reconstructed events
 # ---------------------------------------------------------------
-trecons = TShower()  
+trecons = TRecons()  
 
 
 # ---------------------------------------------------------------
@@ -126,7 +127,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     Xants = np.column_stack((x_coords, y_coords, z_coords))
 
     # ---------------------------------------------------------------
-    # Store peak times, amplitudes and antenna positions in TShower
+    # Store peak times, amplitudes and antenna positions in TRecons
     # ---------------------------------------------------------------
     trecons.peak_time = peak_time
     trecons.peak_amps = peak_amps
@@ -153,6 +154,16 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.zenith_pwf = theta_pwf_rad
     trecons.azimuth_pwf = phi_pwf_rad
     trecons.chi2_pwf = chi2_pwf_reduced
+
+    # ---------------------------------------------------------------
+    # CRB calculation for PWF
+    # ---------------------------------------------------------------
+    stds_pwf = crb.CRB_PWF(
+        theta_pwf_rad, phi_pwf_rad, Xants
+    )
+
+    trecons.crb_zenith_pwf = stds_pwf[0]
+    trecons.crb_azimuth_pwf = stds_pwf[1]
 
     # ---------------------------------------------------------------
     # Spherical Wave Fit (SWF)
@@ -189,7 +200,16 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     sin_alpha = geom.sin_geomag_angle(theta_adf, phi_adf, B=cons.Bn)
     energy_elm = en.recons_energy_from_voltage(scaling_factor, sin_alpha)
 
-    # Store ADF and energy results and in TRecons
+    # ---------------------------------------------------------------
+    # CRB calculations for ADF and SWF
+    # ---------------------------------------------------------------
+    stds = crb.CRB_ADF_SWF(
+        theta_swf_rad, phi_swf_rad, r_xmax, t_s,
+        theta_adf, phi_adf, delta_omega, scaling_factor,
+        Xants
+    )
+
+    # Store ADF, energy results and CRB in TRecons
     trecons.zenith_adf = theta_adf
     trecons.azimuth_adf = phi_adf
     trecons.width = delta_omega
@@ -201,6 +221,16 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.adf_amplitude = amplitude_model
     trecons.distance_source_antenna = l_ant
     trecons.energy_elm_voltage = energy_elm
+
+    # Store CRB results
+    trecons.crb_zenith_adf = stds[4]
+    trecons.crb_azimuth_adf = stds[5]
+    trecons.crb_width = stds[6]
+    trecons.crb_scaling_factor = stds[7]
+    trecons.crb_zenith_swf = stds[0]
+    trecons.crb_azimuth_swf = stds[1]
+    trecons.crb_r_xmax = stds[2]
+    trecons.crb_t_s = stds[3]
 
     # ---------------------------------------------------------------
     # Fill the reconstruction tree for this event
@@ -215,7 +245,7 @@ trecons.write(f"{conf.output}")
 # ---------------------------------------------------------------
 # Read back the reconstructed events to check results
 # ---------------------------------------------------------------
-t_recons = TShower(f"{conf.output}")
+t_recons = TRecons(f"{conf.output}")
 
 for ev_no, run_no in t_recons.get_list_of_events():
     t_recons.get_event(ev_no, run_no)
