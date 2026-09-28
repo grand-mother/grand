@@ -89,6 +89,9 @@ Simulation
 .. automodule:: grand.sim.detector.adc
    :members:
 
+.. automodule:: grand.sim.detector.trigger
+   :members:
+
 .. automodule:: grand.sim.shower.gen_shower
    :members:
 
