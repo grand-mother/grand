@@ -1033,8 +1033,11 @@ class DataTree:
         self.modification_history = ""
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
         self.source_datetime = datetime.datetime.fromtimestamp(0)
-        self.modification_software = ""
-        self.modification_software_version = ""
+        # Which code wrote the tree (issue #137).  A tool that derives this tree
+        # from another may overwrite both, as extract_events.py does.
+        from grand import provenance
+        self.modification_software = provenance.SOFTWARE_NAME
+        self.modification_software_version = provenance.current()
         self.analysis_level = 0
 
     ## Assign metadata to the instance - without calling it, the instance does not show the metadata stored in the TTree

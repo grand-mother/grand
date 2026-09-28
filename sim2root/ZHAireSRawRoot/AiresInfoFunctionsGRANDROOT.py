@@ -1021,9 +1021,11 @@ def GetAtmosphericModelFromSry(sry_file,outmode="N/A"):
 
 
 def GetRefractionIndexModelFromSry(sry_file,outmode="N/A"): #for aires 19.04.06
+  # Fixed 2026-09 (issue #140): it closed "datfile", a NameError that the bare
+  # except below re-raised, so every call failed; and its last test read
+  # `if 'Constant refraction index model':`, which is always true, so it would
+  # have answered "Constant" from the first line of any file.
   try:
-    datafile=open(sry_file,'r')
-    datfile.close()
     with open(sry_file, "r") as datafile:
       for line in datafile:
         if 'Glasgow-Dale refraction index model' in line:
@@ -1032,7 +1034,7 @@ def GetRefractionIndexModelFromSry(sry_file,outmode="N/A"): #for aires 19.04.06
         if 'Exponential refraction index model' in line:  
           IndexModel="Exponential"
           return IndexModel
-        if 'Constant refraction index model':
+        if 'Constant refraction index model' in line:
           IndexModel="Constant"
           return IndexModel  
       try:
