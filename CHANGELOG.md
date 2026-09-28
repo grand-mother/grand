@@ -15,6 +15,34 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`EventList` reads a file, an open `TFile` or a `DataDirectory`, not only a
+  directory name.** Given a file name, `get_number_of_events()` raised
+  `TypeError`, and `get_event()` raised `AttributeError` when the file held no
+  run tree; such events now have no antennas, as other missing trees are
+  skipped. Given a `ROOT.TFile`, `get_event()` raised `AttributeError`; given a
+  `DataDirectory`, iterating raised `TypeError` (the gap left by #94). All four
+  forms now list, count and iterate the same events, checked on the committed
+  sample run.
+
+- **The ZHAireS example in `sim2root/README.md` works again.** The committed
+  `.rawroot` samples predated the current format, and `sim2root.py` stopped on
+  them with `IndexError`; they are regenerated with the README's own
+  commands. Those commands failed too: `ZHAireSRawToRawROOT.py` (and
+  `CoreasToRawROOT.py`) imported `sim2root.*` without the repository on the
+  path. Both converters now add it. A test converts the committed samples, so
+  it fails if they fall behind again.
+
+- **The simulation-pipeline scripts show each step's output as it comes**
+  (#121). `RunSimPipe.py` and `RunSimPipeNoJitter.py` captured every step's
+  output with `communicate()`, showed nothing until the step ended, then
+  printed stderr as one raw byte string; the streaming version in
+  `RunSimPipeADCNoise.py` read it through a pipe and was reported to freeze
+  on 1000-event runs. All three now run each step through
+  `sim2root/Common/pipeline_step.py`, which lets the step write straight to
+  the terminal or job log: no buffering and no pipe to fill. A failed step is
+  now reported with its exit status; the pipeline still continues, as before.
+  The commands run are unchanged.
+
 - **`convert_voltage2adc.py` writes the ADC file beside its voltage file,
   whatever the directories are called.** Without `-o`, it named the output by
   replacing the first 'voltage' and 'L0' in the whole *path*, so when a

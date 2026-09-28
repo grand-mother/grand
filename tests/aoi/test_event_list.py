@@ -14,16 +14,17 @@ class FakeTree:
 
 class FakeDataDirectory:
     """Minimal fake to stand in for grand.dataio.DataDirectory"""
-    def __init__(self, dir_name, tshower_entries=None, tefield_entries=None, tvoltage_entries=None, trawvoltage_entries=None):
+    def __init__(self, dir_name, tshower_entries=None, tefield_entries=None, tvoltage_entries=None, trawvoltage_entries=None, events=((0, 0),)):
         self.dir_name = dir_name
+        self.events = list(events)
         self.tshower = FakeTree(tshower_entries) if tshower_entries is not None else None
         self.tefield = FakeTree(tefield_entries) if tefield_entries is not None else None
         self.tvoltage = FakeTree(tvoltage_entries) if tvoltage_entries is not None else None
         self.trawvoltage = FakeTree(trawvoltage_entries) if trawvoltage_entries is not None else None
 
     def get_max_list_of_events(self):
-        # simple deterministic placeholder (not used in directory-path tests below)
-        return [(0, 0)]
+        # The (event, run) pairs this fake directory holds
+        return list(self.events)
 
 
 class FakeEvent:
@@ -123,10 +124,9 @@ def test_iterates_over_event_list_and_passes_event_run_numbers(tmp_path):
 def test_uses_get_max_list_of_events_when_event_list_not_set(tmp_path):
     dd = el_mod.DataDirectory(str(tmp_path / "dir"))  # FakeDataDirectory.get_max_list_of_events -> [(0,0)]
     el = el_mod.EventList(dd)
-    # current EventList implementation does not auto-initialize event_list,
-    # so initialize it here from the directory to avoid TypeError during iteration
-    el.event_list = dd.get_max_list_of_events()
-    # ensure event_list initialized from dd.get_max_list_of_events
+    # A DataDirectory object used to leave event_list None, so iterating
+    # raised TypeError; it is now taken from dd.get_max_list_of_events()
+    assert el.event_list == [(0, 0)]
     collected = [(ev.event_number, ev.run_number) for ev in el]
     assert collected == [(0, 0)]
 
@@ -153,7 +153,7 @@ def test_iterator_reuses_same_event_instance(tmp_path):
 
 
 def test_get_event_with_event_and_run_number_sets_fields_and_calls_fill(tmp_path):
-    dd = el_mod.DataDirectory(str(tmp_path / "dir"), tshower_entries=10)
+    dd = el_mod.DataDirectory(str(tmp_path / "dir"), tshower_entries=10, events=[(42, 7)])
     el = el_mod.EventList(dd)
     e = el.get_event(event_number=42, run_number=7)
     assert isinstance(e, el_mod.Event)  # fake Event type

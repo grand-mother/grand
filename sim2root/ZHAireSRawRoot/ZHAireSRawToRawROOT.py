@@ -11,6 +11,9 @@ from scipy.ndimage.interpolation import shift  #to shift the time trance for the
 
 
 logging.basicConfig(level=logging.INFO)
+# Run as a script from its own folder (as the README shows), the repository
+# root is not on the path, and the sim2root.* imports below fail.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import sim2root.ZHAireSRawRoot.AiresInfoFunctionsGRANDROOT as AiresInfo
 import sim2root.ZHAireSRawRoot.ZHAireSCompressEvent as ZC
 import sim2root.Common.EventParametersGenerator as EParGen #the functions i use from this file should be moved to root_trees_raw, so that we dont need an additional new file. It will be common to Coreas and ZhAireS.
