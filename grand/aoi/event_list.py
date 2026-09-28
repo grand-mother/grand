@@ -116,6 +116,19 @@ class EventList:
             if run_number is None:
                 run_number = 0
             if event_number is not None:
+                # An event that is not in the input used to crash deep in the
+                # reader (a zero-size minimum) or, after a valid event, to
+                # come back labelled with the requested number but holding
+                # the previous event's traces (issue #95).  The list of events
+                # is known when a file or directory name was given.
+                if (self.event_list is not None
+                        and (event_number, run_number) not in
+                        {(int(ev), int(run)) for ev, run in self.event_list}):
+                    print("No event with event number %s and run number %s; "
+                          "this input holds %d events: %s"
+                          % (event_number, run_number, len(self.event_list),
+                             self.event_list[:10]))
+                    return None
                 e.run_number=run_number
                 e.event_number=event_number
             else:

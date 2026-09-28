@@ -15,6 +15,22 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Four long-standing issues.**
+  - `EventList.get_event` with an event number the input does not hold now
+    returns `None`, as documented (#95). It used to crash deep in the reader,
+    or, after a valid event, return an event labelled with the requested
+    number but carrying the previous event's traces.
+  - `convert_voltage2adc.py` finds noise files in a directory given without
+    a trailing '/', and stops when it finds none (#122). Before, every ADC
+    sample became 8192. A path prefix still works as before.
+  - The CoREAS converter reads the hadronic model and CoREAS version from the
+    log instead of matching one literal string (#123). Other models and
+    versions are no longer written as "n/a"; Sibyll 2.3d and 1.4 read as
+    before.
+  - A `creation_datetime` or `source_datetime` set on a tree now reads back
+    as the datetime that was set, not its integer timestamp. Found while
+    triaging #136; an unset value still reads as 0, as its maintainer chose.
+
 - **Xmax is placed right whatever convention a file uses**
   (grand-mother/grand#160). The committed ZHAireS samples store Xmax above sea
   level, 1264 m too high; today's converter stores it above the ground. Before
