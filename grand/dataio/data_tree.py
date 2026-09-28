@@ -1265,7 +1265,15 @@ class DataTree:
             return
         # Another live tree reads from the same file (it was reused through gROOT's list of files)
         for inst in grand_tree_list:
-            if inst._file is not None and ROOT.addressof(inst._file) == addr:
+            if inst._file is None:
+                continue
+            try:
+                other = ROOT.addressof(inst._file)
+            except TypeError:
+                # That tree's file was already deleted (closed elsewhere), so it
+                # cannot be sharing this one
+                continue
+            if other == addr:
                 return
         del _files_opened_by_trees[addr]
         if f.IsOpen():
