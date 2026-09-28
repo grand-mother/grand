@@ -16,6 +16,7 @@ from grand.dataio import TRun, TRunEfieldSim, TRunShowerSim, TEfield, TShower, T
 import raw_root_trees as RawTrees # this is here in Common
 import grand.manage_log as mlg
 from grand import Geodetic, GRANDCS
+from grand.dataio.xmax_frame import propagation_direction, xmax_in_site_frame
 # import matplotlib.pyplot as plt
 # from scipy.ndimage.interpolation import shift  #to shift the time trance for the trigger simulation
 # from scipy.ndimage import shift  #to shift the time trance for the trigger simulation
@@ -774,8 +775,19 @@ def rawshower2grandroot(trawshower, gt):
     ### Shower Xmax position in shower coordinates [m]
     gt.tshower.xmax_pos_shc = trawshower.xmax_pos_shc
 
-    ### Shower Xmax position in shower coordinates [m] TODO: to be compueted frmom xmax_pos_shc.
-    #gt.tshower.xmax_pos = 
+    ### Shower Xmax position [m] in the site frame (that of du_xyz and shower_core_pos):
+    # the ground-relative xmax_pos_shc plus the core, the point the readers compute as
+    # FIX_xmax_pos.  Raw files written before the ZHAireS converter subtracted the ground
+    # altitude carry xmax_pos_shc above sea level; xmax_in_site_frame detects that from the
+    # geometry.  NaN when the simulation does not know Xmax (issue #104).
+    gt.tshower.xmax_pos, _ = xmax_in_site_frame(
+        trawshower.xmax_pos_shc, trawshower.zenith, trawshower.azimuth,
+        trawshower.site_alt, trawshower.shower_core_pos)
+
+    ### Shower direction: unit vector along which the shower travels, in the site frame
+    # (x North, y West, z Up).  zenith and azimuth say where it comes from, so this is the
+    # opposite of the vector they name; u_z < 0 for a downgoing shower (issue #104).
+    gt.tshower.direction = propagation_direction(trawshower.zenith, trawshower.azimuth)
 
     ### Distance of Xmax  [m] to the ground
     # gt.tshower.xmax_distance = trawshower.xmax_distance

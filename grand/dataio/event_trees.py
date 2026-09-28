@@ -985,7 +985,11 @@ class TShower(MotherEventTree):
     """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
     ## Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
     direction: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref"""
+    """Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
+
+    The unit vector along which the shower travels, x North, y West, z Up:
+    minus the "comes from" vector that zenith and azimuth name, so u_z < 0 for
+    a downgoing shower (``grand.dataio.xmax_frame.propagation_direction``)."""
     ## Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)
     shower_core_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
     """Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)"""
@@ -1006,7 +1010,11 @@ class TShower(MotherEventTree):
     """Shower Xmax depth  (g/cm2 along the shower axis)"""
     ## Shower Xmax position in GRAND detector ref
     xmax_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Shower Xmax position in GRAND detector ref"""
+    """Shower Xmax position in GRAND detector ref
+
+    In metres, in the frame of ``du_xyz`` and ``shower_core_pos``: the
+    ground-relative ``xmax_pos_shc`` plus ``shower_core_pos``
+    (``grand.dataio.xmax_frame.xmax_in_site_frame``).  NaN if unknown."""
     ## Shower Xmax position in shower coordinates
     xmax_pos_shc: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
     """Shower Xmax position in shower coordinates"""
