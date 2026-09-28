@@ -984,12 +984,12 @@ class TShower(MotherEventTree):
     ## Total energy of the primary (including muons, neutrinos, ...) (GeV)
     energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
-    ## Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
+    ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
     azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")"""
-    ## Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
+    """Shower azimuth  (coordinates system = NWU + origin = core, "comes from")"""
+    ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
+    """Shower zenith  (coordinates system = NWU + origin = core, "comes from")"""
     ## Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
     direction: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
     """Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref

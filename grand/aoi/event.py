@@ -1392,8 +1392,12 @@ class Event:
         self.tshower.energy_primary = self.shower.energy_primary
         ## Shower Xmax [g/cm2]
         self.tshower.xmax_grams = self.shower.Xmax
-        ## Shower position in the site's reference frame
-        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0]
+        ## Xmax relative to the shower core, above the ground: what the
+        ## readers (this class included) read back
+        self.tshower.xmax_pos_shc = self.shower.Xmaxpos[:,0]
+        ## Xmax in the site's reference frame: the same point plus the core,
+        ## as sim2root writes it (#104)
+        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0] + self.shower.core_ground_pos[:,0]
         ## Shower azimuth
         self.tshower.azimuth = self.shower.azimuth
         ## Shower zenith
