@@ -8,6 +8,9 @@ import os
 import glob
 import time #to get the unix timestamp
 from CorsikaInfoFuncs import * # this is in the same dir as this file
+# Run as a script from its own folder (as the README shows), the repository
+# root is not on the path, and the sim2root.* imports below fail.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import sim2root.Common.raw_root_trees as RawTrees # this is in Common. since we're in CoREASRawRoot, this is in ../Common
 from optparse import OptionParser
 

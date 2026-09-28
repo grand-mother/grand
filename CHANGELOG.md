@@ -15,6 +15,23 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`EventList` reads a file, an open `TFile` or a `DataDirectory`, not only a
+  directory name.** Given a file name, `get_number_of_events()` raised
+  `TypeError`, and `get_event()` raised `AttributeError` when the file held no
+  run tree; such events now have no antennas, as other missing trees are
+  skipped. Given a `ROOT.TFile`, `get_event()` raised `AttributeError`; given a
+  `DataDirectory`, iterating raised `TypeError` (the gap left by #94). All four
+  forms now list, count and iterate the same events, checked on the committed
+  sample run.
+
+- **The ZHAireS example in `sim2root/README.md` works again.** The committed
+  `.rawroot` samples predated the current format, and `sim2root.py` stopped on
+  them with `IndexError`; they are regenerated with the README's own
+  commands. Those commands failed too: `ZHAireSRawToRawROOT.py` (and
+  `CoreasToRawROOT.py`) imported `sim2root.*` without the repository on the
+  path. Both converters now add it. A test converts the committed samples, so
+  it fails if they fall behind again.
+
 - **The simulation-pipeline scripts show each step's output as it comes**
   (#121). `RunSimPipe.py` and `RunSimPipeNoJitter.py` captured every step's
   output with `communicate()`, showed nothing until the step ended, then
