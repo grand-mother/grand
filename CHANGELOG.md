@@ -15,6 +15,44 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Seven open issues, fixed together in 2026-09.**
+  - **Simulation files record Xmax and the shower direction** (#104).
+    `tshower.xmax_pos` and `tshower.direction` were all zeros in `sim2root`
+    output. `xmax_pos` is now Xmax in the site frame (that of `du_xyz` and
+    `shower_core_pos`): the above-ground `xmax_pos_shc` plus the core, the
+    point readers already computed; NaN when unknown. `direction` is the unit
+    vector of propagation, minus the "comes from" vector of zenith and
+    azimuth, so its z is negative for a downgoing shower; it equals the
+    `primary_inj_dir_shc` the ZHAireS converter already wrote. The AOI now
+    writes both `xmax_pos` and `xmax_pos_shc`: it wrote only `xmax_pos`, as
+    the core-relative point, and read `xmax_pos_shc`, so Xmax was lost on a
+    round trip. The `TShower` zenith and azimuth docstrings said "pointing
+    to"; they now say "comes from", as decided on 2026-09-24.
+  - **Reading many files no longer leaks their memory** (#71). A tree that
+    opened its ROOT file from a name never closed it, because PyROOT gives up
+    ownership after `TTree.SetDirectory()`. `stop_using()` now closes that file
+    once no other tree uses it; a `TFile` the caller passed in is left open.
+    Trees are also context managers, `with TADC(path) as tadc: ...`.
+    Measured on 200 distinct ADC files: 2.65 MB per file before, 0.15 after.
+    About 0.08 MB per file remains inside ROOT 6.36 itself, even from C++.
+    Releasing trees is now documented in the data-model and troubleshooting
+    pages.
+  - **Showers that hit no antenna go through the pipeline** (#91). They are
+    kept at every level, with their shower and run information and
+    `du_count` 0, so that effective-area studies can count them. Before,
+    `sim2root` stopped with "ecef coordinates must be n x 3", and
+    `Efield2Voltage` and `convert_voltage2adc.py` with an `IndexError`.
+  - **No more `TTreeCache::FillBuffer` errors when appending events** (#89).
+    Writing more than about 100 events one at a time, as
+    `convert_efield2voltage.py` does, made ROOT report a cache inconsistency
+    on every event. Values were right; the message was noise, and hidden
+    since 2024-08 by the error level `grand.dataio` sets. The cache's entry
+    window is now reset before every full pass over a tree.
+  - **The ZHAireS refraction-model reader works** (part of #140).
+    `GetRefractionIndexModelFromSry` failed on every call (a misspelt file
+    handle) and would otherwise have answered "Constant" for any file.
+    Nothing calls it yet; the layered model #140 asks for will need it.
+
 - **The reconstruction examples save their results again.**
   `examples/analysis/main_DOI.py` stored every reconstructed value in a
   `TShower`, and `main_AOI.py` in the event's `Shower`, but neither has those
@@ -135,6 +173,25 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   the first column past its rule.
 
 ### Added
+
+- **Files record the code that wrote them** (#137). Every new tree's
+  `modification_software` and `modification_software_version` hold
+  "GRANDlib" and the package version with the git branch, commit and whether
+  tracked files were modified, e.g. `0.1.0.dev1 (git dev-next 1aeac037...)`.
+  Both were always empty. Outside a git checkout, only the version is given,
+  so an install inside another repository never reports that repository's
+  commit. In `grand.provenance`.
+
+- **An offline T1 trigger in `convert_voltage2adc.py`** (#139). The
+  DAQ-style T1 logic of `scripts/T1_trigger_offline.py` is now
+  `grand.sim.detector.trigger`, and it evaluates every DU: the script looked
+  only at the first. The converter gains an opt-in `--t1_trigger` (with
+  `--t1_param KEY=VALUE` overrides) that sets `trigger_flag` per DU (1 =
+  passed); without it the output is unchanged, checked branch by branch. The
+  default parameters are the offline script's and **need confirming by the
+  trigger group**: with them, no DU of the committed sample triggers, even
+  with pulses of about 1000 ADC, because crossings must be at most 8 ns apart
+  (`t_sepmax=10`).
 
 - **Cramér-Rao bounds for the reconstruction** (Sebastián Castro-Isern,
   PR 150). `grand.analysis.cramer_rao_bounds` (also `grand.analysis.crb`)

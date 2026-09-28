@@ -151,6 +151,12 @@ explicitly.
 directory layout rather than taking a path; see
 :ref:`issue-reader-directory-coupling`.
 
+**Memory grows with every file and the job is killed out of memory.**  Tree
+instances are kept alive in ``grand_tree_list``, together with the ROOT files
+they opened, until you release them.  Use ``with TADC(path) as tadc:`` or call
+``tadc.stop_using()`` at the end of each iteration; see
+:ref:`datamodel-releasing-trees`.
+
 Environment and build
 ---------------------
 

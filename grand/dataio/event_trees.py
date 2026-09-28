@@ -177,6 +177,7 @@ class MotherEventTree(DataTree):
     ## List events in the tree together with runs
     def print_list_of_events(self):
         """List events in the tree together with runs"""
+        self._reset_read_cache(self._tree)
         count = self._tree.Draw("event_number:run_number", "", "goff")
         # Remove the Draw() generated histogram from current file to prevent saving
         if tmph := ROOT.gDirectory.Get("htemp"):
@@ -197,6 +198,7 @@ class MotherEventTree(DataTree):
         list of tuple
             Every ``(event number, run number)`` in the tree.
         """
+        self._reset_read_cache(self._tree)
         count = self._tree.Draw("event_number:run_number", "", "goff")
         # Remove the Draw() generated histogram from current file to prevent saving
         if tmph := ROOT.gDirectory.Get("htemp"):
@@ -271,6 +273,7 @@ class MotherEventTree(DataTree):
         evt_id : str, optional
             Branch holding the event number.
         """
+        self._reset_read_cache(self._tree)
         self._tree.BuildIndex(run_id, evt_id)
 
     ## Fills the entry list from the tree
@@ -284,7 +287,10 @@ class MotherEventTree(DataTree):
         """
         if tree is None:
             tree = self._tree
-        # Fill the entry list if there are some entries in the tree
+        # Fill the entry list if there are some entries in the tree.  The
+        # cache reset matters here: this runs on a tree that is being
+        # appended to, every time it is reopened (issue #89).
+        self._reset_read_cache(tree)
         if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
             v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count)).astype(int)
             v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count)).astype(int)
@@ -334,6 +340,7 @@ class MotherEventTree(DataTree):
 
         # Get sizes of each traces
         for i in traces_suffixes:
+            self._reset_read_cache(self._tree)
             cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
             traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
             # Remove the Draw() generated histogram from current file to prevent saving
@@ -977,15 +984,19 @@ class TShower(MotherEventTree):
     ## Total energy of the primary (including muons, neutrinos, ...) (GeV)
     energy_primary: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     """Total energy of the primary (including muons, neutrinos, ...) (GeV)"""
-    ## Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")
+    ## Shower azimuth  (coordinates system = NWU + origin = core, "comes from")
     azimuth: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Shower azimuth  (coordinates system = NWU + origin = core, "pointing to")"""
-    ## Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")
+    """Shower azimuth  (coordinates system = NWU + origin = core, "comes from")"""
+    ## Shower zenith  (coordinates system = NWU + origin = core, "comes from")
     zenith: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    """Shower zenith  (coordinates system = NWU + origin = core, , "pointing to")"""
+    """Shower zenith  (coordinates system = NWU + origin = core, "comes from")"""
     ## Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
     direction: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref"""
+    """Direction vector (u_x, u_y, u_z)  of shower in GRAND detector ref
+
+    The unit vector along which the shower travels, x North, y West, z Up:
+    minus the "comes from" vector that zenith and azimuth name, so u_z < 0 for
+    a downgoing shower (``grand.dataio.xmax_frame.propagation_direction``)."""
     ## Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)
     shower_core_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
     """Shower core position in GRAND detector ref (if it is an upgoing shower, there is no core position)"""
@@ -1006,7 +1017,11 @@ class TShower(MotherEventTree):
     """Shower Xmax depth  (g/cm2 along the shower axis)"""
     ## Shower Xmax position in GRAND detector ref
     xmax_pos: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
-    """Shower Xmax position in GRAND detector ref"""
+    """Shower Xmax position in GRAND detector ref
+
+    In metres, in the frame of ``du_xyz`` and ``shower_core_pos``: the
+    ground-relative ``xmax_pos_shc`` plus ``shower_core_pos``
+    (``grand.dataio.xmax_frame.xmax_in_site_frame``).  NaN if unknown."""
     ## Shower Xmax position in shower coordinates
     xmax_pos_shc: TTreeArrayDesc = field(default=TTreeArrayDesc(3, np.float32))
     """Shower Xmax position in shower coordinates"""

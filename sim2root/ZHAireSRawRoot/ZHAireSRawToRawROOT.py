@@ -520,8 +520,13 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         ############################################################################################################################        
 
         if(IDs[0]==-1 and antx[0]==-1 and anty[0]==-1 and antz[0]==-1 and antt[0]==-1):
-            logging.critical("hey, no antennas found in event sry "+ str(EventID)+" bin size "+str(RawEfield.t_bin_size))  
-                              
+            # The shower hit no antenna (issue #91). The event is kept, with its
+            # shower and run information, du_count 0 and empty per-antenna
+            # vectors: effective-area studies need to count the misses too.
+            logging.warning("no antenna trace files in "+InputFolder+" for event "+str(EventID)
+                            +": the shower hit no antenna. Writing the event with du_count 0.")
+            RawEfield.du_count = 0
+
             RawEfield.fill()
             RawEfield.write()            
         else:		

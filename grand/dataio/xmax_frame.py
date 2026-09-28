@@ -33,12 +33,48 @@ SEA_LEVEL = "sea-level"
 UNDETERMINED = "undetermined"
 
 
+def arrival_direction(zenith, azimuth):
+    r"""Unit vector pointing to where the shower comes from.
+
+    Parameters
+    ----------
+    zenith, azimuth : float
+        The shower's direction in degrees, "comes from", as stored in
+        ``tshower`` (see ``tests/geo/test_angle_convention.py``).
+
+    Returns
+    -------
+    numpy.ndarray
+        Shape (3,), x North, y West, z Up.  Upwards for a downgoing shower.
+    """
+    theta, phi = np.deg2rad(float(zenith)), np.deg2rad(float(azimuth))
+    return np.array([np.sin(theta) * np.cos(phi),
+                     np.sin(theta) * np.sin(phi),
+                     np.cos(theta)])
+
+
+def propagation_direction(zenith, azimuth):
+    r"""Unit vector along which the shower travels: ``-arrival_direction``.
+
+    This is what ``tshower.direction`` stores, and the same vector the
+    ZHAireS converter writes as ``primary_inj_dir_shc``.
+
+    Parameters
+    ----------
+    zenith, azimuth : float
+        The shower's direction in degrees, "comes from".
+
+    Returns
+    -------
+    numpy.ndarray
+        Shape (3,), x North, y West, z Up.  Downwards for a downgoing shower.
+    """
+    return -arrival_direction(zenith, azimuth)
+
+
 def _angle_to_direction(vector, zenith, azimuth):
     r"""Angle in degrees between `vector` and the comes-from direction."""
-    theta, phi = np.deg2rad(zenith), np.deg2rad(azimuth)
-    towards = np.array([np.sin(theta) * np.cos(phi),
-                        np.sin(theta) * np.sin(phi),
-                        np.cos(theta)])
+    towards = arrival_direction(zenith, azimuth)
     norm = np.linalg.norm(vector)
     if not np.isfinite(norm) or norm == 0:
         return np.nan
@@ -87,3 +123,40 @@ def xmax_above_ground(xmax_pos_shc, zenith, azimuth, ground_altitude):
         "ground altitude %.1f m removed. Using it as stored.",
         stored, zenith, azimuth, as_stored, as_shifted, ground_altitude)
     return stored, UNDETERMINED
+
+
+def xmax_in_site_frame(xmax_pos_shc, zenith, azimuth, ground_altitude, shower_core_pos):
+    r"""Returns Xmax in the site frame, the one ``tshower.xmax_pos`` is in.
+
+    The site frame (the "GRAND detector ref" of the data format) is the frame
+    of ``du_xyz`` and ``shower_core_pos``: x North, y West, z Up, origin at
+    ``origin_geoid``.  Xmax there is its ground-relative shower-core position
+    plus the core position -- the point ``get_simu_parameters`` returns as
+    ``FIX_xmax_pos``.
+
+    Parameters
+    ----------
+    xmax_pos_shc : array-like, shape (3,)
+        As stored, in metres, in either vertical frame.
+    zenith, azimuth : float
+        The shower's stored direction, in degrees, "comes from".
+    ground_altitude : float
+        The ground altitude in metres that a sea-level ``z`` would carry.
+    shower_core_pos : array-like, shape (3,)
+        The core in the site frame, in metres.
+
+    Returns
+    -------
+    numpy.ndarray
+        Xmax in the site frame, shape (3,).  All NaN if ``xmax_pos_shc`` is
+        not finite: a simulation that does not know Xmax says so.
+    str
+        The frame ``xmax_pos_shc`` was found in, as :func:`xmax_above_ground`
+        reports it; ``"undetermined"`` for a non-finite input.
+    """
+    stored = np.asarray(xmax_pos_shc, dtype=float).reshape(3)
+    core = np.asarray(shower_core_pos, dtype=float).reshape(3)
+    if not np.all(np.isfinite(stored)):
+        return np.full(3, np.nan), UNDETERMINED
+    above_ground, frame = xmax_above_ground(stored, zenith, azimuth, ground_altitude)
+    return above_ground + core, frame

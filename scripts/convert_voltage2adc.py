@@ -14,6 +14,13 @@ NOTE: if noise is added from measured data, the input voltage trace should NOT i
 
 TO RUN:
     python convert_voltage2adc.py <voltage.root> -o <adc.root> --add_noise_from <noise_dir> -s <seed>
+
+Optionally (--t1_trigger, off by default) the offline DAQ-style T1 trigger of
+`grand.sim.detector.trigger` is applied to every DU, and `trigger_flag` is set
+per DU (1 = passed T1, 0 = not).  Its parameters can be changed with
+--t1_param KEY=VALUE; the defaults are those of `scripts/T1_trigger_offline.py`
+and are still to be confirmed by the trigger group.  Without --t1_trigger the
+output is unchanged.
 '''
 
 ###-###-###-###-###-###-###- IMPORTS -###-###-###-###-###-###-###
@@ -29,6 +36,7 @@ import numpy as np
 
 from grand import ADC, manage_log
 import grand.dataio
+from grand.sim.detector.trigger import DEFAULT_T1_CONFIG, t1_trigger_flags
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +229,62 @@ def get_noise_trace(data_dir,
     return noise_trace
 
 
-def manage_args():
+def t1_config_from_params(params):
+    r"""The T1 trigger parameters, from ``KEY=VALUE`` strings.
+
+    Parameters
+    ----------
+    params : list of str or None
+        Overrides of :data:`grand.sim.detector.trigger.DEFAULT_T1_CONFIG`,
+        e.g. ``['th1=120', 'nc_max=10']``.  The values are integers.
+
+    Returns
+    -------
+    dict
+        The full set of trigger parameters.
+
+    Raises
+    ------
+    ValueError
+        For a string that is not ``KEY=VALUE`` with an integer value, or an
+        unknown key.
+    """
+    config = dict(DEFAULT_T1_CONFIG)
+    for param in params or []:
+        key, sep, value = param.partition('=')
+        key = key.strip()
+        if not sep or key not in DEFAULT_T1_CONFIG:
+            raise ValueError(f'Bad --t1_param {param!r}: expected KEY=VALUE with KEY in {sorted(DEFAULT_T1_CONFIG)}')
+        try:
+            config[key] = int(value)
+        except ValueError:
+            raise ValueError(f'Bad --t1_param {param!r}: the value must be an integer') from None
+    return config
+
+
+def apply_t1_trigger(tadc, adc_trace, t1_config):
+    r"""Sets ``tadc.trigger_flag`` from the T1 trigger on every DU.
+
+    Parameters
+    ----------
+    tadc : grand.dataio.TADC
+        The tree whose current entry is being filled.
+    adc_trace : numpy.ndarray
+        The ADC traces, with shape (N_du, 3, N_samples).
+    t1_config : dict
+        The trigger parameters, see :func:`t1_config_from_params`.
+
+    Returns
+    -------
+    numpy.ndarray of numpy.ushort
+        The flags written, 1 for a DU that passed T1 and 0 otherwise.
+    """
+    flags = t1_trigger_flags(adc_trace, t1_config)
+    tadc.trigger_flag = flags
+    return flags
+
+
+def manage_args(argv=None):
     '''
     Manager for the argument parser of this script.
     '''
@@ -261,7 +324,19 @@ def manage_args():
                         default='info',
                         help='Logger verbosity.')
 
-    return parser.parse_args()
+    parser.add_argument('--t1_trigger',
+                        action='store_true',
+                        help='Apply the offline DAQ-style T1 trigger to every DU and set trigger_flag '
+                             '(1 = passed, 0 = not). Default off, leaving the output unchanged.')
+
+    parser.add_argument('--t1_param',
+                        action='append',
+                        metavar='KEY=VALUE',
+                        default=None,
+                        help='Override a T1 trigger parameter (repeatable), e.g. --t1_param th1=120. '
+                             f'Defaults: {DEFAULT_T1_CONFIG}. Only used with --t1_trigger.')
+
+    return parser.parse_args(argv)
 
 
 ###-###-###-###-###-###-###- MAIN SCRIPT -###-###-###-###-###-###-###
@@ -285,9 +360,12 @@ if __name__ == '__main__':
         f_output = f_output.replace('L0','L1')
     if noise_dir == None:
         noise_trace = None
+    t1_config = t1_config_from_params(args.t1_param) if args.t1_trigger else None
 
     manage_log.create_output_for_logger(args.verbose,log_stdout=True)
     logger.info( manage_log.string_begin_script() )
+    if t1_config is not None:
+        logger.info(f'Applying the T1 trigger to every DU, with parameters {t1_config}')
     #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
     #-#-#- Load TVoltage -#-#-#
@@ -339,6 +417,18 @@ if __name__ == '__main__':
 
             event_number = tvoltage.event_number
             run_number = tvoltage.run_number
+
+            # A shower that hit no antenna (issue #91): nothing to digitise, but
+            # the event is still written, with du_count 0 and empty traces.
+            if voltage_trace.size == 0:
+                logger.warning(f'Event {event_number} of run {run_number} has no antenna (du_count 0): '
+                               'no ADC trace to compute; it is written with du_count 0.')
+                tadc.copy_contents(tvoltage)
+                tadc.trace_ch = np.zeros((0, 3, 0), dtype=np.int16)
+                tadc.trigger_position = np.zeros(0, dtype=np.ushort)
+                tadc.fill()
+                continue
+
             trun.get_run(run_number)
             # print(f"Memory 2_1: {process.memory_info().rss / 1024 ** 2:.2f} MB")
             event_dus_indices = tvoltage.get_dus_indices_in_run(trun)
@@ -375,7 +465,7 @@ if __name__ == '__main__':
             # print(f"Memory after tracemod: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
 
-            #modify the trigger position if needed. TODO: This will have at some point to be replaced by a real trigger algorithm
+            #modify the trigger position if needed. TODO: the T1 trigger (--t1_trigger) only sets trigger_flag; the trigger position still comes from the simulation
             if(input_sampling_rate_mhz != adc.sampling_rate):
               originalsampling=input_sampling_rate_mhz
               newsampling=adc.sampling_rate
@@ -384,6 +474,11 @@ if __name__ == '__main__':
               ratio=1.0
 
             tadc.trigger_position=np.ushort(np.asarray(tvoltage.trigger_position)/ratio)
+
+            #-#-#- Optional T1 trigger, per DU -#-#-#
+            if t1_config is not None:
+                flags = apply_t1_trigger(tadc, adc_trace, t1_config)
+                logger.info(f'T1 trigger: {int(np.count_nonzero(flags))}/{len(flags)} DUs passed')
             # print(f"Memory after trig mod: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
             tadc.fill()

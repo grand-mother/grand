@@ -472,6 +472,14 @@ Measured 2026-09-08.
       targets `dev`; its only content not already there came in with the
       port. #154 (unified install, a Zig-based installer) was closed the
       same day: the collaboration keeps the pip and Docker installations.
+- [x] Triage the open issues — **done 2026-09-28.** Closed as fixed
+      (#95, #122, #123, #136 in PR 172), superseded or
+      duplicate (#80, #84, #99 into #104; #94), not reproducible on
+      `dev-next` (#90, #92, #156), or obsolete (#47). Seven were then fixed
+      in one PR: #71, #89, #91, #104 (Xmax and direction), #137, #139 (opt-in,
+      thresholds for the trigger group) and the reader half of #140. Left
+      open for their owners: #85, #121, #141, #142 (mjtueros), the time
+      fields in #104, the T1 parameters in #139 and the layered model in #140.
 - [ ] Delete `tests_with_docker.yml` from the 34 branches that still carry it.
       It pins the retired `ubuntu-20.04` runner, so every push to those
       branches queues 24 h and is cancelled — 41 such runs since 2025-08-07.

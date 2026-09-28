@@ -17,10 +17,38 @@ logger = getLogger(__name__)
 grand_tree_list = []
 """Internal list of generated Trees"""
 
+## ROOT files that the trees opened themselves from a file name, keyed by the TFile address
+_files_opened_by_trees = {}
+"""ROOT files that the trees opened themselves from a file name, keyed by the TFile address.
+
+``stop_using()`` closes a file listed here once no tree in ``grand_tree_list`` uses it.
+A ``ROOT.TFile`` handed in by the caller is never listed, so the caller keeps control of it.
+This is needed because PyROOT stops owning a TFile once ``TTree.SetDirectory(file)`` is called
+with it, so dropping the last Python reference does not close it (GitHub issue #71)."""
+
+
+def _register_opened_file(f):
+    """Record a TFile that a tree opened itself, so that ``stop_using()`` may close it"""
+    _files_opened_by_trees[ROOT.addressof(f)] = f
+
+
+def _forget_opened_file(f):
+    """Remove a TFile from the record of files the trees opened themselves"""
+    if f is not None:
+        _files_opened_by_trees.pop(ROOT.addressof(f), None)
+
 @dataclass
 class DataTree:
     """
     Mother class for GRAND Tree data classes
+
+    Every instance is kept in ``grand_tree_list`` until ``stop_using()`` is
+    called, so a loop over many files must release each tree, either with
+    ``tree.stop_using()`` or by using the tree as a context manager::
+
+        for path in paths:
+            with TADC(path) as tadc:
+                ...
     """
 
     ## File handle
@@ -544,6 +572,8 @@ class DataTree:
                     # If the file does not exist, create it
                     else:
                         self._file = ROOT.TFile(self._file_name, "create")
+                    # Opened here, so stop_using() may close it
+                    _register_opened_file(self._file)
         else:
             raise ValueError(f"Unsupported filename {f}. Can't open/create a file with a tree.")
 
@@ -651,6 +681,8 @@ class DataTree:
                 else:
                     # By default append
                     self._file = ROOT.TFile(args[0], "update")
+                # Opened here, so stop_using() may close it if it is not closed below
+                _register_opened_file(self._file)
             # Make the tree save itself in this file
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
@@ -673,6 +705,7 @@ class DataTree:
             # Need to set 0 directory so that closing of the file does not delete the internal TTree
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
+            _forget_opened_file(self._file)
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):
@@ -710,6 +743,42 @@ class DataTree:
         self.assign_branches()
         return res
 
+    @staticmethod
+    def _reset_read_cache(tree):
+        r"""Clears the TTreeCache's position bookkeeping before a full pass.
+
+        Call it before every ``Draw()`` or ``BuildIndex()`` of a whole tree.
+
+        Parameters
+        ----------
+        tree : ROOT.TTree or ROOT.TChain
+            The tree about to be read in full.
+
+        Notes
+        -----
+        The cache remembers the entry window it last prefetched, cut at the
+        number of entries the tree had then.  A tree that is being appended
+        to -- the output of ``convert_efield2voltage.py``, which is drawn by
+        ``fill_entry_list()`` when reopened and indexed by ``write()`` after
+        every event -- grows past that window, and once it has more entries
+        than the cache's learning phase (100) the next pass prints, for
+        every event::
+
+            Error in <TTreeCache::FillBuffer>: Inconsistency:
+            fCurrentClusterStart=0 fEntryCurrent=176 fNextClusterStart=178 ...
+
+        (grand-mother/grand#89).  ROOT recovers by itself and the values
+        read are correct, but the message is noise.  ``ResetCache()`` forgets
+        only that window: the branches the cache has learnt are kept, and no
+        value read changes.  Trees without a file or a cache are left alone.
+        """
+        f = tree.GetCurrentFile()
+        if not f:
+            return
+        cache = tree.GetReadCache(f)
+        if cache:
+            cache.ResetCache()
+
     def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0, delete_temp_histogram=True):
         """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX().
 
@@ -734,6 +803,7 @@ class DataTree:
             Number of entries drawn.
         """
 
+        self._reset_read_cache(self._tree)
         count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
 
         # Delete the temporary histogram created by draw, so it is not saved in a file
@@ -1175,9 +1245,105 @@ class DataTree:
         return mem_size, disk_size
 
     def close_file(self):
-        """Close the file associated to the tree"""
-        self._file.Close()
+        """Close the file associated to the tree
 
-    def stop_using(self):
-        """Stop using this instance: remove it from the tree list"""
-        grand_tree_list.remove(self)
+        The file is closed even if other tree instances still read from it.
+        To release a tree when you are done with it, prefer ``stop_using()``
+        or the ``with`` form, which close the file only when no other tree uses it.
+        """
+        self._file.Close()
+        _forget_opened_file(self._file)
+
+    def stop_using(self, close_file=True):
+        """Stop using this instance and release the memory it holds
+
+        Every tree instance is kept in the module-level ``grand_tree_list``,
+        so it is never garbage collected on its own. When reading many files
+        in a loop, call ``stop_using()`` on each tree at the end of the loop,
+        or use the tree as a context manager, which calls it on exit::
+
+            with TADC("file.root") as tadc:
+                for event, run in tadc.get_list_of_events():
+                    tadc.get_event(event, run)
+
+        This removes the instance from ``grand_tree_list`` and, if the tree
+        opened its ROOT file itself from a file name, closes that file once no
+        other tree in ``grand_tree_list`` uses it. A ``ROOT.TFile`` passed in by
+        the caller (for example by ``DataFile``) is left open. Calling it again
+        does nothing.
+
+        Do not use the instance after this call: if its file was closed, the
+        underlying TTree is gone and ``tree`` is ``None``. A tree that was
+        filled but not written is not saved; call ``write()`` first.
+
+        Parameters
+        ----------
+        close_file : bool, optional
+            Close the ROOT file the tree opened, if no other tree uses it.
+            Pass ``False`` to only remove the instance from ``grand_tree_list``.
+        """
+        # Remove by identity: the dataclass __eq__ compares field values and could match another instance
+        for i, inst in enumerate(grand_tree_list):
+            if inst is self:
+                del grand_tree_list[i]
+                break
+
+        if close_file:
+            self._release_file()
+
+    def _release_file(self):
+        """Close the file this tree opened itself, if no other tree in ``grand_tree_list`` uses it"""
+        f = self._file
+        if f is None or self.is_tchain:
+            return
+        addr = ROOT.addressof(f)
+        # A file handed in by the caller: the caller closes it
+        if addr not in _files_opened_by_trees:
+            return
+        # Another live tree reads from the same file (it was reused through gROOT's list of files)
+        for inst in grand_tree_list:
+            if inst._file is None:
+                continue
+            try:
+                other = ROOT.addressof(inst._file)
+            except TypeError:
+                # That tree's file was already deleted (closed elsewhere), so it
+                # cannot be sharing this one
+                continue
+            if other == addr:
+                return
+        del _files_opened_by_trees[addr]
+        if f.IsOpen():
+            # Closing deletes the TTree that lives in the file, so drop the handle to it
+            f.Close()
+        self._tree = None
+
+    def __enter__(self):
+        """Use the tree as a context manager: ``with TADC(file_name) as tadc: ...``
+
+        Returns
+        -------
+        DataTree
+            This tree.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Call ``stop_using()`` when leaving the ``with`` block
+
+        Parameters
+        ----------
+        exc_type : type
+            Type of the exception raised in the block, if any.
+        exc_val : BaseException
+            The exception raised in the block, if any.
+        exc_tb : traceback
+            Traceback of the exception, if any.
+
+        Returns
+        -------
+        bool
+            ``False``, so an exception raised in the block propagates.
+        """
+        self.stop_using()
+        return False

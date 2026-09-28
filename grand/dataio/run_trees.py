@@ -35,6 +35,7 @@ class MotherRunTree(DataTree):
     def add_proper_friends(self):
         """Add proper friends to this tree"""
         # Create the indices
+        self._reset_read_cache(self._tree)
         self._tree.BuildIndex("run_number")
 
     ## List runs in the tree
@@ -118,6 +119,7 @@ class MotherRunTree(DataTree):
         run_id : str, optional
             Branch holding the run number.
         """
+        self._reset_read_cache(self._tree)
         self._tree.BuildIndex(run_id)
 
     ## Fills the entry list from the tree

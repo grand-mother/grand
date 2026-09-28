@@ -420,3 +420,33 @@ def test_an_event_with_no_efield_and_no_voltage_has_no_antennas():
     e.fill_antennas(gp300_workaround=True)
 
     assert e.antennas == []
+
+
+def test_the_shower_tree_carries_xmax_in_both_frames(tmp_path):
+    r"""The AOI writes Xmax where the readers look for it.
+
+    It used to write only ``xmax_pos``, as the core-relative point, while every
+    reader -- the AOI's own included -- reads ``xmax_pos_shc``, so Xmax was lost
+    on a round trip.  Now ``xmax_pos_shc`` is the core-relative point and
+    ``xmax_pos`` the same point in the site frame, as sim2root writes them.
+    """
+    from types import SimpleNamespace
+
+    from grand.dataio import TShower
+
+    xmax = np.array([[-4050.0], [3989.0], [4499.0]])
+    core = np.array([[670.0], [-4250.0], [0.0]])
+    e = Event()
+    e.run_number, e.event_number = 1, 1618
+    e.shower = SimpleNamespace(energy_em=1.0, energy_primary=2.0, Xmax=700.0,
+                               Xmaxpos=xmax, azimuth=135.4, zenith=51.6,
+                               core_ground_pos=core)
+    path = str(tmp_path / "shower.root")
+    e.fill_shower_tree(filename=path)
+    e.tshower.write()
+
+    back = TShower(path)
+    back.get_event(1618, 1)
+    assert np.allclose(back.xmax_pos_shc, xmax[:, 0])
+    assert np.allclose(back.xmax_pos, (xmax + core)[:, 0])
+    assert np.allclose(back.shower_core_pos, core[:, 0])
