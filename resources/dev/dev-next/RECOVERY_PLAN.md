@@ -480,6 +480,13 @@ Measured 2026-09-08.
       thresholds for the trigger group) and the reader half of #140. Left
       open for their owners: #85, #121, #141, #142 (mjtueros), the time
       fields in #104, the T1 parameters in #139 and the layered model in #140.
+- [ ] T1 trigger parameters from the data (#139). Once the trigger group
+      gives the units of `tcmax_ch`, `tprev_ch` and `tper_ch`, let
+      `convert_voltage2adc.py --t1_trigger` read its parameters from a real
+      run's `TRunRawVoltage`, so simulation and data use the same settings.
+      Until then it stays opt-in with the offline script's defaults, with
+      which nothing in the sample triggers; the DAQ's recorded settings are
+      compared with them on the issue (2026-09-28).
 - [ ] Delete `tests_with_docker.yml` from the 34 branches that still carry it.
       It pins the retired `ubuntu-20.04` runner, so every push to those
       branches queues 24 h and is cancelled — 41 such runs since 2025-08-07.
