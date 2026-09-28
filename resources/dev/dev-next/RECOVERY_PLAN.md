@@ -475,18 +475,26 @@ Measured 2026-09-08.
 
 None of these can be done from a branch; all are one-time settings.
 
-**Make `Tests gate` a required check on `dev-next`.** Settings → Branches →
+**~~Make `Tests gate` a required check on `dev-next`.~~ Done 2026-09-24.** Settings → Branches →
 the `dev-next` rule → *Require status checks to pass* → add `Tests gate`.
 It is the one check designed for this: it reports on every commit, including
 docs-only ones, and is green only when the suite ran and passed or when
 nothing it covers changed. Until it is required, it informs but does not
 block.
 
-**`CODECOV_TOKEN` is missing.** The coverage upload has never worked — Codecov
-answers `Token required because branch is protected`, and the repository has
-only `PERSONAL_TOKEN` and `PYPI_TOKEN`. The step is non-fatal so it fails
-invisibly, and the README's codecov badge does not reflect reality. Adding the
-secret is the whole fix; the workflow already passes it.
+**`CODECOV_TOKEN` holds the wrong repository's token.** Added 2026-09-24, and
+the upload now succeeds, but to `app.codecov.io/github/mbustama/grand`, a
+personal fork, because the token was copied from the fork's Codecov page (last
+checked on the #169 run, 2026-09-24). Fix: on Codecov open grand-mother/grand
+(install the Codecov app on the org if it is not listed), copy its repository
+upload token, and replace the secret. The next CI run's log should then say
+`app.codecov.io/github/grand-mother/grand`.
+
+**Protect the archive tags.** Settings → Rules → Rulesets → *New tag
+ruleset*, target `archive/*`, restrict deletions and updates (moves). A tag
+is what keeps an archived branch's commits; once the branch is deleted, a
+deleted tag is the only way to lose them. Do this before running
+`archive_branches.py --delete` (see *Archiving branches* below).
 
 **~~GitHub Pages is switched off.~~ Done 2026-09-07.** The manual publishes
 from this repository at https://grand-mother.github.io/grand/, built by
@@ -746,10 +754,65 @@ mistake: **a diffstat is not a diff.**
 | Branch size measured by `git diff merge-base..branch` | For an old branch that replays everything already merged by another route. `snonis_sim2root_test_merge` shows 279 commits and has **two** patches of its own. `BRANCHES.md` reports both numbers side by side for exactly this reason. |
 | *(found by the post-implementation audit)* `beta_dc1` has 333 commits | **Three.** The 333 was produced by the inventory collector itself, which read an unmerged branch's commits from six 2022 merges naming it rather than from the trunk's merge-base — describing a state the branch left in 2023. Fixed, and the figure it had been quoted as an example in three documents was corrected with it. |
 
+## Archiving branches
+
+Settled branches are retired **to tags**, not simply deleted. Git discards a
+commit only when nothing refers to it, so a tag on a branch's last commit
+keeps that commit and all its history: deleting the branch afterwards
+removes only its name. The commits stay in the repository, browsable on
+GitHub under Tags, and any clone restores a branch with
+
+    git branch <name> archive/<name>-<YYYY-MM>
+
+**Convention.** `archive/<branch>-<YYYY-MM>`, the month archived: the one
+set by `archive/master-2025-03` and `archive/dev-2026-09`. Each is an
+annotated tag whose message says what the branch was, whether it is in
+`dev-next`, decided against or had its content taken, the decision and its
+date from `docs/dev/branch_facts.py`, and how to restore it.
+
+**Procedure**, `docs/dev/archive_branches.py`, one step per command, each
+read before the next:
+
+1. `python docs/dev/archive_branches.py` — the plan: every branch, its state
+   and its tag. Nothing is written. Undecided branches are refused.
+2. `--tag` — create the tags locally. Never moves an existing tag; running
+   it twice changes nothing.
+3. `--verify` — each tag must point at the branch's tip, with no branch
+   commit outside it. Exits non-zero on any failure.
+4. `--push` — push the tags.
+5. Protect `archive/*` (*Needs repository admin*, above).
+6. `--delete` — checks the tags **on origin** first and deletes nothing if
+   any branch is not held; then deletes each branch with `--force-with-lease`
+   on the verified tip, so a branch that gained a commit is left alone.
+7. Regenerate the paperwork (`make_branch_inventory.py` and the diagram
+   scripts). `BRANCHES.md` keeps listing archived branches, read from their
+   tags on origin, with an *Archived as* column.
+
+Deleting a branch closes any pull request open from it: #146
+(`refact_galaxy`) closes this way, which is intended.
+
+**Scope, as of 2026-09-28.** 33 branches: the 24 already in `dev-next`, the
+10 decided against and the 3 whose content was taken. Kept, each for a
+reason: `dev-next`; `dev-next-ipfxhh`, the branch the recovery's pull
+requests come from; `ci/docker-test`, since pushing to it is how the Docker
+workflow runs; `main`, archived in Phase 9, which frees the name; and
+`master` and `dev`, retired in Phase 10. `dev` needs a new tag then:
+`archive/dev-2026-09` predates `7cd02097`, and the inventory says so ("older
+than the branch").
+
+**Checked 2026-09-28**, on this repository, locally (nothing pushed): all 33
+tags created and verified; a second `--tag` was a no-op; a tag moved back one
+commit failed `--verify` ("1 commits not held"); with two branches' refs
+removed, the inventory listed them as archived and deleted. That run also
+found and fixed a bug: fetching the tag namespace with `--prune` discarded
+tags created locally and not yet pushed.
+
 ## Tools
 
 - `quality/premerge_check.py` — reports what a branch adds; flags tree fields
   whose docstrings duplicate an existing field's meaning, and new modules that
   shadow existing ones.
 - `docs/dev/make_recovery_diagram.py` — regenerates the status diagram.
+- `docs/dev/archive_branches.py` — retires settled branches to archive tags,
+  then deletes them; see *Archiving branches*.
 - `tests/dataio/test_schema_snapshot.py` — pins the ROOT tree schema.
