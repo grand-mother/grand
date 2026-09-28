@@ -22,6 +22,7 @@ why. This is the one part that is an opinion, and it is dated: see
 ``resources/dev/dev-next/BRANCHES.md`` for when each was last reviewed.
 """
 import datetime
+import re
 import pathlib
 import subprocess
 
@@ -690,6 +691,45 @@ def _lines(text):
     return [line for line in text.split("\n") if line.strip()]
 
 
+#: Tags that archive a branch: ``archive/<branch>-<YYYY-MM>``, the month it was
+#: archived.  The convention was set by ``archive/master-2025-03`` and
+#: ``archive/dev-2026-09``; ``archive_branches.py`` follows it.  A tag keeps
+#: every commit of the branch reachable after the branch is deleted, so an
+#: archived branch stays in this inventory, read from its tag.
+_ARCHIVE_TAG = re.compile(r"^archive/(?P<branch>.+)-(?P<month>\d{4}-\d{2})$")
+
+
+def archive_tags():
+    r"""Returns every archive tag, by the branch it archives.
+
+    Returns
+    -------
+    dict
+        Branch name to ``(tag, commit)``, the commit being what the tag points
+        at, for tags on origin.  Where a branch has several archive tags, the
+        latest month wins.
+    """
+    # Read from origin, not from local tags: branches are read from origin
+    # too, and a tag created locally and not yet pushed archives nothing.
+    listed = {}
+    for line in _lines(git("ls-remote", "--tags", "origin", "refs/tags/archive/*")):
+        sha, ref = line.split()
+        name = ref[len("refs/tags/"):]
+        if name.endswith("^{}"):
+            listed[name[:-3]] = sha              # the commit an annotated tag names
+        else:
+            listed.setdefault(name, sha)         # a lightweight tag is the commit
+    found = {}
+    for tag, sha in listed.items():
+        match = _ARCHIVE_TAG.match(tag)
+        if not match:
+            continue
+        name = match.group("branch")
+        if name not in found or tag > found[name][0]:
+            found[name] = (tag, sha)
+    return found
+
+
 def _is_ancestor(earlier, later):
     r"""True when ``earlier`` is contained in ``later``.
 
@@ -790,6 +830,13 @@ def collect(include_historical=False):
         name = head.replace("origin/", "")
         tip[name] = git("rev-parse", head)
         info[name] = dict(live=True)
+
+    # A branch deleted after being archived is still described, from its tag.
+    archived = archive_tags()
+    for name, (_, sha) in archived.items():
+        if name not in info:
+            tip[name] = sha
+            info[name] = dict(live=True, deleted=True)
 
     if include_historical:
         for name, shas in merges.items():
@@ -906,6 +953,14 @@ def collect(include_historical=False):
 
     for name in info:
         info[name]["generation"] = generation(name)
+    for name, entry in info.items():
+        tag, sha = archived.get(name, ("", ""))
+        entry.setdefault("deleted", False)
+        if tag and sha != tip[name]:
+            # The branch has moved on since it was archived: the tag holds an
+            # older state, not what the branch holds now.
+            tag = "%s (older than the branch)" % tag
+        entry["archived"] = tag
     return info
 
 

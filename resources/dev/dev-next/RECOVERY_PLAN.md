@@ -457,7 +457,14 @@ Measured 2026-09-08.
 - [ ] Reorganise the tree, if wanted, only *after* the queue drains: 14 of 36
       branches touch `grand/`, 8 `examples/`, 8 `scripts/`, 7 `sim2root/`.
       Before that, a rename is a manual replay of every one of them.
-- [ ] Archive-tag everything before deleting
+- [ ] Archive-tag everything before deleting. `docs/dev/archive_branches.py`
+      (2026-09-28) plans, tags, verifies, pushes and deletes, one step per
+      command: tags follow the `archive/<branch>-<YYYY-MM>` convention of
+      `archive/master-2025-03`, carry the decision from `branch_facts.py`,
+      and a branch is deleted only when the tag on origin holds its tip.
+      33 branches qualify; `master`, `dev`, `main` and `ci/docker-test` are
+      kept for their own phases. `BRANCHES.md` keeps listing archived
+      branches, read from their tags.
 - [ ] Close PRs 9, 49, 52
 - [ ] Delete `tests_with_docker.yml` from the 34 branches that still carry it.
       It pins the retired `ubuntu-20.04` runner, so every push to those

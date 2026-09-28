@@ -107,6 +107,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **Branches can be retired without losing them.** `docs/dev/archive_branches.py`
+  tags each settled branch as `archive/<branch>-<YYYY-MM>`, with the reason in
+  the tag message, before deleting it. Every commit stays in the repository,
+  and `git branch <name> <tag>` restores one. `BRANCHES.md` gains an
+  "Archived as" column and keeps listing deleted branches from their tags. Its
+  "Still out" heading, which counted decided branches too, is now "Not in
+  `dev-next`", with the breakdown.
+
 - **Every branch is now settled.** `refact_galaxy`, the last one open, is
   not merged, with luckyjim's agreement: its fixes are already on the trunk
   and the rest re-implements the verified galactic-noise model.
