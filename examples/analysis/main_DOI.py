@@ -9,7 +9,7 @@ import grand.analysis.energy_reco as en
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom as geom
 import grand.analysis.cramer_rao_bounds as crb
-from grand.dataio import TShower, TRawVoltage
+from grand.dataio import TRecons, TRawVoltage
 import config as conf
 
 
@@ -59,13 +59,13 @@ def read_event_list(txt_file, start_line, stop_line='None'):
 # ---------------------------------------------------------------
 file_path = conf.antenna_file
 column_names = ['antenna_ID', 'x', 'y', 'z'] 
-antenna_position = pd.read_csv(file_path, sep='\s+', names=column_names, header=None)
+antenna_position = pd.read_csv(file_path, sep=r'\s+', names=column_names, header=None)
 antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int) 
 
 # ---------------------------------------------------------------
-# Initialize TShower object to store reconstructed events
+# Initialize TRecons object to store reconstructed events
 # ---------------------------------------------------------------
-trecons = TShower()  
+trecons = TRecons()  
 
 
 # ---------------------------------------------------------------
@@ -127,7 +127,7 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     Xants = np.column_stack((x_coords, y_coords, z_coords))
 
     # ---------------------------------------------------------------
-    # Store peak times, amplitudes and antenna positions in TShower
+    # Store peak times, amplitudes and antenna positions in TRecons
     # ---------------------------------------------------------------
     trecons.peak_time = peak_time
     trecons.peak_amps = peak_amps
@@ -245,7 +245,7 @@ trecons.write(f"{conf.output}")
 # ---------------------------------------------------------------
 # Read back the reconstructed events to check results
 # ---------------------------------------------------------------
-t_recons = TShower(f"{conf.output}")
+t_recons = TRecons(f"{conf.output}")
 
 for ev_no, run_no in t_recons.get_list_of_events():
     t_recons.get_event(ev_no, run_no)

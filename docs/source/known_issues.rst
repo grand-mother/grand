@@ -1309,29 +1309,3 @@ names the site, and either convert in the table or record the unit — and it
 is left to whoever owns ``sim2root/``, because which unit the table should
 hold is their call. Five tests pin both halves in the meantime, including
 one that fails if the override line moves away from the read.
-
-.. _issue-analysis-examples-drop-results:
-
-The reconstruction examples store their results nowhere
--------------------------------------------------------
-
-**What happens.** ``examples/analysis/main_DOI.py`` puts every reconstructed
-value (PWF, SWF, ADF, energy and, since PR 150, the Cramér-Rao bounds) into
-a ``TShower``, and ``main_AOI.py`` into ``event.shower``. ``TShower`` has none
-of those fields. Setting them raises nothing, and the written ``tshower``
-tree has no such branches: checked on 2026-09-28 by writing ``zenith_pwf``
-through ``TShower`` and reading the file back. The script then reads the file
-back and prints values from the same object, so the printout looks right
-even though the file lacks them.
-
-**Why.** Marion Guelfand's commit 817bb79e ("Add AOI script, update TShower
-tree") switched the examples to ``TShower``, but the ``TShower`` change
-itself was never committed. Her sample outputs show it: the ``tshower`` trees
-in ``examples/analysis/reconstructed_events_AOI/`` and in
-``recons_CR_candidates.root`` have 42 branches, including ``zenith_pwf`` and
-``zenith_adf``. The ``TShower`` in the repository has none of them. The same
-fields exist in ``TRecons``, which ``display.py`` reads.
-
-**What settles it.** A decision by the author: either commit the extended
-``TShower``, or point the two scripts at ``TRecons``. It is a change to the
-data format either way, so it is left to her rather than guessed.

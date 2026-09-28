@@ -15,6 +15,19 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The reconstruction examples save their results again.**
+  `examples/analysis/main_DOI.py` stored every reconstructed value in a
+  `TShower`, and `main_AOI.py` in the event's `Shower`, but neither has those
+  fields. Setting an undeclared field on a tree raises nothing, and the file
+  was written without it, so nothing was saved; the printout read back the
+  in-memory object and looked right. The examples relied on a `TShower`
+  extension that was never committed (817bb79e). Both now use `TRecons`,
+  which declares every one of these fields and which `display.py` already
+  reads. `main_AOI.py` writes it to `reconstructed_events_AOI/recons.root`
+  beside its per-event files. A test checks that every value the two scripts
+  store is a `TRecons` field. Also fixed there: `sep='\s+'`, an invalid
+  escape that Python warns about.
+
 - **Four long-standing issues.**
   - `EventList.get_event` with an event number the input does not hold now
     returns `None`, as documented (#95). It used to crash deep in the reader,

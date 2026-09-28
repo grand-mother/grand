@@ -1,4 +1,5 @@
 from grand.aoi import *
+from grand.dataio import TRecons
 from IPython.display import display, clear_output
 import matplotlib.pyplot as plt
 import grand.analysis.signals.extraction as ext
@@ -20,7 +21,7 @@ import pandas as pd
 # ---------------------------------------------------------------
 file_path = conf.antenna_file
 column_names = ['antenna_ID', 'x', 'y', 'z'] 
-antenna_position = pd.read_csv(file_path, sep='\s+', names=column_names, header=None)
+antenna_position = pd.read_csv(file_path, sep=r'\s+', names=column_names, header=None)
 antenna_position['antenna_ID'] = antenna_position['antenna_ID'].astype(int) 
 
 # ---------------------------------------------------------------
@@ -60,6 +61,11 @@ Path(out_dir_root).mkdir(parents=True, exist_ok=True)
 
 # Initialize a list to store all reconstructed events
 el_all = []
+
+# The reconstruction results are also stored in a TRecons tree, written to
+# out_dir_root/recons.root at the end: the Shower object has no fields for
+# them, so e.write() does not save them.
+trecons = TRecons()
 
 flagged_txt = conf.flagged_txt
 
@@ -204,7 +210,43 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=1, stop_line=10)
     e.shower.out_dir = out_dir_root
     e.write(out_dir=out_dir_root)
 
+    # ---------------------------------------------------------------
+    # Store the reconstruction results in TRecons
+    # ---------------------------------------------------------------
+    trecons.run_number = e.run_number
+    trecons.event_number = e.event_number
+    trecons.peak_time = peak_times
+    trecons.peak_amps = peak_amps
+    trecons.Xants = Xants
+    trecons.du_count = n_antennas
+
+    trecons.zenith_pwf = theta_pwf_rad
+    trecons.azimuth_pwf = phi_pwf_rad
+    trecons.chi2_pwf = chi2_pwf_reduced
+
+    trecons.zenith_swf = theta_swf_rad
+    trecons.azimuth_swf = phi_swf_rad
+    trecons.r_xmax = r_xmax
+    trecons.t_s = t_s
+    trecons.Xsource = [Xsource]  # stored with shape (1, 3), as in main_DOI.py
+    trecons.chi2_swf = chi2_swf_reduced
+    trecons.distance_source_antenna = l_ant
+
+    trecons.zenith_adf = theta_adf
+    trecons.azimuth_adf = phi_adf
+    trecons.width = delta_omega
+    trecons.scaling_factor = scaling_factor
+    trecons.chi2_adf = chi2_adf_reduced
+    trecons.omega = omega
+    trecons.eta = eta
+    trecons.omega_cr = omega_cr
+    trecons.adf_amplitude = amplitude_model
+    trecons.energy_elm_voltage = energy_elm
+    trecons.fill()
+
     el_all.append(e)
+
+trecons.write(str(Path(out_dir_root) / "recons.root"))
 
 # --------------------------------------
 # Reload reconstructed events to check

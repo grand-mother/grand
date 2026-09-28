@@ -128,3 +128,26 @@ def test_the_bounds_are_stored_and_older_files_still_read(tmp_path):
     before.get_event(479, 10126)
     assert before.zenith_pwf == pytest.approx(1.3426813)
     assert before.crb_zenith_pwf == 0.0
+
+
+@pytest.mark.parametrize('script, name', [('main_DOI.py', 'trecons'),
+                                          ('main_AOI.py', 'trecons')])
+def test_every_value_the_examples_store_is_a_trecons_field(script, name):
+    r"""A value set on a tree without that field is silently not written.
+
+    Setting an attribute a tree class does not declare raises nothing, and
+    the written file simply lacks it.  The examples stored their results in
+    ``TShower``, which has none of these fields, and nothing was saved.
+    """
+    import dataclasses
+    import pathlib
+    import re
+
+    from grand.dataio import TRecons
+
+    source = (pathlib.Path(__file__).resolve().parents[2] / 'examples'
+              / 'analysis' / script).read_text()
+    assert re.search(r'^%s = TRecons\(\)' % name, source, re.M)
+    stored = set(re.findall(r'^\s*%s\.(\w+)\s*=' % name, source, re.M))
+    fields = {f.name for f in dataclasses.fields(TRecons)}
+    assert stored and not stored - fields
