@@ -35,6 +35,37 @@ logger = logging.getLogger(__name__)
 
 ###-###-###-###-###-###-###- FUNCTIONS -###-###-###-###-###-###-###
 
+def noise_files(data_dir):
+    r"""Returns the noise data files for `data_dir`, sorted.
+
+    A directory is searched inside, with or without a trailing '/'.  Without
+    the slash this used to glob the directory's *siblings*, find nothing, and
+    fill every ADC sample with 8192 (issue #122).  Anything that is not a
+    directory is kept as a path prefix, as before, e.g. '/data/GP80_2025'.
+
+    Parameters
+    ----------
+    data_dir : str
+        A directory of noise ROOT files, or a path prefix.
+
+    Returns
+    -------
+    list of str
+        The matching files, sorted to remove glob's ordering.
+
+    Raises
+    ------
+    FileNotFoundError
+        If nothing matches, rather than simulating from no noise at all.
+    """
+    pattern = (os.path.join(data_dir, '*.root') if os.path.isdir(data_dir)
+               else data_dir + '*.root')
+    found = sorted(glob.glob(pattern))
+    if not found:
+        raise FileNotFoundError(f'No noise files match {pattern}')
+    return found
+
+
 def get_noise_trace(data_dir,
                     n_traces,
                     n_files=None,
@@ -74,7 +105,7 @@ def get_noise_trace(data_dir,
     '''
 
     # Select n_files random data files from directory
-    data_files = sorted( glob.glob(data_dir+'*.root') ) # sort to get rid of additional randomness of glob
+    data_files = noise_files(data_dir)
 
     if n_files is None:
         n_files = len(data_files)

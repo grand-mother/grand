@@ -199,29 +199,68 @@ def read_first_interaction(log_file):
 
 
 
+#: High-energy hadronic models as CORSIKA's log names them, and how to report
+#: them.  Matching used to be one literal string, "S I B Y L L  2.3d", so any
+#: other version or model became "n/a" (issue #123).  The first match wins,
+#: reading the log from the top, as before.
+_HADRONIC_MODELS = [
+    # CORSIKA's banner spaces the letters out: "S I B Y L L  2.3d".
+    (re.compile(r"S\s?I\s?B\s?Y\s?L\s?L\s*(\d+(?:\.\d+)*[a-z]?)"), "Sibyll {}"),
+    (re.compile(r"QGSJET[- ]?(II[- ]?\d+|\d+[A-Za-z0-9.]*)", re.IGNORECASE), "QGSJET-{}"),
+    (re.compile(r"EPOS[- ]?(LHC[A-Za-z0-9.-]*|\d+(?:\.\d+)*)"), "EPOS {}"),
+]
+
+_COREAS_VERSION = re.compile(r"CoREAS\s+V(\d+(?:\.\d+)*)")
+
+
 def read_HADRONIC_INTERACTION(log_file):
+    r"""Returns the high-energy hadronic model named in a CORSIKA log.
+
+    Parameters
+    ----------
+    log_file : str
+        The CORSIKA log.
+
+    Returns
+    -------
+    str
+        E.g. ``"Sibyll 2.3d"``, ``"QGSJET-II-04"`` or ``"EPOS LHC"``, or
+        ``"n/a"`` if no known model is named.
+    """
     with open(log_file, mode="r") as datafile:
         for line in datafile:
-            if "S I B Y L L  2.3d" in line:
-                hadr_interaction = "Sibyll 2.3d"
-                print("hadronic interaction model =", hadr_interaction)
-                return str(hadr_interaction)
-            else:
-                hadr_interaction = "n/a"
-    return str(hadr_interaction)
+            for pattern, label in _HADRONIC_MODELS:
+                match = pattern.search(line)
+                if match:
+                    hadr_interaction = label.format(match.group(1).replace(" ", "-"))
+                    print("hadronic interaction model =", hadr_interaction)
+                    return hadr_interaction
+    return "n/a"
 
 
 
 def read_coreas_version(log_file):
+    r"""Returns the CoREAS version named in a CORSIKA log, e.g. ``"1.4"``.
+
+    Parameters
+    ----------
+    log_file : str
+        The CORSIKA log.
+
+    Returns
+    -------
+    str
+        The version after "CoREAS V", or ``"n/a"``.  Used to match only
+        "CoREAS V1.4" (issue #123).
+    """
     with open(log_file, mode="r") as datafile:
         for line in datafile:
-            if "CoREAS V1.4" in line:
-                coreas_version = "1.4" 
+            match = _COREAS_VERSION.search(line)
+            if match:
+                coreas_version = match.group(1)
                 print("CoREAS version =", coreas_version)
-                return str(coreas_version)
-            else:
-                coreas_version = "n/a"
-    return str(coreas_version)
+                return coreas_version
+    return "n/a"
 
 
 def read_corsika_version(inp_file):

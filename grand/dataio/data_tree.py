@@ -272,8 +272,11 @@ class DataTree:
             Creation time to record.
         """
         if type(val) == datetime.datetime:
-            val = int(val.timestamp())
+            # Keep the datetime for the getter; ROOT stores the integer.  The
+            # two lines were the other way round, so reading back after
+            # setting a datetime gave an int (found while triaging #136).
             val_dt = val
+            val = int(val.timestamp())
         elif type(val) == int:
             val_dt = datetime.datetime.fromtimestamp(val)
         else:
@@ -345,8 +348,11 @@ class DataTree:
 
         # If datetime was given
         if type(val) == datetime.datetime:
-            val = int(val.timestamp())
+            # Keep the datetime for the getter; ROOT stores the integer.  The
+            # two lines were the other way round, so reading back after
+            # setting a datetime gave an int (found while triaging #136).
             val_dt = val
+            val = int(val.timestamp())
         # If timestamp was given - this happens when initialising with self.assign_metadata()
         elif type(val) == int:
             val_dt = datetime.datetime.fromtimestamp(val)
