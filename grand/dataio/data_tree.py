@@ -743,6 +743,42 @@ class DataTree:
         self.assign_branches()
         return res
 
+    @staticmethod
+    def _reset_read_cache(tree):
+        r"""Clears the TTreeCache's position bookkeeping before a full pass.
+
+        Call it before every ``Draw()`` or ``BuildIndex()`` of a whole tree.
+
+        Parameters
+        ----------
+        tree : ROOT.TTree or ROOT.TChain
+            The tree about to be read in full.
+
+        Notes
+        -----
+        The cache remembers the entry window it last prefetched, cut at the
+        number of entries the tree had then.  A tree that is being appended
+        to -- the output of ``convert_efield2voltage.py``, which is drawn by
+        ``fill_entry_list()`` when reopened and indexed by ``write()`` after
+        every event -- grows past that window, and once it has more entries
+        than the cache's learning phase (100) the next pass prints, for
+        every event::
+
+            Error in <TTreeCache::FillBuffer>: Inconsistency:
+            fCurrentClusterStart=0 fEntryCurrent=176 fNextClusterStart=178 ...
+
+        (grand-mother/grand#89).  ROOT recovers by itself and the values
+        read are correct, but the message is noise.  ``ResetCache()`` forgets
+        only that window: the branches the cache has learnt are kept, and no
+        value read changes.  Trees without a file or a cache are left alone.
+        """
+        f = tree.GetCurrentFile()
+        if not f:
+            return
+        cache = tree.GetReadCache(f)
+        if cache:
+            cache.ResetCache()
+
     def draw(self, varexp, selection, option="", nentries=ROOT.TTree.kMaxEntries, firstentry=0, delete_temp_histogram=True):
         """An interface to TTree::Draw(). Allows for drawing specific TTree columns or getting their values with get_vX().
 
@@ -767,6 +803,7 @@ class DataTree:
             Number of entries drawn.
         """
 
+        self._reset_read_cache(self._tree)
         count = self._tree.Draw(varexp, selection, option, nentries, firstentry)
 
         # Delete the temporary histogram created by draw, so it is not saved in a file

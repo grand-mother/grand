@@ -177,6 +177,7 @@ class MotherEventTree(DataTree):
     ## List events in the tree together with runs
     def print_list_of_events(self):
         """List events in the tree together with runs"""
+        self._reset_read_cache(self._tree)
         count = self._tree.Draw("event_number:run_number", "", "goff")
         # Remove the Draw() generated histogram from current file to prevent saving
         if tmph := ROOT.gDirectory.Get("htemp"):
@@ -197,6 +198,7 @@ class MotherEventTree(DataTree):
         list of tuple
             Every ``(event number, run number)`` in the tree.
         """
+        self._reset_read_cache(self._tree)
         count = self._tree.Draw("event_number:run_number", "", "goff")
         # Remove the Draw() generated histogram from current file to prevent saving
         if tmph := ROOT.gDirectory.Get("htemp"):
@@ -271,6 +273,7 @@ class MotherEventTree(DataTree):
         evt_id : str, optional
             Branch holding the event number.
         """
+        self._reset_read_cache(self._tree)
         self._tree.BuildIndex(run_id, evt_id)
 
     ## Fills the entry list from the tree
@@ -284,7 +287,10 @@ class MotherEventTree(DataTree):
         """
         if tree is None:
             tree = self._tree
-        # Fill the entry list if there are some entries in the tree
+        # Fill the entry list if there are some entries in the tree.  The
+        # cache reset matters here: this runs on a tree that is being
+        # appended to, every time it is reopened (issue #89).
+        self._reset_read_cache(tree)
         if (count := tree.Draw("run_number:event_number", "", "goff")) > 0:
             v1 = np.array(np.frombuffer(tree.GetV1(), dtype=np.float64, count=count)).astype(int)
             v2 = np.array(np.frombuffer(tree.GetV2(), dtype=np.float64, count=count)).astype(int)
@@ -334,6 +340,7 @@ class MotherEventTree(DataTree):
 
         # Get sizes of each traces
         for i in traces_suffixes:
+            self._reset_read_cache(self._tree)
             cnt = self._tree.Draw(f"@trace_{i}.size()", "", "goff")
             traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
             # Remove the Draw() generated histogram from current file to prevent saving
