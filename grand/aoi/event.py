@@ -717,7 +717,8 @@ class Event:
             elif self.tvoltage is not None:
                 cur_tree = self.tvoltage
             else:
-                raise "Can't calculate antennas positions"
+                # Raising a plain string is itself a TypeError in Python 3
+                raise ValueError("Can't calculate antennas positions: no efield or voltage tree")
 
             # If this is the first time we calculate antennas positions, or
             # the ones we hold were not built from GPS for this same site
@@ -787,6 +788,14 @@ class Event:
 
 
         else:
+            # Antenna positions come from the run tree.  A file holding only
+            # event trees (say one efield file given to EventList) has none:
+            # the event then has no antennas, as other missing trees are
+            # skipped, rather than failing on trun.du_id.
+            if self.trun is None:
+                print("No Run tree. Antenna positions will not be available.")
+                return
+
             # Fill the antenna part. With neither tree there is nothing to say
             # which DUs took part, so the event simply has no antennas -- the
             # name used to be left unbound and the loop below raised.

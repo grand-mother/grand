@@ -31,14 +31,17 @@ class EventList:
         """
         self.event_list = None
 
-        # If TFile was given
+        # If TFile was given.  It is wrapped like a file name is: the rest of
+        # the class reads the file through a DataFile (``self.file.f``).
         if isinstance(inp_name, ROOT.TFile):
             self.file_name = inp_name.GetName()
-            self.file = inp_name
+            self.file = DataFile(inp_name)
+            self.event_list = self.file.get_max_list_of_events()
         # If DataDirectory was given
         elif isinstance(inp_name, DataDirectory):
             self.directory_name = inp_name.dir_name
             self.directory = inp_name
+            self.event_list = self.directory.get_max_list_of_events()
         # String with file name or directory name was given
         elif isinstance(inp_name, str):
             # If file name was given
@@ -53,6 +56,11 @@ class EventList:
             else:
                 print("Please provide proper file or directory name.")
                 exit()
+        # If DataFile was given
+        elif isinstance(inp_name, DataFile):
+            self.file_name = inp_name.f.GetName()
+            self.file = inp_name
+            self.event_list = self.file.get_max_list_of_events()
 
         if start_event is not None and start_entry is not None:
             print("Please provide only start event or start entry.")
@@ -162,7 +170,8 @@ class EventList:
         if self.directory:
             data_input = self.directory
         elif self.file:
-            data_input = DataFile(self.file)
+            # Already a DataFile; wrapping it again raised a TypeError
+            data_input = self.file
         else:
             print("Please provide data directory or file.")
             exit()
