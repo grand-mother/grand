@@ -74,6 +74,32 @@ def noise_files(data_dir):
     return found
 
 
+def adc_file_path(voltage_file):
+    r"""Returns the default path of the ADC file for `voltage_file`.
+
+    The ADC file goes beside the voltage file, named after it with 'voltage'
+    replaced by 'adc' and 'L0' by 'L1', the first occurrence of each.  Only the
+    file name is changed.  Replacing in the whole path used to change a
+    directory's name instead whenever it contained 'voltage' or 'L0', as in
+    '/tmp/test_efield2voltage_x/sim_run/voltage_1-1_L0_0000.root', so the
+    script failed to open a file in a directory that does not exist, or wrote
+    into one that does.
+
+    Parameters
+    ----------
+    voltage_file : str
+        Path to a voltage file, e.g. 'sim_run/voltage_1-1_L0_0000.root'.
+
+    Returns
+    -------
+    str
+        Path to the ADC file, e.g. 'sim_run/adc_1-1_L1_0000.root'.
+    """
+    directory, name = os.path.split(voltage_file)
+    name = name.replace('voltage', 'adc', 1).replace('L0', 'L1', 1)
+    return os.path.join(directory, name)
+
+
 def get_noise_trace(data_dir,
                     n_traces,
                     n_files=None,
@@ -356,8 +382,7 @@ if __name__ == '__main__':
     f_input_file=glob.glob(f_input_dir+"/voltage_*_L0_*.root")[0]
 
     if f_output == None:
-        f_output = f_input_file.replace('voltage','adc')
-        f_output = f_output.replace('L0','L1')
+        f_output = adc_file_path(f_input_file)
     if noise_dir == None:
         noise_trace = None
     t1_config = t1_config_from_params(args.t1_param) if args.t1_trigger else None
@@ -385,9 +410,7 @@ if __name__ == '__main__':
         print(f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB")
 
         if args.out_file is None:
-            # Replace only first occurrences
-            f_output = "adc".join(f_input_file.split("voltage", 1))
-            f_output = "L1".join(f_output.split("L0", 1))
+            f_output = adc_file_path(f_input_file)
 
         #-#-#- Prepare TADC -#-#-#
         if os.path.exists(f_output):

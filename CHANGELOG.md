@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`convert_voltage2adc.py` writes the ADC file beside its voltage file,
+  whatever the directories are called.** Without `-o`, it named the output by
+  replacing the first 'voltage' and 'L0' in the whole *path*, so when a
+  directory's name contained either, as in `/tmp/test_efield2voltage_x/`, that
+  name was changed instead of the file's. The script then stopped with
+  `OSError: Failed to open file .../voltage_1-1_L1_0000.root`, or wrote into
+  whichever existing directory the changed path named. Only the file name is
+  changed now. A test runs the script on such a directory.
+
 - **Seven open issues, fixed together in 2026-09.**
   - **Simulation files record Xmax and the shower direction** (#104).
     `tshower.xmax_pos` and `tshower.direction` were all zeros in `sim2root`

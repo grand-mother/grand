@@ -296,7 +296,7 @@ class _NoModel:
         pass
 
 
-def test_efield2voltage_and_voltage2adc_write_the_event(grandroot, tmp_path_factory, monkeypatch):
+def test_efield2voltage_and_voltage2adc_write_the_event(grandroot, tmp_path, monkeypatch):
     r"""Voltage and ADC files each get the event, with du_count 0."""
     import grand.sim.efield2voltage as e2v
 
@@ -304,9 +304,7 @@ def test_efield2voltage_and_voltage2adc_write_the_event(grandroot, tmp_path_fact
     for name in ('AntennaModel', 'RFChain', 'RFChainNut', 'RFChain_gaa'):
         monkeypatch.setattr(e2v, name, _NoModel)
 
-    # Not under tmp_path: convert_voltage2adc.py names its output by replacing
-    # the first "voltage" in the whole path, and the test's name has one.
-    work = tmp_path_factory.mktemp('e2v_adc') / grandroot.name
+    work = tmp_path / grandroot.name
     shutil.copytree(str(grandroot), str(work))
     signal = e2v.Efield2Voltage(str(work), 'voltage_1-1_L0_0000.root',
                                 output_directory=str(work), seed=0)
