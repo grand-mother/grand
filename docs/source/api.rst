@@ -169,6 +169,9 @@ with a known answer and on ten GP13 candidates.
 .. automodule:: grand.analysis.signals.extraction
    :members:
 
+.. automodule:: grand.analysis.cramer_rao_bounds.cramer_rao
+   :members:
+
 Support
 -------
 

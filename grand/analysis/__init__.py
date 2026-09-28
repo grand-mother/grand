@@ -10,5 +10,6 @@ import grand.analysis.constants as cons
 import grand.analysis.energy_reco as en
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom as geom
+import grand.analysis.cramer_rao_bounds as crb
 
-__all__ = ['sig', 'fit', 'cons', 'en', 'co', 'geom']
+__all__ = ['sig', 'fit', 'cons', 'en', 'co', 'geom', 'crb']

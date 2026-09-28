@@ -8,6 +8,7 @@ import grand.analysis.constants as cons
 import grand.analysis.energy_reco as en
 import grand.analysis.coords.array_shower as co
 import grand.analysis.geom as geom
+import grand.analysis.cramer_rao_bounds as crb
 from grand.dataio import TShower, TRawVoltage
 import config as conf
 
@@ -155,6 +156,16 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.chi2_pwf = chi2_pwf_reduced
 
     # ---------------------------------------------------------------
+    # CRB calculation for PWF
+    # ---------------------------------------------------------------
+    stds_pwf = crb.CRB_PWF(
+        theta_pwf_rad, phi_pwf_rad, Xants
+    )
+
+    trecons.crb_zenith_pwf = stds_pwf[0]
+    trecons.crb_azimuth_pwf = stds_pwf[1]
+
+    # ---------------------------------------------------------------
     # Spherical Wave Fit (SWF)
     # ---------------------------------------------------------------
     theta_swf_rad, phi_swf_rad, r_xmax, t_s = fit.recons_swf(trecons.zenith_pwf, trecons.azimuth_pwf, peak_time, Xants, sigma = 5e-9)
@@ -189,7 +200,16 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     sin_alpha = geom.sin_geomag_angle(theta_adf, phi_adf, B=cons.Bn)
     energy_elm = en.recons_energy_from_voltage(scaling_factor, sin_alpha)
 
-    # Store ADF and energy results and in TRecons
+    # ---------------------------------------------------------------
+    # CRB calculations for ADF and SWF
+    # ---------------------------------------------------------------
+    stds = crb.CRB_ADF_SWF(
+        theta_swf_rad, phi_swf_rad, r_xmax, t_s,
+        theta_adf, phi_adf, delta_omega, scaling_factor,
+        Xants
+    )
+
+    # Store ADF, energy results and CRB in TRecons
     trecons.zenith_adf = theta_adf
     trecons.azimuth_adf = phi_adf
     trecons.width = delta_omega
@@ -201,6 +221,16 @@ for rootfile, ev_idx in read_event_list(flagged_txt, start_line=5, stop_line=15)
     trecons.adf_amplitude = amplitude_model
     trecons.distance_source_antenna = l_ant
     trecons.energy_elm_voltage = energy_elm
+
+    # Store CRB results
+    trecons.crb_zenith_adf = stds[4]
+    trecons.crb_azimuth_adf = stds[5]
+    trecons.crb_width = stds[6]
+    trecons.crb_scaling_factor = stds[7]
+    trecons.crb_zenith_swf = stds[0]
+    trecons.crb_azimuth_swf = stds[1]
+    trecons.crb_r_xmax = stds[2]
+    trecons.crb_t_s = stds[3]
 
     # ---------------------------------------------------------------
     # Fill the reconstruction tree for this event

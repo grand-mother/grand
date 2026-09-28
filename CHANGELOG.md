@@ -123,6 +123,23 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Added
 
+- **Cramér-Rao bounds for the reconstruction** (Sebastián Castro-Isern,
+  PR 150). `grand.analysis.cramer_rao_bounds` (also `grand.analysis.crb`)
+  gives the smallest uncertainty the PWF, SWF and ADF fits can reach, from
+  the timing and amplitude uncertainties. `TRecons` gains ten `crb_*` fields
+  to store them, a data-format addition (schema snapshot updated). Files
+  written before this still read, with the bounds reading as 0.
+  `examples/analysis/main_DOI.py` computes and stores them. Ported by hand
+  because the PR targets `dev`; the other files in PR 150 were already on
+  `dev-next` from `dev_marion`, apart from its copy of the example, which
+  duplicates `main_DOI.py`. Two changes to the code as submitted:
+  - an azimuth, or any other parameter, of exactly 0 got a derivative step
+    of 0, and every bound came back NaN; it now gets a step of 1e-6;
+  - three docstrings are corrected: one named the wrong model and two called
+    the zenith the azimuth.
+  Tested against 1000 refits of noisy plane-wave times: the PWF bound matches
+  their scatter to within 3 %.
+
 - **Branches can be retired without losing them.** `docs/dev/archive_branches.py`
   tags each settled branch as `archive/<branch>-<YYYY-MM>`, with the reason in
   the tag message, before deleting it. Every commit stays in the repository,

@@ -23,6 +23,8 @@ This module contains analysis tools for the **reconstruction of events in direct
   - `cherenkov_angle.py`: compute the Cherenkov angle using a two-emission-point toy model around the reconstructed Xsource obtained with SWF.  
     The Cherenkov angle is the point on the ground where the light path between the two points is minimal.
 
+- **`cramer_rao_bounds`** (Sebastián Castro-Isern, PR 150) – Main **CRB functions** used in the reconstruction pipeline to estimate the order of magnitude of errors: `CRB_PWF` (direction from times) and `CRB_ADF_SWF` (SWF and ADF parameters from times and amplitudes). Available as `grand.analysis.crb`.
+
 - **`examples/analysis/`** (at the repository root; moved out of the package on
   2026-09-24 so that installing GRANDlib does not install 0.9 MB of example
   data) – Example scripts `main_AOI.py` and `main_DOI.py`, directly applicable to the 73 selected candidates (`Flagged_events_July_October.txt`).  
