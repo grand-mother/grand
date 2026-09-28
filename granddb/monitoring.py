@@ -41,6 +41,7 @@ def with_db_cursor(func):
         jitter=0.1
         retries = 0
         while retries <= max_retries:
+            conn = None
             try:
                 with psycopg2.connect(**monitoring_dbconf.DB_CONFIG) as conn:
                     with conn.cursor() as cur:
@@ -50,7 +51,8 @@ def with_db_cursor(func):
                         return func(cur, conn, *args, **kwargs) if expects_conn else func(cur, *args, **kwargs)
 
             except psycopg2.errors.DeadlockDetected as e:
-                conn.rollback()
+                if conn:
+                    conn.rollback()
                 if retries >= max_retries:
                     logger.error(f"deadlock... end after {retries} retries")
                     raise
@@ -64,7 +66,8 @@ def with_db_cursor(func):
             except Exception:
                 # Immediately re-raise non-retryable exceptions
                 logger.error("unexpected error")
-                conn.rollback()
+                if conn:
+                    conn.rollback()
                 raise
 
     return wrapper

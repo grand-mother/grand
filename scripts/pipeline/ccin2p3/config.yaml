@@ -22,16 +22,16 @@ default-resources:
   slurm_extra: "--licenses=sps"  # note the double "'
   runtime: 8
   mem_mb: 1000
-#  tmpdir: ""
+  tmpdir: ""
   extra: "'--licenses=sps'"
-  database_slots: 15
+  database_slots: 1
   irods_slots: 3
-  bin2root_slots: 1
+  bin2root_slots: 100
 # max allowed resources for a single group job
 resources:
   irods_limits: 3
-  database_limits: 15
-  bin2root_limits: 15
+  database_limits: 5
+  bin2root_limits: 150
   # 150GB is a hard limit on htc partition
 #  mem_mb: 1400
   # 1440 minutes = 1 day
@@ -61,13 +61,14 @@ scheduler: greedy
 ## https://doc.cc.in2p3.fr/fr/Computing/slurm/submit.html#environnement-et-limites
 #remote-job-local-storage-prefix: "/tmp"
 ## those 2 options mitigate the potential slowness of the /sps/ztf partition
-#max-inventory-time: 300
-#latency-wait: 60
+max-inventory-time: 300
+latency-wait: 60
+seconds-between-status-checks: 30
+max-status-checks-per-second: 1
 
 slurm:
   # job name format
   job-name: "smk.{rule}.{wildcards}"
-
 
 # Jobs grouping. We define groups (irods, database and bin2root)
 # If a rule is attached to a group then jobs from this rule will be submitted in slurm inside the same job
@@ -77,6 +78,6 @@ groups:
   - database=database
   - bin2root=bin2root
 group-components:
-  irods: 5
+  irods: 1
   database: 2
-  bin2root: 2
+  bin2root: 1

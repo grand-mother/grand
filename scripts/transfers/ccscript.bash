@@ -6,11 +6,11 @@
 # Copyright : Grand Observatory 2024
 
 # path to bin2root file
+#bin2root='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/bintoroot.bash'
 bin2root='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/bintoroot.bash'
 register_transfers='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/register_transfer.bash'
 refresh_mat_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/refresh_mat_views.bash'
-monitoring_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/run_monitoring.bash'
-update_web_script='/sps/grand/prod_grand/monitoring_page/launch_webmonitoring_update.bash'
+monitoring_script='/pbs/home/p/prod_grand/softs/grand.new/scripts/transfers/run_monitoring.bash'
 tar_logs_script='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/tar_logs.bash'
 config_file='/pbs/home/p/prod_grand/softs/grand/scripts/transfers/config-prod.ini'
 # gtot options for convertion -g1 for gp13 -f2 for gaa
@@ -23,7 +23,7 @@ nbfiles=5
 nbjobs=8
 
 #time required to run bin2root on one file
-bin2rootduration=15
+bin2rootduration=10
 
 # Notification options q
 mail_user='fleg@lpnhe.in2p3.fr'
@@ -33,7 +33,7 @@ fullscriptpath=${BASH_SOURCE[0]}
 args="$*"
 #Check how the script is launched (local execution is authorized and sshd exec is restricted to authorized keys)
 access_type=$(ps h -o comm -p "$PPID")
-if [ "${access_type}" == "sshd" ] ; then
+if [[ "${access_type}" == sshd* ]] ; then
   # manage call from remote restricted ssh command (extract opt parameters)
   # default args
   case $SSH_ORIGINAL_COMMAND in
@@ -86,6 +86,16 @@ case ${site,,} in
     gtot_option="-g1 -os";;
 esac
 
+
+### TEST FLEG
+execdate=`date`
+echo "${execdate} Running ccscript with tag ${tag} and ${db}" >> /sps/grand/data/gp80/logs/ccscript.log
+mail -s "ccscript run ${execdate}" fleg@lpnhe.in2p3.fr << EOF
+tag is ${tag} and db is ${db}
+EOF
+###
+
+
 #test dbfile exists and tag is set
 if [ -z "$tag" ] || [ -z "$db" ];then 
 	printf "Missing option -t or -d\n"
@@ -94,6 +104,10 @@ elif [ ! -f $db ];then
 	printf "Database file does not exists\n"
 	exit 1
 fi
+
+### TEST FLEG NEW PIPELINE ####
+sbatch --job-name="test-pipeline-$(date +%Y%m%d-%H%M%S)" /sps/grand/prod_grand/DB_TESTS/grand/scripts/pipeline/cc_pipeline.bash $db 
+###
 
 # Determine root_dir from database path
 root_dest=${db%/logs*}/GrandRoot/
@@ -124,18 +138,20 @@ j=0
 declare -A listoffiles
 for file in $(sqlite3 $db "select target from transfer,gfiles where gfiles.id=transfer.id and tag='${tag}' and transfer.success=1;")
 do
-  # We exclude small files (which are suposed to be crap)
-  fsize=$(stat -c%s "$file")
-  if [ "$fsize" -le "256" ];then
-      echo "$file too small ($fsize). Moved to $crap_dir/ and skipped."
-      mv "$file" "$crap_dir/"
-  else
-      if [ "$((i % nbfiles))" -eq "0" ]; then
-        ((j++))
-      fi
-      #add file to the list of files to be treated
-      listoffiles[$j]+=" ${file}"
-      ((i++))
+  if [ -e "$file" ]; then
+	# We exclude small files (which are suposed to be crap)
+	fsize=$(stat -c%s "$file")
+	if [ "$fsize" -le "256" ];then
+	    echo "$file too small ($fsize). Moved to $crap_dir/ and skipped."
+		mv "$file" "$crap_dir/"
+	else
+		if [ "$((i % nbfiles))" -eq "0" ]; then
+			((j++))
+		fi
+		#add file to the list of files to be treated
+		listoffiles[$j]+=" ${file}"
+		((i++))
+	fi
   fi
 done
 
@@ -162,7 +178,7 @@ do
 	  l=$((k - nbjobs))
 	  jregid=${jobsid[${l}]}
   fi
-  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 3G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
+  jobsid[${k}]=$(sbatch --dependency=afterany:${jregid} -t 0-${jobtime} -n 1 -J ${submit_base_name}-${j} -o ${submit_dir}/${submit_base_name}-${j}.log --mem 8G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
   jobsid[${k}]=$(echo ${jobsid[${k}]} |awk '{print $NF}')
 	convjobs=$convjobs":"${jobsid[${k}]}
   ((k++))
@@ -180,9 +196,8 @@ else
   fi
   dep="--dependency=afterany${convjobs}"
   #finally refresh the materialized views in the database and the update of monitoring
-  sbatch ${dep} -t 0-00:45 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 2G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
+  sbatch ${dep} -t 0-00:15 -n 1 -J refresh_mat_${tag} -o ${submit_dir}/refresh_mat_${tag}.log --mem 1G  --mail-user=${mail_user} --mail-type=${mail_type} ${refresh_mat_script}
   sbatch ${dep} -o ${submit_dir}/monitoring_${tag}.log ${monitoring_script} -t ${tag}
-  #sbatch ${dep} -t 0-02:00 -n 1 -J update_webmonitoring_${tag} -o ${submit_dir}/update_webmonitoring_${tag}.log --mem 16G  --mail-user=${mail_user} --mail-type=${mail_type} ${update_web_script}
   sbatch -t 0-03:55 -n 1 -J tar_logs_${tag} -o ${submit_dir}/tar_logs_${tag}.log  --mem 1G --mail-user=${mail_user} --mail-type=${mail_type}  --wrap="${tar_logs_script} -s ${site,,} -d 2"
 fi
 

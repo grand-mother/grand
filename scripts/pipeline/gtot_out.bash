@@ -64,7 +64,7 @@ if [ -f $file ]; then
       CD)
         if [ "${site}" == "gp80" ]; then
           #gtot_extra_option="-gc -os -rn -ow"
-          gtot_extra_option=${gtot_options/-g1/-gc}
+          gtot_extra_option=${gtot_options/-g1/-gc2}
         else
           gtot_extra_option=${gtot_options}
         fi

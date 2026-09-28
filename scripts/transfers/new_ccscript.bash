@@ -5,10 +5,12 @@
 # update Fleg : 11/2024 (option to run locally + gp80 management)
 # Copyright : Grand Observatory 2024
 
-fullscriptpath="$(realpath "${BASH_SOURCE[0]}")"
-fullscriptdir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-pipeline_script="$(dirname "$fullscriptdir")/pipeline/cc_pipeline.bash"
+# We set up the directory of the grandlib installation we want to use :
+grand_path="/sps/grand/prod_grand/DB_TESTS/grand"
 
+#Get the pipeline configuration
+setup_file="${grand_path}/scripts/pipeline/pipeline_setup.bash"
+source $setup_file
 
 args="$*"
 #Check how the script is launched (local execution is authorized and sshd exec is restricted to authorized keys)
@@ -68,9 +70,20 @@ submit_dir=$(dirname "${db}")
 submit_base_name=${site}_${tag}
 
 
-sbatch -o ${submit_dir}/new_ccscript_${tag}.log ${pipeline_script} -t ${tag} -d ${db} -s ${site}
+sbatch -o ${submit_dir}/${submit_base_name}-new_ccscript.log -J ${submit_base_name}-new_ccscript ${pipeline_script} -t ${tag} -d ${db} -s ${site} -g ${grand_path}
 
 exit 0
+
+
+
+
+
+
+
+
+
+
+
 
 case ${site,,} in
   gp13)
@@ -107,13 +120,10 @@ fi
 if [ ! -d $crap_dir ];then
                 mkdir -p $crap_dir >/dev/null 2>&1
 fi
+
+
 # First register raw files transfers into the DB and get the id of the registration job
-outfile="${submit_dir}/${submit_base_name}-register-transfer.bash"
-echo "#!/bin/bash" > $outfile
-echo "# ${0} ${@}" >> $outfile
-echo "$register_transfers -d $db -t $tag -c $config_file" >> $outfile
-jregid=$(sbatch -t 0-01:00 -n 1 -J ${submit_base_name}-register-transfer -o ${submit_dir}/${submit_base_name}-register-transfer.log --mem 2G  --mail-user=${mail_user} --mail-type=${mail_type} ${outfile} )
-jregid=$(echo $jregid |awk '{print $NF}')
+
 
 # List files to be converted and group them by bunchs of nbfiles
 i=0

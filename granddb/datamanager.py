@@ -57,6 +57,7 @@ class DataManager:
     _provider = None
 
     def __init__(self, file=os.path.join(os.path.dirname(__file__), 'config.ini')):
+        logger.info("init datamanager")
         configur = ConfigParser()
         # by default configparser convert all keys to lowercase... but we don't want !
         configur.optionxform = lambda option: option
@@ -330,6 +331,7 @@ class DataManager:
     # records will be deleted and the file will be registered again as a new file
     # Returns the path to the file in the repository where the file was registered.
     def register_file(self, localfile, dataset=None, repository=None, targetdir=None, again=False):
+        logger.info("entering register_file")
         newfilename = None
         if targetdir is None or os.path.dirname(targetdir) == os.path.dirname(localfile):
             targetfile = localfile
@@ -337,6 +339,7 @@ class DataManager:
             # Target file is made of target dir + dataset name + filename
             targetfile = targetdir + "/" + os.path.basename(dataset) + "/" + os.path.basename(localfile)
             targetfile=os.path.normpath(targetfile)
+        logger.info(f"Set repository")
         # If repository not given then use the referer
         if repository is None:
             repository = self.referer()
@@ -349,11 +352,12 @@ class DataManager:
         if repository is not None:
             # For registering the full path of the file must be provided
             localpath = os.path.dirname(localfile)
-
+            logger.info(f"localpath is {localpath}")
             if len(localpath) == 0:
                 logger.error(f"For registering, local filename ({localfile}) must be a full path ")
             else:
                 # And the file must be already present in the target repository and in the local directory
+                logger.debug(f"check file exists")
                 fileexists = self.get_file(targetfile, repository.name(), grab=False)
                 #TODO: Check file exists in
                 if fileexists :
@@ -366,8 +370,10 @@ class DataManager:
                             newfilename = None
                             return newfilename
                     if again:
+                        logger.info("Register again")
                         self.database().register_again_file(localfile, newfilename, dataset, repository.id_repository, self.provider(), targetfile=targetfile)
                     else:
+                        logger.info("Register file for the first time")
                         self.database().register_file(localfile, newfilename, dataset, repository.id_repository, self.provider(), targetdir=targetfile)
                 else:
                     logger.error(f"File {targetfile} was not found in repository {repository.name()} thus cannot be registered")

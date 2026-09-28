@@ -3,6 +3,8 @@ import grand.manage_log as mlg
 import os
 logger = mlg.get_logger_for_script(__name__)
 #mlg.create_output_for_logger("debug", log_stdout=True)
+# Desactivate ROOT automatic cleaning (to avoid ROOT to try to destroy objects already destroyed by python and produce a segfault)
+#ROOT.gROOT.SetMustClean(False)
 
 class RootFile:
     # Use dict to associate rootfile ttree class to root_tree classe
@@ -46,7 +48,7 @@ class RootFile:
         'source_datetime' : 'source_datetime',
         'analysis_level' : 'analysis_level',
         'modification_history' : 'modification_history',
-        #'number_of_events' : 'number_of_events',
+        'number_of_events' : 'number_of_events',
         'evt_cnt' : 'number_of_events'
     }
 
@@ -328,7 +330,9 @@ class RootFile:
         self.filename = f_name
         self.TreeList.clear()
         #self.file = ROOT.TFile(f_name)
+        logger.debug('reading tree from file')
         self.file = groot.DataFile(f_name)
+        logger.debug('tree readed')
         for treename in self.file.dict_of_trees.keys():
             if treename in self.TreeToClass:
                 self.TreeList[treename] = self.TreeToClass[treename](f_name)
@@ -347,6 +351,15 @@ class RootFile:
         #    else:
         #        logger.warning(f"{ttype} is unknown")
 
+    def close(self):
+        """explicitely clean ROOT objects to avoid segfaults."""
+        for tree in self.TreeList.values():
+            del tree
+        self.TreeList.clear()
+        if self.file:
+            self.file.Close()
+            del self.file
+        self.file = None
 
     def get_tree(self, treename):
         treetype = self.file.get_tree_info(treename)["type"]

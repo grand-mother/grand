@@ -15,7 +15,6 @@ from sqlalchemy.inspection import inspect
 import grand.manage_log as mlg
 import os
 from sqlalchemy import func
-
 from granddb.rootdblib import Dataset, RootFile
 
 logger = mlg.get_logger_for_script(__name__)
@@ -454,16 +453,18 @@ class Database:
         if register_file:
             id_provider = self.get_or_create_key('provider', 'provider', provider)
             if isnewfile:
+                logger.debug("Read root file")
                 rfile = rdb.RootFile(str(filename))
+                logger.debug("Root file readed")
                 #rfile.dataset_name()
-                # rfile.file().GetSize()
                 container = self.tables()['file'](id_dataset=id_dataset,
                                                   filename=os.path.basename(targetfile),
                                                   description='autodesc',
                                                   original_name=os.path.basename(filename),
                                                   id_provider=id_provider,
-                                                  file_size=rfile.file.GetSize()
+                                                  file_size=os.path.getsize(rfile.file.filename)
                                                   )
+                #file_size=rfile.file.GetSize()
                 self.sqlalchemysession.add(container)
                 self.sqlalchemysession.flush()
                 idfile = container.id_file
@@ -493,61 +494,64 @@ class Database:
         for treename in rfile.TreeList:
             logger.debug(f" Debug reading tree {treename}")
             treetype = treename.split('_', 1)[0]
+
+            # First we register metadata for all trees.
+            ttrees[treename] = {}
+            # Get metadata and add file_content record
+            metatree = {}
+            tablemeta = "file_content"
+            metatree['id_file'] = idfile
+            for meta, field in rfile.metaToDB.items():
+                # try/except to avoid stopping when metadata is not present in root file
+                value=None
+                try:
+                    value = casttodb(getattr(rfile.TreeList[treename], meta))
+                    if field.find('id_') >= 0:
+                        value = self.get_or_create_fk(tablemeta, field, value)
+                    if field == "comment":
+                        field = "comments"
+                    metatree[field] = value
+                    metatree['tree_name'] = treename
+                    #Get the number of events for events trees (set to 0 for run trees)
+                    #Removed because we now just register run trees
+                    if treetype in rfile.EventTrees:
+                        #metatree['number_of_events'] = len(rfile.file.get_max_list_of_events())
+                        metatree['number_of_events'] = rfile.TreeList[treename].get_number_of_entries()
+                    else:
+                        metatree['number_of_events'] = 0
+                except Exception as e:
+                    logger.debug(f" Debug : error on meta {meta} field {field} value {value} : {e}")
+                    pass
+            # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
+            metatree['tree_name'] = treename
+            container = self.tables()[tablemeta](**metatree)
+            self.sqlalchemysession.add(container)
+            # self.sqlalchemysession.flush()
+            # If table not defined in rootdblib for this tree then no content to record.
+            st = time.time()
+
+            #Lets see if events exists but from other files in same dataset
+            #First get the dataset
+            #dataset_result = self.sqlalchemysession.query(getattr(self._tables['file'], 'id_dataset')).filter(self._tables['file'].id_file == idfile).first()
+            #id_dataset = dataset_result[0]
+            if id_dataset is None:
+                pass
+            else:
+                # Get events corresponding to files in the same dataset
+                eventlist = (self.sqlalchemysession.query(getattr(self._tables['events'], 'run_number'),
+                                                          getattr(self._tables['events'], 'event_number'))
+                             .distinct(getattr(self._tables['events'], 'run_number'),getattr(self._tables['events'], 'event_number'))
+                             .join(self._tables['file'])
+                             .filter(self._tables['file'].id_dataset == id_dataset).all())
+                #print(f'{file} {idfile} {len(eventlist)}')
+
+
+
+            #events.run_number, events.event_number).join(file).filter(File.id_dataset == id_dataset).all()
             # We register only known and identified trees defined in rootdblib
             if hasattr(rfile, treetype + "ToDB"):
                 table = getattr(rfile, treetype + "ToDB").get('table')
                 # table = getattr(rfile, treetype + "ToDB")['table']
-                ttrees[treename] = {}
-
-                # Get metadata and add file_content record
-                metatree = {}
-                tablemeta = "file_content"
-                metatree['id_file'] = idfile
-                for meta, field in rfile.metaToDB.items():
-                    # try/except to avoid stopping when metadata is not present in root file
-                    value=None
-                    try:
-                        value = casttodb(getattr(rfile.TreeList[treename], meta))
-                        if field.find('id_') >= 0:
-                            value = self.get_or_create_fk(tablemeta, field, value)
-                        if field == "comment":
-                            field = "comments"
-                        metatree[field] = value
-                        metatree['tree_name'] = treename
-                        #Get the number of events for events trees (set to 0 for run trees)
-                        if treetype in rfile.EventTrees:
-                            metatree['number_of_events'] = rfile.TreeList[treename].get_number_of_entries()
-                        else:
-                            metatree['number_of_events'] = 0
-                    except Exception as e:
-                        logger.debug(f" Debug : error on meta {meta} field {field} value {value} : {e}")
-                        pass
-                # Trick to use "real" tree name (instead of meta _tree_name which is not always correct)
-                metatree['tree_name'] = treename
-                container = self.tables()[tablemeta](**metatree)
-                self.sqlalchemysession.add(container)
-                # self.sqlalchemysession.flush()
-                # If table not defined in rootdblib for this tree then no content to record.
-                st = time.time()
-
-                #Lets see if events exists but from other files in same dataset
-                #First get the dataset
-                #dataset_result = self.sqlalchemysession.query(getattr(self._tables['file'], 'id_dataset')).filter(self._tables['file'].id_file == idfile).first()
-                #id_dataset = dataset_result[0]
-                if id_dataset is None:
-                    pass
-                else:
-                    # Get events corresponding to files in the same dataset
-                    eventlist = (self.sqlalchemysession.query(getattr(self._tables['events'], 'run_number'),
-                                                              getattr(self._tables['events'], 'event_number'))
-                                 .distinct(getattr(self._tables['events'], 'run_number'),getattr(self._tables['events'], 'event_number'))
-                                 .join(self._tables['file'])
-                                 .filter(self._tables['file'].id_dataset == id_dataset).all())
-                    #print(f'{file} {idfile} {len(eventlist)}')
-
-
-
-                    #events.run_number, events.event_number).join(file).filter(File.id_dataset == id_dataset).all()
 
                 if table is not None:
                     # Registering of events trees
@@ -655,6 +659,7 @@ class Database:
     # It will first search the registered file and will remove it from the database before registering it again as a new file
     # Usefull when reprocessing or correcting a file
     def register_again_file(self, orgfilename, newfilename, dataset, id_repository, provider, targetfile=None):
+        logger.debug("In register_again_file")
         if targetfile is None:
             targetfile = newfilename
         if dataset is not None:
@@ -668,9 +673,12 @@ class Database:
 
             removed = self.sqlalchemysession.query(func.delete_file_id(idfile)).all()
             logger.info(f"removed old files {removed}")
+        logger.debug("register filename")
         idfile, read_file, id_dataset = self.register_filename(orgfilename, newfilename, dataset, id_repository, provider, targetfile)
+        logger.debug("after register filename")
         if read_file:
             # We read the localfile and not the remote one
+            logger.debug(f"Enter register_filecontent")
             self.register_filecontent(orgfilename, idfile, id_dataset)
             # self.register_filecontent(newfilename,idfile)
         else:

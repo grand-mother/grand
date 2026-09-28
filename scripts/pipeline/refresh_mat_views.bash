@@ -1,10 +1,14 @@
 #!/bin/bash
-cd /pbs/home/p/prod_grand/softs/grand
-export PLATFORM=redhat-9-x86_64
+SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+source ${SCRIPT_DIR}/pipeline_setup.bash
 source /pbs/throng/grand/soft/miniconda3/etc/profile.d/conda.sh
-conda activate /sps/grand/software/conda/grandlib_2409
-source env/setup.sh
-#export PATH=/sps/grand/software/conda/grandlib_2409/bin/:$PATH
 
-cd /pbs/home/p/prod_grand/softs/grand/scripts/transfers
-python3 /pbs/home/p/prod_grand/softs/grand/granddb/refresh_mat_views.py
+
+cd ${grandlib_path}
+conda activate ${conda_lib}
+export PATH=${conda_lib}/bin/:$PATH
+source env/setup.sh
+${conda_lib}/bin/python3 granddb/refresh_mat_views.py -c ${default_config}
+
+
+

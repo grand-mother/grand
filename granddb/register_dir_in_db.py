@@ -33,9 +33,11 @@ for dir in args.dirs:
 #        ic(onlyfiles)
         for file in onlyfiles:
             lfile=os.path.join(dir,file)
-            dataset=os.path.basename(os.path.normpath(dir))
-#            ic(dataset)
-            dm.register_file(localfile=lfile, dataset=dataset, repository=repo_name, again=True)
+#            dataset=os.path.basename(os.path.normpath(dir))
+##            ic(dataset)
+#            dm.register_file(localfile=lfile, dataset=dataset, repository=repo_name, again=True)
+            dm.register_file(localfile=lfile,  repository=repo_name, again=True)
+
     except Exception as e:
         logger.error(f'Error when importing {file}. Skipping.')
         logger.error(f'Error was {e}.')
