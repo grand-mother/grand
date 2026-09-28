@@ -9,7 +9,8 @@ worked still works:
   without a trailing '/';
 - #123: the hadronic model and CoREAS version read from a CORSIKA log;
 - #136 (found while triaging it): ``creation_datetime`` and
-  ``source_datetime`` read back as integers after being set to a datetime.
+  ``source_datetime`` read back as integers after being set to a datetime;
+- #140 (in part): the reader for the refraction model in a ZHAireS summary.
 """
 
 import contextlib
@@ -148,3 +149,28 @@ def test_a_datetime_set_on_a_tree_reads_back_as_that_datetime(field):
     # An integer timestamp still reads back as the matching datetime.
     setattr(tree, field, int(moment.timestamp()))
     assert getattr(tree, field) == moment
+
+
+# ------------------------------------------------------------------ #140
+
+@pytest.mark.parametrize("line, model", [
+    ("  Glasgow-Dale refraction index model", "Glasgow-Dale"),
+    ("  Exponential refraction index model", "Exponential"),
+    ("  Constant refraction index model", "Constant"),
+])
+def test_the_refraction_model_is_read_from_the_summary(tmp_path, line, model):
+    r"""The reader for the model named in a ZHAireS summary file works.
+
+    It failed on every call (a misspelt file handle), and would otherwise
+    have answered "Constant" from any file's first line.  Nothing calls it
+    yet; #140 needs it to read which model a simulation used.
+    """
+    aires = _load("aires_info", ROOT / "sim2root" / "ZHAireSRawRoot"
+                  / "AiresInfoFunctionsGRANDROOT.py")
+    sry = tmp_path / "run.sry"
+    sry.write_text("  Site: Xiaodushan\n  Refraction index at sea level:1.0003250\n"
+                   "%s\n" % line)
+    assert aires.GetRefractionIndexModelFromSry(str(sry)) == model
+
+    sry.write_text("  Site: Xiaodushan\n  Refraction index at sea level:1.0003250\n")
+    assert aires.GetRefractionIndexModelFromSry(str(sry)) == -1
