@@ -5,7 +5,7 @@ import logging   #for...you guessed it...logging
 logging.basicConfig(level=logging.DEBUG)
 import argparse  #for command line parsing
 import glob      #for listing files in directories
-import subprocess#for launching the script or the qsub
+from pipeline_step import run_step  # runs each step with its output shown live (#121)
 
 try:
   PYTHONINTERPRETER=os.environ["PYTHONINTERPRETER"]
@@ -44,11 +44,7 @@ if args.Extra is not None:
 logging.debug(" Trying to make GrandRoot file")
 #line to make file
 cmd=PYTHONINTERPRETER+" "+PRODUCEGRANDROOT+" "+INPUTDIR+" --target_duration_us=4.096 --trigger_time_ns 800 -e "+EXTRA
-print("about to run:" + cmd)
-p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
-stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes.
-#print(stdout)
-print(stderr)
+run_step(cmd)
 
 
 #########################################################################################################################################################
@@ -63,11 +59,7 @@ OUTPUTFILE=OUTPUTFILE[:-5]
 
 #the "real" thing
 cmd=PYTHONINTERPRETER+" "+PRODUCEVOLTAGE+" "+INPUTDIR+" --seed 1234 --verbose=info --add_jitter_ns 5 --calibration_smearing_sigma 0.075 -o " + OUTPUTFILE+".root"
-print("about to run:" + cmd)
-p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
-stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes.
-#print(stdout)
-print(stderr)
+run_step(cmd)
 
 
 #########################################################################################################################################################
@@ -75,11 +67,7 @@ print(stderr)
 #####################################################################################################################################################
 logging.debug(" Trying to produce ADCs")
 cmd=PYTHONINTERPRETER+" "+PRODUCEADC+" "+INPUTDIR
-print("about to run:" + cmd)
-p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
-stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes.
-print(stdout)
-print(stderr)
+run_step(cmd)
 
 
 #########################################################################################################################################################
@@ -87,9 +75,5 @@ print(stderr)
 #####################################################################################################################################################
 logging.debug(" Trying to produce DC2efields") 
 cmd=PYTHONINTERPRETER+" "+PRODUCEDC2Efield+" "+INPUTDIR+"  --add_noise_uVm 22 --add_jitter_ns 5 --calibration_smearing_sigma 0.075 --target_duration_us 4.096 --target_sampling_rate_mhz 500"
-print("about to run:" + cmd)
-p = subprocess.Popen(cmd,cwd=".",stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
-stdout,stderr=p.communicate() #the communicate will make it to wait until it finishes
+run_step(cmd)
 
-print(stdout)
-print(stderr)

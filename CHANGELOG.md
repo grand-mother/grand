@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The simulation-pipeline scripts show each step's output as it comes**
+  (#121). `RunSimPipe.py` and `RunSimPipeNoJitter.py` captured every step's
+  output with `communicate()`, showed nothing until the step ended, then
+  printed stderr as one raw byte string; the streaming version in
+  `RunSimPipeADCNoise.py` read it through a pipe and was reported to freeze
+  on 1000-event runs. All three now run each step through
+  `sim2root/Common/pipeline_step.py`, which lets the step write straight to
+  the terminal or job log: no buffering and no pipe to fill. A failed step is
+  now reported with its exit status; the pipeline still continues, as before.
+  The commands run are unchanged.
+
 - **`convert_voltage2adc.py` writes the ADC file beside its voltage file,
   whatever the directories are called.** Without `-o`, it named the output by
   replacing the first 'voltage' and 'L0' in the whole *path*, so when a
