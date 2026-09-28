@@ -70,6 +70,48 @@ stamp is the only way to tell two such files apart.
    ``site_layout = "GP300"`` retrieves a specific, versioned array layout
    rather than naming a file that has to be found by hand.
 
+.. _datamodel-releasing-trees:
+
+Reading many files: release each tree
+-------------------------------------
+
+Every tree instance is kept in the module-level list
+``grand.dataio.grand_tree_list``, so it is not freed when your variable goes
+out of scope, and neither is the ROOT file it opened.  A loop over hundreds of
+files therefore grows in memory until the job is killed (GitHub issue #71).
+Release each tree when you are done with it.  The simplest way is the ``with``
+form, which releases the tree even if the loop body raises:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from grand.dataio.event_trees import TADC, TRawVoltage
+
+    for path in Path("data").rglob("*.root"):
+        with TADC(str(path)) as tadc, TRawVoltage(str(path)) as tvoltage:
+            for event, run in tadc.get_list_of_events():
+                tadc.get_event(event, run)
+                ...
+
+Without ``with``, call ``stop_using()`` at the end of each iteration:
+
+.. code-block:: python
+
+    tadc = TADC(path)
+    ...
+    tadc.stop_using()
+
+``stop_using()`` removes the tree from ``grand_tree_list`` and closes the ROOT
+file the tree opened from a file name, once no other live tree reads from that
+file.  A ``ROOT.TFile`` you passed in yourself, or the one a ``DataFile``
+holds, is left open for you to close.  Do not use a tree after releasing it: if
+its file was closed, the TTree is gone.  Write a tree you filled with
+``write()`` *before* releasing it.
+
+Releasing does not bring memory growth to zero.  ROOT 6.36 itself keeps about
+0.08 MB per file that is opened, read entry by entry and closed, even from
+compiled C++ with no Python involved; that part is outside GRANDlib.
+
 Reference
 ---------
 
