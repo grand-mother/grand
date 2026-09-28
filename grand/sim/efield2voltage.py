@@ -286,6 +286,13 @@ class Efield2Voltage:
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
 
+        # A shower that hit no antenna (issue #91): there is nothing to
+        # compute, but the event is still written, with du_count 0, so that it
+        # keeps counting in the statistics downstream.
+        if self.nb_du == 0:
+            self._set_empty_event()
+            return
+
         self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
         self.f_samp_mhz = 1e3/self.dt_ns             # MHz
         # comupte time samples in ns for all antennas in event with index event_idx.
@@ -363,6 +370,32 @@ class Efield2Voltage:
         if self.params["add_rf_chain_gaa"]:
         #    #self.rf_chain.compute_for_freqs(self.freqs_mhz)
             self.rf_chaingaa.compute_for_freqs(self.freqs_mhz)
+
+    def _set_empty_event(self):
+        r"""Prepares the state for an event with no detection unit.
+
+        Every per-unit array is set to its empty shape, ``(0, 3, 0)`` for the
+        traces, so that :meth:`save_voltage` writes the event with
+        ``du_count`` 0 and the steps in between have nothing to do.
+        """
+        logger.warning(
+            f"Event {self.event_number} of run {self.run_number} has no antenna "
+            "(du_count 0): no voltage to compute; it is written with du_count 0."
+        )
+        self.traces = np.zeros((0, 3, 0), dtype=np.float32)
+        self.sig_size = 0
+        self.du_pos = np.zeros((0, 3), dtype=np.float64)
+        self.dt_ns = np.zeros(0, dtype=np.float64)
+        self.f_samp_mhz = np.zeros(0, dtype=np.float64)
+        self.time_samples = np.zeros((0, 0), dtype=np.float64)
+        self.target_sampling_rate_mhz = 0
+        self.target_lenght = 0
+        self.fft_size = 0
+        self.freqs_mhz = np.zeros(0, dtype=np.float64)
+        self.voc = np.zeros((0, 3, 0), dtype=float)
+        self.voc_f = np.zeros((0, 3, 0), dtype=np.complex64)
+        self.vout = np.zeros_like(self.voc)
+        self.vout_f = np.zeros_like(self.voc_f)
 
     def get_leff(self, du_idx):
         r"""Builds the antenna response for one detection unit.
@@ -480,6 +513,9 @@ class Efield2Voltage:
         """
         after everything is done, change the sampling rate if needded and adjust to the desired target lenght:
         """
+        # No antenna in this event (issue #91): the empty output stays as it is
+        if self.nb_du == 0:
+            return
 
         if(self.target_sampling_rate_mhz>0): #if we need to resample
             #compute new number of points
@@ -689,6 +725,10 @@ class Efield2Voltage:
         # Provide either integer event_idx, or both event_number and run_number.
         self.compute_voc_event(event_idx, event_number, run_number)
 
+        # No antenna in this event (issue #91): no noise or RF chain to apply
+        if self.nb_du == 0:
+            return
+
         # ----- Add galactic noise -----
         if self.params["add_noise"]:
             self.add(self.fft_noise_gal_3d)
@@ -874,7 +914,8 @@ class Efield2Voltage:
         logger.debug(f"{type(self.tt_volt.run_number)} {type(self.tt_volt.event_number)}")
         logger.debug(f"{self.tt_volt.run_number} {self.tt_volt.event_number}")
 
-        self.tt_volt.first_du         = self.du_id[0]
+        # An event with no antenna (issue #91) has no first DU; 0 is the default
+        self.tt_volt.first_du         = self.du_id[0] if len(self.du_id) else 0
         self.tt_volt.time_seconds     = self.events.time_seconds
         self.tt_volt.time_nanoseconds = self.events.time_nanoseconds
 

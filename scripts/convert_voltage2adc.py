@@ -417,6 +417,18 @@ if __name__ == '__main__':
 
             event_number = tvoltage.event_number
             run_number = tvoltage.run_number
+
+            # A shower that hit no antenna (issue #91): nothing to digitise, but
+            # the event is still written, with du_count 0 and empty traces.
+            if voltage_trace.size == 0:
+                logger.warning(f'Event {event_number} of run {run_number} has no antenna (du_count 0): '
+                               'no ADC trace to compute; it is written with du_count 0.')
+                tadc.copy_contents(tvoltage)
+                tadc.trace_ch = np.zeros((0, 3, 0), dtype=np.int16)
+                tadc.trigger_position = np.zeros(0, dtype=np.ushort)
+                tadc.fill()
+                continue
+
             trun.get_run(run_number)
             # print(f"Memory 2_1: {process.memory_info().rss / 1024 ** 2:.2f} MB")
             event_dus_indices = tvoltage.get_dus_indices_in_run(trun)

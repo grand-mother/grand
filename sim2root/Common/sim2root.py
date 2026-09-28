@@ -172,6 +172,69 @@ def adjust_trigger(trace, CurrentT0s, TPre, TimeBinSize):
 
     return T0s, trace
 
+def is_no_antenna_event(trawefield):
+    r"""Returns whether the current raw efield entry has no antenna at all.
+
+    A shower can miss every antenna (issue #91).  The raw converters then
+    write an efield entry with ``du_count`` 0 and empty per-antenna vectors.
+    The traces decide, not ``du_count``: an entry that carries traces is
+    never discarded, even if a converter left ``du_count`` at its default.
+
+    Parameters
+    ----------
+    trawefield : RawEfieldTree
+        The raw efield tree, positioned on the entry to test.
+
+    Returns
+    -------
+    bool
+        True if the entry has no antenna.
+    """
+    return len(trawefield.trace_x) == 0
+
+
+def extract_trace(trawefield, event_number):
+    r"""Stacks the raw x, y, z traces into one ``(n_du, 3, n_samples)`` array.
+
+    Parameters
+    ----------
+    trawefield : RawEfieldTree
+        The raw efield tree, positioned on the entry to read.
+    event_number : int
+        Used in the error message only.
+
+    Returns
+    -------
+    ndarray or None
+        The traces as float32, or None if the components cannot be stacked,
+        in which case the error has been logged.
+    """
+    def ensure_2d_trace_component(component_trace_data):
+        ct_arr = np.asarray(component_trace_data)
+        if ct_arr.ndim == 1:
+            # Reshape 1D array (n_samples,) to 2D array (1, n_samples)
+            logger.warning(f"Trace component Shape: {ct_arr.shape}")
+            print(f"Trace component Shape: {ct_arr.shape}")
+            return ct_arr.reshape(1, -1)
+        elif ct_arr.ndim == 0: # Should not happen for traces
+            logger.error(f"Trace component is scalar! Shape: {ct_arr.shape}. This is unexpected.")
+            return np.empty((1,0), dtype=ct_arr.dtype)
+        # If 2D or more, assume it's (n_du, n_samples) or similar, return as is.
+        # np.stack will later complain if shapes are not compatible.
+        return ct_arr
+
+    tx = ensure_2d_trace_component(trawefield.trace_x)
+    ty = ensure_2d_trace_component(trawefield.trace_y)
+    tz = ensure_2d_trace_component(trawefield.trace_z)
+
+    # np.stack requires input arrays to have the same shape.
+    try:
+        return np.stack([tx, ty, tz], axis=1).astype(np.float32)
+    except ValueError as e:
+        logger.error(f"Failed to stack trace components for event {event_number}. Shapes - tx: {tx.shape}, ty: {ty.shape}, tz: {tz.shape}. Error: {e}")
+        return None
+
+
 def convert_date(date_str):
     # Convert input string to a struct_time object
     date_struct = time.strptime(date_str, "%Y-%m-%d")
@@ -345,44 +408,26 @@ def main():
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
             rawmeta2grandroot(trawmeta, gt)
 
-            #Function to catch when trace is not an array
-            def ensure_2d_trace_component(component_trace_data):
-                ct_arr = np.asarray(component_trace_data)
-                if ct_arr.ndim == 1:
-                    # Reshape 1D array (n_samples,) to 2D array (1, n_samples)
-                    logger.warning(f"Trace component Shape: {ct_arr.shape}")
-                    print(f"Trace component Shape: {ct_arr.shape}")
-                    return ct_arr.reshape(1, -1)
-                elif ct_arr.ndim == 0: # Should not happen for traces
-                    logger.error(f"Trace component is scalar! Shape: {ct_arr.shape}. This is unexpected.")
-                    # Return an empty 2D array of appropriate shape, e.g. (1,0) or (0,0)
-                    # Or handle as an error. For now, (1,0) to allow stacking if other components are similar.
-                    return np.empty((1,0), dtype=ct_arr.dtype) 
-                # If 2D or more, assume it's (n_du, n_samples) or similar, return as is.
-                # np.stack will later complain if shapes are not compatible.
-                return ct_arr
-                
-            tx = ensure_2d_trace_component(trawefield.trace_x)
-            ty = ensure_2d_trace_component(trawefield.trace_y)
-            tz = ensure_2d_trace_component(trawefield.trace_z)
+            # A shower that hit no antenna (issue #91). It is kept: the shower,
+            # showersim and efield trees all get the event, the efield entry
+            # with du_count 0 and empty per-antenna arrays, so that the
+            # simulation still counts in effective-area statistics.
+            if is_no_antenna_event(trawefield):
+                logger.warning(f"Event {trawshower.event_number} in {filename} hit no antenna "
+                               f"(du_count 0): writing its shower information with an empty efield.")
+                rawefield2grandroot(trawefield, gt, ext_trace=np.zeros((0, 3, 0), dtype=np.float32),
+                                    ext_t_0=np.zeros(0, dtype=np.float64))
+            else:
+                trace = extract_trace(trawefield, trawshower.event_number)
+                if trace is None:
+                    # Skip this event: the trace components could not be stacked
+                    continue
 
-            # np.stack requires input arrays to have the same shape.
-            # logger.debug(f"Event {trawshower.event_number}: Shapes before stack - tx: {tx.shape}, ty: {ty.shape}, tz: {tz.shape}")
+                # Change the trace lenght as specified in the comand line
+                ext_t_0, trace = adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
 
-            try:
-                trace = np.stack([tx, ty, tz], axis=1).astype(np.float32)
-            except ValueError as e:
-                logger.error(f"Failed to stack trace components for event {trawshower.event_number}. Shapes - tx: {tx.shape}, ty: {ty.shape}, tz: {tz.shape}. Error: {e}")
-                # Skip this event or handle error appropriately
-                continue 
-
-            # Change the trace lenght as specified in the comand line                                
-            ext_t_0, trace_adjusted = adjust_trace(trace, trawefield.t_0, OriginalTpre, OriginalTpost, DesiredTpre, DesiredTpost,trawefield.t_bin_size)
-            # It's good practice to use the returned adjusted trace
-            trace = trace_adjusted
-
-            # Convert the RawEfieldTree entries
-            rawefield2grandroot(trawefield, gt, ext_trace=trace, ext_t_0=ext_t_0)
+                # Convert the RawEfieldTree entries
+                rawefield2grandroot(trawefield, gt, ext_trace=trace, ext_t_0=ext_t_0)
 
             # Overwrite the run number if specified on command line
             if ext_run_number is not None:
@@ -681,7 +726,12 @@ def get_tree_du_id_xyz_geoid(trawefield, shower_core, origin_geoid):
     #trawefield has the antenna positions in array coordinates, cartesian. Origin is at the delcared latitude, longitude and altitude of the site.
     print("Warning: using flat earth approximation for coordinates!.Event:",trawefield.event_number," Core:",shower_core)
     count = trawefield.draw("du_id:du_x:du_y:du_z", "", "goff")
-    du_ids = np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(np.int32)
+    # No antenna in any entry of this file (issue #91): nothing to add to the run's DU list
+    if count <= 0:
+        logger.info("No antenna in this file's efield tree; it adds no DU to the run.")
+        return (np.zeros(0, dtype=np.int32), np.zeros((0, 3), dtype=np.float32),
+                np.zeros((0, 3), dtype=np.float32))
+    du_ids =np.array(np.frombuffer(trawefield.get_v1(), dtype=np.float64, count=count)).astype(np.int32)
     du_xs = np.array(np.frombuffer(trawefield.get_v2(), dtype=np.float64, count=count)).astype(np.float32)
     du_ys = np.array(np.frombuffer(trawefield.get_v3(), dtype=np.float64, count=count)).astype(np.float32)
     du_zs = np.array(np.frombuffer(trawefield.get_v4(), dtype=np.float64, count=count)).astype(np.float32)

@@ -186,6 +186,10 @@ class _FileEventBase:
         self.t_bin_size = self.tt_run.t_bin_size.asnumpy().astype(np.float64)
         self.du_xyz = self.tt_run.du_xyz.asnumpy()
         self.traces = self.tt_event.trace.asnumpy()
+        if self.traces.size == 0:
+            # An event with no antenna (issue #91) reads back as shape (0,);
+            # keep the documented (n_du, 3, n_samples) layout.
+            self.traces = np.zeros((0, 3, 0), dtype=np.float32)
         self.sig_size = self.traces.shape[-1]
 
     def get_du_count(self):
@@ -246,7 +250,8 @@ class _FileEventBase:
             Trigger time of each unit, in nanoseconds relative to `min_sec`,
             in unit order.  Despite the name, the values are **not sorted**.
         min_sec : float
-            The second count the nanoseconds are measured from.
+            The second count the nanoseconds are measured from.  NaN for an
+            event with no antenna, whose ``du_ns`` is empty.
 
         Notes
         -----
@@ -256,6 +261,9 @@ class _FileEventBase:
            result raises rather than giving the times.
         """
         du_s = self.tt_event.du_seconds.asnumpy().astype(np.float64)
+        if du_s.size == 0:
+            # An event with no antenna (issue #91): no time to measure from
+            return np.zeros(0, dtype=np.float64), np.nan
         min_sec = du_s.min()
         du_ns = self.tt_event.du_nanoseconds.asnumpy().astype(np.float64) + 1e9 * (du_s - min_sec)
         return du_ns, min_sec
@@ -268,7 +276,18 @@ class _FileEventBase:
         -------
         Handling3dTraces
             The traces of the current event.
+
+        Raises
+        ------
+        ValueError
+            If the event has no antenna (``du_count`` 0, issue #91): there
+            are no traces to wrap, and no sampling rate to give them.
         """
+        if self.traces.shape[0] == 0:
+            raise ValueError(
+                f"event {self.event_number} of run {self.run_number} in {self.f_name} has no "
+                "antenna (du_count 0), so it has no traces to wrap; check get_du_count() first"
+            )
         s_file = os.path.basename(self.f_name)
         o_tevent = Handling3dTraces(
             f"{s_file},IDX={self.idx_event}, EVT_NB={self.event_number}, RUN_NB={self.run_number}"
