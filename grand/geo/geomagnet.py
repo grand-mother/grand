@@ -68,7 +68,10 @@ def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresen
     Returns
     -------
     CartesianRepresentation
-        The geomagnetic field vector, in the frame of `coordinates`.
+        The geomagnetic field vector, in **tesla**, in the local
+        **east-north-up** frame at the location, whatever frame `coordinates`
+        is given in (#261).  GRAND data use north-west-up: there, x is this
+        y and y is minus this x.  About 5.6e-5 T at Dunhuang.
 
     Examples
     --------
@@ -95,13 +98,27 @@ def field(coordinates: Union[ECEF, Geodetic, GRANDCS, LTP]) -> CartesianRepresen
 
 
 class Geomagnet:
-    """Proxy to a geomagnetic model. 'IGRF13' is used as a default model.
-    Get the geo-magnetic field components [Bx, By, Bz] on any geodetic location of
-    Earth at any given time. For location, either provide latitude (deg), longitude (deg), and
-    height (m) or provide location in ECEF, Geodetic, or GRAND coordinate system. TypeError
-    will occur if location is not provided. For obstime, provide time in isoformat
-    ('2020-01-19') or in datetime.date(2020, 1, 19). If obstime is not provided, a
-    default value ('2020-01-01') is used.
+    """The geomagnetic field of a model ('IGRF13' by default) at a place and time.
+
+    Give the location as latitude (deg), longitude (deg) and height (m), or
+    as an ECEF, Geodetic, LTP or GRANDCS position; a missing location raises
+    TypeError.  Give the time as an ISO date ('2020-01-19') or a
+    ``datetime.date``; the default is '2020-01-01'.
+
+    Attributes
+    ----------
+    field : CartesianRepresentation
+        The field in **tesla**, in the local **east-north-up** frame at the
+        location, whatever frame the location was given in (#261).  GRAND
+        data use north-west-up: there, x is this y and y is minus this x.
+    declination : float or ndarray
+        Angle of the horizontal field from geographic north, in degrees,
+        positive towards east.
+    inclination : float or ndarray
+        Angle of the field below the horizontal, in degrees (positive in the
+        northern hemisphere).
+    location : Geodetic
+        Where the field was evaluated.
     """
 
     def __init__(

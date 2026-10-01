@@ -226,13 +226,15 @@ def _get_geoid():
 
 
 def geoid_undulation(coordinates=None, latitude=None, longitude=None):
-    """Get the geoid undulation. This function calculates the height of
-    the geoid w.r.t the ellipsoid at a given latitude and longitude.
+    """Get the geoid undulation: the height of the geoid above the ellipsoid.
+
+    Same signature and values as :func:`grand.geo.coordinates.geoid_undulation`.
 
     Parameters
     ----------
-    coordinates : Geodetic, ECEF, LTP or GRANDCS
-        Position or positions to evaluate at.
+    coordinates : Geodetic, ECEF, LTP, GRANDCS or float, optional
+        Position or positions to evaluate at; or, as a number, the latitude,
+        with the longitude as the second argument.
     latitude : float or ndarray, optional
         Degrees north, instead of `coordinates`.
     longitude : float or ndarray, optional
@@ -242,6 +244,8 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     -------
     float or ndarray
         Height of the geoid above the ellipsoid, in metres.
+
+    A missing angle gives NaN, with a warning.
 
     Examples
     --------
@@ -254,24 +258,10 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
 
         print("%.2f m" % geoid_undulation(latitude=40.98, longitude=93.95))
     """
+    from grand.geo.coordinates import _latitude_longitude
+    latitude, longitude = _latitude_longitude(coordinates, latitude, longitude, "geoid_undulation")
     geoid = _get_geoid()
-
-    # Compute the geodetic coordinates
-    # if (not isinstance(latitude, type(None))) and (not isinstance(longitude, type(None))):
-    if (latitude is not None) and (longitude is not None):
-        pass
-        # elif not isinstance(coordinates, type(None)):
-    elif coordinates is not None:
-        geodetic = Geodetic(coordinates)
-        latitude = geodetic.latitude
-        longitude = geodetic.longitude
-    else:
-        raise TypeError(
-            "Provide coordinates in known coordinate frames or as latitude and longitude."
-        )
-
     # The map spans longitudes 0 to 360: negative ones gave NaN (#251)
-    # (None reads as NaN, as before)
     return geoid.elevation(np.mod(np.asarray(longitude, dtype=float), 360.0), latitude)
 
 

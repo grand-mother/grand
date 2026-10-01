@@ -147,7 +147,31 @@ class Reference(enum.IntEnum):
     GEOID = enum.auto()
 
 
-def geoid_undulation(latitude=None, longitude=None):
+def _latitude_longitude(coordinates, latitude, longitude, where):
+    r"""Resolves the arguments of :func:`geoid_undulation` to latitude and longitude.
+
+    Both ``geoid_undulation`` functions take a position object, keyword
+    ``latitude`` and ``longitude``, or two positional numbers (latitude,
+    longitude).  Their signatures differed, so ``grand.geoid_undulation(40.98,
+    93.95)`` raised TypeError (#261).
+    """
+    # Positions are ndarray subclasses too, so they are told apart first
+    if isinstance(coordinates, Coordinates):
+        if latitude is not None or longitude is not None:
+            raise TypeError(_validate.message(
+                where, "give a position or latitude and longitude, not both"))
+        geodetic = Geodetic(coordinates)
+        return geodetic.latitude, geodetic.longitude
+    if coordinates is not None:                      # geoid_undulation(lat, lon)
+        if longitude is not None:
+            raise TypeError(_validate.message(
+                where, "three values given; give latitude and longitude, or a position"))
+        latitude, longitude = coordinates, latitude
+    # A missing angle reads as NaN (with a warning), as it always has (#262)
+    return latitude, longitude
+
+
+def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     r"""Returns the height of the geoid above the ellipsoid, in metres.
 
     The geoid undulation is what converts between the two references of
@@ -157,9 +181,12 @@ def geoid_undulation(latitude=None, longitude=None):
 
     Parameters
     ----------
-    latitude : float or ndarray
+    coordinates : Geodetic, ECEF, LTP, GRANDCS or float, optional
+        The position; or, as a number, the latitude, with the longitude as
+        the second argument: ``geoid_undulation(40.98, 93.95)``.
+    latitude : float or ndarray, optional
         Geodetic latitude, in degrees.
-    longitude : float or ndarray
+    longitude : float or ndarray, optional
         Geodetic longitude, in degrees.
 
     Returns
@@ -167,6 +194,8 @@ def geoid_undulation(latitude=None, longitude=None):
     float or ndarray
         Undulation in metres, positive where the geoid lies above the
         ellipsoid.
+
+    A missing angle gives NaN, with a warning.
 
     Examples
     --------
@@ -176,18 +205,19 @@ def geoid_undulation(latitude=None, longitude=None):
 
         # The GRANDProto300 site at Dunhuang.
         print("%.2f m" % geoid_undulation(latitude=40.98, longitude=93.95))
+        print("%.2f m" % geoid_undulation(40.98, 93.95))
 
     Notes
     -----
-    Also defined in :mod:`grand.geo.topography`; repeated here to avoid a
-    circular import.
+    :func:`grand.geo.topography.geoid_undulation` has the same signature and
+    gives the same values; it is repeated here to avoid a circular import.
     """
+    latitude, longitude = _latitude_longitude(coordinates, latitude, longitude, "geoid_undulation")
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
     logger.debug(f"geoid_undulation for {latitude} {longitude}")
     # The map spans longitudes 0 to 360: a negative one gave NaN, and every
     # height west of Greenwich came out NaN with reference GEOID (#251)
-    # (None reads as NaN, as before)
     return geoid.elevation(np.mod(np.asarray(longitude, dtype=float), 360.0), latitude)
 
 
@@ -1196,37 +1226,26 @@ def _check_geodetic(latitude, longitude, height, where):
 
 class Geodetic(GeodeticRepresentation):
     """
-    Generic container for Geodetic coordinate system. Center of this frame.
+    A position as latitude, longitude and height.
 
-    is the center of Earth.
+    Latitude
+        Degrees north of the equator, from -90 (South Pole) to +90 (North
+        Pole); negative in the southern hemisphere.
+    Longitude
+        Degrees east of the prime meridian (Greenwich).  A negative value is
+        stored plus 360, so -10 becomes 350.  A value above 360 is stored as
+        given (400 stays 400), and comes back reduced, as 40, from a
+        conversion through :class:`ECEF`.
+    Height
+        Metres above the WGS-84 ellipsoid, the reference surface of these
+        coordinates.  The ellipsoid is *not* sea level: the geoid (mean sea
+        level) lies up to about 100 m above or below it, 61 m below at
+        Dunhuang.  Heights from other sources -- topography, site tables --
+        may be measured from the geoid; see :class:`Reference` and
+        :func:`geoid_undulation`.
 
-    Latitude:    Angle north and south of the equator. +ve in the northern hemisphere,
-                            -ve in the southern hemisphere. Range: -90 deg (South Pole)
-                            to +90 deg (North Pole). In equator, latitude = 0.
-    Longitude:    Angle east and west of the Prime Meridian. The Prime Meridian
-                            is a north-south line that passes through Greenwich, UK.
-                            +ve to the east of the Prime Meridian, -ve to the west.
-                            Range: 0 deg to 360 deg positive or negative. 
-                            Note that coordinate transformation is possible for +ve 0 to 360 deg.
-                            So negative values are changed to positive by adding 360.
-    Height:    Also called altitude or elevation, this represents the height above
-                    the Earth ellipsoid, measured in meters. The Earth ellipsoid is a
-                    mathematical surface defined by a semi-major axis and a semi-minor axis.
-                    The most common values for these two parameters are defined by
-                    the World Geodetic Standard 1984 (WGS-84). The WGS-84 ellipsoid is
-                    intended to correspond to mean sea level. A Geodetic height of zero
-                    therefore roughly corresponds to sea level, with positive values increasing
-                    away from the Earth’s center. The theoretical range of height values is
-                    from the center of the Earth (about -6,371km) to positive infinity.
-
-    Imp:
-            It was necessary to divide __new__ into __new__ and __init__ to keep track
-            of reference attribute. Using __new__ only caused reference to be a class
-            attribute. So, if you change reference (as a class attribute) in any part
-            of the code, reference for all instances changes resulting in a wrong calculation.
-            To save reference as instance attribute instead of class attribute,
-            __init__ is necessary. Same approach is used in LTP.
-            Todo: There might be an elegant way to do this.
+    Conversions to and from the local frames (:class:`LTP`, :class:`GRANDCS`)
+    pass through :class:`ECEF`, whose origin is the centre of the Earth.
 
     Examples
     --------

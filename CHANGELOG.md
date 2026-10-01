@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Geo docstrings that misled (#261, part 1): `Geomagnet` and
+  `geomagnet.field` state the unit (tesla) and frame (east-north-up at the
+  location, whatever frame the location is given in; GRAND data use
+  north-west-up); `Geodetic` no longer says a height of zero is sea level,
+  states how longitudes are stored, and drops its developer notes. The two
+  `geoid_undulation` functions now share one signature, so
+  `grand.geoid_undulation(40.98, 93.95)` works (it raised `TypeError`).
+
 - The reconstruction's frame is explicit for simulation files (#252): the
   fits take heights above sea level with the ground at `groundAltitude`
   (1231 m, GP13), while `TRun.du_xyz` is relative to `origin_geoid`; the new
