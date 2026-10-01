@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The README quickstart works (#185).** It gave `Efield2Voltage` and
+  `convert_efield2voltage.py` a single e-field file, which fails: both need a
+  simulation directory holding the run and shower trees as well. The
+  quickstart now uses a directory, says what it must hold, and both commands
+  were run as written on the committed RUN1 sample.
+
 - **`Handling3dTraces` handles one-antenna events (#287).** `np.squeeze`
   dropped the antenna axis, so `get_tmax_vmax()` and `get_snr_and_noise()`
   crashed on an event with one antenna, and `interpol="no"` returned 0-d
