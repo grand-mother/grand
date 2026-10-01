@@ -400,6 +400,10 @@ class Event:
             raise ValueError(_validate.message(
                 "Event.fill_event_from_trees",
                 "give entry_number, or event_number and run_number, not both"))
+        # Only one of the two gave TypeError: int() ... NoneType (#277)
+        if (event_number is None) != (run_number is None) and entry_number is None:
+            raise ValueError(_validate.message(
+                "Event.fill_event_from_trees", "give both event_number and run_number, or entry_number"))
         if entry_number is not None:
             self._entry_number = entry_number
             # ToDo: this should be run number from an even tree with entry_number...
@@ -575,10 +579,16 @@ class Event:
 
         # Check the Shower file existence
         if self.file_tshower or self.file_tsimshower:
+            # With a directory, the trees its setter chose (tshower from L1,
+            # tsimshower from L0) stay: the default init_trees=True read the
+            # L1 file handle, None when there is only L0, and crashed (#277)
+            if self.directory is not None:
+                pass
             # If initialising trees requested
-            if init_trees:
+            elif init_trees:
                 # Check the Shower tree existence
-                if tshower := self.file_tshower.Get("tshower"):
+                shower_file = self.file_tsimshower if simshower else self.file_tshower
+                if shower_file and (tshower := shower_file.Get("tshower")):
                     if simshower:
                         self.tsimshower = TShower(_tree=tshower)
                     else:
@@ -973,6 +983,11 @@ class Event:
             ret = self.tefield.get_entry(self._entry_number)
         else:
             ret = self.tefield.get_event(self.event_number, self.run_number)
+        # A missing event went on to "zero-size array to reduction operation" (#277)
+        if not ret:
+            raise LookupError(_validate.message(
+                "Event", "no event %s in run %s (entry %s) in the Efield tree"
+                % (self.event_number, self.run_number, self._entry_number)))
         self.efields = []
 
         # Obtain the start time of the earliest trace. ToDo: maybe the first trace in the file is always first in time? That would save time...
@@ -1141,6 +1156,12 @@ class Event:
         Only the trees with a file name, explicit or through
         ``common_filename``, are written.
         """
+        # Before a fill it failed with "'NoneType' object is not iterable" (#277)
+        if self.run_number is None and self.event_number is None and not self.efields \
+                and not self.voltages and self.shower is None:
+            raise RuntimeError(_validate.message(
+                "Event.write", "the event is empty; fill it (fill_event_from_trees) or set its "
+                "contents first"))
         if out_dir is None or (isinstance(out_dir, str) and self._directory and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory and self._directory.dir_name==out_dir.dir_name):
             # Give common_filename to all the filenames if not specified
             if common_filename:

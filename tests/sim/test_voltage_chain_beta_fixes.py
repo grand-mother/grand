@@ -275,3 +275,39 @@ def test_a_bad_bin_size_is_refused(level0_sample, bin_ns):
     os.replace(staged, path)
     with pytest.raises(ValueError, match="t_bin_size"):
         _voltage(level0_sample, 13790)
+
+
+def test_misuse_of_efield2voltage_is_explained(level0_sample):
+    r"""#277: use before an event and bad indices gave AttributeError, or chose silently."""
+    from grand import Efield2Voltage
+
+    signal = Efield2Voltage(str(level0_sample), seed=1)
+    for action in (lambda: signal.compute_voltage_du(0), signal.final_resample, signal.save_voltage):
+        with pytest.raises(RuntimeError, match="no event is loaded"):
+            action()
+    with pytest.raises(IndexError, match="du_idx must be 0 to"):
+        Efield2Voltage(str(level0_sample), seed=1).compute_voltage(event_idx=0, du_idx=-1)
+    with pytest.raises(TypeError, match="du_idx must be an integer"):
+        Efield2Voltage(str(level0_sample), seed=1).compute_voltage(event_idx=0, du_idx=3.5)
+    with pytest.raises(TypeError, match="event_idx must be an integer"):
+        signal.get_event(event_idx=True)
+    with pytest.raises(ValueError, match="not both"):
+        signal.get_event(event_idx=0, event_number=1618, run_number=1)
+
+
+def test_misuse_of_event_is_explained(level0_sample, tmp_path):
+    r"""#277: Event crashed on a directory with the defaults, a missing event, or one number."""
+    from grand.aoi.event import Event
+
+    event = Event()
+    event.directory = str(level0_sample)
+    event.fill_event_from_trees(event_number=1618, run_number=1)
+    assert len(event.efields) == 5 and event.simshower is not None    # no L1 shower here
+    with pytest.raises(LookupError, match="no event 99"):
+        event.fill_event_from_trees(event_number=99, run_number=1)
+    other = Event()
+    other.directory = str(level0_sample)
+    with pytest.raises(ValueError, match="give both"):
+        other.fill_event_from_trees(event_number=1618)
+    with pytest.raises(RuntimeError, match="the event is empty"):
+        Event().write(out_dir=str(tmp_path))

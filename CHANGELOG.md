@@ -15,6 +15,19 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Efield2Voltage` and `Event` misuse is explained (#277, items 1–4).**
+  `compute_voltage_du`, `final_resample` and `save_voltage` before an event
+  was loaded raised `AttributeError`; they now say to call `get_event` first.
+  `du_idx=-1` silently took the last unit and `3.5` was reported as a bad
+  event index; `event_idx=True` loaded event 1; an `event_idx` given with
+  event and run numbers was ignored but kept. Each is now refused with a
+  `GRANDlib:` message. `Event` on a directory with only level-0 showers
+  crashed with the default `init_trees=True`; a missing event gave "zero-size
+  array"; one of `event_number`/`run_number` alone gave a `TypeError`; and
+  `write()` on an empty event "'NoneType' object is not iterable". These now
+  work or say what is wrong. (Item 5, script options, is covered by #233,
+  #265 and #288.)
+
 - **Nonsense inputs that passed silently (#288, items 1–3).**
   `convert_efield2efield.py --add_noise_uVm inf` wrote NaN traces, and
   `--target_sampling_rate_mhz 0.5` (GHz typed for MHz) wrote traces of a few

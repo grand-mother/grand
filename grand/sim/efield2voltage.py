@@ -335,6 +335,16 @@ class Efield2Voltage:
         Either `event_idx`, or both `event_number` and `run_number`, must be
         given.
         """
+        # event_idx=True loaded event 1, and an index given with the numbers was
+        # silently ignored but kept (#277)
+        if event_idx is not None:
+            if isinstance(event_idx, (bool, np.bool_)) or not isinstance(event_idx, numbers.Integral):
+                raise TypeError(_validate.message(
+                    "Efield2Voltage.get_event", "event_idx must be an integer, got %r" % (event_idx,)))
+            if event_number is not None or run_number is not None:
+                raise ValueError(_validate.message(
+                    "Efield2Voltage.get_event", "give event_idx, or event_number and run_number, not both"))
+            event_idx = int(event_idx)
         self.event_idx = event_idx  # index of events. 0 is for the 1st event and so on. Just a placeholder if event_number and run_number are provided.
         if (event_number is not None) and (run_number is not None):
             self.event_number = event_number
@@ -673,6 +683,7 @@ class Efield2Voltage:
         """
         after everything is done, change the sampling rate if needded and adjust to the desired target lenght:
         """
+        self._require_event("final_resample")     # (#277)
         # No antenna in this event (issue #91): the empty output stays as it is
         if self.nb_du == 0:
             return
@@ -716,10 +727,10 @@ class Efield2Voltage:
         Stores the result on the instance rather than returning it: ``voc``
         in the time domain and ``voc_f`` in the frequency domain.
         """
-        # Any integer, NumPy ones too; an assert refused np.int64 and vanished under -O (#259)
-        if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):
-            raise TypeError(_validate.message("Efield2Voltage.compute_voc_du", "du_idx must be an integer, got %r" % (du_idx,)))
-        du_idx = int(du_idx)
+        # Any integer, NumPy ones too; an assert refused np.int64 and vanished
+        # under -O (#259); before an event, or out of range, it failed late (#277)
+        self._require_event("compute_voc_du")
+        du_idx = self._check_du_idx(du_idx, "compute_voc_du")
         logger.debug(f"==============>  Processing DU with id: {self.du_id[du_idx]}")
 
         self.get_leff(du_idx)
@@ -822,9 +833,8 @@ class Efield2Voltage:
         -----
         Which stages run is taken from ``self.params``, not from arguments.
         """
-        if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):   # (#259)
-            raise TypeError(_validate.message("Efield2Voltage.compute_voltage_du", "du_idx must be an integer, got %r" % (du_idx,)))
-        du_idx = int(du_idx)
+        self._require_event("compute_voltage_du")      # (#259, #277)
+        du_idx = self._check_du_idx(du_idx, "compute_voltage_du")
         self.compute_voc_du(du_idx)
 
         # ----- Add galactic noise -----
@@ -959,6 +969,25 @@ class Efield2Voltage:
             if batch.get("partial") and os.path.exists(batch["partial"]):
                 os.remove(batch.pop("partial"))
 
+    def _require_event(self, action):
+        r"""Refuses `action` before an event is loaded (#277)."""
+        if not hasattr(self, "nb_du"):
+            raise RuntimeError(_validate.message(
+                "Efield2Voltage.%s" % action, "no event is loaded; call get_event() or "
+                "compute_voltage_event() first"))
+
+    def _check_du_idx(self, du_idx, action):
+        r"""Returns `du_idx` as an int in ``range(nb_du)``: -1 silently took the last unit (#277)."""
+        if not isinstance(du_idx, numbers.Integral) or isinstance(du_idx, (bool, np.bool_)):
+            raise TypeError(_validate.message(
+                "Efield2Voltage.%s" % action, "du_idx must be an integer, got %r" % (du_idx,)))
+        du_idx = int(du_idx)
+        if not 0 <= du_idx < self.nb_du:
+            raise IndexError(_validate.message(
+                "Efield2Voltage.%s" % action, "du_idx must be 0 to %d for this event, got %d"
+                % (self.nb_du - 1, du_idx)))
+        return du_idx
+
     def _check_params(self):
         r"""Checks the processing switches before any work is done.
 
@@ -1042,6 +1071,10 @@ class Efield2Voltage:
             return int(value) if isinstance(value, np.integer) else value
         event_idx, event_number, run_number, du_idx = (
             _plain(event_idx), _plain(event_number), _plain(run_number), _plain(du_idx))
+        # du_idx=3.5 was reported as a bad event index (#277)
+        if du_idx is not None and (isinstance(du_idx, (bool, float)) or not isinstance(du_idx, (int, list, np.ndarray))):
+            raise TypeError(_validate.message(
+                "Efield2Voltage.compute_voltage", "du_idx must be an integer or a list of them, got %r" % (du_idx,)))
 
         # compute voltage for all DUs of given event/s.
         if du_idx is None:
@@ -1125,6 +1158,7 @@ class Efield2Voltage:
         The destination is ``self.f_output``, fixed when the object was
         constructed.
         """
+        self._require_event("save_voltage")     # (#277)
         # A resampled voltage cannot be saved: TVoltage has no sampling-rate
         # field and this class writes no run tree, so every later step (such as
         # convert_voltage2adc.py) would read the input's t_bin_size and treat
