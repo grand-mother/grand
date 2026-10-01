@@ -106,3 +106,19 @@ def test_a_shower_tree_without_the_event_is_refused(level0_sample, tmp_path):
     signal.params["add_noise"] = False
     with pytest.raises(KeyError, match="shower tree has no entry for event"):
         signal.compute_voltage(event_number=13790, run_number=1)
+
+
+def test_the_run_tree_is_read_at_the_level_of_the_efield(level0_sample):
+    r"""#237: an L0 efield with an L1 run tree used the L1 sampling time (2× amplitude)."""
+    from grand import Efield2Voltage
+
+    off = dict(add_noise=False, add_rf_chain=False)
+    clean = _voltage(level0_sample, 13790, **off)
+    for path in SAMPLE.glob("run*_L1_*"):          # the L1 run trees, 2 ns sampling
+        shutil.copy(path, level0_sample)
+    assert np.array_equal(_voltage(level0_sample, 13790, **off), clean)
+
+    for path in level0_sample.glob("run_*_L0_*"):  # no run tree at the efield's level
+        path.unlink()
+    with pytest.raises(FileNotFoundError, match="no run file at that level"):
+        Efield2Voltage(str(level0_sample))

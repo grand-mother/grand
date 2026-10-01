@@ -116,6 +116,54 @@ def _grandlib_version():
     return provenance.package_version()
 
 
+
+def _trees_of_one_level(directory):
+    r"""The efield, run and shower trees of `directory`, read at one level.
+
+    ``DataDirectory`` picks the highest level of each tree type on its own, so
+    a folder holding an L0 efield file and an L1 run file paired the L0 traces
+    with the L1 sampling time, which silently doubled every voltage (issue
+    #237).  The level is taken from the efield tree; the run tree must exist
+    at that level, and the shower tree, whose content does not depend on the
+    level, is taken at that level or the closest one below it.
+
+    Parameters
+    ----------
+    directory : grand.dataio.DataDirectory
+
+    Returns
+    -------
+    tuple
+        ``(tefield, trun, tshower)``.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the folder holds no efield tree, or no run tree at the efield's level.
+    """
+    def level_of(tree):
+        levels = [level for level in range(10) if getattr(directory, "%s_l%d" % (tree, level), None) is not None]
+        return levels
+
+    efield_levels = level_of("tefield")
+    if not efield_levels:
+        raise FileNotFoundError(_validate.message(
+            "Efield2Voltage", "%s holds no efield file (efield_*_L<level>_*.root)" % directory.dir_name))
+    level = efield_levels[-1]
+    trun = getattr(directory, "trun_l%d" % level, None)
+    if trun is None:
+        raise FileNotFoundError(_validate.message(
+            "Efield2Voltage", "%s holds an efield file at level %d but no run file at that level "
+            "(run_*_L%d_*.root); the run file carries the sampling time, so it must match the "
+            "efield file" % (directory.dir_name, level, level)))
+    shower_levels = [lvl for lvl in level_of("tshower") if lvl <= level]
+    tshower = getattr(directory, "tshower_l%d" % shower_levels[-1]) if shower_levels else directory.tshower
+    tefield = getattr(directory, "tefield_l%d" % level)
+    logger.info("reading level %d: efield %s, run %s, shower %s"
+                % (level, getattr(tefield, "file_name", "?"), getattr(trun, "file_name", "?"),
+                   getattr(tshower, "file_name", "?")))
+    return tefield, trun, tshower
+
 class Efield2Voltage:
     """
     Class to compute voltage with GRANDROOT IO
@@ -173,6 +221,8 @@ class Efield2Voltage:
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
+        if isinstance(self.d_input, groot.DataDirectory):
+            f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input)
 
         self.f_output = f_output
 

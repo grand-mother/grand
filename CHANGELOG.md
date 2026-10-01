@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Efield2Voltage` reads the run tree at the efield's level (#237).**
+  `DataDirectory` picks the highest level of each tree type on its own, so a
+  folder with an L0 efield file and an L1 run file (as `convert_efield2efield
+  -od` leaves behind, #231) paired 0.5 ns traces with a 2 ns sampling time and
+  doubled every voltage, exit 0. The run tree is now taken at the efield's
+  level (an error if there is none), the shower tree at that level or the
+  closest below, and the files read are logged.
 - **The voltage and e-field conversions refuse an input whose shower or run
   tree lacks the event (#247).** A failed shower lookup left the previous
   event's shower loaded, so the antenna response was computed for the wrong
