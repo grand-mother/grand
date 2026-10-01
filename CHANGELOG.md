@@ -15,6 +15,10 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`sin_geomag_angle` on arrays (#214).** An array of angles gave a single
+  number, larger than 1: the norm ran over all the directions together. It is
+  now taken per direction; a scalar input still gives a float.
+
 - **Output folders and the ADC script's input (#180, #182).** `-od` with a
   folder that did not exist yet failed with `FileNotFoundError` in
   `convert_efield2voltage.py` and `convert_efield2efield.py`, and so did

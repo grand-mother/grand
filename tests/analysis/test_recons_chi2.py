@@ -43,3 +43,4 @@ def test_the_committed_candidates_hold_the_raw_chi2():
                            np.asarray(r.peak_time), sigma=5e-9)
         assert r.chi2_pwf == pytest.approx(raw, rel=1e-4)
     r.stop_using()
+
