@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Raw or reduced χ² in `TRecons`, and bounds that read 0 (#211).** The
+  committed `recons_CR_candidates.root` holds the raw χ², as `TRecons`
+  documents, but `main_AOI.py` and `main_DOI.py` wrote it divided by the
+  degrees of freedom, and notebook 11 read the file as reduced: its section 8
+  showed raw χ² under a "χ²/ndf" heading. The scripts now write the raw χ²;
+  the field docstrings give the right degrees of freedom (`du_count - 2` or
+  `- 4`, not `du_count`); notebook 11 divides, and its conclusions are
+  rewritten from the new numbers (PWF χ²/ndf 0.1–12, not "tens to over a
+  hundred"). Unfilled χ² and Cramér-Rao bound fields read NaN, not 0.0, which
+  looked like a perfect fit or no uncertainty. `examples/analysis/README.md`
+  records what the committed file holds.
+
 - **`sim2root.py`: one trace window per run, and checked options (#222).**
   A run stores one `t_pre`/`t_post`; events with different windows were
   written under the first event's, with traces of different lengths and no

@@ -102,7 +102,8 @@ def test_the_bounds_are_stored_and_older_files_still_read(tmp_path):
     r"""``TRecons`` writes the bounds; a file from before them still opens.
 
     The file in ``examples/analysis`` predates the bounds.  Its other fields
-    read as before, and the absent bounds read as 0.
+    read as before, and the absent bounds read as NaN: 0 read as "no
+    uncertainty" (#211).
     """
     import pathlib
     import shutil
@@ -127,7 +128,7 @@ def test_the_bounds_are_stored_and_older_files_still_read(tmp_path):
     before = TRecons(str(old))
     before.get_event(479, 10126)
     assert before.zenith_pwf == pytest.approx(1.3426813)
-    assert before.crb_zenith_pwf == 0.0
+    assert np.isnan(before.crb_zenith_pwf)
 
 
 @pytest.mark.parametrize('script, name', [('main_DOI.py', 'trecons'),

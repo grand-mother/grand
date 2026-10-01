@@ -125,7 +125,7 @@ Available
    shower it generated, so the answer is known, then the whole chain as
    ``examples/analysis/main_AOI.py`` runs it. Ends on the ten GP13 cosmic-ray
    candidates shipped with the examples, where the data parts company with
-   the model: most timing fits have χ²/ndf far above 1, and 8 of 10
+   the model: most timing fits have χ²/ndf well above 1, and 8 of 10
    amplitude fits stop on a bound. Says plainly that the fits are checked for
    self-consistency only, not yet against simulated showers.
 

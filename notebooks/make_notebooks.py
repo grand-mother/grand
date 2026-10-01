@@ -2866,8 +2866,8 @@ full width, while the zenith has to be read from small height-dependent
 delays.
 
 The fit also offers a χ², `PWF_loss`. It is what `main_AOI.py` stores as
-`chi2_pwf`, divided by the degrees of freedom (antennas − 2). With the right
-`sigma` and a model that fits, the reduced value should be near 1:'''),
+`chi2_pwf`, raw; divided by the degrees of freedom (antennas − 2), with the
+right `sigma` and a model that fits, it should be near 1:'''),
     code(r'''noisy = times + rng.normal(0, SIGMA_T, len(times))
 best = fit.PWF_semianalytical(ANTENNAS, noisy)
 chi2 = fit.PWF_loss(best, ANTENNAS, noisy, sigma=SIGMA_T)
@@ -3166,10 +3166,10 @@ for r in rows:
 
 Now the quality of each fit: the χ² per degree of freedom of each step, how far
 the spherical and ADF directions moved from the plane-wave one, and the bound
-check from section 5. The stored χ² fields are **already** divided by the
-degrees of freedom — `main_AOI.py` divides before writing — so they are read
-as they are. (`display.py` divides `chi2_adf` a second time for its plot
-titles, so the value it prints is smaller than the one stored.)'''),
+check from section 5. The stored χ² fields are **raw**, as `TRecons`
+documents, so they are divided here by the degrees of freedom: antennas − 2
+for the plane wave, antennas − 4 for the spherical wave and the ADF, which
+have four parameters each.'''),
     code(r'''print("  event   chi2/ndf: PWF    SWF    ADF    SWF-PWF (zen, azi)   ADF-PWF (zen, azi)   on a bound")
 bounded = 0
 for event_number, run_number in events:
@@ -3180,8 +3180,10 @@ for event_number, run_number in events:
     edge = on_a_bound(recons.zenith_adf, recons.azimuth_adf, recons.width,
                       recons.scaling_factor, *pwf)
     bounded += bool(edge)
+    n = recons.du_count
     print("%7d  %13.1f %6.1f %6.1f     %+5.2f %+5.2f         %+5.2f %+5.2f         %s"
-          % (event_number, recons.chi2_pwf, recons.chi2_swf, recons.chi2_adf,
+          % (event_number, recons.chi2_pwf / (n - 2), recons.chi2_swf / (n - 4),
+             recons.chi2_adf / (n - 4),
              *swf, *adf, ", ".join(edge) or "-"))
 print("\n%d of %d ADF fits end on a bound" % (bounded, len(events)))'''),
     md(r'''This is where the real data parts company with section 7.
@@ -3190,9 +3192,10 @@ print("\n%d of %d ADF fits end on a bound" % (bounded, len(events)))'''),
   ring width. Those widths are where the minimiser was stopped; the amplitude data
   wanted a wider ring than the model allows. The directions and energies from
   those fits deserve less weight than the table above suggests.
-- **Most timing χ²/ndf are far above 1** — tens to over a hundred — with the
-  5 ns timing uncertainty the script assumes. Either the real timing error is
-  several times larger, or the fronts are not the spheres the model draws.
+- **Most timing χ²/ndf are above 1** — 4 to 12 for the plane wave in eight of
+  the ten events — with the 5 ns timing uncertainty the script assumes. The
+  two five-antenna events sit below 1. Either the real timing error is two to
+  three times larger, or the fronts are not the spheres the model draws.
   Which one is a question the data in this file cannot settle.
 - **The spherical fit moves the azimuth by up to about 3°** from the plane
   wave. The ADF moves it by at most 1°, because that is its bound.
@@ -3288,14 +3291,14 @@ energy are known, and measure the bias and resolution. That has not been done
 on `dev-next`.
 
 **On real data** (section 8): most of the ten GP13 candidates have timing
-χ²/ndf far above 1, and most ADF fits stop on a bound. Those are the first
+χ²/ndf well above 1, and most ADF fits stop on a bound. Those are the first
 things to understand before trusting a reconstructed direction or energy.
 
 **Known behaviours to watch for.** Pinned by tests, so a change is noticed:
 `recons_swf` ignores `sigma`.
 Not pinned: `compute_Xsource_cartesian_coords` returns shape (1, 3); an ADF fit
-on its bounds is not flagged; `display.py` divides the stored, already
-reduced, `chi2_adf` by the degrees of freedom again.'''),
+on its bounds is not flagged. The stored χ² fields are raw; divide them by the
+degrees of freedom, as `display.py` and section 8 do.'''),
     footer(
         r'''[01 — Coordinate systems](01_coordinates.ipynb) — the frame and the "comes from" convention the fits use''',
         r'''[06 — From electric field to ADC counts](06_efield_to_adc.ipynb) — the forward chain that the reconstruction inverts''',

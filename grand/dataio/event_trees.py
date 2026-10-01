@@ -1164,8 +1164,8 @@ class TRecons(MotherEventTree):
     ## Shower azimuth angle from PWF (in radians)
     ## Coordinate system: NWU, origin at layout center, "coming from"
     azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    ## Non-reduced chi² from PWF
-    ## Divide by du_count to obtain the reduced chi²
+    ## Non-reduced (raw) chi² from PWF; NaN if not filled
+    ## Divide by du_count - 2, the degrees of freedom, to obtain the reduced chi²
     chi2_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
     # Spherical Wave Fits (SWF) Reconstruction outputs 
@@ -1183,8 +1183,8 @@ class TRecons(MotherEventTree):
     ## y = r_xmax * sin(theta_swf) * sin(phi_swf)
     ## z = r_xmax * cos(theta_swf)
     Xsource: StdVectorListDesc = field(default=StdVectorListDesc("vector<float>"))
-    ## Non-reduced chi² from SWF
-    ## Divide by du_count to obtain the reduced chi²
+    ## Non-reduced (raw) chi² from SWF; NaN if not filled
+    ## Divide by du_count - 4, the degrees of freedom, to obtain the reduced chi²
     chi2_swf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Distance between the reconstructed Xsource and each antenna (in meters)
     distance_source_antenna:  StdVectorListDesc = field(default=StdVectorListDesc("float"))
@@ -1200,8 +1200,8 @@ class TRecons(MotherEventTree):
     width: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Scaling factor A from ADF fit
     scaling_factor: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
-    ## Non-reduced chi² from ADF
-    ## Divide by du_count to obtain the reduced chi²
+    ## Non-reduced (raw) chi² from ADF; NaN if not filled
+    ## Divide by du_count - 4, the degrees of freedom, to obtain the reduced chi²
     chi2_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## Azimuth angle in the shower plane (in radians)
     eta: StdVectorListDesc = field(default=StdVectorListDesc("float"))
@@ -1216,7 +1216,7 @@ class TRecons(MotherEventTree):
     ## (Electromagnetic energy in eV, obtained directly from voltage data)
     energy_elm_voltage:  TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
 
-    ## Cramér-Rao (lower) bound (CRB)
+    ## Cramér-Rao (lower) bound (CRB); NaN if not filled (main_DOI.py fills them, main_AOI.py does not)
     ## CRB of shower zenith angle from ADF (in radians)
     crb_zenith_adf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of shower azimuth angle from ADF (in radians)
@@ -1237,6 +1237,18 @@ class TRecons(MotherEventTree):
     crb_zenith_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
     ## CRB of shower azimuth from PWF (in radians)
     crb_azimuth_pwf: TTreeScalarDesc = field(default=TTreeScalarDesc(np.float32))
+
+    def __post_init__(self):
+        super().__post_init__()
+        # An unfilled chi² or bound read 0.0, which looks like a perfect fit or
+        # no uncertainty (#211); NaN says it was not computed.
+        for name in self._unfilled_as_nan:
+            setattr(self, name, np.nan)
+
+    _unfilled_as_nan = ("chi2_pwf", "chi2_swf", "chi2_adf",
+                        "crb_zenith_adf", "crb_azimuth_adf", "crb_scaling_factor", "crb_width",
+                        "crb_zenith_swf", "crb_azimuth_swf", "crb_r_xmax", "crb_t_s",
+                        "crb_zenith_pwf", "crb_azimuth_pwf")
 
 
    
