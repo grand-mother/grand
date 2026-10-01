@@ -118,9 +118,10 @@ Orientation strings
 
 ``magnetic=True`` measures the horizontal axes from **magnetic** north rather
 than geographic north, using the geomagnetic model at that place and date.
-The declination at Dunhuang is a few degrees, which over a 10 km array is
-hundreds of metres — so it is a choice to make deliberately, not a default to
-inherit.
+The declination at Dunhuang is small -- about 0.3° in 2020 by the shipped
+IGRF-13 model, roughly 50 m at the edge of a 10 km array -- and it changes
+with the date.  Elsewhere it reaches several degrees, so it is still a choice
+to make deliberately, not a default to inherit.
 
 Heights need a reference
 ------------------------
@@ -197,7 +198,7 @@ Common mistakes
      - Cause
    * - A detector lands outside the array
      - ``GRANDCS`` and ``LTP`` axes confused; see :ref:`coordinates-the-trap`
-   * - Positions off by a few hundred metres
+   * - Positions off by tens of metres (more at sites with a larger declination)
      - ``magnetic=True`` where geographic north was meant, or the reverse
    * - Heights off by a few metres
      - Ellipsoid and geoid references mixed

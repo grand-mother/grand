@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Declination at Dunhuang overstated (#186).** The coordinates page and
+  notebook 01 said "a few degrees ... hundreds of metres over 10 km". It is
+  about 0.3° in 2020 (51 m at 10 km) and −0.03° in mid-2024 by the shipped
+  IGRF-13 model. Both now give the real size; the notebook computes it. The
+  move to IGRF-14 is a separate change.
+
 - **`get_traces_lengths` and `get_list_of_dus` (#200).** `get_traces_lengths`
   looked for branches no tree has (`trace_x`, `trace_0`) and always returned
   `None`; it now gives, for the loaded entry, each unit's channel lengths,

@@ -286,8 +286,9 @@ relying on the constructor alone: `du_grandcs`, `axis_enu`.'''),
     md(r'''## 3. Magnetic versus geographic north
 
 `magnetic=True` measures the horizontal axes from magnetic north. The
-declination at Dunhuang is a few degrees, which over a 10 km array is hundreds
-of metres — a choice to make deliberately, not a default to inherit.
+declination at Dunhuang is small — computed below — and it changes with the
+date; elsewhere it reaches several degrees. Either way it is a choice to make
+deliberately, not a default to inherit.
 
 > **The date matters, and the shipped model has expired.** `data/geomagnet/IGRF13.COF`
 > is IGRF-13, defined to 2025, so any `obstime` from 2025-01-01 onward raises
@@ -299,7 +300,12 @@ mag = ECEF(LTP(x=1000.0, y=0.0, z=0.0, location=SITE,
                orientation='ENU', magnetic=True, obstime='2024-06-01'))
 
 print("geographic vs magnetic north, 1 km out: %.1f m apart"
-      % np.linalg.norm(np.asarray(geo).ravel() - np.asarray(mag).ravel()))'''),
+      % np.linalg.norm(np.asarray(geo).ravel() - np.asarray(mag).ravel()))
+for date in ('2020-01-01', '2024-06-01'):
+    d = LTP(x=0.0, y=0.0, z=0.0, location=SITE, orientation='ENU',
+            magnetic=True, obstime=date).declination
+    print("declination at Dunhuang on %s: %+.3f deg, %.0f m at 10 km"
+          % (date, float(np.ravel(d)[0]), 1e4 * np.radians(abs(float(np.ravel(d)[0])))))'''),
     md(r'''## 4. Heights need a reference
 
 A height is meaningless without saying what it is measured from. The ellipsoid
