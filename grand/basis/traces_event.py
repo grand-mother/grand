@@ -153,10 +153,20 @@ class Handling3dTraces:
         self.idt2idx = {idt: idx for idx, idt in enumerate(self.idx2idt)}
         t_start_ns = _validate.as_array(t_start_ns, "t_start_ns", where, ndim=1)
         self.t_start_ns = t_start_ns.astype(np.float64)
-        if isinstance(f_samp_mhz, (int, float)):
-            self.f_samp_mhz = np.ones(len(du_id)) * f_samp_mhz
-        else:
-            self.f_samp_mhz = f_samp_mhz
+        # One rate for all units, or one per unit.  A NumPy scalar (as read
+        # from a tree) is a single rate too: it used to be kept as a scalar,
+        # which apply_bandpass then failed to index (issue #264).
+        if isinstance(f_samp_mhz, (bool, np.bool_)):
+            raise TypeError(_validate.message(where, "'f_samp_mhz' must be a number or an "
+                                              "array of numbers, got a bool"))
+        f_samp_mhz = _validate.as_array(f_samp_mhz, "f_samp_mhz", where, finite=True)
+        if f_samp_mhz.ndim == 0:
+            f_samp_mhz = np.full(len(du_id), float(f_samp_mhz))
+        elif f_samp_mhz.shape != (len(du_id),):
+            raise ValueError(_validate.message(
+                where, "'f_samp_mhz' must be one rate, or one per unit (%d), got shape %s"
+                % (len(du_id), f_samp_mhz.shape)))
+        self.f_samp_mhz = f_samp_mhz.astype(np.float64)
         _validate.positive(self.f_samp_mhz, "f_samp_mhz", where, "MHz")
         if not traces.shape[0] == len(du_id) == t_start_ns.shape[0]:
             raise ValueError(_validate.message(

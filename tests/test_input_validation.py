@@ -275,6 +275,28 @@ def test_adc_conversion_selects_the_same_channels_as_numpy(channels):
         ex.convert_voltage_to_ADC(trace, [True, False])
 
 
+@pytest.mark.parametrize("rate", [np.float32(2000), np.int64(2000), [2000, 2000], np.array([2000., 2000.])],
+                         ids=["float32", "int64", "list", "array"])
+def test_traces_accept_a_numpy_sampling_rate(rate):
+    r"""#264: a NumPy scalar rate was kept as a scalar, and apply_bandpass failed with IndexError."""
+    from grand.basis.traces_event import Handling3dTraces
+
+    traces = Handling3dTraces()
+    traces.init_traces(np.random.default_rng(0).normal(size=(2, 3, 256)), f_samp_mhz=rate)
+    np.testing.assert_array_equal(traces.f_samp_mhz, [2000.0, 2000.0])
+    traces.apply_bandpass(50, 200)
+
+
+def test_traces_refuse_a_wrong_sampling_rate():
+    from grand.basis.traces_event import Handling3dTraces
+
+    traces = np.zeros((2, 3, 16))
+    with pytest.raises(ValueError, match="one rate, or one per unit"):
+        Handling3dTraces().init_traces(traces, f_samp_mhz=[2000., 2000., 2000.])
+    with pytest.raises(TypeError, match="got a bool"):
+        Handling3dTraces().init_traces(traces, f_samp_mhz=True)
+
+
 # ------------------------------------------------------------------ simulation
 
 def test_simulation_inputs_are_checked():

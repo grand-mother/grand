@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Handling3dTraces.init_traces` accepts a NumPy sampling rate (#264).** A
+  rate given as a NumPy scalar (as read from a tree) was kept as a scalar, and
+  `apply_bandpass` then failed with `IndexError: invalid index to scalar
+  variable`. One rate for all units or one per unit is now accepted in any
+  numeric form; a wrong length, NaN or a bool is refused.
 - **A NaN position no longer crashes Python (#262).** libturtle's elevation
   lookups segfaulted on a NaN latitude or longitude, killing the interpreter with
   no traceback: `geoid_undulation`, `topography.elevation` (every reference) and
