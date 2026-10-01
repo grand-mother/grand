@@ -1027,10 +1027,16 @@ class Efield2Voltage:
 
 
         #modify the trigger position if needed
+        # Rescale by input rate / output rate.  This compared the input rate
+        # with itself (f_samp_mhz is 1e3/dt_ns), so the ratio was always 1 and
+        # a resampled trace kept the input's trigger sample (issue #229).
         if(self.target_sampling_rate_mhz>0):
-          originalsampling=1e3/self.dt_ns
-          newsampling=self.f_samp_mhz
+          originalsampling=1e3/np.asarray(self.dt_ns)
+          newsampling=self.target_sampling_rate_mhz
           ratio=originalsampling/newsampling
+          logger.warning("the voltage is resampled to %s MHz, but the run tree still gives the input "
+                         "sampling (t_bin_size); a later step that reads the run tree, such as "
+                         "convert_voltage2adc.py, will assume the input rate" % newsampling)
         else:
           ratio=1.0
 

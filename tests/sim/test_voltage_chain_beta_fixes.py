@@ -122,3 +122,31 @@ def test_the_run_tree_is_read_at_the_level_of_the_efield(level0_sample):
         path.unlink()
     with pytest.raises(FileNotFoundError, match="no run file at that level"):
         Efield2Voltage(str(level0_sample))
+
+
+def test_resampling_rescales_the_trigger_position_and_the_script_refuses_it(level0_sample, tmp_path):
+    r"""#229: the trigger sample was not rescaled, and convert_voltage2adc then used the input rate."""
+    import subprocess
+    import sys
+
+    from grand import Efield2Voltage
+    from grand.dataio import TEfield, TVoltage
+
+    efield = TEfield(str(next(level0_sample.glob("efield_*_L0_*.root"))))
+    efield.get_event(1618, 1)
+    trigger_in = np.asarray(efield.trigger_position).copy()   # sampled at 2 GHz
+    efield.stop_using()
+
+    signal = Efield2Voltage(str(level0_sample), "out.root", output_directory=str(tmp_path), seed=1)
+    signal.params.update(add_noise=False, add_rf_chain=False, resample_to_mhz=500)
+    signal.compute_voltage(event_number=1618, run_number=1)
+    voltage = TVoltage(str(tmp_path / "out.root"))
+    voltage.get_event(1618, 1)
+    assert np.array_equal(np.asarray(voltage.trigger_position), (trigger_in / 4).astype(np.ushort))
+    voltage.stop_using()
+
+    done = subprocess.run([sys.executable, str(ROOT / "scripts" / "convert_efield2voltage.py"),
+                           str(level0_sample), "--target_sampling_rate_mhz", "500"],
+                          capture_output=True, text=True, timeout=300)
+    assert done.returncode != 0
+    assert "--target_sampling_rate_mhz is not supported" in done.stderr
