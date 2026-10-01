@@ -74,7 +74,7 @@ def _elevation_points(a, b, names, where):
     libturtle's elevation lookups crash the interpreter on a NaN coordinate
     (issue #262), so only finite points are passed to them: the caller gets
     the mask of those points and returns NaN, with a warning, for the others.
-    ``None`` is refused, since NumPy would otherwise turn it into NaN.
+    ``None`` reads as NaN, as it always has; other non-numeric values are refused.
 
     Parameters
     ----------
@@ -92,10 +92,11 @@ def _elevation_points(a, b, names, where):
         points where both are finite.
     """
     for value, name in zip((a, b), names):
-        if value is None or numpy.asanyarray(value).dtype == object:
+        if value is not None and numpy.asanyarray(value).dtype == object:
             raise TypeError(_validate.message(where, "'%s' must be a number or an array of "
                                               "numbers, got %r" % (name, value)))
-    a, b = map(_regularize, (a, b))
+    # None has always read as NaN (geoid_undulation() with no argument gives NaN)
+    a, b = (_regularize(numpy.nan if v is None else v) for v in (a, b))
     if a.size != b.size:
         raise ValueError("%s and %s must have the same size" % names)
     finite = numpy.isfinite(a) & numpy.isfinite(b)

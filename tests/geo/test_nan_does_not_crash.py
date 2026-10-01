@@ -4,8 +4,8 @@ r"""A NaN position must not crash the interpreter (issue #262).
 libturtle's elevation lookups segfaulted on a NaN latitude or longitude, killing
 the whole Python process with no traceback.  Each call below runs in its own
 subprocess, so a crash fails the test instead of taking pytest down with it.
-A NaN point now gives a NaN elevation with a ``GRANDlibWarning``; ``None`` is
-refused with a ``TypeError``.
+A NaN point (or ``None``, which has always read as NaN) now gives a NaN
+elevation with a ``GRANDlibWarning``.
 """
 
 import pathlib
@@ -75,16 +75,10 @@ def test_a_nan_gives_nan_and_a_warning_with_tiles(call):
     _check_nan_and_warning(call)
 
 
-def test_none_is_refused():
-    done = _run("""
-try:
-    turtle.Map(egm96).elevation(None, 45.)
-except TypeError as error:
-    assert 'GRANDlib: Map.elevation' in str(error), error
-    print('OK')
-""")
-    assert done.returncode == 0, done.stderr[-1500:]
-    assert done.stdout.strip().endswith("OK")
+def test_none_reads_as_nan():
+    r"""None has always given NaN (``geoid_undulation()`` with no argument); it must not crash."""
+    _check_nan_and_warning("turtle.Map(egm96).elevation(None, 45.)")
+    _check_nan_and_warning("geoid_undulation()")
 
 
 def test_finite_points_are_unchanged():

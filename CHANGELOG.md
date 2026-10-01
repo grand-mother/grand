@@ -24,8 +24,8 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
   lookups segfaulted on a NaN latitude or longitude, killing the interpreter with
   no traceback: `geoid_undulation`, `topography.elevation` (every reference) and
   `turtle.Map`/`Stack.elevation`. Only finite points now reach the C code; a NaN
-  point gives a NaN elevation with a `GRANDlibWarning`, and `None` is refused
-  with a `TypeError`.
+  point (or `None`, which has always read as NaN) gives a NaN elevation with a
+  `GRANDlibWarning`.
 - **`convert_voltage_to_ADC` converts only the channels asked for (#263).** A
   regression from #179: a boolean mask such as `[True, False, True]` was iterated
   as indices 1, 0, 1, converting the wrong rows, and a slice or a single index
