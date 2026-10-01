@@ -202,10 +202,10 @@ calling conventions, and only one of them normalises:
     >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
     nan
     >>> topography.geoid_undulation(latitude=-35.20, longitude=290.68)
-    -44.371455192615110
+    25.583896785168232
     >>> topography.geoid_undulation(
     ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
-    -44.371455192615110
+    25.583896785168232
 
 Nothing raises.  The ``nan`` propagates into whatever geometry follows, and
 through ``elevation(..., reference='sea')``, which subtracts the undulation.

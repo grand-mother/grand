@@ -53,7 +53,7 @@ explain itself.
 
    geoid undulation
       The difference between the :term:`ellipsoidal height` and height above
-      mean sea level, reaching ±100 m worldwide and −7.7 m at the
+      mean sea level, reaching ±100 m worldwide and −61 m at the
       GRANDProto300 site.  Notebook 07.
 
    GP13

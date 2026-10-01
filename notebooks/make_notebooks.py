@@ -1009,11 +1009,24 @@ falls steeply to the right.
 
 The bright ridge in the maps below is the Galactic plane sweeping through the
 field of view as the Earth turns — which is also why the noise depends on the
-time of day.'''),
-    code(r'''fig, axes = plt.subplots(1, 2, figsize=(11, 3.4))
+time of day.
+
+One caution about the shipped grid: its first axis is **not** right ascension
+as it stands. It runs 12 h ahead: the Galactic Centre, the hottest pixel, sits
+at 5.8 h on it instead of its true 17.8 h. The maps below shift it by 12 h, and
+mark three sources so you can check the result: the Galactic Centre, Cygnus A
+and Cassiopeia A each land on their bright pixel.'''),
+    code(r'''# the stored axis is RA + 12 h: shift by half the grid (72 columns = 24 h)
+sources = {"Gal. Centre": (17.76, 119.0), "Cyg A": (19.99, 49.3), "Cas A": (23.39, 31.2)}
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 3.4))
 for ax, t, f in ((axes[0], temp_30, 30), (axes[1], temp_250, 250)):
-    im = ax.imshow(t.T, origin="lower", aspect="auto", cmap="inferno",
-                   extent=[0, 24, 0, 180])
+    im = ax.imshow(np.roll(t, t.shape[0] // 2, axis=0).T, origin="lower", aspect="auto",
+                   cmap="inferno", extent=[0, 24, 0, 180])
+    for name, (ra_h, polar_deg) in sources.items():
+        ax.plot(ra_h, polar_deg, "o", mfc="none", mec="cyan", ms=9)
+        ax.annotate(name, (ra_h, polar_deg), xytext=(-6, 6), textcoords="offset points",
+                    color="cyan", fontsize=8, ha="right")
     ax.set_xlabel("right ascension (h)")
     ax.set_ylabel("polar angle (deg)")
     ax.set_title("LFMap sky at %d MHz" % f)
@@ -1570,12 +1583,12 @@ for name, lat, lon in [('GRANDProto300 site (China)', 40.98,  93.95),
                        ('Indian Ocean low',            0.00,  78.00)]:
     u = topography.geoid_undulation(Geodetic(latitude=lat, longitude=lon, height=0.0))
     print("   %-28s %+8.2f" % (name, float(np.ravel(u)[0])))'''),
-    md(r'''At the GRANDProto300 site the undulation is about −7.7 m: sea level sits 7.7 m
+    md(r'''At the GRANDProto300 site the undulation is about −61 m: sea level sits 61 m
 *below* the ellipsoid there. Confusing the two conventions moves every antenna
-by that much, which at 2 GHz sampling is roughly 50 samples of light travel
+by that much, which at 2 GHz sampling is roughly 400 samples of light travel
 time.
 
-The spread across these four points — from −103 m to −1 m — is the reason this
+The spread across these four points — from −103 m to +43 m — is the reason this
 cannot be treated as a constant offset for an array that spans any distance.
 
 The rule in GRANDlib: `Geodetic.height` is **ellipsoidal**, and

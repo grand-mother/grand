@@ -6,9 +6,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Union
 from logging import getLogger
+import warnings
+
 import numpy
 
 from .._core import ffi, lib
+from ..basis import validate as _validate
 
 
 __all__ = [
@@ -63,6 +66,46 @@ def _regularize(a):
     """
     a = numpy.asanyarray(a)
     return numpy.require(a, float, ["CONTIGUOUS", "ALIGNED"])
+
+
+def _elevation_points(a, b, names, where):
+    r"""Prepares the two coordinates of an elevation lookup.
+
+    libturtle's elevation lookups crash the interpreter on a NaN coordinate
+    (issue #262), so only finite points are passed to them: the caller gets
+    the mask of those points and returns NaN, with a warning, for the others.
+    ``None`` reads as NaN, as it always has; other non-numeric values are refused.
+
+    Parameters
+    ----------
+    a, b : float or array_like
+        The two coordinates, in degrees.
+    names : tuple of str
+        Their names, for messages.
+    where : str
+        The calling function, for messages.
+
+    Returns
+    -------
+    tuple of ndarray
+        The two coordinates as contiguous float arrays, and the mask of the
+        points where both are finite.
+    """
+    for value, name in zip((a, b), names):
+        if value is not None and numpy.asanyarray(value).dtype == object:
+            raise TypeError(_validate.message(where, "'%s' must be a number or an array of "
+                                              "numbers, got %r" % (name, value)))
+    # None has always read as NaN (geoid_undulation() with no argument gives NaN)
+    a, b = (_regularize(numpy.nan if v is None else v) for v in (a, b))
+    if a.size != b.size:
+        raise ValueError("%s and %s must have the same size" % names)
+    finite = numpy.isfinite(a) & numpy.isfinite(b)
+    if not finite.all():
+        warnings.warn(_validate.message(where, "%d of %d points have a non-finite %s or %s; "
+                                        "their elevation is NaN"
+                                        % (((~finite).sum(), finite.size) + names)),
+                      _validate.GRANDlibWarning, stacklevel=3)
+    return a, b, finite.ravel()
 
 
 def ecef_from_geodetic(latitude, longitude, altitude):
@@ -321,23 +364,24 @@ class Map(object):
             Elevation, in metres.
         """
 
-        x, y = map(_regularize, (x, y))
-        if x.size != y.size:
-            raise ValueError("x and y must have the same size")
+        x, y, finite = _elevation_points(x, y, ("x", "y"), "Map.elevation")
 
         n = x.size
-        elevation = numpy.zeros(n)
+        elevation = numpy.full(n, numpy.nan)
         if self._map is None:
             elevation = numpy.nan
             return elevation
         else:
+            x, y = (numpy.ascontiguousarray(v.ravel()[finite]) for v in (x, y))
+            values = numpy.zeros(x.size)
             lib.turtle_map_elevation_v(
                 self._map[0],
                 ffi.cast("double *", x.ctypes.data),
                 ffi.cast("double *", y.ctypes.data),
-                ffi.cast("double *", elevation.ctypes.data),
-                n,
+                ffi.cast("double *", values.ctypes.data),
+                x.size,
             )
+            elevation[finite] = values
             return elevation[0] if n == 1 else elevation
 
     @property
@@ -407,20 +451,22 @@ class Stack:
             Elevation, in metres.
         """
 
-        latitude, longitude = map(_regularize, (latitude, longitude))
-        if latitude.size != longitude.size:
-            raise ValueError("latitude and longitude must have the same size")
+        latitude, longitude, finite = _elevation_points(
+            latitude, longitude, ("latitude", "longitude"), "Stack.elevation")
 
         n = latitude.size
-        elevation = numpy.zeros(n)
+        elevation = numpy.full(n, numpy.nan)
+        latitude, longitude = (numpy.ascontiguousarray(v.ravel()[finite]) for v in (latitude, longitude))
+        values = numpy.zeros(latitude.size)
 
         lib.turtle_stack_elevation_v(
             self._stack[0],
             ffi.cast("double *", latitude.ctypes.data),
             ffi.cast("double *", longitude.ctypes.data),
-            ffi.cast("double *", elevation.ctypes.data),
-            n,
+            ffi.cast("double *", values.ctypes.data),
+            latitude.size,
         )
+        elevation[finite] = values
         return elevation[0] if n == 1 else elevation
 
     @property

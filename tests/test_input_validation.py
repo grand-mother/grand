@@ -257,6 +257,46 @@ def test_signal_extraction_checks_channels_and_sampling():
         ex.get_peak_time(np.ones((3, 10)), 0, channels=[0], dt_ns=0)
 
 
+@pytest.mark.parametrize("channels", [[True, False, True], slice(0, 3, 2), [0, 2], np.array([0, 2])],
+                         ids=["mask", "slice", "list", "array"])
+def test_adc_conversion_selects_the_same_channels_as_numpy(channels):
+    r"""#263: a mask converted every channel, and a slice or an int raised TypeError."""
+    from grand.analysis.signals import extraction as ex
+
+    trace = np.arange(30, dtype=float).reshape(3, 10) * 100
+    converted = ex.convert_voltage_to_ADC(trace, channels)
+    scale = 1e-6 * 8192 / 0.9
+    np.testing.assert_allclose(converted[[0, 2]], trace[[0, 2]] * scale)
+    np.testing.assert_array_equal(converted[1], trace[1])
+    one = ex.convert_voltage_to_ADC(trace, 1)
+    np.testing.assert_allclose(one[1], trace[1] * scale)
+    np.testing.assert_array_equal(one[[0, 2]], trace[[0, 2]])
+    with pytest.raises(ValueError, match="needs one value per channel"):
+        ex.convert_voltage_to_ADC(trace, [True, False])
+
+
+@pytest.mark.parametrize("rate", [np.float32(2000), np.int64(2000), [2000, 2000], np.array([2000., 2000.])],
+                         ids=["float32", "int64", "list", "array"])
+def test_traces_accept_a_numpy_sampling_rate(rate):
+    r"""#264: a NumPy scalar rate was kept as a scalar, and apply_bandpass failed with IndexError."""
+    from grand.basis.traces_event import Handling3dTraces
+
+    traces = Handling3dTraces()
+    traces.init_traces(np.random.default_rng(0).normal(size=(2, 3, 256)), f_samp_mhz=rate)
+    np.testing.assert_array_equal(traces.f_samp_mhz, [2000.0, 2000.0])
+    traces.apply_bandpass(50, 200)
+
+
+def test_traces_refuse_a_wrong_sampling_rate():
+    from grand.basis.traces_event import Handling3dTraces
+
+    traces = np.zeros((2, 3, 16))
+    with pytest.raises(ValueError, match="one rate, or one per unit"):
+        Handling3dTraces().init_traces(traces, f_samp_mhz=[2000., 2000., 2000.])
+    with pytest.raises(TypeError, match="got a bool"):
+        Handling3dTraces().init_traces(traces, f_samp_mhz=True)
+
+
 # ------------------------------------------------------------------ simulation
 
 def test_simulation_inputs_are_checked():
@@ -307,3 +347,26 @@ def test_checks_keep_accepting_what_the_functions_always_accepted():
     amplitudes = rng.uniform(50, 100, 8)
     assert np.allclose(fit.recons_ADF(1.2, 0.5, amplitudes, antennas, source),
                        fit.recons_ADF(1.2, 0.5, amplitudes, antennas, source[0]))
+
+
+def test_text_that_reads_as_a_number_is_converted_with_a_warning():
+    r"""``"1618"`` was always stored as 1618 (sim2root passes values read from
+    file names and the command line); refusing it broke the ZHAireS converter's
+    one-argument mode and ``sim2root.py -la``.  Other text is still refused."""
+    from grand.dataio import TRun, TShower
+
+    with pytest.warns(GRANDlibWarning, match="stored as the number it reads as"):
+        assert validate.coerce_to_dtype("1618", np.uint32, "T.n") == 1618
+    with pytest.warns(GRANDlibWarning):
+        shower = TShower()
+        shower.event_number = "1618"
+    assert shower.event_number == 1618
+    with pytest.warns(GRANDlibWarning):
+        run = TRun()
+        run.origin_geoid = ["41.5", "93.94", "1264.0"]
+    assert np.allclose(run.origin_geoid, [41.5, 93.94, 1264.0])
+    with pytest.raises(TypeError, match="must be an integer"):
+        with pytest.warns(GRANDlibWarning):
+            validate.coerce_to_dtype("1.7", np.uint32, "T.n")
+    with pytest.raises(TypeError, match="must be a number"):
+        validate.coerce_to_dtype(["1", "x"], np.float32, "T.x")

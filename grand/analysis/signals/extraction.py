@@ -13,7 +13,13 @@ def _trace_channels(trace, channels, where):
         raise ValueError(_validate.message(where, "'trace' has no samples"))
     # A slice or a boolean mask selects channels as NumPy does; only
     # explicit indices are checked here.
-    if isinstance(channels, slice) or np.asarray(channels).dtype == bool:
+    if isinstance(channels, slice):
+        return trace
+    if np.asarray(channels).dtype == bool:
+        if np.asarray(channels).shape != (trace.shape[0],):
+            raise ValueError(_validate.message(
+                where, "a boolean 'channels' mask needs one value per channel (%d), got shape %s"
+                % (trace.shape[0], np.asarray(channels).shape)))
         return trace
     for ch in np.atleast_1d(channels):
         index = _validate.as_integer(ch, "channels", where)
@@ -115,8 +121,8 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
     ----------
     trace : np.ndarray
         2D array of voltage traces in microvolts (µV).
-    channels : list or array-like
-        Indices of the channels to convert.
+    channels : int, list, slice or boolean mask
+        The channels to convert, selected as NumPy indexing does.
     adc_full_scale : int, optional
         ADC full scale value (default: 8192).
     voltage_ref : float, optional
@@ -132,8 +138,9 @@ def convert_voltage_to_ADC(trace, channels, adc_full_scale=8192, voltage_ref=0.9
                        "voltage_ref", "convert_voltage_to_ADC", "V")
     ADC_trace = trace.copy().astype(float) 
     
-    for ch in channels:
-        ADC_trace[ch, :] = trace[ch, :] * 1e-6 * adc_full_scale / voltage_ref
+    # Index as NumPy does, so a mask, a slice or a single index selects the
+    # same channels as in get_peak_amplitude (issue #263)
+    ADC_trace[channels, :] = trace[channels, :] * 1e-6 * adc_full_scale / voltage_ref
             
     return ADC_trace
 

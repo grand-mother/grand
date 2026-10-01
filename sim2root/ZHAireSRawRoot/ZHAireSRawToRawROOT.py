@@ -28,7 +28,35 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR) #this is to shut-up matp
 #TODO ASAP: Get Refractivity Model parameters from the sry (unfortunatelly these are not reported in the sry, this will have to wait to the next version of zhaires hopefully after ICRC 2023)
 #Maybe move them to the function call for now, and remove the unused Longitudinal switches?
 
-def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=0,ForcedTPost=0, TriggerSim=False): 
+# The output file of the conversion in progress, and whether it existed before
+# (set by _convert once the name is known; read by ZHAireSRawToRawROOT).
+_current_output = None
+
+
+def ZHAireSRawToRawROOT(*args, **kwargs):
+    r"""Converts one ZHAireS simulation; see _convert for the parameters.
+
+    If the conversion fails, an output file that it created is removed, so a
+    failed run leaves no half-written ``.rawroot`` behind (issue #242).  A file
+    that existed before is kept, since it holds earlier events; the error says so.
+    """
+    global _current_output
+    _current_output = None
+    try:
+        return _convert(*args, **kwargs)
+    except BaseException:
+        if _current_output is not None:
+            path, existed = _current_output
+            if not existed and os.path.exists(path):
+                os.remove(path)
+                logging.error("the conversion failed: removed the incomplete output " + path)
+            elif existed:
+                logging.error("the conversion failed: " + path + " existed before and may now hold "
+                              "an incomplete event")
+        raise
+
+
+def _convert(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself", EventID="LookForIt",TaskName="LookForIt", EventName="UseTaskName",ForcedTPre=0,ForcedTPost=0, TriggerSim=False): 
     '''
     This routine will read a ZHAireS simulation located in InputFolder and put it in the Desired OutputFileName. 
     
@@ -161,6 +189,12 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
         # If the directory doesn't exist, create it
         os.makedirs(directory_path)
     
+    global _current_output
+    _current_output = (OutputFileName, os.path.exists(OutputFileName))
+
+    # Check the inputs before writing anything (issue #242)
+    check_simulation(InputFolder, sryfile[0], TaskName)
+
     logging.info("###")
     logging.info("###")
     logging.info("### Starting with event "+EventName+" in "+ InputFolder+" to add to "+OutputFileName +" as Event " + str(EventID) + " of Run " + str(RunID) ) 
@@ -949,6 +983,115 @@ def ZHAireSRawToRawROOT(InputFolder, OutputFileName="GRANDConvention", RunID="Su
     return EventName
 
 
+def _bad(where, why):
+    r"""Returns the ValueError for a damaged ZHAireS simulation."""
+    return ValueError("GRANDlib: ZHAireS converter: " + where + ": " + why)
+
+
+def check_simulation(InputFolder, sry_file, TaskName):
+    r"""Checks that a ZHAireS simulation is complete before it is converted.
+
+    A damaged or incomplete simulation used to become valid-looking data
+    (issue #242).  This raises ValueError, naming the file and what is wrong, when:
+
+    * the primary zenith, azimuth or energy is missing, not finite, or (for the
+      energy) given in an unknown unit;
+    * the ``.EventParameters`` file exists without a finite core position;
+    * the trace files ``a<i>.trace`` do not match the antenna list of the
+      ``.sry`` (missing or extra antennas, including all of them missing);
+    * an antenna has a non-finite position or t0, a number out of sequence, a
+      name without digits, or a name or du_id (the digits of its name) that
+      another antenna also has;
+    * a trace is not a finite (N, 4) table, or its length differs by more than
+      one bin from the ``.sry`` time window.
+
+    A ``.sry`` that lists no antenna, with no trace file, is a shower that hit
+    no antenna (issue #91) and is accepted.
+
+    Parameters
+    ----------
+    InputFolder : str
+        The simulation directory.
+    sry_file : str
+        Its ``.sry`` summary file.
+    TaskName : str
+        The task name, which names the ``.EventParameters`` file.
+    """
+    for name, value in (("zenith", AiresInfo.GetZenithAngleFromSry(sry_file, "Aires")),
+                        ("azimuth", AiresInfo.GetAzimuthAngleFromSry(sry_file, "Aires")),
+                        ("energy", AiresInfo.GetEnergyFromSry(sry_file, "Aires"))):
+        if not np.isfinite(value):
+            raise _bad(sry_file, "the primary " + name + " is not finite: " + str(value))
+    if AiresInfo.GetEnergyFromSry(sry_file, "Aires") <= 0:
+        raise _bad(sry_file, "the primary energy is not positive")
+    EParGen.GetCorePositionFromParametersFile(InputFolder + "/" + TaskName + ".EventParameters")
+
+    tracefiles = glob.glob(InputFolder + "/a*.trace")
+    numbers = []
+    for trace in tracefiles:
+        stem = os.path.basename(trace)[1:-len(".trace")]
+        if not stem.isdigit():
+            raise _bad(trace, "a trace file must be named a<number>.trace")
+        numbers.append(int(stem))
+
+    info = AiresInfo.GetAntennaInfoFromSry(sry_file, rename_duplicates=False)
+    if info is None or len(info) != 6:
+        # no antenna table (or a legacy one, which the converter does not read)
+        order, names, xs, ys, zs, ts = [], [], [], [], [], []
+    else:
+        order, names, xs, ys, zs, ts = info
+    count = len(names)
+
+    if count == 0 and not tracefiles:
+        return
+    missing = sorted(set(range(count)) - set(numbers))
+    extra = sorted(set(numbers) - set(range(count)))
+    if missing or extra:
+        raise _bad(InputFolder, "the trace files do not match the %d antennas listed in %s: "
+                   "missing a<i>.trace for i in %s, unexpected for i in %s"
+                   % (count, sry_file, missing, extra))
+
+    du_ids = {}
+    for i in range(count):
+        where = sry_file + ", antenna " + str(order[i]) + " (" + names[i] + ")"
+        if str(order[i]) != str(i + 1):
+            raise _bad(where, "antenna numbers must run 1, 2, ... in order; found %s at position %d"
+                       % (order[i], i + 1))
+        try:
+            values = [float(v) for v in (xs[i], ys[i], zs[i], ts[i])]
+        except ValueError:
+            raise _bad(where, "a position or t0 is not a number") from None
+        if not np.all(np.isfinite(values)):
+            raise _bad(where, "a position or t0 is not finite: %s" % values)
+        if names.index(names[i]) != i:
+            raise _bad(where, "the antenna name is also the name of antenna %s" % order[names.index(names[i])])
+        digits = "".join(c for c in names[i] if c in "0123456789")
+        if not digits:
+            raise _bad(where, "the du_id is read from the digits of the antenna name, and it has none")
+        if int(digits) in du_ids:
+            raise _bad(where, "du_id %d is also the du_id of antenna %s: rename the antennas so "
+                       "that the digits of their names are unique" % (int(digits), du_ids[int(digits)]))
+        du_ids[int(digits)] = names[i]
+
+    bin_size = AiresInfo.GetTimeBinFromSry(sry_file)
+    window = AiresInfo.GetTimeWindowMaxFromSry(sry_file) - AiresInfo.GetTimeWindowMinFromSry(sry_file)
+    expected = window / bin_size
+    for trace in tracefiles:
+        try:
+            table = np.loadtxt(trace, dtype="f4", ndmin=2)
+        except ValueError as error:
+            raise _bad(trace, "cannot read the trace: " + str(error)) from None
+        if table.ndim != 2 or table.shape[1] != 4:
+            raise _bad(trace, "a trace must have 4 columns (t, Ex, Ey, Ez); it has shape %s"
+                       % (table.shape,))
+        if not np.all(np.isfinite(table)):
+            raise _bad(trace, "the trace has non-finite values")
+        if abs(len(table) - expected) > 1:
+            raise _bad(trace, "the trace has %d samples, but the time window of %s gives %.1f: "
+                       "the trace is truncated, or the .sry does not belong to it"
+                       % (len(table), sry_file, expected))
+
+
 def CheckIfEventIDIsUnique(EventID, f):
     # Try to get the tree from the file
     try:
@@ -983,8 +1126,13 @@ def extract_event_number(file_path):
     # Split the file name using underscores
     parts = file_name.split('_')
 
-    # The EventNumber is the last part of the split
-    event_number = parts[-1]
+    # The EventNumber is the last part of the split; it is stored as a number
+    try:
+        event_number = int(parts[-1])
+    except ValueError:
+        raise ValueError("GRANDlib: ZHAireSRawToRawROOT: cannot take the event number from "
+                         "%s: its name must end in _<number>.sry; give the event number "
+                         "explicitly instead" % file_path) from None
 
     return event_number
 
@@ -1039,7 +1187,8 @@ if __name__ == '__main__':
 
 
     if(mode=="standard"): 
-        ZHAireSRawToRawROOT(InputFolder, OutputFileName, RunID, EventID)
+        if ZHAireSRawToRawROOT(InputFolder, OutputFileName, RunID, EventID) == -1:
+            sys.exit(1)
 
 	#elif(mode=="full"):
 

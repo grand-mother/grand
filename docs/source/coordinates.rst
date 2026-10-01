@@ -136,8 +136,8 @@ the two differ by up to about 100 m worldwide.
     undulation = geoid_undulation(latitude=40.98, longitude=93.95)
     print("geoid - ellipsoid at Dunhuang: %.2f m" % undulation)
 
-At Dunhuang the geoid sits 7.75 m *below* the ellipsoid, so a point 1200 m
-above the ellipsoid is about 1207.75 m above sea level.  Use
+At Dunhuang the geoid sits 61 m *below* the ellipsoid, so a point 1200 m
+above the ellipsoid is about 1261 m above sea level.  Use
 :class:`~grand.geo.coordinates.Reference` to say which you mean.
 
 Angles are in degrees

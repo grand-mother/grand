@@ -68,14 +68,10 @@ def GetZenithAngleFromSry(sry_file,outmode="GRAND"):
             zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
           #logging.debug('Found Zenith ' + str(zen))
           return zen
-      try:
-        zen
-      except NameError:
-        zen = 0 #If no zenith angle was included in the input file, AIRES defaults to 0
-        if outmode == 'GRAND':
-          zen = 180-0 #that translates to 180 in GRAND
-        logging.info("Zenith Angle not found in sry file, defaulting to:" + str(zen))
-        return zen
+      # AIRES always writes this line, so a summary without it is damaged
+      # (issue #242): do not fall back to a vertical shower.
+      raise ValueError("GRANDlib: ZHAireS converter: no 'Primary zenith angle:' line in "+sry_file
+                       +": the summary file is incomplete or damaged")
   except:
     logging.error("GetZenithAngleFromSry:file not found or invalid:"+sry_file)
     raise
@@ -97,14 +93,9 @@ def GetAzimuthAngleFromSry(sry_file,outmode="GRAND"):
               azim= azim-360
           #logging.debug('Found Azimuth ' + str(azim))
           return azim
-      try:
-        azim
-      except NameError:
-        azim = 0 #If no azimuth angle was included in the input file, AIRES defaults to 0
-        if outmode == 'GRAND':
-          azim = 0+180 # that translates to 18
-        logging.info("Azimuth Angle not found in sry file, defaulting to:" + str(azim))
-        return azim
+      # AIRES always writes this line, so a summary without it is damaged (issue #242).
+      raise ValueError("GRANDlib: ZHAireS converter: no 'Primary azimuth angle:' line in "+sry_file
+                       +": the summary file is incomplete or damaged")
 
   except:
     logging.error("GetAzimuthAngleFromSry:file not found or invalid:"+sry_file)
@@ -140,6 +131,9 @@ def GetEnergyFromSry(sry_file,outmode="GRAND"):
               energy = energy *1e6
             if unit == "EeV\n":
               energy = energy *1e9
+            if unit.strip() not in ("eV", "KeV", "MeV", "GeV", "TeV", "PeV", "EeV"):
+              raise ValueError("GRANDlib: ZHAireS converter: unknown energy unit '"+unit.strip()
+                               +"' on the 'Primary energy:' line of "+sry_file)
 
             if outmode == 'GRAND': #AIRES mode outputs in GeV, GRAND in EeV
               energy = energy * 1e-9
@@ -148,8 +142,8 @@ def GetEnergyFromSry(sry_file,outmode="GRAND"):
       try:
         energy
       except NameError:
-        logging.error('warning energy not found, Aires has no default value,  cannot continue')
-        exit()
+        raise ValueError("GRANDlib: ZHAireS converter: no 'Primary energy:' line in "+sry_file
+                         +": AIRES has no default energy, so the summary file is damaged")
   except:
     logging.error("GetEnergyFromSry:file not found or invalid:"+sry_file)
     raise
@@ -1351,7 +1345,9 @@ def get_antenna_t0(xant,yant,hant, azimuthdeg, zenithdeg):
 
     return dtna*1.0e9
 
-def GetAntennaInfoFromSry(sry_file,outmode="N/A"):
+def GetAntennaInfoFromSry(sry_file,outmode="N/A",rename_duplicates=True):
+  # rename_duplicates=False returns the labels as written, so that a caller can
+  # refuse duplicates instead (issue #242).
   AntennaOrder=[]
   AntennaID=[]
   AntennaX=[]
@@ -1391,6 +1387,9 @@ def GetAntennaInfoFromSry(sry_file,outmode="N/A"):
             AntennaT.append(stripedline[5])
           else:
             Read=False
+
+            if not rename_duplicates:
+              return AntennaOrder,AntennaID,AntennaX,AntennaY,AntennaZ,AntennaT
 
             #now, i need to make the AntennaID Unique, so that i can store them in the file
             dups = {}

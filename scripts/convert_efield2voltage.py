@@ -152,7 +152,7 @@ def manage_args():
         "--target_sampling_rate_mhz",
         type=float,
         default=0,
-        help="Target sampling rate of the data in Mhz",
+        help="Not supported (the voltage file cannot record a new rate, issue #229): resample with convert_efield2efield.py instead",
     )
     parser.add_argument(
         "--add_jitter_ns",
@@ -184,6 +184,15 @@ if __name__ == "__main__":
     logger.info("Computing voltage from the input electric field")
     
     args = manage_args()
+    # The voltage file has nowhere to record a new sampling rate and the run
+    # tree is not rewritten, so the next step (convert_voltage2adc.py) would
+    # read the input rate and process the trace at the wrong rate (issue #229).
+    if args.target_sampling_rate_mhz:
+        raise SystemExit(
+            "GRANDlib: convert_efield2voltage: --target_sampling_rate_mhz is not supported: the "
+            "voltage file cannot record the new rate, so later steps would use the wrong one. "
+            "Resample the e-field instead (convert_efield2efield.py --target_sampling_rate_mhz, "
+            "which writes the new rate to its run file), then convert that.")
 
     # If no output directory given, define it as input directory
     if args.out_directory is None:

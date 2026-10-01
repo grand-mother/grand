@@ -414,8 +414,9 @@ def coerce_to_dtype(value, dtype, where):
     Used by the data-tree fields.  For an integer dtype, the value must be a
     whole number within the dtype's range (``1.7`` and ``-1`` for an
     unsigned field are refused, rather than stored as 1 and 4294967295);
-    for a float dtype, a real number (a string is refused).  Works on scalars
-    and arrays.
+    for a float dtype, a real number.  Text that reads as a number (``"1618"``)
+    is converted, with a :class:`GRANDlibWarning`, as it always was; other
+    text is refused.  Works on scalars and arrays.
 
     Parameters
     ----------
@@ -441,18 +442,22 @@ def coerce_to_dtype(value, dtype, where):
     dtype = np.dtype(dtype)
     if dtype.kind not in "iuf":
         return np.asarray(value, dtype=dtype)
-    if isinstance(value, (str, bytes)) or (isinstance(value, np.ndarray) and value.dtype.kind in "USO"
-                                           and not all(_is_real(v) for v in value.ravel())):
-        raise TypeError(message(where, "must be a number, got %s" % _show(value)))
     try:
         given = np.asarray(value)
     except (TypeError, ValueError):
         raise TypeError(message(where, "must be a number, got %s" % _show(value))) from None
     if given.dtype.kind in "USO":
+        # Text that reads as a number ("1618", from a file name or the command
+        # line) was always stored as that number: keep converting it, but say
+        # so, so the caller can pass the number itself.  Other text is refused.
+        has_text = any(isinstance(v, (str, bytes)) for v in given.ravel())
         try:
             given = given.astype(float)
         except (TypeError, ValueError):
             raise TypeError(message(where, "must be a number, got %s" % _show(value))) from None
+        if has_text:
+            warn(where, "got the text %s; stored as the number it reads as. Pass a number "
+                 "instead" % _show(value), stacklevel=5)
     if given.dtype.kind == "c":
         raise TypeError(message(where, "must be a real number, got the complex %s" % _show(value)))
     if dtype.kind == "f":

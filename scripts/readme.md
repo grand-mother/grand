@@ -70,8 +70,12 @@ optional arguments:
 
 ## Example
 
+(`--target_sampling_rate_mhz` is no longer accepted by `convert_efield2voltage.py`: the
+voltage file cannot record a new rate, issue #229. Resample the e-field with
+`convert_efield2efield.py --target_sampling_rate_mhz` first.)
+
 ```bash
-python ./convert_efield2voltage.py --seed 1234 --target_sampling_rate_mhz=500 --target_duration_us=4.096 ./TEfield_13_L0_GP300_13790.root -o ./Prueba-no_noise.root --no_noise --verbose=info
+python ./convert_efield2voltage.py --seed 1234 --target_duration_us=4.096 ./TEfield_13_L0_GP300_13790.root -o ./Prueba-no_noise.root --no_noise --verbose=info
 02:21:04.335  INFO [grand.manage_log 187] create handler for root logger: ['grand']
 02:21:04.335  INFO [grand.scripts.convert_efield2voltage 141] 
 02:21:04.335  INFO [grand.scripts.convert_efield2voltage 141] ===========> Begin at 2024-01-10T02:21:04Z <===========

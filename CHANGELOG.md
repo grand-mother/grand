@@ -15,6 +15,124 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Notebook 05's sky maps show right ascension correctly (#268).** The shipped
+  LFMap grid's first axis runs 12 h ahead of right ascension, so the maps put
+  the Galactic Centre at 5.8 h instead of 17.8 h. The notebook now shifts the
+  maps by 12 h, says why, and marks the Galactic Centre, Cygnus A and
+  Cassiopeia A, which land on their bright pixels. The data and
+  `galactic_noise` are unchanged.
+- **`Handling3dTraces.init_traces` accepts a NumPy sampling rate (#264).** A
+  rate given as a NumPy scalar (as read from a tree) was kept as a scalar, and
+  `apply_bandpass` then failed with `IndexError: invalid index to scalar
+  variable`. One rate for all units or one per unit is now accepted in any
+  numeric form; a wrong length, NaN or a bool is refused.
+- **A NaN position no longer crashes Python (#262).** libturtle's elevation
+  lookups segfaulted on a NaN latitude or longitude, killing the interpreter with
+  no traceback: `geoid_undulation`, `topography.elevation` (every reference) and
+  `turtle.Map`/`Stack.elevation`. Only finite points now reach the C code; a NaN
+  point (or `None`, which has always read as NaN) gives a NaN elevation with a
+  `GRANDlibWarning`.
+- **`convert_voltage_to_ADC` converts only the channels asked for (#263).** A
+  regression from #179: a boolean mask such as `[True, False, True]` was iterated
+  as indices 1, 0, 1, converting the wrong rows, and a slice or a single index
+  raised `TypeError`. Channels are now selected as NumPy indexing does, as in
+  `get_peak_amplitude`, and a mask of the wrong length is refused.
+- **The EGM96 geoid map is no longer upside down (#250).** `data/egm96.png`
+  stored its rows south-first, while TURTLE reads PNG rows north-first, so every
+  geoid undulation was the value at the opposite latitude: the North Pole read
+  -29.5 m instead of +13.6 m, and the GP300 site -7.75 m instead of -61.0 m. The
+  rows are flipped, and the grid extents corrected (x1 = 360, y1 = 90 for a
+  0.25 degree grid; they were one step too far, stretching the grid by up to a
+  quarter of a degree). The poles and the model's global minimum and maximum
+  now match published EGM96. **Heights given with the default
+  `reference="GEOID"` (`Geodetic`, `ECEF`, `topography.elevation(...,
+  reference="sea")`) change by the difference, about 53 m at the GP300 site;
+  results computed with earlier versions from such heights need recomputing.**
+- **The ZHAireS converter refuses a damaged simulation (#242).** A missing trace
+  file was dropped, a truncated trace zero-padded, a NaN written as data, a
+  missing zenith line read as a vertical shower, an unknown energy unit ignored,
+  and a broken `.EventParameters` gave a NaN core, all with exit 0. Before
+  writing anything the converter now checks that the trace files match the
+  `.sry` antenna list, that antenna names and du_ids are unique and positions
+  finite, that each trace is a finite (N, 4) table as long as the `.sry` time
+  window (within one bin), and that zenith, azimuth, energy and core are
+  present and valid. A failure exits non-zero naming the file and the problem,
+  and removes the output file if this run created it. A shower that hit no
+  antenna (no antenna in the `.sry`, no trace file) is still written (#91). A
+  missing `.EventParameters` still gives core (0, 0, 0), now with a warning.
+- **The CoREAS converter checks the antenna list against the trace files (#243).**
+  `du_count` came from the trace files and everything else from the list, so a
+  truncated list, a missing or extra trace, a NaN or a short trace produced a
+  `.rawroot` that looked valid, exit 0. Before writing anything the converter now
+  checks that both name the same antennas (no duplicates), that positions and
+  traces are finite, traces have 4 columns and equal lengths, and
+  `TimeResolution` is positive; otherwise it stops listing every problem.
+- **An unknown Xmax no longer gives a crash or near-zero voltages (#228).** The
+  CoREAS converter took `DistanceOfShowerMaximum = -1` ("unknown") as a distance
+  of -1 cm, putting Xmax at the core, and `convert_efield2voltage` then produced
+  V_oc around 1e-13 uV and all-zero ADC traces, exit 0; a NaN Xmax (the `.inp`
+  path) crashed in the antenna lookup. The converter now writes NaN for an
+  unknown distance or depth, and `Efield2Voltage` refuses an event whose Xmax is
+  not finite or lies within 100 m of the core, with a message naming the event.
+- **The CoREAS converter no longer mirrors the azimuth (#209).** For a `.reas`
+  without the shower block (as the committed sample), the converter reads the
+  CORSIKA `.inp` and computed `180 - PHIP`; PHIP is the direction of travel in a
+  North/West frame, so the "comes from" azimuth is `PHIP - 180` (13.57° instead
+  of -13.57° for the sample, confirmed by a plane-wave fit to its antenna
+  timing). Both branches now wrap to [0, 360). The 2024 backward-compatibility
+  fixture `sim_Dunhuang_*_CoREAS-NJ_0000` keeps its old, mirrored value on
+  purpose; files converted from such inputs should be regenerated.
+- **sim2root writes the right antenna latitude/longitude (`du_geoid`) (#220).**
+  With several events sharing antennas in one `.rawroot`, `du_geoid` was
+  computed from the non-unique antenna list and so paired with the wrong
+  antennas (up to 0.1°, about 8 km off). With `-ss` it was assigned to a
+  misspelt field and silently dropped, `du_tilt`/`t_bin_size` took the
+  cumulative antenna count, and every run kept the first run's first event.
+- **Resampling in the voltage step no longer gives the ADC step a wrong rate
+  (#229).** `Efield2Voltage` kept the input's `trigger_position` after
+  resampling (the ratio compared the input rate with itself), and left the run
+  tree's `t_bin_size` at the input rate, so `convert_voltage2adc.py` processed a
+  resampled trace as if it were at the input rate (at 750 MHz: 12288 samples
+  written as 500 MHz ADC data, exit 0). The trigger position is now rescaled,
+  and `convert_efield2voltage.py --target_sampling_rate_mhz` is refused, since
+  the voltage file cannot record the new rate; resample the e-field with
+  `convert_efield2efield.py`, which writes the rate to its run file. The
+  library option (`params["resample_to_mhz"]`) still works and warns.
+- **`Efield2Voltage` reads the run tree at the efield's level (#237).**
+  `DataDirectory` picks the highest level of each tree type on its own, so a
+  folder with an L0 efield file and an L1 run file (as `convert_efield2efield
+  -od` leaves behind, #231) paired 0.5 ns traces with a 2 ns sampling time and
+  doubled every voltage, exit 0. The run tree is now taken at the efield's
+  level (an error if there is none), the shower tree at that level or the
+  closest below, and the files read are logged.
+- **The voltage and e-field conversions refuse an input whose shower or run
+  tree lacks the event (#247).** A failed shower lookup left the previous
+  event's shower loaded, so the antenna response was computed for the wrong
+  zenith, azimuth and Xmax, exit 0. `Efield2Voltage.get_event` and
+  `convert_efield2efield.py` now check that the loaded shower and run entries
+  are the requested ones and raise `KeyError` otherwise.
+- **`Efield2Voltage` refuses an event the input does not hold (#238).** A
+  missing `(event_number, run_number)` used to leave the previously loaded event
+  in place and write it, with an empty trace, under the requested numbers,
+  exit 0. It now raises `KeyError` listing the events the input holds. NumPy
+  integers are accepted as event and run numbers, and a negative `event_idx`
+  is refused instead of wrapping round to the last event.
+- **`--rf_chain_nut` / `--rf_chain_gaa` now apply without noise or the main
+  chain (#227).** With `--no_noise --no_rf_chain`, the nut or GAA chain was
+  multiplied in the frequency domain but never transformed back, so the output
+  was V_oc, bit for bit. `final_resample` now inverts the spectrum whenever any
+  of noise and the three chains is on.
+
+- **Numbers given as text are accepted again in tree fields (#207, a regression
+  from #179).** The input checks refused `"1618"` in a numeric field, which broke
+  `ZHAireSRawToRawROOT.py <run>` (the README's one-argument form takes the event
+  number from the file name) and `sim2root.py -la/-lo/-al`. Text that reads as a
+  number is converted again, now with a `GRANDlibWarning` naming the field; other
+  text is still refused. Both callers now pass numbers: `extract_event_number`
+  returns an `int`, and the three options are `type=float`. `-al 0` was always
+  ignored (the code tested `if clargs.altitude:`) and is now honoured. Tests in
+  `tests/sim2root/test_committed_samples.py` run both commands.
+
 - **`EventList` reads a file, an open `TFile` or a `DataDirectory`, not only a
   directory name.** Given a file name, `get_number_of_events()` raised
   `TypeError`, and `get_event()` raised `AttributeError` when the file held no

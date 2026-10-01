@@ -6,6 +6,8 @@ import os.path
 from logging import getLogger
 import time
 
+import numbers
+
 import numpy as np
 
 from grand.basis import validate as _validate
@@ -114,6 +116,59 @@ def _grandlib_version():
     return provenance.package_version()
 
 
+
+#: Below this distance from the core an Xmax position is taken as a placeholder,
+#: not a measurement: real showers have Xmax kilometres away (issue #228).
+_MIN_XMAX_DISTANCE_M = 100.0
+
+
+def _trees_of_one_level(directory):
+    r"""The efield, run and shower trees of `directory`, read at one level.
+
+    ``DataDirectory`` picks the highest level of each tree type on its own, so
+    a folder holding an L0 efield file and an L1 run file paired the L0 traces
+    with the L1 sampling time, which silently doubled every voltage (issue
+    #237).  The level is taken from the efield tree; the run tree must exist
+    at that level, and the shower tree, whose content does not depend on the
+    level, is taken at that level or the closest one below it.
+
+    Parameters
+    ----------
+    directory : grand.dataio.DataDirectory
+
+    Returns
+    -------
+    tuple
+        ``(tefield, trun, tshower)``.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the folder holds no efield tree, or no run tree at the efield's level.
+    """
+    def level_of(tree):
+        levels = [level for level in range(10) if getattr(directory, "%s_l%d" % (tree, level), None) is not None]
+        return levels
+
+    efield_levels = level_of("tefield")
+    if not efield_levels:
+        raise FileNotFoundError(_validate.message(
+            "Efield2Voltage", "%s holds no efield file (efield_*_L<level>_*.root)" % directory.dir_name))
+    level = efield_levels[-1]
+    trun = getattr(directory, "trun_l%d" % level, None)
+    if trun is None:
+        raise FileNotFoundError(_validate.message(
+            "Efield2Voltage", "%s holds an efield file at level %d but no run file at that level "
+            "(run_*_L%d_*.root); the run file carries the sampling time, so it must match the "
+            "efield file" % (directory.dir_name, level, level)))
+    shower_levels = [lvl for lvl in level_of("tshower") if lvl <= level]
+    tshower = getattr(directory, "tshower_l%d" % shower_levels[-1]) if shower_levels else directory.tshower
+    tefield = getattr(directory, "tefield_l%d" % level)
+    logger.info("reading level %d: efield %s, run %s, shower %s"
+                % (level, getattr(tefield, "file_name", "?"), getattr(trun, "file_name", "?"),
+                   getattr(tshower, "file_name", "?")))
+    return tefield, trun, tshower
+
 class Efield2Voltage:
     """
     Class to compute voltage with GRANDROOT IO
@@ -171,6 +226,8 @@ class Efield2Voltage:
         f_input_TRun = self.d_input.trun
         f_input_TShower = self.d_input.tshower
         f_input_TEfield = self.d_input.tefield
+        if isinstance(self.d_input, groot.DataDirectory):
+            f_input_TEfield, f_input_TRun, f_input_TShower = _trees_of_one_level(self.d_input)
 
         self.f_output = f_output
 
@@ -251,7 +308,7 @@ class Efield2Voltage:
         if (event_number is not None) and (run_number is not None):
             self.event_number = event_number
             self.run_number = run_number
-        elif (self.event_idx is not None) and (self.event_idx<len(self.events_list)): 
+        elif (self.event_idx is not None) and (0 <= self.event_idx < len(self.events_list)): 
             self.event_number = self.events_list[self.event_idx][0]
             self.run_number = self.events_list[self.event_idx][1]
         else:
@@ -261,8 +318,19 @@ class Efield2Voltage:
             logger.exception(message)
             raise Exception(message)
 
-        assert isinstance(self.event_number, int)
-        assert isinstance(self.run_number, int)
+        # The pair must be one the input holds: otherwise the trees below
+        # keep the previously loaded event, which was then written under the
+        # requested numbers (issue #238).
+        for _name in ("event_number", "run_number"):
+            _value = getattr(self, _name)
+            if isinstance(_value, (bool, np.bool_)) or not isinstance(_value, numbers.Integral):
+                raise TypeError(_validate.message(
+                    "Efield2Voltage.get_event", "'%s' must be an integer, got %r" % (_name, _value)))
+            setattr(self, _name, int(_value))
+        if (self.event_number, self.run_number) not in {(int(e), int(r)) for e, r in self.events_list}:
+            raise KeyError(_validate.message(
+                "Efield2Voltage.get_event", "no event %d in run %d in the input; it holds (event, run) %s"
+                % (self.event_number, self.run_number, [(int(e), int(r)) for e, r in self.events_list])))
         logger.info(f"Running on event_number: {self.event_number}, run_number: {self.run_number}")
 
         self.events.get_event(self.event_number, self.run_number)           # update traces, du_pos etc for event with event_idx.
@@ -270,6 +338,18 @@ class Efield2Voltage:
         if self.previous_run != self.run_number:                      # load only for new run.
             self.run.get_run(self.run_number)                         # update run info to get site latitude and longitude.
             self.previous_run = self.run_number
+        # A lookup that finds nothing leaves the previous entry loaded: the
+        # antenna response was then computed for another event's shower
+        # (issue #247).  Refuse instead.
+        if (int(self.shower.event_number), int(self.shower.run_number)) != (self.event_number, self.run_number):
+            raise KeyError(_validate.message(
+                "Efield2Voltage.get_event", "the shower tree has no entry for event %d of run %d; "
+                "the efield and shower files of the input do not match" % (self.event_number, self.run_number)))
+        if int(self.run.run_number) != self.run_number:
+            self.previous_run = None
+            raise KeyError(_validate.message(
+                "Efield2Voltage.get_event", "the run tree has no entry for run %d; the efield and "
+                "run files of the input do not match" % self.run_number))
 
         # stack efield traces
         #self.traces = np.asarray(self.events.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins
@@ -289,6 +369,20 @@ class Efield2Voltage:
         shower.load_root(self.shower)                # calculates grand_ref_frame, shower_frame, Xmax in shower_frame LTP etc
         self.evt_shower = shower                     # Note that 'shower' is an instance of 'self.shower' for one event.
         logger.info(f"shower origin in Geodetic: {self.run.origin_geoid}")
+
+        # The antenna response is evaluated in the direction of Xmax seen from
+        # each antenna.  Without a usable Xmax that direction is undefined: a
+        # NaN position crashed deep in the antenna lookup, and a position a few
+        # centimetres from the core (a "-1 = unknown" read as a distance) gave
+        # voltages near 1e-13 uV (issue #228).  Refuse instead.
+        maximum = np.asarray(shower.maximum, dtype=float).ravel()
+        if not np.all(np.isfinite(maximum)) or np.linalg.norm(maximum) < _MIN_XMAX_DISTANCE_M:
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_event", "event %d of run %d has no usable Xmax position "
+                "(xmax_pos_shc %s, %.3g m from the core); the antenna response needs the "
+                "direction of Xmax. Regenerate the simulation with the shower maximum filled in"
+                % (self.event_number, self.run_number, np.asarray(self.shower.xmax_pos_shc).tolist(),
+                   np.linalg.norm(maximum) if np.all(np.isfinite(maximum)) else float("nan"))))
 
         # A shower that hit no antenna (issue #91): there is nothing to
         # compute, but the event is still written, with du_count 0, so that it
@@ -537,7 +631,11 @@ class Efield2Voltage:
             #we use fourier interpolation, becouse its easy!
             self.vout = sf.irfft(self.vout_f, m)*ratio #renormalize the amplitudes
             #MATIAS: TODO: now, we are missing a place to store the new sampling rate!
-        elif(self.params["add_noise"] or self.params["add_rf_chain"]): #we know we dont need to resample, but we might need to reproces the Voc (curently stored in vout by compute_voc_event) to take into acount the noise or the chain
+        # No resampling, but anything applied in the frequency domain (noise or
+        # any of the three chains) must be brought back: until then ``vout``
+        # still holds the V_oc that compute_voc_event put there (issue #227).
+        elif (self.params["add_noise"] or self.params["add_rf_chain"]
+              or self.params["add_rf_chain_nut"] or self.params["add_rf_chain_gaa"]):
             self.vout[:] = sf.irfft(self.vout_f)
 
         if(self.target_lenght<np.shape(self.vout)[2]):
@@ -811,6 +909,12 @@ class Efield2Voltage:
         The result is written to ``self.f_output`` as a side effect; the
         method returns nothing.
         """
+        # NumPy integer scalars (from arrays, events_list...) are integers too
+        def _plain(value):
+            return int(value) if isinstance(value, np.integer) else value
+        event_idx, event_number, run_number, du_idx = (
+            _plain(event_idx), _plain(event_number), _plain(run_number), _plain(du_idx))
+
         # compute voltage for all DUs of given event/s.
         if du_idx is None:
             # default case: compute voltage for all DUs of all events and all runs provided in the input file.
@@ -942,10 +1046,16 @@ class Efield2Voltage:
 
 
         #modify the trigger position if needed
+        # Rescale by input rate / output rate.  This compared the input rate
+        # with itself (f_samp_mhz is 1e3/dt_ns), so the ratio was always 1 and
+        # a resampled trace kept the input's trigger sample (issue #229).
         if(self.target_sampling_rate_mhz>0):
-          originalsampling=1e3/self.dt_ns
-          newsampling=self.f_samp_mhz
+          originalsampling=1e3/np.asarray(self.dt_ns)
+          newsampling=self.target_sampling_rate_mhz
           ratio=originalsampling/newsampling
+          logger.warning("the voltage is resampled to %s MHz, but the run tree still gives the input "
+                         "sampling (t_bin_size); a later step that reads the run tree, such as "
+                         "convert_voltage2adc.py, will assume the input rate" % newsampling)
         else:
           ratio=1.0
 
