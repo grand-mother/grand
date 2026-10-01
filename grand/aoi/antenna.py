@@ -39,12 +39,16 @@ class Antenna:
 
     @property
     def position(self):
-        """Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
+        """Antenna position in the array frame (GRANDCS), in metres.
+
+        x runs north (magnetic), y west and z up, from the frame's origin;
+        z is relative to the origin's height, not to sea level.  The origin
+        is the event's ``antennas_origin`` (#215).
 
         Returns
         -------
-        ndarray, shape (3,)
-            Position in the array frame, in metres.
+        CartesianRepresentation, shape (3, 1)
+            The position; ``np.ravel(position)`` gives three numbers.
         """
         return self._position
 

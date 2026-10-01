@@ -17,6 +17,15 @@ from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield,
 import grand.dataio
 from grand.dataio.xmax_frame import xmax_above_ground
 
+#: Origin (latitude, longitude, height) of the GRANDCS frame in which
+#: :meth:`Event.fill_antennas` places GP300, GP80 and GP13 antennas computed
+#: from their GPS positions.  It was an unnamed literal.  It is *not* the
+#: run's ``origin_geoid`` -- (40.98456, 93.95225, 1200) in the GP80 files,
+#: about 3.8 km away -- and nothing records why this point was chosen; which
+#: of the two the positions should use is open for the data owners (#215).
+#: ``Event.antennas_origin`` says which origin an event's positions are in.
+GPS_ANTENNA_ORIGIN = (40.95068711, 93.96977396, 1200.0)
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -90,6 +99,11 @@ class Event:
 
     simshower: Shower() = None
     """Simulated shower for simulations"""
+
+    antennas_origin: tuple = None
+    """(latitude, longitude, height) of the GRANDCS frame the positions in
+    ``antennas`` are given in: the run's ``origin_geoid``, or
+    :data:`GPS_ANTENNA_ORIGIN` for positions computed from GPS (#215)."""
 
     ## ToDo: what is it?
     L: int = 0
@@ -792,7 +806,8 @@ class Event:
                 du_alts = du_alts[unique_dus_idx]
 
                 # Get lat/lon/alt from xyz
-                origin = Geodetic(latitude=40.95068711, longitude=93.96977396, height=1200)
+                latitude, longitude, height = GPS_ANTENNA_ORIGIN
+                origin = Geodetic(latitude=latitude, longitude=longitude, height=height)
 
                 geod_ant = Geodetic(latitude=du_lats, longitude=du_lons, height=du_alts)
                 grandcs  = GRANDCS(geod_ant, location=origin)
@@ -811,6 +826,8 @@ class Event:
                     self._all_antennas[a.id] = a
 
                 self._all_antennas_key = ("gps", self.site)
+
+            self.antennas_origin = GPS_ANTENNA_ORIGIN
 
             # Fill the antenna part
             event_dus = cur_tree.du_id
@@ -875,6 +892,9 @@ class Event:
                 self._all_antennas[a.id] = a
 
             self._all_antennas_key = ("run", self.site)
+            origin = getattr(self.trun, "origin_geoid", None)
+            self.antennas_origin = (None if origin is None
+                                    else tuple(float(v) for v in np.ravel(np.asarray(origin))))
 
 
 

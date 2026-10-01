@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `grand.aoi` events now say which origin their antenna positions are in
+  (#215, partly): `Event.antennas_origin` is the run's `origin_geoid`, or for
+  positions computed from GPS (GP300, GP80, GP13) the hard-coded point, now
+  named `grand.aoi.event.GPS_ANTENNA_ORIGIN` and documented as 3.8 km from
+  the GP80 runs' `origin_geoid`. Which origin GPS positions *should* use is
+  left to the data owners. `Antenna.position`'s docstring now gives the
+  frame, the z reference and the `(3, 1)` shape.
+
 - `sim2root.py -ef N` splits correctly (#223): `-ef 1` gives one event per
   file (it was ignored), and an `N` that divides the number of events no
   longer leaves a trailing empty efield/shower/showersim set. Inputs holding
