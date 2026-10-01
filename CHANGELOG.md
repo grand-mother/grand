@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`write()` no longer replaces a tree silently (#197).** Writing a new tree
+  object into a file that already held a tree of the same name replaced it,
+  with `overwrite=False` as with `overwrite=True`, so earlier events were lost;
+  and `overwrite=True` opened the file with "recreate", which also deleted every
+  other tree in it. Without `overwrite` this is now refused with a message
+  saying how to add events (open the file with the tree class and fill that);
+  with it, only the tree of that name is replaced.
+
 - **Listing and drawing a tree no longer change the values it holds (#196).**
   `TTree::Draw()` reads every entry into the buffers the tree object is bound
   to, so after `get_list_of_events()`, `draw()`, `get_traces_lengths()` or the

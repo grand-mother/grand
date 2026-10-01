@@ -686,9 +686,19 @@ class DataTree:
         close_file : bool, optional
             Close the file after writing.
         overwrite : bool, optional
-            Replace an existing tree of the same name.
+            Replace a tree of the same name that the file already holds.
+            Without it, writing into a file that already holds such a tree
+            (other than this one) is refused: to add events to it, open it
+            with this class first, ``TShower("file.root")``, then fill and
+            write. Other trees in the file are kept either way.
         force_close_file : bool, optional
             Close the file even if other trees reference it.
+
+        Raises
+        ------
+        FileExistsError
+            If the file already holds another tree of this name and
+            ``overwrite`` is False.
         """
         # Add the tree friends to this tree
         self.add_proper_friends()
@@ -711,16 +721,14 @@ class DataTree:
                 # One writer at a time (#281); opened afresh, so no stale view
                 if os.path.isfile(args[0]):
                     _file_lock.lock_for_writing(args[0], type(self).__name__, fresh=True)
-                # Overwrite requested
-                # ToDo: this does not really seem to work now
-                if overwrite:
-                    self._file = ROOT.TFile(args[0], "recreate")
-                else:
-                    # By default append
-                    self._file = ROOT.TFile(args[0], "update")
+                # Opened for update in both cases: "recreate" for overwrite
+                # wiped every other tree in the file as well (#197); the tree
+                # of this name alone is replaced below
+                self._file = ROOT.TFile(args[0], "update")
                 _file_lock.lock_for_writing(args[0], type(self).__name__, fresh=True)
                 # Opened here, so stop_using() may close it if it is not closed below
                 _register_opened_file(self._file)
+            self._check_tree_slot(self._file, overwrite, creating_file)
             # Make the tree save itself in this file
             self._tree.SetDirectory(self._file)
             # args passed to the TTree::Write() should be the following
@@ -746,6 +754,43 @@ class DataTree:
             self._tree.SetDirectory(ROOT.nullptr)
             self._file.Close()
             _forget_opened_file(self._file)
+
+    def _check_tree_slot(self, f, overwrite, opened_here):
+        r"""Refuses to replace another tree of this name in ``f`` unless asked.
+
+        Writing a new tree object into a file that already held a tree of the
+        same name replaced it silently, with or without ``overwrite``: the
+        earlier events were lost (#197).
+
+        Parameters
+        ----------
+        f : ROOT.TFile
+            The file about to be written.
+        overwrite : bool
+            Replace the existing tree.
+        opened_here : bool
+            ``f`` was opened by this call, so it is closed before refusing.
+        """
+        directory = self._tree.GetDirectory()
+        try:
+            same = bool(directory) and ROOT.addressof(directory) == ROOT.addressof(f)
+        except TypeError:
+            same = False
+        if same or not f.GetListOfKeys().FindObject(self._tree_name):
+            return
+        if overwrite:
+            f.Delete(self._tree_name + ";*")
+            return
+        name = f.GetName()
+        if opened_here:
+            f.Close()
+            _forget_opened_file(f)
+            self._file = None
+        raise FileExistsError(_validate.message(
+            "%s.write" % type(self).__name__,
+            "%s already holds a %s tree; to add events to it, open it with %s(%r) and fill "
+            "that, or pass overwrite=True to replace it" % (name, self._tree_name,
+                                                           type(self).__name__, name)))
 
     ## Fills the entry list from the tree
     def fill_entry_list(self):

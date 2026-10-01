@@ -56,3 +56,36 @@ def test_listing_keeps_values_set_for_the_next_fill(tmp_path):
     t.write()
     assert t.get_list_of_events() == [(1, 1), (2, 1), (3, 1), (4, 1)]
     t.stop_using()
+
+
+def test_write_does_not_silently_replace_a_tree(tmp_path):
+    r"""#197: a new tree written into a file holding one of that name replaced it, even
+    with overwrite=False; overwrite=True also wiped every other tree in the file."""
+    import pytest
+    import ROOT
+
+    from grand.dataio import TRun, TShower
+
+    path = str(tmp_path / "f.root")
+    r = TRun()
+    r.run_number = 1
+    r.fill()
+    r.write(path)
+    r.stop_using()
+    for ev in (10, 50):
+        t = TShower()
+        t.run_number = 1
+        t.event_number = ev
+        t.fill()
+        if ev == 10:
+            t.write(path)
+        else:
+            with pytest.raises(FileExistsError, match="already holds a tshower tree"):
+                t.write(path)
+            assert TShower(path).get_list_of_events() == [(10, 1)]
+            t.write(path, overwrite=True)
+        t.stop_using()
+    assert TShower(path).get_list_of_events() == [(50, 1)]
+    f = ROOT.TFile(path)
+    assert sorted(k.GetName() for k in f.GetListOfKeys()) == ["trun", "tshower"]
+    f.Close()
