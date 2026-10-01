@@ -8,7 +8,6 @@ import os
 from dataclasses import dataclass, field
 from logging import getLogger
 import warnings
-import weakref
 import ROOT
 
 import numpy as np
@@ -308,11 +307,31 @@ class DataTree:
         "_analysis_level",
         "_modification_history",
         "__setattr__",
+        "_guard_ready",
         "is_tchain"
     ]
     """Fields that are not branches"""
 
-    # def __setattr__(self, key, value):
+    def __setattr__(self, key, value):
+        r"""Refuses a name the tree class does not define, once it is built.
+
+        ``t.zenit = 5`` for ``zenith`` was accepted and stored nowhere: the
+        guard below was assigned to the instance, where Python never looks
+        for ``__setattr__`` (#202).  Private names, the class's fields and
+        properties, and attributes the instance already has are allowed.
+        """
+        if key[0] != "_" and self.__dict__.get("_guard_ready") and key not in self.__dict__:
+            if "_known_names" not in type(self).__dict__:   # per class, not inherited
+                type(self)._known_names = {name for klass in type(self).__mro__[:-1]
+                                           for name in list(klass.__dict__) + list(getattr(klass, "__annotations__", {}))}
+            if key not in type(self)._known_names:
+                import difflib
+
+                close = difflib.get_close_matches(key, sorted(n for n in type(self)._known_names if n[0] != "_"), 1)
+                raise AttributeError(_validate.message(
+                    type(self).__name__, "has no field %r%s" % (key, "; did you mean %r?" % close[0] if close else "")))
+        super().__setattr__(key, value)
+
     def mod_setattr(self, key, value):
         # Create a list of attributes and properties for the class if it doesn't exist
         r"""Sets an attribute, recording the change in the modification history.
@@ -722,8 +741,8 @@ class DataTree:
         if self._tree is not None and not self.is_tchain:
             _branch_owner[ROOT.addressof(self._tree)] = id(self)
 
-        self.__setattr__ = weakref.proxy(self.mod_setattr)
-        # self.__setattr__ = self.mod_setattr
+        # From here on, a misspelt field raises (#202)
+        self._guard_ready = True
 
     ## Return the iterable over self
     def __iter__(self):

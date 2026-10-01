@@ -486,7 +486,8 @@ def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
   RawShower.xmax_distance = DistanceOfShowerMaximum
   RawShower.xmax_pos_shc = Xmax_NWU
 
-  RawShower.long_pd_gamma = pd_gammas
+  # RawShowerTree calls it long_pd_gammas; the gamma profile was stored nowhere (#202)
+  RawShower.long_pd_gammas = pd_gammas
   RawShower.long_pd_eminus = pd_electrons
   RawShower.long_pd_eplus = pd_positrons
   RawShower.long_pd_muminus = pd_muN

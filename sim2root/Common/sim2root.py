@@ -931,7 +931,9 @@ def rawshower2grandroot(trawshower, gt):
     #gt.tshowersim.long_pd_depth = trawshower.long_slantdepth
     gt.tshowersim.long_pd_depth = trawshower.long_pd_depth
     ## Longitudinal Profile of Number of Gammas
-    gt.tshowersim.long_pd_gammas = trawshower.long_pd_gammas
+    # TShowerSim calls it long_pd_gamma: assigned as "long_pd_gammas", the gamma
+    # profile was stored nowhere (found by the #202 field guard)
+    gt.tshowersim.long_pd_gamma = trawshower.long_pd_gammas
     ## Longitudinal Profile of Number of e+
     gt.tshowersim.long_pd_eplus = trawshower.long_pd_eplus
     ## Longitudinal Profile of Number of e-
@@ -940,36 +942,17 @@ def rawshower2grandroot(trawshower, gt):
     gt.tshowersim.long_pd_muplus = trawshower.long_pd_muplus
     ## Longitudinal Profile of Number of mu-
     gt.tshowersim.long_pd_muminus = trawshower.long_pd_muminus
-    ## Longitudinal Profile of Number of All charged particles
-    gt.tshowersim.long_pd_allch = trawshower.long_pd_allch
-    ## Longitudinal Profile of Number of Nuclei
-    gt.tshowersim.long_pd_nuclei = trawshower.long_pd_nuclei
-    ## Longitudinal Profile of Number of Hadrons
-    gt.tshowersim.long_pd_hadr = trawshower.long_pd_hadr
+    ## Longitudinal Profile of Number of Hadrons (TShowerSim: long_pd_hadron;
+    ## assigned as "long_pd_hadr" it was stored nowhere, #202)
+    gt.tshowersim.long_pd_hadron = trawshower.long_pd_hadr
 
-    ## Longitudinal Profile of Energy of created neutrinos (GeV)
-    gt.tshowersim.long_ed_neutrino = trawshower.long_ed_neutrino
-
-    ## Longitudinal Profile of low energy gammas (GeV)
-    gt.tshowersim.long_ed_gamma_cut = trawshower.long_ed_gamma_cut
-    ## Longitudinal Profile of low energy e+/e- (GeV)
-    gt.tshowersim.long_ed_e_cut = trawshower.long_ed_e_cut
-    ## Longitudinal Profile of low energy mu+/mu- (GeV)
-    gt.tshowersim.long_ed_mu_cut = trawshower.long_ed_mu_cut
-    ## Longitudinal Profile of low energy hadrons (GeV)
-    gt.tshowersim.long_ed_hadr_cut = trawshower.long_ed_hadr_cut
-
-    ## Longitudinal Profile of energy deposit by gammas (GeV)
-    gt.tshowersim.long_ed_gamma_ioniz = trawshower.long_ed_gamma_ioniz
-    ## Longitudinal Profile of energy deposit by e+/e-  (GeV)
-    gt.tshowersim.long_ed_e_ioniz = trawshower.long_ed_e_ioniz
-    ## Longitudinal Profile of energy deposit by muons  (GeV)
-    gt.tshowersim.long_ed_mu_ioniz = trawshower.long_ed_mu_ioniz
-    ## Longitudinal Profile of energy deposit by hadrons (GeV)
-    gt.tshowersim.long_ed_hadr_ioniz = trawshower.long_ed_hadr_ioniz
-
-    # extra values
-    gt.tshowersim.long_ed_depth = trawshower.long_ed_depth
+    # Not written: TShowerSim has no field for them.  They were assigned under
+    # these names and silently stored nowhere until the #202 field guard made
+    # that an error.  The energy profiles may sit on their own depth grid
+    # (long_ed_depth), which TShowerSim cannot record next to long_pd_depth;
+    # mapping them onto long_*_elow / long_*_edep is a data-model decision.
+    #   long_pd_allch, long_pd_nuclei, long_ed_neutrino, long_ed_*_cut,
+    #   long_ed_*_ioniz, long_ed_depth
 
     # gt.tshower.first_interaction = trawshower.first_interaction
 
@@ -979,7 +962,9 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     gt.tefield.run_number = trawefield.run_number
     gt.tefield.event_number = trawefield.event_number
 
-    gt.tshowersim.atmos_refractivity = trawefield.atmos_refractivity
+    # atmos_refractivity has no field in the GRANDROOT trees; it was stored
+    # nowhere (#202)
+    # gt.tshowersim.atmos_refractivity = trawefield.atmos_refractivity
 
     # Per antenna things
     gt.tefield.du_id = trawefield.du_id
@@ -993,11 +978,11 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
 
     # ToDo: this should be a single vector of xyz
     ## X position in shower referential
-    gt.tefield.du_x = trawefield.du_x
+    # gt.tefield.du_x = trawefield.du_x  (TEfield has no du_x; stored nowhere, #202)
     ## Y position in shower referential
-    gt.tefield.du_y = trawefield.du_y
+    # gt.tefield.du_y = trawefield.du_y  (TEfield has no du_y; stored nowhere, #202)
     ## Z position in shower referential
-    gt.tefield.du_z = trawefield.du_z
+    # gt.tefield.du_z = trawefield.du_z  (TEfield has no du_z; stored nowhere, #202)
 
     ## Efield trace in X,Y,Z direction
     if ext_trace is None:
@@ -1015,11 +1000,11 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
 
     # Generate trigger times from t0s
     tempseconds=np.zeros((len(t_0)), dtype=np.int64)
-    tempseconds[:]=gt.tshowersim.event_seconds
-    tempnanoseconds= np.int64(gt.tshowersim.event_nanoseconds + t_0)
+    tempseconds[:]=gt.event_seconds
+    tempnanoseconds= np.int64(gt.event_nanoseconds + t_0)
     #rolling over the nanoseconds    
-    maskplus= gt.tshowersim.event_nanoseconds + t_0 >=1e9
-    maskminus= gt.tshowersim.event_nanoseconds + t_0 <0
+    maskplus= gt.event_nanoseconds + t_0 >=1e9
+    maskminus= gt.event_nanoseconds + t_0 <0
     tempnanoseconds[maskplus]-=np.int64(1e9)
     tempseconds[maskplus]+=np.int64(1)   
     tempnanoseconds[maskminus]+=np.int64(1e9)
@@ -1039,12 +1024,12 @@ def rawmeta2grandroot(trawmeta, gt):
     #event time    
     if(trawmeta.unix_second>0):
       gt.tshower.core_time_s = trawmeta.unix_second              #this will be filled by the reconstruction of the core position eventually?
-      gt.tshowersim.event_seconds = trawmeta.unix_second
+      gt.event_seconds = trawmeta.unix_second
     else:
       gt.tshower.core_time_s = 200854852
-      gt.tshowersim.event_seconds = 200854852
+      gt.event_seconds = 200854852
     gt.tshower.core_time_ns = trawmeta.unix_nanosecond         #this will be filled by the reconstruction of the core position eventually?
-    gt.tshowersim.event_nanoseconds = trawmeta.unix_nanosecond
+    gt.event_nanoseconds = trawmeta.unix_nanosecond
     
     
 

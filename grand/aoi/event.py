@@ -1425,15 +1425,9 @@ class Event:
         tree.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.voltages]
         tree.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.voltages]
 
-        # Copy the contents of antennas to the tree
-        # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        # Antenna no longer declares the monitoring fields; simulated antennas
-        # do not carry them, and writing such an event crashed (#212)
-        tree.atm_temperature = np.array([np.array(getattr(a, "atm_temperature", 0)) for a in self.antennas])
-        tree.atm_pressure = np.array([np.array(getattr(a, "atm_pressure", 0)) for a in self.antennas])
-        tree.atm_humidity = np.array([np.array(getattr(a, "atm_humidity", 0)) for a in self.antennas])
-        tree.battery_level = np.array([np.array(getattr(a, "battery_level", 0)) for a in self.antennas])
-        tree.firmware_version = np.array([np.array(getattr(a, "firmware_version", 0)) for a in self.antennas])
+        # The antennas' monitoring fields (atm_*, battery_level,
+        # firmware_version) are not written: TVoltage has none of them, and
+        # assigning them stored nothing, and now raises (#202)
 
         tree.fill()
         return tree

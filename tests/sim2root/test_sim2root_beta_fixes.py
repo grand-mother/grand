@@ -128,3 +128,17 @@ def test_events_with_different_windows_need_one_window(tmp_path):
         assert np.asarray(efield.trace).shape[-1] == 4000
         assert set(np.asarray(efield.trigger_position)) == {1000}
     efield.stop_using()
+
+
+def test_the_gamma_and_hadron_profiles_reach_tshowersim(tmp_path):
+    r"""#202: assigned under names TShowerSim does not have, they were stored nowhere."""
+    from grand.dataio import TShowerSim
+
+    raw = shutil.copy(ZHAIRES / (RUN_13790 + ".rawroot"), tmp_path)
+    out = _run_sim2root(tmp_path, pathlib.Path(raw).name)
+    sim = TShowerSim(str(next(out.glob("*/showersim_*.root"))))
+    sim.get_entry(0)
+    assert len(sim.long_pd_gamma) == len(sim.long_pd_depth) > 0
+    assert max(sim.long_pd_gamma) > 0
+    assert len(sim.long_pd_hadron) == len(sim.long_pd_depth)
+    sim.stop_using()

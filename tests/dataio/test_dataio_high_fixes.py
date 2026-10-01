@@ -422,3 +422,22 @@ def test_patterns_and_lists_make_indexed_chains(tmp_path):
     single = TShower(str(tmp_path / "shower_1_*.root"))
     assert not single.is_tchain and single.get_event(3, 1) > 0
     single.stop_using()
+
+
+def test_a_misspelt_field_is_refused():
+    r"""#202: t.zenit = 5 was accepted and stored nowhere."""
+    import pytest
+
+    from grand.dataio import TEfield, TShower
+
+    t = TShower()
+    with pytest.raises(AttributeError, match="did you mean 'zenith'"):
+        t.zenit = 5
+    t.zenith = 5.0
+    t.comment = "fine"
+    e = TEfield()
+    e.du_id = [1]
+    with pytest.raises(AttributeError):
+        e.zenith = 1.0          # a TShower field, not a TEfield one
+    t.stop_using()
+    e.stop_using()

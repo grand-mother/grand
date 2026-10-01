@@ -360,7 +360,9 @@ def _convert(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself"
         RawShower.long_pd_gammas=np.array(table.T[1], dtype=np.float32)
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,1005,Slant=True,Precision="Simple",TaskName=TaskName)                      
-        RawShower.long_slantdepth=np.array(table.T[0], dtype=np.float32)
+        # The slant depth of this table has no field in RawShowerTree (it was
+        # renamed long_pd_depth, set above from table 1001); assigning it stored
+        # nothing, and now raises (#202)
         RawShower.long_pd_eminus=np.array(table.T[1], dtype=np.float32)
 
         table=AiresInfo.GetLongitudinalTable(InputFolder,1006,Slant=True,Precision="Simple",TaskName=TaskName)                      

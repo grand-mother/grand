@@ -15,6 +15,26 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **A misspelt tree field is refused (#202).** `t.zenit = 5` was accepted and
+  stored nowhere: the guard meant to catch it was assigned to each instance,
+  where Python never looks for `__setattr__`. It is now on the class, active
+  once the tree is built, and suggests the closest field ("did you mean
+  'zenith'?"). Turning it on found the same mistake in the repository, all
+  silently losing data:
+  - `sim2root.py` wrote the gamma and hadron longitudinal profiles under
+    names `TShowerSim` does not have (`long_pd_gammas`, `long_pd_hadr`); they
+    now reach `long_pd_gamma` and `long_pd_hadron`. The CoREAS converter
+    likewise wrote `long_pd_gamma` where `RawShowerTree` has `long_pd_gammas`.
+  - `sim2root.py` also assigned 13 other profiles (all-charged, nuclei,
+    neutrino, the low-energy and energy-deposit tables, their depth grid),
+    `atmos_refractivity` and `du_x/y/z`, none of which any GRANDROOT tree
+    has. They are still not written, now explicitly; whether to map the
+    energy profiles onto `TShowerSim`'s `*_elow` / `*_edep` fields is a
+    data-model decision left open.
+  - `grand.aoi` wrote five monitoring fields to `TVoltage`, which has none;
+    the ZHAireS converter set a slant depth with no field; a test set
+    `trace_ch` on a `TVoltage`, whose field is `trace`.
+
 - **Tree file patterns and lists (#205).** `TShower("dir/nomatch_*.root")`
   with no match created a file literally named `nomatch_*.root`; it now raises
   `FileNotFoundError`. A chain built from a pattern had no index, so

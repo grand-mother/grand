@@ -30,7 +30,7 @@ WRITER = textwrap.dedent('''
         for i in range(n):
             t = TVoltage(out)
             t.run_number = 1; t.event_number = wid * 1000 + i; t.du_count = 1; t.du_id = [1]
-            t.trace_ch = np.ones((1, 3, 256), np.float32).tolist()
+            t.trace = np.ones((1, 3, 256), np.float32).tolist()
             t.fill(); t.write()
             time.sleep(hold)            # still holding the file
             t.stop_using(); ok += 1
@@ -87,7 +87,7 @@ def test_a_write_after_another_process_wrote_is_refused(tmp_path):
     stale.event_number = 5
     stale.du_count = 1
     stale.du_id = [1]
-    stale.trace_ch = np.ones((1, 3, 256), np.float32).tolist()
+    stale.trace = np.ones((1, 3, 256), np.float32).tolist()
     with pytest.raises(OSError, match="changed by another process after this one opened it"):
         stale.fill()
     stale.stop_using()
