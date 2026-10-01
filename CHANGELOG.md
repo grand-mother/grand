@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Event.write` (#212).** `overwrite=True` with `out_dir` deleted the whole
+  output directory, with anything else the user kept there; it now replaces
+  only the files of the tree kinds it writes. `write()` with no destination
+  crashed with `AttributeError`; it now says to give `out_dir` or file names.
+  `common_filename` always failed with `TreeExists`, because `overwrite` was
+  not passed on, and the failed write left the `Event`, and the `EventList` it
+  came from, reading showers with zenith 0 and Xmax 0: writing now builds its
+  own trees and never replaces the ones the event was read from. It adds the
+  event to the file, or with `overwrite=True` replaces those trees; parts the
+  event does not hold are skipped, and simulated events (no weather data, one
+  sampling time) no longer crash the writer.
+
 - **`get_dus_indices_in_run` follows the event's order (#199).** It returned
   the matching indices in the run's order, so whenever an event listed its
   units in another order than the run, antenna positions and sampling times

@@ -4,9 +4,9 @@ from dataclasses import dataclass, field, fields
 import numpy as np
 
 from grand.basis import validate as _validate
+import os
 import ROOT
 from pathlib import Path
-import shutil
 
 from grand import CartesianRepresentation
 from grand.aoi.timetrace import Voltage, Efield, TreeExists
@@ -212,6 +212,9 @@ class Event:
 
     # Choose the level of the efield
     tefield_level: int  = None
+
+    # Trees filled for writing with auto_file_close False, written by close_files()
+    _pending_writes: list = None
 
     ## Post-init actions, like an automatic readout from files, etc.
     def __post_init__(self):
@@ -1078,11 +1081,27 @@ class Event:
         shower_filename, efields_filename, voltages_filename, run_filename : str, optional
             Individual destinations for each tree.
         overwrite : bool, optional
-            Replace existing files rather than appending.
+            Replace what this event's trees would add to: with file names, the
+            trees of those names in those files; with ``out_dir``, the files of
+            those tree kinds in that directory.  Nothing else is removed.
+            Without it, the event is added to what is there.
         out_dir : str, optional
             Directory to write into.
+
+        Raises
+        ------
+        ValueError
+            If neither ``out_dir`` nor a file name is given: writing back into
+            the files the event was read from is not supported.
+
+        Notes
+        -----
+        Writing never changes the trees this event was read from, so the event,
+        and the ``EventList`` it came from, can still be used afterwards.
+        Only the trees with a file name, explicit or through
+        ``common_filename``, are written.
         """
-        if out_dir is None or (isinstance(out_dir, str) and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory.dir_name==out_dir.dir_name):
+        if out_dir is None or (isinstance(out_dir, str) and self._directory and self._directory.dir_name==out_dir) or (isinstance(out_dir, DataDirectory) and self._directory and self._directory.dir_name==out_dir.dir_name):
             # Give common_filename to all the filenames if not specified
             if common_filename:
                 if not shower_filename: shower_filename = common_filename
@@ -1090,11 +1109,20 @@ class Event:
                 if not voltages_filename: voltages_filename = common_filename
                 if not run_filename: run_filename = common_filename
 
-            # Invoke saving for each part
-            self.write_shower(shower_filename)
-            self.write_efields(efields_filename)
-            self.write_voltages(voltages_filename)
-            self.write_run(run_filename)
+            # Writing back into the source files was documented but crashed
+            # (AttributeError on a None tree, #212); it is refused clearly
+            if not any((shower_filename, efields_filename, voltages_filename, run_filename)):
+                raise ValueError(_validate.message(
+                    "Event.write", "give out_dir, common_filename or a file name per tree; "
+                    "writing back into the files the event was read from is not supported"))
+
+            # Invoke saving for each part, passing overwrite on (it was
+            # dropped, so common_filename always failed with TreeExists, #212)
+            # Parts the event does not hold are skipped rather than crashing
+            if shower_filename and self.shower is not None: self.write_shower(shower_filename, overwrite=overwrite)
+            if efields_filename and self.efields: self.write_efields(efields_filename, overwrite=overwrite)
+            if voltages_filename and self.voltages: self.write_voltages(voltages_filename, overwrite=overwrite)
+            if run_filename: self.write_run(run_filename, overwrite=overwrite)
 
         # *** Output directory was given ***
         else:
@@ -1102,9 +1130,13 @@ class Event:
             if isinstance(out_dir, str):
                 target_dir_path = Path(out_dir)
 
-                # Delete the directory if overwrite requested
+                # Replace only the files this write produces: this removed the
+                # whole directory, with whatever else the user kept in it (#212)
                 if target_dir_path.is_dir() and overwrite:
-                    shutil.rmtree(target_dir_path)
+                    for source_tree in self._trees or []:
+                        if source_tree:
+                            for old in target_dir_path.glob(source_tree.tree_name[1:] + "_*.root"):
+                                old.unlink()
 
                 # Create the target directory if it doesn't exist
                 target_dir_path.mkdir(exist_ok=True)
@@ -1165,13 +1197,15 @@ class Event:
         Parameters
         ----------
         filename : str, optional
-            Destination.  Defaults to the name the event was read from.
+            Destination file.
         overwrite : bool, optional
-            Replace an existing file rather than appending to it.
+            Replace the tree of this kind in that file rather than adding to it.
         """
-        self.fill_run_tree(filename=filename)
-        if self.auto_file_close:
-            self.trun.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = 'trun'
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_run_tree(filename=filename)
+        self._finish_write(tree, filename)
 
     ## Write the voltages to a file
     def write_voltages(self, filename, overwrite=False):
@@ -1180,13 +1214,15 @@ class Event:
         Parameters
         ----------
         filename : str, optional
-            Destination.  Defaults to the name the event was read from.
+            Destination file.
         overwrite : bool, optional
-            Replace an existing file rather than appending to it.
+            Replace the tree of this kind in that file rather than adding to it.
         """
-        self.fill_voltage_tree(filename=filename)
-        if self.auto_file_close:
-            self.tvoltage.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = 'tvoltage'
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_voltage_tree(filename=filename)
+        self._finish_write(tree, filename)
 
     ## Write the efields to a file
     def write_efields(self, filename, overwrite=False):
@@ -1195,13 +1231,15 @@ class Event:
         Parameters
         ----------
         filename : str, optional
-            Destination.  Defaults to the name the event was read from.
+            Destination file.
         overwrite : bool, optional
-            Replace an existing file rather than appending to it.
+            Replace the tree of this kind in that file rather than adding to it.
         """
-        self.fill_efield_tree(filename=filename)
-        if self.auto_file_close:
-            self.tefield.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = 'tefield'
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_efield_tree(filename=filename)
+        self._finish_write(tree, filename)
 
     ## Write the shower to a file
     def write_shower(self, filename, overwrite=False, tree_name="tshower"):
@@ -1210,16 +1248,18 @@ class Event:
         Parameters
         ----------
         filename : str, optional
-            Destination.
+            Destination file.
         overwrite : bool, optional
-            Replace an existing file.
+            Replace the tree of this kind in that file rather than adding to it.
         tree_name : str, optional
             Name of the tree to write, which selects ``TShower`` or
             ``TShowerSim``.
         """
-        self.fill_shower_tree(filename=filename, tree_name=tree_name)
-        if self.auto_file_close:
-            self.tshower.write(filename, overwrite=overwrite, force_close_file=self.auto_file_close)
+        tree_name_ = tree_name
+        if overwrite:
+            _drop_tree(filename, tree_name_)
+        tree = self._make_shower_tree(filename=filename, tree_name=tree_name)
+        self._finish_write(tree, filename)
 
 
     ## Fill the run tree from this Event
@@ -1236,36 +1276,52 @@ class Event:
         """
         if self.trun is not None and not overwrite:
             raise TreeExists("The trun TTree already exists!")
+        self.trun = self._make_run_tree(filename=filename)
+
+    def _make_run_tree(self, filename=None):
+        r"""Builds and fills a TRun for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+
+        Returns
+        -------
+        TRun
+            The filled tree.
+        """
 
         # Look for the TRun with the same file and name in the memory
         for el in grand_tree_list:
             # If the TRun with the same file and name in the memory exists, use it
             if type(el)==TRun and el._tree_name== "trun" and el._file_name==filename:
-                self.trun = el
+                tree = el
                 break
         # No same TRun in memory - create a new one
         else:
-            self.trun = TRun(_file_name=filename, _tree_name="trun")
+            tree = TRun(_file_name=filename, _tree_name="trun")
 
         # Copy the event into the tree
-        self.trun.run_number = self.run_number
-        self.trun.run_mode = self.run_mode
-        self.trun.data_source = self.data_source
-        self.trun.data_generator = self.data_generator
-        self.trun.data_generator_version = self.data_generator_version
-        self.trun.site = self.site
-        # self.trun.site_long = self.site_long
-        # self.trun.site_lat = self.site_lat
-        self.trun.origin_geoid = self.origin_geoid[:,0]
-        self.trun.t_bin_size = self._t_bin_size
+        tree.run_number = self.run_number
+        tree.run_mode = self.run_mode
+        tree.data_source = self.data_source
+        tree.data_generator = self.data_generator
+        tree.data_generator_version = self.data_generator_version
+        tree.site = self.site
+        # tree.site_long = self.site_long
+        # tree.site_lat = self.site_lat
+        tree.origin_geoid = self.origin_geoid[:,0]
+        # Read events hold one sampling time; the branch is a vector (#212)
+        tree.t_bin_size = np.atleast_1d(self._t_bin_size)
 
         # Fill the tree with values
         try:
-            self.trun.fill()
+            tree.fill()
         # If this Run already exists just don't fill
         except NotUniqueEvent:
             pass
-
+        return tree
 
     ## Fill the voltage tree from this Event
     def fill_voltage_tree(self, overwrite=False, filename=None):
@@ -1281,48 +1337,66 @@ class Event:
         """
         if self.tvoltage is not None and not overwrite:
             raise TreeExists("The tvoltage TTree already exists!")
+        self.tvoltage = self._make_voltage_tree(filename=filename)
+
+    def _make_voltage_tree(self, filename=None):
+        r"""Builds and fills a TVoltage for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+
+        Returns
+        -------
+        TVoltage
+            The filled tree.
+        """
 
         # Look for the TVoltage with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TVoltage with the same file and name in the memory exists, use it
             if type(el)==TVoltage and el._tree_name== "tvoltage" and el._file_name==filename:
-                self.tvoltage = el
+                tree = el
                 break
         # No same TVoltage in memory - create a new one
         else:
-            self.tvoltage = TVoltage(_file_name = filename)
+            tree = TVoltage(_file_name = filename)
 
-        self.tvoltage.run_number = self.run_number
-        self.tvoltage.event_number = self.event_number
+        tree.run_number = self.run_number
+        tree.event_number = self.event_number
 
         # Copy the contents of voltages to the tree
 
         # Set the DU id
-        self.tvoltage.du_id = [v.du_id for v in self.voltages]
+        tree.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        # self.tvoltage.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
-        self.tvoltage.trace = [v.trace for v in self.voltages]
-        # self.tvoltage.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
-        # self.tvoltage.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
+        # tree.trace = [[np.array(v.trace.x).astype(np.float32), np.array(v.trace.y).astype(np.float32), np.array(v.trace.z).astype(np.float32)] for v in self.voltages]
+        tree.trace = [v.trace for v in self.voltages]
+        # tree.trace_x = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        # tree.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.voltages]
+        # tree.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.voltages]
+        # tree.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.voltages]
+        # tree.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.voltages]
+        # tree.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.voltages]
 
         # Fill the times from t0
-        self.tvoltage.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.voltages]
-        self.tvoltage.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.voltages]
+        tree.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.voltages]
+        tree.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.voltages]
 
         # Copy the contents of antennas to the tree
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        self.tvoltage.atm_temperature = np.array([np.array(a.atm_temperature) for a in self.antennas])
-        self.tvoltage.atm_pressure = np.array([np.array(a.atm_pressure) for a in self.antennas])
-        self.tvoltage.atm_humidity = np.array([np.array(a.atm_humidity) for a in self.antennas])
-        self.tvoltage.battery_level = np.array([np.array(a.battery_level) for a in self.antennas])
-        self.tvoltage.firmware_version = np.array([np.array(a.firmware_version) for a in self.antennas])
+        # Antenna no longer declares the monitoring fields; simulated antennas
+        # do not carry them, and writing such an event crashed (#212)
+        tree.atm_temperature = np.array([np.array(getattr(a, "atm_temperature", 0)) for a in self.antennas])
+        tree.atm_pressure = np.array([np.array(getattr(a, "atm_pressure", 0)) for a in self.antennas])
+        tree.atm_humidity = np.array([np.array(getattr(a, "atm_humidity", 0)) for a in self.antennas])
+        tree.battery_level = np.array([np.array(getattr(a, "battery_level", 0)) for a in self.antennas])
+        tree.firmware_version = np.array([np.array(getattr(a, "firmware_version", 0)) for a in self.antennas])
 
-        self.tvoltage.fill()
+        tree.fill()
+        return tree
 
     ## Fill the efield tree from this Event
     def fill_efield_tree(self, overwrite=False, filename=None):
@@ -1338,40 +1412,56 @@ class Event:
         """
         if self.tefield is not None and not overwrite:
             raise TreeExists("The tefield TTree already exists!")
+        self.tefield = self._make_efield_tree(filename=filename)
+
+    def _make_efield_tree(self, filename=None):
+        r"""Builds and fills a TEfield for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+
+        Returns
+        -------
+        TEfield
+            The filled tree.
+        """
 
         # Look for the TEfield with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TEfield with the same file and name in the memory exists, use it
             if type(el)==TEfield and el._tree_name== "tefield" and el._file_name==filename:
-                self.tefield = el
+                tree = el
                 break
         # No same TEfield in memory - create a new one
         else:
-            self.tefield = TEfield(_file_name = filename)
+            tree = TEfield(_file_name = filename)
 
-        self.tefield.run_number = self.run_number
-        self.tefield.event_number = self.event_number
+        tree.run_number = self.run_number
+        tree.event_number = self.event_number
 
         # Copy the contents of efields to the tree
 
         # Set the DU id
-        self.tefield.du_id = [v.du_id for v in self.voltages]
+        tree.du_id = [v.du_id for v in self.voltages]
 
         # Remark: best to set list. Append will append to the previous event, since it is not cleared automatically
-        # self.tefield.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
-        self.tefield.trace = [v.trace for v in self.efields]
-        # self.tefield.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
-        # self.tefield.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
+        # tree.trace = [[np.array(v.trace.x).astype(np.float32) for v in self.efields], [np.array(v.trace.y).astype(np.float32) for v in self.efields], [np.array(v.trace.z).astype(np.float32) for v in self.efields]]
+        tree.trace = [v.trace for v in self.efields]
+        # tree.trace_x = [np.array(v.trace.x).astype(np.float32) for v in self.efields]
+        # tree.trace_y = [np.array(v.trace.y).astype(np.float32) for v in self.efields]
+        # tree.trace_z = [np.array(v.trace.z).astype(np.float32) for v in self.efields]
+        # tree.trace_x = [np.array(v.trace_x).astype(np.float32) for v in self.efields]
+        # tree.trace_y = [np.array(v.trace_y).astype(np.float32) for v in self.efields]
+        # tree.trace_z = [np.array(v.trace_z).astype(np.float32) for v in self.efields]
 
         # Fill the times from t0
-        self.tefield.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.efields]
-        self.tefield.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.efields]
+        tree.du_seconds = [v.t0.astype('datetime64[s]').astype(np.int64) for v in self.efields]
+        tree.du_nanoseconds = [(v.t0.astype('datetime64[ns]').astype(np.int64)-v.t0.astype('datetime64[s]').astype(np.int64)*1e9).astype(np.int64) for v in self.efields]
 
-        self.tefield.fill()
+        tree.fill()
+        return tree
 
     ## Fill the shower tree from this Event
     def fill_shower_tree(self, overwrite=False, filename=None, tree_name="tshower"):
@@ -1389,50 +1479,91 @@ class Event:
         """
         if self.tshower is not None and not overwrite:
             raise TreeExists("The tshower TTree already exists!")
+        self.tshower = self._make_shower_tree(filename=filename, tree_name=tree_name)
+
+    def _make_shower_tree(self, filename=None, tree_name="tshower"):
+        r"""Builds and fills a TShower for writing, without attaching it to the event.
+
+        Parameters
+        ----------
+        filename : str, optional
+            File the tree belongs to.
+        tree_name : str, optional
+            Which shower tree to fill.
+
+        Returns
+        -------
+        TShower
+            The filled tree.
+        """
 
         # Look for the TShower with the same file and name in the memory
         for el in globals()["grand_tree_list"]:
             # If the TShower with the same file and name in the memory exists, use it
             if type(el)==TShower and el._tree_name== "tshower" and el._file_name==filename:
-                self.tshower = el
+                tree = el
                 break
         # No same TShower in memory - create a new one
         else:
-            self.tshower = TShower(_file_name=filename, _tree_name=tree_name)
+            tree = TShower(_file_name=filename, _tree_name=tree_name)
 
-        self.tshower.run_number = self.run_number
-        self.tshower.event_number = self.event_number
+        tree.run_number = self.run_number
+        tree.event_number = self.event_number
 
 
-        self.tshower.energy_em = self.shower.energy_em
-        self.tshower.energy_primary = self.shower.energy_primary
+        tree.energy_em = self.shower.energy_em
+        tree.energy_primary = self.shower.energy_primary
         ## Shower Xmax [g/cm2]
-        self.tshower.xmax_grams = self.shower.Xmax
+        tree.xmax_grams = self.shower.Xmax
         ## Xmax relative to the shower core, above the ground: what the
         ## readers (this class included) read back
-        self.tshower.xmax_pos_shc = self.shower.Xmaxpos[:,0]
+        tree.xmax_pos_shc = self.shower.Xmaxpos[:,0]
         ## Xmax in the site's reference frame: the same point plus the core,
         ## as sim2root writes it (#104)
-        self.tshower.xmax_pos = self.shower.Xmaxpos[:,0] + self.shower.core_ground_pos[:,0]
+        tree.xmax_pos = self.shower.Xmaxpos[:,0] + self.shower.core_ground_pos[:,0]
         ## Shower azimuth
-        self.tshower.azimuth = self.shower.azimuth
+        tree.azimuth = self.shower.azimuth
         ## Shower zenith
-        self.tshower.zenith = self.shower.zenith
+        tree.zenith = self.shower.zenith
         ## Poistion of the core on the ground in the site's reference frame
-        self.tshower.shower_core_pos = self.shower.core_ground_pos[:,0]
+        tree.shower_core_pos = self.shower.core_ground_pos[:,0]
 
-        self.tshower.fill()
+        tree.fill()
+        return tree
+
+    def _finish_write(self, tree, filename):
+        r"""Writes ``tree`` now, or keeps it for ``close_files()``.
+
+        Parameters
+        ----------
+        tree : DataTree
+            A tree built by one of the ``_make_*_tree`` methods.
+        filename : str
+            Its file.
+        """
+        if self.auto_file_close:
+            tree.write(filename, force_close_file=True)
+            tree.stop_using()
+        else:
+            if self._pending_writes is None:
+                self._pending_writes = []
+            if all(tree is not other for other in self._pending_writes):
+                self._pending_writes.append(tree)
 
     def close_files(self):
-        """Close all files of the all trees - needed when auto_file_close is False"""
-        self.tshower.write()
-        self.tefield.write()
-        self.tvoltage.write()
-        self.trun.write()
-        self.tshower.close_file()
-        self.tefield.close_file()
-        self.tvoltage.close_file()
-        self.trun.close_file()
+        """Writes and closes the files of the trees written with auto_file_close False.
+
+        Only trees this event filled for writing are written: the trees it was
+        read from are left untouched (this used to write them too, changing
+        the input files, #234).
+        """
+        for tree in self._pending_writes or []:
+            # The same tree may be shared with other events writing to the file
+            if tree.tree is None:
+                continue
+            tree.write(force_close_file=True)
+            tree.stop_using()
+        self._pending_writes = []
 
     def fill_t_vector(self, resolution=1):
         """Fills the event's time vector with resolution resolution
@@ -1527,6 +1658,30 @@ class Event:
 
 
 # Create the tree and its file
+def _drop_tree(filename, tree_name):
+    r"""Removes ``tree_name`` from ``filename``, if the file holds it.
+
+    Parameters
+    ----------
+    filename : str
+        The ROOT file.
+    tree_name : str
+        Name of the tree to remove.
+    """
+    if not filename or not os.path.isfile(filename):
+        return
+    from grand.dataio import file_lock
+
+    file_lock.lock_for_writing(filename, "Event.write", fresh=True)
+    try:
+        f = ROOT.TFile(filename, "update")
+        if f.GetListOfKeys().FindObject(tree_name):
+            f.Delete(tree_name + ";*")
+        f.Close()
+    finally:
+        file_lock.release(filename)
+
+
 def create_file_tree(target_dir, tree_name, source_tree):
 
     # Check if the time string was already generated
