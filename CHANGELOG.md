@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The CoREAS converter no longer mirrors the azimuth (#209).** For a `.reas`
+  without the shower block (as the committed sample), the converter reads the
+  CORSIKA `.inp` and computed `180 - PHIP`; PHIP is the direction of travel in a
+  North/West frame, so the "comes from" azimuth is `PHIP - 180` (13.57° instead
+  of -13.57° for the sample, confirmed by a plane-wave fit to its antenna
+  timing). Both branches now wrap to [0, 360). The 2024 backward-compatibility
+  fixture `sim_Dunhuang_*_CoREAS-NJ_0000` keeps its old, mirrored value on
+  purpose; files converted from such inputs should be regenerated.
 - **sim2root writes the right antenna latitude/longitude (`du_geoid`) (#220).**
   With several events sharing antennas in one `.rawroot`, `du_geoid` was
   computed from the non-unique antenna list and so paired with the wrong

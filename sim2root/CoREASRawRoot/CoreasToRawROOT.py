@@ -145,7 +145,8 @@ def CoreasToRawRoot(file, simID=None):
   # parameters in favour of hard-coded Dunhuang values.
   if read_params(reas_input, "ShowerZenithAngle") is not None:
     zenith = read_params(reas_input, "ShowerZenithAngle")
-    azimuth = read_params(reas_input, "ShowerAzimuthAngle") + 180 #shift to GRAND conventions
+    # CoREAS gives the direction of travel; GRAND gives where the shower comes from
+    azimuth = (read_params(reas_input, "ShowerAzimuthAngle") + 180) % 360
 
     Energy = read_params(reas_input, "PrimaryParticleEnergy") * 1e-9 # in GeV
     Primary = read_params(reas_input, "PrimaryParticleType") # as defined in CORSIKA
@@ -166,8 +167,12 @@ def CoreasToRawRoot(file, simID=None):
   else:
     #theta_GRAND = theta_Corsika
     zenith = read_params(inp_input, "THETAP")
-    #azimuth_GRAND = 180 - azimuth_Corsika
-    azimuth = 180 - read_params(inp_input, "PHIP")
+    # CORSIKA's PHIP is the azimuth of the primary's momentum (direction of
+    # travel), in a frame with x North and y West like GRAND's.  The "comes
+    # from" azimuth is therefore PHIP - 180, as in the .reas branch above.
+    # It used to be 180 - PHIP, which mirrored every shower about North
+    # (issue #209).
+    azimuth = (read_params(inp_input, "PHIP") - 180) % 360
 
     Energy = read_params(inp_input, "ERANGE") # in GeV
     Primary = read_params(inp_input, "PRMPAR") # as defined in CORSIKA
