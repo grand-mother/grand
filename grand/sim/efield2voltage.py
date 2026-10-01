@@ -6,6 +6,8 @@ import os.path
 from logging import getLogger
 import time
 
+import numbers
+
 import numpy as np
 
 from grand.basis import validate as _validate
@@ -251,7 +253,7 @@ class Efield2Voltage:
         if (event_number is not None) and (run_number is not None):
             self.event_number = event_number
             self.run_number = run_number
-        elif (self.event_idx is not None) and (self.event_idx<len(self.events_list)): 
+        elif (self.event_idx is not None) and (0 <= self.event_idx < len(self.events_list)): 
             self.event_number = self.events_list[self.event_idx][0]
             self.run_number = self.events_list[self.event_idx][1]
         else:
@@ -261,8 +263,19 @@ class Efield2Voltage:
             logger.exception(message)
             raise Exception(message)
 
-        assert isinstance(self.event_number, int)
-        assert isinstance(self.run_number, int)
+        # The pair must be one the input holds: otherwise the trees below
+        # keep the previously loaded event, which was then written under the
+        # requested numbers (issue #238).
+        for _name in ("event_number", "run_number"):
+            _value = getattr(self, _name)
+            if isinstance(_value, (bool, np.bool_)) or not isinstance(_value, numbers.Integral):
+                raise TypeError(_validate.message(
+                    "Efield2Voltage.get_event", "'%s' must be an integer, got %r" % (_name, _value)))
+            setattr(self, _name, int(_value))
+        if (self.event_number, self.run_number) not in {(int(e), int(r)) for e, r in self.events_list}:
+            raise KeyError(_validate.message(
+                "Efield2Voltage.get_event", "no event %d in run %d in the input; it holds (event, run) %s"
+                % (self.event_number, self.run_number, [(int(e), int(r)) for e, r in self.events_list])))
         logger.info(f"Running on event_number: {self.event_number}, run_number: {self.run_number}")
 
         self.events.get_event(self.event_number, self.run_number)           # update traces, du_pos etc for event with event_idx.
@@ -815,6 +828,12 @@ class Efield2Voltage:
         The result is written to ``self.f_output`` as a side effect; the
         method returns nothing.
         """
+        # NumPy integer scalars (from arrays, events_list...) are integers too
+        def _plain(value):
+            return int(value) if isinstance(value, np.integer) else value
+        event_idx, event_number, run_number, du_idx = (
+            _plain(event_idx), _plain(event_number), _plain(run_number), _plain(du_idx))
+
         # compute voltage for all DUs of given event/s.
         if du_idx is None:
             # default case: compute voltage for all DUs of all events and all runs provided in the input file.

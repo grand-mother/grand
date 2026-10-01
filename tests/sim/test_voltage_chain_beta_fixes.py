@@ -52,3 +52,20 @@ def test_nut_and_gaa_chains_apply_without_noise_or_the_main_chain(level0_sample)
     assert not np.allclose(nut, voc)
     assert not np.allclose(gaa, voc)
     assert not np.allclose(nut, gaa)
+
+
+def test_an_event_the_input_does_not_hold_is_refused(level0_sample, tmp_path):
+    r"""#238: a missing (event, run) wrote the last loaded event with an empty trace."""
+    from grand import Efield2Voltage
+
+    signal = Efield2Voltage(str(level0_sample), "out.root", output_directory=str(tmp_path), seed=1)
+    signal.params["add_noise"] = False
+    for event_number, run_number in ((999, 1), (1618, 7)):
+        with pytest.raises(KeyError, match="no event %d in run %d" % (event_number, run_number)):
+            signal.compute_voltage(event_number=event_number, run_number=run_number)
+    with pytest.raises(Exception, match="event_idx"):
+        signal.compute_voltage(event_idx=-1)
+    assert not (tmp_path / "out.root").exists()
+    # NumPy integers are integers
+    signal.compute_voltage(event_number=np.int64(1618), run_number=np.uint32(1))
+    assert (tmp_path / "out.root").exists()

@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`Efield2Voltage` refuses an event the input does not hold (#238).** A
+  missing `(event_number, run_number)` used to leave the previously loaded event
+  in place and write it, with an empty trace, under the requested numbers,
+  exit 0. It now raises `KeyError` listing the events the input holds. NumPy
+  integers are accepted as event and run numbers, and a negative `event_idx`
+  is refused instead of wrapping round to the last event.
 - **`--rf_chain_nut` / `--rf_chain_gaa` now apply without noise or the main
   chain (#227).** With `--no_noise --no_rf_chain`, the nut or GAA chain was
   multiplied in the frequency domain but never transformed back, so the output
