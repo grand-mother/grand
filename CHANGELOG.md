@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Effective length 1° off for every negative azimuth (#253).** The antenna
+  tables hold azimuth 0–360° inclusive (361 points, 360 repeating 0), and the
+  periodic wrap used the 361 points, so every direction with a negative
+  azimuth read the table one step off: 0.8 % on average, a factor of 3 near a
+  null. The wrap now uses the 360 steps of a turn. The pipeline reference
+  (`tests/sim/pipeline_golden.npz`) is regenerated for this change: it moved
+  by at most 5.8×10⁻⁵ of the trace peak.
+
 - **Documented commands that failed (#257).** `sim2root.rst`,
   `simulation.rst`, `quickstart.rst` and the Handbook's Directory Structure
   page gave commands that failed as written: the CoREAS converter without

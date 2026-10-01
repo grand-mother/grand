@@ -248,9 +248,14 @@ class AntennaProcessing:
         # phi_efield between index ip0 and ip1 in phi antenna response representation
         dphi = self.model_leff.phi[1] - self.model_leff.phi[0]  # deg
         rp1 = (phi_efield - self.model_leff.phi[0]) / dphi
-        ip0 = int(np.ravel(np.floor(rp1) % self.model_leff.phi.size)[0])
+        # Periodic over 360 deg, i.e. over the number of steps in a turn, not
+        # over the number of grid points: the tables hold 0 to 360 inclusive
+        # (361 points), and wrapping by 361 read every negative azimuth one
+        # step off (#253)
+        period = int(round(360.0 / dphi))
+        ip0 = int(np.ravel(np.floor(rp1) % period)[0])
         ip1 = ip0 + 1
-        if ip1 == self.model_leff.phi.size:  # Results are periodic along phi
+        if ip1 >= self.model_leff.phi.size:  # a grid without the 360 deg column
             ip1 = 0
         rp1 -= np.floor(rp1)
         rp0 = 1 - rp1
