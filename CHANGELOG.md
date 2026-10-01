@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **CoREAS converter appended to an existing output (#181).** The trees open
+  their file for appending, so converting a shower a second time -- or once,
+  next to the committed sample -- failed with `NotUniqueEvent`. An existing
+  output is now refused with a `GRANDlib:` message, or replaced with
+  `--overwrite`; `-o` chooses the folder (or, for one shower, the file). The
+  converter exits non-zero when given no option. The README and
+  `sim2root.rst` say where the output goes.
+
 - **Declination at Dunhuang overstated (#186).** The coordinates page and
   notebook 01 said "a few degrees ... hundreds of metres over 10 km". It is
   about 0.3° in 2020 (51 m at 10 km) and −0.03° in mid-2024 by the shipped

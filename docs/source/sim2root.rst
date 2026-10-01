@@ -43,7 +43,11 @@ From a CoREAS simulation directory:
 .. code-block:: bash
 
     cd sim2root/CoREASRawRoot
-    python3 CoreasToRawROOT.py -d proton
+    python3 CoreasToRawROOT.py -d proton -o converted
+
+which writes ``converted/Coreas_004100.rawroot``.  Without ``-o`` the output
+goes to the current folder, where an existing file is refused (here, the
+committed sample) unless ``--overwrite`` is given.
 
 From a ZHAireS one, where the long form takes the identifiers explicitly and
 the short form works them out:

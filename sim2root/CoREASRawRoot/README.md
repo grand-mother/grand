@@ -3,13 +3,21 @@
 ## How to run just CoreasToRawRoot
 ### Convert Multiple Showers in a Directory
 To convert data from multiple CoREAS showers located in the same directory, use the following command:
-`python3 CoreasToRawRoot.py -d <path_to_directory>`
+`python3 CoreasToRawROOT.py -d <path_to_directory>`
 The code will search for CoREAS .reas files in the specified directory and convert each of them into the GRANDROOT format.
 
 ### Convert a Single CoREAS Shower
 To convert data from a single CoREAS shower, use the following command:
-`python3 CoreasToRawRoot.py --file <path_to_SIMxxxxxx.reas>`
+`python3 CoreasToRawROOT.py --file <path_to_SIMxxxxxx.reas>`
 The code will convert the specified CoREAS simulation into GRANDROOT format.
+
+### Where the output goes
+Each shower is written to `Coreas_<simID>.rawroot` in the current folder, or in
+the folder given with `-o <folder>` (for a single shower `-o` may also name the
+file). An existing output file is refused, rather than appended to; give
+`--overwrite` to replace it. This folder already holds the committed sample
+`Coreas_004100.rawroot`, so converting `proton/` here needs `-o` or
+`--overwrite`.
 
 
 ## How to run the whole CoreasToRawRoot + sim2root + efield2voltage

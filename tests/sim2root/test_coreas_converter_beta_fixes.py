@@ -110,3 +110,33 @@ def test_antenna_list_and_traces_are_cross_checked(tmp_path, how, message):
     assert done.returncode != 0
     assert message in done.stderr
     assert not (work / "Coreas_004100.rawroot").exists()
+
+
+def _run(work, *args):
+    return subprocess.run([sys.executable, "CoreasToRawROOT.py", *args], cwd=work,
+                          capture_output=True, text=True, timeout=900)
+
+
+def test_an_existing_output_is_refused_or_replaced(tmp_path):
+    r"""#181: a second conversion appended to the previous output and failed with NotUniqueEvent."""
+    work = _workdir(tmp_path, with_event_block=False)
+    first = _run(work, "--file", "proton/SIM004100.reas")
+    assert first.returncode == 0, first.stderr[-2000:]
+    assert (work / "Coreas_004100.rawroot").is_file()
+
+    again = _run(work, "--file", "proton/SIM004100.reas")
+    assert again.returncode != 0
+    assert "GRANDlib: CoreasToRawROOT:" in again.stderr and "--overwrite" in again.stderr
+    assert "NotUniqueEvent" not in again.stderr
+
+    replaced = _run(work, "--file", "proton/SIM004100.reas", "--overwrite")
+    assert replaced.returncode == 0, replaced.stderr[-2000:]
+
+    elsewhere = _run(work, "-d", "proton", "-o", str(tmp_path / "out" / "raw"))
+    assert elsewhere.returncode == 0, elsewhere.stderr[-2000:]
+    assert (tmp_path / "out" / "raw" / "Coreas_004100.rawroot").is_file()
+
+
+def test_no_option_is_an_error(tmp_path):
+    work = _workdir(tmp_path, with_event_block=False)
+    assert _run(work).returncode != 0

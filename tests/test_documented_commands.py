@@ -79,11 +79,10 @@ def simulation(tmp_path_factory):
 
 def test_the_coreas_converter_command(tmp_path):
     (command,) = [c for c in _commands("sim2root.rst") if c[1] == "CoreasToRawROOT.py"]
+    # As a reader runs it: in the folder, next to the committed sample
     shutil.copytree(COREAS, tmp_path / "CoREASRawRoot")
-    for old in (tmp_path / "CoREASRawRoot").glob("*.rawroot"):
-        old.unlink()
     _run(command, tmp_path / "CoREASRawRoot")
-    assert list((tmp_path / "CoREASRawRoot").glob("*.rawroot"))
+    assert list((tmp_path / "CoREASRawRoot" / "converted").glob("*.rawroot"))
 
 
 def test_the_voltage_and_adc_commands(simulation):

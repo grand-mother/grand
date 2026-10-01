@@ -27,6 +27,11 @@ parser.add_option("--directory", "--dir", "-d", type="str", dest="directory",
                   help="Specify the full path to the directory of the shower that you want to convert.")
 parser.add_option("--file", "-f", type="str", dest="file",
                   help="Specify the full path to the SIMxxxxxx.reas file of the shower that you want to convert.")
+parser.add_option("--output", "-o", type="str", dest="output", default=".",
+                  help="Folder to write Coreas_<simID>.rawroot into, or, for a single shower, the "
+                       "file name. Default: the current folder.")
+parser.add_option("--overwrite", action="store_true", dest="overwrite", default=False,
+                  help="Replace an existing output file instead of refusing.")
 
 (options, args) = parser.parse_args()
 
@@ -86,7 +91,29 @@ def check_antennas_and_traces(path_antenna_list, trace_dir):
     raise ValueError("GRANDlib: CoreasToRawROOT: %s and %s do not match:\n  - %s"
                      % (path_antenna_list, trace_dir, "\n  - ".join(problems)))
 
-def CoreasToRawRoot(file, simID=None):
+def output_file(output, RunID, overwrite=False):
+  r"""Returns the RawROOT file to write, refusing an existing one (#181).
+
+  The trees open their file for appending, so a second conversion of the
+  same shower -- or the committed sample in this folder -- failed with
+  NotUniqueEvent.  An existing file is now refused, or replaced with
+  ``overwrite``.
+  """
+  if output.endswith(".rawroot"):
+    name = output
+  else:
+    name = os.path.join(output, "Coreas_" + RunID + ".rawroot")
+  if os.path.exists(name):
+    if not overwrite:
+      sys.exit("GRANDlib: CoreasToRawROOT: %s already exists; remove it or use --overwrite" % name)
+    os.remove(name)
+  parent = os.path.dirname(name)
+  if parent:
+    os.makedirs(parent, exist_ok=True)
+  return name
+
+
+def CoreasToRawRoot(file, simID=None, output=".", overwrite=False):
   print("-----------------------------------------")
   print("------ COREAS to RAWROOT converter ------")
   print("-----------------------------------------")
@@ -393,7 +420,7 @@ def CoreasToRawRoot(file, simID=None):
   ############################################################################################################################
   # Part B.I.ii: Create and fill the RAW Shower Tree
   ############################################################################################################################
-  OutputFileName = "Coreas_" + RunID +".rawroot"
+  OutputFileName = output_file(output, RunID, overwrite)
 
   # The tree with the Shower information common to ZHAireS and Coreas
   RawShower = RawTrees.RawShowerTree(OutputFileName)
@@ -670,15 +697,18 @@ if __name__ == "__main__":
     if not available_reas_files:
         sys.exit("Error: No showers found in the specified directory. Please check your input and try again.")
     
+    if options.output.endswith(".rawroot") and len(available_reas_files) > 1:
+        sys.exit("GRANDlib: CoreasToRawROOT: %d showers in %s; -o must name a folder, not a file"
+                 % (len(available_reas_files), options.directory))
     # get simIDs from the found reas files
-    for reas_file in available_reas_files:
+    for reas_file in sorted(available_reas_files):
         shower_match = re.search(r'SIM(\d{6})\.reas', reas_file)
         if shower_match:
             simID = shower_match.group(1)
             print(f"Run number: {simID}")
         else:
             sys.exit(f"Error: No simID found for {reas_file}. Please check your input and try again.")
-        CoreasToRawRoot(reas_file, simID)
+        CoreasToRawRoot(reas_file, simID, options.output, options.overwrite)
 
   # * # * # * # * # * # * # * # * # * # *
   # convert a single shower
@@ -691,11 +721,12 @@ if __name__ == "__main__":
     else:
       sys.exit("Error: Shower not found in the specified file. Please check your input and try again.")
     # run the script
-    CoreasToRawRoot(file, simID)
+    CoreasToRawRoot(file, simID, options.output, options.overwrite)
 
   # * # * # * # * # * # * # * # * # * # *
   # print help if options are not specified correctly
   else:
     print("Error: No valid options specified. Please provide either a directory or a file to convert.")
     parser.print_help()
+    sys.exit(2)
     sys.exit()
