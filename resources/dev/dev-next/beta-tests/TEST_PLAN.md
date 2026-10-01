@@ -339,7 +339,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#226](https://github.com/grand-mother/grand/issues/226) | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics | Low | 3a | open | | |
 | [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | Nut/GAA chains brought back to the time domain |
 | [#228](https://github.com/grand-mother/grand/issues/228) | CoREAS Xmax NaN or ~1 cm: efield2voltage crashes or outputs ~1e-13 µV | Critical | 3b | fixed | [#208](https://github.com/grand-mother/grand/pull/208) | unknown Xmax written as NaN; `Efield2Voltage` refuses an event with no usable Xmax |
-| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208), dev-next-ipfxhh 99cda479 | CLI refuses resampling (#208); `Efield2Voltage.save_voltage` now refuses a resampled voltage too, before writing |
+| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | fixed | [#208](https://github.com/grand-mother/grand/pull/208), [#290](https://github.com/grand-mother/grand/pull/290) | CLI refuses resampling (#208); `Efield2Voltage.save_voltage` now refuses a resampled voltage too, before writing |
 | [#230](https://github.com/grand-mother/grand/issues/230) | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded | High | 3b | open | | |
 | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
 | [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
@@ -390,11 +390,11 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#278](https://github.com/grand-mother/grand/issues/278) | A non-editable install or wheel lacks vector_filling.C and rf_chain_config.xml | High | 14 | open | | |
 | [#279](https://github.com/grand-mother/grand/issues/279) | Data model integrity: damaged files accepted, unhelpful errors, "up to date" with noise/ missing; undeclared psutil | Medium | 14 | open | | |
 | [#280](https://github.com/grand-mother/grand/issues/280) | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths | Low | 14 | open | | |
-| [#281](https://github.com/grand-mother/grand/issues/281) | Several processes writing to one output file lose events or corrupt it, while some report success | Critical | 13 | fix in PR | dev-next-ipfxhh 398b6680 | exclusive `flock` on the file while a process writes it; other writers and stale writers refused with a clear message (`grand.dataio.file_lock`) |
+| [#281](https://github.com/grand-mother/grand/issues/281) | Several processes writing to one output file lose events or corrupt it, while some report success | Critical | 13 | fixed | [#290](https://github.com/grand-mother/grand/pull/290) | exclusive `flock` on the file while a process writes it; other writers and stale writers refused with a clear message (`grand.dataio.file_lock`) |
 | [#282](https://github.com/grand-mother/grand/issues/282) | copy_contents() then fill() empties the source tree's traces | Medium | 13 | open | | |
 | [#283](https://github.com/grand-mother/grand/issues/283) | Scaling: per-event appends slow down with file size; DataDirectory superlinear in files | High | 13 | open | | |
 | [#284](https://github.com/grand-mother/grand/issues/284) | Memory: trees not freed without stop_using(); residual leak; Efield2Voltage memory far above data size | Medium | 13 | open | | |
-| [#285](https://github.com/grand-mother/grand/issues/285) | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) | Critical | 12 | fix in PR | dev-next-ipfxhh 8e135a19 | no modulo on zenith; directions outside the table get zero response, with a warning |
+| [#285](https://github.com/grand-mother/grand/issues/285) | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) | Critical | 12 | fixed | [#290](https://github.com/grand-mother/grand/pull/290) | no modulo on zenith; directions outside the table get zero response, with a warning |
 | [#286](https://github.com/grand-mother/grand/issues/286) | recons_ADF returns its starting point when an amplitude is 0 or negative; can run for minutes | High | 12 | open | | |
 | [#287](https://github.com/grand-mother/grand/issues/287) | Handling3dTraces crashes on one-antenna events | High | 12 | open | | |
 | [#288](https://github.com/grand-mother/grand/issues/288) | Numerical edges: NaN and extreme values pass silently; peak amplitude biased; PWF at zenith 0 | Medium | 12 | open | | |
@@ -456,40 +456,37 @@ wave 3.
   wave 2 (physics and documentation checks) running in parallel; wave 3 (breakers)
   after the Critical fixes merge; wave 4 (regression) at the end.
 
-## 7b. Open issues (2026-10-01, after PR #272)
+## 7b. Open issues (2026-10-01, after PR #290)
 
-98 open issues: the 93 `dev-next_beta-test:` issues below (none closed by PR #272, whose
-security fixes were reported privately) and 5 issues kept with their owners
+95 open issues: the 90 `dev-next_beta-test:` issues below (the 3 Critical closed by PR #290;
+PR #272's security fixes were reported privately) and 5 issues kept with their owners
 (#104, #139, #140, #141, #142; feature requests and simulation-field questions).
 
 ### By area and severity
 
 | Area | Critical | High | Medium | Low | Total |
 |---|---|---|---|---|---|
-| dataio | 1 | 13 | 11 | 3 | 28 |
-| Conversion scripts, voltage chain | 1 | 4 | 8 | 2 | 15 |
+| dataio |  | 13 | 11 | 3 | 27 |
+| Conversion scripts, voltage chain |  | 4 | 8 | 2 | 14 |
 | sim2root, ZHAireS, CoREAS |  | 2 | 3 | 2 | 7 |
-| Physics, geo, analysis | 1 | 5 | 7 | 2 | 15 |
+| Physics, geo, analysis |  | 5 | 7 | 2 | 14 |
 | Docs, notebooks, examples |  | 4 | 11 | 2 | 17 |
 | Tools, install, tests |  | 5 | 4 | 2 | 11 |
-| **Total** | **3** | **33** | **44** | **13** | **93** |
+| **Total** | **0** | **33** | **44** | **13** | **90** |
 
 ### By wave
 
 | Found in | Critical | High | Medium | Low | Total |
 |---|---|---|---|---|---|
 | Pre-wave (coordinator) |  | 1 | 3 | 1 | 5 |
-| Wave 1 | 1 | 20 | 23 | 10 | 54 |
+| Wave 1 |  | 20 | 23 | 10 | 53 |
 | Wave 2 |  | 5 | 12 |  | 17 |
-| Wave 3 | 2 | 7 | 6 | 2 | 17 |
+| Wave 3 |  | 7 | 6 | 2 | 15 |
 
 ### All open issues
 
 | Severity | Issue | Area | Wave | Title |
 |---|---|---|---|---|
-| Critical | [#229](https://github.com/grand-mother/grand/issues/229) | Conversion scripts, voltage chain | 1 | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate |
-| Critical | [#281](https://github.com/grand-mother/grand/issues/281) | dataio | 3 | Several processes writing to one output file lose events or corrupt it, while some report success |
-| Critical | [#285](https://github.com/grand-mother/grand/issues/285) | Physics, geo, analysis | 3 | Antenna response read from the wrong table row below the antenna horizon (θ ≥ 91° wraps to 0°) |
 | High | [#184](https://github.com/grand-mother/grand/issues/184) | Tools, install, tests | pre | `open_grand_file.py` / `open_grand_directory.py` / `open_grand_analysis_prompt.py` run the file name as Python code |
 | High | [#185](https://github.com/grand-mother/grand/issues/185) | Docs, notebooks, examples | 1 | README quickstart fails: `Efield2Voltage` needs a directory, not an efield file |
 | High | [#195](https://github.com/grand-mother/grand/issues/195) | dataio | 1 | `DataDirectory` silently drops files: keeps 1 of 10 showers in examples/analysis |
@@ -581,9 +578,7 @@ security fixes were reported privately) and 5 issues kept with their owners
 | Low | [#280](https://github.com/grand-mother/grand/issues/280) | Tools, install, tests | 3 | Environment rough edges: output dirs, missing libraries and optional packages, notebook paths |
 | Low | [#289](https://github.com/grand-mother/grand/issues/289) | Physics, geo, analysis | 3 | Numerical edges, minor: position guards, ignored sigma, trigger shapes, float32 overflow, ADC helpers |
 
-**Next:** the 3 Critical (#229 Python-API resampling, #281 concurrent writers,
-#285 antenna response below the horizon), one commit and one test each, in one PR;
-then the High issues by area, starting with `dataio` (data loss and wrong values).
+**Next:** the High issues by area, starting with `dataio` (data loss and wrong values).
 
 ## 8. Findings not logged
 
@@ -598,6 +593,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | PR #290 merged into `dev-next` (db6964b5); #229, #281, #285 closed. **No Critical issue open.** Open: 95 (33 High, 44 Medium, 13 Low, 5 with owners). |
 | 2026-10-01 | The 3 open Critical issues fixed on `dev-next-ipfxhh`, one commit and one failing-first test each: #229 (Python API saved a resampled voltage with the input rate), #285 (antenna response wrapped below the horizon), #281 (concurrent writers lost events; 10 stress runs of 4 writers now lose nothing). Full suite 841 passed, 10 skipped, 11 xfailed. |
 | 2026-10-01 | PR #272 merged into `dev-next` (7e5c753d): fixes for the privately reported security findings (archive extraction, external commands, production pipeline, granddb remote access), with tests. Open-issue summary added (§7b): 98 open, 3 Critical, 33 High, 44 Medium, 13 Low, 5 with owners. |
 | 2026-10-01 | **Wave 3 complete.** Testers 12 (numerical edges) and 13 (scale and stress) in: logged #281–#289 (2 Critical: #281 concurrent writers lose events, #285 antenna response wrapped below the horizon; 3 High, 3 Medium, 1 Low); #229 reopened (Python API still resamples); #223 extended. Wave 3 total: #273–#289 (2 Critical, 7 High, 6 Medium, 2 Low) plus tester 15's security findings, fixed in PR #272. No regression of the #208 fixes. |
