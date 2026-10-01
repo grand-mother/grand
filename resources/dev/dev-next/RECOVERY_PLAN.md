@@ -480,6 +480,11 @@ Measured 2026-09-08.
       thresholds for the trigger group) and the reader half of #140. Left
       open for their owners: #85, #121, #141, #142 (mjtueros), the time
       fields in #104, the T1 parameters in #139 and the layered model in #140.
+- [ ] Beta test of `dev-next` before it becomes the default branch: eight
+      testers, in two waves, look for bugs, omissions and brittle input
+      handling, for beginners and experts alike. Plan and live tracker:
+      [`beta-tests/TEST_PLAN.md`](beta-tests/TEST_PLAN.md); issues are titled
+      `dev-next_beta-test: …`.
 - [ ] T1 trigger parameters from the data (#139). Once the trigger group
       gives the units of `tcmax_ch`, `tprev_ch` and `tper_ch`, let
       `convert_voltage2adc.py --t1_trigger` read its parameters from a real
