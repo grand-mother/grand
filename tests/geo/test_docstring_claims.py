@@ -28,9 +28,10 @@ def test_the_field_is_tesla_east_north_up_whatever_the_input_frame():
 
 def test_longitudes_are_stored_as_documented():
     assert float(np.ravel(Geodetic(latitude=40.0, longitude=-10.0, height=0.0).longitude)[0]) == 350.0
-    big = Geodetic(latitude=40.0, longitude=400.0, height=0.0)
-    assert float(np.ravel(big.longitude)[0]) == 400.0
-    assert float(np.ravel(Geodetic(ECEF(big)).longitude)[0]) == pytest.approx(40.0)
+    with pytest.raises(ValueError, match="longitude"):            # stored as 400 before #267
+        Geodetic(latitude=40.0, longitude=400.0, height=0.0)
+    assert float(np.ravel(Geodetic(ECEF(Geodetic(latitude=40.0, longitude=350.0, height=0.0))).longitude)[0]) \
+        == pytest.approx(350.0)
     assert "roughly corresponds to sea level" not in Geodetic.__doc__
 
 

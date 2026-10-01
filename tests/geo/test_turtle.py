@@ -170,10 +170,10 @@ class TurtleTest(TestCase):
         # Check the manual deletion
         del map_
 
-        # Check for invalid path case
-        with self.assertRaises(RuntimeError) as context:
+        # Check for invalid path case: named, not a libturtle error (#267)
+        with self.assertRaises(FileNotFoundError) as context:
             map_ = turtle.Map("")
-        self.assertRegex(context.exception.args[0], "^A TURTLE library error")
+        self.assertRegex(context.exception.args[0], "^GRANDlib: turtle.Map: no map file")
 
     def test_stepper(self):
         # Check the stepper wrapper

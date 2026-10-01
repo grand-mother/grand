@@ -719,6 +719,11 @@ class SphericalRepresentation(Coordinates):
             theta, phi, r = _cartesian_to_spherical(arg.x, arg.y, arg.z)
         elif isinstance(arg, SphericalRepresentation):
             theta, phi, r = arg.theta, arg.phi, arg.r
+        elif isinstance(theta, (Number, np.ndarray)) and not isinstance(theta, (bool, np.bool_)):
+            # Out-of-range angles and negative radii were stored as given (#267)
+            _validate.in_range(theta, "theta", cls.__name__, 0, 180, "degrees")
+            if isinstance(r, (Number, np.ndarray)):
+                _validate.in_range(r, "r", cls.__name__, 0, None)
 
         if isinstance(theta, Number):
             n = 1
@@ -906,6 +911,13 @@ class HorizontalRepresentation(Coordinates):
             _validate.same_length(cls.__name__, azimuth=azimuth, elevation=elevation)
         else:
             raise TypeError(_validate.message(cls.__name__, "'azimuth', 'elevation' and 'norm' must be numbers or NumPy arrays, got %s" % type(azimuth).__name__))
+        # An elevation beyond the zenith, or a negative norm, was stored as given (#267)
+        elev = np.asarray(elevation, dtype=float)
+        if np.any(np.abs(elev[np.isfinite(elev)]) > 90 + 1e-9):     # rounding of conversions
+            raise ValueError(_validate.message(
+                cls.__name__, "'elevation' must be between -90 and 90 degrees, got %s"
+                % elev[np.isfinite(elev)][np.abs(elev[np.isfinite(elev)]) > 90 + 1e-9][0]))
+        _validate.in_range(norm, "norm", cls.__name__, 0, None)
         # create 3xn ndarray coordinates instance with random entries.
         obj = super().__new__(cls, n)
         # replace 0-coordinates with input azimuth. azimuth can be int, float, or ndarray.
@@ -1218,6 +1230,14 @@ def _check_geodetic(latitude, longitude, height, where):
     lat = np.asarray(latitude, dtype=float)
     _validate.in_range(lat[np.isfinite(lat)] if lat.ndim else (lat if np.isfinite(lat) else 0.0),
                        "latitude", where, -90, 90, "degrees")
+    # Accepted silently before (#267): a longitude past a full turn, and a
+    # height below the centre of the Earth
+    lon = np.asarray(longitude, dtype=float)
+    _validate.in_range(lon[np.isfinite(lon)] if lon.ndim else (lon if np.isfinite(lon) else 0.0),
+                       "longitude", where, -360, 360, "degrees")
+    alt = np.asarray(height, dtype=float)
+    _validate.in_range(alt[np.isfinite(alt)] if alt.ndim else (alt if np.isfinite(alt) else 0.0),
+                       "height", where, -6.4e6, None, "m")
     for name, value in given.items():
         if not np.all(np.isfinite(np.asarray(value, dtype=float))):
             _validate.warn(where, "'%s' contains NaN or infinity; positions computed from it "
@@ -1232,13 +1252,12 @@ class Geodetic(GeodeticRepresentation):
         Degrees north of the equator, from -90 (South Pole) to +90 (North
         Pole); negative in the southern hemisphere.
     Longitude
-        Degrees east of the prime meridian (Greenwich).  A negative value is
-        stored plus 360, so -10 becomes 350.  A value above 360 is stored as
-        given (400 stays 400), and comes back reduced, as 40, from a
-        conversion through :class:`ECEF`.
+        Degrees east of the prime meridian (Greenwich), between -360 and 360
+        (beyond that it is refused, #267).  A negative value is stored plus
+        360, so -10 becomes 350.
     Height
         Metres above the WGS-84 ellipsoid, the reference surface of these
-        coordinates.  The ellipsoid is *not* sea level: the geoid (mean sea
+        coordinates; not below -6400 km, the centre of the Earth.  The ellipsoid is *not* sea level: the geoid (mean sea
         level) lies up to about 100 m above or below it, 61 m below at
         Dunhuang.  Heights from other sources -- topography, site tables --
         may be measured from the geoid; see :class:`Reference` and
@@ -1717,10 +1736,14 @@ grandcs_origin = Geodetic(
 class HorizontalVector(HorizontalRepresentation):
     """Deprecated alias, merged into :class:`Horizontal`.
 
-    by adding 'vector' attribute to reduce code duplication.
+    by adding 'vector' attribute to reduce code duplication.  It takes what
+    :class:`Horizontal` takes: ``location`` raised TypeError here (#267).
     """
 
-    pass
+    def __new__(cls, *args, **kwargs):
+        r"""Returns the same direction as ``Horizontal(*args, vector=True, **kwargs)``."""
+        kwargs.setdefault("vector", True)
+        return Horizontal(*args, **kwargs).view(cls)
 
 
 # RK: Rework on this class
@@ -1976,14 +1999,18 @@ class LTP(CartesianRepresentation):
         location : Geodetic, ECEF, LTP or GRANDCS, optional
             Origin of the frame.  A local frame without an origin cannot be
             converted to any other.
-        orientation : str, optional
-            Three characters, one per axis, from ``E``/``W``, ``N``/``S`` and
-            ``U``/``D``.  ``'ENU'`` is east-north-up.
+        orientation : str
+            Required unless `frame` is given.  Three characters, one per
+            axis, one from each of ``E``/``W``, ``N``/``S`` and ``U``/``D``:
+            ``'ENU'`` is east-north-up, ``'NWU'`` the GRAND convention.
         magnetic : bool, optional
             Measure the horizontal axes from magnetic north rather than
-            geographic north.  The declination is a few degrees at Dunhuang,
-            which is hundreds of metres across a 10 km array, so this is a
-            choice to make deliberately.
+            geographic north.  The declination is about 0.3 degrees at
+            Dunhuang (about 50 m across a 10 km array) and several degrees
+            elsewhere, so this is a choice to make deliberately.
+        rotation : 3x3 array_like, optional
+            Stored with the frame; it must be a rotation (orthogonal, with
+            determinant +1).
         obstime : str or datetime, optional
             Date used to evaluate the declination when `magnetic` is true.
 
@@ -2025,6 +2052,21 @@ class LTP(CartesianRepresentation):
             pass
         else:
             raise TypeError(_validate.message(type(self).__name__, "'orientation' must be a string such as 'ENU' or 'NWU', got %s" % type(orientation).__name__))
+        # It reported only the first bad character, as "Invalid frame orientation `X`" (#267)
+        axes = orientation.upper()
+        if len(axes) != 3 or sorted("".join({"E": "E", "W": "E", "N": "N", "S": "N", "U": "U",
+                                             "D": "U"}.get(c, "?") for c in axes)) != ["E", "N", "U"]:
+            raise ValueError(_validate.message(
+                type(self).__name__, "'orientation' must be three letters, one from each of E/W, N/S "
+                "and U/D (such as 'ENU' or 'NWU'), got %r" % (orientation,)))
+        # A non-orthogonal matrix was stored as given (#267)
+        if rotation is not None and not hasattr(rotation, "as_matrix"):
+            matrix = np.asarray(rotation, dtype=float)
+            if matrix.shape != (3, 3) or not np.allclose(matrix @ matrix.T, np.eye(3), atol=1e-6) \
+                    or not np.isclose(np.linalg.det(matrix), 1.0, atol=1e-6):
+                raise ValueError(_validate.message(
+                    type(self).__name__, "'rotation' must be a 3x3 rotation matrix (orthogonal, "
+                    "determinant +1)"))
 
         latitude = geodetic_loc.latitude
         longitude = geodetic_loc.longitude

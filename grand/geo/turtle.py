@@ -113,6 +113,16 @@ def _elevation_points(a, b, names, where):
     return a, b, finite.ravel()
 
 
+def _check_real(value, name, where):
+    r"""Refuses a value that is not real numbers (None is allowed: it reads as NaN)."""
+    if value is None:
+        return
+    array = numpy.asanyarray(value)
+    if array.dtype.kind not in "iuf":
+        raise TypeError(_validate.message(where, "'%s' must be a real number or an array of real "
+                                          "numbers, got %r" % (name, value)))
+
+
 def ecef_from_geodetic(latitude, longitude, altitude):
     """Convert geodetic coordinates to ECEF ones
 
@@ -131,6 +141,10 @@ def ecef_from_geodetic(latitude, longitude, altitude):
         ECEF position, in metres.
     """
 
+    # A string was parsed, None read as NaN and a complex number lost its
+    # imaginary part, silently (#267); None stays NaN, as for the elevations
+    for value, name in ((latitude, "latitude"), (longitude, "longitude"), (altitude, "altitude")):
+        _check_real(value, name, "ecef_from_geodetic")
     latitude, longitude, altitude = map(_regularize, (latitude, longitude, altitude))
     if latitude.size != longitude.size:
         raise ValueError("latitude and longitude must have the same size")
@@ -330,6 +344,10 @@ class Map(object):
         if hasattr(self, "_map"):
             logger.debug(f"Map {path} already in cache")
             return
+        # libturtle reported a missing file as a LibraryError (#267)
+        if not os.path.isfile(os.fspath(path)):
+            self._map, self._path = None, None
+            raise FileNotFoundError(_validate.message("turtle.Map", "no map file %s" % os.fspath(path)))
         # Create the map object
         map_ = ffi.new("struct turtle_map **")
         path_ = ffi.new("char []", str(path).encode())
@@ -371,6 +389,7 @@ class Map(object):
             Elevation, in metres.
         """
 
+        shape = numpy.shape(x)
         x, y, finite = _elevation_points(x, y, ("x", "y"), "Map.elevation")
 
         n = x.size
@@ -389,7 +408,8 @@ class Map(object):
                 x.size,
             )
             elevation[finite] = values
-            return elevation[0] if n == 1 else elevation
+            # In the input's shape: 2-D input came back flattened (#267)
+            return elevation[0] if n == 1 else elevation.reshape(shape) if len(shape) > 1 else elevation
 
     @property
     def path(self):

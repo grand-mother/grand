@@ -6,6 +6,7 @@ from typing import Optional, Union
 from typing_extensions import Final
 import numpy
 import datetime
+import os
 from datetime import date
 
 from grand import grand_get_path_root_pkg
@@ -177,6 +178,11 @@ class Geomagnet:
 
         # Calculate magnetic field
         data_file     = f"{DATADIR}/{self.model}.COF"
+        # A bad name gave a GULL LibraryError quoting a file path (#267)
+        if not os.path.isfile(data_file):
+            models = sorted(os.path.splitext(name)[0] for name in os.listdir(DATADIR) if name.endswith(".COF"))
+            raise ValueError(_validate.message(
+                "Geomagnet", "unknown model %r; available: %s" % (self.model, ", ".join(models))))
         #self.snapshot = _Snapshot(self.model, self.obstime)
         self.snapshot = _Snapshot(data_file, self.obstime)
         Bfield = self.snapshot(geodetic_loc.latitude, geodetic_loc.longitude, geodetic_loc.height)

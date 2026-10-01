@@ -3,8 +3,12 @@
 
 from logging import getLogger
 import datetime
+import os
+from pathlib import Path
 
 import numpy
+
+from ..basis import validate as _validate
 
 #from . import DATADIR
 try:
@@ -40,13 +44,15 @@ class LibraryError(RuntimeError):
 class Snapshot:
     """Proxy for a GULL snapshot object"""
 
-    def __init__(self, filename="", date="2020-01-01"):
+    def __init__(self, filename=None, date="2020-01-01"):
         """Create a snapshot of the geo-magnetic field
 
         Parameters
         ----------
-        filename : str
-            The filename with geo-magnetic model info is stored (IGRF13.COF, or WMM2020.COF)
+        filename : str or Path, optional
+            The file holding the model coefficients (IGRF13.COF or
+            WMM2020.COF); the shipped IGRF13 by default.  The default was an
+            empty name, so ``Snapshot()`` failed, and a Path was refused (#267).
         date : str or datetime.date
             The day at which the snapshot is taken
 
@@ -68,8 +74,13 @@ class Snapshot:
         else:
             d = date
 
-        #path = ffi.new("char []", f"{DATADIR}/gull/{model}.COF".encode())
-        #path = ffi.new("char []", f"{DATADIR}/{model}.COF".encode())
+        if filename is None:
+            from grand import grand_get_path_root_pkg
+            filename = Path(grand_get_path_root_pkg()) / "data" / "geomagnet" / "IGRF13.COF"
+        filename = os.fspath(filename)
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(_validate.message(
+                "gull.Snapshot", "no geomagnetic model file %s" % filename))
         path  = ffi.new("char []", filename.encode())
         line = ffi.new("int *")
 

@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- Geo entry points refuse invalid input (#267, part 1): spherical `theta`
+  outside 0–180 or a negative `r`, an elevation beyond ±90, a longitude
+  beyond ±360 and a height below the centre of the Earth; an `LTP`
+  orientation that is not one letter from each of E/W, N/S, U/D (it named
+  only the first bad character), and a `rotation` that is not a rotation;
+  an unknown geomagnetic model (with the available ones listed, instead of
+  a GULL error with a file path); a string or complex number given to
+  `turtle.ecef_from_geodetic`; a missing map or model file (named, instead
+  of a C library error). `HorizontalVector` takes `location` like
+  `Horizontal`; `gull.Snapshot()` works with its defaults and takes a
+  `Path`; `turtle.Map.elevation` keeps a 2-D input's shape.
+
 - aoi and analysis docstrings, and their rendering (#261, part 5):
   `Timetrace3D.get_value_at_time` / `get_hilbert_value_at_time` document
   their real argument, `time_offset`, and that they match a sample exactly
