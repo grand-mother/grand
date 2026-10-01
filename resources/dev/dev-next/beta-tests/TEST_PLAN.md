@@ -295,7 +295,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#181](https://github.com/grand-mother/grand/issues/181) | CoREAS converter appends to an existing output and fails with `NotUniqueEvent` | Medium | coordinator (pre-wave) | open | | |
 | [#182](https://github.com/grand-mother/grand/issues/182) | `-od/--out_directory` fails when the folder does not exist yet | Medium | coordinator (pre-wave) | open | | |
 | [#183](https://github.com/grand-mother/grand/issues/183) | `T1_trigger_offline.py` has no argument parsing; `-h` is opened as a file | Low | coordinator (pre-wave) | open | | |
-| [#184](https://github.com/grand-mother/grand/issues/184) | `open_grand_file.py` / `open_grand_directory.py` run the file name as Python code | Medium | coordinator (pre-wave) | open | | |
+| [#184](https://github.com/grand-mother/grand/issues/184) | `open_grand_file.py` / `open_grand_directory.py` / `open_grand_analysis_prompt.py` run the file name as Python code | High | coordinator (pre-wave) | open | | |
 | [#185](https://github.com/grand-mother/grand/issues/185) | README quickstart fails: `Efield2Voltage` needs a directory, not an efield file | High | 1a-A, 1a-B | open | | |
 | [#186](https://github.com/grand-mother/grand/issues/186) | Docs say the declination at Dunhuang is "a few degrees"; it is about 0.3° (and IGRF-13 is outdated after 2020) | Medium | 1a-A, 1a-B | open | | |
 | [#187](https://github.com/grand-mother/grand/issues/187) | A file whose name level disagrees with its trees is silently ignored | Medium | 1a-A, 1a-B | open | | |
@@ -352,6 +352,11 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#239](https://github.com/grand-mother/grand/issues/239) | NaN/inf voltages become INT64_MIN in the ADC; saturation never reported | High | 4b-B | open | | |
 | [#240](https://github.com/grand-mother/grand/issues/240) | Re-running conversions: voltage2adc deletes old output then crashes; failed runs leave blocking stubs | High | 4b-B | open | | |
 | [#241](https://github.com/grand-mother/grand/issues/241) | Multi-run folders crash; measured noise reused across antennas silently; raw noise errors | Medium | 4b-B | open | | |
+| [#242](https://github.com/grand-mother/grand/issues/242) | ZHAireS converter silently accepts damaged simulations (missing antennas, padded/NaN traces, zenith 0, default core) | Critical | 4c | open | | |
+| [#243](https://github.com/grand-mother/grand/issues/243) | CoREAS converter: antenna list and trace files not cross-checked; NaN and ragged traces accepted | Critical | 4c | open | | |
+| [#244](https://github.com/grand-mother/grand/issues/244) | `extract_events.py`: `-ow` deletes everything in the target (even "."); duplicates leave a broken target | High | 4c | open | | |
+| [#245](https://github.com/grand-mother/grand/issues/245) | `pipeline/get_files_from_db.py` moves small files while listing | High | 4c | open | | |
+| [#246](https://github.com/grand-mother/grand/issues/246) | Utility scripts: no argparse, wrong option lists, files in cwd, version 0.0.0 | Low | 4c | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -367,6 +372,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | 4c in: logged #242–#246 (2 more Critical: converters accept damaged simulations); #184 extended to `open_grand_analysis_prompt.py` and raised to High. Still running: 4b-A. |
 | 2026-10-01 | 4b-B in: logged #237–#241 (2 more Critical: #237 L0/L1 mix doubles amplitudes, #238 missing event writes the wrong one); #229 raised to Critical. Still running: 4b-A, 4c. |
 | 2026-10-01 | Reports in from 3a, 1b, 2b, 4a, 3b: confirmed and logged as #207–#236 (4 Critical: #209 CoREAS azimuth mirrored, #220 sim2root `du_geoid`, #227 nut/GAA chains ignored, #228 CoREAS Xmax → zero voltage). #207 is a regression from #179 (validation), fixed in PR #208. Batch 3 running: 4b ×2, 4c. |
 | 2026-10-01 | Batch 1 reports in from 1a-A, 1a-B and 2a: all findings confirmed by the coordinator (re-run where marked) and logged as #185–#206; five High (silent data loss or wrong values in `grand.dataio`). Batch 2 started: 1b, 2b, 3b. |
