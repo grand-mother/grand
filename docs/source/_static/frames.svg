@@ -34,5 +34,5 @@
 <text x="450" y="408" font-size="10.5" fill="#4C5C69">WGS-84 ellipsoid — Reference.ELLIPSOID</text>
 <path d="M 40 428 q 100 -12 200 0 q 100 12 200 0" fill="none" stroke="#8A6210" stroke-width="2" stroke-dasharray="5 3"/>
 <text x="450" y="432" font-size="10.5" fill="#4C5C69">geoid, mean sea level — Reference.GEOID</text>
-<text x="40" y="454" font-size="10.5" fill="#7A8994">They differ by up to ~100 m worldwide, and by −7.75 m at Dunhuang. A height without a reference is not a height.</text>
+<text x="40" y="454" font-size="10.5" fill="#7A8994">They differ by up to ~100 m worldwide, and by −61 m at Dunhuang. A height without a reference is not a height.</text>
 </svg>

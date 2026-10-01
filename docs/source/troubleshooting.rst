@@ -81,7 +81,7 @@ normalises:
     nan
     >>> topography.geoid_undulation(
     ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
-    -44.371455192615110
+    25.583896785168232
 
 Pass a ``Geodetic``.  See :ref:`issue-geoid-longitude-convention`.
 

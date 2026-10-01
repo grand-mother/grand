@@ -155,7 +155,7 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
     Examples
     --------
     Negative here: at Dunhuang the geoid lies below the ellipsoid, so a point
-    1200 m above the ellipsoid is about 1207.8 m above sea level.
+    1200 m above the ellipsoid is about 1261 m above sea level.
 
     .. jupyter-execute::
 

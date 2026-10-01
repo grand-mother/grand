@@ -1570,12 +1570,12 @@ for name, lat, lon in [('GRANDProto300 site (China)', 40.98,  93.95),
                        ('Indian Ocean low',            0.00,  78.00)]:
     u = topography.geoid_undulation(Geodetic(latitude=lat, longitude=lon, height=0.0))
     print("   %-28s %+8.2f" % (name, float(np.ravel(u)[0])))'''),
-    md(r'''At the GRANDProto300 site the undulation is about −7.7 m: sea level sits 7.7 m
+    md(r'''At the GRANDProto300 site the undulation is about −61 m: sea level sits 61 m
 *below* the ellipsoid there. Confusing the two conventions moves every antenna
-by that much, which at 2 GHz sampling is roughly 50 samples of light travel
+by that much, which at 2 GHz sampling is roughly 400 samples of light travel
 time.
 
-The spread across these four points — from −103 m to −1 m — is the reason this
+The spread across these four points — from −103 m to +43 m — is the reason this
 cannot be treated as a constant offset for an array that spans any distance.
 
 The rule in GRANDlib: `Geodetic.height` is **ellipsoidal**, and

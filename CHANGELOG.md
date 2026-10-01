@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The EGM96 geoid map is no longer upside down (#250).** `data/egm96.png`
+  stored its rows south-first, while TURTLE reads PNG rows north-first, so every
+  geoid undulation was the value at the opposite latitude: the North Pole read
+  -29.5 m instead of +13.6 m, and the GP300 site -7.75 m instead of -61.0 m. The
+  rows are flipped, and the grid extents corrected (x1 = 360, y1 = 90 for a
+  0.25 degree grid; they were one step too far, stretching the grid by up to a
+  quarter of a degree). The poles and the model's global minimum and maximum
+  now match published EGM96. **Heights given with the default
+  `reference="GEOID"` (`Geodetic`, `ECEF`, `topography.elevation(...,
+  reference="sea")`) change by the difference, about 53 m at the GP300 site;
+  results computed with earlier versions from such heights need recomputing.**
 - **The ZHAireS converter refuses a damaged simulation (#242).** A missing trace
   file was dropped, a truncated trace zero-padded, a NaN written as data, a
   missing zenith line read as a vertical shower, an unknown energy unit ignored,

@@ -360,7 +360,7 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#247](https://github.com/grand-mother/grand/issues/247) | efield2voltage / efield2efield use the previous event's shower when the shower tree lacks the event | Critical | 4b-A | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | shower and run entries checked after lookup |
 | [#248](https://github.com/grand-mother/grand/issues/248) | `convert_efield2efield` writes `du_count` 0, ignores the `-o` folder, crashes on zero-antenna events | High | 4b-A | open | | |
 | [#249](https://github.com/grand-mother/grand/issues/249) | Conversion scripts don't check that run, e-field and shower trees match | Medium | 4b-A | open | | |
-| [#250](https://github.com/grand-mother/grand/issues/250) | The geoid model (EGM96) is mirrored in latitude: geoid heights tens of metres off | Critical | 5a, 5b | open | | |
+| [#250](https://github.com/grand-mother/grand/issues/250) | The geoid model (EGM96) is mirrored in latitude: geoid heights tens of metres off | Critical | 5a, 5b | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | `data/egm96.png` rows flipped, grid extents corrected; checked at the poles and the global extremes |
 | [#251](https://github.com/grand-mother/grand/issues/251) | Geodetic height NaN west of Greenwich (GEOID); NaN declination there; Horizon objects share location | High | 5a, 5b | open | | |
 | [#252](https://github.com/grand-mother/grand/issues/252) | Reconstruction hard-codes ground altitude 1231 m; file antenna z is relative to the site | Medium | 5a | open | | |
 | [#253](https://github.com/grand-mother/grand/issues/253) | Antenna effective-length lookup 1° off for every negative azimuth | Medium | 5b | open | | |
@@ -372,6 +372,16 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#259](https://github.com/grand-mother/grand/issues/259) | About 25 user-facing input checks are asserts | Medium | 7 | open | | |
 | [#260](https://github.com/grand-mother/grand/issues/260) | READMEs are stale | Medium | 6b | open | | |
 | [#261](https://github.com/grand-mother/grand/issues/261) | Docstrings that mislead: missing units and frames, wrong parameters and returns | Medium | 6b | open | | |
+| [#262](https://github.com/grand-mother/grand/issues/262) | A NaN or None latitude/longitude segfaults the process (geoid_undulation, Map.elevation) | High | 9 | open | | |
+| [#263](https://github.com/grand-mother/grand/issues/263) | `convert_voltage_to_ADC` converts every channel for a boolean mask; slice or int raises (regression from #179) | High | 9 | open | | |
+| [#264](https://github.com/grand-mother/grand/issues/264) | `Handling3dTraces` accepts a NumPy-scalar `f_samp_mhz`, then `apply_bandpass` fails | High | 9 | open | | |
+| [#265](https://github.com/grand-mother/grand/issues/265) | `Efield2Voltage.params` ignores unknown keys; flags read by truthiness | Medium | 9 | open | | |
+| [#266](https://github.com/grand-mother/grand/issues/266) | Values in the wrong unit (Hz/MHz, s/ns, degrees/radians) accepted silently | Medium | 9 | open | | |
+| [#267](https://github.com/grand-mother/grand/issues/267) | Modules the validation work did not reach (geo reps, turtle, aoi, ShowerEvent, trigger, basis.signal, du_network) | Medium | 9 | open | | |
+| [#268](https://github.com/grand-mother/grand/issues/268) | Notebook 05 sky maps put right ascension 12 h out | High | 10 | open | | |
+| [#269](https://github.com/grand-mother/grand/issues/269) | Notebook prose, second pass: 14 statements the outputs contradict | Medium | 10 | open | | |
+| [#270](https://github.com/grand-mother/grand/issues/270) | Deliberate bugs no test catches (Horizontal azimuth, `get_dus_indices_in_run`, `final_resample`, ADC rounding) | High | 8 | open | | |
+| [#271](https://github.com/grand-mother/grand/issues/271) | Tests that cannot fail, non-strict xfails, tests depending on untracked `data/` files | Medium | 8 | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -435,12 +445,14 @@ Reports that were not confirmed, with the reason.
 
 | Tester | Report | Why not logged |
 |---|---|---|
-| — | *none yet* | |
+| 9 | `Efield2Voltage.get_event(event_number=99, run_number=0)` silently reuses the previous event | Duplicate of #238, already fixed in PR #208 (the pair is now checked against `events_list`) |
+| 9 | Further instances of bare `assert` input checks | Added to #259 as a comment |
 
 ## 9. Progress log
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Critical fixes in PR #208, continued: #209, #228, #243 (CoREAS), #242 (ZHAireS), #250 (geoid). All 10 wave-1 Criticals and #250 now have a fix in PR #208. **Wave 2 complete:** testers 8, 9 and 10 in, logged #262–#271 (5 High, 5 Medium; #263 is a regression from #179). Tester 8: 15 deliberate bugs, 10 caught. |
 | 2026-10-01 | Critical fixes in PR #208 (one commit each, with a failing-first test): #227, #238, #247, #237, #229, #220. Wave 2 batch 1 in (5a, 5b, 6a, 6b, 7): logged #250–#261, one more Critical (#250 geoid mirrored, confirmed at the poles and Tokyo). Wave 2 batch 2 running: 8, 9, 10. |
 | 2026-10-01 | **Wave 1 complete.** 4b-A in: logged #247–#249 (1 more Critical). Totals: 69 issues (#180–#249; #208 is a PR): 10 Critical, 22 High, 26 Medium, 11 Low. The two ×2 pairs (1a-A/1a-B, 4b-A/4b-B) overlapped heavily but each found things the other missed, so the input-fuzzing area gets another pass in wave 3. |
 | 2026-10-01 | 4c in: logged #242–#246 (2 more Critical: converters accept damaged simulations); #184 extended to `open_grand_analysis_prompt.py` and raised to High. Still running: 4b-A. |

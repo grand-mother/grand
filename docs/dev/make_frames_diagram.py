@@ -96,7 +96,7 @@ def main():
     s.append('<text x="450" y="432" font-size="10.5" fill="%s">'
              'geoid, mean sea level — Reference.GEOID</text>' % SOFT)
     s.append('<text x="40" y="454" font-size="10.5" fill="%s">'
-             'They differ by up to ~100 m worldwide, and by −7.75 m at '
+             'They differ by up to ~100 m worldwide, and by −61 m at '
              'Dunhuang. A height without a reference is not a height.</text>' % FAINT)
 
     s.append('</svg>')
