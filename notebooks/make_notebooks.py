@@ -1523,7 +1523,7 @@ books['07_topography.ipynb'] = notebook(
     r'''07 — Topography''',
     r'''GRAND is built to see showers arriving within a few degrees of the horizon.
 For those, the ground is not a flat plane a long way below the antennas — it is
-in the way. A ray at 89° zenith would travel eighty kilometres to drop one
+in the way. A ray at 89° zenith would travel 57 kilometres to drop one
 kilometre over flat ground, so whether it clears a ridge is decided by terrain
 tens of kilometres from the array.
 
@@ -1665,13 +1665,16 @@ This is what `topography.distance` answers: given a starting point and a
 direction, how far to the terrain? It marches along the ray and intersects the
 actual elevation model, not a plane.
 
-The direction is a Cartesian vector in the local ENU frame — x east, y north,
-z up — so a zenith angle $\theta$ and azimuth $\phi$ become
+The direction is read in **ECEF** unless you say otherwise. Here it is
+written in the local ENU frame — x east, y north, z up — and `frame="ENU"`
+says so; an `LTP` or `GRANDCS` can be passed as the frame too. A zenith angle
+$\theta$ and azimuth $\phi$ become
 
 $$\hat{d} = (\sin\theta\cos\phi,\; \sin\theta\sin\phi,\; -\cos\theta)$$
 
 with the minus sign on $z$ because we are looking downward, towards the
-ground.'''),
+ground. Leave out `frame` and this vector is taken as ECEF: straight down then
+comes out as 2.27 km instead of 1.5 km.'''),
     code(r'''if HAVE_TILES:
     ground = topography.elevation(CENTRE)
     origin = Geodetic(latitude=lat0 + 0.5, longitude=lon0 + 0.5,
@@ -1685,7 +1688,7 @@ ground.'''),
                                     z=-np.cos(th))
         # maximum_distance bounds the march; without it a ray that never meets
         # the ground searches a long way before giving up.
-        dist = float(np.ravel(topography.distance(origin, d,
+        dist = float(np.ravel(topography.distance(origin, d, frame="ENU",
                                                   maximum_distance=600e3))[0])
         # What a flat plane 1500 m below would have given, for comparison.
         flat = 1500.0 / np.cos(th)
@@ -1694,24 +1697,18 @@ ground.'''),
                  flat / 1e3))
 else:
     print("skipped: no tiles")'''),
-    md(r'''The two columns diverge, and they diverge in *both* directions.
+    md(r'''Up to 85° the terrain changes the path by a few per cent at this site:
+the same 1.52 km at 10°, 9.18 km against 8.64 km at 80°, 18.5 km
+against 17.2 km at 85°. The ground around the tile centre falls away gently, so
+the ray goes a little further than over a flat plane.
 
-At steep angles the real distance is **longer** than the flat-ground estimate —
-2.25 km against 1.52 km at 10° zenith — because the ground falls away below the
-launch point. The tile spans 1746 m to 2522 m and the centre sits at 2112 m, so
-a ray heading almost straight down has further to fall than the local surface
-suggests.
+At 88° and 89° the ray is not reached: it travels more than the 42 km to the
+tile's edge before dropping 1500 m, and beyond the tile there is no elevation
+data. For rays this close to the horizon, fetch the neighbouring tiles first
+(`topography.update_data` with a larger `radius`).
 
-Near the horizon the sign flips and the size grows. At 89° the flat-ground
-formula gives 86 km, while the real terrain stops the ray at 15 km: the ground
-rises into it. **A flat-ground calculation overestimates the path by a factor
-of nearly six there**, and puts the intersection point seventy kilometres
-wrong — which for an array a few kilometres across is the difference between a
-shower landing inside it and outside it.
-
-Neither error is a small correction to be applied afterwards. Which way it goes
-depends on the terrain and on the arrival direction, so there is no single
-factor to fold in.'''),
+Which way the terrain moves the answer, and by how much, depends on the site
+and the arrival direction, so there is no single factor to fold in.'''),
     md(r'''## 5. A profile along a shower axis
 
 Following the terrain along the ray gives the profile that decides whether a

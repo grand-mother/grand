@@ -70,6 +70,7 @@ def distance(
     position: Any,
     direction: CartesianRepresentation,
     maximum_distance: float = None,
+    frame: Any = None,
 ):
     """Get the signed intersection distance with the topography.
 
@@ -77,10 +78,14 @@ def distance(
     ----------
     position : Geodetic, ECEF, LTP or GRANDCS
         Starting point.
-    direction : array_like
-        Direction to travel in.
+    direction : CartesianRepresentation or ECEF
+        Direction to travel in, in **ECEF** unless `frame` says otherwise.
     maximum_distance : float, optional
         Give up beyond this distance, in metres.
+    frame : LTP, GRANDCS or "ENU", optional
+        Frame `direction` is given in: the axes of an `LTP` or `GRANDCS`, or
+        ``"ENU"`` for east, north and up at the (single) starting point.  By
+        default it is ECEF.
 
     Returns
     -------
@@ -92,7 +97,30 @@ def distance(
     if _default_topography is None:
         DATADIR.mkdir(exist_ok=True)
         _default_topography = Topography(DATADIR)
-    return _default_topography.distance(position, direction, maximum_distance)
+    return _default_topography.distance(position, direction, maximum_distance, frame=frame)
+
+
+def _direction_to_ecef(direction, frame, position):
+    r"""Rotates `direction`, given in `frame`, to ECEF (see `Topography.distance`)."""
+    if isinstance(frame, str):
+        if frame.upper() != "ENU":
+            raise ValueError("GRANDlib: topography.distance: frame must be an LTP, a GRANDCS "
+                             "or \"ENU\", got %r" % frame)
+        if position.x.size != 1:
+            raise ValueError("GRANDlib: topography.distance: frame=\"ENU\" needs a single "
+                             "starting point; pass an LTP as the frame for several")
+        start = Geodetic(position)
+        frame = LTP(location=Geodetic(latitude=float(np.ravel(start.latitude)[0]),
+                                      longitude=float(np.ravel(start.longitude)[0]),
+                                      height=float(np.ravel(start.height)[0])),
+                    orientation="ENU", magnetic=False)
+    basis = getattr(frame, "basis", None)
+    if basis is None:
+        raise ValueError("GRANDlib: topography.distance: frame must be an LTP, a GRANDCS "
+                         "or \"ENU\", got %s" % type(frame).__name__)
+    local = np.vstack([np.ravel(direction.x), np.ravel(direction.y), np.ravel(direction.z)])
+    ecef = np.matmul(np.asarray(basis).T, local)
+    return CartesianRepresentation(x=ecef[0], y=ecef[1], z=ecef[2])
 
 
 def elevation(coordinates, reference: Optional[str] = _default_reference):
@@ -532,6 +560,7 @@ class Topography:
         position: Any,
         direction: CartesianRepresentation,
         maximum_distance: float = None,
+        frame: Any = None,
     ):
         """Get the signed intersection distance with the topography.
 
@@ -539,10 +568,16 @@ class Topography:
         ----------
         position : Geodetic, ECEF, LTP or GRANDCS
             Starting point.
-        direction : array_like
-            Direction to travel in.
+        direction : CartesianRepresentation or ECEF
+            Direction to travel in, in **ECEF** unless `frame` says otherwise.
+            A local (east, north, up) vector passed without `frame` is read as
+            ECEF and gives a wrong distance (#210).
         maximum_distance : float, optional
             Give up beyond this distance, in metres.
+        frame : LTP, GRANDCS or "ENU", optional
+            Frame `direction` is given in: the axes of an `LTP` or `GRANDCS`,
+            or ``"ENU"`` for east, north and up at the (single) starting
+            point.  By default it is ECEF.
 
         Returns
         -------
@@ -556,12 +591,11 @@ class Topography:
             self._stepper = stepper
 
         position = ECEF(position)
-        if isinstance(direction, (CartesianRepresentation, ECEF)):
-            # TODO: Convert direction vector given in any known coordinate frame to ECEF frame.
-            #       direction must be in ECEF frame for lib.grand_topography_distance()
-            pass
-        else:
+        if not isinstance(direction, (CartesianRepresentation, ECEF)):
             raise TypeError("Direction must be in CartesianRepresentation in ECEF frame.")
+        # TURTLE needs an ECEF direction (#210)
+        if frame is not None:
+            direction = _direction_to_ecef(direction, frame, position)
 
         # Normalize the direction vector. Unit vector is required.
         norm = np.linalg.norm(direction)

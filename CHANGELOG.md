@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`topography.distance` read a local direction as ECEF (#210).** TURTLE
+  needs an ECEF direction, the docstrings did not say so, and notebook 07
+  passed an (east, north, up) vector: straight down from 1500 m came out as
+  2.27 km. `distance` now takes `frame=` (an `LTP`, a `GRANDCS` or `"ENU"`)
+  and rotates the direction to ECEF; the docstrings name the frame. Without
+  `frame` the direction is still ECEF, as before. Notebook 07's section 4 is
+  rebuilt: the terrain changes the inclined path by a few per cent at the
+  shipped tile, not by "a factor of nearly six".
+
 - **Coordinates west of Greenwich, and conversions that returned nothing (#251).**
   - `geoid_undulation(latitude=..., longitude=...)` returned NaN for a
     negative longitude: the EGM96 map is indexed 0–360° and only the
