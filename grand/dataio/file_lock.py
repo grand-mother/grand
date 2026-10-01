@@ -163,6 +163,28 @@ def lock_for_writing(name, where, fresh=False):
     _held[path] = fd
 
 
+def is_current(name):
+    r"""Whether a file this process holds open still is the file on disk.
+
+    False when it was removed, or replaced or changed by something other than
+    this process since it was opened: a tree reopening the name must then
+    open it afresh, not reuse the open copy (#236).  Unknown files, and files
+    this process is writing, count as current.
+    """
+    path = _key(name)
+    if path in _held:
+        return True
+    if not os.path.exists(path):
+        return False
+    seen = _seen.get(path)
+    if seen is None:
+        return True
+    try:
+        return _signature(path) == seen
+    except OSError:
+        return False
+
+
 def release(name):
     r"""Releases the write lock on ``name`` and forgets its state; the file was closed."""
     path = _key(name)

@@ -225,7 +225,10 @@ class MotherEventTree(DataTree):
         # Try to get the requested entry
         # res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
         # The above should work, but there is a bug in ROOT
-        res = self._tree.GetEntry(self._tree.GetEntryNumberWithIndex(int(run_no), int(ev_no)))
+        # int() gave a bare "invalid literal for int()" for get_event('x') (#236)
+        ev_no = self._integer(ev_no, "get_event", "ev_no")
+        run_no = self._integer(run_no, "get_event", "run_no")
+        res = self._tree.GetEntry(self._tree.GetEntryNumberWithIndex(run_no, ev_no))
         # If no such entry, return
         if res == 0 or res == -1:
             logger.error(

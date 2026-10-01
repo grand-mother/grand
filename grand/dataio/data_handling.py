@@ -21,6 +21,12 @@ from grand.dataio import file_lock as _file_lock
 ROOT.gErrorIgnoreLevel = ROOT.kFatal
 
 ## Class holding the information about GRAND data in a directory
+#: Names of the trees and file lists a DataDirectory may lack: ``tshower``,
+#: ``tshower_l1``, ``ftshower``, ``ftshowers``, ``ftshower_l0``, ...
+_ABSENT_TREE = re.compile(r"^f?t(run|runvoltage|runrawvoltage|rawvoltage|adc|voltage|efield|shower|"
+                          r"runefieldsim|runshowersim|showersim|runnoise)(s|_l\d+)?$")
+
+
 class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
@@ -56,14 +62,30 @@ class DataDirectory:
 
         self.tree_file_types = ["ftruns", "ftrunrawvoltages", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]
 
+        # -1 is "the highest"; other negative levels silently meant it too (#236)
+        if isinstance(analysis_level, bool) or not isinstance(analysis_level, (int, np.integer)) \
+                or analysis_level < -1:
+            raise ValueError(_validate.message(
+                "DataDirectory", "analysis_level must be -1 (the highest present) or a level >= 0, "
+                "got %r" % (analysis_level,)))
+
         self._claimed = set()
         self.init_structure()
         # A file no tree type claims was ignored without a word (#187)
-        for el in self.file_handle_list:
-            if el.filename not in self._claimed:
-                warnings.warn("GRANDlib: DataDirectory: %s is not named after a GRAND tree type "
-                              "(run_, efield_, voltage_, ...); ignored" % el.filename,
-                              GRANDlibWarning, stacklevel=2)
+        unclaimed = [el.filename for el in self.file_handle_list if el.filename not in self._claimed]
+        for name in unclaimed:
+            warnings.warn("GRANDlib: DataDirectory: %s is not named after a GRAND tree type "
+                          "(run_, efield_, voltage_, ...); ignored" % name,
+                          GRANDlibWarning, stacklevel=2)
+        self.unrecognised_files = unclaimed
+        # A level that is not present gave the highest one's absence: every
+        # tree None, with no word (#236)
+        if analysis_level != -1:
+            present = sorted({level for name in self.tree_file_types for level in getattr(self, name, {})})
+            if present and analysis_level not in present:
+                raise ValueError(_validate.message(
+                    "DataDirectory", "%s holds no files at analysis level %d; it has levels %s"
+                    % (self.dir_name, analysis_level, ", ".join(map(str, present)) or "none")))
 
         # # Set the structure type depending on the dir name
         # exp_structure = False
@@ -98,11 +120,12 @@ class DataDirectory:
         AttributeError
             If no such tree was found in the directory.
         """
-        trees_to_check = ["trun", "trunvoltage", "trunrawvoltage", "trawvoltage", "tadc", "tvoltage", "tefield", "tshower", "trunefieldsim", "trunshowersim", "tshowersim", "trunnoise"]
-        if any(s in name for s in trees_to_check):
+        # A tree or file list this directory lacks reads as None.  Any name
+        # merely containing a tree name did, so a typo such as "trunk" gave
+        # None instead of an error (#236).
+        if _ABSENT_TREE.match(name):
             return None
-        else:
-            raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
+        raise AttributeError(f"'DataDirectory' object has no attribute '{name}'")
 
     def get_list_of_files(self, recursive: bool = False):
         """Gets list of files in the directory

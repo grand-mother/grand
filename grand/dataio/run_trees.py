@@ -80,8 +80,8 @@ class MotherRunTree(DataTree):
             Bytes read; zero when the run is absent.
         """
         self._check_open("get_run")
-        # Make sure we have an int
-        run_no = int(run_no)
+        # Make sure we have an int; int() gave a bare ValueError for 'x' (#236)
+        run_no = self._integer(run_no, "get_run", "run_no")
         # Try to get the run from the tree
         res = self._tree.GetEntryWithIndex(int(run_no))
         # If no such entry, return

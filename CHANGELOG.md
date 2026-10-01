@@ -15,6 +15,17 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- dataio no longer hands back stale or zeroed data silently (#236):
+  reopening a path whose file was replaced, changed or removed since it was
+  opened reads the file on disk, not the copy still open; a tree without
+  its `run_number` / `event_number` branches is refused instead of reading
+  as zeros; `EventList` on a folder with no recognised file names says so
+  (it failed on `None`), and `DataDirectory.unrecognised_files` lists them;
+  an absent or invalid `analysis_level` raises; a misspelt tree name such as
+  `trunk` raises `AttributeError` instead of returning `None`;
+  `get_event('x')` / `get_run('x')` raise a clear `TypeError`; an unreadable
+  file reports "permission denied". (Use after close already raised.)
+
 - The conversion scripts write where they say and can be rerun (#231):
   `convert_efield2efield.py -od` writes the L1 run files there too (they
   went into the input folder), replaces earlier outputs instead of failing

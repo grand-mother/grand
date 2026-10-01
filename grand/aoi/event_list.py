@@ -78,6 +78,14 @@ class EventList:
                         "EventList", "no ROOT files (*.root) in %s" % inp_name))
                 self.directory = DataDirectory(inp_name)
                 self.event_list = self.directory.get_max_list_of_events()
+                # Nothing recognised: this failed later on None, as "'NoneType'
+                # object has no attribute 'f'" (#236)
+                if self.event_list is None:
+                    names = [os.path.basename(name) for name in self.directory.unrecognised_files]
+                    raise FileNotFoundError(_validate.message(
+                        "EventList", "no GRAND event files recognised in %s%s; files must be named "
+                        "<type>_<events>_L<level>_<serial>.root, e.g. efield_1-2_L0_0000.root, or be "
+                        "opened one at a time" % (inp_name, " (found %s)" % ", ".join(names[:5]) if names else "")))
             else:
                 raise FileNotFoundError(_validate.message(
                     "EventList", "no such file or directory: %s" % inp_name))

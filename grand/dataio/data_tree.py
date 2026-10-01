@@ -806,13 +806,24 @@ class DataTree:
             else:
                 self._file_name = f
                 # print(self._file_name)
-                # If the file with that filename is already opened, use it (do not reopen)
-                if f := ROOT.gROOT.GetListOfFiles().FindObject(self._file_name):
+                # If the file with that filename is already opened, use it (do
+                # not reopen) -- unless the file on disk was replaced, changed
+                # or removed since: the old contents were returned (#236)
+                f = ROOT.gROOT.GetListOfFiles().FindObject(self._file_name)
+                if f and not _file_lock.is_current(self._file_name):
+                    logger.info(f"{self._file_name} changed on disk since it was opened; reading it afresh")
+                    ROOT.gROOT.GetListOfFiles().Remove(f)
+                    f = None
+                if f:
                     self._file = f
                 # If not opened, open
                 else:
                     # If file exists, initially open in the read-only mode (changed during write())
                     where = type(self).__name__
+                    if os.path.isfile(self._file_name) and not os.access(self._file_name, os.R_OK):
+                        # It was reported as "not a ROOT file, or damaged" (#236)
+                        raise PermissionError(_validate.message(
+                            where, "cannot open %s: permission denied" % self._file_name))
                     if os.path.isfile(self._file_name):
                         # Not while another process writes it, and remember its
                         # state, to refuse a stale write later (#281)
@@ -889,6 +900,17 @@ class DataTree:
             # Try to init with the TTree from file
             if self._file is not None:
                 self._tree = self._file.Get(self._tree_name)
+                # Without its run/event numbers a tree read as zeros, and
+                # listed no events while counting entries (#236)
+                if self._tree and self._tree.GetEntries() > 0:
+                    missing = [name for name in ("run_number", "event_number")
+                               if getattr(type(self), name, None) is not None
+                               and not self._tree.GetBranch(name)]
+                    if missing:
+                        raise ValueError(_validate.message(
+                            type(self).__name__, "the %s tree in %s has no %s branch: it was not "
+                            "written as a %s, or is damaged" % (self._tree_name, self._file.GetName(),
+                                                               " or ".join(missing), type(self).__name__)))
                 # There was no such tree in the file, so create one
                 if not self._tree:
                     # The normal path when writing a new file: not a warning (#194)
