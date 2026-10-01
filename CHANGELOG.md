@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`copy_contents()` emptied the source (#282).** Copying a vector-of-vectors
+  field from another tree moved the source's inner vectors instead of copying
+  them, so the source's traces were left empty after the first copy, and a
+  loop that copied from the same entry twice wrote empty traces. The copy is
+  now element by element; the source is unchanged.
+
 - **Tree lookups take NumPy integers (#276).** `get_entry(np.int64(1))`,
   the indices `np.where` gives, and `get_entry_with_index(t.run_number,
   t.event_number)` -- whose values are `np.uint32` -- raised `TypeError` from

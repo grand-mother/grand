@@ -305,7 +305,10 @@ class StdVectorList(MutableSequence):
                 try:
                     if isinstance(value, StdVectorList):
                         if high_root_version:
-                            self._vector.assign(value._vector)
+                            # By iterator range, a copy: assign(vector) moved
+                            # the source's inner vectors out, emptying the
+                            # tree copy_contents() read from (#282)
+                            self._vector.assign(value._vector.begin(), value._vector.end())
                         else:
                             self._vector += value._vector
                     else:

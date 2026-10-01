@@ -280,3 +280,31 @@ def test_numpy_integers_select_entries(tmp_path):
     with pytest.raises(TypeError, match="must be an integer"):
         t.get_entry(1.5)
     t.stop_using()
+
+
+def test_copy_contents_leaves_the_source_intact(tmp_path):
+    r"""#282: copy_contents() moved the source's inner trace vectors out."""
+    from grand.dataio import TEfield
+
+    trace = [[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]] * 2
+    src = TEfield(str(tmp_path / "src.root"))
+    src.run_number, src.event_number, src.du_id, src.trace = 1, 1, [1, 2], trace
+    src.fill()
+    src.write()
+    src.get_entry(0)
+
+    out = TEfield(str(tmp_path / "out.root"))
+    for event in (1, 2):              # reusing the source, as a copy loop does
+        out.copy_contents(src)
+        out.event_number = event
+        out.fill()
+        assert [[list(arm) for arm in du] for du in src.trace] == trace
+    out.write()
+    out.stop_using()
+    src.stop_using()
+
+    back = TEfield(str(tmp_path / "out.root"))
+    for entry in (0, 1):
+        back.get_entry(entry)
+        assert [[list(arm) for arm in du] for du in back.trace] == trace
+    back.stop_using()
