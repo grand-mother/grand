@@ -155,8 +155,8 @@ class CoordinatesTest(TestCase):
         geod = Geodetic(ecef, reference="ELLIPSOID")
         ecef1 = geod.geodetic_to_ecef()
         geod1 = ecef.ecef_to_geodetic(reference="ELLIPSOID")
-        horz = geod.geodetic_to_horizontal()
-        grnd = geod.geodetic_to_grandcs()
+        horz = geod.geodetic_to_horizontal(self.location)
+        grnd = geod.geodetic_to_grandcs(self.location)
         ltpf = LTP(location=self.location, orientation="NWU")
         ltp = geod.geodetic_to_ltp(ltpf)
 

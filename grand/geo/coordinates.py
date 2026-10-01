@@ -185,7 +185,10 @@ def geoid_undulation(latitude=None, longitude=None):
     path = os.path.join(DATADIR, "egm96.png")
     geoid = turtle.Map(path)
     logger.debug(f"geoid_undulation for {latitude} {longitude}")
-    return geoid.elevation(longitude, latitude)
+    # The map spans longitudes 0 to 360: a negative one gave NaN, and every
+    # height west of Greenwich came out NaN with reference GEOID (#251)
+    # (None reads as NaN, as before)
+    return geoid.elevation(np.mod(np.asarray(longitude, dtype=float), 360.0), latitude)
 
 
 # Define functions to transform from one coordinate representation to
@@ -1400,18 +1403,30 @@ class Geodetic(GeodeticRepresentation):
         else:
             raise TypeError(_validate.message(type(self).__name__, "'latitude', 'longitude' and 'height' must be numbers or NumPy arrays, got %s" % type(latitude).__name__))
 
-    def geodetic_to_horizontal(self):
-        r"""Returns this position in horizontal coordinates.
+    def geodetic_to_horizontal(self, location=None):
+        r"""Returns this position in horizontal coordinates, as seen from `location`.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
 
+        Parameters
+        ----------
+        location : Geodetic, ECEF, LTP or GRANDCS
+            Where the direction is measured from.
+
         Returns
         -------
-        HorizontalRepresentation
+        Horizontal
             Azimuth, elevation and norm.
+
+        Notes
+        -----
+        It was a stub that returned ``None`` (#251).
         """
-        pass
+        if location is None:
+            raise TypeError(_validate.message(
+                "Geodetic.geodetic_to_horizontal", "give the 'location' the direction is measured from"))
+        return Horizontal(self, location=location)
 
     def geodetic_to_ecef(self):
         r"""Returns this position in the :class:`ECEF` frame.
@@ -1426,18 +1441,24 @@ class Geodetic(GeodeticRepresentation):
         """
         return ECEF(self)
 
-    def geodetic_to_grandcs(self):
+    def geodetic_to_grandcs(self, location=None):
         r"""Returns this position in the :class:`GRANDCS` array frame.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Parameters
+        ----------
+        location : Geodetic, optional
+            Origin of the array frame.  Without it the default origin is
+            used, with a warning (it was used silently, #251).
 
         Returns
         -------
         GRANDCS
             The same position, in the array frame.
         """
-        return GRANDCS(self)
+        return _to_grandcs(self, location, "Geodetic.geodetic_to_grandcs")
 
     def geodetic_to_ltp(self, ltp):
         r"""Returns this position in a local tangent plane, :class:`LTP`.
@@ -1620,18 +1641,24 @@ class ECEF(CartesianRepresentation):
         """
         return Geodetic(self, reference=reference)
 
-    def ecef_to_grandcs(self):
+    def ecef_to_grandcs(self, location=None):
         r"""Returns this position in the :class:`GRANDCS` array frame.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
+
+        Parameters
+        ----------
+        location : Geodetic, optional
+            Origin of the array frame.  Without it the default origin is
+            used, with a warning (it was used silently, #251).
 
         Returns
         -------
         GRANDCS
             The same position, in the array frame.
         """
-        return GRANDCS(self)
+        return _to_grandcs(self, location, "ECEF.ecef_to_grandcs")
 
     def ecef_to_ltp(self, ltp):
         r"""Returns this position in a local tangent plane, :class:`LTP`.
@@ -1726,12 +1753,12 @@ class Horizontal(HorizontalRepresentation):
         obj = LTP(location=location, orientation="ENU", magnetic=False)
         ecef_loc = obj.location  # location is already in ECEF cs.
         ecef_basis = obj.basis  # basis is already in ECEF cs.
-        cls.location = ecef_loc  # used to convert back to ECEF, Geodetic etc.
-        cls.basis = ecef_basis  # used to convert back to ECEF, Geodetic etc.
-        cls.vector = vector
+        # Kept on the instance, set below: they were class attributes, so
+        # building a second Horizontal moved every earlier one (#251)
 
         if isinstance(arg, (Horizontal, HorizontalRepresentation)):
-            return Horizontal(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm)
+            return Horizontal(azimuth=arg.azimuth, elevation=arg.elevation, norm=arg.norm,
+                              location=location, vector=vector)
 
         if isinstance(azimuth, (Number, np.ndarray)):
             # check if input coordinates are of the right kind.
@@ -1750,9 +1777,9 @@ class Horizontal(HorizontalRepresentation):
                 else:
                     pos_v = np.vstack(
                         (
-                            ecef.x - cls.location.x,
-                            ecef.y - cls.location.y,
-                            ecef.z - cls.location.z,
+                            ecef.x - ecef_loc.x,
+                            ecef.y - ecef_loc.y,
+                            ecef.z - ecef_loc.z,
                         )
                     )
                 # Projecting positional vectors to 'ENU' LTP's cs basis.
@@ -1772,7 +1799,11 @@ class Horizontal(HorizontalRepresentation):
         else:
             raise TypeError(_validate.message(cls.__name__, "give either a position to convert (one of ECEF, Geodetic, LTP, GRANDCS or Horizontal) or 'azimuth', 'elevation' and 'norm' as numbers or arrays; got %s" % type(arg if arg is not None else azimuth).__name__))
 
-        return super().__new__(cls, azimuth, elevation, norm)
+        self = super().__new__(cls, azimuth, elevation, norm)
+        self.location = ecef_loc  # used to convert back to ECEF, Geodetic etc.
+        self.basis = ecef_basis  # used to convert back to ECEF, Geodetic etc.
+        self.vector = vector
+        return self
 
     def horizontal_to_ecef(self):
         r"""Returns this direction in the :class:`ECEF` frame.
@@ -2099,21 +2130,24 @@ class LTP(CartesianRepresentation):
 
         return LTP(x=x, y=y, z=z, frame=ltp)
 
-    def ltp_to_grandcs(self):
+    def ltp_to_grandcs(self, location=None):
         r"""Returns this vector in the :class:`GRANDCS` array frame.
 
         Every conversion between a local frame and geodetic passes through
         :class:`ECEF`; see :doc:`/coordinates`.
 
+        Parameters
+        ----------
+        location : Geodetic, optional
+            Origin of the array frame.  Without it the default origin is
+            used, with a warning.
+
         Returns
         -------
         GRANDCS
-            The vector in the array frame.
+            The vector in the array frame.  (It returned ``None``, #251.)
         """
-        # just instantiating a GRANDCS CS to get it's basis and location. x, y, z values does not matter.
-        self = copy(self)
-        gcs = GRANDCS(x=0, y=0, z=0)
-        self.ltp_to_ltp(gcs)
+        return _to_grandcs(self, location, "LTP.ltp_to_grandcs")
 
     def ltp_to_ecef(self):
         r"""Returns this vector in the :class:`ECEF` frame.
@@ -2332,3 +2366,14 @@ class Rotation(_Rotation):
     """
 
     pass
+
+
+def _to_grandcs(position, location, where):
+    r"""``GRANDCS(position, location=location)``, warning when no origin is given (#251)."""
+    if location is None:
+        warnings.warn(_validate.message(
+            where, "no 'location' given: the default array origin (latitude %.3f, longitude "
+            "%.3f) is used, which is not your site's unless you set it so"
+            % (grd_origin_lat, grd_origin_lon)), _validate.GRANDlibWarning, stacklevel=3)
+        return GRANDCS(position)
+    return GRANDCS(position, location=location)

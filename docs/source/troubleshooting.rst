@@ -71,19 +71,9 @@ subtracts the undulation from it.  **Check for ``nan`` after every elevation
 lookup.**
 
 **A geoid undulation returned ``nan`` and the coordinates look fine.**  The
-site is west of Greenwich and you used the keyword form.  The shipped EGM96 map
-is indexed 0–360°, and only the :class:`~grand.geo.coordinates.Geodetic` path
-normalises:
-
-.. code-block:: python
-
-    >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
-    nan
-    >>> topography.geoid_undulation(
-    ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
-    25.583896785168232
-
-Pass a ``Geodetic``.  See :ref:`issue-geoid-longitude-convention`.
+site is west of Greenwich and you are on a version before the fix for
+:ref:`issue-geoid-longitude-convention`: the keyword form did not wrap a
+negative longitude.  Upgrade, or pass a ``Geodetic``.
 
 The numbers are wrong but nothing failed
 ----------------------------------------

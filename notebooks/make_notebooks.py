@@ -1573,9 +1573,8 @@ different things depending on who wrote it down.
 The difference between them — the **geoid undulation** — reaches ±100 m
 worldwide, far larger than the vertical precision GRAND needs for timing. The
 EGM96 undulation map ships with the package, so this works with no downloads.'''),
-    code(r'''# Pass a Geodetic rather than latitude=/longitude= keywords.  Section 2 shows
-# why: the keyword form does not normalise the longitude and the Geodetic form
-# does, so this is the one that works everywhere.
+    code(r'''# A Geodetic or the latitude=/longitude= keywords give the same answer; a
+# negative (western) longitude is wrapped into [0, 360) either way.
 print("geoid undulation, in metres:")
 for name, lat, lon in [('GRANDProto300 site (China)', 40.98,  93.95),
                        ('Auger site (Argentina)',    -35.20, -69.32),
@@ -1593,28 +1592,15 @@ cannot be treated as a constant offset for an array that spans any distance.
 
 The rule in GRANDlib: `Geodetic.height` is **ellipsoidal**, and
 `topography.elevation(..., reference='sea')` converts.'''),
-    md(r'''## 2. Two silent failures worth knowing about
+    md(r'''## 2. A silent failure worth knowing about
 
-Neither of these raises. Both return `nan`, which then propagates quietly into
+It does not raise. It returns `nan`, which then propagates quietly into
 whatever geometry you were computing and stays plausible for several steps.
 
-**First: the keyword form does not normalise longitude.** The shipped EGM96
-map is indexed over 0–360°, and the `latitude=`/`longitude=` path passes the
-value through unchanged, while the `Geodetic` path normalises it.'''),
-    code(r'''lat, lon = -35.20, -69.32          # the Auger site, in the western hemisphere
+(Before grand-mother/grand#251 the keyword form, `latitude=`/`longitude=`, also
+returned `nan` west of Greenwich; it now wraps the longitude like `Geodetic`.)
 
-kw   = topography.geoid_undulation(latitude=lat, longitude=lon)
-wrap = topography.geoid_undulation(latitude=lat, longitude=lon + 360.0)
-geo  = topography.geoid_undulation(Geodetic(latitude=lat, longitude=lon, height=0.0))
-
-print("geoid_undulation(latitude=..., longitude=-69.32) :", kw)
-print("geoid_undulation(latitude=..., longitude=290.68) :", wrap)
-print("geoid_undulation(Geodetic(longitude=-69.32))     :", float(np.ravel(geo)[0]))'''),
-    md(r'''Same point, three calls, two different answers and one `nan`. Prefer the
-`Geodetic` form; if you must use the keywords, wrap the longitude into
-$[0, 360)$ yourself.
-
-**Second: a point with no elevation tile also returns `nan`.**'''),
+**A point with no elevation tile returns `nan`.**'''),
     code(r'''far = Geodetic(latitude=40.98, longitude=93.95, height=0.0)   # GP300 site
 print("elevation with no tile for this square:", topography.elevation(far))
 

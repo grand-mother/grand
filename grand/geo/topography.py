@@ -205,7 +205,9 @@ def geoid_undulation(coordinates=None, latitude=None, longitude=None):
             "Provide coordinates in known coordinate frames or as latitude and longitude."
         )
 
-    return geoid.elevation(longitude, latitude)
+    # The map spans longitudes 0 to 360: negative ones gave NaN (#251)
+    # (None reads as NaN, as before)
+    return geoid.elevation(np.mod(np.asarray(longitude, dtype=float), 360.0), latitude)
 
 
 def update_data(coordinates=None, clear: bool = False, radius: float = None):

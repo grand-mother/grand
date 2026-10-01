@@ -89,8 +89,7 @@ Available
    The two definitions of height and the geoid undulation between them, a
    terrain map, and ray-ground intersection for very inclined showers —
    including how badly a flat-ground estimate does near the horizon.  Also the
-   two silent ``nan`` returns, one of which is
-   :ref:`issue-geoid-longitude-convention`.
+   silent ``nan`` a missing elevation tile returns.
 
 `08. Pinning the chain <https://github.com/grand-mother/grand/blob/dev-next/notebooks/08_pipeline_regression.ipynb>`_
    For the person about to change the chain: what will tell you the answer

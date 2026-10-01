@@ -186,38 +186,27 @@ how the documentation and the notebooks label them.
 
 .. _issue-geoid-longitude-convention:
 
-``geoid_undulation`` returns NaN for a negative longitude
-----------------------------------------------------------
+``geoid_undulation`` returned NaN for a negative longitude
+-----------------------------------------------------------
 
-:Status: open, not blocking
+:Status: **fixed** 2026-10-01 (grand-mother/grand#251); kept here until it appears in a release changelog
 :Affects: any site west of Greenwich
 :Test: ``tests/geo/test_topography_conventions.py``
 
 The EGM96 undulation map shipped as ``data/egm96.png`` is indexed over
 longitude 0-360 degrees.  :func:`grand.geo.topography.geoid_undulation` has two
-calling conventions, and only one of them normalises:
+calling conventions, and only the :class:`~grand.geo.coordinates.Geodetic` one
+normalised the longitude: ``geoid_undulation(latitude=-35.20,
+longitude=-69.32)`` returned ``nan``, with nothing raised.  Both forms now wrap
+the longitude into :math:`[0, 360)` and agree:
 
 .. code-block:: python
 
     >>> topography.geoid_undulation(latitude=-35.20, longitude=-69.32)
-    nan
-    >>> topography.geoid_undulation(latitude=-35.20, longitude=290.68)
     25.583896785168232
     >>> topography.geoid_undulation(
     ...     Geodetic(latitude=-35.20, longitude=-69.32, height=0.0))
     25.583896785168232
-
-Nothing raises.  The ``nan`` propagates into whatever geometry follows, and
-through ``elevation(..., reference='sea')``, which subtracts the undulation.
-
-**Workaround.**  Pass a :class:`~grand.geo.coordinates.Geodetic` rather than
-the ``latitude=``/``longitude=`` keywords.  That path normalises and is what
-the documentation and notebook 07 use throughout.
-
-**Fix.**  Wrap the longitude into :math:`[0, 360)` in the keyword branch.  It
-is one line; it has not been made here only because changing a function's
-domain silently is worse than documenting it, and no user of the keyword form
-in the western hemisphere has been identified.
 
 This is a specific case of a wider pattern in :mod:`grand.geo.topography`: a
 point with no SRTM tile also returns ``nan`` rather than raising.  Both are

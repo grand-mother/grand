@@ -62,19 +62,13 @@ def test_geoid_undulation_is_finite_in_the_eastern_hemisphere():
         % (np.ravel(by_object)[0], by_keyword))
 
 
-def test_keyword_form_does_not_normalise_a_negative_longitude():
-    r"""Records that ``longitude=-69.32`` returns ``nan`` where a `Geodetic` does not.
+def test_keyword_form_normalises_a_negative_longitude():
+    r"""``longitude=-69.32`` gives the same undulation as a `Geodetic` (#251).
 
     The shipped EGM96 map is indexed over 0-360 degrees.  The
-    ``latitude=``/``longitude=`` path passes the value through unchanged, so a
-    western-hemisphere site gives ``nan``; passing a
-    :class:`~grand.geo.coordinates.Geodetic` normalises and gives the right
-    answer.  Anyone working at Auger, or anywhere else west of Greenwich, meets
-    this immediately.
-
-    Asserted rather than merely documented so that the day the keyword path
-    normalises too, this test fails and the caveat can be removed from the
-    documentation and from notebook 07.
+    ``latitude=``/``longitude=`` path passed the value through unchanged, so a
+    western-hemisphere site gave ``nan``; it now wraps the longitude, like the
+    :class:`~grand.geo.coordinates.Geodetic` path.
     """
     lat, lon = AUGER
     negative = topography.geoid_undulation(latitude=lat, longitude=lon)
@@ -82,10 +76,8 @@ def test_keyword_form_does_not_normalise_a_negative_longitude():
     by_object = float(np.ravel(topography.geoid_undulation(
         Geodetic(latitude=lat, longitude=lon, height=0.0)))[0])
 
-    assert np.isnan(negative), (
-        'the keyword form now handles a negative longitude (%s); this test and '
-        'the caveats that cite it are stale' % negative)
-    assert np.isfinite(wrapped), 'wrapping into [0, 360) should work'
+    assert np.isfinite(negative), 'a negative longitude gave %s' % negative
+    assert np.isclose(negative, wrapped)
     assert np.isclose(wrapped, by_object), (
         'the Geodetic form disagrees with the wrapped keyword form: %s vs %s'
         % (by_object, wrapped))

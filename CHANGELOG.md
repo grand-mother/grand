@@ -15,6 +15,18 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Coordinates west of Greenwich, and conversions that returned nothing (#251).**
+  - `geoid_undulation(latitude=..., longitude=...)` returned NaN for a
+    negative longitude: the EGM96 map is indexed 0–360° and only the
+    `Geodetic` form wrapped the longitude. Both forms now wrap it and agree.
+    The known-issues entry, troubleshooting and notebook 07 are updated.
+  - `Horizontal` stored its location, basis and vector on the class, so a
+    second `Horizontal` changed the first. They are now per instance.
+  - `Geodetic.geodetic_to_horizontal` and the `*_to_grandcs` methods
+    returned `None`. They now return the converted coordinates; called
+    without a `location`, the GRAND-frame ones warn that the default origin
+    is used.
+
 - **Silent failures and global side effects (#256, in part).**
   - The Newton solver behind the Cherenkov angle returned whatever iterate it
     had reached when it did not converge (-610961.3 for x² + 1), without a
