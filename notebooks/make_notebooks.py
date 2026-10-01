@@ -1316,8 +1316,8 @@ SITE = [40.98, 93.95, 1200.0]        # GRANDProto300: lat, lon, altitude
 path = os.path.join(workdir, 'efield.root')
 
 # --- TRun: everything constant across the events of one run ------------------
-# Constructing a tree on a file that has no such tree prints "No valid trun
-# TTree ... Creating a new one" -- that is the expected path when writing.
+# Constructing a tree on a file that has no such tree creates it -- the
+# expected path when writing (logged at debug level only).
 run = TRun(path)
 run.run_number = 0
 run.du_id = list(range(N_DU))

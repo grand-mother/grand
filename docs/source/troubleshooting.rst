@@ -161,8 +161,9 @@ Messages that look like errors and are not
 ------------------------------------------
 
 ``No valid trun TTree in the file ...  Creating a new one.``
-    Expected when writing.  Constructing a tree class on a file that does not
-    yet contain that tree creates it.  Only worry if you see it while *reading*
+    Expected when writing, and logged only at debug level now (older versions
+    printed it as a warning).  Constructing a tree class on a file that does
+    not yet contain that tree creates it.  Only worry if you see it while *reading*
     a file you expected to be populated — that means the tree is absent or
     named differently.
 

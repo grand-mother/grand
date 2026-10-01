@@ -1,6 +1,7 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
 from dataclasses import dataclass, field, fields
 
+import logging
 import numpy as np
 
 from grand.basis import validate as _validate
@@ -15,6 +16,8 @@ from grand.aoi.shower import Shower
 from grand.dataio import DataDirectory, TRun, TRunRawVoltage, TVoltage, TEfield, TShower, TRawVoltage, grand_tree_list, NotUniqueEvent 
 import grand.dataio
 from grand.dataio.xmax_frame import xmax_above_ground
+
+logger = logging.getLogger(__name__)
 
 try:
     from line_profiler import profile
@@ -433,7 +436,7 @@ class Event:
             if trun := self.file_trun.Get("trun"):
                 self.trun = TRun(_tree=trun)
             else:
-                print("No Run tree. Run information will not be available.")
+                logger.debug("No Run tree. Run information will not be available.")   # narration, not news (#194)
                 # Make trun really None
                 self.trun = None
 
@@ -442,9 +445,9 @@ class Event:
             # Fill part of the event from trun
             ret = self.fill_event_from_runtree(run_entry_number=run_entry_number)
             if ret:
-                print("Run information loaded.")
+                logger.debug("Run information loaded.")   # narration, not news (#194)
             else:
-                print("No Run tree. Run information will not be available.")
+                logger.debug("No Run tree. Run information will not be available.")   # narration, not news (#194)
 
         # Check the TRunRawVoltage file existence
         if self.file_trunrawvoltage is not None:
@@ -454,7 +457,7 @@ class Event:
                 if trunrawvoltage := self.file_trunrawvoltage.Get("trunrawvoltage"):
                     self.trunrawvoltage = TRunRawVoltage(_tree=trunrawvoltage)
                 else:
-                    print("No TRunRawVoltage tree. RunRawVoltage information will not be available.")
+                    logger.debug("No TRunRawVoltage tree. RunRawVoltage information will not be available.")   # narration, not news (#194)
                     # Make trunrawvoltage really None
                     self.trunrawvoltage = None
 
@@ -463,9 +466,9 @@ class Event:
             # Fill part of the event from trunrawvoltage
             ret = self.fill_event_from_runrawvoltagetree(run_entry_number=run_entry_number)
             if ret:
-                print("RunRawVoltage information loaded.")
+                logger.debug("RunRawVoltage information loaded.")   # narration, not news (#194)
             else:
-                print("No RunRawVoltage tree. RunRawVoltage information will not be available.")
+                logger.debug("No RunRawVoltage tree. RunRawVoltage information will not be available.")   # narration, not news (#194)
 
         if self.file_tvoltage:
             # With a directory the trees are opened once, so the voltage tree
@@ -498,7 +501,7 @@ class Event:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree()
                     if ret:
-                        print("Voltage information loaded.")
+                        logger.debug("Voltage information loaded.")   # narration, not news (#194)
                     else:
                         # print("No Voltage tree. Voltage information will not be available.")
                         # Make tvoltage really None
@@ -513,7 +516,7 @@ class Event:
                         self.tvoltage = TRawVoltage(_tree=tvoltage)
                         use_trawvoltage = True
                     else:
-                        print("No Voltage or TRawVoltage tree. Voltage information will not be available.")
+                        logger.debug("No Voltage or TRawVoltage tree. Voltage information will not be available.")   # narration, not news (#194)
                         # Make tvoltage really None
                         self.tvoltage = None
 
@@ -522,9 +525,9 @@ class Event:
                     # Fill part of the event from tvoltage
                     ret = self.fill_event_from_voltage_tree(use_trawvoltage=use_trawvoltage, trawvoltage_channels=trawvoltage_channels)
                     if ret:
-                        print("Voltage information (from TRawVoltage) loaded.")
+                        logger.debug("Voltage information (from TRawVoltage) loaded.")   # (#194)
                     else:
-                        print("No Voltage or TRawVoltage tree. Voltage information will not be available.")
+                        logger.debug("No Voltage or TRawVoltage tree. Voltage information will not be available.")   # narration, not news (#194)
                         # Make tvoltage really None
                         self.tvoltage = None
 
@@ -562,7 +565,7 @@ class Event:
                                 f"{tefield_level}.")
                         self.tefield_level = tefield_level
                 else:
-                    print("No Efield tree. Efield information will not be available.")
+                    logger.debug("No Efield tree. Efield information will not be available.")   # narration, not news (#194)
                     # Make tefield really None
                     self.tefield = None
 
@@ -571,9 +574,9 @@ class Event:
                 # Fill part of the event from tefield
                 ret = self.fill_event_from_efield_tree()
                 if ret:
-                    print("Efield information loaded.")
+                    logger.debug("Efield information loaded.")   # narration, not news (#194)
                 else:
-                    print("No Efield tree. Efield information will not be available.")
+                    logger.debug("No Efield tree. Efield information will not be available.")   # narration, not news (#194)
                     # Make tefield really None
                     self.tefield = None
 
@@ -594,7 +597,7 @@ class Event:
                     else:
                         self.tshower = TShower(_tree=tshower)
                 else:
-                    print("No Shower tree. Shower information will not be available.")
+                    logger.debug("No Shower tree. Shower information will not be available.")   # narration, not news (#194)
                     # Make tshower really None
                     if simshower:
                         self.tsimshower = None
@@ -606,9 +609,9 @@ class Event:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(simshower)
                 if ret:
-                    print("Shower information loaded.")
+                    logger.debug("Shower information loaded.")   # narration, not news (#194)
                 else:
-                    print("No Shower tree. Shower information will not be available.")
+                    logger.debug("No Shower tree. Shower information will not be available.")   # narration, not news (#194)
                     # Make tshower really None
                     if simshower:
                         self.tsimshower = None
@@ -623,7 +626,7 @@ class Event:
                 if tsimshower := self.file_tsimshower.Get("tshower"):
                     self.tsimshower = TShower(_tree=tsimshower)
                 else:
-                    print("No Simulated Shower tree. Simulated Shower information will not be available.")
+                    logger.debug("No Simulated Shower tree. Simulated Shower information will not be available.")   # narration, not news (#194)
                     # Make tsimshower really None
                     self.tsimshower = None
 
@@ -632,9 +635,9 @@ class Event:
                 # Fill part of the event from tshower
                 ret = self.fill_event_from_shower_tree(True)
                 if ret:
-                    print("Simulated shower information loaded.")
+                    logger.debug("Simulated shower information loaded.")   # narration, not news (#194)
                 else:
-                    print("No Simulated shower tree. Simulated shower information will not be available.")
+                    logger.debug("No Simulated shower tree. Simulated shower information will not be available.")   # narration, not news (#194)
                     # Make tsimshower really None
                     self.tsimshower = None
 
@@ -764,7 +767,7 @@ class Event:
             # If this is the first time we calculate antennas positions, or
             # the ones we hold were not built from GPS for this same site
             if not self._all_antennas or self._all_antennas_key != ("gps", self.site):
-                print("GP300 workaround: calculating all antennas positions")
+                logger.debug("GP300 workaround: calculating all antennas positions")   # (#194)
                 from grand import Geodetic, GRANDCS
 
                 # Get the coordinates for all DUs from all events

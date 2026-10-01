@@ -485,3 +485,25 @@ def test_class_access_to_a_field_gives_the_descriptor():
     t.zenith = 12.5
     assert t.zenith == 12.5          # instance access unchanged
     t.stop_using()
+
+
+def test_routine_operations_do_not_warn(tmp_path, caplog):
+    r"""#194: creating a tree warned; a missing branch warned on every read."""
+    import logging
+    import pathlib
+
+    from grand.dataio import TRun, TShower
+
+    root = pathlib.Path(__file__).resolve().parents[2]
+    sample = next((root / "sim2root" / "Common").glob("sim_*/run_*_L0_*.root"))
+    with caplog.at_level(logging.DEBUG, logger="grand"):
+        t = TShower(str(tmp_path / "new.root"))
+        t.stop_using()
+        for _ in range(2):
+            r = TRun(str(sample))
+            r.stop_using()
+    warnings = [rec for rec in caplog.records if rec.levelno >= logging.WARNING]
+    assert not warnings, [rec.getMessage() for rec in warnings]
+    missing = [rec for rec in caplog.records if "written before it existed" in rec.getMessage()]
+    names = [rec.getMessage().split("'")[1] for rec in missing]
+    assert len(names) == len(set(names))          # each branch reported once

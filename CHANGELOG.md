@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Routine operations no longer print alarms (#194).** Creating a tree in a
+  new file warned "No valid … TTree … Creating a new one" (now debug); every
+  read of an older file warned that a branch was "not found … will not be
+  filled" (now once per file and branch, at info, saying the file predates
+  the branch); `grand.aoi` narrated each read with `print`s ("Run information
+  loaded.", …), now debug logging. Notebook outputs are cleaner accordingly.
+
 - **Documentation facts that were stale or wrong (#258).** `TRun.software_version`
   does not exist (the version fields are named now); the noise-table pages
   speak of the pre-2026-09-07 problems in the past tense; `data_files.rst`

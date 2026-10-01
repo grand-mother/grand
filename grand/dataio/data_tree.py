@@ -20,6 +20,23 @@ from grand.dataio import file_lock as _file_lock
 logger = getLogger(__name__)
 
 
+
+#: (file, branch) pairs already reported as missing (#194)
+_missing_branches_reported = set()
+
+
+def _report_missing_branch(tree, branch_name):
+    r"""Says once per file and branch, at INFO, that an older file lacks a branch.
+
+    It was a warning on every read of every committed sample, which a reader
+    took for an error (#194).
+    """
+    key = (getattr(tree, "_file_name", None), branch_name)
+    if key not in _missing_branches_reported:
+        _missing_branches_reported.add(key)
+        logger.info("%s has no branch '%s' (written before it existed); the field keeps its "
+                    "default", key[0] or "the input", branch_name)
+
 def _to_unix(value):
     r"""Returns the Unix time of `value`; a naive datetime is taken as UTC.
 
@@ -874,7 +891,8 @@ class DataTree:
                 self._tree = self._file.Get(self._tree_name)
                 # There was no such tree in the file, so create one
                 if not self._tree:
-                    logger.warning(
+                    # The normal path when writing a new file: not a warning (#194)
+                    logger.debug(
                         f"No valid {self._tree_name} TTree in the file {self._file.GetName()}. Creating a new one."
                     )
                     self._create_tree()
@@ -1511,7 +1529,7 @@ class DataTree:
                 try:
                     self._tree.SetBranchAddress(branch_name, getattr(self, value_name).string)
                 except:
-                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
+                    _report_missing_branch(self, branch_name)
         elif isinstance(value, ROOT.string):
             # Create the branch
             if not set_branches:
@@ -1523,7 +1541,7 @@ class DataTree:
                 try:
                     self._tree.SetBranchAddress(branch_name, getattr(self, value_name))
                 except:
-                    logger.warning(f"The branch {branch_name} was not found in the source file and will not be filled.")
+                    _report_missing_branch(self, branch_name)
         else:
             raise ValueError(f"Unsupported type {type(value)}. Can't create a branch {branch_name}.")
 
