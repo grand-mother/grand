@@ -15,6 +15,19 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`extract_events.py` no longer deletes the target directory (#244).**
+  `-ow` removed the whole target directory with whatever else was in it (with
+  target `.`, the current directory). It now replaces only the GRAND files the
+  script writes, and refuses `.`, a parent of the current directory, or a
+  directory holding a source. The event list is read and checked before the
+  target is touched: blank and `#` lines are skipped, a repeated line is
+  dropped with a warning, a bad line is reported with its number, and a path
+  with a comma can be quoted. An event already in the target is skipped
+  instead of aborting the job; a requested event that is not found makes the
+  script exit 1; `-c` now stores its comment in the trees written. The trees
+  of the two e-field levels share a name, so only one of them was written and
+  the other file was left without a tree; both are written now.
+
 - **The `open_grand_*` scripts no longer run the file name as code (#184).**
   `open_grand_file.py`, `open_grand_directory.py` and
   `open_grand_analysis_prompt.py` pasted the name into the Python command they
