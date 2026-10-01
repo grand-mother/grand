@@ -223,10 +223,22 @@ class AntennaProcessing:
         dtheta = self.model_leff.theta[1] - self.model_leff.theta[0]
         # theta_efield between index it0 and it1 in theta antenna response representation
         rt1 = (theta_efield - self.model_leff.theta[0]) / dtheta
-        # prevent > 360 deg or >180 deg ?
+        # theta is not periodic: a direction outside the table (below the
+        # antenna's horizon, theta > 90 deg for the GP300 tables) used to wrap
+        # round with a modulo, so 91 deg read the zenith row at full strength
+        # (issue #285).  The table gives no response there; it is taken as zero,
+        # continuous with the 90 deg row, and said so.
         # np.ravel(...)[0]: rt1 may be a size-1 array, which NumPy 2 will
         # not convert to a scalar implicitly.
-        it0 = int(np.ravel(np.floor(rt1) % self.model_leff.theta.size)[0])
+        theta_deg = float(np.ravel(theta_efield)[0])
+        in_table = bool(self.model_leff.theta[0] <= theta_deg <= self.model_leff.theta[-1])
+        if not in_table:
+            logger.warning(
+                "Source direction at zenith %.2f deg, outside the antenna table (%.0f to %.0f deg; "
+                "below the antenna's horizon): its effective length is taken as zero",
+                theta_deg, self.model_leff.theta[0], self.model_leff.theta[-1])
+            rt1 = 0.0
+        it0 = int(np.ravel(np.floor(rt1))[0])
         it1 = it0 + 1
         if it1 == self.model_leff.theta.size:  # Prevent overflow
             it1, rt1 = it0, 0
@@ -277,6 +289,8 @@ class AntennaProcessing:
                 +rp1 * rt1 * leff[:, ip1, it1]
                 )
         leff_itp_sph = np.array([leff_itp_t, leff_itp_p])
+        if not in_table:
+            leff_itp_sph = np.zeros_like(leff_itp_sph)
         # interpolation Leff theta and phi on frequency
         pre = AntennaProcessing.pre_cpt
         leff_itp = (

@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **No antenna response from below the antenna's horizon (#285).** The
+  effective-length lookup took the zenith row modulo the table size, so a
+  source at 91° read the 0° (zenith) row, 95° the 4° row, and so on, at full
+  strength: an Xmax below an antenna's plane (near-horizontal showers over
+  relief, or a wrong Xmax) gave 777–2500 µV instead of about zero, while 90–91°
+  gave exactly zero. Directions outside the table (zenith above 90° for the
+  GP300 tables) now get zero response, continuous with the 90° row, and a
+  warning naming the angle. Directions inside the table are unchanged.
+
 - **Notebook 05's sky maps show right ascension correctly (#268).** The shipped
   LFMap grid's first axis runs 12 h ahead of right ascension, so the maps put
   the Galactic Centre at 5.8 h instead of 17.8 h. The notebook now shifts the
