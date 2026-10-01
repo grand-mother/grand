@@ -52,6 +52,41 @@ def _unwritten(tree):
         return 0
 
 
+def _close_with_trees(f, extra=()):
+    r"""Closes ``f`` and marks every tree object stored in it as gone (#274).
+
+    Parameters
+    ----------
+    f : ROOT.TFile
+        The file to close.
+    extra : iterable of DataTree, optional
+        Tree objects to mark as well, besides those in ``grand_tree_list``.
+    """
+    if f is None:
+        return
+    try:
+        addr = ROOT.addressof(f)
+    except TypeError:
+        return
+    gone = []
+    if f.IsOpen():
+        # Matched on the TFile object, which survives Close(), never by asking
+        # a tree for its directory: another object's tree may already have
+        # been deleted with its own file, and touching it corrupts memory
+        for inst in list(grand_tree_list) + list(extra):
+            if inst._tree is None or inst.is_tchain or inst._file is None:
+                continue
+            try:
+                if ROOT.addressof(inst._file) == addr:
+                    gone.append(inst)
+            except TypeError:
+                continue
+        f.Close()
+    _forget_opened_file(f)
+    for inst in gone:
+        inst._tree = None
+
+
 def _register_opened_file(f):
     """Record a TFile that a tree opened itself, so that ``stop_using()`` may close it"""
     _files_opened_by_trees[ROOT.addressof(f)] = f
@@ -701,6 +736,7 @@ class DataTree:
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
+        self._check_open("fill")
         pass
 
     def write(self, *args, close_file=True, overwrite=False, force_close_file=False, **kwargs):
@@ -725,6 +761,7 @@ class DataTree:
             If the file already holds another tree of this name and
             ``overwrite`` is False.
         """
+        self._check_open("write")
         # Add the tree friends to this tree
         self.add_proper_friends()
 
@@ -902,6 +939,7 @@ class DataTree:
 
     def scan(self, *args):
         """Print out the values of the specified members of the tree (TTree::Scan() interface)"""
+        self._check_open("scan")
         self._tree.Scan(*args)
 
     def get_entry(self, ev_no):
@@ -917,6 +955,7 @@ class DataTree:
         int
             Bytes read; zero when the entry does not exist.
         """
+        self._check_open("get_entry")
         res = self._tree.GetEntry(ev_no)
         self.assign_branches()
         return res
@@ -1025,6 +1064,7 @@ class DataTree:
         int
             Number of entries drawn.
         """
+        self._check_open("draw")
 
         self._reset_read_cache(self._tree)
         # The values of the loaded or about-to-be-filled entry are kept (#196)
@@ -1087,6 +1127,7 @@ class DataTree:
         int
             Number of entries in the tree.
         """
+        self._check_open("get_entries")
         return self._tree.GetEntries()
 
     def get_number_of_entries(self):
@@ -1097,6 +1138,7 @@ class DataTree:
         int
             Number of entries in the tree.
         """
+        self._check_open("get_number_of_entries")
         return self.get_entries()
 
     def get_number_of_events(self):
@@ -1364,6 +1406,7 @@ class DataTree:
         int
             Bytes read; zero when the pair matches no entry.
         """
+        self._check_open("get_entry_with_index")
         res = self._tree.GetEntryWithIndex(run_no, evt_no)
         if res == 0 or res == -1:
             logger.error(
@@ -1469,15 +1512,34 @@ class DataTree:
 
         return mem_size, disk_size
 
+    def _check_open(self, action):
+        r"""Raises if this tree's data went with a closed file.
+
+        Closing a file deletes the trees stored in it; using one afterwards
+        crashed the interpreter (#274).
+
+        Parameters
+        ----------
+        action : str
+            The method being called, for the message.
+        """
+        if self._tree is None:
+            raise RuntimeError(_validate.message(
+                "%s.%s" % (type(self).__name__, action),
+                "this tree's file was closed (close_file(), stop_using(), or the close() of its "
+                "DataFile or DataDirectory), so its data is gone; open the file again with a "
+                "new tree object"))
+
     def close_file(self):
         """Close the file associated to the tree
 
         The file is closed even if other tree instances still read from it.
+        Every tree object stored in it, this one included, can no longer be
+        used: calling it raises a clear error rather than crashing.
         To release a tree when you are done with it, prefer ``stop_using()``
         or the ``with`` form, which close the file only when no other tree uses it.
         """
-        self._file.Close()
-        _forget_opened_file(self._file)
+        _close_with_trees(self._file, [self])
 
     def stop_using(self, close_file=True):
         """Stop using this instance and release the memory it holds

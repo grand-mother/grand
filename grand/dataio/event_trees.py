@@ -44,6 +44,7 @@ class MotherEventTree(DataTree):
 
     def fill(self):
         """Adds the current variable values as a new event to the tree"""
+        self._check_open("fill")
         # If the current run_number and event_number already exist, raise an exception
         if not self.is_unique_event():
             raise NotUniqueEvent(
@@ -220,6 +221,7 @@ class MotherEventTree(DataTree):
         int
             Bytes read; zero when the event is absent.
         """
+        self._check_open("get_event")
         # Try to get the requested entry
         # res = self._tree.GetEntryWithIndex(int(run_no), int(ev_no))
         # The above should work, but there is a bug in ROOT
@@ -270,6 +272,7 @@ class MotherEventTree(DataTree):
         evt_id : str, optional
             Branch holding the event number.
         """
+        self._check_open("build_index")
         self._reset_read_cache(self._tree)
         self._tree.BuildIndex(run_id, evt_id)
 

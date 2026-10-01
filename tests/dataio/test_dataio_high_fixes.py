@@ -167,3 +167,36 @@ def test_filled_entries_are_written_or_reported(tmp_path):
                 t.event_number = 1
                 t.fill()
                 raise RuntimeError("stop")
+
+
+SAMPLE = ROOT / "sim2root" / "Common" / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000"
+
+USE_AFTER_CLOSE = [
+    "e = TEfield(F); e.close_file(); e.get_entry(0)",
+    "a = TEfield(F); b = TEfield(F); a.close_file(); b.get_entry(1)",
+    "df = DataFile(F); df.close(); df.tefield.get_entry(0)",
+    "d = DataDirectory(D); d.close(); d.tefield.get_entry(0)",
+    "e = TEfield(N); e.run_number = 1; e.event_number = 1; e.fill(); e.write(); "
+    "e.close_file(); e.event_number = 2; e.fill()",
+]
+
+
+def test_using_a_tree_after_its_file_closed_raises(tmp_path):
+    r"""#274: each of these crashed the interpreter (exit 129, no traceback)."""
+    import shutil
+    import subprocess
+    import sys
+
+    data = tmp_path / "d"
+    data.mkdir()
+    for f in SAMPLE.glob("*.root"):
+        shutil.copy(f, data)
+    efield = next(data.glob("efield_*_L0_*.root"))
+    for snippet in USE_AFTER_CLOSE:
+        code = ("from grand.dataio import TEfield, DataFile, DataDirectory\n"
+                "F, D, N = %r, %r, %r\n%s\n" % (str(efield), str(data), str(tmp_path / "n.root"),
+                                               snippet))
+        done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                              timeout=120)
+        assert done.returncode == 1, (snippet, done.returncode, done.stderr[-800:])
+        assert "this tree's file was closed" in done.stderr, snippet

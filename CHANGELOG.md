@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Using a tree after its file was closed raises instead of crashing (#274).**
+  `close_file()`, `DataFile.close()` and `DataDirectory.close()` delete the
+  trees stored in the file, and any later use of one -- through the object
+  that closed it or another object on the same file -- killed the interpreter
+  (exit 129, no traceback). Every tree object stored in a file is now marked
+  when the file closes, and `get_entry()`, `fill()`, `write()`, `draw()` and
+  the other methods that read the tree raise a `RuntimeError` saying the file
+  was closed. A tree kept in memory after `write("file.root")` is unaffected.
+
 - **Filled entries are no longer dropped silently (#275).** Entries filled but
   not written were discarded without a word when a `with` block ended or
   `stop_using()` was called. Leaving a `with` block normally now writes them,

@@ -725,7 +725,10 @@ class DataFile:
         """Close the file and the belonging trees"""
         for t in self.tree_instances:
             t.stop_using()
-        self.f.Close()
+        # The trees' data goes with the file: mark them, so that using one
+        # raises a clear error rather than crashing (#274)
+        from grand.dataio.data_tree import _close_with_trees
+        _close_with_trees(self.f, self.tree_instances)
         _file_lock.release(self.f.GetName())
 
     def get_max_list_of_events(self):
