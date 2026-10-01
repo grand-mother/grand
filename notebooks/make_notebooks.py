@@ -1912,8 +1912,8 @@ print("noise floor  %8.2f uV  (RMS, samples 400-511)" % floor)
 print("peak         %8.1f uV" % np.abs(reference).max())
 print("ratio        %8.0f" % (np.abs(reference).max() / floor))
 print()
-print("a 1e-9 relative tolerance is %.2e uV — far below the noise floor,"
-      % (1e-9 * np.abs(reference).max()))
+print("the test's tolerance, %g of the peak, is %.2e uV — far below the noise floor,"
+      % (golden.TOLERANCE, golden.TOLERANCE * np.abs(reference).max()))
 print("so the test is pinning the exact realisation, not a statistical level.")'''),
     code(r'''fig, ax = plt.subplots(figsize=(9, 3.4))
 t_ns = np.arange(reference.shape[2]) * golden.T_BIN_NS
@@ -1942,9 +1942,11 @@ Same input, same seed, same configuration.'''),
 fresh = run()
 print("largest disagreement with the reference: %g uV"
       % np.abs(fresh - reference).max())'''),
-    md(r'''Exactly zero — bit for bit, not nearly. The $10^{-9}$ tolerance in the test
-exists so that a NumPy or BLAS upgrade reassociating a floating-point sum does
-not fail the build; nothing here needs it today.
+    md(r'''Zero, or at most a float32 rounding step (about $10^{-8}$ of the peak):
+whether a run reproduces bit for bit depends on the machine and its BLAS, which
+may reassociate a floating-point sum. The test's tolerance,
+`golden.TOLERANCE` = $10^{-6}$ of the peak, is set above that and far below any
+real change, and the table below uses the same tolerance (#217).
 
 ## What it catches, for real
 
@@ -1961,7 +1963,8 @@ for label, seed, over in [
 ]:
     out = run(seed=seed, **over)
     delta = np.abs(out - reference).max()
-    caught = not np.allclose(out, reference, rtol=1e-9, atol=0.0)
+    # The test's own criterion: the largest difference over the trace peak
+    caught = delta / np.abs(reference).max() > golden.TOLERANCE
     rows.append((label, delta, delta / np.abs(reference).max(), caught))
 
 print("%-30s %12s %10s   %s" % ("change", "max |diff|", "relative", "caught?"))

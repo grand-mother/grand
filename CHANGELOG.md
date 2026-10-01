@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Notebook 08's own tolerance (#217).** It claimed "exactly zero, bit for
+  bit" and judged its table with a 10⁻⁹ tolerance, so on a machine where the
+  rerun differed by one float32 step its unchanged control row read "caught".
+  It now uses the test's tolerance (10⁻⁶ of the peak) and says that
+  reproduction is to float32 rounding. `notebooks.rst` says the notebooks run
+  from `notebooks/` with the repository root on `sys.path`.
+
 - **Notebooks 03–06: fixture, frequency grid and prose (#188, #189, #190).**
   - Notebook 06's fixture put Xmax straight above the core for an 85°
     shower, so every run warned that the geometry was inconsistent; Xmax is

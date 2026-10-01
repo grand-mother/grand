@@ -18,6 +18,12 @@ To run them rather than read them::
     source env/setup.sh
     jupyter lab notebooks/
 
+Run them from the ``notebooks/`` folder, with the repository root on
+``sys.path`` (``export PYTHONPATH=$PWD`` from the root before starting
+Jupyter): notebook 08 imports
+``tests.sim.test_pipeline_golden``, and notebooks 09, 11 and 12 read
+``../sim2root/...`` and ``../examples/...``.
+
 .. note::
 
    The notebooks are **not** built into this documentation.  Executing them on
