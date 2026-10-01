@@ -2794,7 +2794,12 @@ small box around the timing answer.
 
 - **Frame**: x North, y West, z Up, in metres, with the origin at the centre of
   the array. Heights are *above sea level*: the fits put the ground at
-  `constants.groundAltitude`, 1231 m, the GP13 site.
+  `constants.groundAltitude`, 1231 m, the GP13 site, which this notebook uses.
+  Simulation files are different: `TRun.du_xyz` gives z relative to the run's
+  `origin_geoid`, so take positions and ground altitude together from
+  `geom.antenna_positions_from_run(trun)` and pass the latter as
+  `groundAltitude`; the default would put the source over a kilometre too
+  high.
 - **Angles** in radians, and they say where the shower **comes from**: zenith 0
   is a shower falling straight down, azimuth 0 one arriving from the North,
   azimuth 90° one arriving from the West. The

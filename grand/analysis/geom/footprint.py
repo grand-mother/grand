@@ -22,7 +22,10 @@ def compute_core(k, Xsource, groundAltitude=cons.groundAltitude):
     Xsource : ndarray, shape (3,)
         Emission point coordinates [m].
     groundAltitude : float
-        Reference altitude defining the ground plane (meters).
+        Height above sea level of the frame's origin, where the source
+        distance is measured from (meters).  The default, 1231 m, is the GP13
+        site; for simulation files pass the ground altitude
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
 
     Returns
     -------
@@ -40,6 +43,32 @@ def compute_core(k, Xsource, groundAltitude=cons.groundAltitude):
     u_core = (groundAltitude - Xsource[2]) / k[2]
     xc = Xsource + k * u_core
     return(xc)
+
+def antenna_positions_from_run(trun):
+    r"""Returns a run's antenna positions in the fits' frame, and its ground altitude.
+
+    The fits take x North, y West and z the height *above sea level*, with
+    the source measured from ``(0, 0, groundAltitude)``.  ``TRun.du_xyz``
+    gives z relative to the run's origin, ``origin_geoid``, so feeding it
+    to the fits with the default ``groundAltitude`` (1231 m, GP13) placed
+    the source that far too high: arrival times moved by up to 250 ns (#252).
+
+    Parameters
+    ----------
+    trun : grand.dataio.TRun
+        The run tree, at the entry of the wanted run.
+
+    Returns
+    -------
+    Xants : ndarray, shape (N, 3)
+        Positions in metres, z above sea level, in ``trun.du_id`` order.
+    ground_altitude : float
+        ``origin_geoid``'s height, to pass as ``groundAltitude``.
+    """
+    xyz = np.asarray(trun.du_xyz, dtype=float).reshape(-1, 3)
+    ground_altitude = float(np.ravel(np.asarray(trun.origin_geoid, dtype=float))[2])
+    return xyz + np.array([0.0, 0.0, ground_altitude]), ground_altitude
+
 
 def generate_cone_surface_vectors(k, omega, n=10):
     """Generate vectors uniformly distributed on a cone surface.

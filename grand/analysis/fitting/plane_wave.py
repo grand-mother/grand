@@ -154,7 +154,28 @@ def PWF_residuals(params, Xants, tants, verbose=False, c=cons.c_light,  n=cons.n
     return (res)
 
 def PWF_model(params, Xants, c=cons.c_light,  n=cons.n_atm, groundAltitude=cons.groundAltitude):
-    """Generate plane wavefront timings."""
+    """Generate plane wavefront timings.
+
+    Parameters
+    ----------
+    params : sequence
+        ``(theta, phi)`` in radians.
+    Xants : ndarray, shape (N, 3)
+        Antenna positions: x North, y West, z the height above sea level (m).
+    c, n : float, optional
+        Speed of light and refractive index.
+    groundAltitude : float, optional
+        Height above sea level of the frame's origin, where the source
+        distance is measured from (meters).  The default, 1231 m, is the GP13
+        site; for simulation files pass the ground altitude
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
+        For the plane wave it only shifts all times by one constant.
+
+    Returns
+    -------
+    ndarray, shape (N,)
+        Arrival times in seconds, relative to the origin's.
+    """
     theta, phi = params
     ct = np.cos(theta)
     st = np.sin(theta)

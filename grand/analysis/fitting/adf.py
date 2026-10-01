@@ -26,10 +26,10 @@ def ADF_parameters(theta, phi, delta_omega, amplitude, Xants, Xsource, groundAlt
         theta, phi          : shower direction angles (rad) (from ADF_recons, best fit values)
         delta_omega         : ADF shape parameter (output from ADF_recons, best fit values)
         amplitude           : ADF amplitude (output from ADF_recons, best fit values)
-        Xants  : (N,3) positions of antennas
+        Xants  : (N,3) positions of antennas: x North, y West, z above sea level (m)
         Xsource   : (3,) position of Xsource (from SWF)
         Bvec   : (3,) magnetic field
-        groundAltitude : altitude of ground
+        groundAltitude : height above sea level of the frame's origin (m): 1231 m (GP13) by default; for simulation files, the ground altitude grand.analysis.geom.antenna_positions_from_run returns (#252)
     
     Returns
     -------

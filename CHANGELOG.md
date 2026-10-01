@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The reconstruction's frame is explicit for simulation files (#252): the
+  fits take heights above sea level with the ground at `groundAltitude`
+  (1231 m, GP13), while `TRun.du_xyz` is relative to `origin_geoid`; the new
+  `grand.analysis.geom.antenna_positions_from_run(trun)` returns positions
+  in the fits' frame and the ground altitude to pass. The fits' docstrings
+  and notebook 11 now state the convention (feeding `du_xyz` with the
+  default moved arrival times by up to ~250 ns).
+
 - The conversion scripts check that the run and event trees agree before
   computing (#249): `grand.dataio.consistency.check_event_trees`, used by
   `Efield2Voltage`, `convert_efield2efield.py` and `convert_voltage2adc.py`,

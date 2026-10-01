@@ -17,6 +17,11 @@ ns = 325
 kr = -0.1218
 n_atm = 1.000136
 
+#: Height above sea level, in metres, of the reconstruction frame's origin:
+#: the GP13 site.  The fits take antenna heights *above sea level*; the
+#: simulation files store ``du_xyz`` relative to ``origin_geoid`` instead
+#: (1264 m for the committed Xiaodushan samples), so use
+#: :func:`grand.analysis.geom.antenna_positions_from_run` for those (#252).
 groundAltitude = 1231
 
 

@@ -162,7 +162,10 @@ def compute_Xsource_cartesian_coords(theta_swf, phi_swf, r_xmax, groundAltitude=
     r_xmax : float
         Distance to the source (meters).
     groundAltitude : float, optional
-        Ground altitude in the detector reference frame (meters).
+        Height above sea level of the frame's origin, where the source
+        distance is measured from (meters).  The default, 1231 m, is the GP13
+        site; for simulation files pass the ground altitude
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
 
     Returns
     -------
@@ -196,9 +199,13 @@ def SWF_model(theta, phi, r_xsource, t_s, Xants, groundAltitude=cons.groundAltit
     t_s : float
         Emission time of the source (seconds).
     Xants : np.ndarray
-        Antenna positions in the detector reference frame, shape (N, 3).
+        Antenna positions, shape (N, 3): x North, y West, z the height above
+        sea level, in meters.
     groundAltitude : float, optional
-        Ground altitude in meters (default: cons.groundAltitude).
+        Height above sea level of the frame's origin, where the source
+        distance is measured from (meters).  The default, 1231 m, is the GP13
+        site; for simulation files pass the ground altitude
+        :func:`grand.analysis.geom.antenna_positions_from_run` returns (#252).
     cr : float, optional
         Propagation speed of the signal (default: speed of light).
 
