@@ -544,7 +544,7 @@ def convert():
             # Convert the RawShowerTree entries
             rawshower2grandroot(trawshower, gt)
             # Convert the RawMetaTree entries - (this goes before the efield becouse the efield needs the info on the second and nanosecond)
-            rawmeta2grandroot(trawmeta, gt)
+            rawmeta2grandroot(trawmeta, gt, trawshower.unix_date)
 
             # A shower that hit no antenna (issue #91). It is kept: the shower,
             # showersim and efield trees all get the event, the efield entry
@@ -1109,7 +1109,13 @@ def rawefield2grandroot(trawefield, gt, ext_trace = None, ext_t_0 = None):
     gt.tefield.trigger_position= np.ushort([trawefield.t_pre]*trawefield.du_count/trawefield.t_bin_size)
 
 # Convert the RawMetaTree entries
-def rawmeta2grandroot(trawmeta, gt):
+_time_fallback_logged = False
+
+
+def rawmeta2grandroot(trawmeta, gt, unix_date=0):
+    r"""Converts the RawMetaTree entry; `unix_date` is the simulation date, used
+    as the event time when the simulation gives none (#225)."""
+    global _time_fallback_logged
     #gt.tshower.shower_core_pos = trawmeta.shower_core_pos this is duplicated, using ithe one in shower for compatibility
     gt.tshowersim.event_weight = trawmeta.event_weight
     gt.tshowersim.tested_cores = trawmeta.tested_cores
@@ -1118,8 +1124,15 @@ def rawmeta2grandroot(trawmeta, gt):
       gt.tshower.core_time_s = trawmeta.unix_second              #this will be filled by the reconstruction of the core position eventually?
       gt.event_seconds = trawmeta.unix_second
     else:
-      gt.tshower.core_time_s = 200854852
-      gt.event_seconds = 200854852
+      # It was 200854852 (May 1976) here and 200854920 in the converter,
+      # while unix_date and the run's event times gave the simulation date
+      # (#225).  One fallback now: the simulation date.
+      if not _time_fallback_logged:
+        logger.warning("The simulation gives no event time (EventUnixTime 0): using the simulation "
+                       "date, %d, as the event time, here and for every later event without one" % unix_date)
+        _time_fallback_logged = True
+      gt.tshower.core_time_s = unix_date
+      gt.event_seconds = unix_date
     gt.tshower.core_time_ns = trawmeta.unix_nanosecond         #this will be filled by the reconstruction of the core position eventually?
     gt.event_nanoseconds = trawmeta.unix_nanosecond
     

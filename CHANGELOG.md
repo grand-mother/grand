@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- A ZHAireS simulation without an Xmax stores NaN, not -1 g/cm² and -1000 m
+  (which became an Xmax below ground in `TShower`) (#225). A simulation
+  without an event time (`EventUnixTime: 0`, as in the committed sample)
+  gets one fallback, the simulation date, in `core_time_s`, the event time
+  and every `du_seconds`, logged once; it was 200854920 in the converter and
+  200854852 in sim2root (May 1976), while `unix_date` said 2022-10-26. The
+  committed `sim2root/Common` sample files still carry the old time.
+
 - The ZHAireS `.sry` readers raise `ValueError` naming the missing value
   instead of calling `exit()`, which ended whatever program had imported
   them (#224); `scripts/pipeline/register_convert.py` exits 1, not 0, for an

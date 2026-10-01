@@ -222,11 +222,20 @@ def _convert(InputFolder, OutputFileName="GRANDConvention", RunID="SuitYourself"
         Azimuth = AiresInfo.GetAzimuthAngleFromSry(sryfile[0],"Aires")      #Used
         Energy = AiresInfo.GetEnergyFromSry(sryfile[0],"Aires")             #Used
         XmaxAltitude, XmaxDistance, XmaxX, XmaxY, XmaxZ = AiresInfo.GetKmXmaxFromSry(sryfile[0])  #Used all
+        # The readers return -1 for a value the .sry does not give; it was
+        # stored as -1 g/cm2 and -1000 m, and became an Xmax below ground.
+        # Unknown is NaN (#104, #225).
+        if all(float(v) == -1 for v in (XmaxAltitude, XmaxDistance, XmaxX, XmaxY, XmaxZ)):
+            logging.warning("no Xmax position ('Pos. Max.') in %s: stored as NaN" % sryfile[0])
+            XmaxAltitude = XmaxDistance = XmaxX = XmaxY = XmaxZ = float("nan")
         #Convert to m
         XmaxAltitude= float(XmaxAltitude)*1000.0
         XmaxDistance= float(XmaxDistance)*1000.0
         XmaxPosition= [float(XmaxX)*1000.0, float(XmaxY)*1000.0, float(XmaxZ)*1000.0]
         SlantXmax=AiresInfo.GetSlantXmaxFromSry(sryfile[0])                 #Used        
+        if float(SlantXmax) == -1:
+            logging.warning("no slant Xmax ('Sl. depth of max.') in %s: stored as NaN" % sryfile[0])
+            SlantXmax = float("nan")
         InjectionAltitude=AiresInfo.GetInjectionAltitudeFromSry(sryfile[0]) #Used                         
         
         t1=time.strptime(Date.strip(),"%d/%b/%Y")
