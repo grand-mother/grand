@@ -537,7 +537,11 @@ class Efield2Voltage:
             #we use fourier interpolation, becouse its easy!
             self.vout = sf.irfft(self.vout_f, m)*ratio #renormalize the amplitudes
             #MATIAS: TODO: now, we are missing a place to store the new sampling rate!
-        elif(self.params["add_noise"] or self.params["add_rf_chain"]): #we know we dont need to resample, but we might need to reproces the Voc (curently stored in vout by compute_voc_event) to take into acount the noise or the chain
+        # No resampling, but anything applied in the frequency domain (noise or
+        # any of the three chains) must be brought back: until then ``vout``
+        # still holds the V_oc that compute_voc_event put there (issue #227).
+        elif (self.params["add_noise"] or self.params["add_rf_chain"]
+              or self.params["add_rf_chain_nut"] or self.params["add_rf_chain_gaa"]):
             self.vout[:] = sf.irfft(self.vout_f)
 
         if(self.target_lenght<np.shape(self.vout)[2]):

@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`--rf_chain_nut` / `--rf_chain_gaa` now apply without noise or the main
+  chain (#227).** With `--no_noise --no_rf_chain`, the nut or GAA chain was
+  multiplied in the frequency domain but never transformed back, so the output
+  was V_oc, bit for bit. `final_resample` now inverts the spectrum whenever any
+  of noise and the three chains is on.
+
 - **Numbers given as text are accepted again in tree fields (#207, a regression
   from #179).** The input checks refused `"1618"` in a numeric field, which broke
   `ZHAireSRawToRawROOT.py <run>` (the README's one-argument form takes the event
