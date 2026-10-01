@@ -87,7 +87,8 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     tants : np.ndarray
         Measured antenna times (seconds).
     Xants : np.ndarray
-        Antenna positions, shape (N, 3).
+        Antenna positions, shape (N, 3), in metres: x North, y West, z above
+        sea level.
     sigma : float, optional
         Timing uncertainty (seconds).
     maxiter : int, optional
@@ -98,7 +99,10 @@ def recons_swf(theta_pwf, phi_pwf, tants, Xants, sigma=None, maxiter=1000, seed=
     Returns
     -------
     tuple
-        (theta_swf, phi_swf, r_xmax_swf, t_s_swf)
+        ``(theta_swf, phi_swf, r_xmax_swf, t_s_swf)``: the direction the
+        shower comes from, in radians; the distance from the source to
+        ``(0, 0, groundAltitude)``, in metres; and the emission time, in
+        seconds (#261).
     """
     where = "recons_swf"
     _checks.angles(where, theta_pwf=theta_pwf, phi_pwf=phi_pwf)

@@ -14,7 +14,7 @@ class Antenna:
     id: int = -1
     """Antenna ID - the du_id from the trees"""
 
-    ## Antenna position in site's referential (x = SN, y=EW,  0 = center of array + sea level)
+    ## Antenna position in the array frame (GRANDCS: x north, y west, z up from the origin's height)
     # position: np.ndarray = field(default_factory=lambda: np.zeros(3, np.float32))
     _position: CartesianRepresentation = field(default_factory=lambda: CartesianRepresentation(x=np.zeros(1, np.float64), y=np.zeros(1, np.float64), z=np.zeros(1, np.float64)))
     ## Antenna tilt

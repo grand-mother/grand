@@ -15,6 +15,20 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- aoi and analysis docstrings, and their rendering (#261, part 5):
+  `Timetrace3D.get_value_at_time` / `get_hilbert_value_at_time` document
+  their real argument, `time_offset`, and that they match a sample exactly
+  rather than interpolate; `calculate_t_vector`'s argument is required;
+  `Event.write_*`'s `filename` is required; positions are
+  `CartesianRepresentation`s of shape `(3, 1)` in the north-west-up frame;
+  `Event.directory`, the Hilbert getters and `Shower.origin_geoid` describe
+  what they hold. `CRB_PWF` / `CRB_ADF_SWF` say they return standard
+  deviations, in which order and units; `recons_swf` gives units;
+  `shower_direction_vector` says it returns the propagation direction, the
+  opposite of `arrival_direction`. The ADC docstrings, `DataDirectory`'s
+  Doxygen `@param` lines and `create_file_tree`'s parameters now render as
+  numpydoc.
+
 - Sim and reader docstrings match the code (#261, part 4): `Efield2Voltage`
   lists every `params` key with its default, its constructor's Raises/Notes
   render as sections, `du_type` lists its values (`'Horizon'`'s files are

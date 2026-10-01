@@ -282,12 +282,12 @@ class Event:
 
     @property
     def directory(self):
-        """A single file that contains all the TTrees
+        """The directory the event's trees were read from
 
         Returns
         -------
-        str
-            Directory the event files live in.
+        DataDirectory or None
+            The directory, or None when the event was read from one file.
         """
         return self._directory
 
@@ -336,12 +336,13 @@ class Event:
 
     @property
     def origin_geoid(self):
-        """Origin of the coordinate system used for the array
+        """Origin of the array frame
 
         Returns
         -------
-        ndarray, shape (3,)
-            Latitude, longitude and height of the array origin.
+        CartesianRepresentation, shape (3, 1)
+            Latitude and longitude in degrees and height in metres, as x, y
+            and z; ``np.ravel`` gives three numbers.
         """
         return self._origin_geoid
 
@@ -1280,8 +1281,8 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination file.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1297,8 +1298,8 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination file.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1314,8 +1315,8 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination file.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         """
@@ -1331,8 +1332,8 @@ class Event:
 
         Parameters
         ----------
-        filename : str, optional
-            Destination file.
+        filename : str
+            Destination file; required (#212).
         overwrite : bool, optional
             Replace the tree of this kind in that file rather than adding to it.
         tree_name : str, optional
@@ -1705,7 +1706,7 @@ class Event:
         return np.array([el.get_value_at_time(t) for el in self.efields])
 
     def get_hilbert_voltage_at_time(self, t):
-        """Get the voltage signal value in all the DUs at the given time
+        """Get the Hilbert envelope of the voltage in all the DUs at the given time
 
         Parameters
         ----------
@@ -1720,7 +1721,7 @@ class Event:
         return np.array([el.get_hilbert_value_at_time(t) for el in self.voltages])
 
     def get_hilbert_efield_at_time(self, t):
-        """Get the efield signal value in all the DUs at the given time
+        """Get the Hilbert envelope of the efield in all the DUs at the given time
 
         Parameters
         ----------
@@ -1768,11 +1769,11 @@ def create_file_tree(target_dir, tree_name, source_tree):
     Parameters
     ----------
     target_dir : str
-    Directory the file lives in.
+        Directory the file lives in.
     tree_name : str
-    Name of the tree to create.
+        Name of the tree to create.
     source_tree : DataTree, optional
-    Tree whose structure and metadata to copy.
+        Tree whose structure and metadata to copy.
 
     Returns
     -------

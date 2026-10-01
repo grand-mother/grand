@@ -45,8 +45,8 @@ class Shower:
 
         Returns
         -------
-        ndarray, shape (3,)
-            Position of shower maximum.
+        CartesianRepresentation, shape (3, 1)
+            Position of shower maximum, in metres (x north, y west, z up).
         """
         return self._Xmaxpos
 
@@ -63,12 +63,13 @@ class Shower:
 
     @property
     def origin_geoid(self):
-        """Direction of origin
+        """Origin of the array frame the shower's positions are in
 
         Returns
         -------
-        ndarray, shape (3,)
-            Latitude, longitude and height of the array origin.
+        CartesianRepresentation, shape (3, 1)
+            Latitude and longitude in degrees and height in metres, as x, y
+            and z.
         """
         return self._origin_geoid
 
@@ -89,8 +90,8 @@ class Shower:
 
         Returns
         -------
-        ndarray, shape (3,)
-            Shower core position at ground.
+        CartesianRepresentation, shape (3, 1)
+            Shower core position at ground, in metres (x north, y west, z up).
         """
         return self._core_ground_pos
 

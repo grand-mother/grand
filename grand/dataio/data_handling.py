@@ -31,10 +31,7 @@ class DataDirectory:
     """Class holding the information about GRAND data in a directory"""
 
     def __init__(self, dir_name: str, recursive: bool = False, analysis_level: int = -1, sim2root_structure: bool = True):
-        """
-        @param dir_name: the name of the directory to be scanned
-        @param recursive: if to scan the directory recursively
-        @param analysis_level: which analysis level files to read. -1 means max
+        """Indexes the GRAND files of a directory.
 
         Parameters
         ----------

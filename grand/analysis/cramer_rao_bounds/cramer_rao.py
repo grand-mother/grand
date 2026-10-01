@@ -68,8 +68,13 @@ def CRB_ADF_SWF(theta_swf: float, phi_swf: float, r_xsource: float, t_s: float, 
 
     Returns
     -------
-    np.ndarray
-        The computed Cramer-Rao Bound value for the ADF SWF model.
+    np.ndarray, shape (8,)
+        The smallest standard deviations (square roots of the diagonal of the
+        inverse Fisher matrix) an unbiased fit can reach, for the parameters
+        in the order of the arguments: theta_swf, phi_swf (radians),
+        r_xsource (m), t_s (s), theta_adf, phi_adf, delta_omega (radians),
+        scaling_factor.  All NaN if the Fisher matrix cannot be inverted
+        (#261).
     """
     # Number of antennas
     where = "CRB_ADF_SWF"
@@ -172,8 +177,10 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
 
     Returns
     -------
-    np.ndarray
-        The computed Cramer-Rao Bound value for the PWF model.
+    np.ndarray, shape (2,)
+        The smallest standard deviations of theta_pwf and phi_pwf an unbiased
+        fit can reach, in radians (square roots of the diagonal of the
+        inverse Fisher matrix) (#261).
     """
     # Number of antennas
     where = "CRB_PWF"

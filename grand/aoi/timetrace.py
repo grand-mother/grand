@@ -63,8 +63,9 @@ class Timetrace3D:
 
         Parameters
         ----------
-        time_offset : float, optional
-            Offset added to the time axis, in nanoseconds.
+        time_offset : float
+            Subtracted from ``t0`` to give the time of the first sample, in
+            nanoseconds.  Required (#261).
         """
         # ToDo: t0 is at the moment the trigger time, not the start time...
         self.t_vector = np.arange(self.trace.x.size)*self.t_bin_size+(self.t0-time_offset).astype(int)
@@ -74,13 +75,16 @@ class Timetrace3D:
 
         Parameters
         ----------
-        t : float
-            Time, in nanoseconds.
+        time_offset : float
+            The time, in nanoseconds, on the axis of ``t_vector``.  (The
+            docstring called it ``t``, #261.)
 
         Returns
         -------
         ndarray, shape (3,)
-            The three components at that time, interpolated.
+            The three components at the sample whose time equals
+            `time_offset` exactly -- there is no interpolation -- or zeros if
+            no sample falls at that time.
         """
         # If a signal was measured for the requested time value, return it
         if np.any(self.t_vector == time_offset):
@@ -94,13 +98,16 @@ class Timetrace3D:
 
         Parameters
         ----------
-        t : float
-            Time, in nanoseconds.
+        time_offset : float
+            The time, in nanoseconds, on the axis of ``t_vector``.  (The
+            docstring called it ``t``, #261.)
 
         Returns
         -------
         ndarray, shape (3,)
-            The three components at that time, interpolated.
+            The three components at the sample whose time equals
+            `time_offset` exactly -- there is no interpolation -- or zeros if
+            no sample falls at that time.
         """
         # If a signal was measured for the requested time value, return it
         if np.any(self.t_vector == time_offset):

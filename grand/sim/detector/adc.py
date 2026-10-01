@@ -34,19 +34,17 @@ class ADC:
         '''
         downsamples the voltage trace to the target sampling rate
 
-        Arguments
-        ---------
-        `voltage_trace`
-        type        : np.ndarray[double]
-        units       : uV 
-        description : Array of voltage traces, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        voltage_trace : np.ndarray[double]
+            Array of voltage traces, with shape (N_du,3,N_samples), in µV.
+        input_sampling_rate_mhz : float
+            Sampling rate of `voltage_trace`, in MHz.
 
         Returns
         -------
-        `downsampled_voltage_trace`
-        type        : np.ndarray[double]
-        units       : uV
-        description : Array of downsamplef voltage traces, with shape (N_du,3,N_samples)
+        downsampled_voltage_trace : np.ndarray[double]
+            Array of downsampled voltage traces, with shape (N_du,3,N_samples), in µV.
 
         '''
         _validate.plausible(input_sampling_rate_mhz, "input_sampling_rate_mhz", "ADC.downsample", "sampling_rate_mhz")   # (#266)
@@ -74,19 +72,15 @@ class ADC:
         - converts voltage to ADC counts
         - quantizes the values
 
-        Arguments
-        ---------
-        `voltage_trace`
-        type        : np.ndarray[float]
-        units       : µV
-        description : Array of voltage traces at the ADC level, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        voltage_trace : np.ndarray[float]
+            Array of voltage traces at the ADC level, with shape (N_du,3,N_samples), in µV.
 
         Returns
         -------
-        `adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : The digitized array of ADC traces, with shape (N_du,3,N_samples)
+        adc_trace : np.ndarray[int]
+            The digitized array of ADC traces, with shape (N_du,3,N_samples), in ADC counts.
 
         '''
         
@@ -110,19 +104,15 @@ class ADC:
         '''
         Simulates the saturation of the ADC
 
-        Arguments
-        ---------
-        `adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of ADC traces, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        adc_trace : np.ndarray[int]
+            Array of ADC traces, with shape (N_du,3,N_samples), in ADC counts.
 
         Returns
         -------
-        `saturated_adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of saturated ADC traces, with shape (N_du,3,N_samples)
+        saturated_adc_trace : np.ndarray[int]
+            Array of saturated ADC traces, with shape (N_du,3,N_samples), in ADC counts.
 
         '''
         
@@ -148,24 +138,19 @@ class ADC:
         Processes an analog voltage trace to a digital ADC trace,
         with an option to add measured noise
 
-        Arguments
-        ---------
-        `voltage_trace`
-        type        : np.ndarray[float]
-        units       : µV
-        description : Array of voltage traces at the ADC level, with shape (N_du,3,N_samples)
+        Parameters
+        ----------
+        voltage_trace : np.ndarray[float]
+            Array of voltage traces at the ADC level, with shape (N_du,3,N_samples), in µV.
 
-        `noise_trace` (optional)
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of measured noise traces, with shape (N_du,3,N_samples)
+        noise_trace : np.ndarray[int], optional
+            Array of measured noise traces, with shape (N_du,3,N_samples), in
+            ADC counts.
 
         Returns
         -------
-        `adc_trace`
-        type        : np.ndarray[int]
-        units       : ADC counts (least significant bits)
-        description : Array of ADC traces with shape (N_du,3,N_samples)
+        adc_trace : np.ndarray[int]
+            Array of ADC traces with shape (N_du,3,N_samples), in ADC counts.
 
         Examples
         --------
