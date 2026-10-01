@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **A wheel carries the data files the code opens (#278).** `package-data`
+  listed only `dataio/version`, so a wheel built where setuptools does not see
+  the git checkout lacked `dataio/vector_filling.C` and
+  `sim/detector/rf_chain_config.xml`: `import grand.dataio` printed a ROOT
+  error and the first vector branch written failed with an unrelated
+  `AttributeError`, and `grand.sim.efield2voltage` did not import. Both are
+  now listed, `grand.dataio` refuses to import without its macro with a
+  message saying why, and a test builds the wheel and uses it from outside
+  the source tree.
+
 - **The conversion scripts can be run again on the same folder (#240).**
   `convert_voltage2adc.py` deleted its earlier output, then failed with
   `NotUniqueEvent` and left none; `convert_efield2voltage.py` failed the same

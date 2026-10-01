@@ -9,7 +9,14 @@ import numpy as np
 from grand.basis import validate as _validate
 
 # Load the C++ macros for vector filling from numpy arrays
-ROOT.gROOT.LoadMacro(os.path.dirname(os.path.realpath(__file__))+"/vector_filling.C")
+# The macro fills the vector branches; without it ROOT printed an error and
+# carried on, and the first vector branch written failed with an unrelated
+# AttributeError (#278)
+_MACRO = os.path.dirname(os.path.realpath(__file__)) + "/vector_filling.C"
+if not os.path.isfile(_MACRO):
+    raise ImportError("GRANDlib: grand.dataio: %s is missing; the package was installed without "
+                      "its data files (see package-data in pyproject.toml)" % _MACRO)
+ROOT.gROOT.LoadMacro(_MACRO)
 
 # Conversion between numpy dtype and array.array typecodes
 numpy_to_array_typecodes = {np.dtype('int8'): 'b', np.dtype('int16'): 'h', np.dtype('int32'): 'i', np.dtype('int64'): 'q', np.dtype('uint8'): 'B', np.dtype('uint16'): 'H', np.dtype('uint32'): 'I', np.dtype('uint64'): 'Q', np.dtype('float32'): 'f', np.dtype('float64'): 'd', np.dtype('complex64'): 'F', np.dtype('complex128'): 'D', np.dtype('int16'): 'h'}
