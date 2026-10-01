@@ -1,5 +1,6 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
 import atexit
+import calendar
 import datetime
 import numbers
 import glob
@@ -18,6 +19,21 @@ from grand.dataio import StdVectorList, StdVectorListDesc, StdString
 from grand.dataio import file_lock as _file_lock
 
 logger = getLogger(__name__)
+
+
+def _to_unix(value):
+    r"""Returns the Unix time of `value`; a naive datetime is taken as UTC.
+
+    ``datetime.timestamp()`` reads a naive datetime as *local* time, so the
+    UTC creation time was stored off by the machine's UTC offset (#203).
+    """
+    return calendar.timegm(value.utctimetuple())
+
+
+def _from_unix(value):
+    r"""Returns Unix time `value` as a naive UTC datetime (#203)."""
+    return datetime.datetime.fromtimestamp(value, datetime.timezone.utc).replace(tzinfo=None)
+
 
 ## A list of generated Trees
 grand_tree_list = []
@@ -480,9 +496,9 @@ class DataTree:
             # two lines were the other way round, so reading back after
             # setting a datetime gave an int (found while triaging #136).
             val_dt = val
-            val = int(val.timestamp())
+            val = _to_unix(val)
         elif type(val) == int:
-            val_dt = datetime.datetime.fromtimestamp(val)
+            val_dt = _from_unix(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for creation_datetime!")
 
@@ -556,10 +572,10 @@ class DataTree:
             # two lines were the other way round, so reading back after
             # setting a datetime gave an int (found while triaging #136).
             val_dt = val
-            val = int(val.timestamp())
+            val = _to_unix(val)
         # If timestamp was given - this happens when initialising with self.assign_metadata()
         elif type(val) == int:
-            val_dt = datetime.datetime.fromtimestamp(val)
+            val_dt = _from_unix(val)
         else:
             raise ValueError(f"Unsupported type {type(val)} for source_datetime!")
 
@@ -1498,10 +1514,10 @@ class DataTree:
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
         self.type = self._type
         self.comment = ""
-        self.creation_datetime = datetime.datetime.utcnow()
+        self.creation_datetime = _from_unix(int(datetime.datetime.now(datetime.timezone.utc).timestamp()))
         self.modification_history = ""
         # ToDo: stupid, because default values are generated here and in the class fields definitions. But definition of the class field does not call the setter, which is needed to attach these fields to the tree.
-        self.source_datetime = datetime.datetime.fromtimestamp(0)
+        self.source_datetime = _from_unix(0)
         # Which code wrote the tree (issue #137).  A tool that derives this tree
         # from another may overwrite both, as extract_events.py does.
         from grand import provenance
@@ -1598,9 +1614,10 @@ class DataTree:
             except:
                 val = el.GetTitle()
 
-            # Convert unix time if this is the datetime
-            if "datetime" in el.GetName() and val!=0:
-                val = datetime.datetime.fromtimestamp(val)
+            # Convert unix time if this is the datetime; 0 too, as the
+            # properties do (it read 0 here and 1970-01-01 there, #203)
+            if "datetime" in el.GetName() and isinstance(val, (int, float)):
+                val = _from_unix(val)
 
             metadata[el.GetName()] = val
 

@@ -11,6 +11,7 @@ import ROOT
 import datetime
 
 from grand.dataio import logger, DataTree, MotherEventTree
+from grand.dataio.data_tree import _to_unix
 import grand.dataio
 from grand.dataio import file_lock as _file_lock
 
@@ -477,7 +478,7 @@ class DataFile:
                             t.GetUserInfo().Add(ROOT.TNamed(key, value))
                         else:
                             if isinstance(value, datetime.datetime):
-                                t.GetUserInfo().Add(ROOT.TParameter(int)(key, int(value.timestamp())))
+                                t.GetUserInfo().Add(ROOT.TParameter(int)(key, _to_unix(value)))
                             else:
                                 t.GetUserInfo().Add(ROOT.TParameter(int)(key, value))
 

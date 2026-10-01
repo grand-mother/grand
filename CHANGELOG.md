@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Tree datetimes are UTC (#203).** `creation_datetime` was taken in UTC but
+  stored as if it were local time, so it was off by the machine's UTC offset
+  (8 hours early in China), and read back in local time again. Datetimes are
+  now stored and read as UTC, naive datetimes are taken as UTC, and
+  `get_metadata_as_dict` gives 1970-01-01 for an unset `source_datetime`, as
+  the property does, instead of 0. The `utcnow()` deprecation warning on
+  every tree creation is gone.
+
 - **`copy_contents()` emptied the source (#282).** Copying a vector-of-vectors
   field from another tree moved the source's inner vectors instead of copying
   them, so the source's traces were left empty after the first copy, and a

@@ -308,3 +308,29 @@ def test_copy_contents_leaves_the_source_intact(tmp_path):
         back.get_entry(entry)
         assert [[list(arm) for arm in du] for du in back.trace] == trace
     back.stop_using()
+
+
+def test_creation_datetime_is_utc_in_any_time_zone(tmp_path):
+    r"""#203: the UTC creation time was stored as local time: 8 hours early in Shanghai."""
+    import os
+    import pathlib
+    import subprocess
+    import sys
+
+    root = pathlib.Path(__file__).resolve().parents[2]
+    code = (
+        "import time, datetime\n"
+        "from grand.dataio import TShower\n"
+        "t = TShower(%r)\n"
+        "stored = t._tree.GetUserInfo().FindObject('creation_datetime').GetVal()\n"
+        "print(stored - time.time())\n"
+        "print((t.creation_datetime - datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))"
+        ".total_seconds())\n"
+        "print(t.get_metadata_as_dict(t._tree)['source_datetime'])\n" % str(tmp_path / "s.root"))
+    env = dict(os.environ, TZ="Asia/Shanghai", PYTHONPATH=str(root))
+    done = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=300)
+    assert done.returncode == 0, done.stderr[-2000:]
+    stored, read, source = done.stdout.strip().splitlines()[-3:]
+    assert abs(float(stored)) < 5
+    assert abs(float(read)) < 5
+    assert source == "1970-01-01 00:00:00"
