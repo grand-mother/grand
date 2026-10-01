@@ -147,7 +147,10 @@ def get_noise_trace(data_dir,
     if n_files is None:
         n_files = len(data_files)
 
-    assert n_files <= len(data_files), f'There are {len(data_files)} in {data_dir} - requested {n_files}'
+    # Checks, not asserts: those vanish under python -O (#241)
+    if n_files > len(data_files):
+        raise ValueError(f'GRANDlib: convert_voltage2adc: {data_dir} holds {len(data_files)} noise files, '
+                         f'{n_files} were requested')
     idx_files = rng.choice( range( len(data_files) ), n_files, replace=False )
     data_files = [data_files[i] for i in idx_files]
 
@@ -164,6 +167,7 @@ def get_noise_trace(data_dir,
     # Get noise traces from data files
     noise_trace = np.empty( (n_traces,3,n_samples),dtype=int )
     trace_idx = 0
+    reused = 0
 
     # print(f"mem1: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
@@ -186,7 +190,13 @@ def get_noise_trace(data_dir,
         # Check that data traces contain requested number of samples
         # tadc.get_entry(0)
         tadc._tree.GetBranch("adc_samples_count_ch").GetEntry(0)
-        n_samples_data = tadc.adc_samples_count_ch[0][1] #TODO: tempfix
+        # A simulated ADC file has no sample counts: it failed with IndexError (#241)
+        counts = tadc.adc_samples_count_ch
+        if len(counts) == 0 or len(counts[0]) < 2:
+            raise ValueError(f'GRANDlib: convert_voltage2adc: {data_file} records no ADC sample '
+                             f'counts (adc_samples_count_ch): it is not measured data, so it cannot '
+                             f'give noise traces')
+        n_samples_data = counts[0][1] #TODO: tempfix
 
         if n_samples_data == n_samples/2:
             extend_noise_trace = True
@@ -194,13 +204,20 @@ def get_noise_trace(data_dir,
             logger.warning(f'This is SLOW! Suggest to merge traces first. See e.g. `/pbs/home/p/pcorrea/grand/dc2/scripts/merge_noise_trace.py`')
         else:
             extend_noise_trace = False
-            assert n_samples_data >= n_samples, f'Data trace contains less samples than requested: {n_samples_data} < {n_samples}'
+            if n_samples_data < n_samples:
+                raise ValueError(f'GRANDlib: convert_voltage2adc: the noise traces in {data_file} have '
+                                 f'{n_samples_data} samples; the voltage traces need {n_samples}')
 
         # Select random entries from TADC
         # NOTE: assumed that each entry corresponds to a single DU with ADC channels (0,1,2)=(X,Y,Z)
         n_entries_tot = tadc.get_number_of_entries()
 
-        entries_sel = rng.integers(0,high=n_entries_tot,size=n_entries_sel)
+        # Without replacement while the file has enough traces: drawing with
+        # replacement gave several antennas the same noise, silently (#241)
+        replace = n_entries_sel > n_entries_tot
+        if replace:
+            reused += n_entries_sel - n_entries_tot
+        entries_sel = rng.choice(n_entries_tot, size=n_entries_sel, replace=replace)
         logger.debug(f'Selected {n_entries_sel} random traces from {data_file}')
 
         trace_branch = tadc._tree.GetBranch("trace_ch")
@@ -255,6 +272,9 @@ def get_noise_trace(data_dir,
             trace_idx += 1
         df.close()
         # print(f"mem8: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+    if reused:
+        logger.warning(f'Only {n_traces - reused} distinct noise traces for {n_traces} units in {data_dir}: '
+                       f'{reused} are reused, which correlates the noise of those antennas')
     return noise_trace
 
 

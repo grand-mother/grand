@@ -528,20 +528,22 @@ class DataFile:
                 total_elements = int(np.sum(np.frombuffer(t.GetV1(), dtype=np.float64, count=count)))
                 t.SetEstimate(total_elements+1)
 
-                # Build the index for this chain - it is not generated automatically from the Trees indices
-                try:
-                    # Assuming en Event tree
-                    t.BuildIndex("run_number", "event_number")
-                # If failed, try as a run tree
-                except Exception:
-                    try:
-                        t.BuildIndex("run_number")
-                    except Exception as error:
-                        # Raising a string is itself a TypeError, which lost
-                        # the message (#256)
-                        raise RuntimeError(_validate.message(
-                            "DataFile", "unable to build an index for the tree %s"
-                            % t.GetName())) from error
+                # Build the index for this chain - it is not generated automatically
+                # from the Trees indices.  By the branches present: a run tree
+                # indexed by (run_number, event_number) raised nothing, but got
+                # an index that found no run, so a folder of two runs failed
+                # every get_run() (#241)
+                if t.GetBranch("event_number"):
+                    built = t.BuildIndex("run_number", "event_number")
+                elif t.GetBranch("run_number"):
+                    built = t.BuildIndex("run_number")
+                else:
+                    built = -1
+                if built < 0:
+                    # Raising a string is itself a TypeError, which lost
+                    # the message (#256)
+                    raise RuntimeError(_validate.message(
+                        "DataFile", "unable to build an index for the tree %s" % t.GetName()))
 
                 # Set metadata from the first TTree in the TChain
                 temp_metadata = self.get_tree_info(t).keys()

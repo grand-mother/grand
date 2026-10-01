@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- A folder holding several runs converts (#241): the run chain was indexed
+  by (run, event), which found no run, so `get_run()` failed for every run
+  and `convert_efield2voltage` crashed. `convert_voltage2adc
+  --add_noise_from` draws distinct noise traces while there are enough,
+  warns when fewer traces than units force reuse (correlated noise), and
+  refuses a simulated ADC file or too short traces with a message naming the
+  file instead of `IndexError` / `assert`.
+
 - dataio no longer hands back stale or zeroed data silently (#236):
   reopening a path whose file was replaced, changed or removed since it was
   opened reads the file on disk, not the copy still open; a tree without
