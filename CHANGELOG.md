@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Values almost certainly in the wrong unit warn (#266).** Frequencies in Hz
+  given to `galactic_noise` gave all zeros; a sampling rate in Hz, a time
+  step in seconds, angles in degrees where radians are expected, or peak
+  times in ns gave results wrong by orders of magnitude, all silently. A new
+  `grand.basis.validate.plausible` warns (`GRANDlibWarning`) outside generous
+  ranges per unit (`PLAUSIBLE`), and is applied where these values enter:
+  `galactic_noise`, `ADC.downsample`, both `get_fastest_size_fft`, `get_psd`,
+  `get_peak_time`, every analysis function's angles, and the plane-wave
+  fit's times.
+
 - **Input checks that vanished under `python -O` (#259).** Sixteen checks on
   user input were `assert` statements: gone under `-O`, and otherwise an
   empty `AssertionError`. They now raise `TypeError`/`ValueError` with a

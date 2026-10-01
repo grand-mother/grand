@@ -178,8 +178,7 @@ def CRB_PWF(theta_pwf: float, phi_pwf: float, Xants: np.ndarray, uncertainty_tim
     # Number of antennas
     where = "CRB_PWF"
     Xants = _checks.antennas(Xants, where, min_ants=3)
-    _validate.as_real(theta_pwf, "theta_pwf", where)
-    _validate.as_real(phi_pwf, "phi_pwf", where)
+    _checks.angles(where, theta_pwf=theta_pwf, phi_pwf=phi_pwf)
     _validate.positive(_validate.as_real(uncertainty_time, "uncertainty_time", where), "uncertainty_time", where, "s")
     nants = Xants.shape[0]
 

@@ -93,6 +93,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_factor=1):
     axis applied to all of them.  The ``ToDo`` in the body marks the same
     point.
     """
+    _validate.plausible(f_samp_mhz, "f_samp_mhz", "get_fastest_size_fft", "sampling_rate_mhz")   # (#266)
     if not padding_factor >= 1:
         raise ValueError(_validate.message(
             "get_fastest_size_fft", "'padding_factor' must be >= 1, got %s" % padding_factor))

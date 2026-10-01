@@ -49,6 +49,7 @@ class ADC:
         description : Array of downsamplef voltage traces, with shape (N_du,3,N_samples)
 
         '''
+        _validate.plausible(input_sampling_rate_mhz, "input_sampling_rate_mhz", "ADC.downsample", "sampling_rate_mhz")   # (#266)
         if self.sampling_rate != input_sampling_rate_mhz : 
           #compute the fft
           voltage_trace_f=sf.rfft(voltage_trace)

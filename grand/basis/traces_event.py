@@ -36,6 +36,7 @@ def get_psd(trace, f_samp_mhz, nperseg=0):
     tuple of ndarray
         Frequency axis in MHz, and power spectral density.
     """
+    _validate.plausible(f_samp_mhz, "f_samp_mhz", "get_psd", "sampling_rate_mhz")   # (#266)
     if nperseg == 0:
         nperseg = trace.shape[0] // 2
 

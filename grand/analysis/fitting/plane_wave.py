@@ -29,6 +29,12 @@ def PWF_semianalytical(Xants, tants, verbose=False, c=cons.c_light, n=cons.n_atm
     Xants = _checks.antennas(Xants, where, min_ants=3)
     tants = _checks.per_antenna(tants, Xants, "tants", where)
     sigma = _checks.sigma(sigma, where)
+    # Times in ns where seconds are expected gave another direction (#266)
+    if np.ptp(tants) > 1e-3:
+        import warnings
+        warnings.warn(_validate.message(where, "the peak times span %g s, more than a shower front "
+                                        "takes to cross any array; are they in ns rather than s?"
+                                        % np.ptp(tants)), _validate.GRANDlibWarning, stacklevel=2)
 
     PXT = Xants - mean(Xants, sigma)[None, :]
     # PXT = PXT - mean(PXT, sigma)[None, :]   #twice for numerical stability

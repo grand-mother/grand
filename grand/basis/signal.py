@@ -269,6 +269,7 @@ def get_fastest_size_fft(sig_size, f_samp_mhz, padding_fact=1):
     tuple
         Transform length, and the frequency axis in MHz.
     """
+    _validate.plausible(f_samp_mhz, "f_samp_mhz", "get_fastest_size_fft", "sampling_rate_mhz")   # (#266)
     if not padding_fact >= 1:   # an assert, gone under python -O (#259)
         raise ValueError(_validate.message("get_fastest_size_fft", "padding_fact must be at least 1, got %r" % (padding_fact,)))
     dt_s = 1e-6 / f_samp_mhz

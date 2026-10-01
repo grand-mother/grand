@@ -106,6 +106,7 @@ def get_peak_time(trace, t0, channels, dt_ns=2):
     float or np.ndarray
         Time of the peak amplitude in seconds.
     """
+    _validate.plausible(dt_ns, "dt_ns", "get_peak_time", "time_step_ns")   # seconds were taken as ns (#266)
     _validate.positive(_validate.as_real(dt_ns, "dt_ns", "get_peak_time"), "dt_ns", "get_peak_time", "ns")
     _, hilbert_amp = get_peak_amplitude(trace, channels, return_envelope=True)
     peak_idx = np.argmax(hilbert_amp)

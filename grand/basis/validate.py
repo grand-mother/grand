@@ -476,3 +476,46 @@ def coerce_to_dtype(value, dtype, where):
         raise ValueError(message(where, "must be an integer between %d and %d (stored as %s), got %s"
                                  % (info.min, info.max, dtype, int(bad) if float(bad).is_integer() else bad)))
     return given.astype(dtype)
+
+
+#: Ranges outside which a value is almost certainly in the wrong unit (#266):
+#: ``(low, high, unit, what a value outside usually is)``.
+PLAUSIBLE = {
+    "frequency_mhz": (0.0, 1e5, "MHz", "a frequency in Hz or GHz"),
+    "sampling_rate_mhz": (1.0, 1e5, "MHz", "a rate in Hz or GHz"),
+    "time_step_ns": (1e-3, 1e4, "ns", "a time step in seconds"),
+    "angle_rad": (-2 * np.pi, 2 * np.pi, "rad", "an angle in degrees"),
+}
+
+
+def plausible(value, name, where, kind):
+    r"""Warns if `value` lies outside the plausible range of its unit; returns it unchanged.
+
+    Type and range checks cannot tell 500 MHz given as 500e6 from a real
+    500e6 MHz; this catches the unit mistakes that silently give results
+    wrong by orders of magnitude (#266), with a `GRANDlibWarning` rather than
+    an error, since the ranges are generous but not physical limits.
+
+    Parameters
+    ----------
+    value : float or array_like
+        The value to look at; non-finite elements are ignored.
+    name : str
+        The argument's name.
+    where : str
+        The function it was given to.
+    kind : str
+        A key of :data:`PLAUSIBLE`.
+    """
+    low, high, unit, likely = PLAUSIBLE[kind]
+    try:
+        array = np.asarray(value, dtype=float)
+    except (TypeError, ValueError):
+        return value
+    finite = array[np.isfinite(array)]
+    if finite.size and (finite.min() < low or finite.max() > high):
+        bad = finite[(finite < low) | (finite > high)].ravel()[0]
+        warnings.warn(message(where, "'%s' = %g is outside %g to %g %s; is it %s?"
+                              % (name, bad, low, high, unit, likely)),
+                      GRANDlibWarning, stacklevel=3)
+    return value

@@ -94,6 +94,7 @@ def galactic_noise(f_lst, size_out, freqs_mhz, nb_ant, seed=None, du_type="GP300
         not one of the three tabulated models, or if `freqs_mhz` is not
         uniformly spaced and increasing.
     """
+    _validate.plausible(freqs_mhz, "freqs_mhz", "galactic_noise", "frequency_mhz")   # Hz gave all zeros (#266)
     # The Galactic-noise tables sample LST every 20 minutes (72 bins/24 h).
     # Select the nearest available bin. Integer-hour values map exactly, e.g.
     # f_lst=18.0 -> bin 54 -> LST 18:00.
