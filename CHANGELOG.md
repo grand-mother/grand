@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **sim2root cosmetics with consequences (#226, items 1–3).**
+  `IllustrateSimPipe.py --savefig` failed unless a `plots/` folder already
+  existed; it is now created. Without `-e` the output folder name had a double
+  underscore (`_CD__0000`); it is now `_CD_0000`. `-s MySite` changed only
+  `trun` and the folder name; the run-showersim and run-efieldsim trees now
+  carry it too. (Items 4–5, the event order in file names and the
+  one-argument converter's fixed time, are naming conventions left as they
+  are.)
+
 - **Argument messages in the conversion scripts (#233, items 1–2).**
   `convert_efield2efield.py` failed with a bare `AssertionError` for a
   negative noise, jitter or smearing, a negative rate or duration, and a

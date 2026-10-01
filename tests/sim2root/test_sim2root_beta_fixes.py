@@ -142,3 +142,29 @@ def test_the_gamma_and_hadron_profiles_reach_tshowersim(tmp_path):
     assert max(sim.long_pd_gamma) > 0
     assert len(sim.long_pd_hadron) == len(sim.long_pd_depth)
     sim.stop_using()
+
+
+def test_site_option_folder_name_and_figures(tmp_path):
+    r"""#226: -s changed only trun; no -e gave "__"; --savefig needed a plots/ folder."""
+    from grand.dataio import TRunEfieldSim, TRunShowerSim
+
+    raw = shutil.copy(ZHAIRES / (RUN_13790 + ".rawroot"), tmp_path)
+    out = _run_sim2root(tmp_path, pathlib.Path(raw).name, "-s", "MySite")
+    (folder,) = out.glob("sim_*")
+    assert "__" not in folder.name and folder.name.startswith("sim_MySite_")
+    for cls, prefix in ((TRunShowerSim, "runshowersim"), (TRunEfieldSim, "runefieldsim")):
+        run = cls(str(next(folder.glob(prefix + "_*.root"))))
+        run.get_entry(0)
+        assert run.site == "MySite"
+        run.stop_using()
+
+    # The figures need the whole pipeline's output: the committed sample has it
+    sample = tmp_path / "sample"
+    shutil.copytree(ROOT / "sim2root" / "Common" / "sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000", sample)
+    figures = tmp_path / "figs"
+    done = subprocess.run([sys.executable, str(ROOT / "sim2root" / "Common" / "IllustrateSimPipe.py"), str(sample),
+                           "--savefig", "--savefig_dir", str(figures)],
+                          cwd=ROOT / "sim2root" / "Common", capture_output=True, text=True, timeout=900,
+                          env=dict(os.environ, MPLBACKEND="Agg"))
+    assert done.returncode == 0, done.stderr[-2000:]
+    assert list((figures / "plots").glob("*.png"))

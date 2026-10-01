@@ -21,6 +21,7 @@ import grand.dataio as groot
 # import the rest of the guardians of the galaxy:
 import grand.manage_log as mlg
 import raw_root_trees as RawTrees # this is here in Common
+import os
 import sys
 import argparse
 import numpy as np
@@ -560,6 +561,8 @@ if __name__ == "__main__":
     else:
       # Use specified savefig_dir
       plot_dir = savefig_dir
+    # The figures go to <plot_dir>/plots/, which had to exist already (#226)
+    os.makedirs(os.path.join(plot_dir, "plots"), exist_ok=True)
   else:
     pass
 

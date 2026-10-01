@@ -443,12 +443,11 @@ def main():
                 gt.trunshowersim.run_number = run_number
                 gt.trunefieldsim.run_number = run_number
 
-                # If no site was specified for the trunshowersim, put inside site
-                if trawshower.site == "":
+                # The site, if none was recorded or -s gives one: -s changed
+                # only trun and the folder name (#226)
+                if trawshower.site == "" or clargs.site_name:
                     gt.trunshowersim.site = site
-
-                # If no site was specified for the trunefieldsim, put inside site
-                if trawefield.site == "":
+                if trawefield.site == "" or clargs.site_name:
                     gt.trunefieldsim.site = site
 
                 gt.trun.site = site
@@ -1048,7 +1047,9 @@ def form_directory_name(clargs, date, time, run_number, site):
 
     # Go through serial numbers in directory names to find a one that does not exist
     for sn in range(5000):
-        dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_CD_{extra}_{sn:0>4}")
+        # Without -e, "CD_{extra}_" left a double underscore (#226)
+        cd = f"CD_{extra}_" if extra else "CD_"
+        dir_name = Path(clargs.output_parent_directory, f"sim_{site}_{date}_{time}_RUN{run_number}_{cd}{sn:0>4}")
         if not dir_name.exists():
             break
     # If directories with serial number up to 5000 already created
