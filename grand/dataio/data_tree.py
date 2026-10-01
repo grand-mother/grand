@@ -88,6 +88,13 @@ def _close_with_trees(f, extra=()):
         inst._tree = None
 
 
+#: Which tree object a ROOT tree's branches are bound to, keyed by the tree's
+#: address: several objects may wrap one tree (two opened on one file, or the
+#: trees a DataFile holds and those an Event opens), and the branches write
+#: into and read from the buffers of whichever bound them last (#273).
+_branch_owner = {}
+
+
 def _close_everything_at_exit():
     r"""Closes the open ROOT files and detaches the trees before ROOT's own cleanup.
 
@@ -622,6 +629,9 @@ class DataTree:
 
         # What is already on disk does not need writing (#275)
         _written_entries[id(self)] = int(self._tree.GetEntries()) if self._tree else 0
+        # The branches were just bound to this object's buffers (#273)
+        if self._tree is not None and not self.is_tchain:
+            _branch_owner[ROOT.addressof(self._tree)] = id(self)
 
         self.__setattr__ = weakref.proxy(self.mod_setattr)
         # self.__setattr__ = self.mod_setattr
@@ -1563,6 +1573,32 @@ class DataTree:
                 "this tree's file was closed (close_file(), stop_using(), or the close() of its "
                 "DataFile or DataDirectory), so its data is gone; open the file again with a "
                 "new tree object"))
+        self._own_branches()
+
+    def _own_branches(self):
+        r"""Binds the tree's branches to this object's buffers, if another object had them.
+
+        Two objects on one tree shared the branch buffers: one object's fill()
+        wrote the other's values, and reading with one changed the other's
+        fields (#273).  Each object now takes the branches back before it uses
+        the tree, so every object reads into, and fills from, its own fields.
+        """
+        if self.is_tchain or self._tree is None:
+            return
+        key = ROOT.addressof(self._tree)
+        if _branch_owner.get(key) == id(self):
+            return
+        # Rebinding repeats the construction-time notes about branches the
+        # file lacks; they were given once already
+        level, ROOT.gErrorIgnoreLevel = ROOT.gErrorIgnoreLevel, ROOT.kFatal
+        quiet = logger.level
+        logger.setLevel("ERROR")
+        try:
+            self.create_branches()
+        finally:
+            ROOT.gErrorIgnoreLevel = level
+            logger.setLevel(quiet)
+        _branch_owner[key] = id(self)
 
     def close_file(self):
         """Close the file associated to the tree

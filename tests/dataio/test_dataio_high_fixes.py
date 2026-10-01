@@ -200,3 +200,31 @@ def test_using_a_tree_after_its_file_closed_raises(tmp_path):
                               timeout=120)
         assert done.returncode == 1, (snippet, done.returncode, done.stderr[-800:])
         assert "this tree's file was closed" in done.stderr, snippet
+
+
+def test_two_objects_on_one_tree_keep_their_own_values(tmp_path):
+    r"""#273: two objects on one tree shared the branch buffers: one object's fill()
+    wrote the other's event number, and reading with one changed the other's fields."""
+    from grand.dataio import TEfield
+
+    path = str(tmp_path / "x.root")
+    a = TEfield(path)
+    a.run_number, a.event_number = 1, 1
+    a.fill()
+    a.write(close_file=False)
+    b = TEfield(path)
+    b.get_entry(0)
+    b.run_number, b.event_number = 1, 2
+    b.fill()
+    b.write(close_file=False)
+    a.run_number, a.event_number = 1, 3
+    a.fill()
+    a.write(close_file=False)
+    assert b.get_list_of_events() == [(1, 1), (2, 1), (3, 1)]
+
+    efield = next(SAMPLE.glob("efield_*_L0_*.root"))
+    r1, r2 = TEfield(str(efield)), TEfield(str(efield))
+    r2.get_entry(1)
+    r1.get_entry(0)
+    assert (int(r1.event_number), int(r2.event_number)) == (13790, 1618)
+    assert len(r2.du_id) == 5

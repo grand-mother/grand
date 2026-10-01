@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Two objects on one tree keep their own values (#273).** Two tree objects
+  opened on one file wrapped the same ROOT tree, whose branches read into and
+  fill from the buffers of whichever object bound them last: one object's
+  `fill()` wrote the other's event number, and reading with one changed the
+  other's fields. Each object now takes the branches back before it uses the
+  tree, so it reads into and fills from its own fields.
+
 - **Reading events no longer changes input files or crashes at exit (#234).**
   `Event.close_files()` wrote every tree, including those only read, so the
   input files grew a new key cycle each time (and the call could hang); it now
