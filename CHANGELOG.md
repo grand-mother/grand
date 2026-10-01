@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `sim2root.py -ef N` splits correctly (#223): `-ef 1` gives one event per
+  file (it was ignored), and an `N` that divides the number of events no
+  longer leaves a trailing empty efield/shower/showersim set. Inputs holding
+  different run numbers are refused before anything is written unless `-ru`
+  (one run) or `-ss` (one run per file) says how to write them; the run
+  trees used to describe the first run only.
+
 - `StdVectorList` behaves like the list it claims to be (#201): `unsigned
   char` / `char` elements read back as numbers, not characters (also from
   files; `asnumpy()` no longer gives booleans); `+=` appends instead of

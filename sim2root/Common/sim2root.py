@@ -305,6 +305,33 @@ def check_windows(file_list, trigger_time_ns=None, target_duration_us=None, star
                         + ("" if star_shape else ", or convert the files separately with -ss",)))
 
 
+def check_run_numbers(file_list, ext_run_number=None, star_shape=False):
+    r"""Exits with a message if the inputs hold several runs and nothing says how to write them.
+
+    The run trees were written for the first run only, while the event trees
+    kept every event's own run number, so the later runs had no run entry
+    (#223).  ``-ru`` writes them all as one run; ``-ss`` makes each input
+    file its own run.
+    """
+    if ext_run_number is not None or star_shape:
+        return
+    runs = set()
+    for filename in file_list:
+        try:
+            trawshower = RawTrees.RawShowerTree(filename)
+        except OSError:
+            continue
+        for i in range(trawshower.get_entries()):
+            trawshower.get_entry(i)
+            runs.add(int(trawshower.run_number))
+        trawshower.stop_using()
+    if len(runs) > 1:
+        runs = sorted(runs)
+        sys.exit("GRANDlib: sim2root: the inputs hold runs %s and %s, and the run files describe "
+                 "one run.  Give -ru N to write them all as run N, or convert each run separately"
+                 % (", ".join(str(run) for run in runs[:-1]), runs[-1]))
+
+
 def main():
 
     # Check if the site layout is defined
@@ -348,9 +375,16 @@ def main():
 
     # Before anything is written: one window per run, and a valid one (#222)
     check_windows(file_list, clargs.trigger_time_ns, clargs.target_duration_us, clargs.star_shape)
+    # ... and one run, unless -ru or -ss says what to do with several (#223)
+    check_run_numbers(file_list, ext_run_number, clargs.star_shape)
 
-    # How many events were stored in current files
-    events_in_file = 1
+    # How many events the open event files hold.  It started at 1 and the
+    # first event was exempt from the check, so -ef 1 never split and an
+    # exact multiple left an empty file set behind (#223).  A new set is now
+    # opened only when an event is about to go into it.
+    events_in_file = 0
+    event_files_open = True     # init_all_trees opens the first set
+    split_done = False
 
     # The name of the output directory
     out_dir_name = ""
@@ -399,7 +433,7 @@ def main():
             trawefield.t_pre=DesiredTpre
             trawefield.t_post=DesiredTpost
 
-            if events_in_file==1:
+            if events_in_file==0:
                 if ext_event_number is not None:
                     file_start_event_number = end_event_number+1
                 else:
@@ -458,6 +492,11 @@ def main():
                 gt.trunshowersim.fill()
                 gt.trunefieldsim.fill()
                 # gt.trun.write()
+
+            if not event_files_open:
+                logger.info("Creating new event files")
+                init_event_trees(out_dir_name, gt)
+                event_files_open = True
 
             # Convert the RawShowerTree entries
             rawshower2grandroot(trawshower, gt)
@@ -535,9 +574,10 @@ def main():
             gt.tshower.fill()
             gt.tshowersim.fill()
             gt.tefield.fill()
+            events_in_file += 1
 
             # If filled max number of events in file
-            if events_in_file == clargs.events_per_file and not (file_num==0 and i==0):
+            if clargs.events_per_file and events_in_file == clargs.events_per_file:
 
                 # tmp_start_event_number = gt.tshower.event_number
 
@@ -554,14 +594,9 @@ def main():
                 logger.info("Renaming event files")
                 rename_event_files(clargs, out_dir_name, file_start_event_number, end_event_number)
 
-                # Create the new event files
-                logger.info("Creating new event files")
-                init_event_trees(out_dir_name, gt)
-
-                events_in_file=0
-                # start_event_number = tmp_start_event_number
-
-            events_in_file += 1
+                event_files_open = False
+                split_done = True
+                events_in_file = 0
 
         # For the first file, get all the file's events du ids and pos
         if file_num==0:
@@ -641,17 +676,25 @@ def main():
         # gt.trunshowersim.write()
         # gt.trunefieldsim.write()
 
-    # Write the event trees
-    gt.tshower.write(force_close_file=True)
-    gt.tshowersim.write(force_close_file=True)
-    gt.tefield.write(force_close_file=True)
+    # Write the event trees, unless the last set was already written by -ef
+    # (or one opened after it got no event)
+    event_files_pending = event_files_open and not (split_done and events_in_file == 0)
+    if event_files_pending:
+        gt.tshower.write(force_close_file=True)
+        gt.tshowersim.write(force_close_file=True)
+        gt.tefield.write(force_close_file=True)
+    elif event_files_open:
+        for tree, name in ((gt.tshower, "shower"), (gt.tshowersim, "showersim"), (gt.tefield, "efield")):
+            tree.stop_using()
+            Path(out_dir_name, name + ".root").unlink(missing_ok=True)
     gt.trun.write(force_close_file=True)
     gt.trunshowersim.write(force_close_file=True)
     gt.trunefieldsim.write(force_close_file=True)
 
     # Rename the created files to appropriate names
     logger.info("Renaming files to proper file names")
-    rename_all_files(clargs, out_dir_name, file_start_event_number, end_event_number, start_run_number)
+    rename_all_files(clargs, out_dir_name, file_start_event_number, end_event_number, start_run_number,
+                     event_files=event_files_pending)
 
 # Initialise all output trees and their directory
 def init_all_trees(clargs, unix_date, run_number, site, gt):
@@ -1060,7 +1103,7 @@ def form_directory_name(clargs, date, time, run_number, site):
     return dir_name
 
 # Rename the created files to appropriate names
-def rename_all_files(clargs, path, start_event_number, end_event_number, run_number):
+def rename_all_files(clargs, path, start_event_number, end_event_number, run_number, event_files=True):
 
     # Go through run output files
     for fn_start in ["run", "runshowersim", "runefieldsim"]:
@@ -1078,7 +1121,8 @@ def rename_all_files(clargs, path, start_event_number, end_event_number, run_num
             exit(0)
 
     # Rename the event files
-    rename_event_files(clargs, path, start_event_number, end_event_number)
+    if event_files:
+        rename_event_files(clargs, path, start_event_number, end_event_number)
 
 def rename_event_files(clargs, path, start_event_number, end_event_number):
 
