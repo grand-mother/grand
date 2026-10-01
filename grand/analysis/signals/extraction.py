@@ -34,9 +34,10 @@ def get_peak_amplitude(trace, channels, return_envelope=False):
     """
     Compute the peak amplitude of a trace (in ADC counts or uV or uV/m).
 
-    The signal amplitude is computed as the Euclidean norm of the selected
-    components (x, y, z), followed by a Hilbert transform to obtain
-    the signal envelope.
+    The envelope is the Euclidean norm of the Hilbert envelopes of the
+    selected components, sqrt(sum_i |hilbert(ch_i)|^2).  (It was the Hilbert
+    envelope of the norm, which is biased by -4 % to +6 % depending on the
+    carrier frequency, #288.)
 
     Parameters
     ----------
@@ -56,8 +57,7 @@ def get_peak_amplitude(trace, channels, return_envelope=False):
     """
     trace = _trace_channels(trace, channels, "get_peak_amplitude")
     selected = trace[channels, :]
-    E_modulus = np.linalg.norm(selected, axis=0)
-    hilbert_amp = np.abs(hilbert(E_modulus))
+    hilbert_amp = np.sqrt(np.sum(np.abs(hilbert(selected, axis=-1)) ** 2, axis=0))
     peak_amp = np.max(hilbert_amp)
     if return_envelope:
         return peak_amp, hilbert_amp

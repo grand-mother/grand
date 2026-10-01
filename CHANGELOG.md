@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`get_peak_amplitude` was biased by −4 % to +6 % (#288, item 4).** It took
+  the Hilbert envelope of the field's norm, which depends on the carrier
+  frequency. It now takes the norm of the per-channel envelopes, which gives
+  the true envelope to 0.2 %; `get_peak_time` uses the same envelope.
+
 - **Values almost certainly in the wrong unit warn (#266).** Frequencies in Hz
   given to `galactic_noise` gave all zeros; a sampling rate in Hz, a time
   step in seconds, angles in degrees where radians are expected, or peak
