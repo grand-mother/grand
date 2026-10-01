@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`DataDirectory` keeps every file of a level (#195).** Files were grouped
+  by a fixed field of their name, so names of different lengths
+  (`shower_<date>_<time>_0-0_L1_0000.root` and
+  `shower_<date>_<time>_<run>_0-0_L1_0000.root`) of the same level fell into
+  two groups, and one replaced the other: `examples/analysis/reconstructed_events_AOI`
+  showed 1 of its 10 showers. The level is now read from the `L<n>` field
+  before the serial number, wherever it is.
+
 - **Several processes writing one ROOT file no longer lose events or
   corrupt it (#281).** Two batch jobs with the same output, or a resubmitted
   job, interleaved their writes: with three processes appending to one file,

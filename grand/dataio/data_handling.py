@@ -1,5 +1,6 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
 import glob
+import re
 import os
 from collections import defaultdict
 from pathlib import Path
@@ -146,7 +147,15 @@ class DataDirectory:
             whole directory with ``IndexError: list index out of range`` and no
             indication of which file was at fault.
             """
-            el = Path(x).name.split("_")
+            name = Path(x).name
+            el = name.split("_")
+            # The level is the "L<n>" field just before the serial number,
+            # wherever it falls: names carry 4, 6 or 7 fields depending on
+            # the producer, and a fixed position put files of one level into
+            # different groups, one of which then replaced the other (#195).
+            level = re.search(r"_(L\d+)_[^_]*\.root$", name)
+            if level:
+                return el[0], level.group(1)
             if len(el) == 4:
                 return el[0], el[2]
             if len(el) > 4:
