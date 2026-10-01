@@ -14,7 +14,6 @@ tar error -- and staged to a temporary file so that a failure leaves the
 existing installation intact.
 """
 
-import tarfile
 import os
 import time
 import sys
@@ -24,6 +23,7 @@ import os.path as osp
 from urllib import request
 from urllib.error import URLError, HTTPError
 from grand import GRAND_DATA_PATH, grand_add_path_data
+from grand.basis.archive import safe_extract  # refuses members that escape the target
 
 # Paths for flag files
 REPO_FLAG_FILE = grand_add_path_data('model_version.flag')  # Inside the repository
@@ -195,23 +195,39 @@ if preserved:
     print("Preserving %d version-controlled file(s) the archive does not ship."
           % len(preserved))
 
+os.replace(tmp_file, tar_file)
+
+# Extract into a staging directory first. The old data model is removed only
+# once the new one has extracted completely, so a corrupt or truncated archive
+# of the right size leaves the existing installation intact. Members that
+# would land outside the staging directory are refused (safe_extract).
+print("==============================")
+print("Extracting tar file...")
+staging = grand_add_path_data('.model_staging')
+if osp.exists(staging):
+    shutil.rmtree(staging)
+try:
+    safe_extract(tar_file, staging)
+except Exception as e:
+    shutil.rmtree(staging, ignore_errors=True)
+    print(f"Extract failed: {tar_file}")
+    print(f"Error: {e}")
+    print("The existing data model was left in place.")
+    sys.exit(1)
+os.remove(tar_file)  # Delete tar file after extraction
+
 for dir_name in ["detector", "noise", "topography"]:
     dir_path = grand_add_path_data(dir_name)
     if osp.exists(dir_path):
         shutil.rmtree(dir_path)
-os.replace(tmp_file, tar_file)
-
-# Extract new data
-print("==============================")
-print("Extracting tar file...")
-try:
-    with tarfile.open(tar_file) as my_tar:
-        my_tar.extractall(grand_add_path_data(''))
-    os.remove(tar_file)  # Delete tar file after extraction
-except Exception as e:
-    print(f"Extract failed: {tar_file}")
-    print(f"Error: {e}")
-    sys.exit(1)
+for entry in os.listdir(staging):
+    target = grand_add_path_data(entry)
+    if osp.isdir(target) and not osp.islink(target):
+        shutil.rmtree(target)
+    elif osp.lexists(target):
+        os.remove(target)
+    os.replace(osp.join(staging, entry), target)
+shutil.rmtree(staging)
 
 # Put back anything version-controlled that the archive did not ship.
 for rel, blob in preserved.items():

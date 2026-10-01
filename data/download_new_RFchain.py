@@ -6,7 +6,6 @@ Created on 24 DEC. 2024
 @author: SN
 
 '''
-import tarfile
 import os
 import sys
 import os.path as osp
@@ -15,6 +14,7 @@ from urllib import request
 #import progressbar
 
 from grand import GRAND_DATA_PATH, grand_add_path_data
+from grand.basis.archive import safe_extract  # refuses members that escape the target
 
 #LINK_MODEL = "https://forge.in2p3.fr/attachments/download/133380/grand_model_2207.tar.gz"
 #FILE_MODEL = "grand_model_2207.tar.gz"
@@ -62,9 +62,7 @@ except:
 print("==============================")
 print('Extract tar file')
 try:
-    my_tar = tarfile.open(tar_file)
-    my_tar.extractall(grand_add_path_data('detector'))
-    my_tar.close()
+    safe_extract(tar_file, grand_add_path_data('detector'))
     os.remove(tar_file)  # delete zipped file are extraction.
 except:
     print(f"Extract failed '{tar_file}'")
