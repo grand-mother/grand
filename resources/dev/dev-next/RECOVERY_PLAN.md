@@ -483,7 +483,7 @@ Measured 2026-09-08.
 - [ ] Beta test of `dev-next` before it becomes the default branch: eight
       testers, in two waves, look for bugs, omissions and brittle input
       handling, for beginners and experts alike. Plan and live tracker:
-      [`beta-tests/TEST_PLAN.md`](beta-tests/TEST_PLAN.md); issues are titled
+      [`beta-tests/TEST_PLAN.md`](https://github.com/grand-mother/grand/blob/dev-next/resources/dev/dev-next/beta-tests/TEST_PLAN.md); issues are titled
       `dev-next_beta-test: …`.
 - [ ] T1 trigger parameters from the data (#139). Once the trigger group
       gives the units of `tcmax_ch`, `tprev_ch` and `tper_ch`, let
