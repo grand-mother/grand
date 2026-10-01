@@ -103,3 +103,15 @@ def test_the_zhaires_converter_has_a_command_line(tmp_path):
     done = run(str(tmp_path), "standard", "1", "1", str(tmp_path / "x.rawroot"))   # no .sry
     assert done.returncode == 1 and "failed" in done.stderr
     assert not (tmp_path / "x.rawroot").exists()
+
+
+@pytest.mark.parametrize("function", ["GetThinningRelativeEnergyFromSry", "GetPrimaryFromSry",
+                                      "GetTaskNameFromSry"])
+def test_the_aires_readers_raise_instead_of_exiting(tmp_path, function):
+    # exit() in these ended whatever program had imported them (#224)
+    import sim2root.ZHAireSRawRoot.AiresInfoFunctionsGRANDROOT as aires
+
+    sry = tmp_path / "empty.sry"
+    sry.write_text("nothing useful\n")
+    with pytest.raises(ValueError, match="GRANDlib: %s: no " % function):
+        getattr(aires, function)(str(sry))

@@ -15,6 +15,11 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The ZHAireS `.sry` readers raise `ValueError` naming the missing value
+  instead of calling `exit()`, which ended whatever program had imported
+  them (#224); `scripts/pipeline/register_convert.py` exits 1, not 0, for an
+  unregistered file.
+
 - `sim2root.py` and the ZHAireS converter fail cleanly (#224): a missing
   input file is refused (it was created empty, and the run died on an
   unbound variable); no input, a missing `-sl` and a full serial range exit

@@ -1,5 +1,6 @@
 from granddb.datamanager import DataManager
 import os
+import sys
 import argparse
 from datetime import datetime
 
@@ -21,8 +22,8 @@ dm = DataManager(config_path)
 logfile = os.path.normpath(args.logfile)
 myfile = dm.database().sqlalchemysession.query(dm.database().tables()['rawfile']).filter_by(filename=args.file).first()
 if not myfile:
-    print(f"Error file {args.file} not registered")
-    exit(0)
+    # exit(0) told the pipeline the registration had succeeded (#224)
+    sys.exit(f"Error file {args.file} not registered")
 else:
     id_raw_file = myfile.id_raw_file
     converted = {'id_raw_file': id_raw_file, 'date_convertion': datetime.now(), 'logfile': logfile, 'root_filename': args.root, 'retcode': args.status}
