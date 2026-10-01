@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`convert_efield2efield.py` writes `du_count`, honours `-o`, and handles
+  empty events and inputs (#248).** `du_count` was never set, so every event
+  of its output read as having no antenna; `-o` with a directory in it was
+  cut to the file name and written into the input folder; an event whose
+  shower hit no antenna crashed with `IndexError` (it is now written empty, as
+  at every other level, #91); and an input with no events logged "Exiting."
+  and went on to write empty output files (it now stops, writing nothing).
+
 - **The sim2root pipeline example runs as documented (#221).** `RunSimPipe.py`
   and `RunSimPipeNoJitter.py` never passed the site layout that sim2root
   requires, so the first step failed and the next ones ran on whichever

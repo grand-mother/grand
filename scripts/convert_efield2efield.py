@@ -281,13 +281,11 @@ if __name__ == "__main__":
         # else:                          #Matias: TODO: this will change from L0 to L1 when sim2root and the datadirectory can support it
         #    f_output = d_input.ftefield.filename.replace("L0", "L1")
 
-        # If output directory given, use it
-        if output_directory:
+        # The output directory applies to a bare name; an -o with a directory
+        # in it is used as given (it was cut to its name and written into the
+        # input folder, #248)
+        if output_directory and (args.out_file is None or Path(f_output).parent == Path(".")):
            f_output = output_directory + "/" + Path(f_output).name
-
-        logger.info(f"save result in {f_output}")
-        out_tefield = grand.dataio.TEfield(f_output)
-
 
         df_input_file = grand.dataio.DataFile(f_input_file)
         tefield = df_input_file.tefield_l0
@@ -305,10 +303,16 @@ if __name__ == "__main__":
 
         nb_events = len(events_list)
 
-        # If there are no events in the file, exit
+        # If there are no events in the file, exit: this logged "Exiting." and
+        # went on to write empty output files (#248)
         if nb_events == 0:
           message = "There are no events in the file! Exiting."
           logger.error(message)
+          raise SystemExit("GRANDlib: convert_efield2efield: %s has no events" % f_input_file)
+
+        # Opened only once there is something to write
+        logger.info(f"save result in {f_output}")
+        out_tefield = grand.dataio.TEfield(f_output)
 
         ####################################################################################
         # start looping over the events
@@ -344,6 +348,23 @@ if __name__ == "__main__":
            nb_du = trace_shape[0]
            sig_size = trace_shape[-1]
            traces = np.asarray(tefield.trace, dtype=np.float32)  # x,y,z components are stored in events.trace. shape (nb_du, 3, tbins)
+
+           # A shower that hit no antenna is kept, empty, as at every other
+           # level (#91); it crashed here on f_samp_mhz[0] (#248)
+           if len(du_id) == 0:
+              out_tefield.run_number = tefield.run_number
+              out_tefield.event_number = tefield.event_number
+              out_tefield.du_count = 0
+              out_tefield.du_id = []
+              out_tefield.trace = np.zeros((0, 3, 0), dtype=np.float32)
+              out_tefield.du_seconds = []
+              out_tefield.du_nanoseconds = []
+              out_tefield.trigger_position = []
+              out_tefield.analysis_level = tefield.analysis_level+1
+              out_tefield.fill()
+              out_tefield.write()
+              logger.warning(f"Event {event_number} of run {run_number} has no antenna; written empty")
+              continue
 
 
            dt_ns = np.asarray(trun.t_bin_size)[event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
@@ -580,6 +601,8 @@ if __name__ == "__main__":
            out_tefield.run_number = tefield.run_number
            out_tefield.event_number = tefield.event_number
            out_tefield.du_id = tefield.du_id
+           # Was never set, so every event read as having no antenna (#248)
+           out_tefield.du_count = len(du_id)
 
            out_tefield.trace=vout
            out_tefield.du_nanoseconds=du_nanoseconds

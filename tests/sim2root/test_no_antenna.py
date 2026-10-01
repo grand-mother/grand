@@ -331,3 +331,18 @@ def test_efield2voltage_and_voltage2adc_write_the_event(grandroot, tmp_path, mon
     assert list(adc['event_number']) == [1]
     assert int(adc['du_count'][0]) == 0
     assert len(adc['trace_ch'][0]) == 0
+
+
+CONVERT_EFIELD = ROOT / 'scripts' / 'convert_efield2efield.py'
+
+
+def test_efield2efield_writes_the_event(grandroot, tmp_path):
+    r"""#248: convert_efield2efield crashed on an event with no antenna."""
+    grandroot, _ = grandroot
+    work = tmp_path / grandroot.name
+    shutil.copytree(str(grandroot), str(work))
+    completed = _run([CONVERT_EFIELD, work], work)
+    assert 'no antenna' in completed.stdout + completed.stderr
+    efield = _tree(work, 'efield_*L1*.root', 'tefield')
+    assert list(efield['event_number']) == [1]
+    assert int(efield['du_count'][0]) == 0
