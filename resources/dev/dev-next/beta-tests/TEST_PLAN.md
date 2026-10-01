@@ -1,6 +1,6 @@
 # `dev-next` beta test: plan and tracker
 
-**Status:** wave 1 done (69 issues, #180–#249); waves 2–4 pending · **Last updated:** 2026-10-01 · **Branch under test:** `dev-next` at `91d30a1b`
+**Status:** wave 2 running; Critical fixes in PR #208 · **Last updated:** 2026-10-01 · **Branch under test:** `dev-next` at `91d30a1b`
 
 This page is both the plan and the live record of the beta test of GRANDlib's
 `dev-next` branch. It is updated as the test runs: every confirmed problem
@@ -330,16 +330,16 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#217](https://github.com/grand-mother/grand/issues/217) | Notebook 08's "bit for bit" claim fails here; its control row reads "caught" | Medium | 1b | open | | |
 | [#218](https://github.com/grand-mother/grand/issues/218) | examples/: broken, stale or silently misbehaving examples | Medium | 1b | open | | |
 | [#219](https://github.com/grand-mother/grand/issues/219) | Notebooks 10–12: miscounts, unstated units, developer jargon | Low | 1b | open | | |
-| [#220](https://github.com/grand-mother/grand/issues/220) | sim2root writes wrong `du_geoid` for several events per file; empty with `-ss` | Critical | 3a | open | | |
+| [#220](https://github.com/grand-mother/grand/issues/220) | sim2root writes wrong `du_geoid` for several events per file; empty with `-ss` | Critical | 3a | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | geoid from unique antennas; `-ss` field name, lengths, first event |
 | [#221](https://github.com/grand-mother/grand/issues/221) | README pipeline commands fail: `RunSimPipe.py` and the sim2root example lack `-sl` | High | 3a, 3b | open | | |
 | [#222](https://github.com/grand-mother/grand/issues/222) | sim2root: mixed trace windows share one run's t_pre/t_post; window options unchecked | High | 3a | open | | |
 | [#223](https://github.com/grand-mother/grand/issues/223) | sim2root: `-ef` bugs; different run numbers silently merged | Medium | 3a | open | | |
 | [#224](https://github.com/grand-mother/grand/issues/224) | sim2root and ZHAireS converter: failures leave junk files and often exit 0 | Medium | 3a | open | | |
 | [#225](https://github.com/grand-mother/grand/issues/225) | ZHAireS conversion stores sentinels for unknown Xmax and a magic default time | Medium | 3a | open | | |
 | [#226](https://github.com/grand-mother/grand/issues/226) | sim2root minor: IllustrateSimPipe `--savefig`; naming and site cosmetics | Low | 3a | open | | |
-| [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | open | | |
+| [#227](https://github.com/grand-mother/grand/issues/227) | `--rf_chain_nut` / `--rf_chain_gaa` have no effect with `--no_noise --no_rf_chain` | Critical | 3b | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | Nut/GAA chains brought back to the time domain |
 | [#228](https://github.com/grand-mother/grand/issues/228) | CoREAS Xmax NaN or ~1 cm: efield2voltage crashes or outputs ~1e-13 µV | Critical | 3b | open | | |
-| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | open | | |
+| [#229](https://github.com/grand-mother/grand/issues/229) | efield2voltage resampling keeps old `trigger_position` and `t_bin_size`; voltage2adc then uses the wrong rate | Critical | 3b, 4b-B | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | trigger rescaled; script refuses `--target_sampling_rate_mhz` |
 | [#230](https://github.com/grand-mother/grand/issues/230) | `--seed` does not cover calibration smearing; jitter without a seed crashes; seed 0 unseeded | High | 3b | open | | |
 | [#231](https://github.com/grand-mother/grand/issues/231) | Conversion scripts: `-od` writes run files into the input; reruns crash; L0/L1 picked silently | Medium | 3b | open | | |
 | [#232](https://github.com/grand-mother/grand/issues/232) | CoREAS converter: magnetic field in three units; run/event swapped; README names | Low | 3b | open | | |
@@ -347,8 +347,8 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#234](https://github.com/grand-mother/grand/issues/234) | `Event.close_files()` rewrites input files and can hang; EventList scripts crash at exit | High | 4a | open | | |
 | [#235](https://github.com/grand-mother/grand/issues/235) | EventList and DataFile crash deep, with unclear errors, on plausible input | High | 4a | open | | |
 | [#236](https://github.com/grand-mother/grand/issues/236) | dataio returns stale or zeroed data: reopened files, missing branches, unrecognised names, use after close | Medium | 4a | open | | |
-| [#237](https://github.com/grand-mother/grand/issues/237) | efield2voltage pairs an L0 e-field with an L1 run tree: 2× amplitude, no warning | Critical | 4b-B | open | | |
-| [#238](https://github.com/grand-mother/grand/issues/238) | `compute_voltage` for a missing event writes another event with an empty trace | Critical | 4b-B | open | | |
+| [#237](https://github.com/grand-mother/grand/issues/237) | efield2voltage pairs an L0 e-field with an L1 run tree: 2× amplitude, no warning | Critical | 4b-B | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | run tree read at the efield's level |
+| [#238](https://github.com/grand-mother/grand/issues/238) | `compute_voltage` for a missing event writes another event with an empty trace | Critical | 4b-B | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | `get_event` checks the pair against the input's events |
 | [#239](https://github.com/grand-mother/grand/issues/239) | NaN/inf voltages become INT64_MIN in the ADC; saturation never reported | High | 4b-B | open | | |
 | [#240](https://github.com/grand-mother/grand/issues/240) | Re-running conversions: voltage2adc deletes old output then crashes; failed runs leave blocking stubs | High | 4b-B | open | | |
 | [#241](https://github.com/grand-mother/grand/issues/241) | Multi-run folders crash; measured noise reused across antennas silently; raw noise errors | Medium | 4b-B | open | | |
@@ -357,9 +357,21 @@ All issues: [search `dev-next_beta-test:`](https://github.com/grand-mother/grand
 | [#244](https://github.com/grand-mother/grand/issues/244) | `extract_events.py`: `-ow` deletes everything in the target (even "."); duplicates leave a broken target | High | 4c | open | | |
 | [#245](https://github.com/grand-mother/grand/issues/245) | `pipeline/get_files_from_db.py` moves small files while listing | High | 4c | open | | |
 | [#246](https://github.com/grand-mother/grand/issues/246) | Utility scripts: no argparse, wrong option lists, files in cwd, version 0.0.0 | Low | 4c | open | | |
-| [#247](https://github.com/grand-mother/grand/issues/247) | efield2voltage / efield2efield use the previous event's shower when the shower tree lacks the event | Critical | 4b-A | open | | |
+| [#247](https://github.com/grand-mother/grand/issues/247) | efield2voltage / efield2efield use the previous event's shower when the shower tree lacks the event | Critical | 4b-A | fix in PR | [#208](https://github.com/grand-mother/grand/pull/208) | shower and run entries checked after lookup |
 | [#248](https://github.com/grand-mother/grand/issues/248) | `convert_efield2efield` writes `du_count` 0, ignores the `-o` folder, crashes on zero-antenna events | High | 4b-A | open | | |
 | [#249](https://github.com/grand-mother/grand/issues/249) | Conversion scripts don't check that run, e-field and shower trees match | Medium | 4b-A | open | | |
+| [#250](https://github.com/grand-mother/grand/issues/250) | The geoid model (EGM96) is mirrored in latitude: geoid heights tens of metres off | Critical | 5a, 5b | open | | |
+| [#251](https://github.com/grand-mother/grand/issues/251) | Geodetic height NaN west of Greenwich (GEOID); NaN declination there; Horizon objects share location | High | 5a, 5b | open | | |
+| [#252](https://github.com/grand-mother/grand/issues/252) | Reconstruction hard-codes ground altitude 1231 m; file antenna z is relative to the site | Medium | 5a | open | | |
+| [#253](https://github.com/grand-mother/grand/issues/253) | Antenna effective-length lookup 1° off for every negative azimuth | Medium | 5b | open | | |
+| [#254](https://github.com/grand-mother/grand/issues/254) | Physics details: ADF asymmetry B unnormalised, circular convolution at default padding, ADC truncation, refractive index | Medium | 5b | open | | |
+| [#255](https://github.com/grand-mother/grand/issues/255) | rf_chain error path crashes (NameError 'Nonec'); duplicate definitions; prints instead of errors | High | 7 | open | | |
+| [#256](https://github.com/grand-mother/grand/issues/256) | Silent failures: Newton non-convergence, raise of a string, prints instead of errors in aoi, global warning filter | High | 7 | open | | |
+| [#257](https://github.com/grand-mother/grand/issues/257) | Docs give commands that fail (CoREAS, sim2root, Efield2Voltage file input) | High | 6a | open | | |
+| [#258](https://github.com/grand-mother/grand/issues/258) | Docs state stale or wrong facts | Medium | 6a | open | | |
+| [#259](https://github.com/grand-mother/grand/issues/259) | About 25 user-facing input checks are asserts | Medium | 7 | open | | |
+| [#260](https://github.com/grand-mother/grand/issues/260) | READMEs are stale | Medium | 6b | open | | |
+| [#261](https://github.com/grand-mother/grand/issues/261) | Docstrings that mislead: missing units and frames, wrong parameters and returns | Medium | 6b | open | | |
 
 Status values: **open**, **fix in PR**, **fixed** (merged), **with owner** (needs a decision), **won't fix** (with reason).
 
@@ -429,6 +441,7 @@ Reports that were not confirmed, with the reason.
 
 | Date | Event |
 |---|---|
+| 2026-10-01 | Critical fixes in PR #208 (one commit each, with a failing-first test): #227, #238, #247, #237, #229, #220. Wave 2 batch 1 in (5a, 5b, 6a, 6b, 7): logged #250–#261, one more Critical (#250 geoid mirrored, confirmed at the poles and Tokyo). Wave 2 batch 2 running: 8, 9, 10. |
 | 2026-10-01 | **Wave 1 complete.** 4b-A in: logged #247–#249 (1 more Critical). Totals: 69 issues (#180–#249; #208 is a PR): 10 Critical, 22 High, 26 Medium, 11 Low. The two ×2 pairs (1a-A/1a-B, 4b-A/4b-B) overlapped heavily but each found things the other missed, so the input-fuzzing area gets another pass in wave 3. |
 | 2026-10-01 | 4c in: logged #242–#246 (2 more Critical: converters accept damaged simulations); #184 extended to `open_grand_analysis_prompt.py` and raised to High. Still running: 4b-A. |
 | 2026-10-01 | 4b-B in: logged #237–#241 (2 more Critical: #237 L0/L1 mix doubles amplitudes, #238 missing event writes the wrong one); #229 raised to Critical. Still running: 4b-A, 4c. |
