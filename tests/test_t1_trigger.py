@@ -282,3 +282,13 @@ def test_t1_script_parses_its_arguments(tmp_path):
     assert "triggered" in ran.stdout
     if out.exists():
         assert "'th1': 1" in out.read_text().splitlines()[0]
+
+
+def test_a_nan_trace_is_refused():
+    r"""#288: a NaN trace still triggered."""
+    from grand.sim.detector.trigger import t1_du_triggers
+
+    traces = np.zeros((2, 3, 2048))
+    traces[1, 0, 100] = np.nan
+    with pytest.raises(ValueError, match="unit 1 .*NaN"):
+        t1_du_triggers(traces)

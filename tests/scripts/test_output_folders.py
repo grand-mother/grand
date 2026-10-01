@@ -57,7 +57,9 @@ def _fails(*argv, cwd):
 
 @pytest.mark.parametrize("option, message", [
     (("--target_duration_us", "0.5"), "--target_duration_us 0.5 is shorter than the traces"),
-    (("--add_noise_uVm", "-3"), "--add_noise_uVm must be >= 0"),
+    (("--add_noise_uVm", "-3"), "--add_noise_uVm must be finite and >= 0"),
+    (("--add_noise_uVm", "inf"), "--add_noise_uVm must be finite and >= 0"),      # wrote NaN (#288)
+    (("--target_sampling_rate_mhz", "0.5"), "--target_sampling_rate_mhz must be 0 (keep) or at least 10 MHz"),                   # 2-4 samples (#288)
 ])
 def test_efield2efield_explains_bad_options(simulation, tmp_path, option, message):
     r"""#233: these failed with a bare AssertionError."""

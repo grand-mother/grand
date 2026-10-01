@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Nonsense inputs that passed silently (#288, items 1–3).**
+  `convert_efield2efield.py --add_noise_uVm inf` wrote NaN traces, and
+  `--target_sampling_rate_mhz 0.5` (GHz typed for MHz) wrote traces of a few
+  samples; infinite values are now refused, and a target rate must be 0 or at
+  least 10 MHz. `Efield2Voltage` refuses a run `t_bin_size` of 0, negative,
+  NaN or ≥ 1000 ns and traces under 16 samples, which failed with
+  `IndexError` deep in the interpolation. The T1 trigger refuses a NaN trace,
+  which it still triggered on. (A NaN e-field was already refused, #239.)
+
 - **Plane-wave fit: vertical showers and collinear antennas (#288, item 5).**
   Equal arrival times -- a vertical shower over a flat array -- made the
   solver fail with "function value is NaN"; the fit now returns the array's

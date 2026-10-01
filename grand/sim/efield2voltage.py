@@ -435,6 +435,17 @@ class Efield2Voltage:
             return
 
         self.dt_ns = np.asarray(self.run.t_bin_size)[self.event_dus_indices] # sampling time in ns, sampling freq = 1e9/dt_ns.
+        # A bin of 0, < 0, NaN or >= 1000 ns, or a trace of a few samples,
+        # failed with IndexError deep in the interpolation (#288)
+        dt = np.asarray(self.dt_ns, dtype=float)
+        if dt.size and not (np.all(np.isfinite(dt)) and np.all(dt > 0) and np.all(dt < 1000)):
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_event", "the run's t_bin_size for this event must be between 0 and "
+                "1000 ns, got %s" % np.unique(dt)))
+        if self.sig_size < 16:
+            raise ValueError(_validate.message(
+                "Efield2Voltage.get_event", "the traces have %d samples; at least 16 are needed"
+                % self.sig_size))
         self.f_samp_mhz = 1e3/self.dt_ns             # MHz
         # comupte time samples in ns for all antennas in event with index event_idx.
         self.time_samples = self.get_time_samples()  # t_samples.shape = (nb_du, self.sig_size)

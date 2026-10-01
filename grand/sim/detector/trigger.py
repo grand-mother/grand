@@ -229,6 +229,11 @@ def t1_du_triggers(traces, trigger_config=None, channels=DEFAULT_T1_CHANNELS,
     numpy.ndarray of bool
         One value per DU.
     """
+    # A NaN trace still triggered (#288)
+    for index, du in enumerate(traces):
+        if not np.all(np.isfinite(np.asarray(du, dtype=float))):
+            raise ValueError("GRANDlib: t1_du_triggers: the trace of unit %d (index in the event) holds "
+                             "NaN or inf" % index)
     return np.array(
         [any(t1_channel_trigger(du[ch], trigger_config, baseline) for ch in channels)
          for du in traces],

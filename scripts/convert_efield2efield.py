@@ -242,28 +242,29 @@ if __name__ == "__main__":
     logger.info(f"seed used for random number generator is {seed}.")
 
     noise = args.add_noise_uVm
-    if not noise >= 0:    # a bare AssertionError before (#233)
-        raise SystemExit("GRANDlib: convert_efield2efield: --add_noise_uVm must be >= 0, got %s" % noise)
+    if not 0 <= noise < float("inf"):    # a bare AssertionError before (#233); inf wrote NaN (#288)
+        raise SystemExit("GRANDlib: convert_efield2efield: --add_noise_uVm must be finite and >= 0, got %s" % noise)
     if(noise>0):
       logger.info(f"We are going to apply gaussian noise of {noise} uV/m.")   
  
     jitter= args.add_jitter_ns
-    if not jitter >= 0:    # a bare AssertionError before (#233)
-        raise SystemExit("GRANDlib: convert_efield2efield: --add_jitter_ns must be >= 0, got %s" % jitter)
+    if not 0 <= jitter < float("inf"):    # a bare AssertionError before (#233); inf wrote NaN (#288)
+        raise SystemExit("GRANDlib: convert_efield2efield: --add_jitter_ns must be finite and >= 0, got %s" % jitter)
     if(jitter>0):
       logger.info(f"We are going to apply a gaussian time jitter of {jitter} ns")   
  
     calsigma=args.calibration_smearing_sigma
-    if not calsigma >= 0:    # a bare AssertionError before (#233)
-        raise SystemExit("GRANDlib: convert_efield2efield: --calibration_smearing_sigma must be >= 0, got %s" % calsigma)
+    if not 0 <= calsigma < float("inf"):    # a bare AssertionError before (#233); inf wrote NaN (#288)
+        raise SystemExit("GRANDlib: convert_efield2efield: --calibration_smearing_sigma must be finite and >= 0, got %s" % calsigma)
     if(calsigma>0):
       logger.info(f"We are going to apply a gaussian calibration error of {calsigma} ")   
     
  
     padding_factor=1
     target_sampling_rate_mhz = args.target_sampling_rate_mhz   # if different from 0, will resample  
-    if not target_sampling_rate_mhz >= 0:
-        raise SystemExit("GRANDlib: convert_efield2efield: --target_sampling_rate_mhz must be >= 0, got %s"
+    # 0.001 or 0.5 (GHz typed for MHz) wrote traces of 0 to 4 samples (#288)
+    if not (target_sampling_rate_mhz == 0 or 10 <= target_sampling_rate_mhz < float("inf")):
+        raise SystemExit("GRANDlib: convert_efield2efield: --target_sampling_rate_mhz must be 0 (keep) or at least 10 MHz, got %s"
                          % target_sampling_rate_mhz)
     target_duration_us = args.target_duration_us       # if different from 0, will adjust padding factor to get a trace of this lenght in us        
     if not target_duration_us >= 0:

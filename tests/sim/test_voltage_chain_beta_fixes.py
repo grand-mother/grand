@@ -252,3 +252,26 @@ def test_a_single_efield_file_is_explained(level0_sample):
     (efield,) = level0_sample.glob("efield_*_L0_*.root")
     with pytest.raises(ValueError, match="give the folder sim2root.py wrote"):
         Efield2Voltage(str(efield))
+
+
+@pytest.mark.parametrize("bin_ns", [0.0, -0.5, 1000.0, float("nan")])
+def test_a_bad_bin_size_is_refused(level0_sample, bin_ns):
+    r"""#288: these failed with IndexError deep in the interpolation."""
+    import os
+
+    from grand.dataio import TRun
+
+    (path,) = level0_sample.glob("run_*_L0_*.root")
+    source = TRun(str(path))
+    source.get_entry(0)
+    staged = path.with_name("staged.root")
+    target = TRun(str(staged))
+    target.copy_contents(source)
+    target.t_bin_size = [bin_ns] * len(source.t_bin_size)
+    target.fill()
+    target.write()
+    target.stop_using()
+    source.stop_using()
+    os.replace(staged, path)
+    with pytest.raises(ValueError, match="t_bin_size"):
+        _voltage(level0_sample, 13790)
