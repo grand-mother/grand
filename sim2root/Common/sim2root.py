@@ -33,6 +33,8 @@ clparser = argparse.ArgumentParser(description="Convert simulation data in rawro
 clparser.add_argument("file_dir_name", nargs='+', help="ROOT files containing GRANDRaw data TTrees, a directory with GRANDraw files or a .txt file with list of rawroot files")
 clparser.add_argument("-o", "--output_parent_directory", help="Output parent directory", default="")
 clparser.add_argument("-fo", "--forced_output_directory", help="Force this option as the output directory", default=None)
+clparser.add_argument("--overwrite", action="store_true",
+                      help="allow -fo to name a folder that already holds files (refused otherwise)")
 clparser.add_argument("-s", "--site_name", help="The name of the site", default=None)
 clparser.add_argument("-sl", "--site_layout", help="The layout of the site (eg. GP13, GP80, GAA)", default=None)
 clparser.add_argument("-d", "--sim_date", help="The date of the simulation", default=None)
@@ -332,12 +334,44 @@ def check_run_numbers(file_list, ext_run_number=None, star_shape=False):
                  % (", ".join(str(run) for run in runs[:-1]), runs[-1]))
 
 
-def main():
+def fail(message):
+    r"""Exits with status 1 and `message` (#224: several failures exited 0)."""
+    sys.exit("GRANDlib: sim2root: " + message)
 
+
+# What this run wrote, so that a failure can remove it (#224): the folder,
+# whether this run created it, and the files that were there before.
+_output = {"dir": None, "created": False, "before": set()}
+
+
+def _remove_partial_output():
+    r"""Removes the files a failed conversion wrote, and its folder if it made it."""
+    folder = _output["dir"]
+    if folder is None or not folder.is_dir():
+        return
+    for path in folder.iterdir():
+        if path.name not in _output["before"] and path.is_file():
+            path.unlink()
+    if _output["created"] and not any(folder.iterdir()):
+        folder.rmdir()
+    logger.error(f"The conversion failed; removed its partial output from {folder}")
+
+
+def main():
+    r"""Runs the conversion; on failure, removes what it had written (#224)."""
+    try:
+        convert()
+    except BaseException as error:
+        if not (isinstance(error, SystemExit) and error.code in (0, None)):
+            _remove_partial_output()
+        raise
+
+
+def convert():
+    r"""Converts the input files given on the command line."""
     # Check if the site layout is defined
     if not clargs.star_shape and not clargs.site_layout:
-        print("Please provide the simulated site layout as a command line parameter (eg. -sl GP300)")
-        exit(-1)
+        fail("give the simulated site layout with -sl (e.g. -sl GP300)")
 
     # Initialise the run number if specified
     ext_run_number = None
@@ -370,8 +404,17 @@ def main():
         file_list = clargs.file_dir_name
 
     if len(file_list)==0:
-        print("No RawRoot files found in the input directory. Exiting.")
-        exit(0)
+        fail("no .rawroot files in %s" % clargs.file_dir_name[0])
+    # Opening a missing file for reading created it, and the run then failed
+    # on an unbound variable (#224)
+    missing = [name for name in file_list if not Path(name).is_file()]
+    if missing:
+        fail("no such input file: %s" % ", ".join(missing))
+    if clargs.forced_output_directory is not None and not clargs.overwrite:
+        forced = Path(clargs.output_parent_directory, clargs.forced_output_directory)
+        if forced.is_dir() and any(forced.iterdir()):
+            fail("the -fo folder %s already holds files, and a second file set next to them "
+                 "breaks the later steps; give --overwrite to write there anyway" % forced)
 
     # Before anything is written: one window per run, and a valid one (#222)
     check_windows(file_list, clargs.trigger_time_ns, clargs.target_duration_us, clargs.star_shape)
@@ -643,6 +686,9 @@ def main():
         if ext_event_number is not None:
             ext_event_number += 1
 
+    if out_dir_name == "":
+        fail("no events in the input files (all were empty or unreadable); nothing written")
+
     # Fill the trun with antenna positions and ids from ALL the events (not for star shape, already done)
     # ToDo: this should be done with TChain in one loop over all the files... maybe (which would be faster?)
     if not clargs.star_shape:
@@ -713,10 +759,14 @@ def init_all_trees(clargs, unix_date, run_number, site, gt):
         out_dir_name = form_directory_name(clargs, date, time, run_number, site)
         logger.info(f"Storing files in directory {out_dir_name}")
         out_dir_name.mkdir(parents=True)  # -o may name a folder not yet made (#257)
+        _output.update(dir=out_dir_name, created=True, before=set())
     # If another directory was forced as the output directory, create it
     else:
         out_dir_name = Path(clargs.output_parent_directory, clargs.forced_output_directory)
+        existed = out_dir_name.is_dir()
         out_dir_name.mkdir(parents=True, exist_ok=True)
+        _output.update(dir=out_dir_name, created=not existed,
+                       before={path.name for path in out_dir_name.iterdir()})
 
     # Create appropriate GRANDROOT trees in temporary file names (event range not known until the end of the loop)
     # Init run trees only if requested
@@ -1097,8 +1147,7 @@ def form_directory_name(clargs, date, time, run_number, site):
             break
     # If directories with serial number up to 5000 already created
     else:
-        print("All directories with serial number up to 5000 already exist. Please clean up some directories!")
-        exit(0)
+        fail("all output folder names up to serial number 5000 exist; clean some up")
 
     return dir_name
 
@@ -1117,8 +1166,7 @@ def rename_all_files(clargs, path, start_event_number, end_event_number, run_num
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 5000. Please clean up some files!")
-            exit(0)
+            fail(f"no free file name for {fn_in} up to serial number 5000; clean some up")
 
     # Rename the event files
     if event_files:
@@ -1138,8 +1186,7 @@ def rename_event_files(clargs, path, start_event_number, end_event_number):
                 fn_in.rename(fn_out)
                 break
         else:
-            print(f"Could not find a free filename for {fn_in} until serial number 5s000. Please clean up some files!")
-            exit(0)
+            fail(f"no free file name for {fn_in} up to serial number 5000; clean some up")
 
 ## Simple shifting of a single x,y,z trace
 def trace_shift(arr, shift):

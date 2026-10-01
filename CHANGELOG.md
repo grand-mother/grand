@@ -15,6 +15,15 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- `sim2root.py` and the ZHAireS converter fail cleanly (#224): a missing
+  input file is refused (it was created empty, and the run died on an
+  unbound variable); no input, a missing `-sl` and a full serial range exit
+  1 instead of 0; a failed conversion removes the files it wrote and the
+  folder it made; `-fo` on a folder that already holds files needs
+  `--overwrite`. `ZHAireSRawToRawROOT.py` has an argparse command line
+  (`--help` works; the folder alone or all five arguments), and a missing
+  folder or `.sry`, a bad mode or a crash exit non-zero.
+
 - `grand.aoi` events now say which origin their antenna positions are in
   (#215, partly): `Event.antennas_origin` is the run's `origin_geoid`, or for
   positions computed from GPS (GP300, GP80, GP13) the hard-coded point, now

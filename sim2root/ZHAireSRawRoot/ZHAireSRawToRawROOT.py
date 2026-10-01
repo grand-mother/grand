@@ -1160,49 +1160,54 @@ def convert_date(date_str):
     return formatted_date
     
     
-if __name__ == '__main__':
+def main(argv=None):
+    r"""Command line.  It had no argparse: ``--help`` was taken for a folder,
+    and a missing folder or ``.sry``, a bad mode or a crash exited 0 (#224).
+    """
+    import argparse
 
-    if len(sys.argv)==6 :
-        InputFolder=sys.argv[1]
-        mode=sys.argv[2]
-        RunID=int(sys.argv[3])
+    parser = argparse.ArgumentParser(
+        description="Convert one ZHAireS simulation folder into a GRAND raw ROOT file (.rawroot).",
+        epilog="Either the folder alone (names and numbers are taken from the simulation), or all "
+               "five arguments, e.g.: ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 3 "
+               "GP10_192745211400_SD075V.rawroot")
+    parser.add_argument("input_folder", help="folder holding the ZHAireS output (one .sry file)")
+    parser.add_argument("mode", nargs="?", help="conversion mode; only 'standard' is implemented")
+    parser.add_argument("run_id", nargs="?", help="run number (integer)")
+    parser.add_argument("event_id", nargs="?", help="event number, or a name")
+    parser.add_argument("output_file", nargs="?", help="output .rawroot file; events are appended")
+    args = parser.parse_args(argv)
+
+    rest = (args.mode, args.run_id, args.event_id, args.output_file)
+    if any(value is not None for value in rest) and not all(value is not None for value in rest):
+        parser.error("give the folder alone, or the folder, mode, run id, event id and output file")
+    if not os.path.isdir(args.input_folder):
+        sys.exit("GRANDlib: ZHAireSRawToRawROOT: no such folder: %s" % args.input_folder)
+
+    if args.mode is None:
+        run_id, event_id, output = "SuitYourself", "LookForIt", "GRANDConvention"
+    else:
+        if args.mode != "standard":
+            parser.error("mode must be 'standard' ('full' and 'minimal' are not implemented), got %r"
+                         % args.mode)
         try:
-         EventID=int(sys.argv[4])
-        except:
-         EventID=sys.argv[4]  
-        
-        OutputFileName=sys.argv[5]
-	    
-    elif len(sys.argv)==2:
-        InputFolder=sys.argv[1]
-        mode="standard"
-        RunID="SuitYourself"
-        EventID="LookForIt"
-        OutputFileName="GRANDConvention"	
-    else:
-        print("Please point me to a directory with some ZHAires output, and indicate the mode RunID, EventID and output filename...nothing more, nothing less!")
-        print("i.e ZHAiresRawToRawROOT ./MyshowerDir standard RunID EventID MyFile.root")
-        print("i.e. python3 ZHAireSRawToRawROOT.py ./GP10_192745211400_SD075V standard 0 3  GP10_192745211400_SD075V.root")
-        print("or point me to a directory and i will take care of the rest automatically as i see fit.")
-        mode="exit"
+            run_id = int(args.run_id)
+        except ValueError:
+            parser.error("the run id must be an integer, got %r" % args.run_id)
+        try:
+            event_id = int(args.event_id)
+        except ValueError:
+            event_id = args.event_id
+        output = args.output_file
+
+    try:
+        result = ZHAireSRawToRawROOT(args.input_folder, output, run_id, event_id)
+    except Exception as error:
+        sys.exit("GRANDlib: ZHAireSRawToRawROOT: the conversion failed: %s: %s"
+                 % (type(error).__name__, error))
+    if result == -1:
+        sys.exit("GRANDlib: ZHAireSRawToRawROOT: the conversion failed; see the messages above")
 
 
-
-    if(mode=="standard"): 
-        if ZHAireSRawToRawROOT(InputFolder, OutputFileName, RunID, EventID) == -1:
-            sys.exit(1)
-
-	#elif(mode=="full"):
-
-	#	ZHAireSRawToRawROOT(OutputFileName,RunID,EventID, InputFolder, SimEfieldInfo=True, NLongitudinal=True, ELongitudinal=True, NlowLongitudinal=True, ElowLongitudinal=True, EdepLongitudinal=True, LateralDistribution=True, EnergyDistribution=True)
-
-	#elif(mode=="minimal"):
-	
-	#	ZHAireSRawToRawROOT(OutputFileName,RunID,EventID, InputFolder, SimEfieldInfo=True, NLongitudinal=False, ELongitudinal=False, NlowLongitudinal=False, ElowLongitudinal=False, EdepLongitudinal=False, LateralDistribution=False, EnergyDistribution=False)
-
-    else:
-
-        print("please enter the mode: standard (full or minimal still not implemented")
-	
- 
-
+if __name__ == '__main__':
+    main()
