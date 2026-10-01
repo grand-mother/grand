@@ -320,63 +320,49 @@ class MotherEventTree(DataTree):
         return True
 
     def get_traces_lengths(self):
-        """Gets the traces lengths for each event
+        """Gets the trace lengths of the current entry
 
         Returns
         -------
-        list of int
-            Trace length per detection unit.
+        list of list of int or None
+            For each detection unit of the loaded entry, the length of each of
+            its channels; ``None`` if this tree holds no traces.  (It looked
+            for branches named ``trace_x`` or ``trace_0``, which no tree has,
+            and always returned ``None``, #200.)
         """
-
-        # If there are no traces in the tree, return None
-        if not self._tree.GetListOfLeaves().FindObject("trace_x") and not self._tree.GetListOfLeaves().FindObject("trace_0"):
-            return None
-
-        traces_lengths = []
-        # For ADC traces - 4 traces, different names
-        if "ADC" in self.__class__.__name__ or "RawVoltage" in self.__class__.__name__:
-            traces_suffixes = [0, 1, 2, 3]
-        # Other traces
-        else:
-            traces_suffixes = ["x", "y", "z"]
-
-        # Get sizes of each traces
-        for i in traces_suffixes:
-            cnt = self.draw(f"@trace_{i}.size()", "", "goff")
-            traces_lengths.append(np.frombuffer(self._tree.GetV1(), count=cnt, dtype=np.float64).astype(int).tolist())
-
-        return traces_lengths
+        for name in ("trace", "trace_ch"):
+            if self._tree.GetListOfLeaves().FindObject(name):
+                return [[len(channel) for channel in du] for du in getattr(self, name)]
+        return None
 
     def get_list_of_dus(self):
-        """Gets the list of all detector units used for each event
+        """Gets the detector units of the current entry
 
         Returns
         -------
-        list of int
-            Detection units in the current event.
+        list of int or None
+            Detection units in the loaded entry, in its order; ``None`` if this
+            tree has no ``du_id``.  (It returned the units of the whole tree,
+            as `get_list_of_all_used_dus` does, #200.)
         """
-
-        # If there are no detector unit ids in the tree, return None
         if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
-
-        # draw() keeps the loaded entry's du_id (#196)
-        count = self.draw("du_id", "", "goff")
-        return np.unique(np.array(np.frombuffer(self.get_v1(), dtype=np.float64, count=count)).astype(int))
+        return [int(du) for du in self.du_id]
 
     def get_list_of_all_used_dus(self):
         """Compiles the list of all detector units used in the events of the tree
 
         Returns
         -------
-        list of int
-            Every detection unit appearing anywhere in the tree.
+        list of int or None
+            Every detection unit appearing anywhere in the tree, sorted;
+            ``None`` if this tree has no ``du_id``.
         """
-        dus = self.get_list_of_dus()
-        if dus is not None:
-            return np.unique(np.array(dus).flatten()).tolist()
-        else:
+        if not self._tree.GetListOfLeaves().FindObject("du_id"):
             return None
+        # draw() keeps the loaded entry's du_id (#196)
+        count = self.draw("du_id", "", "goff")
+        return np.unique(np.frombuffer(self.get_v1(), dtype=np.float64, count=count).astype(int)).tolist()
 
     def get_dus_indices_in_run(self, trun):
         """Gets an array of the indices of DUs of the current event in the TRun tree

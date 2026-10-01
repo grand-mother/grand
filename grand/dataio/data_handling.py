@@ -640,7 +640,8 @@ class DataFile:
             return None
         else:
             traces_lengths = tree.get_traces_lengths()
-            if traces_lengths is None:
+            # Lengths of the loaded entry; none is loaded when the file opens
+            if not traces_lengths:
                 return None
 
             # Check if traces have constant length

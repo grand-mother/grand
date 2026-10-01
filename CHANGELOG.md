@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`get_traces_lengths` and `get_list_of_dus` (#200).** `get_traces_lengths`
+  looked for branches no tree has (`trace_x`, `trace_0`) and always returned
+  `None`; it now gives, for the loaded entry, each unit's channel lengths,
+  from `trace` or `trace_ch`. `get_list_of_dus` returned every unit in the
+  tree, contrary to its docstring; it now gives the loaded entry's units, and
+  `get_list_of_all_used_dus` the whole tree's.
+
 - **Tree datetimes are UTC (#203).** `creation_datetime` was taken in UTC but
   stored as if it were local time, so it was off by the machine's UTC offset
   (8 hours early in China), and read back in local time again. Datetimes are

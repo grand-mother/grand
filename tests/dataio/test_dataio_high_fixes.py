@@ -334,3 +334,33 @@ def test_creation_datetime_is_utc_in_any_time_zone(tmp_path):
     assert abs(float(stored)) < 5
     assert abs(float(read)) < 5
     assert source == "1970-01-01 00:00:00"
+
+
+def test_trace_lengths_and_units_of_the_current_entry(tmp_path):
+    r"""#200: get_traces_lengths was always None; get_list_of_dus gave the whole tree's units."""
+    from grand.dataio import TADC, TEfield
+
+    name = str(tmp_path / "efield.root")
+    t = TEfield(name)
+    for event, dus, n in ((1, [7, 3], 4), (2, [5], 6)):
+        t.run_number, t.event_number, t.du_id = 1, event, dus
+        t.trace = [[[0.0] * n] * 3] * len(dus)
+        t.fill()
+    t.write()
+    t.stop_using()
+
+    t = TEfield(name)
+    t.get_entry(0)
+    assert t.get_traces_lengths() == [[4, 4, 4], [4, 4, 4]]
+    assert t.get_list_of_dus() == [7, 3]
+    assert t.get_list_of_all_used_dus() == [3, 5, 7]
+    assert t.get_list_of_dus() == [7, 3]          # the union did not replace the entry
+    t.get_entry(1)
+    assert t.get_traces_lengths() == [[6, 6, 6]]
+    t.stop_using()
+
+    a = TADC(str(tmp_path / "adc.root"))
+    a.run_number, a.event_number, a.du_id = 1, 1, [2]
+    a.trace_ch = [[[1, 2], [3, 4], [5, 6], [7, 8]]]
+    assert a.get_traces_lengths() == [[2, 2, 2, 2]]
+    a.stop_using()
