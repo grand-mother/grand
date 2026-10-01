@@ -103,8 +103,14 @@ rsync_options="-az --mkpath --chmod=go-w"
 
 ##### End of Configuration section (do not modify below) #####
 
-lock_file="/tmp/grand_transfer_lock"
-exec {lock_fd}>${lock_file} || exit 1
+# The lock lives in a directory only this account can write: a fixed name in
+# /tmp could be pre-created by another user as a link to one of our files.
+lock_file="${XDG_RUNTIME_DIR:-$HOME}/.grand_transfer_lock"
+exec {lock_fd}>"${lock_file}" || exit 1
+
+# Quote a value for an SQL string literal: double every single quote. File
+# names come from the acquisition machines and must stay data in the queries.
+sqlq() { local v=${1//\'/\'\'}; printf "%s" "$v"; }
 flock -n "$lock_fd" || { echo "Script is already running. Skipping." >&2; exit 1; }
 
 
@@ -177,7 +183,7 @@ do
       toins+=([$i]="")
       j=0
     fi
-    toins[$i]+=",('$(dirname $file)', '$(basename $file)', ${dateobs}, 0, '${md5}')"
+    toins[$i]+=",('$(sqlq "$(dirname "$file")")', '$(sqlq "$(basename "$file")")', ${dateobs}, 0, '$(sqlq "${md5}")')"
     j=$((j + 1))
   else
     openfiles+=("$file") ##tmp
@@ -217,7 +223,7 @@ do
 	then
 	  md5=${trans#*md5:}
 		#Transfer successful : store info to update database at the end
-		translog[$i]+=";UPDATE gfiles SET success=1, md5sum='${md5}' WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,target,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'), \"${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}\", '${trans}')"
+		translog[$i]+=";UPDATE gfiles SET success=1, md5sum='$(sqlq "${md5}")' WHERE id=${fileinfo[4]};INSERT INTO transfer (id, tag, success,date_transfer,target,comment) VALUES (${fileinfo[4]},${tag}, 1,datetime('now','utc'), '$(sqlq "${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}")', '$(sqlq "${trans}")')"
 		# colors only for terminal
 		if [ -n "$TERM" ]; then
 		  printf "${Green}Ok${Default}"
@@ -227,7 +233,7 @@ do
 	else
 	  md5=$(echo ${trans}|awk -F"md5:" '{print $2}')
 		#Transfer failed : just log errors
-		translog[$i]+=";INSERT INTO transfer (id, tag, success, date_transfer, target, comment) VALUES (${fileinfo[4]}, ${tag}, 0,datetime('now','utc'), '${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}', '${trans}')"
+		translog[$i]+=";INSERT INTO transfer (id, tag, success, date_transfer, target, comment) VALUES (${fileinfo[4]}, ${tag}, 0,datetime('now','utc'), '$(sqlq "${remotedatadir}/raw/${fileinfo[2]:0:4}/${fileinfo[2]:4:2}/${finalname}")', '$(sqlq "${trans}")')"
 		if [ -n "$TERM" ]; then
 		  printf "${Red}ERROR:${Default} \n ${trans} "
 		else

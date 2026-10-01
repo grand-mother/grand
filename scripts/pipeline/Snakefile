@@ -22,6 +22,7 @@
 # 10) Notify (after all steps)
 
 import os,sys
+import json
 import subprocess
 import pipeline_setup as p
 import re
@@ -54,7 +55,7 @@ def get_files(db_file):
     query = subprocess.check_output(
     ["python3", p.pipeline_config["pipeline_path"]+"/get_files_from_db.py","-d",dbfile],
     text=True).strip()
-    return eval(query)
+    return json.loads(query)  # the script prints JSON; never evaluate its output
 
 def get_files_test():
     import glob
@@ -150,7 +151,7 @@ rule bin2root:
         bin2root_limits=1
    shell:
         """
-        {pipeline_path}/gtot_out.bash -l {output}.log  {input.filepath} 2>&1 >> {output} && bin=$(basename {input.filepath}) && echo binfile=$bin >> {output}
+        {pipeline_path}/gtot_out.bash -l {output:q}.log  {input.filepath:q} 2>&1 >> {output:q} && bin=$(basename {input.filepath:q}) && printf 'binfile=%q\\n' "$bin" >> {output:q}
         """
 
 
@@ -209,7 +210,7 @@ rule register_convert_in_db:
             export PATH={conda_lib}/bin/:$PATH
             source env/setup.sh
             source {input}
-            {conda_lib}/bin/python3 {register_convert} -s $convstatus -i $binfile -o $outdest  -c {default_config} -l $logfile 2>&1 >>  {output}.log && echo $outdest >> {output} 
+            {conda_lib}/bin/python3 {register_convert} -s "$convstatus" -i "$binfile" -o "$outdest"  -c {default_config} -l $logfile 2>&1 >>  {output}.log && echo $outdest >> {output} 
         '
         """
 
@@ -340,7 +341,7 @@ rule cleanup_tmpdir:
         slurm=False  # Exécuter localement
     shell:
 #        "echo done > {output}"
-        "rm -rf {tmpdirectory}/*; echo done > {output}"
+        "rm -rf -- {tmpdirectory:q}/*; echo done > {output:q}"
 
 ########################
 # STEP 10 – Send email notification

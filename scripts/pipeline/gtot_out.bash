@@ -113,8 +113,10 @@ if [ "$out_is_dir" != "true" ] ; then
    outdest=${dest}/${filename%.*}.root
 fi
 
-echo "outdest=${outdest}" |tee -a ${logfile}
-echo "convstatus=${conv_status}" |tee -a ${logfile}
+# Written with %q: the pipeline reads these lines back with `source`, so a
+# file name must come back as data, never as shell code.
+printf 'outdest=%q\n' "${outdest}" |tee -a "${logfile}"
+printf 'convstatus=%q\n' "${conv_status}" |tee -a "${logfile}"
 exit $conv_status
 
 
