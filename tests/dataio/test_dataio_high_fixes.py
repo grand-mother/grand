@@ -251,3 +251,32 @@ def test_opening_a_tree_does_not_read_all_its_events(tmp_path, monkeypatch):
         t.fill()
     assert calls == [1]
     t.stop_using()
+
+
+def test_numpy_integers_select_entries(tmp_path):
+    r"""#276: get_entry(np.int64) and get_entry_with_index(np.uint32, ...) raised TypeError."""
+    import numpy as np
+    import pytest
+
+    from grand.dataio import TShower
+
+    name = str(tmp_path / "shower.root")
+    t = TShower(name)
+    for event in (5, 6):
+        t.run_number, t.event_number, t.zenith = 1, event, float(event)
+        t.fill()
+    t.write()
+    t.stop_using()
+
+    t = TShower(name)
+    assert t.get_entry(np.int64(1)) > 0 and t.zenith == 6.0
+    for i in np.where(np.array([True, False]))[0]:
+        t.get_entry(i)
+    assert t.zenith == 5.0
+    t.build_index("run_number", "event_number")
+    assert t.get_entry_with_index(np.uint32(1), np.uint32(6)) > 0 and t.zenith == 6.0
+    with pytest.raises(TypeError, match="must be an integer"):
+        t.get_entry(True)
+    with pytest.raises(TypeError, match="must be an integer"):
+        t.get_entry(1.5)
+    t.stop_using()

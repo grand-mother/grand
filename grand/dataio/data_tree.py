@@ -1,6 +1,7 @@
 # Created by Lech Wiktor Piotrowski at 14/03/2025
 import atexit
 import datetime
+import numbers
 import glob
 import os
 from dataclasses import dataclass, field
@@ -1074,9 +1075,22 @@ class DataTree:
             Bytes read; zero when the entry does not exist.
         """
         self._check_open("get_entry")
-        res = self._tree.GetEntry(ev_no)
+        res = self._tree.GetEntry(self._integer(ev_no, "get_entry", "ev_no"))
         self.assign_branches()
         return res
+
+    def _integer(self, value, action, name):
+        r"""Returns `value` as an ``int``, for ROOT.
+
+        NumPy integers -- including the trees' own ``run_number`` and
+        ``event_number``, and the indices ``np.where`` gives -- were refused
+        by ROOT with a ``TypeError`` (#276).  A bool is refused, not read as
+        0 or 1.
+        """
+        if isinstance(value, numbers.Integral) and not isinstance(value, (bool, np.bool_)):
+            return int(value)
+        raise TypeError(_validate.message(
+            type(self).__name__, "%s: %s must be an integer, got %r" % (action, name, value)))
 
     @staticmethod
     def _reset_read_cache(tree):
@@ -1525,7 +1539,8 @@ class DataTree:
             Bytes read; zero when the pair matches no entry.
         """
         self._check_open("get_entry_with_index")
-        res = self._tree.GetEntryWithIndex(run_no, evt_no)
+        res = self._tree.GetEntryWithIndex(self._integer(run_no, "get_entry_with_index", "run_no"),
+                                           self._integer(evt_no, "get_entry_with_index", "evt_no"))
         if res == 0 or res == -1:
             logger.error(
                 f"No event with event number {evt_no} and run number {run_no} in the {self.tree_name} tree. Please provide proper numbers."

@@ -15,6 +15,12 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **Tree lookups take NumPy integers (#276).** `get_entry(np.int64(1))`,
+  the indices `np.where` gives, and `get_entry_with_index(t.run_number,
+  t.event_number)` -- whose values are `np.uint32` -- raised `TypeError` from
+  ROOT. Any integer is now accepted; a bool or a float is refused with a
+  `GRANDlib:` message.
+
 - **`sin_geomag_angle` on arrays (#214).** An array of angles gave a single
   number, larger than 1: the norm ran over all the directions together. It is
   now taken per direction; a scalar input still gives a float.
