@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **`recons_ADF` no longer returns its starting point as a fit (#286).** The
+  loss divides by the antenna amplitudes, so a zero amplitude (an antenna
+  below one ADC count) made it infinite everywhere and the fit returned the
+  input angles and the initial width and amplitude, without a word; a source
+  at or below the antennas made the minimizer run for minutes before doing
+  the same. Non-positive amplitudes and a source not above the antennas are
+  now refused with a `GRANDlib:` error naming the antennas; a fit whose loss
+  ends non-finite raises; and a fit the minimizer reports as not converged
+  logs a warning.
+
 - **The README quickstart works (#185).** It gave `Efield2Voltage` and
   `convert_efield2voltage.py` a single e-field file, which fails: both need a
   simulation directory holding the run and shower trees as well. The
