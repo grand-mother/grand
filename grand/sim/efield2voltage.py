@@ -2,6 +2,7 @@
 Master module for the detector unit simulation GRAND
 """
 import os
+import warnings
 import os.path
 from logging import getLogger
 import time
@@ -899,6 +900,31 @@ class Efield2Voltage:
             batch["tree"] = None
             tree.write()
             tree.stop_using()
+            if batch.get("partial"):
+                groot.data_tree.replace_output(batch.pop("partial"), batch["name"])
+
+    def _discard_voltage(self):
+        r"""Drops the output of a compute_voltage() that failed, writing nothing (#240)."""
+        batch = getattr(self, "_batch_volt", None)
+        if batch and batch.get("tree") is not None:
+            tree = batch["tree"]
+            batch["tree"] = None
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                tree.stop_using()
+            if batch.get("partial") and os.path.exists(batch["partial"]):
+                os.remove(batch.pop("partial"))
+
+    def _check_params(self):
+        r"""Checks the processing switches before any work is done.
+
+        They were checked only when the first event was saved, after the whole
+        computation, and the failed run left a stub output file (#240).
+        """
+        for name, unit in (("resample_to_mhz", "MHz"), ("extend_to_us", "us"),
+                           ("calibration_smearing_sigma", ""), ("add_jitter_ns", "ns")):
+            _validate.non_negative(_validate.as_real(self.params[name], name, "Efield2Voltage"),
+                                   name, "Efield2Voltage", unit)
 
     def compute_voltage(self, event_idx=None, du_idx=None, event_number=None, run_number=None,
                         append_file=True):
@@ -930,15 +956,19 @@ class Efield2Voltage:
         The result is written to ``self.f_output`` as a side effect; the
         method returns nothing.
         """
+        self._check_params()
         self._batch_volt = {}
         try:
             self._compute_voltage(event_idx=event_idx, du_idx=du_idx, event_number=event_number,
                                   run_number=run_number, append_file=append_file)
+        except BaseException:
+            self._discard_voltage()
+            self._batch_volt = None
+            raise
+        try:
+            self._flush_voltage()
         finally:
-            try:
-                self._flush_voltage()
-            finally:
-                self._batch_volt = None
+            self._batch_volt = None
 
     def _compute_voltage(self, 
         event_idx=None, 
@@ -1075,6 +1105,18 @@ class Efield2Voltage:
         batch = getattr(self, "_batch_volt", None)
         if batch is not None and batch.get("name") == cur_f_output and batch.get("tree") is not None:
             self.tt_volt = batch["tree"]
+        elif batch is not None and (not append_file or not os.path.exists(cur_f_output)):
+            # A new or replaced output is written under a temporary name and
+            # moved into place when complete: a run that failed late left a
+            # stub that broke every later run, and a re-run deleted the old
+            # output before it had a new one (#240)
+            self._flush_voltage()
+            partial = groot.data_tree.partial_name(cur_f_output)
+            if os.path.exists(partial):
+                os.remove(partial)
+            logger.info(f"save result in {cur_f_output}")
+            self.tt_volt = groot.TVoltage(partial)
+            batch.update(name=cur_f_output, tree=self.tt_volt, partial=partial)
         else:
             self._flush_voltage()
             # Path(): output_directory may be a string, which crashed here
@@ -1098,6 +1140,10 @@ class Efield2Voltage:
         # moved by sqrt(2) on 2026-09-07 -- and without this there is nothing
         # in a file to say which side of such a change it came from.
         self.tt_volt.grandlib_version = _grandlib_version()
+        # The level of the e-field it was made from, which the file name also
+        # carries: it was left at 0, so a voltage_*_L1_* file said level 0 and
+        # the next scan of the folder failed on the missing tvoltage_l1 (#240)
+        self.tt_volt.analysis_level = int(self.events.analysis_level)
 
         self.tt_volt.run_number   = self.events.run_number
         self.tt_volt.event_number = self.events.event_number

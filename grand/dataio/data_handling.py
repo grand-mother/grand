@@ -168,7 +168,15 @@ class DataDirectory:
         from itertools import groupby
         for key, filenames in groupby(sorted(self.file_list, key=split_filenames), split_filenames):
             filenames = list(filenames)
-            file_handle_list.append(DataFile(filenames))
+            # A file with no GRAND tree, such as the stub a failed run left,
+            # is skipped with a warning: it used to break every later scan of
+            # the folder with an AttributeError (#240)
+            try:
+                file_handle_list.append(DataFile(filenames))
+            except ValueError as error:
+                if "holds no GRAND tree" not in str(error):
+                    raise
+                logger.warning("%s; skipped (delete it if a failed run left it)", error)
 
         return file_handle_list
 

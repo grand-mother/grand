@@ -15,6 +15,20 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **The conversion scripts can be run again on the same folder (#240).**
+  `convert_voltage2adc.py` deleted its earlier output, then failed with
+  `NotUniqueEvent` and left none; `convert_efield2voltage.py` failed the same
+  way on a re-run, although `-o`'s help says an existing file is overwritten;
+  and a run that failed late, on a parameter checked only after the
+  computation, left a stub file that broke every later run on the folder.
+  Both scripts now write under a hidden temporary name and move the file into
+  place only when it is complete, so the earlier output survives a failed run;
+  `Efield2Voltage` checks its parameters before computing and leaves nothing
+  behind when it fails; and `DataDirectory` skips a file holding no GRAND tree,
+  with a warning. `Efield2Voltage` also records the analysis level of the
+  e-field it read: a `voltage_*_L1_*` file said level 0, and the next scan of
+  its folder failed.
+
 - **`--seed` makes calibration smearing reproducible (#230).** The smearing
   drew from NumPy's global generator, which the seed never reached, so two runs
   with the same seed differed by up to 18583 µV; it now draws from a generator

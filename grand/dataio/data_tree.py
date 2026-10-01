@@ -160,6 +160,46 @@ def _detach_everything_at_exit():
 atexit.register(_detach_everything_at_exit)
 
 
+def partial_name(final):
+    r"""The temporary name an output is written under before it is complete (#240).
+
+    Hidden (leading dot), so a DataDirectory scan of the folder never sees it.
+
+    Parameters
+    ----------
+    final : str
+        The output's final path.
+
+    Returns
+    -------
+    str
+        The temporary path, in the same directory.
+    """
+    head, tail = os.path.split(os.fspath(final))
+    return os.path.join(head or ".", "." + tail + ".partial.root")
+
+
+def replace_output(partial, final):
+    r"""Moves a completed output into place, replacing an earlier one (#240).
+
+    The earlier file may be open in this process -- an input DataDirectory
+    opens every file of its folder -- and is closed first, so that nothing
+    reads or writes the replaced file afterwards.
+
+    Parameters
+    ----------
+    partial : str
+        The completed file, written under :func:`partial_name`.
+    final : str
+        Where it goes.
+    """
+    previous = ROOT.gROOT.GetListOfFiles().FindObject(os.fspath(final))
+    if previous:
+        _close_with_trees(previous)
+    _file_lock.release(final)
+    os.replace(partial, final)
+
+
 def _register_opened_file(f):
     """Record a TFile that a tree opened itself, so that ``stop_using()`` may close it"""
     _files_opened_by_trees[ROOT.addressof(f)] = f

@@ -222,7 +222,9 @@ if __name__ == "__main__":
     signal.params["add_rf_chain_gaa"] = args.rf_chain_gaa
     #signal.compute_voltage_event(0)
     #signal.save_voltage(append_file=False)
-    signal.compute_voltage()    # saves automatically
+    # -o's help says an existing file is overwritten; it was appended to, and a
+    # re-run failed with NotUniqueEvent (#240)
+    signal.compute_voltage(append_file=False)    # saves automatically
 
     # =============================================
     logger.info(mlg.string_end_script())
