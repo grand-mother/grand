@@ -2,6 +2,7 @@
 import os
 import xml.etree.ElementTree as ET
 import os.path
+import functools
 import numpy as np
 
 from grand.basis import validate as _validate
@@ -107,15 +108,21 @@ def read_config(xml_file):
 
     return components, csv_files
 
-# Load XML configuration
-# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"  # Ensure absolute path
-xml_file = Path(__file__).parent / "rf_chain_config.xml"  # Ensure absolute path
-components, csv_files = read_config(xml_file)
+#: The configuration file, read on first use (#255): it was parsed at import,
+#: so a broken file broke ``import grand.sim``
+xml_file = Path(__file__).parent / "rf_chain_config.xml"
+
+
+@functools.lru_cache(maxsize=None)
+def _config():
+    r"""The ``(components, csv_files)`` of :data:`xml_file`, read once."""
+    return read_config(xml_file)
+
 
 # Dictionary to map components that depend on axis
-axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}  # Adjust if necessary
+axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}
 
-# Function to get filenames dynamically based on axis
+
 def get_axis_filename(component_name, axis):
     """Returns the correct filename for a given component and axis.
 
@@ -123,48 +130,50 @@ def get_axis_filename(component_name, axis):
     ----------
     component_name : str
         Chain component.
-    axis : int
-        Antenna arm: 0 for X, 1 for Y, 2 for Z.
+    axis : int or str
+        Antenna arm: 0, 1, 2 or "X", "Y", "Z" (also "0", "1", "2").
 
     Returns
     -------
     str
         Path to that component measurements for that arm.
+
+    Raises
+    ------
+    KeyError
+        If the component is not in the configuration file.
+    ValueError
+        If the component is disabled there, or the axis is not one of the above.
+    FileNotFoundError
+        If the configuration gives no file for the component.
+
+    Notes
+    -----
+    Every problem used to be printed as "ERROR: ..." and answered with
+    ``None``, which the callers passed on until an unrelated TypeError; the
+    missing-component path even ended in ``NameError: Nonec`` (#255).
     """
-
-    # Define a dictionary that maps numerical and string axes correctly
-    axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}
-
-    # Ensure axis is properly converted if it is a string digit
+    where = "rf_chain.get_axis_filename"
+    components, _ = _config()
     if isinstance(axis, str) and axis.isdigit():
-        axis = int(axis)  # Convert "0", "1", "2" to integers
+        axis = int(axis)
+    if component_name not in components:
+        raise KeyError(_validate.message(
+            where, "%s is missing from %s" % (component_name, xml_file)))
+    if not _config()[0][component_name]["enabled"]:
+        raise ValueError(_validate.message(
+            where, "%s is disabled in %s" % (component_name, xml_file)))
+    filename_template = _config()[0][component_name]["s2p_file"]
+    if filename_template is None:
+        raise FileNotFoundError(_validate.message(
+            where, "no file is given for %s in %s" % (component_name, xml_file)))
+    if "{axis}" not in filename_template:
+        return filename_template
+    if axis not in axis_dict:
+        raise ValueError(_validate.message(
+            where, "invalid axis %r for %s: must be 0, 1, 2, X, Y or Z" % (axis, component_name)))
+    return filename_template.replace("{axis}", axis_dict[axis])
 
-    if component_name in components:
-        if not components[component_name]["enabled"]:
-            print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
-            return None
-
-        filename_template = components[component_name]["s2p_file"]
-
-        if filename_template is None:
-            print(f"ERROR: No filename template found for {component_name} in rf_chain_config.xml.")
-            return None
-
-        # Ensure axis replacement works correctly
-        if "{axis}" in filename_template:
-            if axis in axis_dict:
-                resolved_filename = filename_template.replace("{axis}", axis_dict[axis])
-                #print(f"DEBUG: Resolved filename for {component_name}: {resolved_filename}")
-                return resolved_filename
-            else:
-                #print(f"ERROR: Invalid axis '{axis}' for {component_name}. Must be 0, 1, 2, X, Y, or Z.")
-                return None
-
-        #print(f"DEBUG: Using static filename for {component_name}: {filename_template}")
-        return filename_template  # If no {axis} placeholder, return as is.
-
-    print(f"ERROR: {component_name} is missing from rf_chain_config.xml.")
-    return None
 
 # Function to safely set the filename for MatchingNetwork
 def _set_name_data_file(self, axis):
@@ -180,111 +189,7 @@ def _set_name_data_file(self, axis):
     str
         Path to the tabulated measurements for that arm.
     """
-    filename = get_axis_filename("MatchingNetwork", axis)
-
-    #print(f"DEBUG: Final MatchingNetwork filename for {axis}: {filename}")
-
-    if filename is None:
-        raise FileNotFoundError(f"ERROR: No valid file found for MatchingNetwork with axis {axis}. Check rf_chain_config.xml.")
-
-    return grand_add_path_data(filename)
-
-
-def read_config(xml_file):
-    """ Reads the XML configuration file and returns component settings.
-
-    Parameters
-    ----------
-    xml_file : str
-        Configuration file listing the chain components.
-
-    Returns
-    -------
-    dict
-        The components and their settings.
-    """
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
-
-    components = {}
-    for comp in root.find("Components"):
-        name = comp.attrib["name"]
-        s2p_file = comp.find("s2pFile").text if comp.find("s2pFile") is not None else None
-        s1p_file = comp.find("s1pFile").text if comp.find("s1pFile") is not None else None
-        enabled = comp.find("enabled").text.lower() == "true"
-
-        components[name] = {"s2p_file": s2p_file, "s1p_file": s1p_file, "enabled": enabled}
-
-    csv_files = {}
-    for csv in root.find("CSVFiles"):
-        name = csv.attrib["name"]
-        csv_file = csv.find("csvFile").text
-        enabled = csv.find("enabled").text.lower() == "true"
-
-        csv_files[name] = {"csv_file": csv_file, "enabled": enabled}
-
-    return components, csv_files
-
-# Load XML configuration
-#xml_file = "rf_chain_config.xml"
-#xml_file = "/home/grand/grand/grand/sim/detector/rf_chain_config.xml"
-# xml_file = "/home/grand/grand/sim/detector/rf_chain_config.xml"
-xml_file = Path(__file__).parent / "rf_chain_config.xml"
-components, csv_files = read_config(xml_file)
-
-# Dictionary to map components that depend on axis
-axis_dict = {0: "X", 1: "Y", 2: "Z", "X": "X", "Y": "Y", "Z": "Z"}  # Adjust if necessary
-
-# Function to get filenames dynamically based on axis
-#def get_axis_filename(component_name, axis):
-#    if component_name in components and components[component_name]["enabled"]:
-#        filename_template = components[component_name]["s2p_file"]
-#        if filename_template and "{axis}" in filename_template:
-#            return filename_template.replace("{axis}", axis_dict[axis])
-#        return filename_template
-#    return None
-
-def get_axis_filename(component_name, axis):
-    """Returns the correct filename for a given component and axis.
-
-    Parameters
-    ----------
-    component_name : str
-        Chain component.
-    axis : int
-        Antenna arm: 0 for X, 1 for Y, 2 for Z.
-
-    Returns
-    -------
-    str
-        Path to that component measurements for that arm.
-    """
-    if component_name in components:
-        if not components[component_name]["enabled"]:
-            print(f"Warning: {component_name} is disabled in rf_chain_config.xml.")
-            return None
-
-        filename_template = components[component_name]["s2p_file"]
-
-        if filename_template is None:
-            print(f"ERROR: No filename template found for {component_name} in rf_chain_config.xml.")
-            return None
-
-        # Ensure axis is valid before replacing it
-        if "{axis}" in filename_template:
-            if axis in axis_dict:
-                resolved_filename = filename_template.replace("{axis}", axis_dict[axis])
-                #print(f"DEBUG: Resolved filename for {component_name}: {resolved_filename}")
-                return resolved_filename
-            else:
-                print(f"ERROR: Invalid axis '{axis}' for {component_name}.")
-                return None
-
-        #print(f"DEBUG: Using static filename for {component_name}: {filename_template}")
-        return filename_template  # If no {axis} placeholder, return as is.
-
-    print(f"ERROR: {component_name} is missing from rf_chain_config.xml.")
-    return Nonec
+    return grand_add_path_data(get_axis_filename("MatchingNetwork", axis))
 
 def interp(x,y,z):
     r"""Returns `z` interpolated onto `x` from samples at `y`.
@@ -1044,7 +949,7 @@ class BalunAfterLNA(GenericProcessingDU):
         """
         #filename = os.path.join("detector", "RFchain_v1", "balun_after_LNA.s2p")
         #filename = os.path.join("detector", "RFchain_v1", "balun46in.s2p")
-        filename = components["BalunIn"]["s2p_file"] if components["BalunIn"]["enabled"] else None
+        filename = _config()[0]["BalunIn"]["s2p_file"] if _config()[0]["BalunIn"]["enabled"] else None
         
         return grand_add_path_data(filename)
 
@@ -1151,7 +1056,7 @@ class Cable(GenericProcessingDU):
         str
             Absolute path to the measurements for that arm.
         """
-        filename = components["CableConnector"]["s2p_file"] if components["CableConnector"]["enabled"] else None
+        filename = _config()[0]["CableConnector"]["s2p_file"] if _config()[0]["CableConnector"]["enabled"] else None
 
         return grand_add_path_data(filename)
 
@@ -1269,10 +1174,13 @@ class VGAFilter(GenericProcessingDU):
         axis : int, optional
             Antenna arm.
         """
-        assert self.gain in [-5, 0, 5, 20]
+        # A check, not an assert, which vanishes under python -O (#255)
+        if self.gain not in [-5, 0, 5, 20]:
+            raise ValueError(_validate.message(
+                "VGAFilter", "the gain must be -5, 0, 5 or 20 dB, got %r" % (self.gain,)))
         logger.info(f"vga gain: {self.gain} dB")
         #filename = os.path.join("detector", "RFchain_v2", "filter+"f"vga{self.gain}db+filter.s2p")
-        filename = components["Filter"]["s2p_file"] if components["Filter"]["enabled"] else None
+        filename = _config()[0]["Filter"]["s2p_file"] if _config()[0]["Filter"]["enabled"] else None
         
         return grand_add_path_data(filename)
 
@@ -1380,7 +1288,7 @@ class BalunBeforeADC(GenericProcessingDU):
         str
             Absolute path to this element's tabulated measurements.
         """
-        filename = components["BalunBeforeAD"]["s2p_file"] if components["BalunBeforeAD"]["enabled"] else None
+        filename = _config()[0]["BalunBeforeAD"]["s2p_file"] if _config()[0]["BalunBeforeAD"]["enabled"] else None
 
         return grand_add_path_data(filename)
 
@@ -1947,7 +1855,7 @@ class Zload(GenericProcessingDU):
             Absolute path to the measurements for that arm.
         """
         #filename = os.path.join("detector", "RFchain_v1", "zload_balun_200ohm.s1p")
-        filename = components["S_balun_AD"]["s1p_file"] if components["S_balun_AD"]["enabled"] else None
+        filename = _config()[0]["S_balun_AD"]["s1p_file"] if _config()[0]["S_balun_AD"]["enabled"] else None
 
         return grand_add_path_data(filename)
 
@@ -2076,7 +1984,7 @@ class RFChain(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -2245,7 +2153,7 @@ class RFChainNut(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -2358,7 +2266,6 @@ class RFChain_gaa(GenericProcessingDU):
 
         assert self.gaa.nb_freqs > 0
         assert self.gaa.ABCD_matrix.shape[-1] > 0
-        assert self.gaa.nb_freqs==self.gaa.nb_freqs
 
         self.Z_ant = np.zeros((3, self.nb_freqs), dtype=np.complex64)
         self.Z_in = np.zeros((3, self.nb_freqs), dtype=np.complex64)
@@ -2376,7 +2283,7 @@ class RFChain_gaa(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -2535,7 +2442,7 @@ class RFChain_Balun1(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -2690,7 +2597,7 @@ class RFChain_Match_net(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -2846,7 +2753,7 @@ class RFChain_Cable_Connectors(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -2998,7 +2905,7 @@ class RFChain_VGA(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz
@@ -3151,7 +3058,7 @@ class RFChain_in_Balun1(GenericProcessingDU):
         #self.total_ABCD_matrix[:] = matmul(self.total_ABCD_matrix, self.balun2.ABCD_matrix) 
 
         # Antenna Impedance.
-        filename = csv_files["AntennaImpedance"]["csv_file"] if csv_files["AntennaImpedance"]["enabled"] else None
+        filename = _config()[1]["AntennaImpedance"]["csv_file"] if _config()[1]["AntennaImpedance"]["enabled"] else None
         filename = grand_add_path_data(filename)
         Zant_dat = np.loadtxt(filename, delimiter=",", comments=['#', '!'], skiprows=1)
         freqs_in = Zant_dat[:,0]  # MHz

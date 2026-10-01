@@ -15,6 +15,16 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **RF-chain configuration errors are raised, not printed (#255).** A
+  component missing from `rf_chain_config.xml` printed "ERROR: ..." and then
+  failed with `NameError: name 'Nonec' is not defined`; an invalid axis
+  printed an error and returned `None`, which callers passed on until an
+  unrelated `TypeError`. `get_axis_filename` now raises `KeyError`,
+  `ValueError` or `FileNotFoundError` naming the component and the axis. The
+  duplicate definitions of `read_config` and `get_axis_filename` are gone, the
+  configuration is read on first use rather than at import, the VGA gain check
+  no longer relies on an `assert`, and a tautological `assert` is removed.
+
 - **`get_files_from_db.py` reports what it does (#245).** Files of 256 kB or
   less that the transfer database lists were moved to a `crap/` folder with no
   message, listed files that did not exist were dropped silently, a database
