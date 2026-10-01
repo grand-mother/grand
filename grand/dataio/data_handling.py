@@ -56,7 +56,14 @@ class DataDirectory:
 
         self.tree_file_types = ["ftruns", "ftrunrawvoltages", "ftrunshowersims", "ftrunefieldsims", "ftefields", "ftshowers", "ftshowersims", "ftvoltages", "ftadcs", "ftrawvoltages", "ftrunnoises"]
 
+        self._claimed = set()
         self.init_structure()
+        # A file no tree type claims was ignored without a word (#187)
+        for el in self.file_handle_list:
+            if el.filename not in self._claimed:
+                warnings.warn("GRANDlib: DataDirectory: %s is not named after a GRAND tree type "
+                              "(run_, efield_, voltage_, ...); ignored" % el.filename,
+                              GRANDlibWarning, stacklevel=2)
 
         # # Set the structure type depending on the dir name
         # exp_structure = False
@@ -204,8 +211,24 @@ class DataDirectory:
             if level is None:
                 warnings.warn("GRANDlib: DataDirectory: %s does not end in _L<level>_<serial>.root; "
                               "skipped" % el.filename, GRANDlibWarning, stacklevel=3)
+                if hasattr(self, "_claimed"):
+                    self._claimed.add(el.filename)    # warned about once already
                 continue
-            files[int(level.group(1))] = el
+            level = int(level.group(1))
+            # The trees' analysis_level decides: a name saying _L1_ over
+            # level-0 trees made the lookup fail, or the file vanish (#187)
+            tree = flistname[1:-1]
+            levels = sorted(int(a[len(tree) + 2:]) for a in vars(el)
+                            if a.startswith(tree + "_l") and a[len(tree) + 2:].isdigit())
+            if levels and level not in levels:
+                warnings.warn("GRANDlib: DataDirectory: %s is named level %d but its %s tree is level "
+                              "%s; level %d is used" % (el.filename, level, tree,
+                                                        "/".join(map(str, levels)), levels[-1], ),
+                              GRANDlibWarning, stacklevel=3)
+                level = levels[-1]
+            files[level] = el
+            if hasattr(self, "_claimed"):
+                self._claimed.add(el.filename)
         return files
 
     # Init the instance with sim2root structure files

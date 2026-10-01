@@ -471,21 +471,27 @@ several runs *silently merges them*.'''),
     code(r'''directory = DataDirectory(workdir)
 print("files found  :", [os.path.basename(f) for f in directory.get_list_of_files()])
 print("handles      :", len(directory.get_list_of_files_handles()))'''),
-    md(r'''**The level in the filename must match the level inside the trees.** The
-scanner takes the analysis level from the `_L0_`/`_L1_` marker in the name, then
-looks for a tree attribute named for the level recorded *in the tree*. When
-they disagree you get `AttributeError: 'DataFile' object has no attribute
-'tefield_l1'` — naming something you never wrote, and saying nothing about the
-real cause.'''),
-    code(r'''bad = os.path.join(workdir, 'mismatch_20260101_000000_RUN0_L1_0000.root')
+    md(r'''**The level in the filename should match the level inside the trees.** The
+scanner takes the analysis level from the `_L0_`/`_L1_` marker in the name and
+checks it against the level recorded *in the tree*. When they disagree it warns,
+naming the file and both levels, and uses the tree's level. A file whose name
+does not start with a tree type (`run_`, `efield_`, ...) is ignored, also with
+a warning. (Before grand-mother/grand#187 the first case failed with an
+`AttributeError` naming a tree you never wrote, and the second was silent.)'''),
+    code(r'''import warnings
+from grand.basis.validate import GRANDlibWarning
+
+bad = os.path.join(workdir, 'run_20260101_000000_RUN0_L1_0000.root')
 r = TRun(bad); r.run_number = 0; r.du_id = [0]; r.du_xyz = [[0., 0., 0.]]
 r.t_bin_size = [0.5]; r.analysis_level = 0          # name says L1, tree says 0
-r.fill(); r.write()
+r.fill(); r.write(); r.stop_using()
 
-try:
-    DataDirectory(workdir).get_list_of_files_handles()
-except AttributeError as exc:
-    print("AttributeError:", exc)'''),
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always", GRANDlibWarning)
+    DataDirectory(workdir)
+for w in caught:
+    print(w.message)
+os.remove(bad)                                     # keep the rest of the notebook clean'''),
     md(r'''**Both levels are returned, but the bare attribute follows the highest.** With
 an L0 and an L1 file present, `directory.tefield` refers to L1 while
 `tefield_l0` and `tefield_l1` name them individually. A script reading

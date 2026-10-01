@@ -441,3 +441,28 @@ def test_a_misspelt_field_is_refused():
         e.zenith = 1.0          # a TShower field, not a TEfield one
     t.stop_using()
     e.stop_using()
+
+
+def test_a_name_level_that_disagrees_with_the_trees_is_reported(tmp_path):
+    r"""#187: such a file failed with AttributeError, or vanished from the directory."""
+    import pytest
+
+    from grand.basis.validate import GRANDlibWarning
+    from grand.dataio import DataDirectory, TRun
+
+    def write(name):
+        r = TRun(str(tmp_path / name))
+        r.run_number, r.du_id, r.du_xyz, r.t_bin_size = 0, [0], [[0.0, 0.0, 0.0]], [0.5]
+        r.analysis_level = 0
+        r.fill()
+        r.write()
+        r.stop_using()
+
+    write("run_20260101_000000_RUN0_L1_0000.root")
+    with pytest.warns(GRANDlibWarning, match="named level 1 but its trun tree is level 0"):
+        d = DataDirectory(str(tmp_path))
+    assert d.trun is not None and d.trun.get_list_of_runs() == [0]
+
+    (tmp_path / "run_20260101_000000_RUN0_L1_0000.root").rename(tmp_path / "mismatch_RUN0_L1_0000.root")
+    with pytest.warns(GRANDlibWarning, match="not named after a GRAND tree type"):
+        DataDirectory(str(tmp_path))

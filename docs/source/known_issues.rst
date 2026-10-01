@@ -1004,7 +1004,10 @@ expects.  None of that is documented, validated or stated in an error message.
 
 **Consequences.**  A user who renames a file, or writes one from the tree
 classes directly, gets an ``AttributeError`` naming an attribute they have
-never heard of.
+never heard of.  (``DataDirectory`` itself no longer does: since #187 it warns
+about a name level that disagrees with the trees and uses the trees' level,
+and warns about a file no tree type claims.  This reader still expects the
+naming above.)
 
 The module was at 21 % test coverage when this was written, not because it is
 unimportant but because a valid input was difficult to construct.  It is now at

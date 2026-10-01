@@ -15,6 +15,13 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- **A file whose name level disagrees with its trees (#187).** A `run_..._L1_`
+  file holding level-0 trees made `DataDirectory` fail with an
+  `AttributeError` naming a tree nobody wrote; a file not named after a tree
+  type vanished from the directory without a word. The first now warns,
+  naming the file and both levels, and uses the trees' level; the second is
+  ignored with a warning. Notebook 02 shows the new behaviour.
+
 - **A misspelt tree field is refused (#202).** `t.zenit = 5` was accepted and
   stored nowhere: the guard meant to catch it was assigned to each instance,
   where Python never looks for `__setattr__`. It is now on the class, active
