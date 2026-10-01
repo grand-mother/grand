@@ -35,6 +35,14 @@ or, equivalently, from a shell::
    library has that shape today, which is why only 17 of the 702 functions
    carry one.
 
+Next steps
+~~~~~~~~~~
+
+- Read a shower's zenith, azimuth and energy back from a file:
+  :ref:`datamodel-read-one-event`.
+- Turn a latitude and longitude into array coordinates, and back:
+  :doc:`coordinates`.
+
 After Phase 6
 -------------
 

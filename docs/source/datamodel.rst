@@ -54,6 +54,73 @@ Class              Contents
 ``TRunNoise``      Noise information common to all events of a run
 =================  =========================================================
 
+.. _datamodel-read-one-event:
+
+Read one event
+--------------
+
+The shower parameters -- zenith, azimuth, energy, Xmax -- are in ``TShower``,
+in the ``shower_*.root`` file.  ``TShowerSim`` (``showersim_*.root``) holds
+only what a simulator adds on top, so ``tshowersim.zenith`` does not exist.
+Both forms below print the first event of the committed sample; run them from
+the repository root.
+
+With :mod:`grand.dataio`, one tree per file:
+
+.. code-block:: python
+
+    from grand.dataio import TShower, TEfield
+
+    DIR = "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000/"
+
+    with TShower(DIR + "shower_1618-13790_L0_0000.root") as shower:
+        shower.get_entry(0)
+        run, event = shower.run_number, shower.event_number
+        print("run %d, event %d" % (run, event))
+        print("zenith %.2f deg, azimuth %.2f deg" % (shower.zenith, shower.azimuth))
+        print("energy %.3g GeV, Xmax %.1f g/cm2" % (shower.energy_primary, shower.xmax_grams))
+
+    with TEfield(DIR + "efield_1618-13790_L0_0000.root") as efield:
+        efield.get_event(event, run)
+        print("antennas %d" % len(efield.du_id))
+
+With :mod:`grand.aoi`, which joins the trees into one event object:
+
+.. code-block:: python
+
+    from grand.aoi.event_list import EventList
+
+    DIR = "sim2root/Common/sim_Xiaodushan_20221026_000000_RUN1_CD_ZHAireS_0000"
+
+    event = next(iter(EventList(DIR)))
+    shower = event.simshower            # the simulated shower, from the L0 shower file
+    print("run %d, event %d" % (event.run_number, event.event_number))
+    print("zenith %.2f deg, azimuth %.2f deg" % (shower.zenith, shower.azimuth))
+    print("energy %.3g GeV, Xmax %.1f g/cm2" % (shower.energy_primary, shower.Xmax))
+    print("antennas %d" % len(event.antennas))
+
+The two APIs name the same quantity differently, and ``simshower`` means
+different things in each: in :mod:`grand.aoi` it is the *simulated* shower
+read from ``TShower`` at level 0 (``event.shower`` is the level-1 one, absent
+from a simulation), not ``TShowerSim``.
+
+======================  ===================  =====================  =======
+Quantity                ``grand.dataio``     ``grand.aoi``          Unit
+======================  ===================  =====================  =======
+Zenith ("comes from")   ``TShower.zenith``   ``simshower.zenith``   degrees
+Azimuth ("comes from")  ``TShower.azimuth``  ``simshower.azimuth``  degrees
+Primary energy          ``energy_primary``   ``energy_primary``     GeV
+Electromagnetic energy  ``energy_em``        ``energy_em``          GeV
+Xmax depth              ``xmax_grams``       ``Xmax``               g/cm²
+Xmax position           ``xmax_pos``         ``Xmaxpos``            m
+Core position           ``shower_core_pos``  ``core_ground_pos``    m
+Primary particle (PDG)  ``primary_type``     ``primary_type``       --
+Antennas in the event   ``TEfield.du_id``    ``event.antennas``     --
+======================  ===================  =====================  =======
+
+Notebook 09, *Reading events* (see :doc:`notebooks`), goes further with
+:mod:`grand.aoi`: traces, times, and the pitfalls of looping over events.
+
 Provenance
 ----------
 

@@ -67,6 +67,23 @@ A local frame needs an origin, supplied as ``location``:
 Compare that with the site itself — latitude 40.98, longitude 93.95.  Moving
 1 km along ``x`` changed the **latitude**, so **GRANDCS x points North**.
 
+The reverse -- a geodetic position into the array frame -- passes the
+position as the first argument:
+
+.. jupyter-execute::
+
+    north = Geodetic(latitude=40.99, longitude=93.95, height=1200.0)
+    local = GRANDCS(north, location=site)
+    print("0.01 deg north, in GRANDCS (m):", np.round(np.asarray(local).ravel(), 1))
+
+The point is due north, yet ``y`` is not zero: ``GRANDCS`` measures ``x``
+from **magnetic** north, 0.3° from geographic north at Dunhuang, and ``z`` is
+slightly negative because the Earth curves away below the tangent plane.
+
+Every frame stores its components as ``(3, n)`` arrays, so a single point
+comes back with shape ``(3, 1)``.  That is why the examples here print
+``np.asarray(x).ravel()``: it flattens one point to three numbers.
+
 .. _coordinates-the-trap:
 
 The trap: x is not x

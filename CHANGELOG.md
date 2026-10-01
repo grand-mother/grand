@@ -15,6 +15,14 @@ Work on the `dev-next` integration branch, ahead of the first tagged release.
 
 ### Fixed
 
+- The docs now show how to read one event's shower (#192): `datamodel.rst`
+  has a "Read one event" recipe in both `grand.dataio` (`TShower`, not
+  `TShowerSim`) and `grand.aoi` (`event.simshower`) forms, with a table of
+  field names and units in each API; `coordinates.rst` shows the geodetic to
+  `GRANDCS` conversion, why a due-north point has a small `y` (magnetic
+  north), and why points are `(3, 1)` arrays. The quickstart links both.
+  `tests/test_documented_recipes.py` runs the recipes.
+
 - Environment problems now name their remedy (#280): a missing compiled core
   says to run `source env/setup.sh`; a missing `iminuit` or event-viewer
   package names the `pip install -e ".[analysis]"` / `".[viewer]"` extra;
